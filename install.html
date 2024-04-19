@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Installation &#8212; Phono3py v.2.9.2</title>
+    <title>Installation &#8212; Phono3py v.3.0.0</title>
   
   
   
@@ -36,8 +36,8 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
   <script src="_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
-    <script src="_static/documentation_options.js?v=157ec567"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/documentation_options.js?v=6a41c08d"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'install';</script>
@@ -129,7 +129,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.2.9.2</p>
+    <p class="title logo__title">Phono3py v.3.0.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -479,7 +479,7 @@ specific one is expected, it is installed by (e.g. openblas)</p>
 </pre></div>
 </div>
 <p>For macOS ARM64 system, currently only openblas can be chosen:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>numpy<span class="w"> </span>scipy<span class="w"> </span>h5py<span class="w"> </span>pyyaml<span class="w"> </span>matplotlib-base<span class="w"> </span>c-compiler<span class="w"> </span>spglib<span class="w"> </span>cmake<span class="w"> </span><span class="nv">openblas</span><span class="o">=</span><span class="s2">&quot;0.3.18&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>numpy<span class="w"> </span>scipy<span class="w"> </span>h5py<span class="w"> </span>pyyaml<span class="w"> </span>matplotlib-base<span class="w"> </span>c-compiler<span class="w"> </span>spglib<span class="w"> </span>cmake<span class="w"> </span>openblas
 </pre></div>
 </div>
 <p>Note that using hdf5 files on NFS mounted file system, you may have to disable
@@ -620,10 +620,12 @@ system. If you don’t have it and you use Ubuntu linux, it is installed by:</p>
 
 
   <div class="sidebar-secondary-item">
-  <div class="page-toc tocsection onthispage">
-    <i class="fa-solid fa-list"></i> Contents
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
   </div>
-  <nav class="bd-toc-nav page-toc">
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-using-conda">Installation using conda</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-from-source-code">Installation from source code</a><ul class="nav section-nav flex-column">

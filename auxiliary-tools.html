@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Auxiliary tools &#8212; Phono3py v.2.9.2</title>
+    <title>Auxiliary tools &#8212; Phono3py v.3.0.0</title>
   
   
   
@@ -36,8 +36,8 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
   <script src="_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
-    <script src="_static/documentation_options.js?v=157ec567"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/documentation_options.js?v=6a41c08d"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
@@ -131,7 +131,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.2.9.2</p>
+    <p class="title logo__title">Phono3py v.3.0.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -322,12 +322,8 @@ document.write(`
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phono3py-kaccum-cumulative-lattice-thermal-conductivity-and-related-properties"><code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code>: Cumulative lattice thermal conductivity and related properties</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-use-phono3py-kaccum">How to use <code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#pa"><code class="docutils literal notranslate"><span class="pre">--pa</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#c"><code class="docutils literal notranslate"><span class="pre">-c</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#qe"><code class="docutils literal notranslate"><span class="pre">--qe</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#crystal"><code class="docutils literal notranslate"><span class="pre">--crystal</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#turbomole"><code class="docutils literal notranslate"><span class="pre">--turbomole</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-use-phono3py-kaccum">How to use <code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#general-options">General options</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#temperature"><code class="docutils literal notranslate"><span class="pre">--temperature</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#nsp"><code class="docutils literal notranslate"><span class="pre">--nsp</span></code></a></li>
 </ul>
@@ -380,48 +376,44 @@ document.write(`
 <ul class="simple">
 <li><p><a class="reference internal" href="#phono3py-kaccum-cumulative-lattice-thermal-conductivity-and-related-properties" id="id3"><code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code>: Cumulative lattice thermal conductivity and related properties</a></p>
 <ul>
-<li><p><a class="reference internal" href="#how-to-use-phono3py-kaccum" id="id4">How to use <code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code></a></p>
+<li><p><a class="reference internal" href="#how-to-use-phono3py-kaccum" id="id4">How to use <code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code></a></p></li>
+<li><p><a class="reference internal" href="#general-options" id="id5">General options</a></p>
 <ul>
-<li><p><a class="reference internal" href="#pa" id="id5"><code class="docutils literal notranslate"><span class="pre">--pa</span></code></a></p></li>
-<li><p><a class="reference internal" href="#c" id="id6"><code class="docutils literal notranslate"><span class="pre">-c</span></code></a></p></li>
-<li><p><a class="reference internal" href="#qe" id="id7"><code class="docutils literal notranslate"><span class="pre">--qe</span></code></a></p></li>
-<li><p><a class="reference internal" href="#crystal" id="id8"><code class="docutils literal notranslate"><span class="pre">--crystal</span></code></a></p></li>
-<li><p><a class="reference internal" href="#turbomole" id="id9"><code class="docutils literal notranslate"><span class="pre">--turbomole</span></code></a></p></li>
-<li><p><a class="reference internal" href="#temperature" id="id10"><code class="docutils literal notranslate"><span class="pre">--temperature</span></code></a></p></li>
-<li><p><a class="reference internal" href="#nsp" id="id11"><code class="docutils literal notranslate"><span class="pre">--nsp</span></code></a></p></li>
+<li><p><a class="reference internal" href="#temperature" id="id6"><code class="docutils literal notranslate"><span class="pre">--temperature</span></code></a></p></li>
+<li><p><a class="reference internal" href="#nsp" id="id7"><code class="docutils literal notranslate"><span class="pre">--nsp</span></code></a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#options-for-tensor-properties" id="id12">Options for tensor properties</a></p>
+<li><p><a class="reference internal" href="#options-for-tensor-properties" id="id8">Options for tensor properties</a></p>
 <ul>
-<li><p><a class="reference internal" href="#mfp" id="id13"><code class="docutils literal notranslate"><span class="pre">--mfp</span></code></a></p></li>
-<li><p><a class="reference internal" href="#gv" id="id14"><code class="docutils literal notranslate"><span class="pre">--gv</span></code></a></p></li>
-<li><p><a class="reference internal" href="#average" id="id15"><code class="docutils literal notranslate"><span class="pre">--average</span></code></a></p></li>
-<li><p><a class="reference internal" href="#trace" id="id16"><code class="docutils literal notranslate"><span class="pre">--trace</span></code></a></p></li>
+<li><p><a class="reference internal" href="#mfp" id="id9"><code class="docutils literal notranslate"><span class="pre">--mfp</span></code></a></p></li>
+<li><p><a class="reference internal" href="#gv" id="id10"><code class="docutils literal notranslate"><span class="pre">--gv</span></code></a></p></li>
+<li><p><a class="reference internal" href="#average" id="id11"><code class="docutils literal notranslate"><span class="pre">--average</span></code></a></p></li>
+<li><p><a class="reference internal" href="#trace" id="id12"><code class="docutils literal notranslate"><span class="pre">--trace</span></code></a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#options-for-scalar-properties" id="id17">Options for scalar properties</a></p>
+<li><p><a class="reference internal" href="#options-for-scalar-properties" id="id13">Options for scalar properties</a></p>
 <ul>
-<li><p><a class="reference internal" href="#gamma" id="id18"><code class="docutils literal notranslate"><span class="pre">--gamma</span></code></a></p></li>
-<li><p><a class="reference internal" href="#tau" id="id19"><code class="docutils literal notranslate"><span class="pre">--tau</span></code></a></p></li>
-<li><p><a class="reference internal" href="#cv" id="id20"><code class="docutils literal notranslate"><span class="pre">--cv</span></code></a></p></li>
-<li><p><a class="reference internal" href="#gv-norm" id="id21"><code class="docutils literal notranslate"><span class="pre">--gv-norm</span></code></a></p></li>
-<li><p><a class="reference internal" href="#pqj" id="id22"><code class="docutils literal notranslate"><span class="pre">--pqj</span></code></a></p></li>
-<li><p><a class="reference internal" href="#dos" id="id23"><code class="docutils literal notranslate"><span class="pre">--dos</span></code></a></p></li>
+<li><p><a class="reference internal" href="#gamma" id="id14"><code class="docutils literal notranslate"><span class="pre">--gamma</span></code></a></p></li>
+<li><p><a class="reference internal" href="#tau" id="id15"><code class="docutils literal notranslate"><span class="pre">--tau</span></code></a></p></li>
+<li><p><a class="reference internal" href="#cv" id="id16"><code class="docutils literal notranslate"><span class="pre">--cv</span></code></a></p></li>
+<li><p><a class="reference internal" href="#gv-norm" id="id17"><code class="docutils literal notranslate"><span class="pre">--gv-norm</span></code></a></p></li>
+<li><p><a class="reference internal" href="#pqj" id="id18"><code class="docutils literal notranslate"><span class="pre">--pqj</span></code></a></p></li>
+<li><p><a class="reference internal" href="#dos" id="id19"><code class="docutils literal notranslate"><span class="pre">--dos</span></code></a></p></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#phono3py-kdeplot-distribution-of-phonon-lifetime" id="id24"><code class="docutils literal notranslate"><span class="pre">phono3py-kdeplot</span></code>: Distribution of phonon lifetime</a></p>
+<li><p><a class="reference internal" href="#phono3py-kdeplot-distribution-of-phonon-lifetime" id="id20"><code class="docutils literal notranslate"><span class="pre">phono3py-kdeplot</span></code>: Distribution of phonon lifetime</a></p>
 <ul>
-<li><p><a class="reference internal" href="#options" id="id25">Options</a></p>
+<li><p><a class="reference internal" href="#options" id="id21">Options</a></p>
 <ul>
-<li><p><a class="reference internal" href="#id2" id="id26"><code class="docutils literal notranslate"><span class="pre">--temperature</span></code></a></p></li>
-<li><p><a class="reference internal" href="#nbins" id="id27"><code class="docutils literal notranslate"><span class="pre">--nbins</span></code></a></p></li>
-<li><p><a class="reference internal" href="#cutoff-fmax" id="id28"><code class="docutils literal notranslate"><span class="pre">--cutoff</span></code>, <code class="docutils literal notranslate"><span class="pre">--fmax</span></code></a></p></li>
-<li><p><a class="reference internal" href="#xmax-and-ymax" id="id29"><code class="docutils literal notranslate"><span class="pre">--xmax</span></code> and <code class="docutils literal notranslate"><span class="pre">--ymax</span></code></a></p></li>
-<li><p><a class="reference internal" href="#zmax" id="id30"><code class="docutils literal notranslate"><span class="pre">--zmax</span></code></a></p></li>
-<li><p><a class="reference internal" href="#dr-density-ratio" id="id31"><code class="docutils literal notranslate"><span class="pre">--dr</span></code>, <code class="docutils literal notranslate"><span class="pre">--density-ratio</span></code></a></p></li>
-<li><p><a class="reference internal" href="#cmap" id="id32"><code class="docutils literal notranslate"><span class="pre">--cmap</span></code></a></p></li>
+<li><p><a class="reference internal" href="#id2" id="id22"><code class="docutils literal notranslate"><span class="pre">--temperature</span></code></a></p></li>
+<li><p><a class="reference internal" href="#nbins" id="id23"><code class="docutils literal notranslate"><span class="pre">--nbins</span></code></a></p></li>
+<li><p><a class="reference internal" href="#cutoff-fmax" id="id24"><code class="docutils literal notranslate"><span class="pre">--cutoff</span></code>, <code class="docutils literal notranslate"><span class="pre">--fmax</span></code></a></p></li>
+<li><p><a class="reference internal" href="#xmax-and-ymax" id="id25"><code class="docutils literal notranslate"><span class="pre">--xmax</span></code> and <code class="docutils literal notranslate"><span class="pre">--ymax</span></code></a></p></li>
+<li><p><a class="reference internal" href="#zmax" id="id26"><code class="docutils literal notranslate"><span class="pre">--zmax</span></code></a></p></li>
+<li><p><a class="reference internal" href="#dr-density-ratio" id="id27"><code class="docutils literal notranslate"><span class="pre">--dr</span></code>, <code class="docutils literal notranslate"><span class="pre">--density-ratio</span></code></a></p></li>
+<li><p><a class="reference internal" href="#cmap" id="id28"><code class="docutils literal notranslate"><span class="pre">--cmap</span></code></a></p></li>
 </ul>
 </li>
 </ul>
@@ -450,21 +442,20 @@ C_\lambda \mathbf{v}_\lambda \otimes \mathbf{v}_\lambda
 <p>(The notations are found in <a class="reference external" href="http://arxiv.org/abs/1501.00691.">http://arxiv.org/abs/1501.00691.</a>)</p>
 <section id="how-to-use-phono3py-kaccum">
 <h3><a class="toc-backref" href="#id4" role="doc-backlink">How to use <code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code></a><a class="headerlink" href="#how-to-use-phono3py-kaccum" title="Link to this heading">#</a></h3>
-<p>Let’s computer lattice thermal conductivity of Si using the <code class="docutils literal notranslate"><span class="pre">Si-PBEsol</span></code> example
+<p>Let’s compute lattice thermal conductivity of Si using the <code class="docutils literal notranslate"><span class="pre">Si-PBEsol</span></code> example
 found in the example directory.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--pa<span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span><span class="w"> </span>--sym-fc<span class="w"> </span>--br
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span><span class="w"> </span>--sym-fc<span class="w"> </span>--br
 </pre></div>
 </div>
 <p>Then using the output file, <code class="docutils literal notranslate"><span class="pre">kappa-m111111.hdf5</span></code>, run <code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code> as
 follows:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-kaccum<span class="w"> </span>--pa<span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>kappa-m111111.hdf5<span class="w"> </span><span class="p">|</span>tee<span class="w"> </span>kaccum.dat
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-kaccum<span class="w"> </span>kappa-m111111.hdf5<span class="w"> </span><span class="p">|</span>tee<span class="w"> </span>kaccum.dat
 </pre></div>
 </div>
-<p>Here <code class="docutils literal notranslate"><span class="pre">--pa</span></code> is optional. The definition of <code class="docutils literal notranslate"><span class="pre">--pa</span></code> option is same as
-<a class="reference internal" href="command-options.html#pa-option"><span class="std std-ref">--pa, --primitive-axes (PRIMITIVE_AXES)</span></a>. <code class="docutils literal notranslate"><span class="pre">POSCAR-unitcell</span></code> is the unit cell filename that is specified
-with <code class="docutils literal notranslate"><span class="pre">-c</span></code> option. <code class="docutils literal notranslate"><span class="pre">kappa-m111111.hdf5</span></code> is the output file of thermal
-conductivity calculation, which is passed to <code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code> as the first
-argument.</p>
+<p><code class="docutils literal notranslate"><span class="pre">kappa-m111111.hdf5</span></code> is the output file of thermal conductivity calculation,
+which is passed to <code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code> as the first argument. <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code>
+or <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> is necessary to be located under the current directory to
+read the crystal structure.</p>
 <p>The format of the output is as follows: The first column gives frequency in THz,
 and the second to seventh columns give the cumulative lattice thermal
 conductivity of 6 elements, xx, yy, zz, yz, xz, xy. The eighth to 13th columns
@@ -482,45 +473,24 @@ gnuplot&gt;<span class="w"> </span>p<span class="w"> </span><span class="s2">&qu
 <a class="reference internal image-reference" href="_images/Si-kaccum.png"><img alt="_images/Si-kaccum.png" src="_images/Si-kaccum.png" style="width: 50%;" /></a>
 <p>With <span class="math notranslate nohighlight">\(19\times 19\times 19\)</span> mesh:</p>
 <a class="reference internal image-reference" href="_images/Si-kaccum-m191919.png"><img alt="_images/Si-kaccum-m191919.png" src="_images/Si-kaccum-m191919.png" style="width: 25%;" /></a>
-<p>###General options</p>
-<section id="pa">
-<h4><a class="toc-backref" href="#id5" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--pa</span></code></a><a class="headerlink" href="#pa" title="Link to this heading">#</a></h4>
-<p>See <a class="reference internal" href="command-options.html#pa-option"><span class="std std-ref">--pa, --primitive-axes (PRIMITIVE_AXES)</span></a>.</p>
-</section>
-<section id="c">
-<h4><a class="toc-backref" href="#id6" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">-c</span></code></a><a class="headerlink" href="#c" title="Link to this heading">#</a></h4>
-<p>Unit cell filename is specified with this option, e.g., <code class="docutils literal notranslate"><span class="pre">-c</span> <span class="pre">POSCAR-unitcell</span></code>.</p>
-</section>
-<section id="qe">
-<h4><a class="toc-backref" href="#id7" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--qe</span></code></a><a class="headerlink" href="#qe" title="Link to this heading">#</a></h4>
-<p>Let <code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code> read a QE (pw) unit cell file with <code class="docutils literal notranslate"><span class="pre">-c</span></code> option, for
-example:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-kaccum<span class="w"> </span>--qe<span class="w"> </span>--pa<span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="w"> </span>-c<span class="w"> </span>Si.in<span class="w"> </span>kappa-m191919.hdf5
-</pre></div>
-</div>
+<p>That calculated by QE with <span class="math notranslate nohighlight">\(19\times 19\times 19\)</span> mesh:</p>
 <a class="reference internal image-reference" href="_images/Si-kaccum-pwscf.png"><img alt="_images/Si-kaccum-pwscf.png" src="_images/Si-kaccum-pwscf.png" style="width: 25%;" /></a>
 </section>
-<section id="crystal">
-<h4><a class="toc-backref" href="#id8" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--crystal</span></code></a><a class="headerlink" href="#crystal" title="Link to this heading">#</a></h4>
-<p>Analogous to <code class="docutils literal notranslate"><span class="pre">--qe</span></code>, but to be used with the CRYSTAL interface.</p>
-</section>
-<section id="turbomole">
-<h4><a class="toc-backref" href="#id9" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--turbomole</span></code></a><a class="headerlink" href="#turbomole" title="Link to this heading">#</a></h4>
-<p>Analogous to <code class="docutils literal notranslate"><span class="pre">--qe</span></code>, but to be used with the TURBOMOLE interface</p>
-</section>
+<section id="general-options">
+<h3><a class="toc-backref" href="#id5" role="doc-backlink">General options</a><a class="headerlink" href="#general-options" title="Link to this heading">#</a></h3>
 <section id="temperature">
-<h4><a class="toc-backref" href="#id10" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--temperature</span></code></a><a class="headerlink" href="#temperature" title="Link to this heading">#</a></h4>
+<h4><a class="toc-backref" href="#id6" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--temperature</span></code></a><a class="headerlink" href="#temperature" title="Link to this heading">#</a></h4>
 <p>Pick up one temperature point. For example, <code class="docutils literal notranslate"><span class="pre">--temperature=300</span></code> for 300 K, which
 works only if thermal conductivity is calculated at temperatures including 300
 K.</p>
 </section>
 <section id="nsp">
-<h4><a class="toc-backref" href="#id11" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--nsp</span></code></a><a class="headerlink" href="#nsp" title="Link to this heading">#</a></h4>
+<h4><a class="toc-backref" href="#id7" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--nsp</span></code></a><a class="headerlink" href="#nsp" title="Link to this heading">#</a></h4>
 <p>Number of points to be sampled in the x-axis.</p>
 </section>
 </section>
 <section id="options-for-tensor-properties">
-<h3><a class="toc-backref" href="#id12" role="doc-backlink">Options for tensor properties</a><a class="headerlink" href="#options-for-tensor-properties" title="Link to this heading">#</a></h3>
+<h3><a class="toc-backref" href="#id8" role="doc-backlink">Options for tensor properties</a><a class="headerlink" href="#options-for-tensor-properties" title="Link to this heading">#</a></h3>
 <p>For cummulative thermal conductivity, the last value is given as the thermal
 conductivity in W/mK. For the other properties, the last value is effectively
 the sum of values on all mesh grids divided by number of mesh grids. This is
@@ -530,7 +500,7 @@ cell volume.</p>
 <p>Number of columns of output data is 13 as explained above. With <code class="docutils literal notranslate"><span class="pre">--average</span></code> and
 <code class="docutils literal notranslate"><span class="pre">--trace</span></code> options, number of columns of output data becomes 3.</p>
 <section id="mfp">
-<h4><a class="toc-backref" href="#id13" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--mfp</span></code></a><a class="headerlink" href="#mfp" title="Link to this heading">#</a></h4>
+<h4><a class="toc-backref" href="#id9" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--mfp</span></code></a><a class="headerlink" href="#mfp" title="Link to this heading">#</a></h4>
 <p>Mean free path (MFP) is used instead of frequency for the x-axis. MFP is defined
 in the single-mode RTA by a vector</p>
 <div class="math notranslate nohighlight">
@@ -565,56 +535,56 @@ show this type of plot, be careful about the sampling mesh convergence.</p>
 <p>(This plot is based on the <code class="docutils literal notranslate"><span class="pre">Si-PBEsol</span></code> example.)</p>
 </section>
 <section id="gv">
-<h4><a class="toc-backref" href="#id14" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--gv</span></code></a><a class="headerlink" href="#gv" title="Link to this heading">#</a></h4>
+<h4><a class="toc-backref" href="#id10" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--gv</span></code></a><a class="headerlink" href="#gv" title="Link to this heading">#</a></h4>
 <p>Outer product of group velocities <span class="math notranslate nohighlight">\(\mathbf{v}_\lambda \otimes
 \mathbf{v}_\lambda\)</span>
 divided by primitive cell volume (in <span class="math notranslate nohighlight">\(\text{THz}^2 /
 \text{Angstrom}\)</span>).</p>
 </section>
 <section id="average">
-<h4><a class="toc-backref" href="#id15" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--average</span></code></a><a class="headerlink" href="#average" title="Link to this heading">#</a></h4>
+<h4><a class="toc-backref" href="#id11" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--average</span></code></a><a class="headerlink" href="#average" title="Link to this heading">#</a></h4>
 <p>Output the traces of the tensors divided by 3 rather than the unique elements.</p>
 </section>
 <section id="trace">
-<h4><a class="toc-backref" href="#id16" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--trace</span></code></a><a class="headerlink" href="#trace" title="Link to this heading">#</a></h4>
+<h4><a class="toc-backref" href="#id12" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--trace</span></code></a><a class="headerlink" href="#trace" title="Link to this heading">#</a></h4>
 <p>Output the traces of the tensors rather than the unique elements.</p>
 </section>
 </section>
 <section id="options-for-scalar-properties">
-<h3><a class="toc-backref" href="#id17" role="doc-backlink">Options for scalar properties</a><a class="headerlink" href="#options-for-scalar-properties" title="Link to this heading">#</a></h3>
+<h3><a class="toc-backref" href="#id13" role="doc-backlink">Options for scalar properties</a><a class="headerlink" href="#options-for-scalar-properties" title="Link to this heading">#</a></h3>
 <p>For the following properties, those values are normalized by the number of full
 grid points. This is understood as normalized for one primitive cell.</p>
 <p>Number of columns of output data is three, frequency, cumulative property, and
 derivative of cumulative property such like DOS.</p>
 <section id="gamma">
-<h4><a class="toc-backref" href="#id18" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--gamma</span></code></a><a class="headerlink" href="#gamma" title="Link to this heading">#</a></h4>
+<h4><a class="toc-backref" href="#id14" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--gamma</span></code></a><a class="headerlink" href="#gamma" title="Link to this heading">#</a></h4>
 <p><span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega_\lambda)\)</span> (in THz).</p>
 </section>
 <section id="tau">
-<h4><a class="toc-backref" href="#id19" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--tau</span></code></a><a class="headerlink" href="#tau" title="Link to this heading">#</a></h4>
+<h4><a class="toc-backref" href="#id15" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--tau</span></code></a><a class="headerlink" href="#tau" title="Link to this heading">#</a></h4>
 <p>Lifetime <span class="math notranslate nohighlight">\(\tau_\lambda = \frac{1}{2\Gamma_\lambda(\omega_\lambda)}\)</span> (in ps)</p>
 </section>
 <section id="cv">
-<h4><a class="toc-backref" href="#id20" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--cv</span></code></a><a class="headerlink" href="#cv" title="Link to this heading">#</a></h4>
+<h4><a class="toc-backref" href="#id16" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--cv</span></code></a><a class="headerlink" href="#cv" title="Link to this heading">#</a></h4>
 <p>Modal heat capacity <span class="math notranslate nohighlight">\(C_\lambda\)</span> (in eV/K).</p>
 </section>
 <section id="gv-norm">
-<h4><a class="toc-backref" href="#id21" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--gv-norm</span></code></a><a class="headerlink" href="#gv-norm" title="Link to this heading">#</a></h4>
+<h4><a class="toc-backref" href="#id17" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--gv-norm</span></code></a><a class="headerlink" href="#gv-norm" title="Link to this heading">#</a></h4>
 <p>Absolute value of group velocity <span class="math notranslate nohighlight">\(|\mathbf{v}_\lambda|\)</span> (in
 <span class="math notranslate nohighlight">\(\text{THz}\cdot\text{Angstrom}\)</span>).</p>
 </section>
 <section id="pqj">
-<h4><a class="toc-backref" href="#id22" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--pqj</span></code></a><a class="headerlink" href="#pqj" title="Link to this heading">#</a></h4>
+<h4><a class="toc-backref" href="#id18" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--pqj</span></code></a><a class="headerlink" href="#pqj" title="Link to this heading">#</a></h4>
 <p>Averaged phonon-phonon interaction <span class="math notranslate nohighlight">\(P_{\mathbf{q}j}\)</span> (in <span class="math notranslate nohighlight">\(\text{eV}^2\)</span>).</p>
 </section>
 <section id="dos">
-<h4><a class="toc-backref" href="#id23" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--dos</span></code></a><a class="headerlink" href="#dos" title="Link to this heading">#</a></h4>
+<h4><a class="toc-backref" href="#id19" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--dos</span></code></a><a class="headerlink" href="#dos" title="Link to this heading">#</a></h4>
 <p>Constant value of 1. This results in phonon DOS.</p>
 </section>
 </section>
 </section>
 <section id="phono3py-kdeplot-distribution-of-phonon-lifetime">
-<span id="auxiliary-tools-kdeplot"></span><h2><a class="toc-backref" href="#id24" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">phono3py-kdeplot</span></code>: Distribution of phonon lifetime</a><a class="headerlink" href="#phono3py-kdeplot-distribution-of-phonon-lifetime" title="Link to this heading">#</a></h2>
+<span id="auxiliary-tools-kdeplot"></span><h2><a class="toc-backref" href="#id20" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">phono3py-kdeplot</span></code>: Distribution of phonon lifetime</a><a class="headerlink" href="#phono3py-kdeplot-distribution-of-phonon-lifetime" title="Link to this heading">#</a></h2>
 <p><strong>This script is under the development and may contain bugs.</strong> But a feature is
 briefly introduced below since it may be useful. Scipy is needed to use this
 script.</p>
@@ -640,9 +610,9 @@ and the <code class="docutils literal notranslate"><span class="pre">Si-PBEsol</
 in matplotlib is used.</p>
 <a class="reference internal image-reference" href="_images/Si-kdeplot.png"><img alt="_images/Si-kdeplot.png" src="_images/Si-kdeplot.png" style="width: 50%;" /></a>
 <section id="options">
-<h3><a class="toc-backref" href="#id25" role="doc-backlink">Options</a><a class="headerlink" href="#options" title="Link to this heading">#</a></h3>
+<h3><a class="toc-backref" href="#id21" role="doc-backlink">Options</a><a class="headerlink" href="#options" title="Link to this heading">#</a></h3>
 <section id="id2">
-<h4><a class="toc-backref" href="#id26" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--temperature</span></code></a><a class="headerlink" href="#id2" title="Link to this heading">#</a></h4>
+<h4><a class="toc-backref" href="#id22" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--temperature</span></code></a><a class="headerlink" href="#id2" title="Link to this heading">#</a></h4>
 <p>Pick up one temperature point. For example, <code class="docutils literal notranslate"><span class="pre">--temperature=300</span></code> for 300 K, which
 works only if thermal conductivity is calculated at temperatures including 300
 K.</p>
@@ -650,7 +620,7 @@ K.</p>
 corresponds to 300 K if phono3py ran without setting temperature range and step.</p>
 </section>
 <section id="nbins">
-<h4><a class="toc-backref" href="#id27" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--nbins</span></code></a><a class="headerlink" href="#nbins" title="Link to this heading">#</a></h4>
+<h4><a class="toc-backref" href="#id23" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--nbins</span></code></a><a class="headerlink" href="#nbins" title="Link to this heading">#</a></h4>
 <p>This option controls the resolution of the density plot. The default value
 is 100. With larger nbins, the resolution of the plot becomes better, but the
 computation will take more time.</p>
@@ -659,7 +629,7 @@ computation will take more time.</p>
 </div>
 </section>
 <section id="cutoff-fmax">
-<h4><a class="toc-backref" href="#id28" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--cutoff</span></code>, <code class="docutils literal notranslate"><span class="pre">--fmax</span></code></a><a class="headerlink" href="#cutoff-fmax" title="Link to this heading">#</a></h4>
+<h4><a class="toc-backref" href="#id24" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--cutoff</span></code>, <code class="docutils literal notranslate"><span class="pre">--fmax</span></code></a><a class="headerlink" href="#cutoff-fmax" title="Link to this heading">#</a></h4>
 <p>The option <code class="docutils literal notranslate"><span class="pre">--cutoff</span></code> (<code class="docutils literal notranslate"><span class="pre">--fmax</span></code>) sets the maximum value of lifetime (frequency)
 to be included as data points <strong>before</strong> Gaussian-KDE. Normally increasing this
 value from the chosen value without specifying this option does nothing since
@@ -667,7 +637,7 @@ automatic control of drawing area cuts high lifetime (frequency) side if the
 density is low.</p>
 </section>
 <section id="xmax-and-ymax">
-<h4><a class="toc-backref" href="#id29" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--xmax</span></code> and <code class="docutils literal notranslate"><span class="pre">--ymax</span></code></a><a class="headerlink" href="#xmax-and-ymax" title="Link to this heading">#</a></h4>
+<h4><a class="toc-backref" href="#id25" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--xmax</span></code> and <code class="docutils literal notranslate"><span class="pre">--ymax</span></code></a><a class="headerlink" href="#xmax-and-ymax" title="Link to this heading">#</a></h4>
 <p>Maximum values of drawing region of phonon frequency (x-axis) and lifetime
 (y-axis) are specified by <code class="docutils literal notranslate"><span class="pre">--xmax</span></code> and <code class="docutils literal notranslate"><span class="pre">--ymax</span></code>, respectively.</p>
 <p><code class="docutils literal notranslate"><span class="pre">--ymax</span></code> switches off automatic determination of maximum value of drawing region
@@ -678,13 +648,13 @@ faster.</p>
 </div>
 </section>
 <section id="zmax">
-<h4><a class="toc-backref" href="#id30" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--zmax</span></code></a><a class="headerlink" href="#zmax" title="Link to this heading">#</a></h4>
+<h4><a class="toc-backref" href="#id26" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--zmax</span></code></a><a class="headerlink" href="#zmax" title="Link to this heading">#</a></h4>
 <p>Maximum value of the density is specified with this option. The color along
 colorbar saturates by choosing a smaller value than the maximum value of density
 in the data.</p>
 </section>
 <section id="dr-density-ratio">
-<span id="kdeplot-density-ratio"></span><h4><a class="toc-backref" href="#id31" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--dr</span></code>, <code class="docutils literal notranslate"><span class="pre">--density-ratio</span></code></a><a class="headerlink" href="#dr-density-ratio" title="Link to this heading">#</a></h4>
+<span id="kdeplot-density-ratio"></span><h4><a class="toc-backref" href="#id27" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--dr</span></code>, <code class="docutils literal notranslate"><span class="pre">--density-ratio</span></code></a><a class="headerlink" href="#dr-density-ratio" title="Link to this heading">#</a></h4>
 <p>The density threshold is specified by the ratio with respect to maximum density.
 Normally smaller value results in larger drawing region. The default value is
 0.1. When <code class="docutils literal notranslate"><span class="pre">--ymax</span></code> is specified together, this option is ignored.</p>
@@ -693,7 +663,7 @@ Normally smaller value results in larger drawing region. The default value is
 </div>
 </section>
 <section id="cmap">
-<h4><a class="toc-backref" href="#id32" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--cmap</span></code></a><a class="headerlink" href="#cmap" title="Link to this heading">#</a></h4>
+<h4><a class="toc-backref" href="#id28" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">--cmap</span></code></a><a class="headerlink" href="#cmap" title="Link to this heading">#</a></h4>
 <p>Color map to be used for the density plot. It’s given by the name presented at
 the matplotlib documentation, <a class="reference external" href="https://matplotlib.org/users/colormaps.html">https://matplotlib.org/users/colormaps.html</a>. The
 default colormap depends on your matplotlib environment.</p>
@@ -753,18 +723,16 @@ default colormap depends on your matplotlib environment.</p>
 
 
   <div class="sidebar-secondary-item">
-  <div class="page-toc tocsection onthispage">
-    <i class="fa-solid fa-list"></i> Contents
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
   </div>
-  <nav class="bd-toc-nav page-toc">
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phono3py-kaccum-cumulative-lattice-thermal-conductivity-and-related-properties"><code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code>: Cumulative lattice thermal conductivity and related properties</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-use-phono3py-kaccum">How to use <code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#pa"><code class="docutils literal notranslate"><span class="pre">--pa</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#c"><code class="docutils literal notranslate"><span class="pre">-c</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#qe"><code class="docutils literal notranslate"><span class="pre">--qe</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#crystal"><code class="docutils literal notranslate"><span class="pre">--crystal</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#turbomole"><code class="docutils literal notranslate"><span class="pre">--turbomole</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-use-phono3py-kaccum">How to use <code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#general-options">General options</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#temperature"><code class="docutils literal notranslate"><span class="pre">--temperature</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#nsp"><code class="docutils literal notranslate"><span class="pre">--nsp</span></code></a></li>
 </ul>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Change Log &#8212; Phono3py v.2.9.2</title>
+    <title>Change Log &#8212; Phono3py v.3.0.0</title>
   
   
   
@@ -36,8 +36,8 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
   <script src="_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
-    <script src="_static/documentation_options.js?v=157ec567"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/documentation_options.js?v=6a41c08d"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
@@ -130,7 +130,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.2.9.2</p>
+    <p class="title logo__title">Phono3py v.3.0.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -320,6 +320,8 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apr-19-2024-version-3-0-0">Apr-19-2024: Version 3.0.0</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mar-20-2024-version-2-10-0">Mar-20-2024: Version 2.10.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#feb-2-2024-version-2-9-2">Feb-2-2024: Version 2.9.2</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dec-26-2023-version-2-9-1">Dec-26-2023: Version 2.9.1</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dec-25-2023-version-2-9-0">Dec-25-2023: Version 2.9.0</a></li>
@@ -394,6 +396,31 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="change-log">
 <span id="changelog"></span><h1>Change Log<a class="headerlink" href="#change-log" title="Link to this heading">#</a></h1>
+<section id="apr-19-2024-version-3-0-0">
+<h2>Apr-19-2024: Version 3.0.0<a class="headerlink" href="#apr-19-2024-version-3-0-0" title="Link to this heading">#</a></h2>
+<p>This is a major version release. There are backward-incompatible changes.</p>
+<ul class="simple">
+<li><p>Calculation method to transform supercell third-order force constants fc3 in
+real to reciprocal space was changed as described at Version 2.9.0 changelog
+below. This results in the change of results with respect to those obtained by
+phono3py version 2. To emulate v2 behaviour, use <code class="docutils literal notranslate"><span class="pre">--v2</span></code> option in phono3py
+command line script. For <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class , <code class="docutils literal notranslate"><span class="pre">make_r0_average=True</span></code> (default)
+when instantiating it, and similarly for <code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code> function.</p></li>
+<li><p>Completely dropped support of <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> and <code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code>.</p></li>
+<li><p>Dropped support of old style usage of <code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code> script.</p></li>
+<li><p>Removed functions <code class="docutils literal notranslate"><span class="pre">write_fc3_dat</span></code>, <code class="docutils literal notranslate"><span class="pre">write_triplets</span></code>, <code class="docutils literal notranslate"><span class="pre">write_grid_address</span></code> in
+<code class="docutils literal notranslate"><span class="pre">file_IO.py</span></code>.</p></li>
+<li><p>Removed methods marked by <code class="docutils literal notranslate"><span class="pre">DeprecationWarning</span></code>.</p></li>
+<li><p>Removed <code class="docutils literal notranslate"><span class="pre">masses</span></code>, <code class="docutils literal notranslate"><span class="pre">band_indices</span></code>, <code class="docutils literal notranslate"><span class="pre">sigmas</span></code>, <code class="docutils literal notranslate"><span class="pre">sigma_cutoff</span></code> parameters from
+<code class="docutils literal notranslate"><span class="pre">Phono3py.__init__()</span></code>.</p></li>
+</ul>
+</section>
+<section id="mar-20-2024-version-2-10-0">
+<h2>Mar-20-2024: Version 2.10.0<a class="headerlink" href="#mar-20-2024-version-2-10-0" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Maintenance release</p></li>
+</ul>
+</section>
 <section id="feb-2-2024-version-2-9-2">
 <h2>Feb-2-2024: Version 2.9.2<a class="headerlink" href="#feb-2-2024-version-2-9-2" title="Link to this heading">#</a></h2>
 <ul class="simple">
@@ -521,7 +548,7 @@ were changed to</p>
 </section>
 <section id="jul-22-2021-version-2-0-0">
 <h2>Jul-22-2021: Version 2.0.0<a class="headerlink" href="#jul-22-2021-version-2-0-0" title="Link to this heading">#</a></h2>
-<p>This is a major version release. There are some backword-incompatible changes.</p>
+<p>This is a major version release. There are some backward-incompatible changes.</p>
 <ol class="arabic simple">
 <li><p>Grid point indexing system to address grid points of q-points is changed.</p></li>
 <li><p>Array data types of most of the integer arrays are changed to <code class="docutils literal notranslate"><span class="pre">dtype='int_'</span></code>
@@ -1014,11 +1041,15 @@ a mesh number is an even number, it is more carefully treated.</p></li>
 
 
   <div class="sidebar-secondary-item">
-  <div class="page-toc tocsection onthispage">
-    <i class="fa-solid fa-list"></i> Contents
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
   </div>
-  <nav class="bd-toc-nav page-toc">
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apr-19-2024-version-3-0-0">Apr-19-2024: Version 3.0.0</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mar-20-2024-version-2-10-0">Mar-20-2024: Version 2.10.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#feb-2-2024-version-2-9-2">Feb-2-2024: Version 2.9.2</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dec-26-2023-version-2-9-1">Dec-26-2023: Version 2.9.1</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dec-25-2023-version-2-9-0">Dec-25-2023: Version 2.9.0</a></li>
