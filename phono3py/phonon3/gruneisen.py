@@ -149,7 +149,6 @@ class Gruneisen:
             self._scell,
             self._pcell,
             nac_params=nac_params,
-            symprec=self._symprec,
         )
         self._nac_q_direction = nac_q_direction
 

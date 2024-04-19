@@ -51,28 +51,12 @@ from phonopy.file_IO import check_force_constants_indices, get_cell_from_disp_ya
 from phono3py.version import __version__
 
 
-def write_cell_yaml(w, supercell):
-    """Write cell info.
+def write_disp_fc3_yaml(dataset, supercell, filename="disp_fc3.yaml"):
+    """Write disp_fc3.yaml.
 
-    This is only used from write_disp_fc3_yaml and write_disp_fc2_yaml.
-    These methods are also deprecated.
+    This function should not be called from phono3py script from version 3.
 
     """
-    warnings.warn("write_cell_yaml() is deprecated.", DeprecationWarning)
-
-    w.write("lattice:\n")
-    for axis in supercell.get_cell():
-        w.write("- [ %20.15f,%20.15f,%20.15f ]\n" % tuple(axis))
-    symbols = supercell.get_chemical_symbols()
-    positions = supercell.get_scaled_positions()
-    w.write("atoms:\n")
-    for i, (s, v) in enumerate(zip(symbols, positions)):
-        w.write("- symbol: %-2s # %d\n" % (s, i + 1))
-        w.write("  position: [ %18.14f,%18.14f,%18.14f ]\n" % tuple(v))
-
-
-def write_disp_fc3_yaml(dataset, supercell, filename="disp_fc3.yaml"):
-    """Write disp_fc3.yaml."""
     warnings.warn("write_disp_fc3_yaml() is deprecated.", DeprecationWarning)
 
     w = open(filename, "w")
@@ -158,7 +142,7 @@ def write_disp_fc3_yaml(dataset, supercell, filename="disp_fc3.yaml"):
             ids = ["%d" % disp2["id"] for disp2 in disp2_list]
             w.write("    displacement_ids: [ %s ]\n" % ", ".join(ids))
 
-    write_cell_yaml(w, supercell)
+    _write_cell_yaml(w, supercell)
 
     w.close()
 
@@ -166,7 +150,11 @@ def write_disp_fc3_yaml(dataset, supercell, filename="disp_fc3.yaml"):
 
 
 def write_disp_fc2_yaml(dataset, supercell, filename="disp_fc2.yaml"):
-    """Write disp_fc2.yaml."""
+    """Write disp_fc2.yaml.
+
+    This function should not be called from phono3py script from version 3.
+
+    """
     warnings.warn("write_disp_fc2_yaml() is deprecated.", DeprecationWarning)
 
     w = open(filename, "w")
@@ -185,7 +173,7 @@ def write_disp_fc2_yaml(dataset, supercell, filename="disp_fc2.yaml"):
         )
 
     if supercell is not None:
-        write_cell_yaml(w, supercell)
+        _write_cell_yaml(w, supercell)
 
     w.close()
 
@@ -269,25 +257,6 @@ def write_FORCES_FC3(disp_dataset, forces_fc3=None, fp=None, filename="FORCES_FC
 
     if fp is None:
         w.close()
-
-
-def write_fc3_dat(force_constants_third, filename="fc3.dat"):
-    """Write fc3.dat."""
-    warnings.warn("write_fc3_dat() is deprecated.", DeprecationWarning)
-
-    w = open(filename, "w")
-    for i in range(force_constants_third.shape[0]):
-        for j in range(force_constants_third.shape[1]):
-            for k in range(force_constants_third.shape[2]):
-                tensor3 = force_constants_third[i, j, k]
-                w.write(
-                    " %d - %d - %d  (%f)\n"
-                    % (i + 1, j + 1, k + 1, np.abs(tensor3).sum())
-                )
-                for tensor2 in tensor3:
-                    for vec in tensor2:
-                        w.write("%20.14f %20.14f %20.14f\n" % tuple(vec))
-                    w.write("\n")
 
 
 def write_fc3_to_hdf5(fc3, filename="fc3.hdf5", p2s_map=None, compression="gzip"):
@@ -402,64 +371,6 @@ def read_fc2_from_hdf5(filename="fc2.hdf5", p2s_map=None):
     return read_force_constants_from_hdf5(
         filename=filename, p2s_map=p2s_map, calculator="vasp"
     )
-
-
-def write_triplets(
-    triplets, weights, mesh, grid_address, grid_point=None, filename=None
-):
-    """Write triplets in triplets.dat."""
-    warnings.warn("write_triplets() is deprecated.", DeprecationWarning)
-
-    triplets_filename = "triplets"
-    suffix = "-m%d%d%d" % tuple(mesh)
-    if grid_point is not None:
-        suffix += "-g%d" % grid_point
-    if filename is not None:
-        suffix += "." + filename
-    suffix += ".dat"
-    triplets_filename += suffix
-    w = open(triplets_filename, "w")
-    for weight, g3 in zip(weights, triplets):
-        w.write("%4d    " % weight)
-        for q3 in grid_address[g3]:
-            w.write("%4d %4d %4d    " % tuple(q3))
-        w.write("\n")
-    w.close()
-
-
-def write_grid_address(grid_address, mesh, filename=None):
-    """Write grid addresses in grid_address.dat."""
-    warnings.warn("write_grid_address() is deprecated.", DeprecationWarning)
-
-    grid_address_filename = "grid_address"
-    suffix = "-m%d%d%d" % tuple(mesh)
-    if filename is not None:
-        suffix += "." + filename
-    suffix += ".dat"
-    grid_address_filename += suffix
-
-    w = open(grid_address_filename, "w")
-    w.write("# Grid addresses for %dx%dx%d mesh\n" % tuple(mesh))
-    w.write(
-        "#%9s    %8s %8s %8s     %8s %8s %8s\n"
-        % (
-            "index",
-            "a",
-            "b",
-            "c",
-            ("a%%%d" % mesh[0]),
-            ("b%%%d" % mesh[1]),
-            ("c%%%d" % mesh[2]),
-        )
-    )
-    for i, bz_q in enumerate(grid_address):
-        if i == np.prod(mesh):
-            w.write("#" + "-" * 78 + "\n")
-        q = bz_q % mesh
-        w.write("%10d    %8d %8d %8d     " % (i, bz_q[0], bz_q[1], bz_q[2]))
-        w.write("%8d %8d %8d\n" % tuple(q))
-
-    return grid_address_filename
 
 
 def write_grid_address_to_hdf5(
@@ -1566,7 +1477,7 @@ def write_ir_grid_points(bz_grid, grid_points, grid_weights, primitive_lattice):
 def parse_disp_fc2_yaml(filename="disp_fc2.yaml", return_cell=False):
     """Parse disp_fc2.yaml file.
 
-    This is obsolete at v2 and later versions.
+    This function should not be called from phono3py script from version 3.
 
     """
     warnings.warn("parse_disp_fc2_yaml() is deprecated.", DeprecationWarning)
@@ -1593,7 +1504,7 @@ def parse_disp_fc2_yaml(filename="disp_fc2.yaml", return_cell=False):
 def parse_disp_fc3_yaml(filename="disp_fc3.yaml", return_cell=False):
     """Parse disp_fc3.yaml file.
 
-    This is obsolete at v2 and later versions.
+    This function should not be called from phono3py script from version 3.
 
     """
     warnings.warn("parse_disp_fc3_yaml() is deprecated.", DeprecationWarning)
@@ -1800,3 +1711,23 @@ def _parse_force_lines(forcefile, num_atom):
         return None
     else:
         return np.array(forces)
+
+
+def _write_cell_yaml(w, supercell):
+    """Write cell info.
+
+    This is only used from write_disp_fc3_yaml and write_disp_fc2_yaml.
+    These methods are also deprecated.
+
+    """
+    warnings.warn("write_cell_yaml() is deprecated.", DeprecationWarning)
+
+    w.write("lattice:\n")
+    for axis in supercell.get_cell():
+        w.write("- [ %20.15f,%20.15f,%20.15f ]\n" % tuple(axis))
+    symbols = supercell.get_chemical_symbols()
+    positions = supercell.get_scaled_positions()
+    w.write("atoms:\n")
+    for i, (s, v) in enumerate(zip(symbols, positions)):
+        w.write("- symbol: %-2s # %d\n" % (s, i + 1))
+        w.write("  position: [ %18.14f,%18.14f,%18.14f ]\n" % tuple(v))

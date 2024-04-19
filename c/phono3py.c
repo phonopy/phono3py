@@ -435,7 +435,7 @@ long ph3py_get_integration_weight(
     const long (*bz_grid_addresses)[3], const long *bz_map,
     const long bz_grid_type, const double *frequencies1, const long num_band1,
     const double *frequencies2, const long num_band2, const long tp_type,
-    const long openmp_per_triplets, const long openmp_per_bands) {
+    const long openmp_per_triplets) {
     ConstBZGrid *bzgrid;
     long i;
 
@@ -451,10 +451,10 @@ long ph3py_get_integration_weight(
         bzgrid->D_diag[i] = D_diag[i];
     }
 
-    tpl_get_integration_weight(
-        iw, iw_zero, frequency_points, num_band0, relative_grid_address,
-        triplets, num_triplets, bzgrid, frequencies1, num_band1, frequencies2,
-        num_band2, tp_type, openmp_per_triplets, openmp_per_bands);
+    tpl_get_integration_weight(iw, iw_zero, frequency_points, num_band0,
+                               relative_grid_address, triplets, num_triplets,
+                               bzgrid, frequencies1, num_band1, frequencies2,
+                               num_band2, tp_type, openmp_per_triplets);
     free(bzgrid);
     bzgrid = NULL;
 

@@ -2,6 +2,28 @@
 
 # Change Log
 
+## Apr-19-2024: Version 3.0.0
+
+This is a major version release. There are backward-incompatible changes.
+
+- Calculation method to transform supercell third-order force constants fc3 in
+  real to reciprocal space was changed as described at Version 2.9.0 changelog
+  below. This results in the change of results with respect to those obtained by
+  phono3py version 2. To emulate v2 behaviour, use `--v2` option in phono3py
+  command line script. For `Phono3py` class , `make_r0_average=True` (default)
+  when instantiating it, and similarly for `phono3py.load` function.
+- Completely dropped support of `disp_fc3.yaml` and `disp_fc2.yaml`.
+- Dropped support of old style usage of `phono3py-kaccum` script.
+- Removed functions `write_fc3_dat`, `write_triplets`, `write_grid_address` in
+  `file_IO.py`.
+- Removed methods marked by `DeprecationWarning`.
+- Removed `masses`, `band_indices`, `sigmas`, `sigma_cutoff` parameters from
+  `Phono3py.__init__()`.
+
+## Mar-20-2024: Version 2.10.0
+
+- Maintenance release
+
 ## Feb-2-2024: Version 2.9.2
 
 - `boundary_mfp` value is stored in `kappa-*.hdf5` file when it is specified.
@@ -96,7 +118,7 @@
 
 ## Jul-22-2021: Version 2.0.0
 
-This is a major version release. There are some backword-incompatible changes.
+This is a major version release. There are some backward-incompatible changes.
 
 1. Grid point indexing system to address grid points of q-points is changed.
 2. Array data types of most of the integer arrays are changed to `dtype='int_'`
