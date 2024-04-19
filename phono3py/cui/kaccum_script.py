@@ -6,13 +6,7 @@ import sys
 import h5py
 import numpy as np
 from phonopy.cui.collect_cell_info import collect_cell_info
-from phonopy.cui.settings import fracval
 from phonopy.interface.calculator import read_crystal_structure
-from phonopy.structure.cells import (
-    get_primitive,
-    get_primitive_matrix,
-    guess_primitive_matrix,
-)
 from phonopy.structure.symmetry import Symmetry
 
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
@@ -129,14 +123,14 @@ def _assert_grid_in_hdf5(
 def _get_calculator(args):
     """Return calculator name."""
     interface_mode = None
-    if args.qe_mode:
-        interface_mode = "qe"
-    elif args.crystal_mode:
-        interface_mode = "crystal"
-    elif args.abinit_mode:
-        interface_mode = "abinit"
-    elif args.turbomole_mode:
-        interface_mode = "turbomole"
+    # if args.qe_mode:
+    #     interface_mode = "qe"
+    # elif args.crystal_mode:
+    #     interface_mode = "crystal"
+    # elif args.abinit_mode:
+    #     interface_mode = "abinit"
+    # elif args.turbomole_mode:
+    #     interface_mode = "turbomole"
     return interface_mode
 
 
@@ -155,16 +149,6 @@ def _read_files(args):
         f = h5py.File(args.filenames[0], "r")
 
     return cell, f
-
-
-def _read_files_by_collect_cell_info(cell_filename, interface_mode):
-    cell_info = collect_cell_info(
-        interface_mode=interface_mode,
-        cell_filename=cell_filename,
-        supercell_matrix=np.eye(3, dtype=int),
-        phonopy_yaml_cls=Phono3pyYaml,
-    )
-    return cell_info
 
 
 def _get_mode_property(args, f_kappa):
@@ -197,23 +181,6 @@ def _get_mode_property(args, f_kappa):
 def _get_parser():
     """Return args of ArgumentParser."""
     parser = argparse.ArgumentParser(description="Show unit cell volume")
-    parser.add_argument(
-        "--pa",
-        "--primitive-axis",
-        "--primitive-axes",
-        nargs="+",
-        dest="primitive_matrix",
-        default=None,
-        help="Same as PRIMITIVE_AXES tags",
-    )
-    parser.add_argument(
-        "-c",
-        "--cell",
-        dest="cell_filename",
-        metavar="FILE",
-        default=None,
-        help="Read unit cell",
-    )
     parser.add_argument(
         "--gv", action="store_true", help="Calculate for gv_x_gv (tensor)"
     )
@@ -272,24 +239,6 @@ def _get_parser():
         help="Use smearing method (only for scalar density)",
     )
     parser.add_argument(
-        "--qe", "--pwscf", dest="qe_mode", action="store_true", help="Invoke Pwscf mode"
-    )
-    parser.add_argument(
-        "--crystal",
-        dest="crystal_mode",
-        action="store_true",
-        help="Invoke CRYSTAL mode",
-    )
-    parser.add_argument(
-        "--abinit", dest="abinit_mode", action="store_true", help="Invoke Abinit mode"
-    )
-    parser.add_argument(
-        "--turbomole",
-        dest="turbomole_mode",
-        action="store_true",
-        help="Invoke TURBOMOLE mode",
-    )
-    parser.add_argument(
         "--no-gridsym",
         dest="no_gridsym",
         action="store_true",
@@ -298,34 +247,6 @@ def _get_parser():
     parser.add_argument("filenames", nargs="*")
     args = parser.parse_args()
     return args
-
-
-def _analyze_primitive_matrix_option(args, unitcell=None):
-    """Analyze --pa option argument."""
-    if args.primitive_matrix is not None:
-        if type(args.primitive_matrix) is list:
-            _primitive_matrix = " ".join(args.primitive_matrix)
-        else:
-            _primitive_matrix = args.primitive_matrix.strip()
-
-        if _primitive_matrix.lower() == "auto":
-            primitive_matrix = "auto"
-        elif _primitive_matrix.upper() in ("P", "F", "I", "A", "C", "R"):
-            primitive_matrix = _primitive_matrix.upper()
-        elif len(_primitive_matrix.split()) != 9:
-            raise SyntaxError("Number of elements in --pa option argument has to be 9.")
-        else:
-            primitive_matrix = np.reshape(
-                [fracval(x) for x in _primitive_matrix.split()], (3, 3)
-            )
-            if np.linalg.det(primitive_matrix) < 1e-8:
-                raise SyntaxError("Primitive matrix has to have positive determinant.")
-
-    pmat = get_primitive_matrix(primitive_matrix)
-    if unitcell is not None and isinstance(pmat, str) and pmat == "auto":
-        return guess_primitive_matrix(unitcell)
-    else:
-        return pmat
 
 
 def main():
@@ -338,12 +259,6 @@ def main():
     % phono3py-kaccum kappa-m111111.hdf5
     ```
 
-    Old style usage
-    ---------------
-    ```
-    % phono3py-kaccum --pa="F" -c POSCAR-unitcell kappa-m111111.hdf5 |tee kaccum.dat
-    ```
-
     Plot by gnuplot
     ---------------
     ```
@@ -352,32 +267,27 @@ def main():
     gnuplot> p "kaccum.dat" i 30 u 1:2 w l, "kaccum.dat" i 30 u 1:8 w l
     ```
 
-    With phono3py.yaml type file as crystal structure, primitive matrix is
-    unnecessary to set.
-
     """
     args = _get_parser()
     primitive = None
-    if len(args.filenames) > 1:  # deprecated
-        cell, f_kappa = _read_files(args)
-        primitive_matrix = _analyze_primitive_matrix_option(args, unitcell=cell)
+    if len(args.filenames) > 1:
+        raise RuntimeError(
+            'Use of "phono3py-kaccum CRYSTAL_STRUCTURE_FILE" is not supported.'
+        )
     else:
-        interface_mode = _get_calculator(args)
-        cell_info = _read_files_by_collect_cell_info(args.cell_filename, interface_mode)
+        cell_info = collect_cell_info(
+            supercell_matrix=np.eye(3, dtype=int),
+            phonopy_yaml_cls=Phono3pyYaml,
+        )
+        cell_filename = cell_info["optional_structure_info"][0]
+        print(f'# Crystal structure was read from "{cell_filename}".')
         cell = cell_info["unitcell"]
         phpy_yaml = cell_info.get("phonopy_yaml", None)
         if phpy_yaml is not None:
             primitive = cell_info["phonopy_yaml"].primitive
             if primitive is None:
                 primitive = cell
-        else:
-            primitive_matrix = _analyze_primitive_matrix_option(args, unitcell=cell)
         f_kappa = h5py.File(args.filenames[0], "r")
-    if primitive is None:
-        if primitive_matrix is None:
-            primitive = cell
-        else:
-            primitive = get_primitive(cell, primitive_matrix)
 
     if "grid_matrix" in f_kappa:
         mesh = np.array(f_kappa["grid_matrix"][:], dtype="int_")

@@ -34,7 +34,6 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import warnings
 from collections.abc import Sequence
 from typing import Optional, Union
 
@@ -144,17 +143,13 @@ class Phono3py:
         supercell_matrix=None,
         primitive_matrix=None,
         phonon_supercell_matrix=None,
-        masses=None,
-        band_indices=None,
-        sigmas=None,
-        sigma_cutoff=None,
         cutoff_frequency=1e-4,
         frequency_factor_to_THz=VaspToTHz,
         is_symmetry=True,
         is_mesh_symmetry=True,
         use_grg=False,
         SNF_coordinates="reciprocal",
-        make_r0_average: bool = False,
+        make_r0_average: bool = True,
         symprec=1e-5,
         calculator: Optional[str] = None,
         log_level=0,
@@ -185,14 +180,6 @@ class Phono3py:
             than that of fc3. Unless setting this, supercell_matrix is used.
             This is only valide when unitcell or unitcell_filename is given.
             Default is None.
-        masses : Deprecated.
-            Use Phono3py.masses attribute after instanciation.
-        band_indices : Deprecated.
-            Use Phono3py.band_indices attribute after instanciation.
-        sigmas : Deprecated.
-            Use Phono3py.sigmas attribute after instanciation.
-        sigma_cutoff : Deprecated.
-            Use Phono3py.sigma_cutoff attribute after instanciation.
         cutoff_frequency : float, optional
             Phonon frequency below this value is ignored when the cutoff is
             needed for the computation. Default is 1e-4.
@@ -308,38 +295,6 @@ class Phono3py:
         self._band_indices_flatten = None
         self._set_band_indices()
 
-        if masses is not None:
-            warnings.warn(
-                "Phono3py init parameter of masses is deprecated. "
-                "Use Phono3py.masses attribute instead.",
-                DeprecationWarning,
-            )
-            self.masses = masses
-
-        if band_indices is not None:
-            warnings.warn(
-                "Phono3py init parameter of band_indices is deprecated. "
-                "Use Phono3py.band_indices attribute instead.",
-                DeprecationWarning,
-            )
-            self.band_indices = band_indices
-
-        if sigmas is not None:
-            warnings.warn(
-                "Phono3py init parameter of sigmas is deprecated. "
-                "Use Phono3py.sigmas attribute instead.",
-                DeprecationWarning,
-            )
-            self.sigmas = sigmas
-
-        if sigma_cutoff is not None:
-            warnings.warn(
-                "Phono3py init parameter of sigma_cutoff is deprecated. "
-                "Use Phono3py.sigma_cutoff attribute instead.",
-                DeprecationWarning,
-            )
-            self.sigma_cutoff = sigma_cutoff
-
     @property
     def version(self):
         """Return phono3py release version number.
@@ -349,15 +304,6 @@ class Phono3py:
 
         """
         return __version__
-
-    def get_version(self):
-        """Return phono3py release version number."""
-        warnings.warn(
-            "Phono3py.get_version() is deprecated."
-            "Use Phono3py.version attribute instead.",
-            DeprecationWarning,
-        )
-        return self.version
 
     @property
     def calculator(self) -> Optional[str]:
@@ -386,22 +332,6 @@ class Phono3py:
     def fc3(self, fc3):
         self._fc3 = fc3
 
-    def get_fc3(self):
-        """Return third order force constants (fc3)."""
-        warnings.warn(
-            "Phono3py.get_fc3() is deprecated." "Use Phono3py.fc3 attribute instead.",
-            DeprecationWarning,
-        )
-        return self.fc3
-
-    def set_fc3(self, fc3):
-        """Set fc3."""
-        warnings.warn(
-            "Phono3py.set_fc3() is deprecated." "Use Phono3py.fc3 attribute instead.",
-            DeprecationWarning,
-        )
-        self.fc3 = fc3
-
     @property
     def fc2(self):
         """Setter and getter of second order force constants (fc2).
@@ -418,22 +348,6 @@ class Phono3py:
     @fc2.setter
     def fc2(self, fc2):
         self._fc2 = fc2
-
-    def get_fc2(self):
-        """Return second order force constants (fc2)."""
-        warnings.warn(
-            "Phono3py.get_fc2() is deprecated." "Use Phono3py.fc2 attribute instead.",
-            DeprecationWarning,
-        )
-        return self.fc2
-
-    def set_fc2(self, fc2):
-        """Set fc2."""
-        warnings.warn(
-            "Phono3py.set_fc2() is deprecated." "Use Phono3py.fc2 attribute instead.",
-            DeprecationWarning,
-        )
-        self.fc2 = fc2
 
     @property
     def force_constants(self):
@@ -511,24 +425,6 @@ class Phono3py:
         if self._interaction is not None:
             self._init_dynamical_matrix()
 
-    def get_nac_params(self):
-        """Return NAC parameters."""
-        warnings.warn(
-            "Phono3py.get_nac_params() is deprecated."
-            "Use Phono3py.nac_params attribute instead.",
-            DeprecationWarning,
-        )
-        return self.nac_params
-
-    def set_nac_params(self, nac_params):
-        """Set NAC parameters."""
-        warnings.warn(
-            "Phono3py.set_nac_params() is deprecated."
-            "Use Phono3py.nac_params attribute instead.",
-            DeprecationWarning,
-        )
-        self.nac_params = nac_params
-
     @property
     def dynamical_matrix(self):
         """Return DynamicalMatrix instance.
@@ -552,15 +448,6 @@ class Phono3py:
         """
         return self._primitive
 
-    def get_primitive(self):
-        """Return primitive cell."""
-        warnings.warn(
-            "Phono3py.get_primitive() is deprecated."
-            "Use Phono3py.primitive attribute instead.",
-            DeprecationWarning,
-        )
-        return self.primitive
-
     @property
     def unitcell(self) -> PhonopyAtoms:
         """Return Unit cell.
@@ -570,15 +457,6 @@ class Phono3py:
 
         """
         return self._unitcell
-
-    def get_unitcell(self):
-        """Return Unit cell."""
-        warnings.warn(
-            "Phono3py.get_unitcell() is deprecated."
-            "Use Phono3py.unitcell attribute instead.",
-            DeprecationWarning,
-        )
-        return self.unitcell
 
     @property
     def supercell(self) -> Supercell:
@@ -590,15 +468,6 @@ class Phono3py:
         """
         return self._supercell
 
-    def get_supercell(self):
-        """Return supercell."""
-        warnings.warn(
-            "Phono3py.get_supercell() is deprecated."
-            "Use Phono3py.supercell attribute instead.",
-            DeprecationWarning,
-        )
-        return self.supercell
-
     @property
     def phonon_supercell(self) -> Supercell:
         """Return supercell for fc2.
@@ -608,15 +477,6 @@ class Phono3py:
 
         """
         return self._phonon_supercell
-
-    def get_phonon_supercell(self):
-        """Return supercell for fc2."""
-        warnings.warn(
-            "Phono3py.get_phonon_supercell() is deprecated."
-            "Use Phono3py.phonon_supercell attribute instead.",
-            DeprecationWarning,
-        )
-        return self.phonon_supercell
 
     @property
     def phonon_primitive(self) -> Primitive:
@@ -630,15 +490,6 @@ class Phono3py:
         """
         return self._phonon_primitive
 
-    def get_phonon_primitive(self):
-        """Return primitive cell for fc2."""
-        warnings.warn(
-            "Phono3py.get_phonon_primitive() is deprecated."
-            "Use Phono3py.phonon_primitive attribute instead.",
-            DeprecationWarning,
-        )
-        return self.phonon_primitive
-
     @property
     def symmetry(self) -> Symmetry:
         """Return symmetry of supercell.
@@ -648,15 +499,6 @@ class Phono3py:
 
         """
         return self._symmetry
-
-    def get_symmetry(self):
-        """Return symmetry of supercell."""
-        warnings.warn(
-            "Phono3py.get_symmetry() is deprecated."
-            "Use Phono3py.symmetry attribute instead.",
-            DeprecationWarning,
-        )
-        return self.symmetry
 
     @property
     def primitive_symmetry(self) -> Symmetry:
@@ -668,15 +510,6 @@ class Phono3py:
         """
         return self._primitive_symmetry
 
-    def get_primitive_symmetry(self):
-        """Return symmetry of primitive cell."""
-        warnings.warn(
-            "Phono3py.get_primitive_symmetry() is deprecated."
-            "Use Phono3py.primitive_symmetry attribute instead.",
-            DeprecationWarning,
-        )
-        return self.primitive_symmetry
-
     @property
     def phonon_supercell_symmetry(self) -> Symmetry:
         """Return symmetry of supercell for fc2.
@@ -686,15 +519,6 @@ class Phono3py:
 
         """
         return self._phonon_supercell_symmetry
-
-    def get_phonon_supercell_symmetry(self):
-        """Return symmetry of supercell for fc2."""
-        warnings.warn(
-            "Phono3py.get_phonon_supercell_symmetry() is deprecated."
-            "Use Phono3py.phonon_supercell_symmetry attribute instead.",
-            DeprecationWarning,
-        )
-        return self.phonon_supercell_symmetry
 
     @property
     def supercell_matrix(self):
@@ -707,15 +531,6 @@ class Phono3py:
         """
         return self._supercell_matrix
 
-    def get_supercell_matrix(self):
-        """Return transformation matrix to supercell cell from unit cell."""
-        warnings.warn(
-            "Phono3py.get_supercell_matrix() is deprecated."
-            "Use Phono3py.supercell_matrix attribute instead.",
-            DeprecationWarning,
-        )
-        return self.supercell_matrix
-
     @property
     def phonon_supercell_matrix(self):
         """Return transformation matrix to phonon supercell from unit cell.
@@ -726,15 +541,6 @@ class Phono3py:
 
         """
         return self._phonon_supercell_matrix
-
-    def get_phonon_supercell_matrix(self):
-        """Return transformation matrix to phonon supercell from unit cell."""
-        warnings.warn(
-            "Phono3py.get_phonon_supercell_matrix() is deprecated."
-            "Use Phono3py.phonon_supercell_matrix attribute instead.",
-            DeprecationWarning,
-        )
-        return self.phonon_supercell_matrix
 
     @property
     def primitive_matrix(self):
@@ -747,15 +553,6 @@ class Phono3py:
         """
         return self._primitive_matrix
 
-    def get_primitive_matrix(self):
-        """Return transformation matrix to primitive cell from unit cell."""
-        warnings.warn(
-            "Phono3py.get_primitive_matrix() is deprecated."
-            "Use Phono3py.primitive_matrix attribute instead.",
-            DeprecationWarning,
-        )
-        return self.primitive_matrix
-
     @property
     def unit_conversion_factor(self):
         """Return phonon frequency unit conversion factor.
@@ -767,15 +564,6 @@ class Phono3py:
 
         """
         return self._frequency_factor_to_THz
-
-    def set_displacement_dataset(self, dataset):
-        """Set displacement-force dataset."""
-        warnings.warn(
-            "Phono3py.set_displacement_dataset() is deprecated."
-            "Use Phono3py.dataset attribute instead.",
-            DeprecationWarning,
-        )
-        self._dataset = dataset
 
     @property
     def dataset(self):
@@ -824,24 +612,6 @@ class Phono3py:
         self._phonon_supercells_with_displacements = None
 
     @property
-    def displacement_dataset(self):
-        """Return displacement-force dataset."""
-        warnings.warn(
-            "Phono3py.displacement_dataset is deprecated." "Use Phono3py.dataset.",
-            DeprecationWarning,
-        )
-        return self.dataset
-
-    def get_displacement_dataset(self):
-        """Return displacement-force dataset."""
-        warnings.warn(
-            "Phono3py.get_displacement_dataset() is deprecated."
-            "Use Phono3py.dataset.",
-            DeprecationWarning,
-        )
-        return self.displacement_dataset
-
-    @property
     def phonon_dataset(self):
         """Setter and getter of displacement-force dataset for fc2.
 
@@ -870,25 +640,6 @@ class Phono3py:
         self._phonon_dataset = dataset
 
     @property
-    def phonon_displacement_dataset(self):
-        """Return phonon dispalcement-force dataset."""
-        warnings.warn(
-            "Phono3py.phonon_displacement_dataset is deprecated."
-            "Use Phono3py.phonon_dataset.",
-            DeprecationWarning,
-        )
-        return self._phonon_dataset
-
-    def get_phonon_displacement_dataset(self):
-        """Return phonon dispalcement-force dataset."""
-        warnings.warn(
-            "Phono3py.get_phonon_displacement_dataset() is deprecated."
-            "Use Phono3py.phonon_dataset.",
-            DeprecationWarning,
-        )
-        return self.phonon_displacement_dataset
-
-    @property
     def band_indices(self):
         """Setter and getter of band indices.
 
@@ -902,15 +653,6 @@ class Phono3py:
     @band_indices.setter
     def band_indices(self, band_indices):
         self._set_band_indices(band_indices=band_indices)
-
-    def set_band_indices(self, band_indices):
-        """Set band indices."""
-        warnings.warn(
-            "Phono3py.set_band_indices() is deprecated."
-            "Use Phono3py.band_indices attribute instead.",
-            DeprecationWarning,
-        )
-        self.band_indices = band_indices
 
     def _set_band_indices(self, band_indices=None):
         if band_indices is None:
@@ -955,15 +697,6 @@ class Phono3py:
             self._build_supercells_with_displacements()
         return self._supercells_with_displacements
 
-    def get_supercells_with_displacements(self):
-        """Return supercells with displacements."""
-        warnings.warn(
-            "Phono3py.get_supercells_with_displacements() is deprecated."
-            "Use Phono3py.supercells_with_displacements attribute instead.",
-            DeprecationWarning,
-        )
-        return self.supercells_with_displacements
-
     @property
     def phonon_supercells_with_displacements(self):
         """Return supercells with displacements for fc2.
@@ -982,16 +715,6 @@ class Phono3py:
                 )
         return self._phonon_supercells_with_displacements
 
-    def get_phonon_supercells_with_displacements(self):
-        """Return supercells with displacements for fc2."""
-        warnings.warn(
-            "Phono3py.get_phonon_supercells_with_displacements() "
-            "is deprecated. Use Phono3py.phonon_supercells_with_displacements "
-            "attribute instead.",
-            DeprecationWarning,
-        )
-        return self.phonon_supercells_with_displacements
-
     @property
     def mesh_numbers(self):
         """Setter and getter of sampling mesh numbers in reciprocal space."""
@@ -1008,15 +731,6 @@ class Phono3py:
     def thermal_conductivity(self):
         """Return thermal conductivity class instance."""
         return self._thermal_conductivity
-
-    def get_thermal_conductivity(self):
-        """Return thermal conductivity class instance."""
-        warnings.warn(
-            "Phono3py.get_thermal_conductivity() is deprecated."
-            "Use Phono3py.thermal_conductivity attribute instead.",
-            DeprecationWarning,
-        )
-        return self.thermal_conductivity
 
     @property
     def displacements(self):
@@ -1260,15 +974,6 @@ class Phono3py:
     def phph_interaction(self):
         """Return Interaction instance."""
         return self._interaction
-
-    def get_phph_interaction(self):
-        """Return Interaction instance."""
-        warnings.warn(
-            "Phono3py.get_phph_interaction() is deprecated."
-            "Use Phono3py.phph_interaction attribute instead.",
-            DeprecationWarning,
-        )
-        return self.phph_interaction
 
     @property
     def detailed_gammas(self):
@@ -1879,15 +1584,6 @@ class Phono3py:
             self._write_imag_self_energy(output_filename=output_filename)
 
         return vals
-
-    def write_imag_self_energy(self, filename=None):
-        """Write imaginary part of self energy to a file."""
-        warnings.warn(
-            "Phono3py.write_imag_self_energy is deprecated."
-            "Use Phono3py.run_imag_self_energy with write_txt=True.",
-            DeprecationWarning,
-        )
-        self._write_imag_self_energy(output_filename=filename)
 
     def _write_imag_self_energy(self, output_filename=None):
         write_imag_self_energy(

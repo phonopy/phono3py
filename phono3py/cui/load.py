@@ -94,17 +94,17 @@ def load(
     can be overwritten.
 
     'fc3.hdf5' is read if found in current directory. Unless 'fc3.hdf5' is found
-    and if 'FORCES_FC3' and 'disp_fc3.yaml" are found, these are read and fc3
-    and fc2 are produced.
+    and if 'FORCES_FC3' and 'phono3py_disp.yaml" are found, these are read and
+    fc3 and fc2 are produced.
 
     if 'fc2.hdf5' is found, this is read. Unless 'fc2.hdf5' is found and if
-    'FORCES_FC2' and 'disp_fc2.yaml" are found, these are read and fc2 is
+    'FORCES_FC2' and 'phono3py_disp.yaml" are found, these are read and fc2 is
     produced.
 
     When force_sets_filename and force_constants_filename are not given,
     'FORCES_FC3' and 'FORCES_FC2' are looked for in the current directory as the
     default behaviour. When 'FORCES_FC3' ('FORCES_FC2') is given in the type-1
-    format, 'disp_fc3.yaml' ('disp_fc2.yaml') is also necessary and read.
+    format, 'phono3py_disp.yaml' is also necessary and read.
 
     Crystal structure
     -----------------
@@ -121,12 +121,12 @@ def load(
     priority:
         1. fc3_filename (fc2_filename)
         2. forces_fc3_filename (forces_fc2_filename). Do not forget that for
-           type-1 format, disp_fc3.yaml (disp_fc2.yaml) has to be given, too.
+           type-1 format, phono3py_disp.yaml has to be given, too.
         3. 'fc3.hdf5' and 'fc2.hdf5' are searched in current directory.
         4. 'FORCES_FC3' and 'FORCES_FC2' are searched in current directory.
-           'FORCES_FC2' is optional. For type-1 format, 'disp_fc3.yaml' and
-           optionally 'disp_fc2.yaml' are also searched in current directory.
-           When 'FORCES_FC2' is not found, 'FORCES_FC3' is used to create fc2.
+           'FORCES_FC2' is optional. For type-1 format, 'phono3py_disp.yaml' is
+           also searched in current directory. When 'FORCES_FC2' is not found,
+           'FORCES_FC3' is used to create fc2.
 
     Parameters for non-analytical term correctiion (NAC)
     ----------------------------------------------------
@@ -188,11 +188,11 @@ def load(
         correction parameters.
     forces_fc3_filename : sequence or os.PathLike, optional
         A two-elemental sequence of filenames corresponding to ('FORCES_FC3',
-        'disp_fc3.yaml') in the type-1 format or a filename (os.PathLike)
+        'phono3py_disp.yaml') in the type-1 format or a filename (os.PathLike)
         corresponding to 'FORCES_FC3' in the type-2 format. Default is None.
     forces_fc2_filename : os.PathLike or sequence, optional
         A two-elemental sequence of filenames corresponding to ('FORCES_FC2',
-        'disp_fc2.yaml') in the type-1 format or a filename (os.PathLike)
+        'phono3py_disp.yaml') in the type-1 format or a filename (os.PathLike)
         corresponding to 'FORCES_FC2' in the type-2 format. Default is None.
     fc3_filename : os.PathLike, optional
         Filename of a file corresponding to 'fc3.hdf5', a file contains
@@ -233,10 +233,10 @@ def load(
     use_grg : bool, optional
         Use generalized regular grid when True. Default is False.
     make_r0_average : bool, optional
-        fc3 transformation from real to reciprocal space is done
-        around three atoms and averaged when True. Default is False, i.e.,
-        only around the first atom. Setting False is for rough compatibility
-        with v2.x. Default is True.
+        fc3 transformation from real to reciprocal space is done around three
+        atoms and averaged when True. Default is False, i.e., only around the
+        first atom. Setting False is for rough compatibility with v2.x. Default
+        is True.
     symprec : float, optional
         Tolerance used to find crystal symmetry. Default is 1e-5.
     log_level : int, optional
@@ -477,16 +477,11 @@ def _set_dataset_or_fc3(
         if log_level:
             print('fc3 was read from "%s".' % fc3_filename)
     elif forces_fc3_filename is not None:
-        if isinstance(forces_fc3_filename, os.PathLike):
-            force_filename = forces_fc3_filename
-            disp_filename = None
-        else:
-            force_filename, disp_filename = forces_fc3_filename
+        force_filename = forces_fc3_filename
         _set_dataset_for_fc3(
             ph3py,
             ph3py_yaml,
             force_filename,
-            disp_filename,
             phono3py_yaml_filename,
             cutoff_pair_distance,
             log_level,
@@ -499,17 +494,10 @@ def _set_dataset_or_fc3(
         if log_level:
             print('fc3 was read from "fc3.hdf5".')
     elif os.path.isfile("FORCES_FC3"):
-        disp_filename = None
-        if os.path.isfile("disp_fc3.yaml"):
-            if ph3py_yaml is None:
-                disp_filename = "disp_fc3.yaml"
-            elif ph3py_yaml.dataset is None:
-                disp_filename = "disp_fc3.yaml"
         _set_dataset_for_fc3(
             ph3py,
             ph3py_yaml,
             "FORCES_FC3",
-            disp_filename,
             phono3py_yaml_filename,
             cutoff_pair_distance,
             log_level,
@@ -522,7 +510,6 @@ def _set_dataset_or_fc3(
         _set_dataset_for_fc3(
             ph3py,
             ph3py_yaml,
-            None,
             None,
             phono3py_yaml_filename,
             cutoff_pair_distance,
@@ -548,16 +535,11 @@ def _set_dataset_phonon_dataset_or_fc2(
         if log_level:
             print('fc2 was read from "%s".' % fc2_filename)
     elif forces_fc2_filename is not None:
-        if isinstance(forces_fc2_filename, os.PathLike):
-            force_filename = forces_fc2_filename
-            disp_filename = None
-        else:
-            force_filename, disp_filename = forces_fc2_filename
+        force_filename = forces_fc2_filename
         _set_dataset_for_fc2(
             ph3py,
             ph3py_yaml,
             force_filename,
-            disp_filename,
             "phonon_fc2",
             log_level,
         )
@@ -569,17 +551,10 @@ def _set_dataset_phonon_dataset_or_fc2(
         if log_level:
             print('fc2 was read from "fc2.hdf5".')
     elif os.path.isfile("FORCES_FC2"):
-        disp_filename = None
-        if os.path.isfile("disp_fc2.yaml"):
-            if ph3py_yaml is None:
-                disp_filename = "disp_fc2.yaml"
-            elif ph3py_yaml.phonon_dataset is None:
-                disp_filename = "disp_fc2.yaml"
         _set_dataset_for_fc2(
             ph3py,
             ph3py_yaml,
             "FORCES_FC2",
-            disp_filename,
             "phonon_fc2",
             log_level,
         )
@@ -591,7 +566,6 @@ def _set_dataset_phonon_dataset_or_fc2(
         _set_dataset_for_fc2(
             ph3py,
             ph3py_yaml,
-            None,
             None,
             "phonon_fc2",
             log_level,
@@ -605,23 +579,15 @@ def _set_dataset_phonon_dataset_or_fc2(
             ph3py,
             ph3py_yaml,
             None,
-            None,
             "fc2",
             log_level,
         )
     elif os.path.isfile("FORCES_FC3"):
         # suppose fc3.hdf5 is read but fc2.hdf5 doesn't exist.
-        disp_filename = None
-        if os.path.isfile("disp_fc3.yaml"):
-            if ph3py_yaml is None:
-                disp_filename = "disp_fc3.yaml"
-            elif ph3py_yaml.dataset is None:
-                disp_filename = "disp_fc3.yaml"
         _set_dataset_for_fc2(
             ph3py,
             ph3py_yaml,
             "FORCES_FC3",
-            disp_filename,
             "fc2",
             log_level,
         )
@@ -632,7 +598,6 @@ def _set_dataset_for_fc3(
     ph3py: Phono3py,
     ph3py_yaml: Optional[Phono3pyYaml],
     force_filename,
-    disp_filename,
     phono3py_yaml_filename,
     cutoff_pair_distance,
     log_level,
@@ -642,7 +607,6 @@ def _set_dataset_for_fc3(
         ph3py_yaml=ph3py_yaml,
         cutoff_pair_distance=cutoff_pair_distance,
         force_filename=force_filename,
-        disp_filename=disp_filename,
         phono3py_yaml_filename=phono3py_yaml_filename,
         fc_type="fc3",
         log_level=log_level,
@@ -653,7 +617,6 @@ def _set_dataset_for_fc2(
     ph3py: Phono3py,
     ph3py_yaml: Optional[Phono3pyYaml],
     force_filename,
-    disp_filename,
     fc_type,
     log_level,
 ):
@@ -661,7 +624,6 @@ def _set_dataset_for_fc2(
         ph3py,
         ph3py_yaml=ph3py_yaml,
         force_filename=force_filename,
-        disp_filename=disp_filename,
         fc_type=fc_type,
         log_level=log_level,
     )

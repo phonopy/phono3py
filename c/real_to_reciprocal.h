@@ -52,5 +52,5 @@ void r2r_real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
                             const double q_vecs[3][3], const double *fc3,
                             const long is_compact_fc3,
                             const AtomTriplets *atom_triplets,
-                            const long openmp_at_bands);
+                            const long openmp_per_triplets);
 #endif
