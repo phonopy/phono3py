@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Apr-20-2024: Version 3.0.1
+
+- Minor fix to build phono3py C-library on conda-forge.
+
 ## Apr-19-2024: Version 3.0.0
 
 This is a major version release. There are backward-incompatible changes.
