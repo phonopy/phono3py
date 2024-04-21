@@ -34,10 +34,12 @@
 
 #include "reciprocal_to_normal.h"
 
+#ifdef MULTITHREADED_BLAS
 #if defined(MKL_LAPACKE) || defined(SCIPY_MKL_H)
 #include <mkl_cblas.h>
 #else
 #include <cblas.h>
+#endif
 #endif
 #include <math.h>
 #include <stdlib.h>
@@ -55,11 +57,13 @@ static double get_fc3_sum(const lapack_complex_double *e0,
                           const lapack_complex_double *e2,
                           const lapack_complex_double *fc3_reciprocal,
                           const long num_band);
+#ifdef MULTITHREADED_BLAS
 static double get_fc3_sum_blas(const lapack_complex_double *e0,
                                const lapack_complex_double *e1,
                                const lapack_complex_double *e2,
                                const lapack_complex_double *fc3_reciprocal,
                                const long num_band);
+#endif
 static double get_fc3_sum_blas_like(const lapack_complex_double *e0,
                                     const lapack_complex_double *e1,
                                     const lapack_complex_double *e2,
@@ -153,6 +157,7 @@ void reciprocal_to_normal_squared(
         if (freqs0[band_indices[g_pos[i][0]]] > cutoff_frequency &&
             freqs1[g_pos[i][1]] > cutoff_frequency &&
             freqs2[g_pos[i][2]] > cutoff_frequency) {
+#ifdef MULTITHREADED_BLAS
             if (use_multithreaded_blas) {
                 fc3_normal_squared[g_pos[i][3]] =
                     get_fc3_sum_blas(e0 + band_indices[g_pos[i][0]] * num_band,
@@ -162,6 +167,7 @@ void reciprocal_to_normal_squared(
                     (freqs0[band_indices[g_pos[i][0]]] * freqs1[g_pos[i][1]] *
                      freqs2[g_pos[i][2]]);
             } else {
+#endif
                 fc3_normal_squared[g_pos[i][3]] =
                     get_fc3_sum_blas_like(
                         e0 + band_indices[g_pos[i][0]] * num_band,
@@ -169,7 +175,9 @@ void reciprocal_to_normal_squared(
                         e2 + g_pos[i][2] * num_band, fc3_reciprocal, num_band) /
                     (freqs0[band_indices[g_pos[i][0]]] * freqs1[g_pos[i][1]] *
                      freqs2[g_pos[i][2]]);
+#ifdef MULTITHREADED_BLAS
             }
+#endif
         } else {
             fc3_normal_squared[g_pos[i][3]] = 0;
         }
@@ -224,6 +232,7 @@ static double get_fc3_sum(const lapack_complex_double *e0,
     return (sum_real * sum_real + sum_imag * sum_imag);
 }
 
+#ifdef MULTITHREADED_BLAS
 static double get_fc3_sum_blas(const lapack_complex_double *e0,
                                const lapack_complex_double *e1,
                                const lapack_complex_double *e2,
@@ -259,6 +268,7 @@ static double get_fc3_sum_blas(const lapack_complex_double *e0,
            lapack_complex_double_imag(retval) *
                lapack_complex_double_imag(retval);
 }
+#endif
 
 static double get_fc3_sum_blas_like(const lapack_complex_double *e0,
                                     const lapack_complex_double *e1,
