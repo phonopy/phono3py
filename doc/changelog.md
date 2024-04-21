@@ -2,6 +2,11 @@
 
 # Change Log
 
+## Apr-21-2024: Version 3.0.2
+
+- New way of ph-ph interaction calculation (see {ref}`changelog_v290`) is used as
+  default. In versions 3.0.0 and 3.0.1, it was not the default by mistake.
+
 ## Apr-20-2024: Version 3.0.1
 
 - Minor fix to build phono3py C-library on conda-forge.
@@ -11,8 +16,8 @@
 This is a major version release. There are backward-incompatible changes.
 
 - Calculation method to transform supercell third-order force constants fc3 in
-  real to reciprocal space was changed as described at Version 2.9.0 changelog
-  below. This results in the change of results with respect to those obtained by
+  real to reciprocal space was changed as described at {ref}`changelog_v290`.
+  This results in the change of results with respect to those obtained by
   phono3py version 2. To emulate v2 behaviour, use `--v2` option in phono3py
   command line script. For `Phono3py` class , `make_r0_average=True` (default)
   when instantiating it, and similarly for `phono3py.load` function.
@@ -35,6 +40,8 @@ This is a major version release. There are backward-incompatible changes.
 ## Dec-26-2023: Version 2.9.1
 
 - Release to build conda-forge package.
+
+(changelog_v290)=
 
 ## Dec-25-2023: Version 2.9.0
 
