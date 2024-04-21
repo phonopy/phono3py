@@ -1,4 +1,4 @@
-name: Pytest with mkl and --v2 option
+name: Pytest with mkl  sing BLAS for phph-calc
 
 on:
   pull_request:
@@ -36,10 +36,10 @@ jobs:
     - name: Install phono3py
       run: |
         conda activate test
-        pip install -e . -vvv
+        PHPHCALC_USE_MTBLAS=true pip install -e . -vvv
     - name: Run pytest
       run: |
-        pytest --v2 -v --cov=./ --cov-report=xml test
+        pytest -v --cov=./ --cov-report=xml test
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
