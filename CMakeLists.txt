@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 3.15)
 project(phono3py C)
 
-option(PHONO3PY "Option to build phono3py module" OFF)
+option(PHPHCALC "Option to build phph calculation module" OFF)
 option(PHONONCALC "Option to build phonon calculation module" OFF)
 option(GRIDSYS "Option to build gridsys module" OFF)
 option(WITH_Fortran "enable fortran interface" OFF)
-option(USE_OpenMP "Option to search OpenMP library" ON)
+option(PHONO3PY_USE_OMP "Option to search OpenMP library" ON)
+option(PHPHCALC_USE_MTBLAS "Use multithread BLAS is it exists" OFF)
 option(WITH_TESTS "build unit tests" OFF)
 option(BUILD_SHARED_LIBRARIES "Option to build shared library" OFF)
 if(WITH_Fortran)
@@ -51,7 +52,7 @@ else()
   set(MY_INCLUDES ${PROJECT_SOURCE_DIR}/c)
 endif()
 
-if(USE_OpenMP)
+if(PHONO3PY_USE_OMP)
   message(STATUS "Find OpenMP library")
   find_package(OpenMP)
 
@@ -61,7 +62,7 @@ if(USE_OpenMP)
   endif()
 endif()
 
-if(PHONO3PY OR PHONONCALC)
+if(PHPHCALC OR PHONONCALC)
   find_package(BLAS REQUIRED) # set BLAS_LIBRARIES
 
   if(BLAS_FOUND)
@@ -77,22 +78,30 @@ if(PHONO3PY OR PHONONCALC)
   endif()
 endif()
 
-if(PHONO3PY OR PHONONCALC)
+if(PHPHCALC OR PHONONCALC)
   if(BLAS_LIBRARIES MATCHES "libmkl")
     message(STATUS "MKL detected: Set C-macros MKL_LAPACKE MULTITHREADED_BLAS")
+    message(STATUS "Use multithreaded BLAS for phonon calculation.")
+    if(PHPHCALC_USE_MTBLAS)
+      message(STATUS "Use multithreaded BLAS for ph-ph calculation.")
+    endif()
   endif()
 
   if(BLAS_LIBRARIES MATCHES "libopenblas")
     message(STATUS "OpenBLAS detected: Set C-macro MULTITHREADED_BLAS")
+    message(STATUS "Use multithreaded BLAS for phonon calculation.")
+    if(PHPHCALC_USE_MTBLAS)
+      message(STATUS "Use multithreaded BLAS for ph-ph calculation.")
+    endif()
   endif()
 endif()
 
 # ##############################################################################
 # phono3py #
 # ##############################################################################
-if(PHONO3PY)
+if(PHPHCALC)
   # Source code
-  set(SOURCES_PHONO3PY
+  set(SOURCES_PHPHCALC
       ${PROJECT_SOURCE_DIR}/c/bzgrid.c
       ${PROJECT_SOURCE_DIR}/c/collision_matrix.c
       ${PROJECT_SOURCE_DIR}/c/fc3.c
@@ -116,18 +125,28 @@ if(PHONO3PY)
 
   if(BUILD_SHARED_LIBRARIES)
     # Shared library
-    add_library(ph3py SHARED ${SOURCES_PHONO3PY})
+    add_library(ph3py SHARED ${SOURCES_PHPHCALC})
     target_link_libraries(ph3py m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
                           ${OpenMP_C_LIBRARIES})
     target_include_directories(ph3py PRIVATE ${MY_INCLUDES})
     target_compile_options(ph3py PRIVATE ${OpenMP_C_FLAGS})
 
     if(BLAS_LIBRARIES MATCHES "libmkl")
-      target_compile_definitions(ph3py PRIVATE MKL_LAPACKE THM_EPSILON=1e-10)
+      if(PHPHCALC_USE_MTBLAS)
+        target_compile_definitions(ph3py PRIVATE MKL_LAPACKE MULTITHREADED_BLAS
+                                                 THM_EPSILON=1e-10)
+      else()
+        target_compile_definitions(ph3py PRIVATE MKL_LAPACKE THM_EPSILON=1e-10)
+      endif()
     endif()
 
     if(BLAS_LIBRARIES MATCHES "libopenblas")
-      target_compile_definitions(ph3py PRIVATE THM_EPSILON=1e-10)
+      if(PHPHCALC_USE_MTBLAS)
+        target_compile_definitions(ph3py PRIVATE MULTITHREADED_BLAS
+                                                 THM_EPSILON=1e-10)
+      else()
+        target_compile_definitions(ph3py PRIVATE THM_EPSILON=1e-10)
+      endif()
     endif()
 
     set_property(TARGET ph3py PROPERTY VERSION ${SERIAL})
@@ -136,19 +155,29 @@ if(PHONO3PY)
   endif()
 
   # Static link library
-  add_library(ph3py_static STATIC ${SOURCES_PHONO3PY})
+  add_library(ph3py_static STATIC ${SOURCES_PHPHCALC})
   target_link_libraries(ph3py_static m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
                         ${OpenMP_C_LIBRARIES})
   target_include_directories(ph3py_static PRIVATE ${MY_INCLUDES})
   target_compile_options(ph3py_static PRIVATE ${OpenMP_C_FLAGS})
 
   if(BLAS_LIBRARIES MATCHES "libmkl")
-    target_compile_definitions(ph3py_static PRIVATE MKL_LAPACKE
-                                                    THM_EPSILON=1e-10)
+    if(PHPHCALC_USE_MTBLAS)
+      target_compile_definitions(
+        ph3py_static PRIVATE MKL_LAPACKE MULTITHREADED_BLAS THM_EPSILON=1e-10)
+    else()
+      target_compile_definitions(ph3py_static PRIVATE MKL_LAPACKE
+                                                      THM_EPSILON=1e-10)
+    endif()
   endif()
 
   if(BLAS_LIBRARIES MATCHES "libopenblas")
-    target_compile_definitions(ph3py_static PRIVATE THM_EPSILON=1e-10)
+    if(PHPHCALC_USE_MTBLAS)
+      target_compile_definitions(ph3py_static PRIVATE MULTITHREADED_BLAS
+                                                      THM_EPSILON=1e-10)
+    else()
+      target_compile_definitions(ph3py_static PRIVATE THM_EPSILON=1e-10)
+    endif()
   endif()
 
   set_property(TARGET ph3py_static PROPERTY VERSION ${SERIAL})

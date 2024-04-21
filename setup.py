@@ -34,9 +34,15 @@ def _run_cmake(build_dir):
         "-B",
         "_build",
         "-DPHONONCALC=on",
-        "-DPHONO3PY=on",
+        "-DPHPHCALC=on",
         "-DCMAKE_INSTALL_PREFIX=.",
     ]
+    if (
+        "PHPHCALC_USE_MTBLAS" in os.environ
+        and os.environ["PHPHCALC_USE_MTBLAS"].lower() == "true"
+    ):
+        args.append("-DPHPHCALC_USE_MTBLAS=on")
+
     # if "CONDA_PREFIX" in os.environ:
     #     args.append("-DUSE_CONDA_PATH=on")
     # if "CC" in os.environ:
