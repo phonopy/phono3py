@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Change Log &#8212; Phono3py v.3.0.1</title>
+    <title>Change Log &#8212; Phono3py v.3.0.2</title>
   
   
   
@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8d27b9dea8ad943066ae" />
   <script src="_static/vendor/fontawesome/6.5.1/js/all.min.js?digest=8d27b9dea8ad943066ae"></script>
 
-    <script src="_static/documentation_options.js?v=d1bd4290"></script>
+    <script src="_static/documentation_options.js?v=c6c9c2f6"></script>
     <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=efea14e4"></script>
@@ -130,7 +130,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.0.1</p>
+    <p class="title logo__title">Phono3py v.3.0.2</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -320,6 +320,7 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apr-21-2024-version-3-0-2">Apr-21-2024: Version 3.0.2</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apr-20-2024-version-3-0-1">Apr-20-2024: Version 3.0.1</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apr-19-2024-version-3-0-0">Apr-19-2024: Version 3.0.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mar-20-2024-version-2-10-0">Mar-20-2024: Version 2.10.0</a></li>
@@ -397,6 +398,13 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="change-log">
 <span id="changelog"></span><h1>Change Log<a class="headerlink" href="#change-log" title="Link to this heading">#</a></h1>
+<section id="apr-21-2024-version-3-0-2">
+<h2>Apr-21-2024: Version 3.0.2<a class="headerlink" href="#apr-21-2024-version-3-0-2" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>New way of ph-ph interaction calculation (see <a class="reference internal" href="#changelog-v290"><span class="std std-ref">Dec-25-2023: Version 2.9.0</span></a>) is used as
+default. In versions 3.0.0 and 3.0.1, it was not the default by mistake.</p></li>
+</ul>
+</section>
 <section id="apr-20-2024-version-3-0-1">
 <h2>Apr-20-2024: Version 3.0.1<a class="headerlink" href="#apr-20-2024-version-3-0-1" title="Link to this heading">#</a></h2>
 <ul class="simple">
@@ -408,8 +416,8 @@ document.write(`
 <p>This is a major version release. There are backward-incompatible changes.</p>
 <ul class="simple">
 <li><p>Calculation method to transform supercell third-order force constants fc3 in
-real to reciprocal space was changed as described at Version 2.9.0 changelog
-below. This results in the change of results with respect to those obtained by
+real to reciprocal space was changed as described at <a class="reference internal" href="#changelog-v290"><span class="std std-ref">Dec-25-2023: Version 2.9.0</span></a>.
+This results in the change of results with respect to those obtained by
 phono3py version 2. To emulate v2 behaviour, use <code class="docutils literal notranslate"><span class="pre">--v2</span></code> option in phono3py
 command line script. For <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class , <code class="docutils literal notranslate"><span class="pre">make_r0_average=True</span></code> (default)
 when instantiating it, and similarly for <code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code> function.</p></li>
@@ -441,7 +449,7 @@ when instantiating it, and similarly for <code class="docutils literal notransla
 </ul>
 </section>
 <section id="dec-25-2023-version-2-9-0">
-<h2>Dec-25-2023: Version 2.9.0<a class="headerlink" href="#dec-25-2023-version-2-9-0" title="Link to this heading">#</a></h2>
+<span id="changelog-v290"></span><h2>Dec-25-2023: Version 2.9.0<a class="headerlink" href="#dec-25-2023-version-2-9-0" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Pre-release of version 3.0.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--v3</span></code> option enables phono3py version 3 behaviour. In phono3py-v3, it is
@@ -1053,6 +1061,7 @@ a mesh number is an even number, it is more carefully treated.</p></li>
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apr-21-2024-version-3-0-2">Apr-21-2024: Version 3.0.2</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apr-20-2024-version-3-0-1">Apr-20-2024: Version 3.0.1</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apr-19-2024-version-3-0-0">Apr-19-2024: Version 3.0.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mar-20-2024-version-2-10-0">Mar-20-2024: Version 2.10.0</a></li>
