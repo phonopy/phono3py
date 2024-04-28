@@ -192,6 +192,8 @@ class Phono3pyYamlLoader(PhonopyYamlLoader):
                 data1["id"] = d1_id
             if "forces" in d1:
                 data1["forces"] = np.array(d1["forces"], dtype="double", order="C")
+                if "energy" in d1:
+                    data1["energy"] = d1["energy"]
             d2_list = d1.get("paired_with")
             if d2_list is None:  # backward compatibility
                 d2_list = d1.get("second_atoms")
@@ -226,6 +228,8 @@ class Phono3pyYamlLoader(PhonopyYamlLoader):
             second_atom_dict["id"] = d2_id
         if "pair_distance" in d2:
             second_atom_dict["pair_distance"] = d2["pair_distance"]
+        if "energy" in d2:
+            second_atom_dict["energy"] = d2["energy"]
         disp2_id += 1
         data1["second_atoms"].append(second_atom_dict)
         return disp2_id
@@ -464,6 +468,8 @@ def displacements_yaml_lines_type1(dataset, with_forces=False, key="displacement
             lines.append("  forces:")
             for v in d1["forces"]:
                 lines.append("  - [ %19.16f, %19.16f, %19.16f ]" % tuple(v))
+            if "energy" in d1:
+                lines.append("  energy: {energy:.8f}".format(energy=d1["energy"]))
         if "second_atoms" in d1:
             ret_lines, id_offset = _second_displacements_yaml_lines(
                 d1["second_atoms"], id_offset, with_forces=with_forces
@@ -542,6 +548,10 @@ def _second_displacements_yaml_lines(dataset2, id_offset, with_forces=False):
                 lines.append("    forces:")
                 for v in dataset2[j]["forces"]:
                     lines.append("    - [ %19.16f, %19.16f, %19.16f ]" % tuple(v))
+                if "energy" in dataset2[j]:
+                    lines.append(
+                        "    energy: {energy:.8f}".format(energy=dataset2[j]["energy"])
+                    )
         else:
             lines.append("  - atom: %4d" % (i + 1))
             lines.append(

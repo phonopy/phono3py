@@ -879,7 +879,7 @@ def main(**argparse_control):
         or settings.create_forces_fc3_file
         or settings.create_forces_fc2
     ):
-        create_FORCES_FC3_and_FORCES_FC2(settings, cell_filename, log_level)
+        create_FORCES_FC3_and_FORCES_FC2(settings, cell_filename, log_level=log_level)
         if log_level:
             print_end_phono3py()
         sys.exit(0)
