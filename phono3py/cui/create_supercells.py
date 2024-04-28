@@ -121,7 +121,7 @@ def create_phono3py_supercells(
         )
         write_supercells_with_displacements(
             interface_mode,
-            phono3py.supercell,
+            phono3py.phonon_supercell,
             phono3py.phonon_supercells_with_displacements,
             optional_structure_info,
             zfill_width=5,
