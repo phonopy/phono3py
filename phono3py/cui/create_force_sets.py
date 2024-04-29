@@ -40,6 +40,7 @@ import copy
 import sys
 from typing import Optional
 
+import numpy as np
 from phonopy.cui.create_force_sets import check_number_of_force_files
 from phonopy.cui.load_helper import get_nac_params
 from phonopy.cui.phonopy_script import file_exists, files_exist, print_error
@@ -227,8 +228,16 @@ def _get_force_sets_fc2(
     interface_mode = settings.calculator
     if log_level:
         print(f'FC2 displacement dataset was read from "{disp_filename}".')
-    num_atoms = disp_dataset["natom"]
-    num_disps = len(disp_dataset["first_atoms"])
+
+    if "first_atoms" in disp_dataset:  # type-1
+        num_atoms = disp_dataset["natom"]
+        num_disps = len(disp_dataset["first_atoms"])
+    elif "displacements" in disp_dataset:  # type-2:
+        num_disps = len(disp_dataset["displacements"])
+        num_atoms = len(disp_dataset["displacements"][0])
+    else:
+        raise RuntimeError("FC2 displacement dataset is broken.")
+
     force_filenames = settings.create_forces_fc2
     for filename in force_filenames:
         file_exists(filename, log_level)
@@ -276,12 +285,18 @@ def _get_force_sets_fc3(
         print("")
         print(f'FC3 Displacement dataset was read from "{disp_filename}".')
 
-    num_atoms = disp_dataset["natom"]
-    num_disps = len(disp_dataset["first_atoms"])
-    for d1 in disp_dataset["first_atoms"]:
-        for d2 in d1["second_atoms"]:
-            if "included" not in d2 or d2["included"]:
-                num_disps += 1
+    if "first_atoms" in disp_dataset:  # type-1
+        num_atoms = disp_dataset["natom"]
+        num_disps = len(disp_dataset["first_atoms"])
+        for d1 in disp_dataset["first_atoms"]:
+            for d2 in d1["second_atoms"]:
+                if "included" not in d2 or d2["included"]:
+                    num_disps += 1
+    elif "displacements" in disp_dataset:  # type-2:
+        num_disps = len(disp_dataset["displacements"])
+        num_atoms = len(disp_dataset["displacements"][0])
+    else:
+        raise RuntimeError("FC3 displacement dataset is broken.")
 
     if settings.create_forces_fc3_file:
         file_exists(settings.create_forces_fc3_file, log_level)
@@ -336,23 +351,45 @@ def _get_force_sets_fc3(
 def _set_forces_and_nac_params(
     ph3py_yaml: Phono3pyYaml, settings, calc_dataset_fc3: dict, calc_dataset_fc2: dict
 ):
-    count = len(ph3py_yaml.dataset["first_atoms"])
-    for i, d1 in enumerate(ph3py_yaml.dataset["first_atoms"]):
-        d1["forces"] = calc_dataset_fc3["forces"][i]
-        if "energies" in calc_dataset_fc3:
-            d1["energy"] = float(calc_dataset_fc3["energies"][i])
-        for d2 in d1["second_atoms"]:
-            if "included" not in d2 or d2["included"]:
-                d2["forces"] = calc_dataset_fc3["forces"][count]
-                if "energies" in calc_dataset_fc3:
-                    d2["energy"] = float(calc_dataset_fc3["energies"][count])
-                count += 1
+    if "first_atoms" in ph3py_yaml.dataset:
+        count = len(ph3py_yaml.dataset["first_atoms"])
+        for i, d1 in enumerate(ph3py_yaml.dataset["first_atoms"]):
+            d1["forces"] = calc_dataset_fc3["forces"][i]
+            if "supercell_energies" in calc_dataset_fc3:
+                d1["supercell_energy"] = float(
+                    calc_dataset_fc3["supercell_energies"][i]
+                )
+            for d2 in d1["second_atoms"]:
+                if "included" not in d2 or d2["included"]:
+                    d2["forces"] = calc_dataset_fc3["forces"][count]
+                    if "supercell_energies" in calc_dataset_fc3:
+                        d2["supercell_energy"] = float(
+                            calc_dataset_fc3["supercell_energies"][count]
+                        )
+                    count += 1
+    else:
+        ph3py_yaml.dataset["forces"] = np.array(
+            calc_dataset_fc3["forces"], dtype="double", order="C"
+        )
+        ph3py_yaml.dataset["supercell_energies"] = np.array(
+            calc_dataset_fc3["supercell_energies"], dtype="double"
+        )
 
     if settings.create_forces_fc2:
-        for i, d in enumerate(ph3py_yaml.phonon_dataset["first_atoms"]):
-            d["forces"] = calc_dataset_fc2["forces"][i]
-            if "energies" in calc_dataset_fc2:
-                d["energy"] = float(calc_dataset_fc2["energies"][i])
+        if "first_atoms" in ph3py_yaml.phonon_dataset:
+            for i, d in enumerate(ph3py_yaml.phonon_dataset["first_atoms"]):
+                d["forces"] = calc_dataset_fc2["forces"][i]
+                if "supercell_energies" in calc_dataset_fc2:
+                    d["supercell_energy"] = float(
+                        calc_dataset_fc2["supercell_energies"][i]
+                    )
+        else:
+            ph3py_yaml.phonon_dataset["forces"] = np.array(
+                calc_dataset_fc2["forces"], dtype="double", order="C"
+            )
+            ph3py_yaml.phonon_dataset["supercell_energies"] = np.array(
+                calc_dataset_fc2["supercell_energies"], dtype="double"
+            )
 
     nac_params = get_nac_params(primitive=ph3py_yaml.primitive)
     if nac_params:

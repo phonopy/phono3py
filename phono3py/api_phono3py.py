@@ -582,6 +582,7 @@ class Phono3py:
                       {'number': atom index of second displaced atom,
                        'displacement': displacement in Cartesian coordinates},
                        'forces': forces on atoms in supercell,
+                       'supercell_energy': energy of supercell,
                        'pair_distance': distance between paired atoms,
                        'included': with cutoff pair distance in displacement
                                    pair generation, this indicates if this
@@ -591,9 +592,11 @@ class Phono3py:
                       ... ] }, ... ] }
             Type 2. All atomic displacements in each supercell:
                 {'displacements': ndarray, dtype='double', order='C',
-                                  shape=(supercells, atoms in supercell, 3)
+                                  shape=(supercells, atoms in supercell, 3),
                  'forces': ndarray, dtype='double',, order='C',
-                                  shape=(supercells, atoms in supercell, 3)}
+                                  shape=(supercells, atoms in supercell, 3),
+                 'supercell_energies': ndarray, dtype='double',
+                                  shape=(supercells,)}
             In type 2, displacements and forces can be given by numpy array
             with different shape but that can be reshaped to
             (supercells, natom, 3).
@@ -622,12 +625,15 @@ class Phono3py:
                  'first_atoms': [
                    {'number': atom index of first displaced atom,
                     'displacement': displacement in Cartesian coordinates,
-                    'forces': forces on atoms in supercell} ... ]}
+                    'forces': forces on atoms in supercell,
+                    'supercell_energy': energy of supercell}, ... ]}
             Type 2. All atomic displacements in each supercell:
                 {'displacements': ndarray, dtype='double', order='C',
-                                  shape=(supercells, atoms in supercell, 3)
+                                  shape=(supercells, atoms in supercell, 3),
                  'forces': ndarray, dtype='double',, order='C',
-                                  shape=(supercells, atoms in supercell, 3)}
+                                  shape=(supercells, atoms in supercell, 3),
+                 'supercell_energies': ndarray, dtype='double',
+                                  shape=(supercells,)}
             In type 2, displacements and forces can be given by numpy array
             with different shape but that can be reshaped to
             (supercells, natom, 3).
