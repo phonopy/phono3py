@@ -484,6 +484,20 @@ def aln_lda(request) -> Phono3py:
 
 
 @pytest.fixture(scope="session")
+def si_111_222_fd() -> Phono3py:
+    """Return Phono3py class instance of Si-1x1x1-2x2x2 FD."""
+    yaml_filename = cwd / "phono3py_params_Si-111-222-fd.yaml.xz"
+    return phono3py.load(yaml_filename, produce_fc=False, log_level=1)
+
+
+@pytest.fixture(scope="session")
+def si_111_222_rd() -> Phono3py:
+    """Return Phono3py class instance of Si-1x1x1-2x2x2 RD."""
+    yaml_filename = cwd / "phono3py_params_Si-111-222-rd.yaml.xz"
+    return phono3py.load(yaml_filename, produce_fc=False, log_level=1)
+
+
+@pytest.fixture(scope="session")
 def ph_nacl() -> Phonopy:
     """Return Phonopy class instance of NaCl 2x2x2."""
     yaml_filename = cwd / "phonopy_disp_NaCl.yaml"
@@ -512,7 +526,7 @@ def ph_si() -> Phonopy:
 
 
 @pytest.fixture(scope="session")
-def si_111_222_fd() -> tarfile.TarFile:
+def si_111_222_fd_raw_data() -> tarfile.TarFile:
     """Return Si fc3 111 fc2 222 vasp inputs.
 
     tar.getnames()
@@ -546,7 +560,7 @@ def si_111_222_fd() -> tarfile.TarFile:
 
 
 @pytest.fixture(scope="session")
-def si_111_222_rd() -> tarfile.TarFile:
+def si_111_222_rd_raw_data() -> tarfile.TarFile:
     """Return Si fc3 111 fc2 222 vasp inputs.
 
     tar.getnames()
