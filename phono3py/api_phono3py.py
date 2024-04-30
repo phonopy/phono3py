@@ -34,8 +34,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import copy
 from collections.abc import Sequence
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
 import numpy as np
 from phonopy.exception import ForceCalculatorRequiredError
@@ -610,7 +611,20 @@ class Phono3py:
 
     @dataset.setter
     def dataset(self, dataset):
-        self._dataset = dataset
+        if dataset is None:
+            self._dataset = None
+        elif "first_atoms" in dataset:
+            self._dataset = copy.deepcopy(dataset)
+        elif "displacements" in dataset:
+            self._dataset = {}
+            self.displacements = dataset["displacements"]
+            if "forces" in dataset:
+                self.forces = dataset["forces"]
+            if "supercell_energies" in dataset:
+                self.supercell_energies = dataset["supercell_energies"]
+        else:
+            raise RuntimeError("Data format of dataset is wrong.")
+
         self._supercells_with_displacements = None
         self._phonon_supercells_with_displacements = None
 
@@ -643,7 +657,21 @@ class Phono3py:
 
     @phonon_dataset.setter
     def phonon_dataset(self, dataset):
-        self._phonon_dataset = dataset
+        if dataset is None:
+            self._phonon_dataset = None
+        elif "first_atoms" in dataset:
+            self._phonon_dataset = copy.deepcopy(dataset)
+        elif "displacements" in dataset:
+            self._phonon_dataset = {}
+            self.phonon_displacements = dataset["displacements"]
+            if "forces" in dataset:
+                self.phonon_forces = dataset["forces"]
+            if "supercell_energies" in dataset:
+                self.phonon_supercell_energies = dataset["supercell_energies"]
+        else:
+            raise RuntimeError("Data format of dataset is wrong.")
+
+        self._phonon_supercells_with_displacements = None
 
     @property
     def band_indices(self):
@@ -822,45 +850,32 @@ class Phono3py:
             be the same order of supercells_with_displacements.
 
         """
-        dataset = self._dataset
-        if "forces" in dataset:
-            return dataset["forces"]
-        elif "first_atoms" in dataset:
-            num_scells = len(dataset["first_atoms"])
-            for disp1 in dataset["first_atoms"]:
-                num_scells += len(disp1["second_atoms"])
-            forces = np.zeros(
-                (num_scells, self._supercell.get_number_of_atoms(), 3),
-                dtype="double",
-                order="C",
-            )
-            i = 0
-            for disp1 in dataset["first_atoms"]:
-                forces[i] = disp1["forces"]
-                i += 1
-            for disp1 in dataset["first_atoms"]:
-                for disp2 in disp1["second_atoms"]:
-                    forces[i] = disp2["forces"]
-                    i += 1
-            return forces
-        else:
-            raise RuntimeError("displacement dataset has wrong format.")
+        return self._get_forces_energies(target="forces")
 
     @forces.setter
-    def forces(self, forces_fc3):
-        forces = np.array(forces_fc3, dtype="double", order="C")
-        dataset = self._dataset
-        if "first_atoms" in dataset:
-            i = 0
-            for disp1 in dataset["first_atoms"]:
-                disp1["forces"] = forces[i]
-                i += 1
-            for disp1 in dataset["first_atoms"]:
-                for disp2 in disp1["second_atoms"]:
-                    disp2["forces"] = forces[i]
-                    i += 1
-        elif "displacements" in dataset or "forces" in dataset:
-            dataset["forces"] = forces
+    def forces(self, values):
+        self._set_forces_energies(values, target="forces")
+
+    @property
+    def supercell_energies(self):
+        """Setter and getter of supercell energies in displacement dataset.
+
+        A set of supercell energies of displaced supercells. The order of
+        displaced supercells has to match with that in displacement dataset.
+        shape=(displaced supercells,)
+
+        getter : ndarray
+
+        setter : array_like
+            The order of supercells used for calculating supercell energies has
+            to be the same order of supercells_with_displacements.
+
+        """
+        return self._get_forces_energies(target="supercell_energies")
+
+    @supercell_energies.setter
+    def supercell_energies(self, values):
+        self._set_forces_energies(values, target="supercell_energies")
 
     @property
     def phonon_displacements(self):
@@ -928,7 +943,7 @@ class Phono3py:
 
     @property
     def phonon_forces(self):
-        """Setter and getter of forces in displacement dataset for fc2.
+        """Setter and getter of forces in fc2 displacement dataset.
 
         A set of atomic forces in displaced supercells. The order of
         displaced supercells has to match with that in phonon displacement
@@ -942,39 +957,30 @@ class Phono3py:
             be the same order of phonon_supercells_with_displacements.
 
         """
-        if self._phonon_dataset is None:
-            raise RuntimeError("phonon_displacement_dataset does not exist.")
-
-        dataset = self._phonon_dataset
-        if "forces" in dataset:
-            return dataset["forces"]
-        elif "first_atoms" in dataset:
-            num_scells = len(dataset["first_atoms"])
-            forces = np.zeros(
-                (num_scells, self._phonon_supercell.get_number_of_atoms(), 3),
-                dtype="double",
-                order="C",
-            )
-            for i, disp1 in enumerate(dataset["first_atoms"]):
-                forces[i] = disp1["forces"]
-            return forces
-        else:
-            raise RuntimeError("displacement dataset has wrong format.")
+        return self._get_phonon_forces_energies(target="forces")
 
     @phonon_forces.setter
-    def phonon_forces(self, forces_fc2):
-        if self._phonon_dataset is None:
-            raise RuntimeError("phonon_displacement_dataset does not exist.")
+    def phonon_forces(self, values):
+        self._set_phonon_forces_energies(values, target="forces")
 
-        forces = np.array(forces_fc2, dtype="double", order="C")
-        dataset = self._phonon_dataset
-        if "first_atoms" in dataset:
-            i = 0
-            for i, disp1 in enumerate(dataset["first_atoms"]):
-                disp1["forces"] = forces[i]
-                i += 1
-        elif "displacements" in dataset or "forces" in dataset:
-            dataset["forces"] = forces
+    @property
+    def phonon_supercell_energies(self):
+        """Setter and getter of supercell energies in fc2 displacement dataset.
+
+        shape=(displaced supercells,)
+
+        getter : ndarray
+
+        setter : array_like
+            The order of supercells used for calculating supercell energies has
+            to be the same order of phonon_supercells_with_displacements.
+
+        """
+        return self._get_phonon_forces_energies(target="supercell_energies")
+
+    @phonon_supercell_energies.setter
+    def phonon_supercell_energies(self, values):
+        self._set_phonon_forces_energies(values, target="supercell_energies")
 
     @property
     def phph_interaction(self):
@@ -2280,3 +2286,116 @@ class Phono3py:
             _fc_calculator_options = None
 
         return _fc_calculator, _fc_calculator_options
+
+    def _get_forces_energies(
+        self, target: Literal["forces", "supercell_energies"]
+    ) -> Optional[np.ndarray]:
+        """Return fc3 forces and supercell energies.
+
+        Return None if tagert data is not found rather than raising exception.
+
+        """
+        if target in self._dataset:  # type-2
+            return self._dataset[target]
+        elif "first_atoms" in self._dataset:  # type-1
+            num_scells = len(self._dataset["first_atoms"])
+            for disp1 in self._dataset["first_atoms"]:
+                num_scells += len(disp1["second_atoms"])
+            if target == "forces":
+                values = np.zeros(
+                    (num_scells, len(self._supercell), 3),
+                    dtype="double",
+                    order="C",
+                )
+                type1_target = "forces"
+            elif target == "supercell_energies":
+                values = np.zeros(num_scells, dtype="double")
+                type1_target = "supercell_energy"
+            count = 0
+            for disp1 in self._dataset["first_atoms"]:
+                values[count] = disp1[type1_target]
+                count += 1
+            for disp1 in self._dataset["first_atoms"]:
+                for disp2 in disp1["second_atoms"]:
+                    values[count] = disp2[type1_target]
+                    count += 1
+            return values
+        return None
+
+    def _set_forces_energies(
+        self, values, target: Literal["forces", "supercell_energies"]
+    ):
+        if "first_atoms" in self._dataset:  # type-1
+            count = 0
+            for disp1 in self._dataset["first_atoms"]:
+                if target == "forces":
+                    disp1[target] = np.array(values[count], dtype="double", order="C")
+                elif target == "supercell_energies":
+                    disp1["supercell_energy"] = float(values[count])
+                count += 1
+            for disp1 in self._dataset["first_atoms"]:
+                for disp2 in disp1["second_atoms"]:
+                    if target == "forces":
+                        disp2[target] = np.array(
+                            values[count], dtype="double", order="C"
+                        )
+                    elif target == "supercell_energies":
+                        disp2["supercell_energy"] = float(values[count])
+                    count += 1
+        elif "displacements" in self._dataset or "forces" in self._dataset:  # type-2
+            self._dataset[target] = np.array(values, dtype="double", order="C")
+        else:
+            raise RuntimeError("Set of FC3 displacements is not available.")
+
+    def _get_phonon_forces_energies(
+        self, target: Literal["forces", "supercell_energies"]
+    ) -> Optional[np.ndarray]:
+        """Return fc2 forces and supercell energies.
+
+        Return None if tagert data is not found rather than raising exception.
+
+        """
+        if self._phonon_dataset is None:
+            raise RuntimeError("Dataset for fc2does not exist.")
+
+        if target in self._phonon_dataset:  # type-2
+            return self._phonon_dataset[target]
+        elif "first_atoms" in self._phonon_dataset:  # type-1
+            values = []
+            for disp in self._phonon_dataset["first_atoms"]:
+                if target == "forces":
+                    if target in disp:
+                        values.append(disp[target])
+                elif target == "supercell_energies":
+                    if "supercell_energy" in disp:
+                        values.append(disp["supercell_energy"])
+            if values:
+                return np.array(values, dtype="double", order="C")
+        return None
+
+    def _set_phonon_forces_energies(
+        self, values, target: Literal["forces", "supercell_energies"]
+    ):
+        if self._phonon_dataset is None:
+            raise RuntimeError("Dataset for fc2 does not exist.")
+
+        if "first_atoms" in self._phonon_dataset:
+            for disp, v in zip(self._phonon_dataset["first_atoms"], values):
+                if target == "forces":
+                    disp[target] = np.array(v, dtype="double", order="C")
+                elif target == "supercell_energies":
+                    disp["supercell_energy"] = float(v)
+        elif "displacements" in self._phonon_dataset:
+            _values = np.array(values, dtype="double", order="C")
+            natom = len(self._phonon_supercell)
+            ndisps = len(self._phonon_dataset["displacements"])
+            if target == "forces" and (
+                _values.ndim != 3 or _values.shape != (ndisps, natom, 3)
+            ):
+                raise RuntimeError(f"Array shape of input {target} is incorrect.")
+            elif target == "supercell_energies":
+                if _values.ndim != 1 or _values.shape != (ndisps,):
+                    raise RuntimeError(f"Array shape of input {target} is incorrect.")
+            self._phonon_dataset[target] = _values
+        else:
+            raise RuntimeError("Set of FC2 displacements is not available.")

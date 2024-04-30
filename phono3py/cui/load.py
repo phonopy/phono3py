@@ -390,13 +390,14 @@ def set_dataset_and_force_constants(
         cutoff_pair_distance=cutoff_pair_distance,
         log_level=log_level,
     )
-    read_fc["fc2"] = _set_dataset_phonon_dataset_or_fc2(
-        ph3py,
-        ph3py_yaml=ph3py_yaml,
-        fc2_filename=fc2_filename,
-        forces_fc2_filename=forces_fc2_filename,
-        log_level=log_level,
-    )
+    if ph3py.phonon_supercell_matrix is not None:
+        read_fc["fc2"] = _set_dataset_phonon_dataset_or_fc2(
+            ph3py,
+            ph3py_yaml=ph3py_yaml,
+            fc2_filename=fc2_filename,
+            forces_fc2_filename=forces_fc2_filename,
+            log_level=log_level,
+        )
 
     # Cases that dataset is in phono3py.yaml but not forces.
     if ph3py.dataset is None:
