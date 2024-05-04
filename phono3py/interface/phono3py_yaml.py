@@ -133,14 +133,11 @@ class Phono3pyYamlLoader(PhonopyYamlLoader):
 
         This method override PhonopyYaml._parse_dataset.
 
-        key="phonon_displacements" at v2.2 or later.
-        key="displacements" at older version than v2.2.
-
         """
         self._data.phonon_dataset = self._get_dataset(
-            self._data.phonon_supercell, key="phonon_displacements"
+            self._data.phonon_supercell, key_prefix="phonon_"
         )
-        if self._data.phonon_dataset is None:  # key="displacements"
+        if self._data.phonon_dataset is None:
             self._data.phonon_dataset = self._get_dataset(self._data.phonon_supercell)
 
     def _parse_fc3_dataset(self):
@@ -192,6 +189,8 @@ class Phono3pyYamlLoader(PhonopyYamlLoader):
                 data1["id"] = d1_id
             if "forces" in d1:
                 data1["forces"] = np.array(d1["forces"], dtype="double", order="C")
+            if "supercell_energy" in d1:
+                data1["supercell_energy"] = d1["supercell_energy"]
             d2_list = d1.get("paired_with")
             if d2_list is None:  # backward compatibility
                 d2_list = d1.get("second_atoms")
@@ -226,6 +225,8 @@ class Phono3pyYamlLoader(PhonopyYamlLoader):
             second_atom_dict["id"] = d2_id
         if "pair_distance" in d2:
             second_atom_dict["pair_distance"] = d2["pair_distance"]
+        if "supercell_energy" in d2:
+            second_atom_dict["supercell_energy"] = d2["supercell_energy"]
         disp2_id += 1
         data1["second_atoms"].append(second_atom_dict)
         return disp2_id
@@ -294,15 +295,6 @@ class Phono3pyYamlDumper(PhonopyYamlDumper):
         lines += self._phonon_supercell_yaml_lines()
         return lines
 
-    def _phonon_supercell_matrix_yaml_lines(self):
-        lines = []
-        if self._data.phonon_supercell_matrix is not None:
-            lines.append("phonon_supercell_matrix:")
-            for v in self._data.supercell_matrix:
-                lines.append("- [ %3d, %3d, %3d ]" % tuple(v))
-            lines.append("")
-        return lines
-
     def _phonon_supercell_yaml_lines(self):
         lines = []
         if self._data.phonon_supercell is not None:
@@ -326,7 +318,7 @@ class Phono3pyYamlDumper(PhonopyYamlDumper):
         else:
             return self._nac_yaml_lines_given_symbols(self._data.primitive.symbols)
 
-    def _displacements_yaml_lines(self, with_forces=False, key="displacements"):
+    def _displacements_yaml_lines(self, with_forces: bool = False) -> list:
         """Get YAML lines for phonon_dataset and dataset.
 
         This method override PhonopyYaml._displacements_yaml_lines.
@@ -337,16 +329,18 @@ class Phono3pyYamlDumper(PhonopyYamlDumper):
         lines = []
         if self._data.phonon_supercell_matrix is not None:
             lines += self._displacements_yaml_lines_2types(
-                self._data.phonon_dataset, with_forces=with_forces, key=f"phonon_{key}"
+                self._data.phonon_dataset,
+                with_forces=with_forces,
+                key_prefix="phonon_",
             )
         lines += self._displacements_yaml_lines_2types(
-            self._data.dataset, with_forces=with_forces, key=key
+            self._data.dataset, with_forces=with_forces
         )
         return lines
 
     def _displacements_yaml_lines_type1(
-        self, dataset, with_forces=False, key="displacements"
-    ):
+        self, dataset: dict, with_forces: bool = False, key_prefix: str = ""
+    ) -> list:
         """Get YAML lines for type1 phonon_dataset and dataset.
 
         This method override PhonopyYaml._displacements_yaml_lines_type1.
@@ -354,7 +348,9 @@ class Phono3pyYamlDumper(PhonopyYamlDumper):
         Phono3pyYaml._displacements_yaml_lines_type1.
 
         """
-        return displacements_yaml_lines_type1(dataset, with_forces=with_forces, key=key)
+        return displacements_yaml_lines_type1(
+            dataset, with_forces=with_forces, key_prefix=key_prefix
+        )
 
 
 class Phono3pyYaml(PhonopyYaml):
@@ -441,7 +437,9 @@ class Phono3pyYaml(PhonopyYaml):
         self._data.phonon_supercell = phono3py.phonon_supercell
 
 
-def displacements_yaml_lines_type1(dataset, with_forces=False, key="displacements"):
+def displacements_yaml_lines_type1(
+    dataset: dict, with_forces: bool = False, key_prefix: str = ""
+) -> list:
     """Get YAML lines for type1 phonon_dataset and dataset.
 
     This is a function but not class method because used by other function.
@@ -452,7 +450,7 @@ def displacements_yaml_lines_type1(dataset, with_forces=False, key="displacement
     if "second_atoms" in dataset["first_atoms"][0]:
         lines = ["displacement_pairs:"]
     else:
-        lines = [f"{key}:"]
+        lines = [f"{key_prefix}displacements:"]
     for disp1_id, d1 in enumerate(dataset["first_atoms"]):
         lines.append("- atom: %4d" % (d1["number"] + 1))
         lines.append("  displacement:")
@@ -464,6 +462,12 @@ def displacements_yaml_lines_type1(dataset, with_forces=False, key="displacement
             lines.append("  forces:")
             for v in d1["forces"]:
                 lines.append("  - [ %19.16f, %19.16f, %19.16f ]" % tuple(v))
+            if "supercell_energy" in d1:
+                lines.append(
+                    "  supercell_energy: {energy:.8f}".format(
+                        energy=d1["supercell_energy"]
+                    )
+                )
         if "second_atoms" in d1:
             ret_lines, id_offset = _second_displacements_yaml_lines(
                 d1["second_atoms"], id_offset, with_forces=with_forces
@@ -542,6 +546,12 @@ def _second_displacements_yaml_lines(dataset2, id_offset, with_forces=False):
                 lines.append("    forces:")
                 for v in dataset2[j]["forces"]:
                     lines.append("    - [ %19.16f, %19.16f, %19.16f ]" % tuple(v))
+                if "supercell_energy" in dataset2[j]:
+                    lines.append(
+                        "    supercell_energy: {energy:.8f}".format(
+                            energy=dataset2[j]["supercell_energy"]
+                        )
+                    )
         else:
             lines.append("  - atom: %4d" % (i + 1))
             lines.append(

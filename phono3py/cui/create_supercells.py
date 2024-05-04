@@ -1,4 +1,4 @@
-"""Utilities of main CUI script."""
+"""Command line user interface to create supercells."""
 
 # Copyright (C) 2015 Atsushi Togo
 # All rights reserved.
@@ -48,7 +48,6 @@ def create_phono3py_supercells(
     cell_info,
     settings,
     symprec,
-    output_filename=None,
     interface_mode="vasp",
     log_level=1,
 ):
@@ -121,7 +120,7 @@ def create_phono3py_supercells(
         )
         write_supercells_with_displacements(
             interface_mode,
-            phono3py.supercell,
+            phono3py.phonon_supercell,
             phono3py.phonon_supercells_with_displacements,
             optional_structure_info,
             zfill_width=5,
