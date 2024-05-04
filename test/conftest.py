@@ -1,5 +1,6 @@
 """Pytest conftest.py."""
 
+import tarfile
 from pathlib import Path
 
 import numpy as np
@@ -483,6 +484,20 @@ def aln_lda(request) -> Phono3py:
 
 
 @pytest.fixture(scope="session")
+def si_111_222_fd() -> Phono3py:
+    """Return Phono3py class instance of Si-1x1x1-2x2x2 FD."""
+    yaml_filename = cwd / "phono3py_params_Si-111-222-fd.yaml.xz"
+    return phono3py.load(yaml_filename, produce_fc=False, log_level=1)
+
+
+@pytest.fixture(scope="session")
+def si_111_222_rd() -> Phono3py:
+    """Return Phono3py class instance of Si-1x1x1-2x2x2 RD."""
+    yaml_filename = cwd / "phono3py_params_Si-111-222-rd.yaml.xz"
+    return phono3py.load(yaml_filename, produce_fc=False, log_level=1)
+
+
+@pytest.fixture(scope="session")
 def ph_nacl() -> Phonopy:
     """Return Phonopy class instance of NaCl 2x2x2."""
     yaml_filename = cwd / "phonopy_disp_NaCl.yaml"
@@ -508,3 +523,76 @@ def ph_si() -> Phonopy:
         log_level=1,
         produce_fc=True,
     )
+
+
+@pytest.fixture(scope="session")
+def si_111_222_fd_raw_data() -> tarfile.TarFile:
+    """Return Si fc3 111 fc2 222 vasp inputs.
+
+    tar.getnames()
+    ['Si-111-222-fd',
+     'Si-111-222-fd/vasprun-001.xml',
+     'Si-111-222-fd/vasprun-015.xml',
+     'Si-111-222-fd/vasprun-014.xml',
+     'Si-111-222-fd/vasprun-000.xml',
+     'Si-111-222-fd/vasprun-016.xml',
+     'Si-111-222-fd/vasprun-002.xml',
+     'Si-111-222-fd/vasprun-003.xml',
+     'Si-111-222-fd/vasprun-013.xml',
+     'Si-111-222-fd/vasprun-007.xml',
+     'Si-111-222-fd/vasprun-fc2-000.xml',
+     'Si-111-222-fd/vasprun-fc2-001.xml',
+     'Si-111-222-fd/vasprun-006.xml',
+     'Si-111-222-fd/vasprun-012.xml',
+     'Si-111-222-fd/vasprun-004.xml',
+     'Si-111-222-fd/vasprun-010.xml',
+     'Si-111-222-fd/vasprun-011.xml',
+     'Si-111-222-fd/vasprun-005.xml',
+     'Si-111-222-fd/phono3py_disp.yaml',
+     'Si-111-222-fd/vasprun-008.xml',
+     'Si-111-222-fd/vasprun-009.xml']
+    member = tar.getmember("Si-111-222-fd/phono3py_disp.yaml")
+    tar.extractfile(member)  -> byte file object
+
+    """
+    tar = tarfile.open(cwd / "Si-111-222-fd.tar.xz")
+    return tar
+
+
+@pytest.fixture(scope="session")
+def si_111_222_rd_raw_data() -> tarfile.TarFile:
+    """Return Si fc3 111 fc2 222 vasp inputs.
+
+    tar.getnames()
+    ['Si-111-222-rd',
+     'Si-111-222-rd/vasprun-001.xml',
+     'Si-111-222-rd/vasprun-015.xml',
+     'Si-111-222-rd/vasprun-014.xml',
+     'Si-111-222-rd/vasprun-000.xml',
+     'Si-111-222-rd/vasprun-016.xml',
+     'Si-111-222-rd/vasprun-002.xml',
+     'Si-111-222-rd/vasprun-003.xml',
+     'Si-111-222-rd/vasprun-017.xml',
+     'Si-111-222-rd/vasprun-013.xml',
+     'Si-111-222-rd/vasprun-007.xml',
+     'Si-111-222-rd/vasprun-fc2-000.xml',
+     'Si-111-222-rd/vasprun-fc2-001.xml',
+     'Si-111-222-rd/vasprun-006.xml',
+     'Si-111-222-rd/vasprun-012.xml',
+     'Si-111-222-rd/vasprun-004.xml',
+     'Si-111-222-rd/vasprun-010.xml',
+     'Si-111-222-rd/vasprun-fc2-002.xml',
+     'Si-111-222-rd/vasprun-011.xml',
+     'Si-111-222-rd/vasprun-005.xml',
+     'Si-111-222-rd/phono3py_disp.yaml',
+     'Si-111-222-rd/vasprun-020.xml',
+     'Si-111-222-rd/vasprun-008.xml',
+     'Si-111-222-rd/vasprun-009.xml',
+     'Si-111-222-rd/vasprun-019.xml',
+     'Si-111-222-rd/vasprun-018.xml']
+    member = tar.getmember("Si-111-222-rd/phono3py_disp.yaml")
+    tar.extractfile(member)  -> byte file object
+
+    """
+    tar = tarfile.open(cwd / "Si-111-222-fd.tar.xz")
+    return tar
