@@ -36,18 +36,14 @@
 
 from __future__ import annotations
 
-import copy
 import datetime
 import sys
-from typing import Optional, Union
 
 import numpy as np
 from phonopy.cui.collect_cell_info import collect_cell_info
-from phonopy.cui.create_force_sets import check_number_of_force_files
 from phonopy.cui.phonopy_argparse import show_deprecated_option_warnings
 from phonopy.cui.phonopy_script import (
     file_exists,
-    files_exist,
     print_end,
     print_error,
     print_error_message,
@@ -56,9 +52,9 @@ from phonopy.cui.phonopy_script import (
     store_nac_params,
 )
 from phonopy.exception import ForceCalculatorRequiredError
-from phonopy.file_IO import is_file_phonopy_yaml, parse_FORCE_SETS, write_FORCE_SETS
+from phonopy.file_IO import is_file_phonopy_yaml
 from phonopy.harmonic.force_constants import show_drift_force_constants
-from phonopy.interface.calculator import get_default_physical_units, get_force_sets
+from phonopy.interface.calculator import get_default_physical_units
 from phonopy.phonon.band_structure import get_band_qpoints
 from phonopy.structure.cells import isclose as cells_isclose
 from phonopy.units import Bohr, Hartree, VaspToTHz
@@ -67,6 +63,11 @@ from phono3py import Phono3py, Phono3pyIsotope, Phono3pyJointDos
 from phono3py.cui.create_force_constants import (
     create_phono3py_force_constants,
     get_fc_calculator_params,
+)
+from phono3py.cui.create_force_sets import (
+    create_FORCE_SETS_from_FORCES_FCx,
+    create_FORCES_FC2_from_FORCE_SETS,
+    create_FORCES_FC3_and_FORCES_FC2,
 )
 from phono3py.cui.create_supercells import create_phono3py_supercells
 from phono3py.cui.load import (
@@ -82,19 +83,12 @@ from phono3py.cui.show_log import (
 )
 from phono3py.cui.triplets_info import show_num_triplets, write_grid_points
 from phono3py.file_IO import (
-    get_length_of_first_line,
-    parse_FORCES_FC2,
     read_phonon_from_hdf5,
     write_fc2_to_hdf5,
     write_fc3_to_hdf5,
-    write_FORCES_FC2,
-    write_FORCES_FC3,
     write_phonon_to_hdf5,
 )
-from phono3py.interface.phono3py_yaml import (
-    Phono3pyYaml,
-    displacements_yaml_lines_type1,
-)
+from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon3.fc3 import show_drift_fc3
 from phono3py.phonon3.gruneisen import run_gruneisen_parameters
 from phono3py.phonon.grid import get_grid_point_from_address, get_ir_grid_points
@@ -297,255 +291,6 @@ def read_phono3py_settings(args, argparse_control, log_level):
     settings = phono3py_conf_parser.settings
 
     return settings, confs_dict, cell_filename
-
-
-def create_FORCES_FC2_from_FORCE_SETS_then_exit(log_level):
-    """Convert FORCE_SETS to FORCES_FC2."""
-    filename = "FORCE_SETS"
-    file_exists(filename, log_level)
-    disp_dataset = parse_FORCE_SETS(filename=filename)
-    write_FORCES_FC2(disp_dataset)
-
-    if log_level:
-        print("")
-        print("FORCES_FC2 has been created from FORCE_SETS.")
-        print("The following yaml lines should replace respective part of")
-        print("phono3py_disp.yaml made with --dim-fc2=dim_of_FORCE_SETS.")
-
-    print("")
-    print("\n".join(displacements_yaml_lines_type1(disp_dataset)))
-
-    if log_level:
-        print_end_phono3py()
-    sys.exit(0)
-
-
-def create_FORCE_SETS_from_FORCES_FCx_then_exit(
-    phonon_smat, input_filename: Optional[str], cell_filename: Optional[str], log_level
-):
-    """Convert FORCES_FC3 or FORCES_FC2 to FORCE_SETS."""
-    if cell_filename is not None:
-        disp_filename = cell_filename
-    elif input_filename is None:
-        disp_filename = "phono3py_disp.yaml"
-    else:
-        disp_filename = f"phono3py_disp.{input_filename}.yaml"
-    if phonon_smat is not None:
-        forces_filename = "FORCES_FC2"
-    else:
-        forces_filename = "FORCES_FC3"
-
-    if log_level:
-        print(f'Displacement dataset is read from "{disp_filename}".')
-        print(f'Forces are read from "{forces_filename}"')
-
-    with open(forces_filename, "r") as f:
-        len_first_line = get_length_of_first_line(f)
-
-    if len_first_line == 3:
-        file_exists(disp_filename, log_level)
-        file_exists(forces_filename, log_level)
-        ph3yml = Phono3pyYaml()
-        ph3yml.read(disp_filename)
-        if phonon_smat is None:
-            dataset = copy.deepcopy(ph3yml.dataset)
-            smat = ph3yml.supercell_matrix
-        else:
-            dataset = copy.deepcopy(ph3yml.phonon_dataset)
-            smat = ph3yml.phonon_supercell_matrix
-
-        if smat is None or (phonon_smat is not None and (phonon_smat != smat).any()):
-            if log_level:
-                print("")
-                print("Supercell matrix is inconsistent.")
-                print(f'Supercell matrix read from "{disp_filename}":')
-                print(smat)
-                print("Supercell matrix given by --dim-fc2:")
-                print(phonon_smat)
-                print_error()
-            sys.exit(1)
-
-        parse_FORCES_FC2(dataset, filename=forces_filename)
-        write_FORCE_SETS(dataset)
-
-        if log_level:
-            print("FORCE_SETS has been created.")
-            print_end_phono3py()
-    else:
-        if log_level:
-            print(
-                "The file format of %s is already readable by phonopy."
-                % forces_filename
-            )
-            print_end_phono3py()
-    sys.exit(0)
-
-
-def create_FORCES_FC3_and_FORCES_FC2_then_exit(
-    settings,
-    cell_filename: Optional[str],
-    log_level: Union[bool, int],
-):
-    """Create FORCES_FC3 and FORCES_FC2 from files."""
-    interface_mode = settings.calculator
-    ph3py_yaml = None
-
-    #####################
-    # Create FORCES_FC3 #
-    #####################
-    if settings.create_forces_fc3 or settings.create_forces_fc3_file:
-        disp_filename_candidates = [
-            "phono3py_disp.yaml",
-        ]
-        if cell_filename is not None:
-            disp_filename_candidates.insert(0, cell_filename)
-        disp_filenames = files_exist(disp_filename_candidates, log_level, is_any=True)
-        disp_filename = disp_filenames[0]
-        ph3py_yaml = Phono3pyYaml()
-        ph3py_yaml.read(disp_filename)
-        if ph3py_yaml.calculator is not None:
-            interface_mode = ph3py_yaml.calculator  # overwrite
-        disp_dataset = ph3py_yaml.dataset
-
-        if log_level:
-            print("")
-            print('Displacement dataset was read from "%s".' % disp_filename)
-
-        num_atoms = disp_dataset["natom"]
-        num_disps = len(disp_dataset["first_atoms"])
-        for d1 in disp_dataset["first_atoms"]:
-            for d2 in d1["second_atoms"]:
-                if "included" not in d2 or d2["included"]:
-                    num_disps += 1
-
-        if settings.create_forces_fc3_file:
-            file_exists(settings.create_forces_fc3_file, log_level)
-            force_filenames = [x.strip() for x in open(settings.create_forces_fc3_file)]
-        else:
-            force_filenames = settings.create_forces_fc3
-
-        for filename in force_filenames:
-            file_exists(filename, log_level)
-
-        if log_level > 0:
-            print("Number of displacements: %d" % num_disps)
-            print("Number of supercell files: %d" % len(force_filenames))
-
-        if not check_number_of_force_files(num_disps, force_filenames, disp_filename):
-            force_sets = []
-        else:
-            force_sets = get_force_sets(
-                interface_mode,
-                num_atoms,
-                force_filenames,
-                verbose=(log_level > 0),
-            )
-
-        if settings.subtract_forces:
-            force_filename = settings.subtract_forces
-            file_exists(force_filename, log_level)
-            force_set_zero = get_force_sets(
-                interface_mode,
-                num_atoms,
-                [
-                    force_filename,
-                ],
-                verbose=(log_level > 0),
-            )[0]
-            for fs in force_sets:
-                fs -= force_set_zero
-
-            if log_level > 0:
-                print(
-                    "Forces in '%s' were subtracted from supercell forces."
-                    % force_filename
-                )
-
-        if force_sets:
-            write_FORCES_FC3(disp_dataset, forces_fc3=force_sets, filename="FORCES_FC3")
-            if log_level:
-                print("")
-                print("%s has been created." % "FORCES_FC3")
-                print_end_phono3py()
-            sys.exit(0)
-        else:
-            if log_level:
-                print("")
-                print("%s could not be created." % "FORCES_FC3")
-                print_error()
-            sys.exit(1)
-
-    #####################
-    # Create FORCES_FC2 #
-    #####################
-    if settings.create_forces_fc2:
-        disp_filename_candidates = [
-            "phono3py_disp.yaml",
-        ]
-        if cell_filename is not None:
-            disp_filename_candidates.insert(0, cell_filename)
-        disp_filenames = files_exist(disp_filename_candidates, log_level, is_any=True)
-        disp_filename = disp_filenames[0]
-
-        # ph3py_yaml is not None, phono3py_disp.yaml is already read.
-        if ph3py_yaml is None:
-            ph3py_yaml = Phono3pyYaml()
-            ph3py_yaml.read(disp_filename)
-            if ph3py_yaml.calculator is not None:
-                interface_mode = ph3py_yaml.calculator  # overwrite
-        disp_dataset = ph3py_yaml.phonon_dataset
-
-        if log_level:
-            print('Displacement dataset was read from "%s".' % disp_filename)
-        num_atoms = disp_dataset["natom"]
-        num_disps = len(disp_dataset["first_atoms"])
-        force_filenames = settings.create_forces_fc2
-        for filename in force_filenames:
-            file_exists(filename, log_level)
-
-        if log_level > 0:
-            print("Number of displacements: %d" % num_disps)
-            print("Number of supercell files: %d" % len(force_filenames))
-        force_sets = get_force_sets(
-            interface_mode,
-            num_atoms,
-            force_filenames,
-            verbose=(log_level > 0),
-        )
-
-        if settings.subtract_forces:
-            force_filename = settings.subtract_forces
-            file_exists(force_filename, log_level)
-            force_set_zero = get_force_sets(
-                interface_mode,
-                num_atoms,
-                [
-                    force_filename,
-                ],
-                verbose=(log_level > 0),
-            )[0]
-            for fs in force_sets:
-                fs -= force_set_zero
-
-            if log_level > 0:
-                print(
-                    "Forces in '%s' were subtracted from supercell forces."
-                    % force_filename
-                )
-
-        if force_sets:
-            write_FORCES_FC2(disp_dataset, forces_fc2=force_sets, filename="FORCES_FC2")
-            if log_level:
-                print("")
-                print("%s has been created." % "FORCES_FC2")
-                print_end_phono3py()
-            sys.exit(0)
-        else:
-            if log_level:
-                print("")
-                print("%s could not be created." % "FORCES_FC2")
-                print_error()
-            sys.exit(1)
 
 
 def get_input_output_filenames_from_args(args):
@@ -1104,11 +849,17 @@ def main(**argparse_control):
     )
 
     if args.force_sets_to_forces_fc2_mode:
-        create_FORCES_FC2_from_FORCE_SETS_then_exit(log_level)
+        create_FORCES_FC2_from_FORCE_SETS(log_level)
+        if log_level:
+            print_end_phono3py()
+        sys.exit(0)
     if args.force_sets_mode:
-        create_FORCE_SETS_from_FORCES_FCx_then_exit(
+        create_FORCE_SETS_from_FORCES_FCx(
             settings.phonon_supercell_matrix, input_filename, cell_filename, log_level
         )
+        if log_level:
+            print_end_phono3py()
+        sys.exit(0)
     if args.write_grid_points:
         run_mode = "write_grid_info"
     elif args.show_num_triplets:
@@ -1123,7 +874,15 @@ def main(**argparse_control):
     ####################################
     # Create FORCES_FC3 and FORCES_FC2 #
     ####################################
-    create_FORCES_FC3_and_FORCES_FC2_then_exit(settings, cell_filename, log_level)
+    if (
+        settings.create_forces_fc3
+        or settings.create_forces_fc3_file
+        or settings.create_forces_fc2
+    ):
+        create_FORCES_FC3_and_FORCES_FC2(settings, cell_filename, log_level=log_level)
+        if log_level:
+            print_end_phono3py()
+        sys.exit(0)
 
     ###########################################################
     # Symmetry tolerance. Distance unit depends on interface. #
@@ -1149,7 +908,6 @@ def main(**argparse_control):
             cell_info,
             settings,
             symprec,
-            output_filename=output_filename,
             interface_mode=interface_mode,
             log_level=log_level,
         )

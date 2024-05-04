@@ -682,6 +682,14 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         help="Calculate real part of self energy",
     )
     parser.add_argument(
+        "--sp",
+        "--save-params",
+        dest="save_params",
+        action="store_true",
+        default=None,
+        help="Save parameters that can run phono3py in phono3py_params.yaml.",
+    )
+    parser.add_argument(
         "--scattering-event-class",
         dest="scattering_event_class",
         type=int,
