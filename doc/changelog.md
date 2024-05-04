@@ -2,6 +2,10 @@
 
 # Change Log
 
+## May-4-2024: Version 3.0.3
+
+- Release to follow the update of phonopy.
+
 ## Apr-21-2024: Version 3.0.2
 
 - New way of ph-ph interaction calculation (see {ref}`changelog_v290`) is used as
