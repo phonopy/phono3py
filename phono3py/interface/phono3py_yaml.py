@@ -42,8 +42,8 @@ from typing import TYPE_CHECKING, Optional
 import numpy as np
 from phonopy.interface.phonopy_yaml import (
     PhonopyYaml,
-    PhonopyYamlDumper,
-    PhonopyYamlLoader,
+    PhonopyYamlDumperBase,
+    PhonopyYamlLoaderBase,
     load_yaml,
     phonopy_yaml_property_factory,
 )
@@ -82,7 +82,7 @@ class Phono3pyYamlData:
     phonon_primitive: Optional[Primitive] = None
 
 
-class Phono3pyYamlLoader(PhonopyYamlLoader):
+class Phono3pyYamlLoader(PhonopyYamlLoaderBase):
     """Phono3pyYaml loader."""
 
     def __init__(
@@ -168,7 +168,7 @@ class Phono3pyYamlLoader(PhonopyYamlLoader):
         self._data.dataset = dataset
 
         # This case should work only for v2.2 or later.
-        if self._data.dataset is None and "displacements" in self._yaml:
+        if self._data.dataset is None:
             self._data.dataset = self._get_dataset(self._data.supercell)
 
     def _parse_fc3_dataset_type1(self, natom):
@@ -263,7 +263,7 @@ class Phono3pyYamlLoader(PhonopyYamlLoader):
         return disp2_id
 
 
-class Phono3pyYamlDumper(PhonopyYamlDumper):
+class Phono3pyYamlDumper(PhonopyYamlDumperBase):
     """Phono3pyYaml dumper."""
 
     _default_dumper_settings = {
