@@ -115,18 +115,18 @@ class Phono3pyYamlLoader(PhonopyYamlLoaderBase):
 
         """
         super()._parse_all_cells()
-        if "phonon_primitive_cell" in self._yaml:
-            self._data.phonon_primitive = self._parse_cell(
-                self._yaml["phonon_primitive_cell"]
-            )
-        if "phonon_supercell" in self._yaml:
-            self._data.phonon_supercell = self._parse_cell(
-                self._yaml["phonon_supercell"]
-            )
         if "phonon_supercell_matrix" in self._yaml:
             self._data.phonon_supercell_matrix = np.array(
                 self._yaml["phonon_supercell_matrix"], dtype="intc", order="C"
             )
+            if "phonon_primitive_cell" in self._yaml:
+                self._data.phonon_primitive = self._parse_cell(
+                    self._yaml["phonon_primitive_cell"]
+                )
+            if "phonon_supercell" in self._yaml:
+                self._data.phonon_supercell = self._parse_cell(
+                    self._yaml["phonon_supercell"]
+                )
 
     def _parse_dataset(self):
         """Parse phonon_dataset.
@@ -137,8 +137,6 @@ class Phono3pyYamlLoader(PhonopyYamlLoaderBase):
         self._data.phonon_dataset = self._get_dataset(
             self._data.phonon_supercell, key_prefix="phonon_"
         )
-        if self._data.phonon_dataset is None:
-            self._data.phonon_dataset = self._get_dataset(self._data.phonon_supercell)
 
     def _parse_fc3_dataset(self):
         """Parse force dataset for fc3.
@@ -286,13 +284,14 @@ class Phono3pyYamlDumper(PhonopyYamlDumperBase):
 
         """
         lines = super()._cell_info_yaml_lines()
-        lines += self._supercell_matrix_yaml_lines(
-            self._data.phonon_supercell_matrix, "phonon_supercell_matrix"
-        )
-        lines += self._primitive_yaml_lines(
-            self._data.phonon_primitive, "phonon_primitive_cell"
-        )
-        lines += self._phonon_supercell_yaml_lines()
+        if self._data.phonon_supercell_matrix is not None:
+            lines += self._supercell_matrix_yaml_lines(
+                self._data.phonon_supercell_matrix, "phonon_supercell_matrix"
+            )
+            lines += self._primitive_yaml_lines(
+                self._data.phonon_primitive, "phonon_primitive_cell"
+            )
+            lines += self._phonon_supercell_yaml_lines()
         return lines
 
     def _phonon_supercell_yaml_lines(self):
