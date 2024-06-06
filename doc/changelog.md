@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Jun-7-2024: Version 3.0.4
+
+- Bug fix when handling different supercell size of fc2 than that of fc3.
+
 ## May-4-2024: Version 3.0.3
 
 - Release to follow the update of phonopy.

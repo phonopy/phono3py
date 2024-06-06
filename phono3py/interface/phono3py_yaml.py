@@ -42,8 +42,8 @@ from typing import TYPE_CHECKING, Optional
 import numpy as np
 from phonopy.interface.phonopy_yaml import (
     PhonopyYaml,
-    PhonopyYamlDumper,
-    PhonopyYamlLoader,
+    PhonopyYamlDumperBase,
+    PhonopyYamlLoaderBase,
     load_yaml,
     phonopy_yaml_property_factory,
 )
@@ -82,7 +82,7 @@ class Phono3pyYamlData:
     phonon_primitive: Optional[Primitive] = None
 
 
-class Phono3pyYamlLoader(PhonopyYamlLoader):
+class Phono3pyYamlLoader(PhonopyYamlLoaderBase):
     """Phono3pyYaml loader."""
 
     def __init__(
@@ -115,18 +115,18 @@ class Phono3pyYamlLoader(PhonopyYamlLoader):
 
         """
         super()._parse_all_cells()
-        if "phonon_primitive_cell" in self._yaml:
-            self._data.phonon_primitive = self._parse_cell(
-                self._yaml["phonon_primitive_cell"]
-            )
-        if "phonon_supercell" in self._yaml:
-            self._data.phonon_supercell = self._parse_cell(
-                self._yaml["phonon_supercell"]
-            )
         if "phonon_supercell_matrix" in self._yaml:
             self._data.phonon_supercell_matrix = np.array(
                 self._yaml["phonon_supercell_matrix"], dtype="intc", order="C"
             )
+            if "phonon_primitive_cell" in self._yaml:
+                self._data.phonon_primitive = self._parse_cell(
+                    self._yaml["phonon_primitive_cell"]
+                )
+            if "phonon_supercell" in self._yaml:
+                self._data.phonon_supercell = self._parse_cell(
+                    self._yaml["phonon_supercell"]
+                )
 
     def _parse_dataset(self):
         """Parse phonon_dataset.
@@ -137,8 +137,6 @@ class Phono3pyYamlLoader(PhonopyYamlLoader):
         self._data.phonon_dataset = self._get_dataset(
             self._data.phonon_supercell, key_prefix="phonon_"
         )
-        if self._data.phonon_dataset is None:
-            self._data.phonon_dataset = self._get_dataset(self._data.phonon_supercell)
 
     def _parse_fc3_dataset(self):
         """Parse force dataset for fc3.
@@ -168,7 +166,7 @@ class Phono3pyYamlLoader(PhonopyYamlLoader):
         self._data.dataset = dataset
 
         # This case should work only for v2.2 or later.
-        if self._data.dataset is None and "displacements" in self._yaml:
+        if self._data.dataset is None:
             self._data.dataset = self._get_dataset(self._data.supercell)
 
     def _parse_fc3_dataset_type1(self, natom):
@@ -263,7 +261,7 @@ class Phono3pyYamlLoader(PhonopyYamlLoader):
         return disp2_id
 
 
-class Phono3pyYamlDumper(PhonopyYamlDumper):
+class Phono3pyYamlDumper(PhonopyYamlDumperBase):
     """Phono3pyYaml dumper."""
 
     _default_dumper_settings = {
@@ -286,13 +284,14 @@ class Phono3pyYamlDumper(PhonopyYamlDumper):
 
         """
         lines = super()._cell_info_yaml_lines()
-        lines += self._supercell_matrix_yaml_lines(
-            self._data.phonon_supercell_matrix, "phonon_supercell_matrix"
-        )
-        lines += self._primitive_yaml_lines(
-            self._data.phonon_primitive, "phonon_primitive_cell"
-        )
-        lines += self._phonon_supercell_yaml_lines()
+        if self._data.phonon_supercell_matrix is not None:
+            lines += self._supercell_matrix_yaml_lines(
+                self._data.phonon_supercell_matrix, "phonon_supercell_matrix"
+            )
+            lines += self._primitive_yaml_lines(
+                self._data.phonon_primitive, "phonon_primitive_cell"
+            )
+            lines += self._phonon_supercell_yaml_lines()
         return lines
 
     def _phonon_supercell_yaml_lines(self):

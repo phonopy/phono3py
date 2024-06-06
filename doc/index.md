@@ -23,7 +23,13 @@ Papers that may introduce phono3py:
   <http://dx.doi.org/10.1103/PhysRevB.91.094306> (arxiv
   <http://arxiv.org/abs/1501.00691>).
 - Introduction to phono3py application:
-  <https://doi.org/10.1103/PhysRevB.97.224306> (open access).
+  <https://journals.jps.jp/doi/10.7566/JPSJ.92.012001> (open access),
+  and phono3py inputs for 103 compounds found in Fig.17
+  <https://github.com/atztogo/phonondb/blob/main/mdr/phono3py_103compounds_fd/README.md>
+- Implementation of phono3py:
+  <https://iopscience.iop.org/article/10.1088/1361-648X/acd831> (open access)
+
+A set of pre-calculated data for phono3py in
 
 ```{image} Si-kaccum.png
 :width: 20%
