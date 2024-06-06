@@ -36,6 +36,7 @@
 from __future__ import annotations
 
 import os
+import pathlib
 from collections.abc import Sequence
 from typing import Optional, Union
 
@@ -390,14 +391,13 @@ def set_dataset_and_force_constants(
         cutoff_pair_distance=cutoff_pair_distance,
         log_level=log_level,
     )
-    if ph3py.phonon_supercell_matrix is not None:
-        read_fc["fc2"] = _set_dataset_phonon_dataset_or_fc2(
-            ph3py,
-            ph3py_yaml=ph3py_yaml,
-            fc2_filename=fc2_filename,
-            forces_fc2_filename=forces_fc2_filename,
-            log_level=log_level,
-        )
+    read_fc["fc2"] = _set_dataset_phonon_dataset_or_fc2(
+        ph3py,
+        ph3py_yaml=ph3py_yaml,
+        fc2_filename=fc2_filename,
+        forces_fc2_filename=forces_fc2_filename,
+        log_level=log_level,
+    )
 
     # Cases that dataset is in phono3py.yaml but not forces.
     if ph3py.dataset is None:
@@ -487,14 +487,14 @@ def _set_dataset_or_fc3(
             cutoff_pair_distance,
             log_level,
         )
-    elif os.path.isfile("fc3.hdf5"):
+    elif pathlib.Path("fc3.hdf5").exists():
         fc3 = read_fc3_from_hdf5(filename="fc3.hdf5", p2s_map=p2s_map)
         _check_fc3_shape(ph3py, fc3)
         ph3py.fc3 = fc3
         read_fc3 = True
         if log_level:
             print('fc3 was read from "fc3.hdf5".')
-    elif os.path.isfile("FORCES_FC3"):
+    elif pathlib.Path("FORCES_FC3").exists():
         _set_dataset_for_fc3(
             ph3py,
             ph3py_yaml,
@@ -544,14 +544,17 @@ def _set_dataset_phonon_dataset_or_fc2(
             "phonon_fc2",
             log_level,
         )
-    elif os.path.isfile("fc2.hdf5"):
+    elif pathlib.Path("fc2.hdf5").exists():
         fc2 = read_fc2_from_hdf5(filename="fc2.hdf5", p2s_map=phonon_p2s_map)
         _check_fc2_shape(ph3py, fc2)
         ph3py.fc2 = fc2
         read_fc2 = True
         if log_level:
             print('fc2 was read from "fc2.hdf5".')
-    elif os.path.isfile("FORCES_FC2"):
+    elif (
+        pathlib.Path("FORCES_FC2").exists()
+        and ph3py.phonon_supercell_matrix is not None
+    ):
         _set_dataset_for_fc2(
             ph3py,
             ph3py_yaml,
@@ -583,7 +586,10 @@ def _set_dataset_phonon_dataset_or_fc2(
             "fc2",
             log_level,
         )
-    elif os.path.isfile("FORCES_FC3"):
+    elif (
+        pathlib.Path("FORCES_FC3").exists()
+        and ph3py.phonon_supercell_matrix is not None
+    ):
         # suppose fc3.hdf5 is read but fc2.hdf5 doesn't exist.
         _set_dataset_for_fc2(
             ph3py,
