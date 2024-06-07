@@ -541,14 +541,7 @@ def store_force_constants(
                 log_level=log_level,
             )
         except ForceCalculatorRequiredError:
-            if log_level:
-                print("")
-                print(
-                    "Built-in force constants calculator doesn't support the "
-                    "dispalcements-forces dataset. "
-                    "An external force calculator, e.g., ALM (--alm), has to be used "
-                    "to compute force constants."
-                )
+            _show_fc_calculator_not_found(log_level)
 
         if log_level:
             if phono3py.fc3 is None:
@@ -592,15 +585,31 @@ def store_force_constants(
             if log_level:
                 print('fc2 was written into "fc2.hdf5".')
     else:
-        create_phono3py_force_constants(
-            phono3py,
-            settings,
-            ph3py_yaml=ph3py_yaml,
-            phono3py_yaml_filename=phono3py_yaml_filename,
-            input_filename=input_filename,
-            output_filename=output_filename,
-            log_level=log_level,
+        try:
+            create_phono3py_force_constants(
+                phono3py,
+                settings,
+                ph3py_yaml=ph3py_yaml,
+                phono3py_yaml_filename=phono3py_yaml_filename,
+                input_filename=input_filename,
+                output_filename=output_filename,
+                log_level=log_level,
+            )
+        except ForceCalculatorRequiredError:
+            _show_fc_calculator_not_found(log_level)
+
+
+def _show_fc_calculator_not_found(log_level):
+    if log_level:
+        print("")
+        print(
+            "Built-in force constants calculator doesn't support the "
+            "dispalcements-forces dataset. "
+            "An external force calculator, e.g., ALM (--alm), has to be used "
+            "to compute force constants."
         )
+        print_error()
+    sys.exit(1)
 
 
 def run_gruneisen_then_exit(phono3py, settings, output_filename, log_level):

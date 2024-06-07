@@ -48,7 +48,12 @@ from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import determinant
 
 from phono3py import Phono3py
-from phono3py.cui.create_force_constants import forces_in_dataset, parse_forces
+from phono3py.cui.create_force_constants import (
+    displacements_in_dataset,
+    forces_in_dataset,
+    parse_forces,
+    read_type2_dataset,
+)
 from phono3py.file_IO import read_fc2_from_hdf5, read_fc3_from_hdf5
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon3.fc3 import show_drift_fc3
@@ -494,28 +499,31 @@ def _set_dataset_or_fc3(
         read_fc3 = True
         if log_level:
             print('fc3 was read from "fc3.hdf5".')
-    elif pathlib.Path("FORCES_FC3").exists():
-        _set_dataset_for_fc3(
-            ph3py,
-            ph3py_yaml,
-            "FORCES_FC3",
-            phono3py_yaml_filename,
-            cutoff_pair_distance,
-            log_level,
-        )
-    elif (
-        ph3py_yaml is not None
-        and ph3py_yaml.dataset is not None
-        and forces_in_dataset(ph3py_yaml.dataset)
-    ):
-        _set_dataset_for_fc3(
-            ph3py,
-            ph3py_yaml,
-            None,
-            phono3py_yaml_filename,
-            cutoff_pair_distance,
-            log_level,
-        )
+    elif dataset := read_type2_dataset(
+        len(ph3py.supercell), "FORCES_FC3", log_level=log_level
+    ):  # := Assignment Expressions (Python>=3.8)
+        ph3py.dataset = dataset
+    elif ph3py_yaml is not None and ph3py_yaml.dataset is not None:
+        if pathlib.Path("FORCES_FC3").exists() and displacements_in_dataset(
+            ph3py_yaml.dataset
+        ):
+            _set_dataset_for_fc3(
+                ph3py,
+                ph3py_yaml,
+                "FORCES_FC3",
+                phono3py_yaml_filename,
+                cutoff_pair_distance,
+                log_level,
+            )
+        if forces_in_dataset(ph3py_yaml.dataset):
+            _set_dataset_for_fc3(
+                ph3py,
+                ph3py_yaml,
+                None,
+                phono3py_yaml_filename,
+                cutoff_pair_distance,
+                log_level,
+            )
     return read_fc3
 
 
