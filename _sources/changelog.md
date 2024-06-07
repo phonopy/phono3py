@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Jun-7-2024: Version 3.1.1
+
+- Minor fix related to typehint for python-3.8.
+
 ## Jun-7-2024: Version 3.1.0
 
 - Change to write forces in phono3py-yaml as default.
