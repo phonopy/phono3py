@@ -44,6 +44,7 @@ from phonopy.harmonic.displacement import (
     directions_to_displacement_dataset,
     get_least_displacements,
 )
+from phonopy.harmonic.dynamical_matrix import DynamicalMatrix
 from phonopy.harmonic.force_constants import get_fc2 as get_phonopy_fc2
 from phonopy.harmonic.force_constants import (
     set_permutation_symmetry,
@@ -179,7 +180,7 @@ class Phono3py:
             Supercell matrix used for fc2. In phono3py, supercell matrix for fc3
             and fc2 can be different to support longer range interaction of fc2
             than that of fc3. Unless setting this, supercell_matrix is used.
-            This is only valide when unitcell or unitcell_filename is given.
+            This is only valid when unitcell or unitcell_filename is given.
             Default is None.
         cutoff_frequency : float, optional
             Phonon frequency below this value is ignored when the cutoff is
@@ -297,7 +298,7 @@ class Phono3py:
         self._set_band_indices()
 
     @property
-    def version(self):
+    def version(self) -> str:
         """Return phono3py release version number.
 
         str
@@ -317,7 +318,7 @@ class Phono3py:
         return self._calculator
 
     @property
-    def fc3(self):
+    def fc3(self) -> Optional[np.ndarray]:
         """Setter and getter of third order force constants (fc3).
 
         ndarray
@@ -334,7 +335,7 @@ class Phono3py:
         self._fc3 = fc3
 
     @property
-    def fc2(self):
+    def fc2(self) -> Optional[np.ndarray]:
         """Setter and getter of second order force constants (fc2).
 
         ndarray
@@ -351,12 +352,12 @@ class Phono3py:
         self._fc2 = fc2
 
     @property
-    def force_constants(self):
+    def force_constants(self) -> Optional[np.ndarray]:
         """Return fc2. This is same as the getter attribute `fc2`."""
         return self.fc2
 
     @property
-    def sigmas(self):
+    def sigmas(self) -> list:
         """Setter and getter of smearing widths.
 
         list
@@ -386,7 +387,7 @@ class Phono3py:
                     self._sigmas.append(None)
 
     @property
-    def sigma_cutoff(self):
+    def sigma_cutoff(self) -> Optional[float]:
         """Setter and getter of Smearing cutoff width.
 
         This is given as a multiple of the standard deviation.
@@ -403,7 +404,7 @@ class Phono3py:
         self._sigma_cutoff = sigma_cutoff
 
     @property
-    def nac_params(self):
+    def nac_params(self) -> Optional[dict]:
         """Setter and getter of parameters for non-analytical term correction.
 
         dict
@@ -427,7 +428,7 @@ class Phono3py:
             self._init_dynamical_matrix()
 
     @property
-    def dynamical_matrix(self):
+    def dynamical_matrix(self) -> Optional[DynamicalMatrix]:
         """Return DynamicalMatrix instance.
 
         This is not dynamical matrices but the instance of DynamicalMatrix
@@ -522,7 +523,7 @@ class Phono3py:
         return self._phonon_supercell_symmetry
 
     @property
-    def supercell_matrix(self):
+    def supercell_matrix(self) -> np.ndarray:
         """Return transformation matrix to supercell cell from unit cell.
 
         ndarray
@@ -533,7 +534,7 @@ class Phono3py:
         return self._supercell_matrix
 
     @property
-    def phonon_supercell_matrix(self):
+    def phonon_supercell_matrix(self) -> Optional[np.ndarray]:
         """Return transformation matrix to phonon supercell from unit cell.
 
         ndarray
@@ -544,7 +545,7 @@ class Phono3py:
         return self._phonon_supercell_matrix
 
     @property
-    def primitive_matrix(self):
+    def primitive_matrix(self) -> np.ndarray:
         """Return transformation matrix to primitive cell from unit cell.
 
         ndarray
@@ -555,7 +556,7 @@ class Phono3py:
         return self._primitive_matrix
 
     @property
-    def unit_conversion_factor(self):
+    def unit_conversion_factor(self) -> float:
         """Return phonon frequency unit conversion factor.
 
         float
@@ -567,7 +568,7 @@ class Phono3py:
         return self._frequency_factor_to_THz
 
     @property
-    def dataset(self):
+    def dataset(self) -> Optional[dict]:
         """Setter and getter of displacement-force dataset.
 
         dict
@@ -629,7 +630,7 @@ class Phono3py:
         self._phonon_supercells_with_displacements = None
 
     @property
-    def phonon_dataset(self):
+    def phonon_dataset(self) -> Optional[dict]:
         """Setter and getter of displacement-force dataset for fc2.
 
         dict
@@ -674,10 +675,10 @@ class Phono3py:
         self._phonon_supercells_with_displacements = None
 
     @property
-    def band_indices(self):
+    def band_indices(self) -> list[np.ndarray]:
         """Setter and getter of band indices.
 
-        array_like
+        list[np.ndarray]
             List of band indices specified to select specific bands
             to computer ph-ph interaction related properties.
 
@@ -693,11 +694,11 @@ class Phono3py:
             num_band = len(self._primitive) * 3
             self._band_indices = [np.arange(num_band, dtype="int_")]
         else:
-            self._band_indices = band_indices
+            self._band_indices = [np.array(bi, dtype="int_") for bi in band_indices]
         self._band_indices_flatten = np.hstack(self._band_indices).astype("int_")
 
     @property
-    def masses(self):
+    def masses(self) -> np.ndarray:
         """Setter and getter of atomic masses of primitive cell."""
         return self._primitive.masses
 
@@ -719,7 +720,7 @@ class Phono3py:
         self._phonon_supercell.masses = s_masses
 
     @property
-    def supercells_with_displacements(self):
+    def supercells_with_displacements(self) -> list[PhonopyAtoms]:
         """Return supercells with displacements.
 
         list of PhonopyAtoms
@@ -2038,7 +2039,7 @@ class Phono3py:
             the settings expected to be updated from the following
             default settings are needed to be set in the dictionary.
             The possible parameters and their default settings are:
-                {'force_sets': False,
+                {'force_sets': True,
                  'displacements': True,
                  'force_constants': False,
                  'born_effective_charge': True,
