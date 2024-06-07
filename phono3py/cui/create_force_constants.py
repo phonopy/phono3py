@@ -34,8 +34,11 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import copy
 import os
+import pathlib
 import sys
 from typing import Optional
 
@@ -247,7 +250,7 @@ def parse_forces(
     # None is returned unless type-2.
     # can emit FileNotFoundError.
     if dataset is None or dataset is not None and not forces_in_dataset(dataset):
-        _dataset = _get_type2_dataset(
+        _dataset = read_type2_dataset(
             natom, filename=force_filename, log_level=log_level
         )
         # Do not overwrite dataset when _dataset is None.
@@ -311,11 +314,16 @@ def parse_forces(
     return dataset
 
 
-def forces_in_dataset(dataset):
+def forces_in_dataset(dataset: dict) -> bool:
     """Return whether forces in dataset or not."""
     return "forces" in dataset or (
         "first_atoms" in dataset and "forces" in dataset["first_atoms"][0]
     )
+
+
+def displacements_in_dataset(dataset: dict) -> bool:
+    """Return whether displacements in dataset or not."""
+    return "displacements" in dataset or "first_atoms" in dataset
 
 
 def get_fc_calculator_params(settings):
@@ -338,7 +346,7 @@ def get_fc_calculator_params(settings):
     return fc_calculator, fc_calculator_options
 
 
-def _read_phono3py_fc3(phono3py, symmetrize_fc3r, input_filename, log_level):
+def _read_phono3py_fc3(phono3py: Phono3py, symmetrize_fc3r, input_filename, log_level):
     if input_filename is None:
         filename = "fc3.hdf5"
     else:
@@ -357,7 +365,7 @@ def _read_phono3py_fc3(phono3py, symmetrize_fc3r, input_filename, log_level):
         if log_level:
             print_error()
         sys.exit(1)
-    num_atom = phono3py.supercell.get_number_of_atoms()
+    num_atom = len(phono3py.supercell)
     if fc3.shape[1] != num_atom:
         print("Matrix shape of fc3 doesn't agree with supercell size.")
         if log_level:
@@ -407,8 +415,9 @@ def _read_phono3py_fc2(phono3py, symmetrize_fc2, input_filename, log_level):
     phono3py.fc2 = phonon_fc2
 
 
-def _get_type2_dataset(natom, filename="FORCES_FC3", log_level=0):
-    if not os.path.isfile(filename):
+def read_type2_dataset(natom, filename="FORCES_FC3", log_level=0) -> Optional[dict]:
+    """Read type-2 FORCES_FC3."""
+    if not pathlib.Path(filename).exists():
         return None
 
     with open(filename, "r") as f:

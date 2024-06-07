@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Jun-7-2024: Version 3.1.0
+
+- Change to write forces in phono3py-yaml as default.
+
 ## Jun-7-2024: Version 3.0.4
 
 - Bug fix when handling different supercell size of fc2 than that of fc3.
