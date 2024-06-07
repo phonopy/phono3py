@@ -265,7 +265,7 @@ class Phono3pyYamlDumper(PhonopyYamlDumperBase):
     """Phono3pyYaml dumper."""
 
     _default_dumper_settings = {
-        "force_sets": False,
+        "force_sets": True,
         "displacements": True,
         "force_constants": False,
         "born_effective_charge": True,
