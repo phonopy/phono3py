@@ -277,13 +277,12 @@ def _test_disp_corr_matrix(ph3):
 
 def test_fc3(si_pbesol_iterha_111):
     """Test of ThirdOrderFC class."""
-    try:
-        import alm  # noqa F401
-    except ModuleNotFoundError:
-        pytest.skip("Skip this test because ALM module was not found.")
+    pytest.importorskip("symfc")
 
     ph = si_pbesol_iterha_111
-    ph.produce_force_constants(calculate_full_force_constants=True, fc_calculator="alm")
+    ph.produce_force_constants(
+        calculate_full_force_constants=True, fc_calculator="symfc"
+    )
     supercell_phonon = SupercellPhonon(
         ph.supercell,
         ph.force_constants,

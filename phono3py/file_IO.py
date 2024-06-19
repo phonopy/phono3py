@@ -280,7 +280,7 @@ def write_fc3_to_hdf5(fc3, filename="fc3.hdf5", p2s_map=None, compression="gzip"
 
     """
     with h5py.File(filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("fc3", data=fc3, compression=compression)
         if p2s_map is not None:
             w.create_dataset("p2s_map", data=p2s_map)
@@ -352,9 +352,9 @@ def write_fc2_to_hdf5(
                 dset = w.create_dataset(
                     "physical_unit", (1,), dtype="S%d" % len(physical_unit)
                 )
-                dset[0] = np.string_(physical_unit)
+                dset[0] = np.bytes_(physical_unit)
             if version is not None:
-                w.create_dataset("version", data=np.string_(version))
+                w.create_dataset("version", data=np.bytes_(version))
 
     write_force_constants_to_hdf5(
         force_constants,
@@ -385,7 +385,7 @@ def write_grid_address_to_hdf5(
     suffix = _get_filename_suffix(mesh, filename=filename)
     full_filename = "grid_address" + suffix + ".hdf5"
     with h5py.File(full_filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("mesh", data=mesh)
         if bz_grid is not None and bz_grid.grid_matrix is not None:
             w.create_dataset("grid_matrix", data=bz_grid.grid_matrix)
@@ -577,7 +577,7 @@ def write_real_self_energy_to_hdf5(
     full_filename += ".hdf5"
 
     with h5py.File(full_filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("grid_point", data=grid_point)
         w.create_dataset("mesh", data=mesh)
         if bz_grid is not None and bz_grid.grid_matrix is not None:
@@ -666,7 +666,7 @@ def write_spectral_function_to_hdf5(
     full_filename += ".hdf5"
 
     with h5py.File(full_filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("grid_point", data=grid_point)
         w.create_dataset("mesh", data=mesh)
         if bz_grid is not None and bz_grid.grid_matrix is not None:
@@ -713,7 +713,7 @@ def write_collision_to_hdf5(
     )
     full_filename = "collision" + suffix + ".hdf5"
     with h5py.File(full_filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("temperature", data=temperature)
         if gamma is not None:
             w.create_dataset("gamma", data=gamma)
@@ -751,7 +751,7 @@ def write_collision_to_hdf5(
 def write_full_collision_matrix(collision_matrix, filename="fcm.hdf5"):
     """Write full (non-symmetrized) collision matrix to collision-*.hdf5."""
     with h5py.File(filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("collision_matrix", data=collision_matrix)
 
 
@@ -776,7 +776,7 @@ def write_unitary_matrix_to_hdf5(
     )
     hdf5_filename = "unitary" + suffix + ".hdf5"
     with h5py.File(hdf5_filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("temperature", data=temperature)
         if unitary_matrix is not None:
             w.create_dataset("unitary_matrix", data=unitary_matrix)
@@ -816,7 +816,7 @@ def write_collision_eigenvalues_to_hdf5(
         mesh, sigma=sigma, sigma_cutoff=sigma_cutoff, filename=filename
     )
     with h5py.File("coleigs" + suffix + ".hdf5", "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("temperature", data=temperatures)
         w.create_dataset("collision_eigenvalues", data=collision_eigenvalues)
         w.close()
@@ -885,7 +885,7 @@ def write_kappa_to_hdf5(
     )
     full_filename = "kappa" + suffix + ".hdf5"
     with h5py.File(full_filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("temperature", data=temperature)
         w.create_dataset("mesh", data=mesh)
         if bz_grid is not None and bz_grid.grid_matrix is not None:
@@ -1159,7 +1159,7 @@ def write_pp_to_hdf5(
     full_filename = "pp" + suffix + ".hdf5"
 
     with h5py.File(full_filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         if pp is not None:
             if g_zero is None:
                 w.create_dataset("pp", data=pp, compression=compression)
@@ -1323,7 +1323,7 @@ def write_gamma_detail_to_hdf5(
     full_filename = "gamma_detail" + suffix + ".hdf5"
 
     with h5py.File(full_filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("temperature", data=temperature)
         w.create_dataset("mesh", data=mesh)
         if bz_grid is not None and bz_grid.grid_matrix is not None:
@@ -1397,7 +1397,7 @@ def write_phonon_to_hdf5(
     full_filename = "phonon" + suffix + ".hdf5"
 
     with h5py.File(full_filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("mesh", data=mesh)
         if bz_grid is not None and bz_grid.grid_matrix is not None:
             w.create_dataset("grid_matrix", data=bz_grid.grid_matrix)
