@@ -170,21 +170,21 @@ def si_pbesol_111(request) -> Phono3py:
 
 
 @pytest.fixture(scope="session")
-def si_pbesol_111_alm(request) -> Phono3py:
+def si_pbesol_111_symfc(request) -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
     * full fc
-    * use alm if available on test side
+    * use symfc if available on test side
 
     """
-    pytest.importorskip("alm")
+    pytest.importorskip("symfc")
 
     yaml_filename = cwd / "phono3py_params_Si111.yaml"
     enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
-        fc_calculator="alm",
+        fc_calculator="symfc",
         make_r0_average=not enable_v2,
         log_level=1,
     )
@@ -208,7 +208,7 @@ def si_pbesol_111_222_fd(request) -> Phono3py:
 
     * with symmetry
     * full fc
-    * use alm if available on test side
+    * use symfc if available on test side
 
     """
     yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
@@ -221,63 +221,63 @@ def si_pbesol_111_222_fd(request) -> Phono3py:
 
 
 @pytest.fixture(scope="session")
-def si_pbesol_111_222_alm(request) -> Phono3py:
+def si_pbesol_111_222_symfc(request) -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
     * full fc
-    * use alm if available on test side
+    * use symfc if available on test side
 
     """
-    pytest.importorskip("alm")
+    pytest.importorskip("symfc")
 
     yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
     enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
-        fc_calculator="alm",
+        fc_calculator="symfc",
         make_r0_average=not enable_v2,
         log_level=1,
     )
 
 
 @pytest.fixture(scope="session")
-def si_pbesol_111_222_alm_fd(request) -> Phono3py:
+def si_pbesol_111_222_symfc_fd(request) -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
     * full fc
-    * use alm for fc2 if available on test side
+    * use symfc for fc2 if available on test side
 
     """
-    pytest.importorskip("alm")
+    pytest.importorskip("symfc")
 
     yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
     enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
-        fc_calculator="alm|",
+        fc_calculator="symfc|",
         make_r0_average=not enable_v2,
         log_level=1,
     )
 
 
 @pytest.fixture(scope="session")
-def si_pbesol_111_222_fd_alm(request) -> Phono3py:
+def si_pbesol_111_222_fd_symfc(request) -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
     * full fc
-    * use alm for fc3 if available on test side
+    * use symfc for fc3 if available on test side
 
     """
-    pytest.importorskip("alm")
+    pytest.importorskip("symfc")
 
     yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
     enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
-        fc_calculator="|alm",
+        fc_calculator="|symfc",
         make_r0_average=not enable_v2,
         log_level=1,
     )

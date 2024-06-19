@@ -3,6 +3,7 @@
 import numpy as np
 
 import phono3py
+from phono3py import Phono3py
 from phono3py.phonon3.displacement_fc3 import get_smallest_vector_of_atom_pair
 
 distances_NaCl = [
@@ -97,9 +98,13 @@ def test_duplicates_agno2(agno2_cell):
     np.testing.assert_equal(duplicates_ref, ph3.dataset["duplicates"])
 
 
-def test_nacl_pbe(nacl_pbe):
+def test_nacl_pbe(nacl_pbe: Phono3py):
     """Test generated displacements and duplicates."""
-    ph3 = nacl_pbe
+    ph3 = Phono3py(
+        nacl_pbe.unitcell,
+        supercell_matrix=nacl_pbe.supercell_matrix,
+        primitive_matrix=nacl_pbe.primitive_matrix,
+    )
     ph3.generate_displacements()
     duplicates_ref = [[77, 41]]
     ph3.dataset["duplicates"]
