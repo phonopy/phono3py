@@ -15,9 +15,9 @@ jobs:
         python-version: ["3.12"]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     # Use conda-incubator/setup-miniconda for precise control of conda infrastructure
-    - uses: conda-incubator/setup-miniconda@v2
+    - uses: conda-incubator/setup-miniconda@v3
       with:
         miniforge-version: latest
     - name: Install dependent packages
