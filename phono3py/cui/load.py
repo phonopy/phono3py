@@ -442,17 +442,20 @@ def compute_force_constants_from_datasets(
             fc_calculator=fc_calculator,
             fc_calculator_options=fc_calculator_options,
         )
-        if log_level and symmetrize_fc:
+        if log_level and symmetrize_fc and fc_calculator is None:
             print("fc3 was symmetrized.")
 
     if not read_fc["fc2"] and (ph3py.dataset or ph3py.phonon_dataset):
         if (
             ph3py.phonon_supercell_matrix is None
-            and fc_calculator == "alm"
+            and fc_calculator in ("alm", "symfc")
             and ph3py.fc2 is not None
         ):
             if log_level:
-                print("fc2 that was fit simultaneously with fc3 by ALM is used.")
+                if fc_calculator == "alm":
+                    print("fc2 that was fit simultaneously with fc3 by ALM is used.")
+                elif fc_calculator == "symfc":
+                    print("fc2 that was fit simultaneously with fc3 by symfc is used.")
         else:
             ph3py.produce_fc2(
                 symmetrize_fc2=symmetrize_fc,
