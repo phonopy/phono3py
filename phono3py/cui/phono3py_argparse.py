@@ -714,6 +714,13 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         help="Cutoff width of smearing function (ratio to sigma value)",
     )
     parser.add_argument(
+        "--symfc",
+        dest="use_symfc",
+        action="store_true",
+        default=None,
+        help="Use symfc for generating force constants",
+    )
+    parser.add_argument(
         "--spf",
         dest="is_spectral_function",
         action="store_true",
