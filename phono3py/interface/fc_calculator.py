@@ -34,16 +34,26 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
+from typing import Optional
+
+import numpy as np
+from phonopy.structure.atoms import PhonopyAtoms
+from phonopy.structure.cells import Primitive
+from phonopy.structure.symmetry import Symmetry
+
 
 def get_fc3(
-    supercell,
-    primitive,
-    displacements,
-    forces,
-    fc_calculator=None,
-    fc_calculator_options=None,
-    is_compact_fc=False,
-    log_level=0,
+    supercell: PhonopyAtoms,
+    primitive: Primitive,
+    displacements: np.ndarray,
+    forces: np.ndarray,
+    fc_calculator: Optional[str] = None,
+    fc_calculator_options: Optional[str] = None,
+    is_compact_fc: bool = False,
+    symmetry: Optional[Symmetry] = None,
+    log_level: int = 0,
 ):
     """Supercell 2nd order force constants (fc2) are calculated.
 
@@ -86,15 +96,28 @@ def get_fc3(
 
     """
     if fc_calculator == "alm":
-        from phono3py.interface.alm import get_fc3
+        from phono3py.interface.alm import get_fc3 as get_fc3_alm
 
-        return get_fc3(
+        return get_fc3_alm(
             supercell,
             primitive,
             displacements,
             forces,
             options=fc_calculator_options,
             is_compact_fc=is_compact_fc,
+            log_level=log_level,
+        )
+    elif fc_calculator == "symfc":
+        from phonopy.interface.symfc import run_symfc
+
+        return run_symfc(
+            supercell,
+            primitive,
+            displacements,
+            forces,
+            orders=[2, 3],
+            is_compact_fc=is_compact_fc,
+            symmetry=symmetry,
             log_level=log_level,
         )
     else:

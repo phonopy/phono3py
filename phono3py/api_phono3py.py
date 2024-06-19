@@ -1329,6 +1329,7 @@ class Phono3py:
                 fc_calculator=fc3_calculator,
                 fc_calculator_options=fc3_calculator_options,
                 is_compact_fc=is_compact_fc,
+                symmetry=self._symmetry,
                 log_level=self._log_level,
             )
         else:
@@ -1425,6 +1426,8 @@ class Phono3py:
                 fc_calculator=fc2_calculator,
                 fc_calculator_options=fc2_calculator_options,
                 atom_list=p2s_map,
+                symmetry=self._phonon_supercell_symmetry,
+                symprec=self._symprec,
                 log_level=self._log_level,
             )
         else:
