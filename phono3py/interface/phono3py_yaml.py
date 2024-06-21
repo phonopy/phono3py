@@ -152,9 +152,9 @@ class Phono3pyYamlLoader(PhonopyYamlLoaderBase):
         dataset = None
         if "displacement_pairs" in self._yaml:
             disp = self._yaml["displacement_pairs"][0]
-            if type(disp) is dict:  # type1
+            if isinstance(disp, dict):  # type1
                 dataset = self._parse_fc3_dataset_type1(len(self._data.supercell))
-            elif type(disp) is list:  # type2
+            elif isinstance(disp, list):  # type2
                 if "displacement" in disp[0]:
                     dataset = self._parse_force_sets_type2()
         if "displacement_pair_info" in self._yaml:
@@ -507,7 +507,7 @@ def _displacements_yaml_lines_type1_info(dataset):
     if "duplicates" in dataset and dataset["duplicates"]:
         lines.append("  duplicated_supercell_ids: " "# 0 means perfect supercell")
         # Backward compatibility for dict type
-        if type(dataset["duplicates"]) is dict:
+        if isinstance(dataset["duplicates"], dict):
             for disp1_id, j in dataset["duplicates"].items():
                 lines.append("  - [ %d, %d ]" % (int(disp1_id), j))
         else:
@@ -580,7 +580,7 @@ def read_phono3py_yaml(
 ) -> Phono3pyYamlData:
     """Read phono3py.yaml like file."""
     yaml_data = load_yaml(filename)
-    if type(yaml_data) is str:
+    if isinstance(yaml_data, str):
         msg = f'Could not load "{filename}" properly.'
         raise TypeError(msg)
     return load_phono3py_yaml(
@@ -597,7 +597,7 @@ def load_phono3py_yaml(
     """Return Phono3pyYamlData instance loading yaml data.
 
     Parameters
-    -----------
+    ----------
     yaml_data : dict
 
     """

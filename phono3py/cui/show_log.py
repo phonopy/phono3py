@@ -48,7 +48,8 @@ def show_general_settings(
 ):
     """Show general setting information."""
     is_primitive_axes_auto = (
-        type(phono3py.primitive_matrix) is str and phono3py.primitive_matrix == "auto"
+        isinstance(phono3py.primitive_matrix, str)
+        and phono3py.primitive_matrix == "auto"
     )
     primitive_matrix = phono3py.primitive_matrix
     supercell_matrix = phono3py.supercell_matrix

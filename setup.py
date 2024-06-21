@@ -188,12 +188,12 @@ def _get_extensions(build_dir):
                     found_libs[key] = line.split()[3].split(";")
                 if f"{key} flags" in line and len(line.split()) > 3:
                     found_flags[key] = line.split()[3].split(";")
-        for key, value in found_libs.items():
+        for _, value in found_libs.items():
             found_extra_link_args += value
             for element in value:
                 if "libmkl" in element:
                     use_mkl_lapacke = True
-        for key, value in found_flags.items():
+        for _, value in found_flags.items():
             found_extra_compile_args += value
         if use_mkl_lapacke:
             params["define_macros"].append(("MKL_LAPACKE", None))

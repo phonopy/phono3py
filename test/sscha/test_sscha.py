@@ -13,11 +13,6 @@ from phono3py.sscha.sscha import (
     get_sscha_matrices,
 )
 
-try:
-    ModuleNotFoundError
-except NameError:
-    ModuleNotFoundError = ImportError
-
 si_pbesol_upsilon0_0 = [[3.849187e02, 0, 0], [0, 3.849187e02, 0], [0, 0, 3.849187e02]]
 si_pbesol_upsilon1_34 = [
     [1.886404, -1.549705, -1.126055],

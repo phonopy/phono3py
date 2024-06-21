@@ -46,9 +46,9 @@ from phono3py.file_IO import (
     write_gamma_detail_to_hdf5,
     write_imag_self_energy_at_grid_point,
 )
+from phono3py.phonon.func import bose_einstein
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.triplets import get_triplets_integration_weights
-from phono3py.phonon.func import bose_einstein
 
 
 class ImagSelfEnergy:
@@ -170,6 +170,7 @@ class ImagSelfEnergy:
             "Use attribute, ImagSelfEnergy.imag_self_energy "
             "instead of ImagSelfEnergy.get_imag_self_energy().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.imag_self_energy
 
@@ -200,6 +201,7 @@ class ImagSelfEnergy:
             "Use attribute, ImagSelfEnergy.detailed_imag_self_energy "
             "instead of ImagSelfEnergy.get_detailed_imag_self_energy().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.detailed_imag_self_energy
 
@@ -222,6 +224,7 @@ class ImagSelfEnergy:
             "Use attribute, ImagSelfEnergy.unit_conversion_factor "
             "instead of ImagSelfEnergy.get_unit_conversion_factor().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.unit_conversion_factor
 
@@ -268,6 +271,7 @@ class ImagSelfEnergy:
             "Use attribute, ImagSelfEnergy.frequency_points "
             "instead of ImagSelfEnergy.set_frequency_points().",
             DeprecationWarning,
+            stacklevel=2,
         )
         self.frequency_points = frequency_points
 
@@ -289,6 +293,7 @@ class ImagSelfEnergy:
             "Use attribute, ImagSelfEnergy.temperature "
             "instead of ImagSelfEnergy.set_temperature().",
             DeprecationWarning,
+            stacklevel=2,
         )
         self.temperature = temperature
 

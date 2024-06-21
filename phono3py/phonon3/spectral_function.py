@@ -214,7 +214,7 @@ class SpectralFunction:
 
     def run(self):
         """Calculate spectral function over grid points."""
-        for gp_index in self:
+        for _ in self:
             pass
 
     def __iter__(self):
@@ -354,7 +354,7 @@ class SpectralFunction:
         if self._log_level:
             print("* Spectral function")
         frequencies = self._pp.get_phonons()[0]
-        for j, temp in enumerate(self._temperatures):
+        for j, _ in enumerate(self._temperatures):
             for k, bi in enumerate(self._pp.band_indices):
                 freq = frequencies[grid_point, bi]
                 gammas = self._gammas[sigma_i, j, i, k]

@@ -34,7 +34,6 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-
 import sys
 from typing import TYPE_CHECKING, Optional, Union
 
@@ -367,7 +366,7 @@ class ConductivityRTAWriter:
         all_triplets = get_all_triplets(gp, interaction.bz_grid)
 
         if all_bands_exist(interaction):
-            for j, sigma in enumerate(sigmas):
+            for sigma in sigmas:
                 write_gamma_detail_to_hdf5(
                     temperatures,
                     mesh,
@@ -384,7 +383,7 @@ class ConductivityRTAWriter:
                     verbose=verbose,
                 )
         else:
-            for j, sigma in enumerate(sigmas):
+            for sigma in sigmas:
                 for k, bi in enumerate(interaction.get_band_indices()):
                     write_gamma_detail_to_hdf5(
                         temperatures,
@@ -871,7 +870,7 @@ class ShowCalcProgress:
                     ("#%6s       " + " %-10s" * 6)
                     % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
                 )
-                for j, (t, k) in enumerate(zip(temperatures, kappa[i])):
+                for t, k in zip(temperatures, kappa[i]):
                     print(("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
             print("")
 
@@ -936,13 +935,13 @@ class ShowCalcProgress:
                     % ("      \t   T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
                 )
                 if kappa_P_RTA is not None:
-                    for j, (t, k) in enumerate(zip(temperatures, kappa_P_RTA[i])):
+                    for t, k in zip(temperatures, kappa_P_RTA[i]):
                         print("K_P\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
                     print(" ")
-                    for j, (t, k) in enumerate(zip(temperatures, kappa_C[i])):
+                    for t, k in zip(temperatures, kappa_C[i]):
                         print("K_C\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
                 print(" ")
-                for j, (t, k) in enumerate(zip(temperatures, kappa_TOT_RTA[i])):
+                for t, k in zip(temperatures, kappa_TOT_RTA[i]):
                     print("K_T\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
             print("")
 

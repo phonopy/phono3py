@@ -709,7 +709,7 @@ class Phono3pyConfParser(ConfParser):
 
             # specials
             if conf_key in ("create_forces_fc2", "create_forces_fc3"):
-                if type(confs[conf_key]) is str:
+                if isinstance(confs[conf_key], str):
                     fnames = confs[conf_key].split()
                 else:
                     fnames = confs[conf_key]

@@ -89,9 +89,9 @@ from phono3py.file_IO import (
     write_phonon_to_hdf5,
 )
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
+from phono3py.phonon.grid import get_grid_point_from_address, get_ir_grid_points
 from phono3py.phonon3.fc3 import show_drift_fc3
 from phono3py.phonon3.gruneisen import run_gruneisen_parameters
-from phono3py.phonon.grid import get_grid_point_from_address, get_ir_grid_points
 from phono3py.version import __version__
 
 # import logging
