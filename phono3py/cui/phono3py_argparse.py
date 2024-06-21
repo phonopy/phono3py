@@ -516,7 +516,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         action="store_true",
         default=False,
         help="Deactivate summation of partial kappa at q-stars",
-    ),
+    )
     parser.add_argument(
         "--nomeshsym",
         dest="is_nomeshsym",

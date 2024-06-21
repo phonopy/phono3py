@@ -57,7 +57,9 @@ def write_disp_fc3_yaml(dataset, supercell, filename="disp_fc3.yaml"):
     This function should not be called from phono3py script from version 3.
 
     """
-    warnings.warn("write_disp_fc3_yaml() is deprecated.", DeprecationWarning)
+    warnings.warn(
+        "write_disp_fc3_yaml() is deprecated.", DeprecationWarning, stacklevel=2
+    )
 
     w = open(filename, "w")
     w.write("natom: %d\n" % dataset["natom"])
@@ -155,7 +157,9 @@ def write_disp_fc2_yaml(dataset, supercell, filename="disp_fc2.yaml"):
     This function should not be called from phono3py script from version 3.
 
     """
-    warnings.warn("write_disp_fc2_yaml() is deprecated.", DeprecationWarning)
+    warnings.warn(
+        "write_disp_fc2_yaml() is deprecated.", DeprecationWarning, stacklevel=2
+    )
 
     w = open(filename, "w")
     w.write("natom: %d\n" % dataset["natom"])
@@ -251,7 +255,7 @@ def write_FORCES_FC3(disp_dataset, forces_fc3=None, fp=None, filename="FORCES_FC
             else:
                 # for forces in forces_fc3[i]:
                 #     w.write("%15.10f %15.10f %15.10f\n" % (tuple(forces)))
-                for j in range(natom):
+                for _ in range(natom):
                     w.write("%15.10f %15.10f %15.10f\n" % (0, 0, 0))
             count += 1
 
@@ -339,8 +343,8 @@ def write_fc2_to_hdf5(
     ):
         try:
             import h5py
-        except ImportError:
-            raise ModuleNotFoundError("You need to install python-h5py.")
+        except ImportError as exc:
+            raise ModuleNotFoundError("You need to install python-h5py.") from exc
 
         with h5py.File(filename, "w") as w:
             w.create_dataset(
@@ -1480,7 +1484,9 @@ def parse_disp_fc2_yaml(filename="disp_fc2.yaml", return_cell=False):
     This function should not be called from phono3py script from version 3.
 
     """
-    warnings.warn("parse_disp_fc2_yaml() is deprecated.", DeprecationWarning)
+    warnings.warn(
+        "parse_disp_fc2_yaml() is deprecated.", DeprecationWarning, stacklevel=2
+    )
 
     dataset = _parse_yaml(filename)
     natom = dataset["natom"]
@@ -1507,7 +1513,9 @@ def parse_disp_fc3_yaml(filename="disp_fc3.yaml", return_cell=False):
     This function should not be called from phono3py script from version 3.
 
     """
-    warnings.warn("parse_disp_fc3_yaml() is deprecated.", DeprecationWarning)
+    warnings.warn(
+        "parse_disp_fc3_yaml() is deprecated.", DeprecationWarning, stacklevel=2
+    )
 
     dataset = _parse_yaml(filename)
     natom = dataset["natom"]
@@ -1547,7 +1555,7 @@ def parse_FORCES_FC2(disp_dataset, filename="FORCES_FC2", unit_conversion_factor
     num_disp = len(disp_dataset["first_atoms"])
     forces_fc2 = []
     with open(filename, "r") as f2:
-        for i in range(num_disp):
+        for _ in range(num_disp):
             forces = _parse_force_lines(f2, num_atom)
             if forces is None:
                 return []
@@ -1681,7 +1689,7 @@ def _parse_yaml(file_yaml):
     So this is obsolete at v2 and later versions.
 
     """
-    warnings.warn("_parse_yaml() is deprecated.", DeprecationWarning)
+    warnings.warn("_parse_yaml() is deprecated.", DeprecationWarning, stacklevel=2)
 
     import yaml
 
@@ -1720,7 +1728,7 @@ def _write_cell_yaml(w, supercell):
     These methods are also deprecated.
 
     """
-    warnings.warn("write_cell_yaml() is deprecated.", DeprecationWarning)
+    warnings.warn("write_cell_yaml() is deprecated.", DeprecationWarning, stacklevel=2)
 
     w.write("lattice:\n")
     for axis in supercell.get_cell():

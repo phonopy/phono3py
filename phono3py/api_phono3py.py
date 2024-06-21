@@ -72,19 +72,20 @@ from phono3py.conductivity.direct_solution import get_thermal_conductivity_LBTE
 from phono3py.conductivity.rta import get_thermal_conductivity_RTA
 from phono3py.interface.fc_calculator import get_fc3
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
+from phono3py.phonon.grid import BZGrid
 from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
 from phono3py.phonon3.displacement_fc3 import (
     direction_to_displacement,
     get_third_order_displacements,
 )
-from phono3py.phonon3.fc3 import cutoff_fc3_by_zero
-from phono3py.phonon3.fc3 import get_fc3 as get_phono3py_fc3
 from phono3py.phonon3.fc3 import (
+    cutoff_fc3_by_zero,
     set_permutation_symmetry_compact_fc3,
     set_permutation_symmetry_fc3,
     set_translational_invariance_compact_fc3,
     set_translational_invariance_fc3,
 )
+from phono3py.phonon3.fc3 import get_fc3 as get_phono3py_fc3
 from phono3py.phonon3.imag_self_energy import (
     get_imag_self_energy,
     write_imag_self_energy,
@@ -95,7 +96,6 @@ from phono3py.phonon3.real_self_energy import (
     write_real_self_energy,
 )
 from phono3py.phonon3.spectral_function import run_spectral_function
-from phono3py.phonon.grid import BZGrid
 from phono3py.version import __version__
 
 

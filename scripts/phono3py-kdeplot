@@ -12,6 +12,7 @@ epsilon = 1.0e-8
 
 
 def collect_data(gamma, weights, frequencies, cutoff, max_freq):
+    """Collect data for making input of Gaussian-KDE."""
     freqs = []
     mode_prop = []
     for w, freq, g in zip(weights, frequencies, gamma):
@@ -37,8 +38,7 @@ def collect_data(gamma, weights, frequencies, cutoff, max_freq):
 
 
 def run_KDE(x, y, nbins, x_max=None, y_max=None, density_ratio=0.1):
-    """Running Gaussian-KDE by scipy"""
-
+    """Run Gaussian-KDE by scipy."""
     x_min = 0
     if x_max is None:
         _x_max = np.rint(x.max() * 1.1)
@@ -95,6 +95,7 @@ def plot(
     point_size=5,
     title=None,
 ):
+    """Plot lifetime distribution."""
     xmax = np.max(x)
     ymax = np.max(y)
     x_cut = []
@@ -159,7 +160,7 @@ def plot(
 
 
 def get_options():
-    # Arg-parser
+    """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
         description="Plot property density with gaussian KDE"
     )
@@ -206,7 +207,7 @@ def get_options():
             "Number of bins in which data are assigned, "
             "i.e., determining resolution of plot"
         ),
-    ),
+    )
     parser.add_argument(
         "--no-points", dest="no_points", action="store_true", help="Do not show points"
     )
@@ -246,9 +247,7 @@ def get_options():
 
 
 def main(args):
-    #
-    # Matplotlib setting
-    #
+    """Run phono3py-kdeplot."""
     import matplotlib
 
     matplotlib.use("Agg")

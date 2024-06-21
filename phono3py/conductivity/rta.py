@@ -54,9 +54,9 @@ from phono3py.conductivity.wigner import (
 )
 from phono3py.file_IO import read_pp_from_hdf5
 from phono3py.other.tetrahedron_method import get_tetrahedra_relative_grid_address
+from phono3py.phonon.grid import get_grid_points_by_rotations
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy, average_by_degeneracy
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
-from phono3py.phonon.grid import get_grid_points_by_rotations
 
 
 class ConductivityRTABase(ConductivityBase):
@@ -298,9 +298,9 @@ class ConductivityRTABase(ConductivityBase):
                     self._gamma_N[j, k, i] = g_N
                     self._gamma_U[j, k, i] = g_U
                 if self._is_gamma_detail:
-                    self._gamma_detail_at_q[k] = (
-                        self._collision.get_detailed_imag_self_energy()
-                    )
+                    self._gamma_detail_at_q[
+                        k
+                    ] = self._collision.get_detailed_imag_self_energy()
 
     def _set_gamma_at_sigmas_lowmem(self, i):
         """Calculate gamma without storing ph-ph interaction strength.
@@ -921,7 +921,7 @@ class ConductivityKuboRTA(ConductivityKuboMixIn, ConductivityRTABase):
                 return
 
             g = g_sum[i_band] + g_sum[j_band]
-            for i_pair, (a, b) in enumerate(
+            for i_pair, _ in enumerate(
                 ([0, 0], [1, 1], [2, 2], [1, 2], [0, 2], [0, 1])
             ):
                 old_settings = np.seterr(all="raise")

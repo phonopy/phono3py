@@ -45,6 +45,7 @@ class MockArgs:
         return (getattr(self, field.name) for field in fields(self))
 
     def __contains__(self, item):
+        """Implement in operator."""
         return item in (field.name for field in fields(self))
 
 

@@ -111,7 +111,6 @@ def test_kappa_RTA_si_nosym(si_pbesol: Phono3py, si_pbesol_nosym: Phono3py):
 
 def test_kappa_RTA_si_nomeshsym(si_pbesol: Phono3py, si_pbesol_nomeshsym: Phono3py):
     """Test RTA without considering mesh symmetry by Si."""
-
     if si_pbesol_nomeshsym._make_r0_average:
         ref_kappa_RTA_si_nomeshsym = [81.147, 81.147, 81.147, 0.000, 0.000, 0.000]
     else:

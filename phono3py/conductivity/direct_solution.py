@@ -56,9 +56,9 @@ from phono3py.conductivity.wigner import (
     get_conversion_factor_WTE,
 )
 from phono3py.file_IO import read_pp_from_hdf5
+from phono3py.phonon.grid import get_grid_points_by_rotations
 from phono3py.phonon3.collision_matrix import CollisionMatrix
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
-from phono3py.phonon.grid import get_grid_points_by_rotations
 
 
 class ConductivityLBTEBase(ConductivityBase):
@@ -163,6 +163,7 @@ class ConductivityLBTEBase(ConductivityBase):
             "Use attribute, Conductivity_LBTE.collision_matrix "
             "instead of Conductivity_LBTE.get_collision_matrix().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.collision_matrix
 
@@ -172,6 +173,7 @@ class ConductivityLBTEBase(ConductivityBase):
             "Use attribute, Conductivity_LBTE.collision_matrix "
             "instead of Conductivity_LBTE.set_collision_matrix().",
             DeprecationWarning,
+            stacklevel=2,
         )
         self.collision_matrix = collision_matrix
 
@@ -517,9 +519,9 @@ class ConductivityLBTEBase(ConductivityBase):
                 else:
                     i_data = 0
                 self._gamma[j, k, i_data] = self._collision.imag_self_energy
-                self._collision_matrix[j, k, i_data] = (
-                    self._collision.get_collision_matrix()
-                )
+                self._collision_matrix[
+                    j, k, i_data
+                ] = self._collision.get_collision_matrix()
 
     def _prepare_collision_matrix(self):
         """Collect pieces and construct collision matrix."""
@@ -1271,6 +1273,7 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
             "Use attribute, Conductivity_LBTE.kappa_RTA "
             "instead of Conductivity_LBTE.get_kappa_RTA().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.kappa_RTA
 
@@ -1285,6 +1288,7 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
             "Use attribute, Conductivity_LBTE.mode_kappa_RTA "
             "instead of Conductivity_LBTE.get_mode_kappa_RTA().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.mode_kappa_RTA
 
