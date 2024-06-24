@@ -519,9 +519,9 @@ class ConductivityLBTEBase(ConductivityBase):
                 else:
                     i_data = 0
                 self._gamma[j, k, i_data] = self._collision.imag_self_energy
-                self._collision_matrix[
-                    j, k, i_data
-                ] = self._collision.get_collision_matrix()
+                self._collision_matrix[j, k, i_data] = (
+                    self._collision.get_collision_matrix()
+                )
 
     def _prepare_collision_matrix(self):
         """Collect pieces and construct collision matrix."""

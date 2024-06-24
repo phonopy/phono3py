@@ -292,16 +292,16 @@ class RealSelfEnergy:
                 freqs = self._frequencies[triplet]
                 for j, _ in enumerate(self._band_indices):
                     if self._temperature > 0:
-                        self._real_self_energies[
-                            k, j
-                        ] += self._real_self_energies_at_bands(
-                            j, fpoint, freqs, interaction, w
+                        self._real_self_energies[k, j] += (
+                            self._real_self_energies_at_bands(
+                                j, fpoint, freqs, interaction, w
+                            )
                         )
                     else:
-                        self._real_self_energies[
-                            k, j
-                        ] += self._real_self_energies_at_bands_0K(
-                            j, fpoint, freqs, interaction, w
+                        self._real_self_energies[k, j] += (
+                            self._real_self_energies_at_bands_0K(
+                                j, fpoint, freqs, interaction, w
+                            )
                         )
 
         self._real_self_energies *= self._unit_conversion
