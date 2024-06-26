@@ -619,6 +619,13 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         help="Conversion factor for ph-ph interaction",
     )
     parser.add_argument(
+        "--pypolymlp",
+        dest="use_pypolymlp",
+        action="store_true",
+        default=None,
+        help="Use pypolymlp and symfc for generating force constants",
+    )
+    parser.add_argument(
         "--qpoints",
         nargs="+",
         dest="qpoints",

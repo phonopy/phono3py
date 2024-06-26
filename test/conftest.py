@@ -498,6 +498,17 @@ def si_111_222_rd() -> Phono3py:
 
 
 @pytest.fixture(scope="session")
+def mgo_222rd_444rd() -> Phono3py:
+    """Return Phono3py class instance of MgO-2x2x2-4x4x4 RD-RD.
+
+    4 and 400 supercells for fc2 and fc3, respectively.
+
+    """
+    yaml_filename = cwd / "phono3py_params_MgO-222rd-444fd.yaml.xz"
+    return phono3py.load(yaml_filename, produce_fc=False, log_level=1)
+
+
+@pytest.fixture(scope="session")
 def ph_nacl() -> Phonopy:
     """Return Phonopy class instance of NaCl 2x2x2."""
     yaml_filename = cwd / "phonopy_disp_NaCl.yaml"
