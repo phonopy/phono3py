@@ -54,6 +54,7 @@ from phono3py.cui.create_force_constants import (
     run_pypolymlp_to_compute_forces,
 )
 from phono3py.file_IO import read_fc2_from_hdf5, read_fc3_from_hdf5
+from phono3py.interface.fc_calculator import extract_fc2_fc3_calculators
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon3.fc3 import show_drift_fc3
 
@@ -464,33 +465,36 @@ def compute_force_constants_from_datasets(
             ph3py.produce_fc3(
                 symmetrize_fc3r=symmetrize_fc,
                 is_compact_fc=is_compact_fc,
-                fc_calculator=fc_calculator,
-                fc_calculator_options=fc_calculator_options,
+                fc_calculator=extract_fc2_fc3_calculators(fc_calculator, 3),
+                fc_calculator_options=extract_fc2_fc3_calculators(
+                    fc_calculator_options, 3
+                ),
             )
 
             if log_level and symmetrize_fc and fc_calculator is None:
                 print("fc3 was symmetrized.")
 
     if not read_fc["fc2"] and (ph3py.dataset or ph3py.phonon_dataset):
-        if (
-            ph3py.phonon_supercell_matrix is None
-            and fc_calculator in ("alm", "symfc")
-            and ph3py.fc2 is not None
-        ):
-            if log_level:
-                if fc_calculator == "alm":
-                    print("fc2 that was fit simultaneously with fc3 by ALM is used.")
-                elif fc_calculator == "symfc":
-                    print("fc2 that was fit simultaneously with fc3 by symfc is used.")
-        else:
-            ph3py.produce_fc2(
-                symmetrize_fc2=symmetrize_fc,
-                is_compact_fc=is_compact_fc,
-                fc_calculator=fc_calculator,
-                fc_calculator_options=fc_calculator_options,
-            )
-            if log_level and symmetrize_fc:
-                print("fc2 was symmetrized.")
+        # if (
+        #     ph3py.phonon_supercell_matrix is None
+        #     and fc_calculator in ("alm", "symfc")
+        #     and ph3py.fc2 is not None
+        # ):
+        #     if log_level:
+        #         if fc_calculator == "alm":
+        #             print("fc2 that was fit simultaneously with fc3 by ALM is used.")
+        #         elif fc_calculator == "symfc":
+        #             print(
+        #                 "fc2 that was fit simultaneously with fc3 by symfc is used.")
+        # else:
+        ph3py.produce_fc2(
+            symmetrize_fc2=symmetrize_fc,
+            is_compact_fc=is_compact_fc,
+            fc_calculator=extract_fc2_fc3_calculators(fc_calculator, 2),
+            fc_calculator_options=extract_fc2_fc3_calculators(fc_calculator_options, 2),
+        )
+        if log_level and symmetrize_fc and fc_calculator is None:
+            print("fc2 was symmetrized.")
 
 
 def _get_dataset_or_fc3(

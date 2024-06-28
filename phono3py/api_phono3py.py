@@ -1421,19 +1421,15 @@ class Phono3py:
             Options for external force constants calculator.
 
         """
-        fc3_calculator, fc3_calculator_options = self._extract_fc2_fc3_calculators(
-            fc_calculator, fc_calculator_options, 3
-        )
-
-        if fc3_calculator is not None:
+        if fc_calculator is not None:
             disps, forces = get_displacements_and_forces_fc3(self._dataset)
             fc2, fc3 = get_fc3(
                 self._supercell,
                 self._primitive,
                 disps,
                 forces,
-                fc_calculator=fc3_calculator,
-                fc_calculator_options=fc3_calculator_options,
+                fc_calculator=fc_calculator,
+                fc_calculator_options=fc_calculator_options,
                 is_compact_fc=is_compact_fc,
                 symmetry=self._symmetry,
                 log_level=self._log_level,
@@ -1518,19 +1514,15 @@ class Phono3py:
         else:
             p2s_map = None
 
-        fc2_calculator, fc2_calculator_options = self._extract_fc2_fc3_calculators(
-            fc_calculator, fc_calculator_options, 2
-        )
-
-        if fc2_calculator is not None:
+        if fc_calculator is not None:
             disps, forces = get_displacements_and_forces(disp_dataset)
             self._fc2 = get_fc2(
                 self._phonon_supercell,
                 self._phonon_primitive,
                 disps,
                 forces,
-                fc_calculator=fc2_calculator,
-                fc_calculator_options=fc2_calculator_options,
+                fc_calculator=fc_calculator,
+                fc_calculator_options=fc_calculator_options,
                 atom_list=p2s_map,
                 symmetry=self._phonon_supercell_symmetry,
                 symprec=self._symprec,
@@ -2436,41 +2428,6 @@ class Phono3py:
                     )
                     print(" But this frequency is forced to be zero.")
                     print("=" * 61)
-
-    def _extract_fc2_fc3_calculators(self, fc_calculator, fc_calculator_options, order):
-        """Extract fc_calculator and fc_calculator_options for fc2 and fc3.
-
-        fc_calculator : str
-            FC calculator. "|" separates fc2 and fc3. First and last
-            parts separated correspond to fc2 and fc3 calculators, respectively.
-        fc_calculator_options : str
-            FC calculator options. "|" separates fc2 and fc3. First and last
-            parts separated correspond to fc2 and fc3 options, respectively.
-        order : int = 2 or 3
-            2 and 3 indicate fc2 and fc3, respectively.
-
-        """
-        if fc_calculator is not None:
-            if "|" in fc_calculator:
-                _fc_calculator = fc_calculator.split("|")[order - 2]
-                if _fc_calculator == "":
-                    _fc_calculator = None
-            else:
-                _fc_calculator = fc_calculator
-        else:
-            _fc_calculator = None
-
-        if fc_calculator_options is not None:
-            if "|" in fc_calculator_options:
-                _fc_calculator_options = fc_calculator_options.split("|")[order - 2]
-                if _fc_calculator_options == "":
-                    _fc_calculator_options = None
-            else:
-                _fc_calculator_options = fc_calculator_options
-        else:
-            _fc_calculator_options = None
-
-        return _fc_calculator, _fc_calculator_options
 
     def _get_forces_energies(
         self, target: Literal["forces", "supercell_energies"]

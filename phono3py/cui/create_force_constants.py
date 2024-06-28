@@ -66,6 +66,7 @@ from phono3py.file_IO import (
     write_fc2_to_hdf5,
     write_fc3_to_hdf5,
 )
+from phono3py.interface.fc_calculator import extract_fc2_fc3_calculators
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon3.fc3 import (
     set_permutation_symmetry_fc3,
@@ -510,8 +511,8 @@ def _create_phono3py_fc3(
     phono3py.produce_fc3(
         symmetrize_fc3r=symmetrize_fc3r,
         is_compact_fc=is_compact_fc,
-        fc_calculator=fc_calculator,
-        fc_calculator_options=fc_calculator_options,
+        fc_calculator=extract_fc2_fc3_calculators(fc_calculator, 3),
+        fc_calculator_options=extract_fc2_fc3_calculators(fc_calculator_options, 3),
     )
 
 
@@ -527,8 +528,7 @@ def run_pypolymlp_to_compute_forces(
     if log_level:
         print("-" * 29 + " pypolymlp start " + "-" * 30)
         print("Pypolymlp is a generator of polynomial machine learning potentials.")
-        print("Please cite the paper:")
-        print("A. Seko, J. Appl. Phys. 133, 011101 (2023).")
+        print("Please cite the paper: A. Seko, J. Appl. Phys. 133, 011101 (2023).")
         print("Pypolymlp is developed at https://github.com/sekocha/pypolymlp.")
         if mlp_params:
             print("Parameters:")
@@ -620,8 +620,8 @@ def _create_phono3py_fc2(
     phono3py.produce_fc2(
         symmetrize_fc2=symmetrize_fc2,
         is_compact_fc=is_compact_fc,
-        fc_calculator=fc_calculator,
-        fc_calculator_options=fc_calculator_options,
+        fc_calculator=extract_fc2_fc3_calculators(fc_calculator, 2),
+        fc_calculator_options=extract_fc2_fc3_calculators(fc_calculator_options, 2),
     )
 
 
@@ -664,8 +664,8 @@ def _create_phono3py_phonon_fc2(
     phono3py.produce_fc2(
         symmetrize_fc2=symmetrize_fc2,
         is_compact_fc=is_compact_fc,
-        fc_calculator=fc_calculator,
-        fc_calculator_options=fc_calculator_options,
+        fc_calculator=extract_fc2_fc3_calculators(fc_calculator, 2),
+        fc_calculator_options=extract_fc2_fc3_calculators(fc_calculator_options, 2),
     )
 
 
