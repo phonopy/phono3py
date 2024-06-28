@@ -415,7 +415,6 @@ def nacl_pbe_cutoff_fc3(request) -> Phono3py:
             count += 1
     ph3.dataset = dataset
     ph3.produce_fc3()
-    # ph3.produce_fc3(symmetrize_fc3r=True)
     return ph3
 
 
@@ -504,7 +503,7 @@ def mgo_222rd_444rd() -> Phono3py:
     4 and 400 supercells for fc2 and fc3, respectively.
 
     """
-    yaml_filename = cwd / "phono3py_params_MgO-222rd-444fd.yaml.xz"
+    yaml_filename = cwd / "phono3py_params_MgO-222rd-444rd.yaml.xz"
     return phono3py.load(yaml_filename, produce_fc=False, log_level=1)
 
 
