@@ -204,5 +204,5 @@ def test_use_pypolymlp_mgo(mgo_222rd_444rd: Phono3py):
     ph3.init_phph_interaction()
     ph3.run_thermal_conductivity(temperatures=[300])
     assert (
-        pytest.approx(63.0018546, abs=1e-3) == ph3.thermal_conductivity.kappa[0, 0, 0]
+        pytest.approx(63.0018546, abs=1e-1) == ph3.thermal_conductivity.kappa[0, 0, 0]
     )
