@@ -40,7 +40,8 @@ import copy
 import os
 import pathlib
 import sys
-from typing import Optional
+from dataclasses import asdict
+from typing import Optional, Union
 
 import numpy as np
 from phonopy.cui.phonopy_script import file_exists, print_error
@@ -52,6 +53,7 @@ from phonopy.harmonic.force_constants import (
 )
 from phonopy.interface.calculator import get_default_physical_units
 from phonopy.interface.fc_calculator import fc_calculator_names
+from phonopy.interface.pypolymlp import PypolymlpParams, parse_mlp_params
 
 from phono3py import Phono3py
 from phono3py.cui.show_log import show_phono3py_force_constants_settings
@@ -122,6 +124,11 @@ def create_phono3py_force_constants(
                 settings.cutoff_pair_distance,
                 fc_calculator,
                 fc_calculator_options,
+                settings.use_pypolymlp,
+                settings.mlp_params,
+                settings.displacement_distance,
+                settings.random_displacements,
+                settings.random_seed,
                 log_level,
             )
 
@@ -249,7 +256,7 @@ def parse_forces(
     # Try to read FORCES_FC* if type-2 and return dataset.
     # None is returned unless type-2.
     # can emit FileNotFoundError.
-    if dataset is None or dataset is not None and not forces_in_dataset(dataset):
+    if dataset is None or (dataset is not None and not forces_in_dataset(dataset)):
         _dataset = read_type2_dataset(
             natom, filename=force_filename, log_level=log_level
         )
@@ -321,8 +328,10 @@ def forces_in_dataset(dataset: dict) -> bool:
     )
 
 
-def displacements_in_dataset(dataset: dict) -> bool:
+def displacements_in_dataset(dataset: Optional[dict]) -> bool:
     """Return whether displacements in dataset or not."""
+    if dataset is None:
+        return False
     return "displacements" in dataset or "first_atoms" in dataset
 
 
@@ -443,6 +452,11 @@ def _create_phono3py_fc3(
     cutoff_pair_distance: Optional[float],
     fc_calculator: Optional[str],
     fc_calculator_options: Optional[str],
+    use_pypolymlp: bool,
+    mlp_params: Union[str, dict, PypolymlpParams],
+    displacement_distance: Optional[float],
+    number_of_snapshots: Optional[int],
+    random_seed: Optional[int],
     log_level: int,
 ):
     """Read or calculate fc3.
@@ -481,13 +495,98 @@ def _create_phono3py_fc3(
         # from _get_type2_dataset
         file_exists(e.filename, log_level)
 
-    phono3py.dataset = dataset
+    if use_pypolymlp:
+        phono3py.mlp_dataset = dataset
+        run_pypolymlp_to_compute_forces(
+            phono3py,
+            mlp_params=mlp_params,
+            displacement_distance=displacement_distance,
+            number_of_snapshots=number_of_snapshots,
+            random_seed=random_seed,
+            log_level=log_level,
+        )
+    else:
+        phono3py.dataset = dataset
     phono3py.produce_fc3(
         symmetrize_fc3r=symmetrize_fc3r,
         is_compact_fc=is_compact_fc,
         fc_calculator=fc_calculator,
         fc_calculator_options=fc_calculator_options,
     )
+
+
+def run_pypolymlp_to_compute_forces(
+    ph3py: Phono3py,
+    mlp_params: Union[str, dict, PypolymlpParams],
+    displacement_distance: float,
+    number_of_snapshots: int,
+    random_seed: int,
+    log_level: int,
+):
+    """Run pypolymlp to compute forces."""
+    if log_level:
+        print("-" * 29 + " pypolymlp start " + "-" * 30)
+        print("Pypolymlp is a generator of polynomial machine learning potentials.")
+        print("Please cite the paper:")
+        print("A. Seko, J. Appl. Phys. 133, 011101 (2023).")
+        print("Pypolymlp is developed at https://github.com/sekocha/pypolymlp.")
+        if mlp_params:
+            print("Parameters:")
+            for k, v in asdict(parse_mlp_params(mlp_params)).items():
+                if v is not None:
+                    print(f"  {k}: {v}")
+    if log_level > 1:
+        print("")
+    if log_level:
+        print("Developing MLPs by pypolymlp...", flush=True)
+
+    ph3py.develop_mlp(params=mlp_params)
+
+    if displacement_distance is None:
+        _displacement_distance = 0.001
+    else:
+        _displacement_distance = displacement_distance
+
+    if log_level > 1:
+        print("")
+    if log_level:
+        if number_of_snapshots:
+            print("Generate random displacements")
+            print(
+                "  Twice of number of snapshots will be generated "
+                "for plus-minus displacements."
+            )
+        else:
+            print("Generate displacements")
+        print(
+            f"  Displacement distance: {_displacement_distance:.5f}".rstrip("0").rstrip(
+                "."
+            )
+        )
+    ph3py.generate_displacements(
+        distance=_displacement_distance,
+        is_plusminus=True,
+        number_of_snapshots=number_of_snapshots,
+        random_seed=random_seed,
+    )
+
+    if log_level:
+        print(
+            "  Number of supercells for computing forces: "
+            f"{ph3py.displacements.shape[0]}"
+        )
+        print("Evaluate forces by pypolymlp", flush=True)
+
+    if ph3py.mlp_dataset is None:
+        msg = "mlp_dataset has to be set before calling this method."
+        raise RuntimeError(msg)
+    if ph3py.supercells_with_displacements is None:
+        raise RuntimeError("Displacements are not set. Run generate_displacements.")
+
+    ph3py.evaluate_mlp()
+
+    if log_level:
+        print("-" * 30 + " pypolymlp end " + "-" * 31, flush=True)
 
 
 def _create_phono3py_fc2(

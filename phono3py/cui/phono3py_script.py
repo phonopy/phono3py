@@ -528,6 +528,7 @@ def store_force_constants(
             ph3py_yaml=ph3py_yaml,
             phono3py_yaml_filename=phono3py_yaml_filename,
             cutoff_pair_distance=settings.cutoff_pair_distance,
+            use_pypolymlp=settings.use_pypolymlp,
             log_level=log_level,
         )
         try:
@@ -538,6 +539,11 @@ def store_force_constants(
                 fc_calculator_options=fc_calculator_options,
                 symmetrize_fc=settings.fc_symmetry,
                 is_compact_fc=settings.is_compact_fc,
+                use_pypolymlp=settings.use_pypolymlp,
+                mlp_params=settings.mlp_params,
+                displacement_distance=settings.displacement_distance,
+                number_of_snapshots=settings.random_displacements,
+                random_seed=settings.random_seed,
                 log_level=log_level,
             )
         except ForceCalculatorRequiredError:
@@ -605,8 +611,8 @@ def _show_fc_calculator_not_found(log_level):
         print(
             "Built-in force constants calculator doesn't support the "
             "dispalcements-forces dataset. "
-            "An external force calculator, e.g., ALM (--alm), has to be used "
-            "to compute force constants."
+            "An external force calculator, e.g., symfc (--symfc_ or ALM (--alm), "
+            "has to be used to compute force constants."
         )
         print_error()
     sys.exit(1)

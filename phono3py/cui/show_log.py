@@ -107,7 +107,7 @@ def show_phono3py_cells(phono3py: Phono3py):
         print_cell(phonon_primitive)
         print("-" * 21 + " supercell for harmonic phonon " + "-" * 22)
         print_cell(phonon_supercell, mapping=phonon_primitive.s2p_map)
-    print("-" * 76)
+    print("-" * 76, flush=True)
 
 
 def show_phono3py_force_constants_settings(settings: Phono3pySettings):

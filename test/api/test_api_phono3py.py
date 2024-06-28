@@ -170,7 +170,7 @@ def test_type2_forces_energies_setter_Si(si_111_222_rd: Phono3py):
     np.testing.assert_allclose(ph3_in.phonon_forces + 1, ph3.phonon_forces)
 
 
-def test_use_pypolymlp_mgs(mgo_222rd_444rd: Phono3py):
+def test_use_pypolymlp_mgo(mgo_222rd_444rd: Phono3py):
     """Test use_pypolymlp in produce_fc3."""
     pytest.importorskip("pypolymlp")
 
@@ -193,12 +193,16 @@ def test_use_pypolymlp_mgs(mgo_222rd_444rd: Phono3py):
 
     atom_energies = {"Mg": -0.00896717, "O": -0.95743902}
     params = PypolymlpParams(gtinv_maxl=(4, 4), atom_energies=atom_energies)
-    ph3.produce_fc3(use_pypolymlp=True, mlp_params=params, fc_calculator="symfc")
+
+    ph3.generate_displacements(distance=0.001, is_plusminus=True)
+    ph3.develop_mlp(params=params)
+    ph3.evaluate_mlp()
+    ph3.produce_fc3(fc_calculator="symfc")
     ph3.produce_fc2(fc_calculator="symfc")
 
     ph3.mesh_numbers = 30
     ph3.init_phph_interaction()
     ph3.run_thermal_conductivity(temperatures=[300])
     assert (
-        pytest.approx(63.6001137, abs=1e-3) == ph3.thermal_conductivity.kappa[0, 0, 0]
+        pytest.approx(63.0018546, abs=1e-3) == ph3.thermal_conductivity.kappa[0, 0, 0]
     )

@@ -472,6 +472,15 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         "--mesh", nargs="+", dest="mesh_numbers", default=None, help="Mesh numbers"
     )
     parser.add_argument(
+        "--mlp-params",
+        dest="mlp_params",
+        default=None,
+        help=(
+            "Parameters for machine learning potentials as comma separated "
+            "string with the style of key = values"
+        ),
+    )
+    parser.add_argument(
         "--mv",
         "--mass-variances",
         nargs="+",
@@ -622,7 +631,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         "--pypolymlp",
         dest="use_pypolymlp",
         action="store_true",
-        default=None,
+        default=False,
         help="Use pypolymlp and symfc for generating force constants",
     )
     parser.add_argument(
@@ -646,6 +655,21 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         action="store_true",
         default=False,
         help="Print out smallest information",
+    )
+    parser.add_argument(
+        "--random-seed",
+        dest="random_seed",
+        type=int,
+        default=None,
+        help="Random seed by a 32 bit unsigned integer",
+    )
+    parser.add_argument(
+        "--rd",
+        "--random-displacements",
+        dest="random_displacements",
+        type=int,
+        default=None,
+        help="Number of supercells with random displacements",
     )
     parser.add_argument(
         "--read-collision",
