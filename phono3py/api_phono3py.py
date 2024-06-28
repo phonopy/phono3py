@@ -2176,6 +2176,8 @@ class Phono3py:
 
         if params is not None:
             _params = parse_mlp_params(params)
+        else:
+            _params = params
 
         disps = self._mlp_dataset["displacements"]
         forces = self._mlp_dataset["forces"]
