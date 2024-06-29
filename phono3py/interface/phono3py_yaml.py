@@ -326,7 +326,7 @@ class Phono3pyYamlDumper(PhonopyYamlDumperBase):
 
         """
         lines = []
-        if self._data.phonon_supercell_matrix is not None:
+        if self._data.phonon_dataset is not None:
             lines += self._displacements_yaml_lines_2types(
                 self._data.phonon_dataset,
                 with_forces=with_forces,

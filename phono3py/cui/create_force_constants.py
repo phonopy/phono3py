@@ -167,29 +167,19 @@ def create_phono3py_force_constants(
         _read_phono3py_fc2(phono3py, symmetrize_fc2, input_filename, log_level)
     else:
         if phono3py.phonon_supercell_matrix is None:
-            if fc_calculator == "alm" and phono3py.fc2 is not None:
-                if log_level:
-                    print("fc2 that was fit simultaneously with fc3 " "by ALM is used.")
-            else:
-                _create_phono3py_fc2(
-                    phono3py,
-                    ph3py_yaml,
-                    symmetrize_fc2,
-                    settings.is_compact_fc,
-                    fc_calculator,
-                    fc_calculator_options,
-                    log_level,
-                )
+            force_filename = "FORCES_FC3"
         else:
-            _create_phono3py_phonon_fc2(
-                phono3py,
-                ph3py_yaml,
-                symmetrize_fc2,
-                settings.is_compact_fc,
-                fc_calculator,
-                fc_calculator_options,
-                log_level,
-            )
+            force_filename = "FORCES_FC2"
+        _create_phono3py_fc2(
+            phono3py,
+            ph3py_yaml,
+            force_filename,
+            symmetrize_fc2,
+            settings.is_compact_fc,
+            fc_calculator,
+            fc_calculator_options,
+            log_level,
+        )
         if output_filename is None:
             filename = "fc2.hdf5"
         else:
@@ -500,7 +490,7 @@ def _create_phono3py_fc3(
         phono3py.mlp_dataset = dataset
         run_pypolymlp_to_compute_forces(
             phono3py,
-            mlp_params=mlp_params,
+            mlp_params,
             displacement_distance=displacement_distance,
             number_of_snapshots=number_of_snapshots,
             random_seed=random_seed,
@@ -519,10 +509,10 @@ def _create_phono3py_fc3(
 def run_pypolymlp_to_compute_forces(
     ph3py: Phono3py,
     mlp_params: Union[str, dict, PypolymlpParams],
-    displacement_distance: float,
-    number_of_snapshots: int,
-    random_seed: int,
-    log_level: int,
+    displacement_distance: Optional[float] = None,
+    number_of_snapshots: Optional[int] = None,
+    random_seed: Optional[int] = None,
+    log_level: int = 0,
 ):
     """Run pypolymlp to compute forces."""
     if log_level:
@@ -542,13 +532,14 @@ def run_pypolymlp_to_compute_forces(
 
     ph3py.develop_mlp(params=mlp_params)
 
+    if log_level:
+        print("-" * 30 + " pypolymlp end " + "-" * 31, flush=True)
+
     if displacement_distance is None:
         _displacement_distance = 0.001
     else:
         _displacement_distance = displacement_distance
 
-    if log_level > 1:
-        print("")
     if log_level:
         if number_of_snapshots:
             print("Generate random displacements")
@@ -572,10 +563,10 @@ def run_pypolymlp_to_compute_forces(
 
     if log_level:
         print(
-            "  Number of supercells for computing forces: "
-            f"{ph3py.displacements.shape[0]}"
+            f"Evaluate forces in {ph3py.displacements.shape[0]} supercells "
+            "by pypolymlp",
+            flush=True,
         )
-        print("Evaluate forces by pypolymlp", flush=True)
 
     if ph3py.mlp_dataset is None:
         msg = "mlp_dataset has to be set before calling this method."
@@ -585,26 +576,85 @@ def run_pypolymlp_to_compute_forces(
 
     ph3py.evaluate_mlp()
 
+
+def run_pypolymlp_to_compute_phonon_forces(
+    ph3py: Phono3py,
+    mlp_params: Optional[Union[str, dict, PypolymlpParams]] = None,
+    displacement_distance: Optional[float] = None,
+    number_of_snapshots: Optional[int] = None,
+    random_seed: Optional[int] = None,
+    log_level: int = 0,
+):
+    """Run pypolymlp to compute phonon forces."""
+    if ph3py.phonon_mlp_dataset is not None:
+        if log_level:
+            print("-" * 29 + " pypolymlp start " + "-" * 30)
+            print("Pypolymlp is a generator of polynomial machine learning potentials.")
+            print("Please cite the paper: A. Seko, J. Appl. Phys. 133, 011101 (2023).")
+            print("Pypolymlp is developed at https://github.com/sekocha/pypolymlp.")
+            if mlp_params:
+                print("Parameters:")
+                for k, v in asdict(parse_mlp_params(mlp_params)).items():
+                    if v is not None:
+                        print(f"  {k}: {v}")
+        if log_level > 1:
+            print("")
+        if log_level:
+            print("Developing MLPs by pypolymlp...", flush=True)
+
+        ph3py.develop_phonon_mlp(params=mlp_params)
+
+        if log_level:
+            print("-" * 30 + " pypolymlp end " + "-" * 31, flush=True)
+
+    if displacement_distance is None:
+        _displacement_distance = 0.001
+    else:
+        _displacement_distance = displacement_distance
     if log_level:
-        print("-" * 30 + " pypolymlp end " + "-" * 31, flush=True)
+        print("Generate random displacements for fc2")
+        print(
+            f"  Displacement distance: {_displacement_distance:.5f}".rstrip("0").rstrip(
+                "."
+            )
+        )
+    ph3py.generate_fc2_displacements(
+        distance=_displacement_distance,
+        is_plusminus=True,
+        number_of_snapshots=number_of_snapshots,
+        random_seed=random_seed,
+    )
+    if log_level:
+        print(
+            f"Evaluate forces in {ph3py.phonon_displacements.shape[0]} "
+            "supercells by pypolymlp",
+            flush=True,
+        )
+    ph3py.evaluate_phonon_mlp()
 
 
 def _create_phono3py_fc2(
     phono3py: Phono3py,
     ph3py_yaml: Optional[Phono3pyYaml],
+    force_filename,
     symmetrize_fc2,
     is_compact_fc,
     fc_calculator,
     fc_calculator_options,
     log_level,
 ):
+    """Read forces and produce fc2.
+
+    force_filename is either "FORCES_FC2" or "FORCES_FC3".
+
+    """
     _ph3py_yaml = _get_default_ph3py_yaml(ph3py_yaml)
 
     try:
         dataset = parse_forces(
             phono3py,
             ph3py_yaml=_ph3py_yaml,
-            force_filename="FORCES_FC3",
+            force_filename=force_filename,
             fc_type="fc2",
             log_level=log_level,
         )
@@ -631,42 +681,6 @@ def _get_default_ph3py_yaml(ph3py_yaml: Optional[Phono3pyYaml]):
         _ph3py_yaml = Phono3pyYaml()
         _ph3py_yaml.read("phono3py_disp.yaml")
     return _ph3py_yaml
-
-
-def _create_phono3py_phonon_fc2(
-    phono3py: Phono3py,
-    ph3py_yaml: Optional[Phono3pyYaml],
-    symmetrize_fc2: bool,
-    is_compact_fc: bool,
-    fc_calculator: Optional[str],
-    fc_calculator_options: Optional[str],
-    log_level: int,
-):
-    _ph3py_yaml = _get_default_ph3py_yaml(ph3py_yaml)
-
-    try:
-        dataset = parse_forces(
-            phono3py,
-            ph3py_yaml=_ph3py_yaml,
-            force_filename="FORCES_FC2",
-            fc_type="phonon_fc2",
-            log_level=log_level,
-        )
-    except RuntimeError as e:
-        if log_level:
-            print(str(e))
-            print_error()
-        sys.exit(1)
-    except FileNotFoundError as e:
-        file_exists(e.filename, log_level)
-
-    phono3py.phonon_dataset = dataset
-    phono3py.produce_fc2(
-        symmetrize_fc2=symmetrize_fc2,
-        is_compact_fc=is_compact_fc,
-        fc_calculator=extract_fc2_fc3_calculators(fc_calculator, 2),
-        fc_calculator_options=extract_fc2_fc3_calculators(fc_calculator_options, 2),
-    )
 
 
 def _convert_unit_in_dataset(

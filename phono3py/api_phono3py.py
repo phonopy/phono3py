@@ -303,6 +303,8 @@ class Phono3py:
         # MLP
         self._mlp = None
         self._mlp_dataset = None
+        self._phonon_mlp = None
+        self._phonon_mlp_dataset = None
 
         # Setup interaction
         self._interaction = None
@@ -700,21 +702,24 @@ class Phono3py:
 
     @mlp_dataset.setter
     def mlp_dataset(self, mlp_dataset: dict):
-        if not isinstance(mlp_dataset, dict):
-            raise TypeError("mlp_dataset has to be a dictionary.")
-        if "displacements" not in mlp_dataset:
-            raise RuntimeError("Displacements have to be given.")
-        if "forces" not in mlp_dataset:
-            raise RuntimeError("Forces have to be given.")
-        if "supercell_energy" in mlp_dataset:
-            raise RuntimeError("Supercell energies have to be given.")
-        if len(mlp_dataset["displacements"]) != len(mlp_dataset["forces"]):
-            raise RuntimeError("Length of displacements and forces are different.")
-        if len(mlp_dataset["displacements"]) != len(mlp_dataset["supercell_energies"]):
-            raise RuntimeError(
-                "Length of displacements and supercell_energies are different."
-            )
+        self._check_mlp_dataset(mlp_dataset)
         self._mlp_dataset = mlp_dataset
+
+    @property
+    def phonon_mlp_dataset(self) -> Optional[dict]:
+        """Return phonon displacement-force dataset.
+
+        The phonon supercell matrix is equal to that of usual displacement-force
+        dataset. Only type 2 format is supported. "displacements", "forces", and
+        "supercell_energies" should be contained.
+
+        """
+        return self._phonon_mlp_dataset
+
+    @phonon_mlp_dataset.setter
+    def phonon_mlp_dataset(self, mlp_dataset: dict):
+        self._check_mlp_dataset(mlp_dataset)
+        self._phonon_mlp_dataset = mlp_dataset
 
     @property
     def band_indices(self) -> list[np.ndarray]:
@@ -950,18 +955,18 @@ class Phono3py:
             shape=(supercells, natom, 3), dtype='double', order='C'
 
         """
-        if self._phonon_supercell_matrix is None:
-            raise RuntimeError("phonon_supercell_matrix is not set.")
-
-        dataset = self._phonon_dataset
-        if "first_atoms" in dataset:
-            num_scells = len(dataset["first_atoms"])
+        if self._phonon_dataset is None:
+            raise RuntimeError("phonon_dataset is not set.")
+        if "first_atoms" in self._phonon_dataset:
+            num_scells = len(self._phonon_dataset["first_atoms"])
             natom = len(self._phonon_supercell)
             displacements = np.zeros((num_scells, natom, 3), dtype="double", order="C")
-            for i, disp1 in enumerate(dataset["first_atoms"]):
+            for i, disp1 in enumerate(self._phonon_dataset["first_atoms"]):
                 displacements[i, disp1["number"]] = disp1["displacement"]
-        elif "forces" in dataset or "displacements" in dataset:
-            displacements = dataset["displacements"]
+        elif (
+            "forces" in self._phonon_dataset or "displacements" in self._phonon_dataset
+        ):
+            displacements = self._phonon_dataset["displacements"]
         else:
             raise RuntimeError("displacement dataset has wrong format.")
 
@@ -1044,6 +1049,16 @@ class Phono3py:
 
         """
         return self._bz_grid
+
+    @property
+    def mlp(self):
+        """Return MLP instance."""
+        return self._mlp
+
+    @property
+    def phonon_mlp(self):
+        """Return MLP instance for fc2."""
+        return self._phonon_mlp
 
     def init_phph_interaction(
         self,
@@ -1214,48 +1229,56 @@ class Phono3py:
     ):
         """Generate displacement dataset in supercell for fc3.
 
-        This systematically generates single and pair atomic displacements
-        in supercells to calculate fc3 considering crystal symmetry.
-        When this method is called, existing cache of supercells with
-        displacements for fc3 are removed.
+        Systematic displacements
+        ------------------------
 
-        For fc3, two atoms are displaced for each configuration
-        considering crystal symmetry. The first displacement is chosen
-        in the perfect supercell, and the second displacement in the
-        displaced supercell. The first displacements are taken along
-        the basis vectors of the supercell. This is because the
-        symmetry is expected to be less broken by the introduced first
-        displacement, and as the result, the number of second
-        displacements may become smaller than the case that the first
-        atom is displaced not along the basis vectors.
+        Unless number_of_snapshots is specified, this method systematically
+        generates single and pair atomic displacements in supercells to
+        calculate fc3 considering crystal symmetry.
+
+        For fc3, two atoms are displaced for each configuration considering
+        crystal symmetry. The first displacement is chosen in the perfect
+        supercell, and the second displacement in the displaced supercell. The
+        first displacements are taken along the basis vectors of the supercell.
+        This is because the symmetry is expected to be less broken by the
+        introduced first displacement, and as the result, the number of second
+        displacements may become smaller than the case that the first atom is
+        displaced not along the basis vectors.
+
+        Random displacements
+        --------------------
+        Unless number_of_snapshots is specified, displacements are generated
+        randomly. There are several options how the random displacements are
+        generated.
 
         Note
         ----
-        When phonon_supercell_matrix is not given, fc2 is also
-        computed from the same set of the displacements for fc3 and
-        respective supercell forces. When phonon_supercell_matrix is
-        set, the displacements in phonon_supercell are generated unless
-        those already exist.
+        When phonon_supercell_matrix is not given, fc2 is also computed from the
+        same set of the displacements for fc3 and respective supercell forces.
+        When phonon_supercell_matrix is set, the displacements in
+        phonon_supercell are generated unless those already exist. If a specific
+        set of displacements for fc2 is expected, generate_fc2_displacements
+        should be called.
 
         Parameters
         ----------
         distance : float, optional
             Constant displacement Euclidean distance. Default is 0.03.
         cutoff_pair_distance : float, optional
-            This is used as a cutoff Euclidean distance to determine if
-            each pair of displacements is considered to calculate fc3 or not.
-            Default is None, which means cutoff is not used.
+            This is used as a cutoff Euclidean distance to determine if each
+            pair of displacements is considered to calculate fc3 or not. Default
+            is None, which means cutoff is not used.
         is_plusminus : True, False, or 'auto', optional
             With True, atomis are displaced in both positive and negative
-            directions. With False, only one direction. With 'auto',
-            mostly equivalent to is_plusminus=True, but only one direction
-            is chosen when the displacements in both directions are
-            symmetrically equivalent. Default is 'auto'.
+            directions. With False, only one direction. With 'auto', mostly
+            equivalent to is_plusminus=True, but only one direction is chosen
+            when the displacements in both directions are symmetrically
+            equivalent. Default is 'auto'.
         is_diagonal : Bool, optional
             With False, the second displacements are made along the basis
             vectors of the supercell. With True, direction not along the basis
-            vectors can be chosen when the number of the displacements
-            may be reduced.
+            vectors can be chosen when the number of the displacements may be
+            reduced.
         number_of_snapshots : int or None, optional
             Number of snapshots of supercells with random displacements. Random
             displacements are generated displacing all atoms in random
@@ -1362,14 +1385,6 @@ class Phono3py:
             value.
 
         """
-        if self._phonon_supercell_matrix is None:
-            msg = (
-                "phonon_supercell_matrix is not set. "
-                "This method is used to generate displacements to "
-                "calculate phonon_fc2."
-            )
-            raise RuntimeError(msg)
-
         if number_of_snapshots is not None and number_of_snapshots > 0:
             self._phonon_dataset = self._generate_random_displacements(
                 number_of_snapshots,
@@ -2214,6 +2229,75 @@ class Phono3py:
         self.supercell_energies = energies
         self.forces = forces
 
+    def develop_phonon_mlp(
+        self, params: Optional[Union[PypolymlpParams, dict, str]] = None
+    ):
+        """Develop MLP of pypolymlp for fc2.
+
+        Parameters
+        ----------
+        params : PypolymlpParams or dict, optional
+            Parameters for developing MLP. Default is None. When dict is given,
+            PypolymlpParams instance is created from the dict.
+
+        """
+        if self._phonon_mlp_dataset is None:
+            raise RuntimeError("MLP dataset is not set.")
+
+        if params is not None:
+            _params = parse_mlp_params(params)
+        else:
+            _params = params
+
+        disps = self._phonon_mlp_dataset["displacements"]
+        forces = self._phonon_mlp_dataset["forces"]
+        energies = self._phonon_mlp_dataset["supercell_energies"]
+        n = int(len(disps) * 0.9)
+        train_data = PypolymlpData(
+            displacements=disps[:n], forces=forces[:n], supercell_energies=energies[:n]
+        )
+        test_data = PypolymlpData(
+            displacements=disps[n:], forces=forces[n:], supercell_energies=energies[n:]
+        )
+        self._phonon_mlp = develop_polymlp(
+            self._phonon_supercell,
+            train_data,
+            test_data,
+            params=_params,
+            verbose=self._log_level - 1 > 0,
+        )
+
+    def evaluate_phonon_mlp(self):
+        """Evaluate the machine learning potential of pypolymlp.
+
+        This method calculates the supercell energies and forces from the MLP
+        for the displacements in self._dataset of type 2. The results are stored
+        in self._dataset.
+
+        The displacements may be generated by the produce_force_constants method
+        with number_of_snapshots > 0. With MLP, a small distance parameter, such
+        as 0.001, can be numerically stable for the computation of force
+        constants.
+
+        """
+        if self._mlp is None and self._phonon_mlp is None:
+            raise RuntimeError("MLP is not developed yet.")
+
+        if self.phonon_supercells_with_displacements is None:
+            raise RuntimeError(
+                "Displacements are not set. Run generate_fc2_displacements."
+            )
+
+        if self._phonon_mlp is None:
+            mlp = self._mlp
+        else:
+            mlp = self._phonon_mlp
+        energies, forces, _ = evalulate_polymlp(
+            mlp, self.phonon_supercells_with_displacements
+        )
+        self.phonon_supercell_energies = energies
+        self.phonon_forces = forces
+
     ###################
     # private methods #
     ###################
@@ -2569,3 +2653,19 @@ class Phono3py:
         )
         dataset["displacements"] = d
         return dataset
+
+    def _check_mlp_dataset(self, mlp_dataset: dict):
+        if not isinstance(mlp_dataset, dict):
+            raise TypeError("mlp_dataset has to be a dictionary.")
+        if "displacements" not in mlp_dataset:
+            raise RuntimeError("Displacements have to be given.")
+        if "forces" not in mlp_dataset:
+            raise RuntimeError("Forces have to be given.")
+        if "supercell_energy" in mlp_dataset:
+            raise RuntimeError("Supercell energies have to be given.")
+        if len(mlp_dataset["displacements"]) != len(mlp_dataset["forces"]):
+            raise RuntimeError("Length of displacements and forces are different.")
+        if len(mlp_dataset["displacements"]) != len(mlp_dataset["supercell_energies"]):
+            raise RuntimeError(
+                "Length of displacements and supercell_energies are different."
+            )

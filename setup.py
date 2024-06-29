@@ -326,7 +326,7 @@ def main(build_dir):
             "matplotlib>=2.2.2",
             "h5py>=3.0",
             "spglib>=2.0",
-            "phonopy>=2.24,<2.25",
+            "phonopy>=2.25,<2.26",
         ],
         provides=["phono3py"],
         scripts=scripts_phono3py,
