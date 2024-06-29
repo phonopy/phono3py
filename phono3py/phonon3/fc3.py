@@ -276,12 +276,12 @@ def set_permutation_symmetry_compact_fc3(fc3, primitive):
             np.array(p2s_map, dtype="int_"),
             np.array(nsym_list, dtype="int_"),
         )
-    except ImportError:
+    except ImportError as exc:
         text = (
             "Import error at phono3c.permutation_symmetry_compact_fc3. "
             "Corresponding python code is not implemented."
         )
-        raise RuntimeError(text)
+        raise RuntimeError(text) from exc
 
 
 def _copy_permutation_symmetry_fc3_elem(fc3, fc3_elem, a, b, c):
@@ -339,29 +339,29 @@ def set_translational_invariance_compact_fc3(fc3, primitive: Primitive):
         _set_translational_invariance_fc3_per_index(fc3, index=1)
         _set_translational_invariance_fc3_per_index(fc3, index=2)
 
-    except ImportError:
+    except ImportError as exc:
         text = (
             "Import error at phono3c.tranpose_compact_fc3. "
             "Corresponding python code is not implemented."
         )
-        raise RuntimeError(text)
+        raise RuntimeError(text) from exc
 
 
 def _set_translational_invariance_fc3_per_index(fc3, index=0):
     for i in range(fc3.shape[(1 + index) % 3]):
         for j in range(fc3.shape[(2 + index) % 3]):
-            for k, l, m in list(np.ndindex(3, 3, 3)):
+            for k, ll, m in list(np.ndindex(3, 3, 3)):
                 if index == 0:
-                    fc3[:, i, j, k, l, m] -= (
-                        np.sum(fc3[:, i, j, k, l, m]) / fc3.shape[0]
+                    fc3[:, i, j, k, ll, m] -= (
+                        np.sum(fc3[:, i, j, k, ll, m]) / fc3.shape[0]
                     )
                 elif index == 1:
-                    fc3[j, :, i, k, l, m] -= (
-                        np.sum(fc3[j, :, i, k, l, m]) / fc3.shape[1]
+                    fc3[j, :, i, k, ll, m] -= (
+                        np.sum(fc3[j, :, i, k, ll, m]) / fc3.shape[1]
                     )
                 elif index == 2:
-                    fc3[i, j, :, k, l, m] -= (
-                        np.sum(fc3[i, j, :, k, l, m]) / fc3.shape[2]
+                    fc3[i, j, :, k, ll, m] -= (
+                        np.sum(fc3[i, j, :, k, ll, m]) / fc3.shape[2]
                     )
 
 
@@ -465,7 +465,7 @@ def _solve_fc3(
             print("Displacements (in Angstrom):")
         else:
             print("One displacement (in Angstrom):")
-        for i, v in enumerate(displacements_first):
+        for v in displacements_first:
             print("    [%7.4f %7.4f %7.4f]" % tuple(v))
             sys.stdout.flush()
         if verbose > 2:
@@ -577,19 +577,19 @@ def show_drift_fc3(fc3, primitive=None, name="fc3"):
         klm1 = [0, 0, 0]
         klm2 = [0, 0, 0]
         klm3 = [0, 0, 0]
-        for i, j, k, l, m in list(np.ndindex((num_atom, num_atom, 3, 3, 3))):
-            val1 = fc3[:, i, j, k, l, m].sum()
-            val2 = fc3[i, :, j, k, l, m].sum()
-            val3 = fc3[i, j, :, k, l, m].sum()
+        for i, j, k, ll, m in list(np.ndindex((num_atom, num_atom, 3, 3, 3))):
+            val1 = fc3[:, i, j, k, ll, m].sum()
+            val2 = fc3[i, :, j, k, ll, m].sum()
+            val3 = fc3[i, j, :, k, ll, m].sum()
             if abs(val1) > abs(maxval1):
                 maxval1 = val1
-                klm1 = [k, l, m]
+                klm1 = [k, ll, m]
             if abs(val2) > abs(maxval2):
                 maxval2 = val2
-                klm2 = [k, l, m]
+                klm2 = [k, ll, m]
             if abs(val3) > abs(maxval3):
                 maxval3 = val3
-                klm3 = [k, l, m]
+                klm3 = [k, ll, m]
     else:
         try:
             import phono3py._phono3py as phono3c
@@ -614,29 +614,29 @@ def show_drift_fc3(fc3, primitive=None, name="fc3"):
             phono3c.transpose_compact_fc3(
                 fc3, permutations, s2pp_map, p2s_map, nsym_list, 0
             )  # dim[0] <--> dim[1]
-            for i, j, k, l, m in np.ndindex((num_patom, num_satom, 3, 3, 3)):
-                val1 = fc3[i, :, j, k, l, m].sum()
+            for i, j, k, ll, m in np.ndindex((num_patom, num_satom, 3, 3, 3)):
+                val1 = fc3[i, :, j, k, ll, m].sum()
                 if abs(val1) > abs(maxval1):
                     maxval1 = val1
-                    klm1 = [k, l, m]
+                    klm1 = [k, ll, m]
             phono3c.transpose_compact_fc3(
                 fc3, permutations, s2pp_map, p2s_map, nsym_list, 0
             )  # dim[0] <--> dim[1]
-            for i, j, k, l, m in np.ndindex((num_patom, num_satom, 3, 3, 3)):
-                val2 = fc3[i, :, j, k, l, m].sum()
-                val3 = fc3[i, j, :, k, l, m].sum()
+            for i, j, k, ll, m in np.ndindex((num_patom, num_satom, 3, 3, 3)):
+                val2 = fc3[i, :, j, k, ll, m].sum()
+                val3 = fc3[i, j, :, k, ll, m].sum()
                 if abs(val2) > abs(maxval2):
                     maxval2 = val2
-                    klm2 = [k, l, m]
+                    klm2 = [k, ll, m]
                 if abs(val3) > abs(maxval3):
                     maxval3 = val3
-                    klm3 = [k, l, m]
-        except ImportError:
+                    klm3 = [k, ll, m]
+        except ImportError as exc:
             text = (
                 "Import error at phono3c.tranpose_compact_fc3. "
                 "Corresponding python code is not implemented."
             )
-            raise RuntimeError(text)
+            raise RuntimeError(text) from exc
 
     text = "Max drift of %s: " % name
     text += "%f (%s%s%s) " % (maxval1, "xyz"[klm1[0]], "xyz"[klm1[1]], "xyz"[klm1[2]])

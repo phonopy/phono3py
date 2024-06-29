@@ -42,14 +42,14 @@ from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_mat
 from phonopy.structure.cells import Primitive, Supercell
 from phonopy.units import VaspToTHz
 
+from phono3py.phonon.func import bose_einstein
+from phono3py.phonon.grid import BZGrid, get_grid_point_from_address
+from phono3py.phonon.solver import run_phonon_solver_c
 from phono3py.phonon3.triplets import (
     get_nosym_triplets_at_q,
     get_triplets_at_q,
     get_triplets_integration_weights,
 )
-from phono3py.phonon.func import bose_einstein
-from phono3py.phonon.grid import BZGrid, get_grid_point_from_address
-from phono3py.phonon.solver import run_phonon_solver_c
 
 
 class JointDos:
@@ -129,7 +129,7 @@ class JointDos:
 
     def get_joint_dos(self):
         """Return joint-density-of-states."""
-        warnings.warn("Use attribute, joint_dos", DeprecationWarning)
+        warnings.warn("Use attribute, joint_dos", DeprecationWarning, stacklevel=2)
         return self.joint_dos
 
     @property
@@ -143,7 +143,9 @@ class JointDos:
 
     def get_frequency_points(self):
         """Return frequency points."""
-        warnings.warn("Use attribute, frequency_points", DeprecationWarning)
+        warnings.warn(
+            "Use attribute, frequency_points", DeprecationWarning, stacklevel=2
+        )
         return self.frequency_points
 
     def get_phonons(self):
@@ -157,7 +159,7 @@ class JointDos:
 
     def get_primitive(self):
         """Return primitive cell."""
-        warnings.warn("Use attribute, primitive", DeprecationWarning)
+        warnings.warn("Use attribute, primitive", DeprecationWarning, stacklevel=2)
         return self.primitive
 
     @property
@@ -172,7 +174,7 @@ class JointDos:
 
     def get_mesh_numbers(self):
         """Return mesh numbers by three integer values."""
-        warnings.warn("Use attribute, mesh_numbers", DeprecationWarning)
+        warnings.warn("Use attribute, mesh_numbers", DeprecationWarning, stacklevel=2)
         return self.mesh
 
     @property
@@ -189,7 +191,9 @@ class JointDos:
 
     def set_nac_q_direction(self, nac_q_direction=None):
         """Set q-direction for NAC."""
-        warnings.warn("Use attribute, nac_q_direction", DeprecationWarning)
+        warnings.warn(
+            "Use attribute, nac_q_direction", DeprecationWarning, stacklevel=2
+        )
         self.nac_q_direction = nac_q_direction
 
     @property
@@ -209,6 +213,7 @@ class JointDos:
         warnings.warn(
             "Use attribute, JointDOS.sigma instead of JointDOS.set_sigma()",
             DeprecationWarning,
+            stacklevel=2,
         )
         self.sigma = sigma
 
@@ -401,14 +406,16 @@ class JointDos:
     def _run_py_with_g_at_temperature(self, jdos, i):
         g = self._g
         n = self._occupations
-        for k, l in list(np.ndindex(g.shape[3:])):
+        for k, ll in list(np.ndindex(g.shape[3:])):
             weights = np.where(
-                np.logical_or(n[:, 0, k] < 0, n[:, 1, l] < 0), 0, self._weights_at_q
+                np.logical_or(n[:, 0, k] < 0, n[:, 1, ll] < 0), 0, self._weights_at_q
             )
             jdos[i, 1] += np.dot(
-                (n[:, 0, k] + n[:, 1, l] + 1) * g[0, :, i, k, l], weights
+                (n[:, 0, k] + n[:, 1, ll] + 1) * g[0, :, i, k, ll], weights
             )
-            jdos[i, 0] += np.dot((n[:, 0, k] - n[:, 1, l]) * g[1, :, i, k, l], weights)
+            jdos[i, 0] += np.dot(
+                (n[:, 0, k] - n[:, 1, ll]) * g[1, :, i, k, ll], weights
+            )
 
     def _init_dynamical_matrix(self):
         self._dm = get_dynamical_matrix(

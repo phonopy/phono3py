@@ -40,12 +40,12 @@ from phonopy.structure.symmetry import Symmetry
 from phonopy.units import VaspToTHz
 
 from phono3py.file_IO import write_joint_dos
+from phono3py.phonon.grid import BZGrid
 from phono3py.phonon3.imag_self_energy import (
     get_freq_points_batches,
     get_frequency_points,
 )
 from phono3py.phonon3.joint_dos import JointDos
-from phono3py.phonon.grid import BZGrid
 
 
 class Phono3pyJointDos:

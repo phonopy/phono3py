@@ -44,9 +44,9 @@ from phono3py.file_IO import (
     write_real_self_energy_at_grid_point,
     write_real_self_energy_to_hdf5,
 )
+from phono3py.phonon.func import bose_einstein
 from phono3py.phonon3.imag_self_energy import get_frequency_points
 from phono3py.phonon3.interaction import Interaction
-from phono3py.phonon.func import bose_einstein
 
 
 class RealSelfEnergy:
@@ -247,8 +247,8 @@ class RealSelfEnergy:
         )
 
     def _run_py_with_band_indices(self):
-        for i, (triplet, w, interaction) in enumerate(
-            zip(self._triplets_at_q, self._weights_at_q, self._pp_strength)
+        for triplet, w, interaction in zip(
+            self._triplets_at_q, self._weights_at_q, self._pp_strength
         ):
             freqs = self._frequencies[triplet]
             for j, bi in enumerate(self._band_indices):
@@ -286,22 +286,22 @@ class RealSelfEnergy:
 
     def _run_py_with_frequency_points(self):
         for k, fpoint in enumerate(self._frequency_points):
-            for i, (triplet, w, interaction) in enumerate(
-                zip(self._triplets_at_q, self._weights_at_q, self._pp_strength)
+            for triplet, w, interaction in zip(
+                self._triplets_at_q, self._weights_at_q, self._pp_strength
             ):
                 freqs = self._frequencies[triplet]
-                for j, bi in enumerate(self._band_indices):
+                for j, _ in enumerate(self._band_indices):
                     if self._temperature > 0:
-                        self._real_self_energies[
-                            k, j
-                        ] += self._real_self_energies_at_bands(
-                            j, fpoint, freqs, interaction, w
+                        self._real_self_energies[k, j] += (
+                            self._real_self_energies_at_bands(
+                                j, fpoint, freqs, interaction, w
+                            )
                         )
                     else:
-                        self._real_self_energies[
-                            k, j
-                        ] += self._real_self_energies_at_bands_0K(
-                            j, fpoint, freqs, interaction, w
+                        self._real_self_energies[k, j] += (
+                            self._real_self_energies_at_bands_0K(
+                                j, fpoint, freqs, interaction, w
+                            )
                         )
 
         self._real_self_energies *= self._unit_conversion
@@ -442,7 +442,7 @@ class ImagToReal:
         fpoints = []
         coef = self._df / np.pi
         i_zero = (len(self._im_part) - 1) // 2
-        for i, im_part_at_i in enumerate(self._im_part):
+        for i, _ in enumerate(self._im_part):
             if i < i_zero:
                 continue
             fpoint = self._all_frequency_points[i] + self._df / 2

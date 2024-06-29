@@ -2470,7 +2470,6 @@ def test_GridMatrix_with_supercell_symmetry(ph_nacl: Phonopy):
     np.testing.assert_array_equal(gm.D_diag, [4, 4, 4])
 
 
-@pytest.mark.filterwarnings("error")
 def test_GridMatrix_with_supercell_symmetry_grg_false(ph_nacl: Phonopy):
     """Test of GridMatrix with supercell symmetry.
 

@@ -5,8 +5,8 @@ import pytest
 
 from phono3py import Phono3py
 from phono3py.api_jointdos import Phono3pyJointDos
-from phono3py.phonon3.joint_dos import JointDos
 from phono3py.phonon.grid import BZGrid
+from phono3py.phonon3.joint_dos import JointDos
 
 si_freq_points = [
     0.0000000,

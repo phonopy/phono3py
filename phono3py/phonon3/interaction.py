@@ -45,15 +45,15 @@ from phonopy.structure.cells import Primitive, compute_all_sg_permutations
 from phonopy.structure.symmetry import Symmetry
 from phonopy.units import AMU, EV, Angstrom, Hbar, THz, VaspToTHz
 
-from phono3py.phonon3.real_to_reciprocal import RealToReciprocal
-from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
-from phono3py.phonon3.triplets import get_nosym_triplets_at_q, get_triplets_at_q
 from phono3py.phonon.grid import (
     BZGrid,
     get_grid_points_by_rotations,
     get_ir_grid_points,
 )
 from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
+from phono3py.phonon3.real_to_reciprocal import RealToReciprocal
+from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
+from phono3py.phonon3.triplets import get_nosym_triplets_at_q, get_triplets_at_q
 
 
 class Interaction:
@@ -222,6 +222,7 @@ class Interaction:
             "Use attribute, Interaction.interaction_strength "
             "instead of Interaction.get_interaction_strength().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.interaction_strength
 
@@ -243,6 +244,7 @@ class Interaction:
             "Use attribute, Interaction.mesh_numbers "
             "instead of Interaction.get_mesh_numbers().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.mesh_numbers
 
@@ -261,6 +263,7 @@ class Interaction:
         warnings.warn(
             "Use attribute, Interaction.fc3 " "instead of Interaction.get_fc3().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.fc3
 
@@ -275,6 +278,7 @@ class Interaction:
             "Use attribute, Interaction.dynamical_matrix "
             "instead of Interaction.get_dynamical_matrix().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.dynamical_matrix
 
@@ -289,6 +293,7 @@ class Interaction:
             "Use attribute, Interaction.primitive "
             "instead of Interaction.get_primitive().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.primitive
 
@@ -338,6 +343,7 @@ class Interaction:
             "Use attribute, Interaction.band_indices "
             "instead of Interaction.get_band_indices().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.band_indices
 
@@ -373,6 +379,7 @@ class Interaction:
             "Use attribute, Interaction.nac_q_direction "
             "instead of Interaction.get_nac_q_direction().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.nac_q_direction
 
@@ -382,6 +389,7 @@ class Interaction:
             "Use attribute, Interaction.nac_q_direction "
             "instead of Interaction.set_nac_q_direction().",
             DeprecationWarning,
+            stacklevel=2,
         )
         self.nac_q_direction = nac_q_direction
 
@@ -402,6 +410,7 @@ class Interaction:
             "Use attribute, Interaction.zero_value_positions "
             "instead of Interaction.get_zero_value_positions().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.zero_value_positions
 
@@ -436,6 +445,7 @@ class Interaction:
             "Use attribute, Interaction.frequency_factor_to_THz ",
             "instead of Interaction.get_frequency_factor_to_THz().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.frequency_factor_to_THz
 
@@ -450,6 +460,7 @@ class Interaction:
             "Use attribute, Interaction.lapack_zheev_uplo "
             "instead of Interaction.get_lapack_zheev_uplo().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.lapack_zheev_uplo
 
@@ -464,6 +475,7 @@ class Interaction:
             "Use attribute, Interaction.cutoff_frequency "
             "instead of Interaction.get_cutoff_frequency().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.cutoff_frequency
 
@@ -520,6 +532,7 @@ class Interaction:
             "Use attribute, Interaction.averaged_interaction "
             "instead of Interaction.get_averaged_interaction().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.averaged_interaction
 
@@ -540,6 +553,7 @@ class Interaction:
             "Use attribute, Interaction.unit_conversion_factor "
             "instead of Interaction.get_unit_conversion_factor().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.unit_conversion_factor
 
@@ -554,6 +568,7 @@ class Interaction:
             "Use attribute, Interaction.constant_averaged_interaction "
             "instead of Interaction.get_constant_averaged_interaction().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.constant_averaged_interaction
 

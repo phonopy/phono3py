@@ -57,7 +57,9 @@ def write_disp_fc3_yaml(dataset, supercell, filename="disp_fc3.yaml"):
     This function should not be called from phono3py script from version 3.
 
     """
-    warnings.warn("write_disp_fc3_yaml() is deprecated.", DeprecationWarning)
+    warnings.warn(
+        "write_disp_fc3_yaml() is deprecated.", DeprecationWarning, stacklevel=2
+    )
 
     w = open(filename, "w")
     w.write("natom: %d\n" % dataset["natom"])
@@ -155,7 +157,9 @@ def write_disp_fc2_yaml(dataset, supercell, filename="disp_fc2.yaml"):
     This function should not be called from phono3py script from version 3.
 
     """
-    warnings.warn("write_disp_fc2_yaml() is deprecated.", DeprecationWarning)
+    warnings.warn(
+        "write_disp_fc2_yaml() is deprecated.", DeprecationWarning, stacklevel=2
+    )
 
     w = open(filename, "w")
     w.write("natom: %d\n" % dataset["natom"])
@@ -251,7 +255,7 @@ def write_FORCES_FC3(disp_dataset, forces_fc3=None, fp=None, filename="FORCES_FC
             else:
                 # for forces in forces_fc3[i]:
                 #     w.write("%15.10f %15.10f %15.10f\n" % (tuple(forces)))
-                for j in range(natom):
+                for _ in range(natom):
                     w.write("%15.10f %15.10f %15.10f\n" % (0, 0, 0))
             count += 1
 
@@ -280,7 +284,7 @@ def write_fc3_to_hdf5(fc3, filename="fc3.hdf5", p2s_map=None, compression="gzip"
 
     """
     with h5py.File(filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("fc3", data=fc3, compression=compression)
         if p2s_map is not None:
             w.create_dataset("p2s_map", data=p2s_map)
@@ -339,8 +343,8 @@ def write_fc2_to_hdf5(
     ):
         try:
             import h5py
-        except ImportError:
-            raise ModuleNotFoundError("You need to install python-h5py.")
+        except ImportError as exc:
+            raise ModuleNotFoundError("You need to install python-h5py.") from exc
 
         with h5py.File(filename, "w") as w:
             w.create_dataset(
@@ -352,9 +356,9 @@ def write_fc2_to_hdf5(
                 dset = w.create_dataset(
                     "physical_unit", (1,), dtype="S%d" % len(physical_unit)
                 )
-                dset[0] = np.string_(physical_unit)
+                dset[0] = np.bytes_(physical_unit)
             if version is not None:
-                w.create_dataset("version", data=np.string_(version))
+                w.create_dataset("version", data=np.bytes_(version))
 
     write_force_constants_to_hdf5(
         force_constants,
@@ -385,7 +389,7 @@ def write_grid_address_to_hdf5(
     suffix = _get_filename_suffix(mesh, filename=filename)
     full_filename = "grid_address" + suffix + ".hdf5"
     with h5py.File(full_filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("mesh", data=mesh)
         if bz_grid is not None and bz_grid.grid_matrix is not None:
             w.create_dataset("grid_matrix", data=bz_grid.grid_matrix)
@@ -577,7 +581,7 @@ def write_real_self_energy_to_hdf5(
     full_filename += ".hdf5"
 
     with h5py.File(full_filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("grid_point", data=grid_point)
         w.create_dataset("mesh", data=mesh)
         if bz_grid is not None and bz_grid.grid_matrix is not None:
@@ -666,7 +670,7 @@ def write_spectral_function_to_hdf5(
     full_filename += ".hdf5"
 
     with h5py.File(full_filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("grid_point", data=grid_point)
         w.create_dataset("mesh", data=mesh)
         if bz_grid is not None and bz_grid.grid_matrix is not None:
@@ -713,7 +717,7 @@ def write_collision_to_hdf5(
     )
     full_filename = "collision" + suffix + ".hdf5"
     with h5py.File(full_filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("temperature", data=temperature)
         if gamma is not None:
             w.create_dataset("gamma", data=gamma)
@@ -751,7 +755,7 @@ def write_collision_to_hdf5(
 def write_full_collision_matrix(collision_matrix, filename="fcm.hdf5"):
     """Write full (non-symmetrized) collision matrix to collision-*.hdf5."""
     with h5py.File(filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("collision_matrix", data=collision_matrix)
 
 
@@ -776,7 +780,7 @@ def write_unitary_matrix_to_hdf5(
     )
     hdf5_filename = "unitary" + suffix + ".hdf5"
     with h5py.File(hdf5_filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("temperature", data=temperature)
         if unitary_matrix is not None:
             w.create_dataset("unitary_matrix", data=unitary_matrix)
@@ -816,7 +820,7 @@ def write_collision_eigenvalues_to_hdf5(
         mesh, sigma=sigma, sigma_cutoff=sigma_cutoff, filename=filename
     )
     with h5py.File("coleigs" + suffix + ".hdf5", "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("temperature", data=temperatures)
         w.create_dataset("collision_eigenvalues", data=collision_eigenvalues)
         w.close()
@@ -885,7 +889,7 @@ def write_kappa_to_hdf5(
     )
     full_filename = "kappa" + suffix + ".hdf5"
     with h5py.File(full_filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("temperature", data=temperature)
         w.create_dataset("mesh", data=mesh)
         if bz_grid is not None and bz_grid.grid_matrix is not None:
@@ -1159,7 +1163,7 @@ def write_pp_to_hdf5(
     full_filename = "pp" + suffix + ".hdf5"
 
     with h5py.File(full_filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         if pp is not None:
             if g_zero is None:
                 w.create_dataset("pp", data=pp, compression=compression)
@@ -1323,7 +1327,7 @@ def write_gamma_detail_to_hdf5(
     full_filename = "gamma_detail" + suffix + ".hdf5"
 
     with h5py.File(full_filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("temperature", data=temperature)
         w.create_dataset("mesh", data=mesh)
         if bz_grid is not None and bz_grid.grid_matrix is not None:
@@ -1397,7 +1401,7 @@ def write_phonon_to_hdf5(
     full_filename = "phonon" + suffix + ".hdf5"
 
     with h5py.File(full_filename, "w") as w:
-        w.create_dataset("version", data=np.string_(__version__))
+        w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("mesh", data=mesh)
         if bz_grid is not None and bz_grid.grid_matrix is not None:
             w.create_dataset("grid_matrix", data=bz_grid.grid_matrix)
@@ -1480,7 +1484,9 @@ def parse_disp_fc2_yaml(filename="disp_fc2.yaml", return_cell=False):
     This function should not be called from phono3py script from version 3.
 
     """
-    warnings.warn("parse_disp_fc2_yaml() is deprecated.", DeprecationWarning)
+    warnings.warn(
+        "parse_disp_fc2_yaml() is deprecated.", DeprecationWarning, stacklevel=2
+    )
 
     dataset = _parse_yaml(filename)
     natom = dataset["natom"]
@@ -1507,7 +1513,9 @@ def parse_disp_fc3_yaml(filename="disp_fc3.yaml", return_cell=False):
     This function should not be called from phono3py script from version 3.
 
     """
-    warnings.warn("parse_disp_fc3_yaml() is deprecated.", DeprecationWarning)
+    warnings.warn(
+        "parse_disp_fc3_yaml() is deprecated.", DeprecationWarning, stacklevel=2
+    )
 
     dataset = _parse_yaml(filename)
     natom = dataset["natom"]
@@ -1547,7 +1555,7 @@ def parse_FORCES_FC2(disp_dataset, filename="FORCES_FC2", unit_conversion_factor
     num_disp = len(disp_dataset["first_atoms"])
     forces_fc2 = []
     with open(filename, "r") as f2:
-        for i in range(num_disp):
+        for _ in range(num_disp):
             forces = _parse_force_lines(f2, num_atom)
             if forces is None:
                 return []
@@ -1681,7 +1689,7 @@ def _parse_yaml(file_yaml):
     So this is obsolete at v2 and later versions.
 
     """
-    warnings.warn("_parse_yaml() is deprecated.", DeprecationWarning)
+    warnings.warn("_parse_yaml() is deprecated.", DeprecationWarning, stacklevel=2)
 
     import yaml
 
@@ -1720,7 +1728,7 @@ def _write_cell_yaml(w, supercell):
     These methods are also deprecated.
 
     """
-    warnings.warn("write_cell_yaml() is deprecated.", DeprecationWarning)
+    warnings.warn("write_cell_yaml() is deprecated.", DeprecationWarning, stacklevel=2)
 
     w.write("lattice:\n")
     for axis in supercell.get_cell():
