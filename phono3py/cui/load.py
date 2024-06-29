@@ -450,47 +450,33 @@ def compute_force_constants_from_datasets(
             fc2 : bool
 
     """
-    if not read_fc["fc3"]:
-        if ph3py.dataset or ph3py.mlp_dataset:
-            if ph3py.mlp_dataset and use_pypolymlp:
-                run_pypolymlp_to_compute_forces(
-                    ph3py,
-                    mlp_params=mlp_params,
-                    displacement_distance=displacement_distance,
-                    number_of_snapshots=number_of_snapshots,
-                    random_seed=random_seed,
-                    log_level=log_level,
-                )
-
-            ph3py.produce_fc3(
-                symmetrize_fc3r=symmetrize_fc,
-                is_compact_fc=is_compact_fc,
-                fc_calculator=extract_fc2_fc3_calculators(fc_calculator, 3),
-                fc_calculator_options=extract_fc2_fc3_calculators(
-                    fc_calculator_options, 3
-                ),
+    fc3_calculator = extract_fc2_fc3_calculators(fc_calculator, 3)
+    fc2_calculator = extract_fc2_fc3_calculators(fc_calculator, 2)
+    if not read_fc["fc3"] and (ph3py.dataset or ph3py.mlp_dataset):
+        if ph3py.mlp_dataset and use_pypolymlp:
+            run_pypolymlp_to_compute_forces(
+                ph3py,
+                mlp_params=mlp_params,
+                displacement_distance=displacement_distance,
+                number_of_snapshots=number_of_snapshots,
+                random_seed=random_seed,
+                log_level=log_level,
             )
+        ph3py.produce_fc3(
+            symmetrize_fc3r=symmetrize_fc,
+            is_compact_fc=is_compact_fc,
+            fc_calculator=fc3_calculator,
+            fc_calculator_options=extract_fc2_fc3_calculators(fc_calculator_options, 3),
+        )
 
-            if log_level and symmetrize_fc and fc_calculator is None:
-                print("fc3 was symmetrized.")
+        if log_level and symmetrize_fc and fc_calculator is None:
+            print("fc3 was symmetrized.")
 
     if not read_fc["fc2"] and (ph3py.dataset or ph3py.phonon_dataset):
-        # if (
-        #     ph3py.phonon_supercell_matrix is None
-        #     and fc_calculator in ("alm", "symfc")
-        #     and ph3py.fc2 is not None
-        # ):
-        #     if log_level:
-        #         if fc_calculator == "alm":
-        #             print("fc2 that was fit simultaneously with fc3 by ALM is used.")
-        #         elif fc_calculator == "symfc":
-        #             print(
-        #                 "fc2 that was fit simultaneously with fc3 by symfc is used.")
-        # else:
         ph3py.produce_fc2(
             symmetrize_fc2=symmetrize_fc,
             is_compact_fc=is_compact_fc,
-            fc_calculator=extract_fc2_fc3_calculators(fc_calculator, 2),
+            fc_calculator=fc2_calculator,
             fc_calculator_options=extract_fc2_fc3_calculators(fc_calculator_options, 2),
         )
         if log_level and symmetrize_fc and fc_calculator is None:
