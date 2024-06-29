@@ -332,6 +332,7 @@ class Phono3pyYamlDumper(PhonopyYamlDumperBase):
                 with_forces=with_forces,
                 key_prefix="phonon_",
             )
+            lines.append("")
         lines += self._displacements_yaml_lines_2types(
             self._data.dataset, with_forces=with_forces
         )

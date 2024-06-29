@@ -2,6 +2,11 @@
 
 # Change Log
 
+## Jun-29-2024: Version 3.2.0
+
+- `--rd` and `--rd-fc2` options for generating random directional displacements.
+- Experimental implementation for using pypolymlp.
+
 ## Jun-19-2024: Version 3.1.2
 
 - Treatment of numpy 2.0.

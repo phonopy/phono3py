@@ -672,6 +672,14 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         help="Number of supercells with random displacements",
     )
     parser.add_argument(
+        "--rd-fc2",
+        "--random-displacements-fc2",
+        dest="random_displacements_fc2",
+        type=int,
+        default=None,
+        help="Number of phonon supercells with random displacements",
+    )
+    parser.add_argument(
         "--read-collision",
         dest="read_collision",
         default=None,
