@@ -7,12 +7,12 @@ from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.symmetry import Symmetry
 
 from phono3py import Phono3py
+from phono3py.phonon.grid import BZGrid, get_grid_point_from_address
 from phono3py.phonon3.triplets import (
     _get_BZ_triplets_at_q,
     _get_triplets_reciprocal_mesh_at_q,
     get_triplets_at_q,
 )
-from phono3py.phonon.grid import BZGrid, get_grid_point_from_address
 
 
 def test_get_triplets_at_q_type1(si_pbesol_111):

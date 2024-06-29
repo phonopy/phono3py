@@ -350,13 +350,11 @@ def _find_duplicates(direction_dataset):
 
     duplucates = []
     done = []
-    for i, direction1 in enumerate(direction_dataset):
+    for direction1 in direction_dataset:
         n1 = direction1["number"]
         for directions2 in direction1["second_atoms"]:
             n2 = directions2["number"]
-            if (
-                n2 > n1 and (n2, n1) not in done and (n2, n1) in direction_sets
-            ):  # noqa E129
+            if n2 > n1 and (n2, n1) not in done and (n2, n1) in direction_sets:  # noqa E129
                 done.append((n2, n1))
                 duplucates += _compare(
                     n1,
@@ -368,14 +366,14 @@ def _find_duplicates(direction_dataset):
                 )
 
     done = []
-    for i, direction1 in enumerate(direction_dataset):
+    for direction1 in direction_dataset:
         n1 = direction1["number"]
         for directions2 in direction1["second_atoms"]:
             n2 = directions2["number"]
             if n1 == n2 and n1 not in done:
                 done.append(n1)
                 duplucates += _compare_opposite(
-                    n1, direction_sets[(n1, n1)], pair_idx[(n1, n1)]
+                    direction_sets[(n1, n1)], pair_idx[(n1, n1)]
                 )
 
     return duplucates
@@ -393,10 +391,10 @@ def _compare(n1, n2, dset1, dset2, pidx1, pidx2):
     return [[i, j] for (i, j) in duplucates if i > j]
 
 
-def _compare_opposite(n1, dset1, pidx1):
+def _compare_opposite(dset1, pidx1):
     flip_sets = np.array(dset1)[:, [3, 4, 5, 0, 1, 2]]
     duplucates = []
-    for i, d1 in enumerate(dset1):
+    for d1 in dset1:
         eq_indices = np.where(np.abs(flip_sets + d1).sum(axis=1) == 0)[0]
         if len(eq_indices) > 0:
             duplucates += [[pidx1[j], 0] for j in eq_indices]

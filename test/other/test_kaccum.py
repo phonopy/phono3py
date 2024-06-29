@@ -298,6 +298,7 @@ def test_GammaDOSsmearing(nacl_pbe: Phono3py):
 
 
 def test_run_prop_dos(si_pbesol: Phono3py):
+    """Test of run_prop_dos."""
     ph3 = si_pbesol
     ph3.mesh_numbers = [7, 7, 7]
     ph3.init_phph_interaction()

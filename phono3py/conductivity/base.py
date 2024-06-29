@@ -45,10 +45,10 @@ from phonopy.phonon.thermal_properties import mode_cv
 from phonopy.units import EV, Angstrom, Kb, THz, THzToEv
 
 from phono3py.other.isotope import Isotope
+from phono3py.phonon.grid import get_grid_points_by_rotations, get_ir_grid_points
 from phono3py.phonon3.collision_matrix import CollisionMatrix
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy
 from phono3py.phonon3.interaction import Interaction
-from phono3py.phonon.grid import get_grid_points_by_rotations, get_ir_grid_points
 
 unit_to_WmK = (
     (THz * Angstrom) ** 2 / (Angstrom**3) * EV / THz / (2 * np.pi)
@@ -81,6 +81,7 @@ class HeatCapacityMixIn:
             "Use attribute, Conductivity.mode_heat_capacities "
             "instead of Conductivity.get_mode_heat_capacities().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.mode_heat_capacities
 
@@ -129,6 +130,7 @@ class ConductivityMixIn(HeatCapacityMixIn):
         warnings.warn(
             "Use attribute, Conductivity.kappa " "instead of Conductivity.get_kappa().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.kappa
 
@@ -143,6 +145,7 @@ class ConductivityMixIn(HeatCapacityMixIn):
             "Use attribute, Conductivity.mode_kappa "
             "instead of Conductivity.get_mode_kappa().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.mode_kappa
 
@@ -165,6 +168,7 @@ class ConductivityMixIn(HeatCapacityMixIn):
             "Use attribute, Conductivity.group_velocities "
             "instead of Conductivity.get_group_velocities().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.group_velocities
 
@@ -179,6 +183,7 @@ class ConductivityMixIn(HeatCapacityMixIn):
             "Use attribute, Conductivity.gv_by_gv "
             "instead of Conductivity.get_gv_by_gv().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.gv_by_gv
 
@@ -413,6 +418,7 @@ class ConductivityBase(ABC):
             "Use attribute, Conductivity.mesh_numbers "
             "instead of Conductivity.get_mesh_numbers().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.mesh_numbers
 
@@ -440,6 +446,7 @@ class ConductivityBase(ABC):
             "Use attribute, Conductivity.frequencies "
             "instead of Conductivity.get_frequencies().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.frequencies
 
@@ -458,6 +465,7 @@ class ConductivityBase(ABC):
             "Use attribute, Conductivity.qpoints "
             "instead of Conductivity.get_qpoints().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.qpoints
 
@@ -480,6 +488,7 @@ class ConductivityBase(ABC):
             "Use attribute, Conductivity.grid_points "
             "instead of Conductivity.get_grid_points().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.grid_points
 
@@ -494,6 +503,7 @@ class ConductivityBase(ABC):
             "Use attribute, Conductivity.grid_weights "
             "instead of Conductivity.get_grid_weights().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.grid_weights
 
@@ -513,6 +523,7 @@ class ConductivityBase(ABC):
             "Use attribute, Conductivity.temperatures "
             "instead of Conductivity.get_temperatures().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.temperatures
 
@@ -522,6 +533,7 @@ class ConductivityBase(ABC):
             "Use attribute, Conductivity.temperatures "
             "instead of Conductivity.set_temperatures().",
             DeprecationWarning,
+            stacklevel=2,
         )
         self.temperatures = temperatures
 
@@ -540,6 +552,7 @@ class ConductivityBase(ABC):
         warnings.warn(
             "Use attribute, Conductivity.gamma " "instead of Conductivity.get_gamma().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.gamma
 
@@ -548,6 +561,7 @@ class ConductivityBase(ABC):
         warnings.warn(
             "Use attribute, Conductivity.gamma " "instead of Conductivity.set_gamma().",
             DeprecationWarning,
+            stacklevel=2,
         )
         self.gamma = gamma
 
@@ -567,6 +581,7 @@ class ConductivityBase(ABC):
             "Use attribute, Conductivity.gamma_isotope "
             "instead of Conductivity.get_gamma_isotope().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.gamma_isotope
 
@@ -576,6 +591,7 @@ class ConductivityBase(ABC):
             "Use attribute, Conductivity.gamma_isotope "
             "instead of Conductivity.set_gamma_isotope().",
             DeprecationWarning,
+            stacklevel=2,
         )
         self.gamma_isotope = gamma_iso
 
@@ -590,6 +606,7 @@ class ConductivityBase(ABC):
             "Use attribute, Conductivity.sigmas "
             "instead of Conductivity.get_sigmas().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.sigmas
 
@@ -604,6 +621,7 @@ class ConductivityBase(ABC):
             "Use attribute, Conductivity.sigma_cutoff_width "
             "instead of Conductivity.get_sigma_cutoff_width().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.sigma_cutoff_width
 
@@ -618,6 +636,7 @@ class ConductivityBase(ABC):
             "Use attribute, Conductivity.grid_point_count "
             "instead of Conductivity.get_grid_point_count().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.grid_point_count
 
@@ -632,6 +651,7 @@ class ConductivityBase(ABC):
             "Use attribute, Conductivity.averaged_pp_interaction "
             "instead of Conductivity.get_averaged_pp_interaction().",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.averaged_pp_interaction
 

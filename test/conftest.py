@@ -415,7 +415,6 @@ def nacl_pbe_cutoff_fc3(request) -> Phono3py:
             count += 1
     ph3.dataset = dataset
     ph3.produce_fc3()
-    # ph3.produce_fc3(symmetrize_fc3r=True)
     return ph3
 
 
@@ -494,6 +493,17 @@ def si_111_222_fd() -> Phono3py:
 def si_111_222_rd() -> Phono3py:
     """Return Phono3py class instance of Si-1x1x1-2x2x2 RD."""
     yaml_filename = cwd / "phono3py_params_Si-111-222-rd.yaml.xz"
+    return phono3py.load(yaml_filename, produce_fc=False, log_level=1)
+
+
+@pytest.fixture(scope="session")
+def mgo_222rd_444rd() -> Phono3py:
+    """Return Phono3py class instance of MgO-2x2x2-4x4x4 RD-RD.
+
+    4 and 400 supercells for fc2 and fc3, respectively.
+
+    """
+    yaml_filename = cwd / "phono3py_params_MgO-222rd-444rd.yaml.xz"
     return phono3py.load(yaml_filename, produce_fc=False, log_level=1)
 
 
