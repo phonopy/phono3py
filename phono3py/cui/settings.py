@@ -89,6 +89,7 @@ class Phono3pySettings(Settings):
         "pinv_solver": 0,
         "pinv_method": 0,
         "pp_conversion_factor": None,
+        "random_displacements_fc2": None,
         "scattering_event_class": None,  # scattering event class 1 or 2
         "sigma_cutoff_width": None,
         "solve_collective_phonon": False,
@@ -275,6 +276,10 @@ class Phono3pySettings(Settings):
     def set_pp_conversion_factor(self, val):
         """Set pp_conversion_factor."""
         self._v["pp_conversion_factor"] = val
+
+    def set_random_displacements_fc2(self, val):
+        """Set random_displacements_fc2."""
+        self._v["random_displacements_fc2"] = val
 
     def set_read_collision(self, val):
         """Set read_collision."""
@@ -553,6 +558,11 @@ class Phono3pyConfParser(ConfParser):
             if pp_conv_factor is not None:
                 self._confs["pp_conversion_factor"] = pp_conv_factor
 
+        if "random_displacements_fc2" in self._args:
+            rd_fc2 = self._args.random_displacements_fc2
+            if rd_fc2 is not None:
+                self._confs["random_displacements_fc2"] = rd_fc2
+
         if "read_fc2" in self._args:
             if self._args.read_fc2:
                 self._confs["read_fc2"] = ".true."
@@ -695,6 +705,7 @@ class Phono3pyConfParser(ConfParser):
                 "pinv_method",
                 "pinv_solver",
                 "num_points_in_batch",
+                "random_displacements_fc2",
                 "scattering_event_class",
             ):
                 self.set_parameter(conf_key, int(confs[conf_key]))
@@ -942,6 +953,12 @@ class Phono3pyConfParser(ConfParser):
         # Ph-ph interaction unit conversion factor
         if "pp_conversion_factor" in params:
             self._settings.set_pp_conversion_factor(params["pp_conversion_factor"])
+
+        # Random displacements for fc2
+        if "random_displacements_fc2" in params:
+            self._settings.set_random_displacements_fc2(
+                params["random_displacements_fc2"]
+            )
 
         # Calculate real_self_energys
         if "real_self_energy" in params:

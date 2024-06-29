@@ -77,7 +77,17 @@ def create_phono3py_supercells(
         cutoff_pair_distance=settings.cutoff_pair_distance,
         is_plusminus=settings.is_plusminus_displacement,
         is_diagonal=settings.is_diagonal_displacement,
+        number_of_snapshots=settings.random_displacements,
+        random_seed=settings.random_seed,
     )
+
+    if settings.random_displacements_fc2:
+        phono3py.generate_fc2_displacements(
+            distance=distance,
+            is_plusminus=settings.is_plusminus_displacement,
+            number_of_snapshots=settings.random_displacements_fc2,
+            random_seed=settings.random_seed,
+        )
 
     if log_level:
         print("")

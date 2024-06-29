@@ -181,7 +181,7 @@ created from `FORCES_FC2` and `phono3py_disp.yaml` instead of `FORCES_FC3` and
 ### `--dim` (`DIM`)
 
 Supercell dimension is specified. See the detail at
-http://phonopy.github.io/phonopy/setting-tags.html#dim. When a proper
+<http://phonopy.github.io/phonopy/setting-tags.html#dim>. When a proper
 `phono3py_disp.yaml` exists in the current directory, this is unnecessary to be
 specified.
 
@@ -233,7 +233,7 @@ that created in the usual phono3py run without `--dim-fc2` option.
 
 Transformation matrix from a non-primitive cell to the primitive cell. See
 phonopy `PRIMITIVE_AXES` tag (`--pa` option) at
-http://phonopy.github.io/phonopy/setting-tags.html#primitive-axis. When a proper
+<http://phonopy.github.io/phonopy/setting-tags.html#primitive-axis>. When a proper
 `phono3py_disp.yaml` exists in the current directory, this is unnecessary to be
 specified.
 
@@ -261,10 +261,17 @@ e.g., `--pa="F"` if the input unit cell has F-centring.
 
 (amplitude_option)=
 
+### `--rd` (`RANDOM_DISPLACEMENTS`), `--rd-fc2` (`RANDOM_DISPLACEMENTS_FC2`) and `--random-seed` (`RANDOM_SEED`)
+
+Random directional displacements are generated for fc3 and fc2 supercells by
+`--rd` and `--rd-fc2`, respectively. `--amplitude` and `--random-seed` options
+may be used together. These are used in the equivalent way to [`--rd` of
+phonopy](https://phonopy.github.io/phonopy/setting-tags.html#random-displacements).
+
 ### `--amplitude` (`DISPLACEMENT_DISTANCE`)
 
 Atomic displacement distance is specified. This value may be increased for the
-weak interaction systems and descreased when the force calculator is numerically
+weak interaction systems and decreased when the force calculator is numerically
 very accurate.
 
 The default value depends on calculator. See
@@ -279,7 +286,7 @@ The default value depends on calculator. See
 When creating force constants from `FORCES_FC3` and/or `FORCES_FC2`, force
 constants that use smaller data size are created. The shape of the data array is
 `(num_patom, num_satom)` for fc2 and `(num_patom, num_satom, num_satom)` for
-fc3, where `num_patom` and `num_satom` are the numbers of atoms in primtive cell
+fc3, where `num_patom` and `num_satom` are the numbers of atoms in primitive cell
 and supercell. In the full size force constants case, `num_patom` is replaced by
 `num_satom`. Therefore if the supercell dimension is large, this reduction of
 data size becomes large. If the input crystal structure has centring
@@ -298,7 +305,7 @@ imperfect symmetrization scheme that phono3py employs.
 ### `--sym-fc` (`FC_SYMMETRY = .TRUE.`)
 
 Second- and third-order force constants are symmetrized. The index exchange of
-real space force constantsand translational invariance symmetry are applied in a
+real space force constants and translational invariance symmetry are applied in a
 simple way. This symmetrization just removes drift force constants evenly from
 all elements and then applies averaging index-exchange equivalent elements.
 Therefore the different symmetries are not simultaneously enforced. For better
@@ -336,7 +343,7 @@ or computed with less numerical accuracy. More details are found at
 
 This invokes ALM as the force constants calculator for fc2 and fc3. See the
 detail at
-[phonopy documentaton](https://phonopy.github.io/phonopy/setting-tags.html#alm).
+[phonopy documentation](https://phonopy.github.io/phonopy/setting-tags.html#alm).
 This option is useful for fitting random displacement dataset or MD data to
 force constants. Phono3py doesn't provide command-line interface to generate
 random displacements. Instead simply
@@ -359,7 +366,7 @@ as written
 ### `--gp` (`GRID_POINTS`)
 
 Grid points are specified by their unique indices, e.g., for selecting the
-q-points where imaginary parts of self energees are calculated. For thermal
+q-points where imaginary parts of self energies are calculated. For thermal
 conductivity calculation, this can be used to distribute its calculation over
 q-points (see {ref}`workload_distribution`).
 
@@ -382,7 +389,7 @@ This is used to specify grid points like `--gp` option but in their addresses
 represented by integer numbers. For example with `--mesh="16 16 16"`, a q-point
 of (0.5, 0.5, 0.5) is given by `--ga="8 8 8"`. The values have to be integers.
 If you want to specify the point on a path,
-`--ga="0 0 0 1 1 1 2 2 2 3 3 3 ..."`, where each three values are recogninzed as
+`--ga="0 0 0 1 1 1 2 2 2 3 3 3 ..."`, where each three values are recognized as
 a grid point. The grid points given by `--ga` option are translated to grid
 point indices as given by `--gp` option, and the values given by `--ga` option
 will not be shown in log files.
@@ -394,7 +401,7 @@ will not be shown in log files.
 Band indices are specified. The calculated values at indices separated by space
 are averaged, and those separated by comma are separately calculated. The output
 file name will be, e.g., `gammas-mxxx-gxx(-sx)-bx.dat` where `bxbx...` shows the
-band indices where the values are calcualted and summed and averaged over those
+band indices where the values are calculated and summed and averaged over those
 bands.
 
 ```bash
@@ -489,7 +496,7 @@ $$
   \delta(\omega-\omega_{\lambda'}-\omega_{\lambda''}) \right.
   + (n_{\lambda'}-n_{\lambda''})
  \left[\delta(\omega+\omega_{\lambda'}-\omega_{\lambda''})
-- \left. \delta(\omega-\omega_{\lambda'}+\omega_{\lambda''})
++ \left. \delta(\omega-\omega_{\lambda'}+\omega_{\lambda''})
 \right]\right\}.
 $$
 
@@ -524,16 +531,17 @@ equivalent to that of `--br`. More detail is documented at
 
 ### `--wigner`
 
-Run calculation of lattice thermal conductivity tensor computing the coherences (wave-like) contribution
-to the thermal conductivity, obtained solving the Wigner transport equation equation.
-This option can be combined with `--lbte` or `--br`; in the former case the populations
-conductivity (particle-like, equivalent to the conductivity obtained solving the LBTE) is computed exactly,
-in the latter case the populations conductivity is
-computed in the relaxation-time approximation (RTA).
-The coherences contribution to the conductivity is always computed exactly.
-The coherences conductivity is usually non-negligible compared to the particle-like conductivity in materials
-with ultralow or glass-like conductivity.
-More details can be found at {ref}`wigner_solution`.
+Run calculation of lattice thermal conductivity tensor computing the coherences
+(wave-like) contribution to the thermal conductivity, obtained solving the
+Wigner transport equation equation. This option can be combined with `--lbte` or
+`--br`; in the former case the populations conductivity (particle-like,
+equivalent to the conductivity obtained solving the LBTE) is computed exactly,
+in the latter case the populations conductivity is computed in the
+relaxation-time approximation (RTA). The coherences contribution to the
+conductivity is always computed exactly. The coherences conductivity is usually
+non-negligible compared to the particle-like conductivity in materials with
+ultralow or glass-like conductivity. More details can be found at
+{ref}`wigner_solution`.
 
 ## Scattering
 
@@ -718,7 +726,7 @@ $$
  \bigl|\Phi_{-\lambda\lambda_1\lambda_2}\bigl|^2
  (n_{\lambda_1}-n_{\lambda_2})
  \left[\delta(\omega+\omega_{\lambda_1}-\omega_{\lambda_2})
- -  \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2})
+ +  \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2})
  \right]
  \end{align*}
 $$
@@ -732,7 +740,7 @@ $$
  \bigl|\Phi_{-\lambda\lambda_1\lambda_2}\bigl|^2
 (n_{\lambda_1}+ n_{\lambda_2}+1)
  \left[ \delta(\omega-\omega_{\lambda_1}-\omega_{\lambda_2})
- - \delta(\omega + \omega_{\lambda_1} + \omega_{\lambda_2}) \right]
+ + \delta(\omega + \omega_{\lambda_1} + \omega_{\lambda_2}) \right]
  \end{align*},
 $$
 
@@ -758,7 +766,7 @@ Specific temperatures are specified by `--ts`.
 
 Temperatures at equal interval are specified by `--tmax`, `--tmin`, `--tstep`.
 See phonopy's document for the same tags at
-http://phonopy.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep.
+<http://phonopy.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep>.
 
 ```bash
 % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="11 11 11" -c POSCAR-unitcell --br --tmin=100 --tmax=1000 --tstep=50
@@ -779,7 +787,7 @@ file.
 
 This is used with `--nac` to specify reciprocal-space direction at
 $\mathbf{q}\rightarrow \mathbf{0}$. See the detail at
-http://phonopy.github.io/phonopy/setting-tags.html#q-direction.
+<http://phonopy.github.io/phonopy/setting-tags.html#q-direction>.
 
 (self_energy_options)=
 
@@ -800,11 +808,11 @@ $$
  \bigl|\Phi_{-\lambda\lambda_1\lambda_2}\bigl|^2 &
  \left\{(n_{\lambda_1}+ n_{\lambda_2}+1)
  \left[ \delta(\omega-\omega_{\lambda_1}-\omega_{\lambda_2})
- - \delta(\omega+\omega_{\lambda_1}+\omega_{\lambda_2}) \right] \right.
+ + \delta(\omega+\omega_{\lambda_1}+\omega_{\lambda_2}) \right] \right.
  \\
  & + (n_{\lambda_1}-n_{\lambda_2})
  \left[\delta(\omega+\omega_{\lambda_1}-\omega_{\lambda_2})
- - \left. \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2})
+ + \left. \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2})
  \right]\right\},
 \end{align*}
 $$
@@ -819,14 +827,14 @@ $$
  \left\{
  \left[ \frac{(n_{\lambda_1}+ n_{\lambda_2}+1)}{
  (\omega-\omega_{\lambda_1}-\omega_{\lambda_2})_\mathrm{p}}
- - \frac{(n_{\lambda_1}+ n_{\lambda_2}+1)}{
+ + \frac{(n_{\lambda_1}+ n_{\lambda_2}+1)}{
  (\omega+\omega_{\lambda_1}+\omega_{\lambda_2})_\mathrm{p}}
  \right]
  \right. \\
   & + \left[
  \frac{(n_{\lambda_1}-n_{\lambda_2})}{(\omega +
  \omega_{\lambda_1} - \omega_{\lambda_2})_\mathrm{p}}
- - \left. \frac{(n_{\lambda_1}-n_{\lambda_2})}{(\omega -
+ + \left. \frac{(n_{\lambda_1}-n_{\lambda_2})}{(\omega -
  \omega_{\lambda_1} + \omega_{\lambda_2})_\mathrm{p}}
  \right]\right\},
 \end{align*}
@@ -1186,7 +1194,7 @@ different CPU architectures. {ref}`--pa <pa_option>` and
 
 ### `--write-pp` (`WRITE_PP = .TRUE.`) and `--read-pp` (`READ_PP = .TRUE.`)
 
-Phonon-phonon (ph-ph) intraction strengths are written to and read from
+Phonon-phonon (ph-ph) interaction strengths are written to and read from
 `pp-mxxx-gx.hdf5`. This works only in the calculation of lattice thermal
 conductivity, i.e., usable only with `--br` or `--lbte`. The stored data are
 different with and without specifying `--full-pp` option. In the former case,
@@ -1212,7 +1220,7 @@ Most of phono3py HDF5 output file is compressed by default with the `gzip`
 compression filter. To avoid compression, `--hdf5-compression=None` has to be
 set. Other filters (`lzf` or integer values of 0 to 9) may be used, see h5py
 documentation
-(http://docs.h5py.org/en/stable/high/dataset.html#filter-pipeline).
+(<http://docs.h5py.org/en/stable/high/dataset.html#filter-pipeline>).
 
 (output_filename_option)=
 
@@ -1226,12 +1234,12 @@ Using this option, output file names are slightly modified. For example, with
 
 This rule is applied to
 
-- `fc3.hdf5`
-- `fc2.hdf5`
-- `kappa-xxx.hdf5`
-- `phonon-xxx.hdf5`
-- `pp-xxx.hdf5`
-- `gamma_detail-xxx.hdf5` (write only)
++ `fc3.hdf5`
++ `fc2.hdf5`
++ `kappa-xxx.hdf5`
++ `phonon-xxx.hdf5`
++ `pp-xxx.hdf5`
++ `gamma_detail-xxx.hdf5` (write only)
 
 (input_filename_option)=
 
@@ -1245,11 +1253,11 @@ specifying `-i iso --fc3`, a file name `fc3.iso.hdf5` is read instead of
 
 This rule is applied to
 
-- `fc3.hdf5`
-- `fc2.hdf5`
-- `kappa-xxx.hdf5`
-- `phonon-xxx.hdf5`
-- `pp-xxx.hdf5`
++ `fc3.hdf5`
++ `fc2.hdf5`
++ `kappa-xxx.hdf5`
++ `phonon-xxx.hdf5`
++ `pp-xxx.hdf5`
 
 ### `--io` (command option only)
 
