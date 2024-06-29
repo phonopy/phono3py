@@ -5,6 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
+import pytest
+from phonopy.interface.pypolymlp import PypolymlpParams
 
 from phono3py import Phono3py
 
@@ -166,3 +168,41 @@ def test_type2_forces_energies_setter_Si(si_111_222_rd: Phono3py):
     ph3.phonon_forces = ph3_in.phonon_forces + 1
     np.testing.assert_allclose(ph3_in.forces + 1, ph3.forces)
     np.testing.assert_allclose(ph3_in.phonon_forces + 1, ph3.phonon_forces)
+
+
+def test_use_pypolymlp_mgo(mgo_222rd_444rd: Phono3py):
+    """Test use_pypolymlp in produce_fc3."""
+    pytest.importorskip("pypolymlp")
+
+    ph3_in = mgo_222rd_444rd
+    ph3 = Phono3py(
+        ph3_in.unitcell,
+        supercell_matrix=ph3_in.supercell_matrix,
+        phonon_supercell_matrix=ph3_in.phonon_supercell_matrix,
+        primitive_matrix=ph3_in.primitive_matrix,
+        log_level=2,
+    )
+    ph3.mlp_dataset = {
+        "displacements": ph3_in.displacements[:10],
+        "forces": ph3_in.forces[:10],
+        "supercell_energies": ph3_in.supercell_energies[:10],
+    }
+    ph3.phonon_dataset = ph3_in.phonon_dataset
+    ph3.nac_params = ph3_in.nac_params
+    ph3.displacements = ph3_in.displacements[:100]
+
+    atom_energies = {"Mg": -0.00896717, "O": -0.95743902}
+    params = PypolymlpParams(gtinv_maxl=(4, 4), atom_energies=atom_energies)
+
+    ph3.generate_displacements(distance=0.001, is_plusminus=True)
+    ph3.develop_mlp(params=params)
+    ph3.evaluate_mlp()
+    ph3.produce_fc3(fc_calculator="symfc")
+    ph3.produce_fc2(fc_calculator="symfc")
+
+    ph3.mesh_numbers = 30
+    ph3.init_phph_interaction()
+    ph3.run_thermal_conductivity(temperatures=[300])
+    assert (
+        pytest.approx(63.0018546, abs=1e-1) == ph3.thermal_conductivity.kappa[0, 0, 0]
+    )

@@ -36,7 +36,7 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 from phonopy.structure.atoms import PhonopyAtoms
@@ -118,8 +118,35 @@ def get_fc3(
             orders=[2, 3],
             is_compact_fc=is_compact_fc,
             symmetry=symmetry,
+            options=fc_calculator_options,
             log_level=log_level,
         )
     else:
         msg = "Force constants calculator of %s was not found ." % fc_calculator
         raise RuntimeError(msg)
+
+
+def extract_fc2_fc3_calculators(fc_calculator: Optional[Union[str, dict]], order: int):
+    """Extract fc_calculator and fc_calculator_options for fc2 and fc3.
+
+    fc_calculator : str
+        FC calculator. "|" separates fc2 and fc3. First and last
+        parts separated correspond to fc2 and fc3 calculators, respectively.
+    order : int = 2 or 3
+        2 and 3 indicate fc2 and fc3, respectively.
+
+    """
+    if isinstance(fc_calculator, dict) or fc_calculator is None:
+        return fc_calculator
+    elif isinstance(fc_calculator, str):
+        if "|" in fc_calculator:
+            _fc_calculator = fc_calculator.split("|")[order - 2]
+            if _fc_calculator == "":
+                return None
+            return _fc_calculator
+        else:
+            if fc_calculator.strip() == "":
+                return None
+            return fc_calculator
+    else:
+        raise RuntimeError("fc_calculator should be str or dict.")

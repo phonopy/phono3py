@@ -6,13 +6,19 @@
 
 # phono3py
 
-A simulation package of phonon-phonon interaction related properties. Phono3py
-user documentation is found at http://phonopy.github.io/phono3py/.
+A simulation package of phonon-phonon interaction related properties mainly
+written in python. Phono3py user documentation is found at
+http://phonopy.github.io/phono3py/.
 
 ## Mailing list for questions
 
 Usual phono3py questions should be sent to phonopy mailing list
 (https://sourceforge.net/p/phonopy/mailman/).
+
+## Dependency
+
+See `requirements.txt`. Optionally `symfc` and `scipy` are required
+for using additional features.
 
 ## Development
 
@@ -21,26 +27,19 @@ phono3py repository.
 
 - Github issues is the place to discuss about phono3py issues.
 - Github pull request is the place to request merging source code.
-- Python 3.7 is the minimum requirement.
-- Formatting is written in `pyproject.toml`.
-- Not strictly, but VSCode's `settings.json` may be written like
+- Formatting rules are found in `pyproject.toml`.
+- Not strictly, but VSCode's `settings.json` may be written like below
 
   ```json
-  "python.linting.flake8Enabled": true,
-  "python.linting.flake8Args": ["--max-line-length=88", "--ignore=E203,W503"],
-  "python.linting.enabled": true,
-  "python.linting.pylintEnabled": false,
-  "python.linting.mypyEnabled": true,
-  "python.linting.pycodestyleEnabled": false,
-  "python.linting.pydocstyleEnabled": true,
-  "python.formatting.provider": "black",
-  "python.formatting.blackArgs": ["--line-length=88"],
-  "python.sortImports.args": ["--profile", "black"],
+  "ruff.lint.args": [
+      "--config=${workspaceFolder}/pyproject.toml",
+  ],
   "[python]": {
+      "editor.defaultFormatter": "charliermarsh.ruff",
       "editor.codeActionsOnSave": {
-      "source.organizeImports": true
-    },
-  }
+          "source.organizeImports": "explicit"
+      }
+  },
   ```
 
 - Use of pre-commit (https://pre-commit.com/) is encouraged.
@@ -57,7 +56,8 @@ stored in `doc` directory. Please see how to write the documentation at
 
 ## How to run tests
 
-You need pytest. At home directory of phono3py after setup,
+Tests are written using pytest. To run tests, pytest has to be installed. The
+tests can be run by
 
 ```bash
 % pytest

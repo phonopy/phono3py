@@ -716,6 +716,7 @@ class GridMatrix:
         warnings.warn(
             "Non primitive cell input. Unable to use GR-grid.",
             RuntimeWarning,
+            stacklevel=2,
         )
         return False
 

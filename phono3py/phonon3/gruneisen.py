@@ -270,9 +270,7 @@ class Gruneisen:
             ):
                 f.write("- nqpoint: %d\n" % len(path))
                 f.write("  phonon:\n")
-                for i, (q, d, g_at_q, freqs_at_q) in enumerate(
-                    zip(path, distances, gs, fs)
-                ):  # noqa E125
+                for q, d, g_at_q, freqs_at_q in zip(path, distances, gs, fs):
                     f.write("  - q-position: [ %10.7f, %10.7f, %10.7f ]\n" % tuple(q))
                     f.write("    distance: %10.7f\n" % d)
                     f.write("    band:\n")
@@ -415,7 +413,7 @@ class Gruneisen:
                     for j in range(3):
                         for k in range(3):
                             for ll in range(3):
-                                for m in range(3):
+                                for _ in range(3):
                                     dPhidu[nu, pi, i, j, k, ll] = (
                                         fc3[p2s[nu], pi, :, i, j, :] * Y[:, :, k, ll]
                                     ).sum()
