@@ -2168,7 +2168,11 @@ class Phono3py:
         with open(filename, "w") as w:
             w.write(str(ph3py_yaml))
 
-    def develop_mlp(self, params: Optional[Union[PypolymlpParams, dict, str]] = None):
+    def develop_mlp(
+        self,
+        params: Optional[Union[PypolymlpParams, dict, str]] = None,
+        test_size: float = 0.1,
+    ):
         """Develop MLP of pypolymlp.
 
         Parameters
@@ -2176,6 +2180,10 @@ class Phono3py:
         params : PypolymlpParams or dict, optional
             Parameters for developing MLP. Default is None. When dict is given,
             PypolymlpParams instance is created from the dict.
+        test_size : float, optional
+            Training and test data are splitted by this ratio. test_size=0.1
+            means the first 90% of the data is used for training and the rest
+            is used for test. Default is 0.1.
 
         """
         if self._mlp_dataset is None:
@@ -2189,7 +2197,7 @@ class Phono3py:
         disps = self._mlp_dataset["displacements"]
         forces = self._mlp_dataset["forces"]
         energies = self._mlp_dataset["supercell_energies"]
-        n = int(len(disps) * 0.9)
+        n = int(len(disps) * (1 - test_size))
         train_data = PypolymlpData(
             displacements=disps[:n], forces=forces[:n], supercell_energies=energies[:n]
         )
@@ -2230,7 +2238,9 @@ class Phono3py:
         self.forces = forces
 
     def develop_phonon_mlp(
-        self, params: Optional[Union[PypolymlpParams, dict, str]] = None
+        self,
+        params: Optional[Union[PypolymlpParams, dict, str]] = None,
+        test_size: float = 0.1,
     ):
         """Develop MLP of pypolymlp for fc2.
 
@@ -2239,6 +2249,10 @@ class Phono3py:
         params : PypolymlpParams or dict, optional
             Parameters for developing MLP. Default is None. When dict is given,
             PypolymlpParams instance is created from the dict.
+        test_size : float, optional
+            Training and test data are splitted by this ratio. test_size=0.1
+            means the first 90% of the data is used for training and the rest
+            is used for test. Default is 0.1.
 
         """
         if self._phonon_mlp_dataset is None:
@@ -2252,7 +2266,7 @@ class Phono3py:
         disps = self._phonon_mlp_dataset["displacements"]
         forces = self._phonon_mlp_dataset["forces"]
         energies = self._phonon_mlp_dataset["supercell_energies"]
-        n = int(len(disps) * 0.9)
+        n = int(len(disps) * (1 - test_size))
         train_data = PypolymlpData(
             displacements=disps[:n], forces=forces[:n], supercell_energies=energies[:n]
         )
