@@ -64,7 +64,7 @@ endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "CMAKE_SYSTEM_PREFIX_PATH: ${CMAKE_SYSTEM_PREFIX_PATH}")
 
-if(USE_CONDA_PATH)
+if(USE_CONDA_PATH AND DEFINED ENV{CONDA_PREFIX})
     message(STATUS "$ENV{CONDA_PREFIX}")
     set(CMAKE_MODULE_PATH $ENV{CONDA_PREFIX})
     set(MY_INCLUDES $ENV{CONDA_PREFIX}/include ${PROJECT_SOURCE_DIR}/c)
@@ -149,10 +149,9 @@ if(PHPHCALC OR BUILD_NANOBIND_MODULE)
     if(BUILD_SHARED_LIBS)
         # Shared library
         add_library(phphcalc_lib SHARED ${SOURCES_PHPHCALC})
-        target_link_libraries(phphcalc_lib m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
-                              OpenMP::OpenMP_C)
+        target_link_libraries(phphcalc_lib PRIVATE BLAS::BLAS LAPACK::LAPACK
+                                                   OpenMP::OpenMP_C lapacke)
         target_include_directories(phphcalc_lib PRIVATE ${MY_INCLUDES})
-        target_compile_options(phphcalc_lib)
 
         if(BLAS_LIBRARIES MATCHES "libmkl")
             if(PHPHCALC_USE_MTBLAS)
@@ -177,10 +176,9 @@ if(PHPHCALC OR BUILD_NANOBIND_MODULE)
     else()
         # Static link library
         add_library(phphcalc_lib STATIC ${SOURCES_PHPHCALC})
-        target_link_libraries(phphcalc_lib m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
+        target_link_libraries(phphcalc_lib BLAS::BLAS LAPACK::LAPACK
                               OpenMP::OpenMP_C)
         target_include_directories(phphcalc_lib PRIVATE ${MY_INCLUDES})
-        target_compile_options(phphcalc_lib)
 
         if(BLAS_LIBRARIES MATCHES "libmkl")
             if(PHPHCALC_USE_MTBLAS)
@@ -233,10 +231,9 @@ if(PHONONCALC OR BUILD_NANOBIND_MODULE)
     if(BUILD_SHARED_LIBS)
         # Shared library
         add_library(phononcalc_lib SHARED ${SOURCES_PHONONCALC})
-        target_link_libraries(phononcalc_lib m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
+        target_link_libraries(phononcalc_lib BLAS::BLAS LAPACK::LAPACK
                               OpenMP::OpenMP_C)
         target_include_directories(phononcalc_lib PRIVATE ${MY_INCLUDES})
-        target_compile_options(phononcalc_lib)
 
         if(BLAS_LIBRARIES MATCHES "libmkl")
             target_compile_definitions(phononcalc_lib PRIVATE MKL_LAPACKE
@@ -250,11 +247,9 @@ if(PHONONCALC OR BUILD_NANOBIND_MODULE)
     else()
         # Static link library
         add_library(phononcalc_lib STATIC ${SOURCES_PHONONCALC})
-        target_link_libraries(
-            phononcalc_lib PRIVATE m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
-                                   OpenMP::OpenMP_C)
+        target_link_libraries(phononcalc_lib PRIVATE BLAS::BLAS LAPACK::LAPACK
+                                                     OpenMP::OpenMP_C)
         target_include_directories(phononcalc_lib PRIVATE ${MY_INCLUDES})
-        target_compile_options(phononcalc_lib)
 
         if(BLAS_LIBRARIES MATCHES "libmkl")
             target_compile_definitions(phononcalc_lib PRIVATE MKL_LAPACKE
@@ -308,9 +303,8 @@ if(GRIDSYS)
     if(BUILD_SHARED_LIBS)
         # Shared library
         add_library(gridsys SHARED ${SOURCES_GRIDSYS})
-        target_link_libraries(gridsys m ${OpenMP_C_LIBRARIES})
+        target_link_libraries(gridsys PRIVATE OpenMP::OpenMP_C)
         target_include_directories(gridsys PRIVATE ${MY_INCLUDES})
-        target_compile_options(gridsys PRIVATE ${OpenMP_C_FLAGS})
         target_compile_definitions(gridsys PRIVATE THM_EPSILON=1e-10)
         set_property(TARGET gridsys PROPERTY VERSION ${SERIAL})
         set_property(TARGET gridsys PROPERTY SOVERSION ${SOSERIAL})
@@ -318,9 +312,8 @@ if(GRIDSYS)
     else()
         # Static link library
         add_library(gridsys_static STATIC ${SOURCES_GRIDSYS})
-        target_link_libraries(gridsys_static m ${OpenMP_C_LIBRARIES})
+        target_link_libraries(gridsys_static PRIVATE OpenMP::OpenMP_C)
         target_include_directories(gridsys_static PRIVATE ${MY_INCLUDES})
-        target_compile_options(gridsys_static PRIVATE ${OpenMP_C_FLAGS})
         target_compile_definitions(gridsys_static PRIVATE THM_EPSILON=1e-10)
         set_property(TARGET gridsys_static PROPERTY VERSION ${SERIAL})
         set_property(TARGET gridsys_static PROPERTY SOVERSION ${SOSERIAL})
