@@ -150,9 +150,9 @@ if(PHPHCALC OR BUILD_NANOBIND_MODULE)
         # Shared library
         add_library(phphcalc_lib SHARED ${SOURCES_PHPHCALC})
         target_link_libraries(phphcalc_lib m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
-                              ${OpenMP_C_LIBRARIES})
+                              OpenMP::OpenMP_C)
         target_include_directories(phphcalc_lib PRIVATE ${MY_INCLUDES})
-        target_compile_options(phphcalc_lib PRIVATE ${OpenMP_C_FLAGS})
+        target_compile_options(phphcalc_lib)
 
         if(BLAS_LIBRARIES MATCHES "libmkl")
             if(PHPHCALC_USE_MTBLAS)
@@ -178,9 +178,9 @@ if(PHPHCALC OR BUILD_NANOBIND_MODULE)
         # Static link library
         add_library(phphcalc_lib STATIC ${SOURCES_PHPHCALC})
         target_link_libraries(phphcalc_lib m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
-                              ${OpenMP_C_LIBRARIES})
+                              OpenMP::OpenMP_C)
         target_include_directories(phphcalc_lib PRIVATE ${MY_INCLUDES})
-        target_compile_options(phphcalc_lib PRIVATE ${OpenMP_C_FLAGS})
+        target_compile_options(phphcalc_lib)
 
         if(BLAS_LIBRARIES MATCHES "libmkl")
             if(PHPHCALC_USE_MTBLAS)
@@ -234,9 +234,9 @@ if(PHONONCALC OR BUILD_NANOBIND_MODULE)
         # Shared library
         add_library(phononcalc_lib SHARED ${SOURCES_PHONONCALC})
         target_link_libraries(phononcalc_lib m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
-                              ${OpenMP_C_LIBRARIES})
+                              OpenMP::OpenMP_C)
         target_include_directories(phononcalc_lib PRIVATE ${MY_INCLUDES})
-        target_compile_options(phononcalc_lib PRIVATE ${OpenMP_C_FLAGS})
+        target_compile_options(phononcalc_lib)
 
         if(BLAS_LIBRARIES MATCHES "libmkl")
             target_compile_definitions(phononcalc_lib PRIVATE MKL_LAPACKE
@@ -250,10 +250,11 @@ if(PHONONCALC OR BUILD_NANOBIND_MODULE)
     else()
         # Static link library
         add_library(phononcalc_lib STATIC ${SOURCES_PHONONCALC})
-        target_link_libraries(phononcalc_lib m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
-                              ${OpenMP_C_LIBRARIES})
+        target_link_libraries(
+            phononcalc_lib PRIVATE m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES}
+                                   OpenMP::OpenMP_C)
         target_include_directories(phononcalc_lib PRIVATE ${MY_INCLUDES})
-        target_compile_options(phononcalc_lib PRIVATE ${OpenMP_C_FLAGS})
+        target_compile_options(phononcalc_lib)
 
         if(BLAS_LIBRARIES MATCHES "libmkl")
             target_compile_definitions(phononcalc_lib PRIVATE MKL_LAPACKE

@@ -42,6 +42,9 @@ sdist.include = [
     "README.md",
 ]
 
+[tool.scikit-build.cmake.define]
+PHPHCALC_USE_MTBLAS = {env="PHPHCALC_USE_MTBLAS", default="OFF"}
+
 [tool.setuptools_scm]
 write_to = "phono3py/_version.py"
 
