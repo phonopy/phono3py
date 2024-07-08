@@ -31,8 +31,15 @@ All dependent packages should be installed.
 ## Installation from source code
 
 When installing phono3py from the source code, a few libraries are required
-before running `pip install`. For building phono3py, nanobind,
-scikit-build-core, and cmake are used.
+before running `pip install`.
+
+Note that at version 3.3.0, the build system of phono3py was modernized.
+Nanobind, cmake, and scikit-build-core are used for the building. The receipt is
+written in `CMakeLists.txt` and `pyproject.toml`. The old `setup.py` was
+removed.
+
+If phono3py is compiled with a special compiler or special options, manual
+modification of `CMakeLists.txt` may be needed.
 
 - {ref}`Linear algebra library <install_lapacke>`: BLAS, LAPACK, and LAPACKE
 - {ref}`OpenMP library <install_openmp>`: For the multithreding support.
