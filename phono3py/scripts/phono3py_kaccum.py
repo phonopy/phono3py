@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Copyright (C) 2021 Atsushi Togo
 # All rights reserved.
 #
@@ -36,5 +34,7 @@
 
 from phono3py.cui.kaccum_script import main
 
-if __name__ == "__main__":
+
+def run():
+    """Run phono3py-kaccum script."""
     main()

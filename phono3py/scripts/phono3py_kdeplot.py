@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import argparse
 import os
 import sys
@@ -350,5 +348,6 @@ def main(args):
         plt.close(fig)
 
 
-if __name__ == "__main__":
+def run():
+    """Run phono3py-kdeplot script."""
     main(get_options())

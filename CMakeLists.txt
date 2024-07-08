@@ -1,27 +1,27 @@
 cmake_minimum_required(VERSION 3.20)
 
-option(PHPHCALC "Option to build phph calculation module" OFF)
-option(PHONONCALC "Option to build phonon calculation module" OFF)
-option(GRIDSYS "Option to build gridsys module" OFF)
-option(WITH_Fortran "enable fortran interface" OFF)
+option(BUILD_PHPHCALC_LIB "Option to build phph calculation module" OFF)
+option(BUILD_PHONONCALC_LIB "Option to build phonon calculation module" OFF)
+option(BUILD_GRIDSYS_LIB "Option to build gridsys module" OFF)
+option(PHONO3PY_WITH_Fortran "enable fortran interface" OFF)
 option(PHONO3PY_USE_OMP "Option to search OpenMP library" ON)
-option(PHPHCALC_USE_MTBLAS "Use multithread BLAS is it exists" OFF)
-option(WITH_TESTS "build unit tests" OFF)
+option(PHONO3PY_USE_MTBLAS "Use multithread BLAS if it exists" ON)
+option(PHONO3PY_WITH_TESTS "build unit tests" OFF)
 option(BUILD_SHARED_LIBS "Option to build shared library" OFF)
 
-if(WITH_Fortran)
+if(PHONO3PY_WITH_Fortran)
     enable_language(Fortran)
-    set(GRIDSYS ON)
+    set(BUILD_GRIDSYS_LIB ON)
 endif()
 
-if(WITH_TESTS)
+if(PHONO3PY_WITH_TESTS)
     set(BUILD_SHARED_LIBS ON)
-    set(GRIDSYS ON)
+    set(BUILD_GRIDSYS_LIB ON)
 endif()
 
-if((NOT PHPHCALC)
-   AND (NOT PHONONCALC)
-   AND (NOT GRIDSYS))
+if((NOT BUILD_PHPHCALC_LIB)
+   AND (NOT BUILD_PHONONCALC_LIB)
+   AND (NOT BUILD_GRIDSYS_LIB))
     set(BUILD_NANOBIND_MODULE ON)
     message(STATUS "Build nanobind module of ${SKBUILD_PROJECT_NAME}")
 else()
@@ -86,8 +86,8 @@ else()
     set(OpenMP_FOUND OFF) # cmake-lint: disable=C0103
 endif()
 
-if(PHPHCALC
-   OR PHONONCALC
+if(BUILD_PHPHCALC_LIB
+   OR BUILD_PHONONCALC_LIB
    OR BUILD_NANOBIND_MODULE)
     find_package(BLAS REQUIRED) # set BLAS_LIBRARIES
 
@@ -104,20 +104,22 @@ if(PHPHCALC
     endif()
 
     if(BLAS_LIBRARIES MATCHES "libmkl")
-        message(STATUS "MKL detected: Set C-macros MKL_LAPACKE MULTITHREADED_BLAS")
-        message(STATUS "Use multithreaded BLAS for phonon calculation.")
+        message(STATUS "MKL detected: Set C-macro MKL_LAPACKE.")
 
-        if(PHPHCALC_USE_MTBLAS)
-            message(STATUS "Use multithreaded BLAS for ph-ph calculation.")
+        if(PHONO3PY_USE_MTBLAS)
+            message(
+                STATUS "Set C-macro MULTITHREADED_BLAS to avoid nested OpenMP calls."
+            )
         endif()
     endif()
 
     if(BLAS_LIBRARIES MATCHES "libopenblas")
-        message(STATUS "OpenBLAS detected: Set C-macro MULTITHREADED_BLAS")
-        message(STATUS "Use multithreaded BLAS for phonon calculation.")
+        message(STATUS "OpenBLAS detected.")
 
-        if(PHPHCALC_USE_MTBLAS)
-            message(STATUS "Use multithreaded BLAS for ph-ph calculation.")
+        if(PHONO3PY_USE_MTBLAS)
+            message(
+                STATUS "Set C-macro MULTITHREADED_BLAS to avoid nested OpenMP calls."
+            )
         endif()
     endif()
 endif()
@@ -125,7 +127,7 @@ endif()
 # ###################################################################################
 # Build phphcalc module #
 # ###################################################################################
-if(PHPHCALC OR BUILD_NANOBIND_MODULE)
+if(BUILD_PHPHCALC_LIB OR BUILD_NANOBIND_MODULE)
     # Source code
     set(SOURCES_PHPHCALC
         ${PROJECT_SOURCE_DIR}/c/bzgrid.c
@@ -163,7 +165,7 @@ if(PHPHCALC OR BUILD_NANOBIND_MODULE)
         target_include_directories(phphcalc_lib PRIVATE ${MY_INCLUDES})
 
         if(BLAS_LIBRARIES MATCHES "libmkl")
-            if(PHPHCALC_USE_MTBLAS)
+            if(PHONO3PY_USE_MTBLAS)
                 target_compile_definitions(
                     phphcalc_lib PRIVATE MKL_LAPACKE MULTITHREADED_BLAS
                                          THM_EPSILON=1e-10)
@@ -174,7 +176,7 @@ if(PHPHCALC OR BUILD_NANOBIND_MODULE)
         endif()
 
         if(BLAS_LIBRARIES MATCHES "libopenblas")
-            if(PHPHCALC_USE_MTBLAS)
+            if(PHONO3PY_USE_MTBLAS)
                 target_compile_definitions(phphcalc_lib PRIVATE MULTITHREADED_BLAS
                                                                 THM_EPSILON=1e-10)
             else()
@@ -195,7 +197,7 @@ if(PHPHCALC OR BUILD_NANOBIND_MODULE)
         target_include_directories(phphcalc_lib PRIVATE ${MY_INCLUDES})
 
         if(BLAS_LIBRARIES MATCHES "libmkl")
-            if(PHPHCALC_USE_MTBLAS)
+            if(PHONO3PY_USE_MTBLAS)
                 target_compile_definitions(
                     phphcalc_lib PRIVATE MKL_LAPACKE MULTITHREADED_BLAS
                                          THM_EPSILON=1e-10)
@@ -206,7 +208,7 @@ if(PHPHCALC OR BUILD_NANOBIND_MODULE)
         endif()
 
         if(BLAS_LIBRARIES MATCHES "libopenblas")
-            if(PHPHCALC_USE_MTBLAS)
+            if(PHONO3PY_USE_MTBLAS)
                 target_compile_definitions(phphcalc_lib PRIVATE MULTITHREADED_BLAS
                                                                 THM_EPSILON=1e-10)
             else()
@@ -236,7 +238,7 @@ endif()
 # ###################################################################################
 # phononcalc #
 # ###################################################################################
-if(PHONONCALC OR BUILD_NANOBIND_MODULE)
+if(BUILD_PHONONCALC_LIB OR BUILD_NANOBIND_MODULE)
     # Source code
     set(SOURCES_PHONONCALC
         ${PROJECT_SOURCE_DIR}/c/dynmat.c ${PROJECT_SOURCE_DIR}/c/lapack_wrapper.c
@@ -311,7 +313,7 @@ endif()
 # ###################################################################################
 # grid #
 # ###################################################################################
-if(GRIDSYS)
+if(BUILD_GRIDSYS_LIB)
     # Source code
     set(SOURCES_GRIDSYS
         ${PROJECT_SOURCE_DIR}/c/bzgrid.c
@@ -360,12 +362,12 @@ if(GRIDSYS)
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
 
-if(WITH_Fortran)
+if(PHONO3PY_WITH_Fortran)
     add_subdirectory(fortran)
 endif()
 
-if(WITH_TESTS)
-    if(WITH_Fortran)
+if(PHONO3PY_WITH_TESTS)
+    if(PHONO3PY_WITH_Fortran)
         set(LIB_MOD_DIR ${CMAKE_CURRENT_BINARY_DIR}/fortran)
     endif()
 
