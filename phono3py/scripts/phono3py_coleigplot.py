@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import argparse
 import os
 import sys
@@ -139,5 +137,6 @@ def main(args: argparse.Namespace):
         plot(args)
 
 
-if __name__ == "__main__":
+def run():
+    """Run phono3py-coleigplot script."""
     main(get_options())

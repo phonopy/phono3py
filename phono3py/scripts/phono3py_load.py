@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-
-# Copyright (C) 2021 Atsushi Togo
+# Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
 # This file is part of phonopy.
@@ -34,7 +32,10 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from phono3py.cui.kaccum_script import main
+from phono3py.cui.phono3py_script import main
 
-if __name__ == "__main__":
-    main()
+
+def run():
+    """Run phono3py-load script."""
+    argparse_control = {"fc_symmetry": True, "is_nac": True, "load_phono3py_yaml": True}
+    main(**argparse_control)
