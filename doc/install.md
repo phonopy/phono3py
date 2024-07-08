@@ -30,18 +30,23 @@ All dependent packages should be installed.
 (install_from_source_code)=
 ## Installation from source code
 
-When installing phono3py using `setup.py` from the source code, a few libraries
-are required before running `setup.py` script.
+When installing phono3py from the source code, a few libraries are required
+before running `pip install`.
+
+Note that at version 3.3.0, the build system of phono3py was modernized.
+Nanobind, cmake, and scikit-build-core are used for the building. The receipt is
+written in `CMakeLists.txt` and `pyproject.toml`. The old `setup.py` was
+removed.
+
+If phono3py is compiled with a special compiler or special options, manual
+modification of `CMakeLists.txt` may be needed.
 
 - {ref}`Linear algebra library <install_lapacke>`: BLAS, LAPACK, and LAPACKE
 - {ref}`OpenMP library <install_openmp>`: For the multithreding support.
 
 These packages may be installed by the package manager of OS (e.g. `apt`) or
 conda environment. Automatic search of required libraries and flags that are
-already on the system is performed by cmake. If cmake is installed on the
-system, this automatic search is invoked as default. For the installation with
-custom configurations without using cmake, the environment variable
-`PHONO3PY_USE_CMAKE=false` has to be set.
+already on the system is performed by cmake.
 
 (install_with_cmake)=
 ### Build with automatic search of library configurations by cmake
@@ -56,57 +61,6 @@ See an example at {ref}`install_an_example`. In the standard output, flags and
 libraries found by cmake are shown. Please carefully check if those
 configurations are expected ones or not.
 
-(install_custom)=
-### Build with custom library configurations by `site.cfg` file
-
-Custom installation is achieved by creating `site.cfg` file on the same
-directory as `setup.py`. Users will write configurations of compiler flags and
-linked libraries in `site.cfg`. If `setup.py` finds `site.cfg`, the
-configurations are used as the default configurations. If cmake is found in the
-system, cmake tries to find required libraries and found configurations are
-appended. To deactivate cmake's library search, the environment variable
-`PHONO3PY_USE_CMAKE=false` has to be set before running the phono3py build:
-```
-% export PHONO3PY_USE_CMAKE=false
-```
-In previous versions, `site.cfg` was processed by numpy,
-but from version 2.4.0, it is processed by script in `setup.py`.
-`extra_link_args`, `extra_compile_args`, `extra_objects`, and `include_dirs` can
-be specified. How they used is found at [setuptools web
-site](https://setuptools.pypa.io/en/latest/userguide/ext_modules.html#extension-api-reference).
-
-In most cases, users want to enable multithreading support with OpenMP. Its
-minimum setting with gcc as the compiler is:
-
-```
-extra_compile_args = -fopenmp
-```
-
-Additional configuration can be necessary. It is recommended first starting only
-with `extra_compile_args = -fopenmp` and run `setup.py`, then check if phono3py
-works properly or not without error or warning. When phono3py doesn't work with
-the above setting, add another configuration one by one to test compilation.
-Some examples are given below.
-
-For MKL (for gcc and clang), `site.cfg`
-
-```
-extra_compile_args = -fopenmp
-```
-
-For openblas and clang
-
-```
-extra_compile_args = -fopenmp
-```
-
-For openblas and gcc
-
-```
-extra_compile_args = -fopenmp
-extra_link_args = -lgomp
-```
-
 (install_an_example)=
 
 ## Installation instruction of latest development version of phono3py
@@ -117,7 +71,8 @@ wrong python libraries can be imported.
 1. Download miniforge
 
    Miniforge is downloaded at https://github.com/conda-forge/miniforge. The
-   detailed installation instruction is found in the same page. If usual conda or miniconda is used, the following `~/.condarc` setting is recommended:
+   detailed installation instruction is found in the same page. If usual conda
+   or miniconda is used, the following `~/.condarc` setting is recommended:
 
    ```
    channel_priority: strict
@@ -148,7 +103,7 @@ wrong python libraries can be imported.
    For x86-64 system:
 
    ```bash
-   % conda install numpy scipy h5py pyyaml matplotlib-base c-compiler "libblas=*=*mkl" spglib mkl-include cmake
+   % conda install numpy scipy h5py pyyaml matplotlib-base c-compiler cxx-compiler "libblas=*=*mkl" spglib mkl-include cmake
    ```
 
    A libblas library can be chosen among `[openblas, mkl, blis, netlib]`. If
@@ -161,7 +116,7 @@ wrong python libraries can be imported.
    For macOS ARM64 system, currently only openblas can be chosen:
 
    ```bash
-   % conda install numpy scipy h5py pyyaml matplotlib-base c-compiler spglib cmake openblas
+   % conda install numpy scipy h5py pyyaml matplotlib-base c-compiler cxx-compiler spglib cmake openblas
    ```
 
    Note that using hdf5 files on NFS mounted file system, you may have to disable
@@ -179,10 +134,8 @@ wrong python libraries can be imported.
    % git clone https://github.com/phonopy/phonopy.git
    % git clone https://github.com/phonopy/phono3py.git
    % cd phonopy
-   % git checkout develop
    % pip install -e . -vvv
    % cd ../phono3py
-   % git checkout develop
    % pip install -e . -vvv
    ```
 
@@ -214,23 +167,6 @@ Ubuntu package manager (`liblapacke` and `liblapacke-dev`):
 ```bash
 % sudo apt-get install liblapack-dev liblapacke-dev
 ```
-
-### Compiling Netlib LAPACKE
-
-The compilation procedure is found at the LAPACKE web site. After creating the
-LAPACKE library, `liblapacke.a` (or the dynamic link library), `setup.py` must
-be properly modified to link it. As an example, the procedure of compiling
-LAPACKE is shown below.
-
-```bash
-% tar xvfz lapack-3.6.0.tgz
-% cd lapack-3.6.0
-% cp make.inc.example make.inc
-% make lapackelib
-```
-
-BLAS, LAPACK, and LAPACKE, these all may have to be compiled with `-fPIC` option
-to use it with python.
 
 (install_openmp)=
 ## Multithreading and its controlling by C macro

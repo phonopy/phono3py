@@ -2,6 +2,12 @@
 
 # Change Log
 
+## Jul-8-2024: Version 3.3.0
+
+- Build system of phono3py was renewed. Now nanobind, cmake, and
+  scikit-build-core are used for the building, and the receipt is written in
+  `CMakeLists.txt` and `pyproject.toml`.
+
 ## Jun-29-2024: Version 3.2.0
 
 - `--rd` and `--rd-fc2` options for generating random directional displacements.
