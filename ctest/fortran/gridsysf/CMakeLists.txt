@@ -7,6 +7,6 @@ set_target_properties(test_${NAME} PROPERTIES Fortran_MODULE_DIRECTORY
                                               ${LIB_MOD_DIR})
 
 add_test(
-  NAME ${NAME}
-  COMMAND $<TARGET_FILE:test_${NAME}> ${CMAKE_CURRENT_BINARY_DIR}
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    NAME ${NAME}
+    COMMAND $<TARGET_FILE:test_${NAME}> ${CMAKE_CURRENT_BINARY_DIR}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})

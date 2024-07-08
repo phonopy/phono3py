@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-
-# Copyright (C) 2020 Atsushi Togo
+# Copyright (C) 2011 Atsushi Togo
 # All rights reserved.
 #
 # This file is part of phonopy.
@@ -36,6 +34,12 @@
 
 from phono3py.cui.phono3py_script import main
 
-if __name__ == "__main__":
-    argparse_control = {"fc_symmetry": True, "is_nac": True, "load_phono3py_yaml": True}
+
+def run():
+    """Run phono3py script."""
+    argparse_control = {
+        "fc_symmetry": False,
+        "is_nac": False,
+        "load_phono3py_yaml": False,
+    }
     main(**argparse_control)
