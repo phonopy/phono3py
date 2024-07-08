@@ -81,6 +81,9 @@ if(PHONO3PY_USE_OMP)
         message(STATUS "OpenMP libs: ${OpenMP_C_LIBRARIES}")
         message(STATUS "OpenMP flags: ${OpenMP_C_FLAGS}")
     endif()
+else()
+    message(STATUS "OpenMP is not used.")
+    set(OpenMP_FOUND OFF) # cmake-lint: disable=C0103
 endif()
 
 if(PHPHCALC
@@ -149,8 +152,14 @@ if(PHPHCALC OR BUILD_NANOBIND_MODULE)
     if(BUILD_SHARED_LIBS)
         # Shared library
         add_library(phphcalc_lib SHARED ${SOURCES_PHPHCALC})
-        target_link_libraries(phphcalc_lib PRIVATE BLAS::BLAS LAPACK::LAPACK
-                                                   OpenMP::OpenMP_C lapacke)
+
+        if(OpenMP_FOUND)
+            target_link_libraries(phphcalc_lib PRIVATE BLAS::BLAS LAPACK::LAPACK
+                                                       OpenMP::OpenMP_C)
+        else()
+            target_link_libraries(phphcalc_lib PRIVATE BLAS::BLAS LAPACK::LAPACK)
+        endif()
+
         target_include_directories(phphcalc_lib PRIVATE ${MY_INCLUDES})
 
         if(BLAS_LIBRARIES MATCHES "libmkl")
@@ -172,12 +181,17 @@ if(PHPHCALC OR BUILD_NANOBIND_MODULE)
                 target_compile_definitions(phphcalc_lib PRIVATE THM_EPSILON=1e-10)
             endif()
         endif()
-
     else()
         # Static link library
         add_library(phphcalc_lib STATIC ${SOURCES_PHPHCALC})
-        target_link_libraries(phphcalc_lib BLAS::BLAS LAPACK::LAPACK
-                              OpenMP::OpenMP_C)
+
+        if(OpenMP_FOUND)
+            target_link_libraries(phphcalc_lib BLAS::BLAS LAPACK::LAPACK
+                                  OpenMP::OpenMP_C)
+        else()
+            target_link_libraries(phphcalc_lib BLAS::BLAS LAPACK::LAPACK)
+        endif()
+
         target_include_directories(phphcalc_lib PRIVATE ${MY_INCLUDES})
 
         if(BLAS_LIBRARIES MATCHES "libmkl")
@@ -231,8 +245,14 @@ if(PHONONCALC OR BUILD_NANOBIND_MODULE)
     if(BUILD_SHARED_LIBS)
         # Shared library
         add_library(phononcalc_lib SHARED ${SOURCES_PHONONCALC})
-        target_link_libraries(phononcalc_lib BLAS::BLAS LAPACK::LAPACK
-                              OpenMP::OpenMP_C)
+
+        if(OpenMP_FOUND)
+            target_link_libraries(phononcalc_lib BLAS::BLAS LAPACK::LAPACK
+                                  OpenMP::OpenMP_C)
+        else()
+            target_link_libraries(phononcalc_lib BLAS::BLAS LAPACK::LAPACK)
+        endif()
+
         target_include_directories(phononcalc_lib PRIVATE ${MY_INCLUDES})
 
         if(BLAS_LIBRARIES MATCHES "libmkl")
@@ -247,8 +267,14 @@ if(PHONONCALC OR BUILD_NANOBIND_MODULE)
     else()
         # Static link library
         add_library(phononcalc_lib STATIC ${SOURCES_PHONONCALC})
-        target_link_libraries(phononcalc_lib PRIVATE BLAS::BLAS LAPACK::LAPACK
-                                                     OpenMP::OpenMP_C)
+
+        if(OpenMP_FOUND)
+            target_link_libraries(phononcalc_lib PRIVATE BLAS::BLAS LAPACK::LAPACK
+                                                         OpenMP::OpenMP_C)
+        else()
+            target_link_libraries(phononcalc_lib PRIVATE BLAS::BLAS LAPACK::LAPACK)
+        endif()
+
         target_include_directories(phononcalc_lib PRIVATE ${MY_INCLUDES})
 
         if(BLAS_LIBRARIES MATCHES "libmkl")
@@ -303,7 +329,11 @@ if(GRIDSYS)
     if(BUILD_SHARED_LIBS)
         # Shared library
         add_library(gridsys SHARED ${SOURCES_GRIDSYS})
-        target_link_libraries(gridsys PRIVATE OpenMP::OpenMP_C)
+
+        if(OpenMP_FOUND)
+            target_link_libraries(gridsys PRIVATE OpenMP::OpenMP_C)
+        endif()
+
         target_include_directories(gridsys PRIVATE ${MY_INCLUDES})
         target_compile_definitions(gridsys PRIVATE THM_EPSILON=1e-10)
         set_property(TARGET gridsys PROPERTY VERSION ${SERIAL})
@@ -312,7 +342,11 @@ if(GRIDSYS)
     else()
         # Static link library
         add_library(gridsys_static STATIC ${SOURCES_GRIDSYS})
-        target_link_libraries(gridsys_static PRIVATE OpenMP::OpenMP_C)
+
+        if(OpenMP_FOUND)
+            target_link_libraries(gridsys_static PRIVATE OpenMP::OpenMP_C)
+        endif()
+
         target_include_directories(gridsys_static PRIVATE ${MY_INCLUDES})
         target_compile_definitions(gridsys_static PRIVATE THM_EPSILON=1e-10)
         set_property(TARGET gridsys_static PROPERTY VERSION ${SERIAL})
@@ -353,13 +387,8 @@ if(BUILD_NANOBIND_MODULE)
     nanobind_add_module(_phononcalc STABLE_ABI ${PROJECT_SOURCE_DIR}/c/phononcalc.h
                         ${PROJECT_SOURCE_DIR}/c/_phononcalc.cpp)
 
-    if(OpenMP_FOUND)
-        target_link_libraries(_phono3py PRIVATE phphcalc_lib OpenMP::OpenMP_C)
-        target_link_libraries(_phononcalc PRIVATE phononcalc_lib OpenMP::OpenMP_C)
-    else()
-        target_link_libraries(_phono3py PRIVATE phphcalc_lib)
-        target_link_libraries(_phononcalc PRIVATE phononcalc_lib)
-    endif()
+    target_link_libraries(_phono3py PRIVATE phphcalc_lib)
+    target_link_libraries(_phononcalc PRIVATE phononcalc_lib)
 
     target_compile_definitions(_phono3py PRIVATE THM_EPSILON=1e-10)
     install(TARGETS _phono3py LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME})

@@ -45,6 +45,7 @@ sdist.include = [
 [tool.scikit-build.cmake.define]
 PHPHCALC_USE_MTBLAS = {env="PHPHCALC_USE_MTBLAS", default="OFF"}
 USE_CONDA_PATH = {env="USE_CONDA_PATH", default="ON"}
+PHONO3PY_USE_OMP = {env="PHONO3PY_USE_OMP", default="ON"}
 
 [tool.setuptools_scm]
 write_to = "phono3py/_version.py"
