@@ -348,17 +348,20 @@ if(BUILD_NANOBIND_MODULE)
         OUTPUT_VARIABLE NB_DIR)
     list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
     find_package(nanobind CONFIG REQUIRED)
-    nanobind_add_module(
-        _phono3py STABLE_ABI ${PROJECT_SOURCE_DIR}/c/phono3py.h
-        ${PROJECT_SOURCE_DIR}/c/phononcalc.h ${PROJECT_SOURCE_DIR}/c/_phono3py.cpp)
+    nanobind_add_module(_phono3py STABLE_ABI ${PROJECT_SOURCE_DIR}/c/phono3py.h
+                        ${PROJECT_SOURCE_DIR}/c/_phono3py.cpp)
+    nanobind_add_module(_phononcalc STABLE_ABI ${PROJECT_SOURCE_DIR}/c/phononcalc.h
+                        ${PROJECT_SOURCE_DIR}/c/_phononcalc.cpp)
 
     if(OpenMP_FOUND)
-        target_link_libraries(_phono3py PRIVATE phphcalc_lib phononcalc_lib
-                                                OpenMP::OpenMP_C)
+        target_link_libraries(_phono3py PRIVATE phphcalc_lib OpenMP::OpenMP_C)
+        target_link_libraries(_phononcalc PRIVATE phononcalc_lib OpenMP::OpenMP_C)
     else()
-        target_link_libraries(_phono3py PRIVATE phphcalc_lib phononcalc_lib)
+        target_link_libraries(_phono3py PRIVATE phphcalc_lib)
+        target_link_libraries(_phononcalc PRIVATE phononcalc_lib)
     endif()
 
     target_compile_definitions(_phono3py PRIVATE THM_EPSILON=1e-10)
     install(TARGETS _phono3py LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME})
+    install(TARGETS _phononcalc LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME})
 endif()
