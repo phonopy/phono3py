@@ -872,7 +872,7 @@ class ShowCalcProgress:
                 )
                 for t, k in zip(temperatures, kappa[i]):
                     print(("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
-            print("")
+            print("", flush=True)
 
     @staticmethod
     def kappa_Wigner_RTA(br: "ConductivityWignerRTA", log_level):
@@ -943,7 +943,7 @@ class ShowCalcProgress:
                 print(" ")
                 for t, k in zip(temperatures, kappa_TOT_RTA[i]):
                     print("K_T\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
-            print("")
+            print("", flush=True)
 
 
 def write_pp(
