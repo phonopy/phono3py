@@ -34,6 +34,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import warnings
 from abc import abstractmethod
 from typing import Type, Union, cast
 
@@ -141,6 +142,16 @@ class ConductivityRTABase(ConductivityBase):
         return self._gamma_detail_at_q
 
     def get_number_of_ignored_phonon_modes(self):
+        """Return number of ignored phonon modes."""
+        warnings.warn(
+            "Use attribute, number_of_ignored_phonon_modes",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.number_of_ignored_phonon_modes
+
+    @property
+    def number_of_ignored_phonon_modes(self):
         """Return number of ignored phonon modes."""
         return self._num_ignored_phonon_modes
 

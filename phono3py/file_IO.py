@@ -308,7 +308,7 @@ def read_fc3_from_hdf5(filename="fc3.hdf5", p2s_map=None):
             check_force_constants_indices(
                 fc3.shape[:2], p2s_map_in_file, p2s_map, filename
             )
-        if fc3.dtype == np.double and fc3.flags.c_contiguous:
+        if fc3.dtype == np.dtype("double") and fc3.flags.c_contiguous:
             return fc3
         else:
             msg = (
@@ -316,7 +316,6 @@ def read_fc3_from_hdf5(filename="fc3.hdf5", p2s_map=None):
                 "dtype='double' and c_contiguous." % filename
             )
             raise TypeError(msg)
-    return None
 
 
 def write_fc2_to_hdf5(

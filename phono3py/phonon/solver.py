@@ -99,16 +99,28 @@ def run_phonon_solver_c(
             Lambda,
         ) = gonze_nac_dataset  # Convergence parameter
         fc = gonze_fc
+        use_GL_NAC = True
     else:
-        positions = None
-        dd_q0 = None
-        G_list = None
-        Lambda = 0
+        use_GL_NAC = False
+        positions = np.zeros(3)  # dummy variable
+        dd_q0 = np.zeros(2)  # dummy variable
+        G_list = np.zeros(3)  # dummy variable
+        Lambda = 0  # dummy variable
+        if not dm.is_nac():
+            born = np.zeros((3, 3))  # dummy variable
+            dielectric = np.zeros(3)  # dummy variable
         fc = dm.force_constants
 
-    assert grid_points.dtype == "int_"
+    if nac_q_direction is None:
+        is_nac_q_zero = False
+        _nac_q_direction = np.zeros(3)
+    else:
+        is_nac_q_zero = True
+        _nac_q_direction = np.array(nac_q_direction, dtype="double")
+
+    assert grid_points.dtype == np.dtype("int_")
     assert grid_points.flags.c_contiguous
-    assert QDinv.dtype == "double"
+    assert QDinv.dtype == np.dtype("double")
     assert QDinv.flags.c_contiguous
     assert lapack_zheev_uplo in ("L", "U")
 
@@ -131,11 +143,14 @@ def run_phonon_solver_c(
         born,
         dielectric,
         rec_lattice,
-        nac_q_direction,
-        nac_factor,
+        _nac_q_direction,
+        float(nac_factor),
         dd_q0,
         G_list,
-        Lambda,
+        float(Lambda),
+        dm.is_nac() * 1,
+        is_nac_q_zero * 1,
+        use_GL_NAC * 1,
         lapack_zheev_uplo,
     )
 

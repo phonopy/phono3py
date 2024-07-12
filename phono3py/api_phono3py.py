@@ -1908,35 +1908,36 @@ class Phono3py:
 
     def run_thermal_conductivity(
         self,
-        is_LBTE=False,
-        temperatures=None,
-        is_isotope=False,
-        mass_variances=None,
-        grid_points=None,
-        boundary_mfp=None,  # in micrometre
-        solve_collective_phonon=False,
-        use_ave_pp=False,
-        is_reducible_collision_matrix=False,
-        is_kappa_star=True,
-        gv_delta_q=None,  # for group velocity
-        is_full_pp=False,
-        pinv_cutoff=1.0e-8,  # for pseudo-inversion of collision matrix
-        pinv_method=0,  # for pseudo-inversion of collision matrix
-        pinv_solver=0,  # solver of pseudo-inversion of collision matrix
-        write_gamma=False,
-        read_gamma=False,
-        is_N_U=False,
-        conductivity_type=None,
-        write_kappa=False,
-        write_gamma_detail=False,
-        write_collision=False,
-        read_collision=False,
-        write_pp=False,
-        read_pp=False,
-        write_LBTE_solution=False,
-        compression="gzip",
-        input_filename=None,
-        output_filename=None,
+        is_LBTE: bool = False,
+        temperatures: Optional[Sequence] = None,
+        is_isotope: bool = False,
+        mass_variances: Optional[Sequence] = None,
+        grid_points: Optional[Sequence[int]] = None,
+        boundary_mfp: Optional[float] = None,  # in micrometre
+        solve_collective_phonon: bool = False,
+        use_ave_pp: bool = False,
+        is_reducible_collision_matrix: bool = False,
+        is_kappa_star: bool = True,
+        gv_delta_q: Optional[float] = None,  # for group velocity
+        is_full_pp: bool = False,
+        pinv_cutoff: float = 1.0e-8,  # for pseudo-inversion of collision matrix
+        pinv_method: int = 0,  # for pseudo-inversion of collision matrix
+        pinv_solver: int = 0,  # solver of pseudo-inversion of collision matrix
+        write_gamma: bool = False,
+        read_gamma: bool = False,
+        is_N_U: bool = False,
+        conductivity_type: Optional[str] = None,
+        write_kappa: bool = False,
+        write_gamma_detail: bool = False,
+        write_collision: bool = False,
+        read_collision: bool = False,
+        write_pp: bool = False,
+        read_pp: bool = False,
+        write_LBTE_solution: bool = False,
+        compression: str = "gzip",
+        input_filename: Optional[str] = None,
+        output_filename: Optional[str] = None,
+        log_level: Optional[int] = None,
     ):
         """Run thermal conductivity calculation.
 
@@ -2076,6 +2077,11 @@ class Phono3py:
             )
             raise RuntimeError(msg)
 
+        if log_level is None:
+            _log_level = self._log_level
+        else:
+            _log_level = log_level
+
         if is_LBTE:
             if temperatures is None:
                 _temperatures = [
@@ -2110,7 +2116,7 @@ class Phono3py:
                 compression=compression,
                 input_filename=input_filename,
                 output_filename=output_filename,
-                log_level=self._log_level,
+                log_level=_log_level,
             )
         else:
             if temperatures is None:
@@ -2141,7 +2147,7 @@ class Phono3py:
                 compression=compression,
                 input_filename=input_filename,
                 output_filename=output_filename,
-                log_level=self._log_level,
+                log_level=_log_level,
             )
 
     def save(self, filename="phono3py_params.yaml", settings=None):
@@ -2168,7 +2174,11 @@ class Phono3py:
         with open(filename, "w") as w:
             w.write(str(ph3py_yaml))
 
-    def develop_mlp(self, params: Optional[Union[PypolymlpParams, dict, str]] = None):
+    def develop_mlp(
+        self,
+        params: Optional[Union[PypolymlpParams, dict, str]] = None,
+        test_size: float = 0.1,
+    ):
         """Develop MLP of pypolymlp.
 
         Parameters
@@ -2176,6 +2186,10 @@ class Phono3py:
         params : PypolymlpParams or dict, optional
             Parameters for developing MLP. Default is None. When dict is given,
             PypolymlpParams instance is created from the dict.
+        test_size : float, optional
+            Training and test data are splitted by this ratio. test_size=0.1
+            means the first 90% of the data is used for training and the rest
+            is used for test. Default is 0.1.
 
         """
         if self._mlp_dataset is None:
@@ -2189,7 +2203,7 @@ class Phono3py:
         disps = self._mlp_dataset["displacements"]
         forces = self._mlp_dataset["forces"]
         energies = self._mlp_dataset["supercell_energies"]
-        n = int(len(disps) * 0.9)
+        n = int(len(disps) * (1 - test_size))
         train_data = PypolymlpData(
             displacements=disps[:n], forces=forces[:n], supercell_energies=energies[:n]
         )
@@ -2230,7 +2244,9 @@ class Phono3py:
         self.forces = forces
 
     def develop_phonon_mlp(
-        self, params: Optional[Union[PypolymlpParams, dict, str]] = None
+        self,
+        params: Optional[Union[PypolymlpParams, dict, str]] = None,
+        test_size: float = 0.1,
     ):
         """Develop MLP of pypolymlp for fc2.
 
@@ -2239,6 +2255,10 @@ class Phono3py:
         params : PypolymlpParams or dict, optional
             Parameters for developing MLP. Default is None. When dict is given,
             PypolymlpParams instance is created from the dict.
+        test_size : float, optional
+            Training and test data are splitted by this ratio. test_size=0.1
+            means the first 90% of the data is used for training and the rest
+            is used for test. Default is 0.1.
 
         """
         if self._phonon_mlp_dataset is None:
@@ -2252,7 +2272,7 @@ class Phono3py:
         disps = self._phonon_mlp_dataset["displacements"]
         forces = self._phonon_mlp_dataset["forces"]
         energies = self._phonon_mlp_dataset["supercell_energies"]
-        n = int(len(disps) * 0.9)
+        n = int(len(disps) * (1 - test_size))
         train_data = PypolymlpData(
             displacements=disps[:n], forces=forces[:n], supercell_energies=energies[:n]
         )

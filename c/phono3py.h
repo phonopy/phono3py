@@ -35,6 +35,10 @@
 #ifndef __phono3py_H__
 #define __phono3py_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "phonoc_array.h"
 
 typedef struct {
@@ -237,4 +241,9 @@ void ph3py_pinv_from_eigensolution(double *data, const double *eigvals,
                                    const long size, const double cutoff,
                                    const long pinv_method);
 long ph3py_get_max_threads(void);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
