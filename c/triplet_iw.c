@@ -36,10 +36,9 @@
 
 #include <math.h>
 
+#include "funcs.h"
 #include "grgrid.h"
-#include "phonoc_utils.h"
 #include "tetrahedron_method.h"
-#include "triplet.h"
 
 static void set_freq_vertices(double freq_vertices[3][24][4],
                               const double *frequencies1,
@@ -159,9 +158,9 @@ void tpi_get_integration_weight_with_sigma(
                     g2 = 0;
                 } else {
                     iw_zero[adrs_shift] = 0;
-                    g0 = phonoc_gaussian(f0 + f1 - f2, sigma);
-                    g1 = phonoc_gaussian(f0 - f1 + f2, sigma);
-                    g2 = phonoc_gaussian(f0 - f1 - f2, sigma);
+                    g0 = funcs_gaussian(f0 + f1 - f2, sigma);
+                    g1 = funcs_gaussian(f0 - f1 + f2, sigma);
+                    g2 = funcs_gaussian(f0 - f1 - f2, sigma);
                 }
                 if (tp_type == 2) {
                     iw[adrs_shift] = g2;
@@ -182,7 +181,7 @@ void tpi_get_integration_weight_with_sigma(
                     iw[adrs_shift] = 0;
                 } else {
                     iw_zero[adrs_shift] = 0;
-                    iw[adrs_shift] = phonoc_gaussian(f0 + f1 - f2, sigma);
+                    iw[adrs_shift] = funcs_gaussian(f0 + f1 - f2, sigma);
                 }
             }
         }

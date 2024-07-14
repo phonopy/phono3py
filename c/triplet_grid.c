@@ -39,10 +39,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "bzgrid.h"
 #include "grgrid.h"
-#include "lagrid.h"
-#include "triplet.h"
 
 static long get_ir_triplets_at_q(long *map_triplets, long *map_q,
                                  const long grid_point, const long D_diag[3],
