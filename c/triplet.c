@@ -36,12 +36,12 @@
 
 #include "triplet.h"
 
-#include "bzgrid.h"
+#include "recgrid.h"
 #include "triplet_grid.h"
 #include "triplet_iw.h"
 
 long tpl_get_BZ_triplets_at_q(long (*triplets)[3], const long grid_point,
-                              const ConstBZGrid *bzgrid,
+                              const RecgridConstBZGrid *bzgrid,
                               const long *map_triplets) {
     return tpk_get_BZ_triplets_at_q(triplets, grid_point, bzgrid, map_triplets);
 }
@@ -62,9 +62,9 @@ void tpl_get_integration_weight(
     double *iw, char *iw_zero, const double *frequency_points,
     const long num_band0, const long relative_grid_address[24][4][3],
     const long (*triplets)[3], const long num_triplets,
-    const ConstBZGrid *bzgrid, const double *frequencies1, const long num_band1,
-    const double *frequencies2, const long num_band2, const long tp_type,
-    const long openmp_per_triplets) {
+    const RecgridConstBZGrid *bzgrid, const double *frequencies1,
+    const long num_band1, const double *frequencies2, const long num_band2,
+    const long tp_type, const long openmp_per_triplets) {
     long i, num_band_prod;
     long tp_relative_grid_address[2][24][4][3];
 

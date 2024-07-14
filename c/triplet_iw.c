@@ -51,23 +51,23 @@ static long set_g(double g[3], const double f0,
                   const double freq_vertices[3][24][4], const long max_i);
 static void get_triplet_tetrahedra_vertices(
     long vertices[2][24][4], const long tp_relative_grid_address[2][24][4][3],
-    const long triplet[3], const ConstBZGrid *bzgrid);
+    const long triplet[3], const RecgridConstBZGrid *bzgrid);
 static void get_neighboring_grid_points_type1(
     long *neighboring_grid_points, const long grid_point,
     const long (*relative_grid_address)[3],
-    const long num_relative_grid_address, const ConstBZGrid *bzgrid);
+    const long num_relative_grid_address, const RecgridConstBZGrid *bzgrid);
 static void get_neighboring_grid_points_type2(
     long *neighboring_grid_points, const long grid_point,
     const long (*relative_grid_address)[3],
-    const long num_relative_grid_address, const ConstBZGrid *bzgrid);
+    const long num_relative_grid_address, const RecgridConstBZGrid *bzgrid);
 
 void tpi_get_integration_weight(
     double *iw, char *iw_zero, const double *frequency_points,
     const long num_band0, const long tp_relative_grid_address[2][24][4][3],
-    const long triplets[3], const long num_triplets, const ConstBZGrid *bzgrid,
-    const double *frequencies1, const long num_band1,
-    const double *frequencies2, const long num_band2, const long tp_type,
-    const long openmp_per_triplets) {
+    const long triplets[3], const long num_triplets,
+    const RecgridConstBZGrid *bzgrid, const double *frequencies1,
+    const long num_band1, const double *frequencies2, const long num_band2,
+    const long tp_type, const long openmp_per_triplets) {
     long max_i, j, b1, b2, b12, num_band_prod, adrs_shift;
     long vertices[2][24][4];
     double g[3];
@@ -204,7 +204,7 @@ void tpi_get_neighboring_grid_points(long *neighboring_grid_points,
                                      const long grid_point,
                                      const long (*relative_grid_address)[3],
                                      const long num_relative_grid_address,
-                                     const ConstBZGrid *bzgrid) {
+                                     const RecgridConstBZGrid *bzgrid) {
     if (bzgrid->type == 1) {
         get_neighboring_grid_points_type1(neighboring_grid_points, grid_point,
                                           relative_grid_address,
@@ -276,7 +276,7 @@ static long set_g(double g[3], const double f0,
 
 static void get_triplet_tetrahedra_vertices(
     long vertices[2][24][4], const long tp_relative_grid_address[2][24][4][3],
-    const long triplet[3], const ConstBZGrid *bzgrid) {
+    const long triplet[3], const RecgridConstBZGrid *bzgrid) {
     long i, j;
 
     for (i = 0; i < 2; i++) {
@@ -291,7 +291,7 @@ static void get_triplet_tetrahedra_vertices(
 static void get_neighboring_grid_points_type1(
     long *neighboring_grid_points, const long grid_point,
     const long (*relative_grid_address)[3],
-    const long num_relative_grid_address, const ConstBZGrid *bzgrid) {
+    const long num_relative_grid_address, const RecgridConstBZGrid *bzgrid) {
     long bzmesh[3], bz_address[3];
     long i, j, bz_gp, prod_bz_mesh;
 
@@ -304,10 +304,11 @@ static void get_neighboring_grid_points_type1(
             bz_address[j] =
                 bzgrid->addresses[grid_point][j] + relative_grid_address[i][j];
         }
-        bz_gp = bzgrid->gp_map[grg_get_grid_index(bz_address, bzmesh)];
+        bz_gp = bzgrid->gp_map[recgrid_get_grid_index_from_address(bz_address,
+                                                                   bzmesh)];
         if (bz_gp == prod_bz_mesh) {
             neighboring_grid_points[i] =
-                grg_get_grid_index(bz_address, bzgrid->D_diag);
+                recgrid_get_grid_index_from_address(bz_address, bzgrid->D_diag);
         } else {
             neighboring_grid_points[i] = bz_gp;
         }
@@ -317,7 +318,7 @@ static void get_neighboring_grid_points_type1(
 static void get_neighboring_grid_points_type2(
     long *neighboring_grid_points, const long grid_point,
     const long (*relative_grid_address)[3],
-    const long num_relative_grid_address, const ConstBZGrid *bzgrid) {
+    const long num_relative_grid_address, const RecgridConstBZGrid *bzgrid) {
     long bz_address[3];
     long i, j, gp;
 
@@ -326,7 +327,7 @@ static void get_neighboring_grid_points_type2(
             bz_address[j] =
                 bzgrid->addresses[grid_point][j] + relative_grid_address[i][j];
         }
-        gp = grg_get_grid_index(bz_address, bzgrid->D_diag);
+        gp = recgrid_get_grid_index_from_address(bz_address, bzgrid->D_diag);
         neighboring_grid_points[i] = bzgrid->gp_map[gp];
         if (bzgrid->gp_map[gp + 1] - bzgrid->gp_map[gp] > 1) {
             for (j = bzgrid->gp_map[gp]; j < bzgrid->gp_map[gp + 1]; j++) {

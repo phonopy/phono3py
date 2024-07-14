@@ -43,6 +43,7 @@
 #include "phonoc_array.h"
 #include "phonoc_utils.h"
 #include "real_to_reciprocal.h"
+#include "recgrid.h"
 #include "triplet.h"
 #include "triplet_iw.h"
 
@@ -51,9 +52,10 @@ static void get_collision(
     const long num_temps, const double *temperatures, const double *g,
     const char *g_zero, const double *frequencies,
     const lapack_complex_double *eigenvectors, const long triplet[3],
-    const long triplet_weight, const ConstBZGrid *bzgrid, const double *fc3,
-    const long is_compact_fc3, const AtomTriplets *atom_triplets,
-    const double *masses, const long *band_indices, const long symmetrize_fc3_q,
+    const long triplet_weight, const RecgridConstBZGrid *bzgrid,
+    const double *fc3, const long is_compact_fc3,
+    const AtomTriplets *atom_triplets, const double *masses,
+    const long *band_indices, const long symmetrize_fc3_q,
     const double cutoff_frequency, const long openmp_per_triplets);
 static void finalize_ise(double *imag_self_energy, const double *ise,
                          const long (*bz_grid_address)[3],
@@ -66,11 +68,12 @@ void ppc_get_pp_collision(
     const long relative_grid_address[24][4][3], /* thm */
     const double *frequencies, const lapack_complex_double *eigenvectors,
     const long (*triplets)[3], const long num_triplets,
-    const long *triplet_weights, const ConstBZGrid *bzgrid, const double *fc3,
-    const long is_compact_fc3, const AtomTriplets *atom_triplets,
-    const double *masses, const Larray *band_indices,
-    const Darray *temperatures, const long is_NU, const long symmetrize_fc3_q,
-    const double cutoff_frequency, const long openmp_per_triplets) {
+    const long *triplet_weights, const RecgridConstBZGrid *bzgrid,
+    const double *fc3, const long is_compact_fc3,
+    const AtomTriplets *atom_triplets, const double *masses,
+    const Larray *band_indices, const Darray *temperatures, const long is_NU,
+    const long symmetrize_fc3_q, const double cutoff_frequency,
+    const long openmp_per_triplets) {
     long i;
     long num_band, num_band0, num_band_prod, num_temps;
     double *ise, *freqs_at_gp, *g;
@@ -136,11 +139,12 @@ void ppc_get_pp_collision_with_sigma(
     double *imag_self_energy, const double sigma, const double sigma_cutoff,
     const double *frequencies, const lapack_complex_double *eigenvectors,
     const long (*triplets)[3], const long num_triplets,
-    const long *triplet_weights, const ConstBZGrid *bzgrid, const double *fc3,
-    const long is_compact_fc3, const AtomTriplets *atom_triplets,
-    const double *masses, const Larray *band_indices,
-    const Darray *temperatures, const long is_NU, const long symmetrize_fc3_q,
-    const double cutoff_frequency, const long openmp_per_triplets) {
+    const long *triplet_weights, const RecgridConstBZGrid *bzgrid,
+    const double *fc3, const long is_compact_fc3,
+    const AtomTriplets *atom_triplets, const double *masses,
+    const Larray *band_indices, const Darray *temperatures, const long is_NU,
+    const long symmetrize_fc3_q, const double cutoff_frequency,
+    const long openmp_per_triplets) {
     long i;
     long num_band, num_band0, num_band_prod, num_temps;
     long const_adrs_shift;
@@ -207,9 +211,10 @@ static void get_collision(
     const long num_temps, const double *temperatures, const double *g,
     const char *g_zero, const double *frequencies,
     const lapack_complex_double *eigenvectors, const long triplet[3],
-    const long triplet_weight, const ConstBZGrid *bzgrid, const double *fc3,
-    const long is_compact_fc3, const AtomTriplets *atom_triplets,
-    const double *masses, const long *band_indices, const long symmetrize_fc3_q,
+    const long triplet_weight, const RecgridConstBZGrid *bzgrid,
+    const double *fc3, const long is_compact_fc3,
+    const AtomTriplets *atom_triplets, const double *masses,
+    const long *band_indices, const long symmetrize_fc3_q,
     const double cutoff_frequency, const long openmp_per_triplets) {
     long i;
     long num_band_prod, num_g_pos;
