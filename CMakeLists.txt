@@ -176,7 +176,7 @@ if(BUILD_PHPHCALC_LIB OR BUILD_NANOBIND_MODULE)
         ${PROJECT_SOURCE_DIR}/c/isotope.c
         ${PROJECT_SOURCE_DIR}/c/lapack_wrapper.c
         ${PROJECT_SOURCE_DIR}/c/phono3py.c
-        ${PROJECT_SOURCE_DIR}/c/phonoc_utils.c
+        ${PROJECT_SOURCE_DIR}/c/funcs.c
         ${PROJECT_SOURCE_DIR}/c/pp_collision.c
         ${PROJECT_SOURCE_DIR}/c/real_self_energy.c
         ${PROJECT_SOURCE_DIR}/c/real_to_reciprocal.c
@@ -358,7 +358,7 @@ if(BUILD_GRIDSYS_LIB)
         ${PROJECT_SOURCE_DIR}/c/gridsys.c
         ${PROJECT_SOURCE_DIR}/c/lagrid.c
         ${PROJECT_SOURCE_DIR}/c/niggli.c
-        ${PROJECT_SOURCE_DIR}/c/phonoc_utils.c
+        ${PROJECT_SOURCE_DIR}/c/funcs.c
         ${PROJECT_SOURCE_DIR}/c/snf3x3.c
         ${PROJECT_SOURCE_DIR}/c/tetrahedron_method.c
         ${PROJECT_SOURCE_DIR}/c/triplet.c

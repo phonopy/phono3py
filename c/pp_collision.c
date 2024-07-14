@@ -37,11 +37,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "funcs.h"
 #include "imag_self_energy_with_g.h"
 #include "interaction.h"
 #include "lapack_wrapper.h"
 #include "phonoc_array.h"
-#include "phonoc_utils.h"
 #include "real_to_reciprocal.h"
 #include "recgrid.h"
 #include "triplet.h"

@@ -37,8 +37,8 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "funcs.h"
 #include "phonoc_array.h"
-#include "phonoc_utils.h"
 #include "real_to_reciprocal.h"
 
 static double get_real_self_energy_at_band(
@@ -160,10 +160,10 @@ static double sum_real_self_energy_at_band(
     shift = 0;
     for (i = 0; i < num_band; i++) {
         if (freqs1[i] > cutoff_frequency) {
-            n1 = phonoc_bose_einstein(freqs1[i], temperature);
+            n1 = funcs_bose_einstein(freqs1[i], temperature);
             for (j = 0; j < num_band; j++) {
                 if (freqs2[j] > cutoff_frequency) {
-                    n2 = phonoc_bose_einstein(freqs2[j], temperature);
+                    n2 = funcs_bose_einstein(freqs2[j], temperature);
                     f1 = fpoint + freqs1[i] + freqs2[j];
                     f2 = fpoint - freqs1[i] - freqs2[j];
                     f3 = fpoint - freqs1[i] + freqs2[j];
