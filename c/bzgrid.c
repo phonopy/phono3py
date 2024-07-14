@@ -40,9 +40,9 @@
 
 #include "grgrid.h"
 #include "lagrid.h"
+#include "recgrid.h"
 
 #define BZG_NUM_BZ_SEARCH_SPACE 125
-#define GRID_TOLERANCE_FACTOR 0.01
 static long bz_search_space[BZG_NUM_BZ_SEARCH_SPACE][3] = {
     {0, 0, 0},   {0, 0, 1},   {0, 0, 2},   {0, 0, -2},   {0, 0, -1},
     {0, 1, 0},   {0, 1, 1},   {0, 1, 2},   {0, 1, -2},   {0, 1, -1},
@@ -70,21 +70,26 @@ static long bz_search_space[BZG_NUM_BZ_SEARCH_SPACE][3] = {
     {-1, -2, 0}, {-1, -2, 1}, {-1, -2, 2}, {-1, -2, -2}, {-1, -2, -1},
     {-1, -1, 0}, {-1, -1, 1}, {-1, -1, 2}, {-1, -1, -2}, {-1, -1, -1}};
 
-static void get_bz_grid_addresses_type1(BZGrid *bzgrid, const long Qinv[3][3]);
-static void get_bz_grid_addresses_type2(BZGrid *bzgrid, const long Qinv[3][3]);
+static void get_bz_grid_addresses_type1(RecgridBZGrid *bzgrid,
+                                        const long Qinv[3][3]);
+static void get_bz_grid_addresses_type2(RecgridBZGrid *bzgrid,
+                                        const long Qinv[3][3]);
 static void set_bz_address(long address[3], const long bz_index,
                            const long grid_address[3], const long D_diag[3],
                            const long nint[3], const long Qinv[3][3]);
 static double get_bz_distances(long nint[3], double distances[],
-                               const BZGrid *bzgrid, const long grid_address[3],
+                               const RecgridBZGrid *bzgrid,
+                               const long grid_address[3],
                                const double tolerance);
 static void multiply_matrix_vector_d3(double v[3], const double a[3][3],
                                       const double b[3]);
+static void multiply_matrix_vector_ld3(double v[3], const long a[3][3],
+                                       const double b[3]);
 static long get_inverse_unimodular_matrix_l3(long m[3][3], const long a[3][3]);
 static double norm_squared_d3(const double a[3]);
 
 long bzg_rotate_grid_index(const long bz_grid_index, const long rotation[3][3],
-                           const ConstBZGrid *bzgrid) {
+                           const RecgridConstBZGrid *bzgrid) {
     long i, gp, num_bzgp, num_grgp;
     long dadrs[3], dadrs_rot[3], adrs_rot[3];
 
@@ -124,7 +129,7 @@ long bzg_rotate_grid_index(const long bz_grid_index, const long rotation[3][3],
     return bzgrid->gp_map[gp];
 }
 
-long bzg_get_bz_grid_addresses(BZGrid *bzgrid) {
+long bzg_get_bz_grid_addresses(RecgridBZGrid *bzgrid) {
     long det;
     long Qinv[3][3];
 
@@ -142,91 +147,15 @@ long bzg_get_bz_grid_addresses(BZGrid *bzgrid) {
     return 1;
 }
 
-/* Note: Tolerance in squared distance. */
-double bzg_get_tolerance_for_BZ_reduction(const BZGrid *bzgrid) {
-    long i, j;
-    double tolerance;
-    double length[3];
-    double reclatQ[3][3];
-
-    for (i = 0; i < 3; i++) {
-        for (j = 0; j < 3; j++) {
-            reclatQ[i][j] = bzgrid->reclat[i][0] * bzgrid->Q[0][j] +
-                            bzgrid->reclat[i][1] * bzgrid->Q[1][j] +
-                            bzgrid->reclat[i][2] * bzgrid->Q[2][j];
-        }
-    }
-
-    for (i = 0; i < 3; i++) {
-        length[i] = 0;
-        for (j = 0; j < 3; j++) {
-            length[i] += reclatQ[j][i] * reclatQ[j][i];
-        }
-        length[i] /= bzgrid->D_diag[i] * bzgrid->D_diag[i];
-    }
-    tolerance = length[0];
-    for (i = 1; i < 3; i++) {
-        if (tolerance < length[i]) {
-            tolerance = length[i];
-        }
-    }
-    tolerance *= GRID_TOLERANCE_FACTOR;
-
-    return tolerance;
-}
-
-RotMats *bzg_alloc_RotMats(const long size) {
-    RotMats *rotmats;
-
-    rotmats = NULL;
-
-    if ((rotmats = (RotMats *)malloc(sizeof(RotMats))) == NULL) {
-        warning_print("Memory could not be allocated.");
-        return NULL;
-    }
-
-    rotmats->size = size;
-    if (size > 0) {
-        if ((rotmats->mat = (long(*)[3][3])malloc(sizeof(long[3][3]) * size)) ==
-            NULL) {
-            warning_print("Memory could not be allocated ");
-            warning_print("(RotMats, line %d, %s).\n", __LINE__, __FILE__);
-            free(rotmats);
-            rotmats = NULL;
-            return NULL;
-        }
-    }
-    return rotmats;
-}
-
-void bzg_free_RotMats(RotMats *rotmats) {
-    if (rotmats->size > 0) {
-        free(rotmats->mat);
-        rotmats->mat = NULL;
-    }
-    free(rotmats);
-}
-
-void bzg_multiply_matrix_vector_ld3(double v[3], const long a[3][3],
-                                    const double b[3]) {
-    long i;
-    double c[3];
-    for (i = 0; i < 3; i++) {
-        c[i] = a[i][0] * b[0] + a[i][1] * b[1] + a[i][2] * b[2];
-    }
-    for (i = 0; i < 3; i++) {
-        v[i] = c[i];
-    }
-}
-
-static void get_bz_grid_addresses_type1(BZGrid *bzgrid, const long Qinv[3][3]) {
+static void get_bz_grid_addresses_type1(RecgridBZGrid *bzgrid,
+                                        const long Qinv[3][3]) {
     double tolerance, min_distance;
     double distances[BZG_NUM_BZ_SEARCH_SPACE];
     long bzmesh[3], bz_address_double[3], nint[3], gr_adrs[3];
     long i, j, k, boundary_num_gp, total_num_gp, bzgp, gp, num_bzmesh;
     long count, id_shift;
 
-    tolerance = bzg_get_tolerance_for_BZ_reduction(bzgrid);
+    tolerance = recgrid_get_tolerance_for_BZ_reduction(bzgrid);
     for (j = 0; j < 3; j++) {
         bzmesh[j] = bzgrid->D_diag[j] * 2;
     }
@@ -278,13 +207,14 @@ static void get_bz_grid_addresses_type1(BZGrid *bzgrid, const long Qinv[3][3]) {
     bzgrid->size = boundary_num_gp + total_num_gp;
 }
 
-static void get_bz_grid_addresses_type2(BZGrid *bzgrid, const long Qinv[3][3]) {
+static void get_bz_grid_addresses_type2(RecgridBZGrid *bzgrid,
+                                        const long Qinv[3][3]) {
     double tolerance, min_distance;
     double distances[BZG_NUM_BZ_SEARCH_SPACE];
     long nint[3], gr_adrs[3];
     long i, j, num_gp;
 
-    tolerance = bzg_get_tolerance_for_BZ_reduction(bzgrid);
+    tolerance = recgrid_get_tolerance_for_BZ_reduction(bzgrid);
     num_gp = 0;
     /* The first element of gp_map is always 0. */
     bzgrid->gp_map[0] = 0;
@@ -324,7 +254,8 @@ static void set_bz_address(long address[3], const long bz_index,
 }
 
 static double get_bz_distances(long nint[3], double distances[],
-                               const BZGrid *bzgrid, const long grid_address[3],
+                               const RecgridBZGrid *bzgrid,
+                               const long grid_address[3],
                                const double tolerance) {
     long i, j;
     long dadrs[3];
@@ -336,7 +267,7 @@ static double get_bz_distances(long nint[3], double distances[],
     for (i = 0; i < 3; i++) {
         q_red[i] = dadrs[i] / (2.0 * bzgrid->D_diag[i]);
     }
-    bzg_multiply_matrix_vector_ld3(q_red, bzgrid->Q, q_red);
+    multiply_matrix_vector_ld3(q_red, bzgrid->Q, q_red);
     for (i = 0; i < 3; i++) {
         nint[i] = lagmat_Nint(q_red[i]);
         q_red[i] -= nint[i];
@@ -366,6 +297,18 @@ static double get_bz_distances(long nint[3], double distances[],
 
 static void multiply_matrix_vector_d3(double v[3], const double a[3][3],
                                       const double b[3]) {
+    long i;
+    double c[3];
+    for (i = 0; i < 3; i++) {
+        c[i] = a[i][0] * b[0] + a[i][1] * b[1] + a[i][2] * b[2];
+    }
+    for (i = 0; i < 3; i++) {
+        v[i] = c[i];
+    }
+}
+
+static void multiply_matrix_vector_ld3(double v[3], const long a[3][3],
+                                       const double b[3]) {
     long i;
     double c[3];
     for (i = 0; i < 3; i++) {

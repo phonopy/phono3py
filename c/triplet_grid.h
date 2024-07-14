@@ -46,7 +46,7 @@ long tpk_get_ir_triplets_at_q(long *map_triplets, long *map_q,
                               const long (*rec_rotations_in)[3][3],
                               const long num_rot, const long swappable);
 long tpk_get_BZ_triplets_at_q(long (*triplets)[3], const long grid_point,
-                              const ConstBZGrid *bzgrid,
+                              const RecgridConstBZGrid *bzgrid,
                               const long *map_triplets);
 
 #endif

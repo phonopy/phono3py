@@ -1179,14 +1179,6 @@ NB_MODULE(_phono3py, m) {
     m.def("triplets_integration_weights", &py_get_triplets_integration_weights);
     m.def("triplets_integration_weights_with_sigma",
           &py_get_triplets_integration_weights_with_sigma);
-    m.def("grid_index_from_address", &py_get_grid_index_from_address);
-    m.def("ir_grid_map", &py_get_ir_grid_map);
-    m.def("gr_grid_addresses", &py_get_gr_grid_addresses);
-    m.def("reciprocal_rotations", &py_get_reciprocal_rotations);
-    m.def("transform_rotations", &py_transform_rotations);
-    m.def("snf3x3", &py_get_snf3x3);
-    m.def("bz_grid_addresses", &py_get_bz_grid_addresses);
-    m.def("rotate_bz_grid_index", &py_rotate_bz_grid_addresses);
     m.def("diagonalize_collision_matrix", &py_diagonalize_collision_matrix);
     m.def("pinv_from_eigensolution", &py_pinv_from_eigensolution);
     m.def("default_colmat_solver", &py_get_default_colmat_solver);
