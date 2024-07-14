@@ -401,7 +401,7 @@ def test_gv_operator_si(ph_si: Phonopy):
         ph_si.dynamical_matrix, symmetry=ph_si.primitive_symmetry
     )
 
-    ph_si.dynamical_matrix.run([[0.1, 0.22, 0.33]])
+    ph_si.dynamical_matrix.run([0.1, 0.22, 0.33])
     dm = ph_si.dynamical_matrix.dynamical_matrix
     eigvals, eigvecs = np.linalg.eigh(dm)
 
