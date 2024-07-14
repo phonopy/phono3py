@@ -466,7 +466,7 @@ class BZGrid:
         Terminate when symmetry of grid is broken.
 
         """
-        import phono3py._phono3py as phono3c
+        import phono3py._recgrid as recgrid
 
         if self._symmetry_dataset is None:
             direct_rotations = np.eye(3, dtype="int_", order="C").reshape(1, 3, 3)
@@ -475,7 +475,7 @@ class BZGrid:
                 self._symmetry_dataset["rotations"], dtype="int_", order="C"
             )
         rec_rotations = np.zeros((48, 3, 3), dtype="int_", order="C")
-        num_rec_rot = phono3c.reciprocal_rotations(
+        num_rec_rot = recgrid.reciprocal_rotations(
             rec_rotations, direct_rotations, self._is_time_reversal
         )
         self._reciprocal_operations = np.array(
@@ -492,7 +492,7 @@ class BZGrid:
         self._rotations = np.zeros(
             self._reciprocal_operations.shape, dtype="int_", order="C"
         )
-        if not phono3c.transform_rotations(
+        if not recgrid.transform_rotations(
             self._rotations, self._reciprocal_operations, self._D_diag, self._Q
         ):
             msg = "Grid symmetry is broken. Use generalized regular grid."
@@ -778,9 +778,9 @@ class GridMatrix:
         if (np.diag(gm_diag) == _grid_matrix).all() and not force_SNF:
             self._D_diag = np.array(gm_diag, dtype="int_")
         else:
-            import phono3py._phono3py as phono3c
+            import phono3py._recgrid as recgrid
 
-            if not phono3c.snf3x3(self._D_diag, self._P, self._Q, _grid_matrix):
+            if not recgrid.snf3x3(self._D_diag, self._P, self._Q, _grid_matrix):
                 msg = "SNF3x3 failed."
                 raise RuntimeError(msg)
 
@@ -879,17 +879,17 @@ def get_grid_point_from_address(address, D_diag):
         shape=(n, ), dtype='int_'
 
     """
-    import phono3py._phono3py as phono3c
+    import phono3py._recgrid as recgrid
 
     adrs_array = np.array(address, dtype="int_", order="C")
     mesh_array = np.array(D_diag, dtype="int_")
 
     if adrs_array.ndim == 1:
-        return phono3c.grid_index_from_address(adrs_array, mesh_array)
+        return recgrid.grid_index_from_address(adrs_array, mesh_array)
 
     gps = np.zeros(adrs_array.shape[0], dtype="int_")
     for i, adrs in enumerate(adrs_array):
-        gps[i] = phono3c.grid_index_from_address(adrs, mesh_array)
+        gps[i] = recgrid.grid_index_from_address(adrs, mesh_array)
     return gps
 
 
@@ -977,11 +977,11 @@ def _get_grid_points_by_bz_rotations(bz_gp, bz_grid: BZGrid, rotations, lang="C"
 
 
 def _get_grid_points_by_bz_rotations_c(bz_gp, bz_grid: BZGrid, rotations):
-    import phono3py._phono3py as phono3c
+    import phono3py._recgrid as recgrid
 
     bzgps = np.zeros(len(rotations), dtype="int_")
     for i, r in enumerate(rotations):
-        bzgps[i] = phono3c.rotate_bz_grid_index(
+        bzgps[i] = recgrid.rotate_bz_grid_index(
             bz_gp,
             r,
             bz_grid.addresses,
@@ -1053,10 +1053,10 @@ def _get_grid_address(D_diag):
         shape=(prod(D_diag), 3), dtype='int_'
 
     """
-    import phono3py._phono3py as phono3c
+    import phono3py._recgrid as recgrid
 
     gr_grid_addresses = np.zeros((np.prod(D_diag), 3), dtype="int_")
-    phono3c.gr_grid_addresses(gr_grid_addresses, np.array(D_diag, dtype="int_"))
+    recgrid.gr_grid_addresses(gr_grid_addresses, np.array(D_diag, dtype="int_"))
     return gr_grid_addresses
 
 
@@ -1122,7 +1122,7 @@ def _relocate_BZ_grid_address(
     shape=(prod(mesh) + 1, )
 
     """
-    import phono3py._phono3py as phono3c
+    import phono3py._recgrid as recgrid
 
     if PS is None:
         _PS = np.zeros(3, dtype="int_")
@@ -1143,7 +1143,7 @@ def _relocate_BZ_grid_address(
     tmat_inv_int = np.rint(tmat_inv).astype("int_")
     assert (np.abs(tmat_inv - tmat_inv_int) < 1e-5).all()
 
-    num_gp = phono3c.bz_grid_addresses(
+    num_gp = recgrid.bz_grid_addresses(
         bz_grid_addresses,
         bz_map,
         bzg2grg,
@@ -1183,7 +1183,7 @@ def _get_ir_grid_map(D_diag, grg_rotations, PS=None):
         dtype='int_', shape=(prod(mesh),)
 
     """
-    import phono3py._phono3py as phono3c
+    import phono3py._recgrid as recgrid
 
     ir_grid_map = np.zeros(np.prod(D_diag), dtype="int_")
     if PS is None:
@@ -1191,7 +1191,7 @@ def _get_ir_grid_map(D_diag, grg_rotations, PS=None):
     else:
         _PS = np.array(PS, dtype="int_")
 
-    num_ir = phono3c.ir_grid_map(
+    num_ir = recgrid.ir_grid_map(
         ir_grid_map,
         np.array(D_diag, dtype="int_"),
         _PS,

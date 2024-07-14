@@ -36,9 +36,9 @@
 
 #include <stdlib.h>
 
+#include "funcs.h"
 #include "lapack_wrapper.h"
 #include "phonoc_const.h"
-#include "phonoc_utils.h"
 
 void iso_get_isotope_scattering_strength(
     double *gamma, const long grid_point, const long *ir_grid_points,
@@ -75,8 +75,8 @@ void iso_get_isotope_scattering_strength(
         }
         sum_g = 0;
 #ifdef _OPENMP
-#pragma omp parallel for private(gp, k, l, m, f, e1_r, e1_i, a, b, dist, sum_g_k) reduction(+ \
-                                                                                        : sum_g)
+#pragma omp parallel for private(gp, k, l, m, f, e1_r, e1_i, a, b, dist, \
+                                     sum_g_k) reduction(+ : sum_g)
 #endif
         for (j = 0; j < num_grid_points; j++) {
             gp = ir_grid_points[j];
@@ -86,7 +86,7 @@ void iso_get_isotope_scattering_strength(
                 if (f < cutoff_frequency) {
                     continue;
                 }
-                dist = phonoc_gaussian(f - f0[i], sigma);
+                dist = funcs_gaussian(f - f0[i], sigma);
                 for (l = 0; l < num_band / 3; l++) { /* elements */
                     a = 0;
                     b = 0;
@@ -162,7 +162,7 @@ void iso_get_thm_isotope_scattering_strength(
 
 #ifdef _OPENMP
 #pragma omp parallel for private(j, k, l, m, f, gp, e1_r, e1_i, a, b, dist, \
-                                 sum_g_k)
+                                     sum_g_k)
 #endif
     for (i = 0; i < num_grid_points; i++) {
         gp = ir_grid_points[i];

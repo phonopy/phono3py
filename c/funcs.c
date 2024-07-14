@@ -32,11 +32,23 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef __phonoc_utils_H__
-#define __phonoc_utils_H__
+#include "funcs.h"
 
-double phonoc_bose_einstein(const double x, const double t);
-double phonoc_gaussian(const double x, const double sigma);
-double phonoc_inv_sinh_occupation(const double x, const double t);
+#include <math.h>
 
-#endif
+#include "phonoc_const.h"
+
+#define THZTOEVPARKB 47.992398658977166
+#define INVSQRT2PI 0.3989422804014327
+
+double funcs_bose_einstein(const double x, const double t) {
+    return 1.0 / (exp(THZTOEVPARKB * x / t) - 1);
+}
+
+double funcs_gaussian(const double x, const double sigma) {
+    return INVSQRT2PI / sigma * exp(-x * x / 2 / sigma / sigma);
+}
+
+double funcs_inv_sinh_occupation(const double x, const double t) {
+    return 1.0 / sinh(x * THZTOEVPARKB / 2 / t);
+}

@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Jul-8-2024: Version 3.3.1
+
+- Major refactoring to isolate reciprocal space grid code.
+
 ## Jul-8-2024: Version 3.3.0
 
 - Build system of phono3py was renewed. Now nanobind, cmake, and

@@ -32,12 +32,68 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef __gridsys_H__
-#define __gridsys_H__
+#ifndef __recgrid_H__
+#define __recgrid_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct {
+    long size;
+    long (*mat)[3][3];
+} RecgridMats;
+
+/* Data structure of Brillouin zone grid
+ *
+ * size : long
+ *     Number of grid points in Brillouin zone including its surface.
+ * D_diag : long array
+ *     Diagonal part of matrix D of SNF.
+ *     shape=(3, )
+ * PS : long array
+ *     Matrix P of SNF multiplied by shift.
+ *     shape=(3, )
+ * gp_map : long array
+ *     Type1 : Twice enlarged grid space along basis vectors.
+ *             Grid index is recovered in the same way as regular grid.
+ *             shape=(prod(mesh * 2), )
+ *     Type2 : In the last index, multiplicity and array index of
+ *             each address of the grid point are stored. Here,
+ *             multiplicity means the number of translationally
+ *             equivalent grid points in BZ.
+ *             shape=(prod(mesh), 2) -> flattened.
+ * addresses : long array
+ *     Grid point addresses.
+ *     shape=(size, 3)
+ * reclat : double array
+ *     Reciprocal basis vectors given as column vectors.
+ *     shape=(3, 3)
+ * type : long
+ *     1 or 2. */
+typedef struct {
+    long size;
+    long D_diag[3];
+    long Q[3][3];
+    long PS[3];
+    long *gp_map;
+    long *bzg2grg;
+    long (*addresses)[3];
+    double reclat[3][3];
+    long type;
+} RecgridBZGrid;
+
+typedef struct {
+    long size;
+    long D_diag[3];
+    long Q[3][3];
+    long PS[3];
+    const long *gp_map;
+    const long *bzg2grg;
+    const long (*addresses)[3];
+    double reclat[3][3];
+    long type;
+} RecgridConstBZGrid;
 
 /* Generalized regular (GR) grid
 
@@ -57,7 +113,7 @@ half-grid shift along an axis corresponds to 1.
  * @param D_diag Numbers of divisions along a, b, c directions of GR-grid
  * @return void
  */
-void gridsys_get_all_grid_addresses(long (*gr_grid_addresses)[3],
+void recgrid_get_all_grid_addresses(long (*gr_grid_addresses)[3],
                                     const long D_diag[3]);
 
 /**
@@ -69,7 +125,7 @@ void gridsys_get_all_grid_addresses(long (*gr_grid_addresses)[3],
  * @param PS Shift in GR-grid
  * @return void
  */
-void gridsys_get_double_grid_address(long address_double[3],
+void recgrid_get_double_grid_address(long address_double[3],
                                      const long address[3], const long PS[3]);
 
 /**
@@ -80,7 +136,7 @@ void gridsys_get_double_grid_address(long address_double[3],
  * @param D_diag Numbers of divisions along a, b, c directions of GR-grid
  * @return void
  */
-void gridsys_get_grid_address_from_index(long address[3], const long grid_index,
+void recgrid_get_grid_address_from_index(long address[3], const long grid_index,
                                          const long D_diag[3]);
 
 /**
@@ -92,7 +148,7 @@ void gridsys_get_grid_address_from_index(long address[3], const long grid_index,
  * @param PS Shift in GR-grid
  * @return long
  */
-long gridsys_get_double_grid_index(const long address_double[3],
+long recgrid_get_double_grid_index(const long address_double[3],
                                    const long D_diag[3], const long PS[3]);
 
 /**
@@ -102,7 +158,7 @@ long gridsys_get_double_grid_index(const long address_double[3],
  * @param D_diag Numbers of divisions along a, b, c directions of GR-grid
  * @return long
  */
-long gridsys_get_grid_index_from_address(const long address[3],
+long recgrid_get_grid_index_from_address(const long address[3],
                                          const long D_diag[3]);
 
 /**
@@ -114,7 +170,7 @@ long gridsys_get_grid_index_from_address(const long address[3],
  * @param PS Shift in GR-grid
  * @return long
  */
-long gridsys_rotate_grid_index(const long grid_index, const long rotation[3][3],
+long recgrid_rotate_grid_index(const long grid_index, const long rotation[3][3],
                                const long D_diag[3], const long PS[3]);
 
 /**
@@ -125,13 +181,14 @@ long gridsys_rotate_grid_index(const long grid_index, const long rotation[3][3],
  * @param rotations Rotations in direct space {R}
  * @param num_rot Number of given rotations |{R}|
  * @param is_time_reversal With (1) or without (0) time reversal symmetry
+ * @param is_transpose With (1) or without (0) transpose of rotation matrices
  * @return long
  */
-long gridsys_get_reciprocal_point_group(long rec_rotations[48][3][3],
+long recgrid_get_reciprocal_point_group(long rec_rotations[48][3][3],
                                         const long (*rotations)[3][3],
                                         const long num_rot,
-                                        const long is_time_reversal);
-
+                                        const long is_time_reversal,
+                                        const long is_transpose);
 /**
  * @brief Return D, P, Q of Smith normal form of A.
  *
@@ -141,7 +198,7 @@ long gridsys_get_reciprocal_point_group(long rec_rotations[48][3][3],
  * @param A Integer matrix
  * @return long
  */
-long gridsys_get_snf3x3(long D_diag[3], long P[3][3], long Q[3][3],
+long recgrid_get_snf3x3(long D_diag[3], long P[3][3], long Q[3][3],
                         const long A[3][3]);
 
 /**
@@ -156,7 +213,7 @@ long gridsys_get_snf3x3(long D_diag[3], long P[3][3], long Q[3][3],
  * @param Q Unimodular matrix Q of Smith normal form
  * @return long
  */
-long gridsys_transform_rotations(long (*transformed_rots)[3][3],
+long recgrid_transform_rotations(long (*transformed_rots)[3][3],
                                  const long (*rotations)[3][3],
                                  const long num_rot, const long D_diag[3],
                                  const long Q[3][3]);
@@ -170,8 +227,9 @@ long gridsys_transform_rotations(long (*transformed_rots)[3][3],
  * @param num_rot Number of rotation matrices
  * @param D_diag Diagonal elements of diagnoal matrix D of Smith normal form
  * @param PS Shift in GR-grid
+ * @return long Number of ir_grid_points.
  */
-void gridsys_get_ir_grid_map(long *ir_grid_map, const long (*rotations)[3][3],
+long recgrid_get_ir_grid_map(long *ir_grid_map, const long (*rotations)[3][3],
                              const long num_rot, const long D_diag[3],
                              const long PS[3]);
 
@@ -194,7 +252,7 @@ void gridsys_get_ir_grid_map(long *ir_grid_map, const long (*rotations)[3][3],
  * dense, recommended) of bz_map
  * @return long Number of bz_grid_addresses stored.
  */
-long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3], long *bz_map,
+long recgrid_get_bz_grid_addresses(long (*bz_grid_addresses)[3], long *bz_map,
                                    long *bzg2grg, const long D_diag[3],
                                    const long Q[3][3], const long PS[3],
                                    const double rec_lattice[3][3],
@@ -215,107 +273,14 @@ long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3], long *bz_map,
  * dense, recommended) of bz_map
  * @return long
  */
-long gridsys_rotate_bz_grid_index(const long bz_grid_index,
+long recgrid_rotate_bz_grid_index(const long bz_grid_index,
                                   const long rotation[3][3],
                                   const long (*bz_grid_addresses)[3],
                                   const long *bz_map, const long D_diag[3],
                                   const long PS[3], const long bz_grid_type);
-
-/**
- * @brief Find independent q' of (q, q', q'') with given q.
- *
- * @param map_triplets Mapping table from all grid points to grid points of
- * independent q' in GR-grid
- * @param map_q Mapping table from all grid points to grid point indices of
- * irreducible q-points under the stabilizer subgroup of q
- * @param grid_index Grid point index of q in GR-grid
- * @param D_diag Diagonal elements of diagnoal matrix D of Smith normal form
- * @param is_time_reversal With (1) or without (0) time reversal symmetry
- * @param num_rot Number of rotation matrices
- * @param rec_rotations Transformed rotation matrices in reciprocal space
- * @param swappable With (1) or without (0) permutation symmetry between q'
- * and q''
- * @return long Number of unique element of map_triplets
- */
-long gridsys_get_triplets_at_q(long *map_triplets, long *map_q,
-                               const long grid_index, const long D_diag[3],
-                               const long is_time_reversal, const long num_rot,
-                               const long (*rec_rotations)[3][3],
-                               const long swappable);
-
-/**
- * @brief Search grid point triplets considering BZ surface.
- *
- * @param ir_triplets Ir-triplets by grid point indices in BZ-grid
- * @param bz_grid_index Grid point of q in BZ-grid
- * @param bz_grid_addresses Grid point addresses of shortest grid points
- * @param bz_map  List of accumulated numbers of BZ grid points from the
- * first GR grid point to the last grid point. In type-II, [0, 1, 3, 4, ...]
- * means multiplicities of [1, 2, 1, ...], with len(bz_map)=product(D_diag) + 1.
- * @param map_triplets Mapping table from all grid points to grid points of
- * independent q'
- * @param num_map_triplets First dimension of map_triplets
- * @param D_diag Diagonal elements of diagnoal matrix D of Smith normal form
- * @param Q Unimodular matrix Q of Smith normal form
- * @param bz_grid_type Data structure type I (old and sparse) or II (new and
- * dense, recommended) of bz_map
- * @return long
- */
-long gridsys_get_bz_triplets_at_q(long (*ir_triplets)[3],
-                                  const long bz_grid_index,
-                                  const long (*bz_grid_addresses)[3],
-                                  const long *bz_map, const long *map_triplets,
-                                  const long num_map_triplets,
-                                  const long D_diag[3], const long Q[3][3],
-                                  const long bz_grid_type);
-
-/**
- * @brief Return integration weight of linear tetrahedron method
- *
- * @param omega A frequency point where integration weight is computed
- * @param tetrahedra_omegas Frequencies at vertices of 6 tetrahedra
- * @param function I (delta function) or J (theta function)
- * @return double
- */
-double gridsys_get_thm_integration_weight(const double omega,
-                                          const double tetrahedra_omegas[24][4],
-                                          const char function);
-
-/**
- * @brief Return predefined relative grid addresses of 4 different
- * main diagonals for linear tetrahedron method
- *
- * @param relative_grid_address predefined relative grid addresses for linear
- * tetrahedron method
- */
-void gridsys_get_thm_all_relative_grid_address(
-    long relative_grid_address[4][24][4][3]);
-
-/**
- * @brief Return predefined relative grid addresses of main diagonal determined
- * from reciprocal basis vectors for linear tetrahedron method
- *
- * @param relative_grid_addresses predefined relative grid addresses of given
- * reciprocal basis vectors
- * @param rec_lattice Reciprocal basis vectors in column vectors
- * @return * long
- */
-long gridsys_get_thm_relative_grid_address(
-    long relative_grid_addresses[24][4][3], const double rec_lattice[3][3]);
-
-long gridsys_get_integration_weight(
-    double *iw, char *iw_zero, const double *frequency_points,
-    const long num_band0, const long relative_grid_address[24][4][3],
-    const long D_diag[3], const long (*triplets)[3], const long num_triplets,
-    const long (*bz_grid_addresses)[3], const long *bz_map,
-    const long bz_grid_type, const double *frequencies1, const long num_band1,
-    const double *frequencies2, const long num_band2, const long tp_type,
-    const long openmp_per_triplets);
-void gridsys_get_integration_weight_with_sigma(
-    double *iw, char *iw_zero, const double sigma, const double sigma_cutoff,
-    const double *frequency_points, const long num_band0,
-    const long (*triplets)[3], const long num_triplets,
-    const double *frequencies, const long num_band, const long tp_type);
+double recgrid_get_tolerance_for_BZ_reduction(const RecgridBZGrid *bzgrid);
+RecgridMats *recgrid_alloc_RotMats(const long size);
+void recgrid_free_RotMats(RecgridMats *rotmats);
 
 #ifdef __cplusplus
 }

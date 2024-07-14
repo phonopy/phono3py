@@ -118,9 +118,9 @@ def run_phonon_solver_c(
         is_nac_q_zero = True
         _nac_q_direction = np.array(nac_q_direction, dtype="double")
 
-    assert grid_points.dtype == "int_"
+    assert grid_points.dtype == np.dtype("int_")
     assert grid_points.flags.c_contiguous
-    assert QDinv.dtype == "double"
+    assert QDinv.dtype == np.dtype("double")
     assert QDinv.flags.c_contiguous
     assert lapack_zheev_uplo in ("L", "U")
 

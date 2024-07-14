@@ -42,6 +42,7 @@
 #include "lapack_wrapper.h"
 #include "phonoc_array.h"
 #include "real_to_reciprocal.h"
+#include "recgrid.h"
 #include "reciprocal_to_normal.h"
 
 static const long index_exchange[6][3] = {{0, 1, 2}, {2, 0, 1}, {1, 2, 0},
@@ -73,9 +74,10 @@ static void real_to_normal_sym_q(
 void itr_get_interaction(
     Darray *fc3_normal_squared, const char *g_zero, const Darray *frequencies,
     const lapack_complex_double *eigenvectors, const long (*triplets)[3],
-    const long num_triplets, const ConstBZGrid *bzgrid, const double *fc3,
-    const long is_compact_fc3, const AtomTriplets *atom_triplets,
-    const double *masses, const long *band_indices, const long symmetrize_fc3_q,
+    const long num_triplets, const RecgridConstBZGrid *bzgrid,
+    const double *fc3, const long is_compact_fc3,
+    const AtomTriplets *atom_triplets, const double *masses,
+    const long *band_indices, const long symmetrize_fc3_q,
     const double cutoff_frequency, const long openmp_per_triplets) {
     long(*g_pos)[4];
     long i;
@@ -112,9 +114,9 @@ void itr_get_interaction_at_triplet(
     double *fc3_normal_squared, const long num_band0, const long num_band,
     const long (*g_pos)[4], const long num_g_pos, const double *frequencies,
     const lapack_complex_double *eigenvectors, const long triplet[3],
-    const ConstBZGrid *bzgrid, const double *fc3, const long is_compact_fc3,
-    const AtomTriplets *atom_triplets, const double *masses,
-    const long *band_indices, const long symmetrize_fc3_q,
+    const RecgridConstBZGrid *bzgrid, const double *fc3,
+    const long is_compact_fc3, const AtomTriplets *atom_triplets,
+    const double *masses, const long *band_indices, const long symmetrize_fc3_q,
     const double cutoff_frequency,
     const long triplet_index, /* only for print */
     const long num_triplets,  /* only for print */
@@ -123,13 +125,22 @@ void itr_get_interaction_at_triplet(
     double *freqs[3];
     lapack_complex_double *eigvecs[3];
     double q_vecs[3][3];
+    double vec_tmp[3];
 
     for (j = 0; j < 3; j++) {
         for (k = 0; k < 3; k++) {
             q_vecs[j][k] =
                 ((double)bzgrid->addresses[triplet[j]][k]) / bzgrid->D_diag[k];
         }
-        bzg_multiply_matrix_vector_ld3(q_vecs[j], bzgrid->Q, q_vecs[j]);
+
+        for (k = 0; k < 3; k++) {
+            vec_tmp[k] = bzgrid->Q[k][0] * q_vecs[j][0] +
+                         bzgrid->Q[k][1] * q_vecs[j][1] +
+                         bzgrid->Q[k][2] * q_vecs[j][2];
+        }
+        for (k = 0; k < 3; k++) {
+            q_vecs[j][k] = vec_tmp[k];
+        }
     }
 
     if (symmetrize_fc3_q) {

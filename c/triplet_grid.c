@@ -39,14 +39,11 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "bzgrid.h"
 #include "grgrid.h"
-#include "lagrid.h"
-#include "triplet.h"
 
 static long get_ir_triplets_at_q(long *map_triplets, long *map_q,
                                  const long grid_point, const long D_diag[3],
-                                 const RotMats *rot_reciprocal,
+                                 const RecgridMats *rot_reciprocal,
                                  const long swappable);
 static long get_ir_triplets_at_q_perm_q1q2(long *map_triplets,
                                            const long *map_q,
@@ -56,27 +53,27 @@ static long get_ir_triplets_at_q_noperm(long *map_triplets, const long *map_q,
                                         const long grid_point,
                                         const long D_diag[3]);
 static long get_BZ_triplets_at_q(long (*triplets)[3], const long grid_point,
-                                 const ConstBZGrid *bzgrid,
+                                 const RecgridConstBZGrid *bzgrid,
                                  const long *map_triplets);
 static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
                                        const long grid_point,
-                                       const ConstBZGrid *bzgrid,
+                                       const RecgridConstBZGrid *bzgrid,
                                        const long *ir_q1_gps,
                                        const long num_ir);
 static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
                                        const long grid_point,
-                                       const ConstBZGrid *bzgrid,
+                                       const RecgridConstBZGrid *bzgrid,
                                        const long *ir_q1_gps,
                                        const long num_ir);
 static double get_squared_distance(const long G[3], const double LQD_inv[3][3]);
-static void get_LQD_inv(double LQD_inv[3][3], const ConstBZGrid *bzgrid);
-static RotMats *get_reciprocal_point_group_with_q(const RotMats *rot_reciprocal,
-                                                  const long D_diag[3],
-                                                  const long grid_point);
-static RotMats *get_reciprocal_point_group(const long (*rec_rotations_in)[3][3],
-                                           const long num_rot,
-                                           const long is_time_reversal,
-                                           const long is_transpose);
+static void get_LQD_inv(double LQD_inv[3][3], const RecgridConstBZGrid *bzgrid);
+static RecgridMats *get_reciprocal_point_group_with_q(
+    const RecgridMats *rot_reciprocal, const long D_diag[3],
+    const long grid_point);
+static RecgridMats *get_reciprocal_point_group(
+    const long (*rec_rotations_in)[3][3], const long num_rot,
+    const long is_time_reversal, const long is_transpose);
+static void copy_matrix_l3(long a[3][3], const long b[3][3]);
 
 long tpk_get_ir_triplets_at_q(long *map_triplets, long *map_q,
                               const long grid_point, const long D_diag[3],
@@ -84,7 +81,7 @@ long tpk_get_ir_triplets_at_q(long *map_triplets, long *map_q,
                               const long (*rec_rotations_in)[3][3],
                               const long num_rot, const long swappable) {
     long num_ir;
-    RotMats *rotations;
+    RecgridMats *rotations;
 
     rotations = get_reciprocal_point_group(rec_rotations_in, num_rot,
                                            is_time_reversal, 0);
@@ -94,25 +91,25 @@ long tpk_get_ir_triplets_at_q(long *map_triplets, long *map_q,
 
     num_ir = get_ir_triplets_at_q(map_triplets, map_q, grid_point, D_diag,
                                   rotations, swappable);
-    bzg_free_RotMats(rotations);
+    recgrid_free_RotMats(rotations);
     rotations = NULL;
 
     return num_ir;
 }
 
 long tpk_get_BZ_triplets_at_q(long (*triplets)[3], const long grid_point,
-                              const ConstBZGrid *bzgrid,
+                              const RecgridConstBZGrid *bzgrid,
                               const long *map_triplets) {
     return get_BZ_triplets_at_q(triplets, grid_point, bzgrid, map_triplets);
 }
 
 static long get_ir_triplets_at_q(long *map_triplets, long *map_q,
                                  const long grid_point, const long D_diag[3],
-                                 const RotMats *rot_reciprocal,
+                                 const RecgridMats *rot_reciprocal,
                                  const long swappable) {
     long i, num_ir_q, num_ir_triplets;
     long PS[3];
-    RotMats *rot_reciprocal_q;
+    RecgridMats *rot_reciprocal_q;
 
     rot_reciprocal_q = NULL;
 
@@ -124,14 +121,8 @@ static long get_ir_triplets_at_q(long *map_triplets, long *map_q,
     rot_reciprocal_q =
         get_reciprocal_point_group_with_q(rot_reciprocal, D_diag, grid_point);
 
-    grg_get_ir_grid_map(map_q, rot_reciprocal_q->mat, rot_reciprocal_q->size,
-                        D_diag, PS);
-    num_ir_q = 0;
-    for (i = 0; i < D_diag[0] * D_diag[1] * D_diag[2]; i++) {
-        if (map_q[i] == i) {
-            num_ir_q++;
-        }
-    }
+    num_ir_q = recgrid_get_ir_grid_map(map_q, rot_reciprocal_q->mat,
+                                       rot_reciprocal_q->size, D_diag, PS);
 
     if (swappable) {
         num_ir_triplets = get_ir_triplets_at_q_perm_q1q2(map_triplets, map_q,
@@ -141,7 +132,7 @@ static long get_ir_triplets_at_q(long *map_triplets, long *map_q,
                                                       grid_point, D_diag);
     }
 
-    bzg_free_RotMats(rot_reciprocal_q);
+    recgrid_free_RotMats(rot_reciprocal_q);
     rot_reciprocal_q = NULL;
 
     return num_ir_triplets;
@@ -156,21 +147,21 @@ static long get_ir_triplets_at_q_perm_q1q2(long *map_triplets,
 
     num_ir_triplets = 0;
     num_grid = D_diag[0] * D_diag[1] * D_diag[2];
-    grg_get_grid_address_from_index(adrs0, grid_point, D_diag);
+    recgrid_get_grid_address_from_index(adrs0, grid_point, D_diag);
 
     // #ifdef _OPENMP
     // #pragma omp parallel for private(j, gp2, adrs1, adrs2)
     // #endif
     for (gp1 = 0; gp1 < num_grid; gp1++) {
         if (map_q[gp1] == gp1) {
-            grg_get_grid_address_from_index(adrs1, gp1, D_diag);
+            recgrid_get_grid_address_from_index(adrs1, gp1, D_diag);
             for (j = 0; j < 3; j++) {
                 adrs2[j] = -adrs0[j] - adrs1[j];
             }
             /* If map_q[gp2] is smaller than current gp1, map_q[gp2] should */
             /* equal to a previous gp1 for which map_triplets is already */
             /* filled. So the counter is not incremented. */
-            gp2 = grg_get_grid_index(adrs2, D_diag);
+            gp2 = recgrid_get_grid_index_from_address(adrs2, D_diag);
             if (map_q[gp2] < gp1) {
                 map_triplets[gp1] = map_q[gp2];
             } else {
@@ -215,7 +206,7 @@ static long get_ir_triplets_at_q_noperm(long *map_triplets, const long *map_q,
 }
 
 static long get_BZ_triplets_at_q(long (*triplets)[3], const long grid_point,
-                                 const ConstBZGrid *bzgrid,
+                                 const RecgridConstBZGrid *bzgrid,
                                  const long *map_triplets) {
     long gp1, num_ir;
     long *ir_q1_gps;
@@ -252,7 +243,7 @@ ret:
 
 static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
                                        const long grid_point,
-                                       const ConstBZGrid *bzgrid,
+                                       const RecgridConstBZGrid *bzgrid,
                                        const long *ir_q1_gps,
                                        const long num_ir) {
     long i, j, gp2, num_gp, num_bzgp, bz0, bz1, bz2;
@@ -267,7 +258,7 @@ static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
     bz_adrs = bzgrid->addresses;
     get_LQD_inv(LQD_inv, bzgrid);
     /* This tolerance is used to be consistent to BZ reduction in bzgrid. */
-    tolerance = bzg_get_tolerance_for_BZ_reduction((BZGrid *)bzgrid);
+    tolerance = recgrid_get_tolerance_for_BZ_reduction((RecgridBZGrid *)bzgrid);
 
     for (i = 0; i < 3; i++) {
         bz_adrs0[i] = bz_adrs[grid_point][i];
@@ -277,14 +268,14 @@ static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
 
 #ifdef _OPENMP
 #pragma omp parallel for private(j, gp2, bzgp, G, bz_adrs1, bz_adrs2, d2, \
-                                 min_d2, bz0, bz1, bz2)
+                                     min_d2, bz0, bz1, bz2)
 #endif
     for (i = 0; i < num_ir; i++) {
         for (j = 0; j < 3; j++) {
             bz_adrs1[j] = bz_adrs[ir_q1_gps[i]][j];
             bz_adrs2[j] = -bz_adrs0[j] - bz_adrs1[j];
         }
-        gp2 = grg_get_grid_index(bz_adrs2, bzgrid->D_diag);
+        gp2 = recgrid_get_grid_index_from_address(bz_adrs2, bzgrid->D_diag);
         /* Negative value is the signal to initialize min_d2 later. */
         min_d2 = -1;
         for (bz0 = 0; bz0 < gp_map[num_bzgp + grid_point + 1] -
@@ -338,7 +329,7 @@ static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
 
 static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
                                        const long grid_point,
-                                       const ConstBZGrid *bzgrid,
+                                       const RecgridConstBZGrid *bzgrid,
                                        const long *ir_q1_gps,
                                        const long num_ir) {
     long i, j, gp0, gp2;
@@ -353,23 +344,23 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
     bz_adrs = bzgrid->addresses;
     get_LQD_inv(LQD_inv, bzgrid);
     /* This tolerance is used to be consistent to BZ reduction in bzgrid. */
-    tolerance = bzg_get_tolerance_for_BZ_reduction((BZGrid *)bzgrid);
+    tolerance = recgrid_get_tolerance_for_BZ_reduction((RecgridBZGrid *)bzgrid);
 
     for (i = 0; i < 3; i++) {
         bz_adrs0[i] = bz_adrs[grid_point][i];
     }
-    gp0 = grg_get_grid_index(bz_adrs0, bzgrid->D_diag);
+    gp0 = recgrid_get_grid_index_from_address(bz_adrs0, bzgrid->D_diag);
 
 #ifdef _OPENMP
 #pragma omp parallel for private(j, gp2, bzgp, G, bz_adrs1, bz_adrs2, d2, \
-                                 min_d2)
+                                     min_d2)
 #endif
     for (i = 0; i < num_ir; i++) {
         for (j = 0; j < 3; j++) {
             bz_adrs1[j] = bz_adrs[gp_map[ir_q1_gps[i]]][j];
             bz_adrs2[j] = -bz_adrs0[j] - bz_adrs1[j];
         }
-        gp2 = grg_get_grid_index(bz_adrs2, bzgrid->D_diag);
+        gp2 = recgrid_get_grid_index_from_address(bz_adrs2, bzgrid->D_diag);
         /* Negative value is the signal to initialize min_d2 later. */
         min_d2 = -1;
         for (bzgp[0] = gp_map[gp0]; bzgp[0] < gp_map[gp0 + 1]; bzgp[0]++) {
@@ -415,7 +406,8 @@ static double get_squared_distance(const long G[3],
     return d2;
 }
 
-static void get_LQD_inv(double LQD_inv[3][3], const ConstBZGrid *bzgrid) {
+static void get_LQD_inv(double LQD_inv[3][3],
+                        const RecgridConstBZGrid *bzgrid) {
     long i, j, k;
 
     /* LQD^-1 */
@@ -430,19 +422,19 @@ static void get_LQD_inv(double LQD_inv[3][3], const ConstBZGrid *bzgrid) {
 }
 
 /* Return NULL if failed */
-static RotMats *get_reciprocal_point_group_with_q(const RotMats *rot_reciprocal,
-                                                  const long D_diag[3],
-                                                  const long grid_point) {
-    long i, num_rot, gp_rot;
+static RecgridMats *get_reciprocal_point_group_with_q(
+    const RecgridMats *rot_reciprocal, const long D_diag[3],
+    const long grid_point) {
+    long i, j, num_rot, gp_rot;
     long *ir_rot;
     long adrs[3], adrs_rot[3];
-    RotMats *rot_reciprocal_q;
+    RecgridMats *rot_reciprocal_q;
 
     ir_rot = NULL;
     rot_reciprocal_q = NULL;
     num_rot = 0;
 
-    grg_get_grid_address_from_index(adrs, grid_point, D_diag);
+    recgrid_get_grid_address_from_index(adrs, grid_point, D_diag);
 
     if ((ir_rot = (long *)malloc(sizeof(long) * rot_reciprocal->size)) ==
         NULL) {
@@ -454,9 +446,12 @@ static RotMats *get_reciprocal_point_group_with_q(const RotMats *rot_reciprocal,
         ir_rot[i] = -1;
     }
     for (i = 0; i < rot_reciprocal->size; i++) {
-        lagmat_multiply_matrix_vector_l3(adrs_rot, rot_reciprocal->mat[i],
-                                         adrs);
-        gp_rot = grg_get_grid_index(adrs_rot, D_diag);
+        for (j = 0; j < 3; j++) {
+            adrs_rot[j] = rot_reciprocal->mat[i][j][0] * adrs[0] +
+                          rot_reciprocal->mat[i][j][1] * adrs[1] +
+                          rot_reciprocal->mat[i][j][2] * adrs[2];
+        }
+        gp_rot = recgrid_get_grid_index_from_address(adrs_rot, D_diag);
 
         if (gp_rot == grid_point) {
             ir_rot[num_rot] = i;
@@ -464,10 +459,10 @@ static RotMats *get_reciprocal_point_group_with_q(const RotMats *rot_reciprocal,
         }
     }
 
-    if ((rot_reciprocal_q = bzg_alloc_RotMats(num_rot)) != NULL) {
+    if ((rot_reciprocal_q = recgrid_alloc_RotMats(num_rot)) != NULL) {
         for (i = 0; i < num_rot; i++) {
-            lagmat_copy_matrix_l3(rot_reciprocal_q->mat[i],
-                                  rot_reciprocal->mat[ir_rot[i]]);
+            copy_matrix_l3(rot_reciprocal_q->mat[i],
+                           rot_reciprocal->mat[ir_rot[i]]);
         }
     }
 
@@ -477,25 +472,36 @@ static RotMats *get_reciprocal_point_group_with_q(const RotMats *rot_reciprocal,
     return rot_reciprocal_q;
 }
 
-static RotMats *get_reciprocal_point_group(const long (*rec_rotations_in)[3][3],
-                                           const long num_rot,
-                                           const long is_time_reversal,
-                                           const long is_transpose) {
+static RecgridMats *get_reciprocal_point_group(
+    const long (*rec_rotations_in)[3][3], const long num_rot,
+    const long is_time_reversal, const long is_transpose) {
     long i, num_rot_out;
     long rec_rotations_out[48][3][3];
-    RotMats *rec_rotations;
+    RecgridMats *rec_rotations;
 
-    num_rot_out =
-        grg_get_reciprocal_point_group(rec_rotations_out, rec_rotations_in,
-                                       num_rot, is_time_reversal, is_transpose);
+    num_rot_out = recgrid_get_reciprocal_point_group(
+        rec_rotations_out, rec_rotations_in, num_rot, is_time_reversal,
+        is_transpose);
     if (num_rot_out == 0) {
         return NULL;
     }
 
-    rec_rotations = bzg_alloc_RotMats(num_rot_out);
+    rec_rotations = recgrid_alloc_RotMats(num_rot_out);
     for (i = 0; i < num_rot_out; i++) {
-        lagmat_copy_matrix_l3(rec_rotations->mat[i], rec_rotations_out[i]);
+        copy_matrix_l3(rec_rotations->mat[i], rec_rotations_out[i]);
     }
 
     return rec_rotations;
+}
+
+static void copy_matrix_l3(long a[3][3], const long b[3][3]) {
+    a[0][0] = b[0][0];
+    a[0][1] = b[0][1];
+    a[0][2] = b[0][2];
+    a[1][0] = b[1][0];
+    a[1][1] = b[1][1];
+    a[1][2] = b[1][2];
+    a[2][0] = b[2][0];
+    a[2][1] = b[2][1];
+    a[2][2] = b[2][2];
 }
