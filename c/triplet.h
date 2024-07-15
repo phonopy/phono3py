@@ -39,7 +39,7 @@
 
 #include <stddef.h>
 
-#include "bzgrid.h"
+#include "recgrid.h"
 
 /* Irreducible triplets of k-points are searched under conservation of */
 /* :math:``\mathbf{k}_1 + \mathbf{k}_2 + \mathbf{k}_3 = \mathbf{G}``. */
@@ -58,15 +58,15 @@ long tpl_get_triplets_reciprocal_mesh_at_q(
 /* triplets[num_ir_triplets][3] = number of non-zero triplets weights*/
 /* Number of ir-triplets is returned. */
 long tpl_get_BZ_triplets_at_q(long (*triplets)[3], const long grid_point,
-                              const ConstBZGrid *bzgrid,
+                              const RecgridConstBZGrid *bzgrid,
                               const long *map_triplets);
 void tpl_get_integration_weight(
     double *iw, char *iw_zero, const double *frequency_points,
     const long num_band0, const long relative_grid_address[24][4][3],
     const long (*triplets)[3], const long num_triplets,
-    const ConstBZGrid *bzgrid, const double *frequencies1, const long num_band1,
-    const double *frequencies2, const long num_band2, const long tp_type,
-    const long openmp_per_triplets);
+    const RecgridConstBZGrid *bzgrid, const double *frequencies1,
+    const long num_band1, const double *frequencies2, const long num_band2,
+    const long tp_type, const long openmp_per_triplets);
 void tpl_get_integration_weight_with_sigma(
     double *iw, char *iw_zero, const double sigma, const double sigma_cutoff,
     const double *frequency_points, const long num_band0,

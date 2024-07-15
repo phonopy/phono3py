@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 option(BUILD_PHPHCALC_LIB "Option to build phph calculation module" OFF)
 option(BUILD_PHONONCALC_LIB "Option to build phonon calculation module" OFF)
+option(BUILD_RECGRID_LIB "Option to build reciprocal space grid module" OFF)
 option(BUILD_GRIDSYS_LIB "Option to build gridsys module" OFF)
 option(PHONO3PY_WITH_Fortran "enable fortran interface" OFF)
 option(PHONO3PY_USE_OMP "Option to search OpenMP library" ON)
@@ -125,27 +126,61 @@ if(BUILD_PHPHCALC_LIB
 endif()
 
 # ###################################################################################
-# Build phphcalc module #
+# Reciprocal space grid library #
+# ###################################################################################
+if(BUILD_RECGRID_LIB
+   OR BUILD_PHPHCALC_LIB
+   OR BUILD_NANOBIND_MODULE)
+    # Source code
+    set(SOURCES_PHPHCALC
+        ${PROJECT_SOURCE_DIR}/c/bzgrid.c ${PROJECT_SOURCE_DIR}/c/grgrid.c
+        ${PROJECT_SOURCE_DIR}/c/lagrid.c ${PROJECT_SOURCE_DIR}/c/snf3x3.c
+        ${PROJECT_SOURCE_DIR}/c/recgrid.c)
+
+    if(BUILD_SHARED_LIBS)
+        # Shared library
+        add_library(recgrid_lib SHARED ${SOURCES_PHPHCALC})
+    else()
+        # Static link library
+        add_library(recgrid_lib STATIC ${SOURCES_PHPHCALC})
+    endif()
+
+    if(NOT BUILD_NANOBIND_MODULE)
+        if(BUILD_SHARED_LIBS)
+            set_property(TARGET recgrid_lib PROPERTY VERSION ${SERIAL})
+            set_property(TARGET recgrid_lib PROPERTY SOVERSION ${SOSERIAL})
+            install(TARGETS recgrid_lib LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        else()
+            set_property(TARGET recgrid_lib PROPERTY VERSION ${SERIAL})
+            set_property(TARGET recgrid_lib PROPERTY SOVERSION ${SOSERIAL})
+            set_property(TARGET recgrid_lib PROPERTY OUTPUT_NAME recgrid_lib)
+            install(TARGETS recgrid_lib ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        endif()
+
+        # Header file
+        install(FILES ${PROJECT_SOURCE_DIR}/c/recgrid.h
+                DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+    endif()
+endif()
+
+# ###################################################################################
+# Ph-ph calculation library #
 # ###################################################################################
 if(BUILD_PHPHCALC_LIB OR BUILD_NANOBIND_MODULE)
     # Source code
     set(SOURCES_PHPHCALC
-        ${PROJECT_SOURCE_DIR}/c/bzgrid.c
         ${PROJECT_SOURCE_DIR}/c/collision_matrix.c
         ${PROJECT_SOURCE_DIR}/c/fc3.c
-        ${PROJECT_SOURCE_DIR}/c/grgrid.c
         ${PROJECT_SOURCE_DIR}/c/imag_self_energy_with_g.c
         ${PROJECT_SOURCE_DIR}/c/interaction.c
         ${PROJECT_SOURCE_DIR}/c/isotope.c
-        ${PROJECT_SOURCE_DIR}/c/lagrid.c
         ${PROJECT_SOURCE_DIR}/c/lapack_wrapper.c
         ${PROJECT_SOURCE_DIR}/c/phono3py.c
-        ${PROJECT_SOURCE_DIR}/c/phonoc_utils.c
+        ${PROJECT_SOURCE_DIR}/c/funcs.c
         ${PROJECT_SOURCE_DIR}/c/pp_collision.c
         ${PROJECT_SOURCE_DIR}/c/real_self_energy.c
         ${PROJECT_SOURCE_DIR}/c/real_to_reciprocal.c
         ${PROJECT_SOURCE_DIR}/c/reciprocal_to_normal.c
-        ${PROJECT_SOURCE_DIR}/c/snf3x3.c
         ${PROJECT_SOURCE_DIR}/c/tetrahedron_method.c
         ${PROJECT_SOURCE_DIR}/c/triplet.c
         ${PROJECT_SOURCE_DIR}/c/triplet_grid.c
@@ -156,10 +191,12 @@ if(BUILD_PHPHCALC_LIB OR BUILD_NANOBIND_MODULE)
         add_library(phphcalc_lib SHARED ${SOURCES_PHPHCALC})
 
         if(OpenMP_FOUND)
-            target_link_libraries(phphcalc_lib PRIVATE BLAS::BLAS LAPACK::LAPACK
-                                                       OpenMP::OpenMP_C)
+            target_link_libraries(
+                phphcalc_lib PRIVATE recgrid_lib BLAS::BLAS LAPACK::LAPACK
+                                     OpenMP::OpenMP_C)
         else()
-            target_link_libraries(phphcalc_lib PRIVATE BLAS::BLAS LAPACK::LAPACK)
+            target_link_libraries(phphcalc_lib PRIVATE recgrid_lib BLAS::BLAS
+                                                       LAPACK::LAPACK)
         endif()
 
         target_include_directories(phphcalc_lib PRIVATE ${MY_INCLUDES})
@@ -188,10 +225,10 @@ if(BUILD_PHPHCALC_LIB OR BUILD_NANOBIND_MODULE)
         add_library(phphcalc_lib STATIC ${SOURCES_PHPHCALC})
 
         if(OpenMP_FOUND)
-            target_link_libraries(phphcalc_lib BLAS::BLAS LAPACK::LAPACK
+            target_link_libraries(phphcalc_lib recgrid_lib BLAS::BLAS LAPACK::LAPACK
                                   OpenMP::OpenMP_C)
         else()
-            target_link_libraries(phphcalc_lib BLAS::BLAS LAPACK::LAPACK)
+            target_link_libraries(phphcalc_lib recgrid_lib BLAS::BLAS LAPACK::LAPACK)
         endif()
 
         target_include_directories(phphcalc_lib PRIVATE ${MY_INCLUDES})
@@ -236,7 +273,7 @@ if(BUILD_PHPHCALC_LIB OR BUILD_NANOBIND_MODULE)
 endif()
 
 # ###################################################################################
-# phononcalc #
+# Phonon calculation library #
 # ###################################################################################
 if(BUILD_PHONONCALC_LIB OR BUILD_NANOBIND_MODULE)
     # Source code
@@ -311,7 +348,7 @@ if(BUILD_PHONONCALC_LIB OR BUILD_NANOBIND_MODULE)
 endif()
 
 # ###################################################################################
-# grid #
+# gridsys #
 # ###################################################################################
 if(BUILD_GRIDSYS_LIB)
     # Source code
@@ -321,7 +358,7 @@ if(BUILD_GRIDSYS_LIB)
         ${PROJECT_SOURCE_DIR}/c/gridsys.c
         ${PROJECT_SOURCE_DIR}/c/lagrid.c
         ${PROJECT_SOURCE_DIR}/c/niggli.c
-        ${PROJECT_SOURCE_DIR}/c/phonoc_utils.c
+        ${PROJECT_SOURCE_DIR}/c/funcs.c
         ${PROJECT_SOURCE_DIR}/c/snf3x3.c
         ${PROJECT_SOURCE_DIR}/c/tetrahedron_method.c
         ${PROJECT_SOURCE_DIR}/c/triplet.c
@@ -388,11 +425,15 @@ if(BUILD_NANOBIND_MODULE)
                         ${PROJECT_SOURCE_DIR}/c/_phono3py.cpp)
     nanobind_add_module(_phononcalc STABLE_ABI ${PROJECT_SOURCE_DIR}/c/phononcalc.h
                         ${PROJECT_SOURCE_DIR}/c/_phononcalc.cpp)
+    nanobind_add_module(_recgrid STABLE_ABI ${PROJECT_SOURCE_DIR}/c/recgrid.h
+                        ${PROJECT_SOURCE_DIR}/c/_recgrid.cpp)
 
     target_link_libraries(_phono3py PRIVATE phphcalc_lib)
     target_link_libraries(_phononcalc PRIVATE phononcalc_lib)
+    target_link_libraries(_recgrid PRIVATE recgrid_lib)
 
     target_compile_definitions(_phono3py PRIVATE THM_EPSILON=1e-10)
     install(TARGETS _phono3py LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME})
     install(TARGETS _phononcalc LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME})
+    install(TARGETS _recgrid LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME})
 endif()

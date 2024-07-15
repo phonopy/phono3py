@@ -35,69 +35,10 @@
 #ifndef __bzgrid_H__
 #define __bzgrid_H__
 
-typedef struct {
-    long size;
-    long (*mat)[3][3];
-} RotMats;
-
-/* Data structure of Brillouin zone grid
- *
- * size : long
- *     Number of grid points in Brillouin zone including its surface.
- * D_diag : long array
- *     Diagonal part of matrix D of SNF.
- *     shape=(3, )
- * PS : long array
- *     Matrix P of SNF multiplied by shift.
- *     shape=(3, )
- * gp_map : long array
- *     Type1 : Twice enlarged grid space along basis vectors.
- *             Grid index is recovered in the same way as regular grid.
- *             shape=(prod(mesh * 2), )
- *     Type2 : In the last index, multiplicity and array index of
- *             each address of the grid point are stored. Here,
- *             multiplicity means the number of translationally
- *             equivalent grid points in BZ.
- *             shape=(prod(mesh), 2) -> flattened.
- * addresses : long array
- *     Grid point addresses.
- *     shape=(size, 3)
- * reclat : double array
- *     Reciprocal basis vectors given as column vectors.
- *     shape=(3, 3)
- * type : long
- *     1 or 2. */
-typedef struct {
-    long size;
-    long D_diag[3];
-    long Q[3][3];
-    long PS[3];
-    long *gp_map;
-    long *bzg2grg;
-    long (*addresses)[3];
-    double reclat[3][3];
-    long type;
-} BZGrid;
-
-typedef struct {
-    long size;
-    long D_diag[3];
-    long Q[3][3];
-    long PS[3];
-    const long *gp_map;
-    const long *bzg2grg;
-    const long (*addresses)[3];
-    double reclat[3][3];
-    long type;
-} ConstBZGrid;
+#include "recgrid.h"
 
 long bzg_rotate_grid_index(const long grid_index, const long rotation[3][3],
-                           const ConstBZGrid *bzgrid);
-long bzg_get_bz_grid_addresses(BZGrid *bzgrid);
-double bzg_get_tolerance_for_BZ_reduction(const BZGrid *bzgrid);
-RotMats *bzg_alloc_RotMats(const long size);
-void bzg_free_RotMats(RotMats *rotmats);
-void bzg_multiply_matrix_vector_ld3(double v[3], const long a[3][3],
-                                    const double b[3]);
+                           const RecgridConstBZGrid *bzgrid);
+long bzg_get_bz_grid_addresses(RecgridBZGrid *bzgrid);
 
 #endif

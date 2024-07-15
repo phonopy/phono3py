@@ -1329,8 +1329,7 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
                     text += "for sigma=%s -----------" % sigma
                 else:
                     text += "with tetrahedron method -----------"
-                print(text)
-                sys.stdout.flush()
+                print(text, flush=True)
 
             for k, t in enumerate(self._temperatures):
                 if t > 0:
@@ -1360,11 +1359,10 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
                             (" %6s " + " %10.3f" * 6)
                             % (("(RTA)",) + tuple(self._kappa_RTA[j, k]))
                         )
-                        print("-" * 76)
-                        sys.stdout.flush()
+                        print("-" * 76, flush=True)
 
         if self._log_level:
-            print("")
+            print("", flush=True)
 
     def _set_kappa(self, i_sigma, i_temp, weights):
         if self._is_reducible_collision_matrix:
@@ -1532,8 +1530,7 @@ class ConductivityWignerLBTE(ConductivityWignerMixIn, ConductivityLBTEBase):
                     text += "for sigma=%s -----------" % sigma
                 else:
                     text += "with tetrahedron method -----------"
-                print(text)
-                sys.stdout.flush()
+                print(text, flush=True)
 
             for k, t in enumerate(self._temperatures):
                 if t > 0:
@@ -1587,11 +1584,10 @@ class ConductivityWignerLBTE(ConductivityWignerMixIn, ConductivityLBTEBase):
                                 + tuple(self._kappa_C[j, k] + self._kappa_P_exact[j, k])
                             )
                         )
-                        print("-" * 76)
-                        sys.stdout.flush()
+                        print("-" * 76, flush=True)
 
         if self._log_level:
-            print("")
+            print("", flush=True)
 
     def _set_kappa(self, i_sigma, i_temp, weights):
         if self._is_reducible_collision_matrix:
