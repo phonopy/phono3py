@@ -558,7 +558,7 @@ def _get_dataset_phonon_dataset_or_fc2(
         ph3py.fc2 = fc2
         read_fc2 = True
         if log_level:
-            print(f'fc2 was read from "{fc2_filename}".')
+            print(f'fc2 was read from "{_fc2_filename}".')
     elif (
         ph3py_yaml is not None
         and ph3py_yaml.phonon_dataset is not None
