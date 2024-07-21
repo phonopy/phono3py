@@ -846,6 +846,9 @@ class Phono3py:
         """
         dataset = self._dataset
 
+        if self._dataset is None:
+            raise RuntimeError("displacement dataset is not set.")
+
         if "first_atoms" in dataset:
             num_scells = len(dataset["first_atoms"])
             for disp1 in dataset["first_atoms"]:
@@ -1218,10 +1221,10 @@ class Phono3py:
 
     def generate_displacements(
         self,
-        distance=0.03,
-        cutoff_pair_distance=None,
-        is_plusminus="auto",
-        is_diagonal=True,
+        distance: float = 0.03,
+        cutoff_pair_distance: Optional[float] = None,
+        is_plusminus: Union[bool, str] = "auto",
+        is_diagonal: bool = True,
         number_of_snapshots: Optional[int] = None,
         random_seed: Optional[int] = None,
         is_random_distance: bool = False,
@@ -1410,7 +1413,7 @@ class Phono3py:
         self,
         symmetrize_fc3r: bool = False,
         is_compact_fc: bool = False,
-        fc_calculator: Optional[str] = None,
+        fc_calculator: Optional[Union[str, dict]] = None,
         fc_calculator_options: Optional[Union[str, dict]] = None,
     ):
         """Calculate fc3 from displacements and forces.
@@ -2150,7 +2153,9 @@ class Phono3py:
                 log_level=_log_level,
             )
 
-    def save(self, filename="phono3py_params.yaml", settings=None):
+    def save(
+        self, filename: str = "phono3py_params.yaml", settings: Optional[dict] = None
+    ):
         """Save parameters in Phono3py instants into file.
 
         Parameters
