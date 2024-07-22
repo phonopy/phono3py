@@ -1,4 +1,4 @@
-"""Tests of Phono3py API."""
+"""Tests of phono3py-load script."""
 
 from __future__ import annotations
 
