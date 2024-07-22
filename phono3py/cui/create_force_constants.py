@@ -68,6 +68,7 @@ from phono3py.file_IO import (
 )
 from phono3py.interface.fc_calculator import extract_fc2_fc3_calculators
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
+from phono3py.phonon3.dataset import forces_in_dataset
 from phono3py.phonon3.fc3 import (
     set_permutation_symmetry_fc3,
     set_translational_invariance_fc3,
@@ -314,22 +315,6 @@ def parse_forces(
             )
 
     return dataset
-
-
-def forces_in_dataset(dataset: dict) -> bool:
-    """Return whether forces in dataset or not."""
-    if dataset is None:
-        return False
-    return "forces" in dataset or (
-        "first_atoms" in dataset and "forces" in dataset["first_atoms"][0]
-    )
-
-
-def displacements_in_dataset(dataset: Optional[dict]) -> bool:
-    """Return whether displacements in dataset or not."""
-    if dataset is None:
-        return False
-    return "displacements" in dataset or "first_atoms" in dataset
 
 
 def get_fc_calculator_params(settings, log_level=0):

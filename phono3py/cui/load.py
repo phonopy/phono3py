@@ -49,13 +49,13 @@ from phonopy.structure.cells import determinant
 
 from phono3py import Phono3py
 from phono3py.cui.create_force_constants import (
-    forces_in_dataset,
     parse_forces,
     run_pypolymlp_to_compute_forces,
 )
 from phono3py.file_IO import read_fc2_from_hdf5, read_fc3_from_hdf5
 from phono3py.interface.fc_calculator import extract_fc2_fc3_calculators
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
+from phono3py.phonon3.dataset import forces_in_dataset
 from phono3py.phonon3.fc3 import show_drift_fc3
 
 

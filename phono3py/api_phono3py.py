@@ -81,7 +81,7 @@ from phono3py.conductivity.rta import get_thermal_conductivity_RTA
 from phono3py.interface.fc_calculator import get_fc3
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon.grid import BZGrid
-from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
+from phono3py.phonon3.dataset import forces_in_dataset, get_displacements_and_forces_fc3
 from phono3py.phonon3.displacement_fc3 import (
     direction_to_displacement,
     get_third_order_displacements,
@@ -866,7 +866,7 @@ class Phono3py:
                 for disp2 in disp1["second_atoms"]:
                     displacements[i, disp2["number"]] = disp2["displacement"]
                     i += 1
-        elif "forces" in dataset or "displacements" in dataset:
+        elif "displacements" in dataset:
             displacements = dataset["displacements"]
         else:
             raise RuntimeError("displacement dataset has wrong format.")
@@ -2546,6 +2546,11 @@ class Phono3py:
         Return None if tagert data is not found rather than raising exception.
 
         """
+        if self._dataset is None:
+            return None
+        if not forces_in_dataset(self._dataset):
+            return None
+
         if target in self._dataset:  # type-2
             return self._dataset[target]
         elif "first_atoms" in self._dataset:  # type-1
