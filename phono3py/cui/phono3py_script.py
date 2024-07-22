@@ -528,8 +528,6 @@ def store_force_constants(
         if log_level:
             print("-" * 29 + " Force constants " + "-" * 30)
 
-        (fc_calculator, fc_calculator_options) = get_fc_calculator_params(settings)
-
         read_fc = set_dataset_and_force_constants(
             phono3py,
             ph3py_yaml=ph3py_yaml,
@@ -537,6 +535,9 @@ def store_force_constants(
             cutoff_pair_distance=settings.cutoff_pair_distance,
             use_pypolymlp=settings.use_pypolymlp,
             log_level=log_level,
+        )
+        (fc_calculator, fc_calculator_options) = get_fc_calculator_params(
+            settings, log_level=(not read_fc["fc3"]) * 1
         )
         try:
             compute_force_constants_from_datasets(
