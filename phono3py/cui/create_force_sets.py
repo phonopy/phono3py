@@ -107,6 +107,8 @@ def create_FORCES_FC3_and_FORCES_FC2(
                 print("%s could not be created." % "FORCES_FC2")
                 print_error()
             sys.exit(1)
+    else:
+        calc_dataset_fc2 = None
 
     if settings.save_params:
         fc3_yaml_filename = "phono3py_params.yaml"
@@ -349,7 +351,10 @@ def _get_force_sets_fc3(
 
 
 def _set_forces_and_nac_params(
-    ph3py_yaml: Phono3pyYaml, settings, calc_dataset_fc3: dict, calc_dataset_fc2: dict
+    ph3py_yaml: Phono3pyYaml,
+    settings,
+    calc_dataset_fc3: dict,
+    calc_dataset_fc2: Optional[dict],
 ):
     if "first_atoms" in ph3py_yaml.dataset:
         count = len(ph3py_yaml.dataset["first_atoms"])
@@ -375,7 +380,7 @@ def _set_forces_and_nac_params(
             calc_dataset_fc3["supercell_energies"], dtype="double"
         )
 
-    if settings.create_forces_fc2:
+    if settings.create_forces_fc2 and calc_dataset_fc2:
         if "first_atoms" in ph3py_yaml.phonon_dataset:
             for i, d in enumerate(ph3py_yaml.phonon_dataset["first_atoms"]):
                 d["forces"] = calc_dataset_fc2["forces"][i]
