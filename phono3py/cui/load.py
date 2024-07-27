@@ -49,13 +49,13 @@ from phonopy.structure.cells import determinant
 
 from phono3py import Phono3py
 from phono3py.cui.create_force_constants import (
-    forces_in_dataset,
     parse_forces,
     run_pypolymlp_to_compute_forces,
 )
 from phono3py.file_IO import read_fc2_from_hdf5, read_fc3_from_hdf5
 from phono3py.interface.fc_calculator import extract_fc2_fc3_calculators
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
+from phono3py.phonon3.dataset import forces_in_dataset
 from phono3py.phonon3.fc3 import show_drift_fc3
 
 
@@ -453,7 +453,7 @@ def compute_force_constants_from_datasets(
     fc3_calculator = extract_fc2_fc3_calculators(fc_calculator, 3)
     fc2_calculator = extract_fc2_fc3_calculators(fc_calculator, 2)
     if not read_fc["fc3"] and (ph3py.dataset or ph3py.mlp_dataset):
-        if ph3py.mlp_dataset and use_pypolymlp:
+        if use_pypolymlp and forces_in_dataset(ph3py.mlp_dataset):
             run_pypolymlp_to_compute_forces(
                 ph3py,
                 mlp_params=mlp_params,
@@ -462,17 +462,22 @@ def compute_force_constants_from_datasets(
                 random_seed=random_seed,
                 log_level=log_level,
             )
-        ph3py.produce_fc3(
-            symmetrize_fc3r=symmetrize_fc,
-            is_compact_fc=is_compact_fc,
-            fc_calculator=fc3_calculator,
-            fc_calculator_options=extract_fc2_fc3_calculators(fc_calculator_options, 3),
-        )
+        if forces_in_dataset(ph3py.dataset):
+            ph3py.produce_fc3(
+                symmetrize_fc3r=symmetrize_fc,
+                is_compact_fc=is_compact_fc,
+                fc_calculator=fc3_calculator,
+                fc_calculator_options=extract_fc2_fc3_calculators(
+                    fc_calculator_options, 3
+                ),
+            )
 
-        if log_level and symmetrize_fc and fc_calculator is None:
-            print("fc3 was symmetrized.")
+            if log_level and symmetrize_fc and fc_calculator is None:
+                print("fc3 was symmetrized.")
 
-    if not read_fc["fc2"] and (ph3py.dataset or ph3py.phonon_dataset):
+    if not read_fc["fc2"] and (
+        forces_in_dataset(ph3py.dataset) or forces_in_dataset(ph3py.phonon_dataset)
+    ):
         ph3py.produce_fc2(
             symmetrize_fc2=symmetrize_fc,
             is_compact_fc=is_compact_fc,
@@ -495,6 +500,7 @@ def _get_dataset_or_fc3(
     p2s_map = ph3py.primitive.p2s_map
     read_fc3 = False
     dataset = None
+
     if fc3_filename is not None or pathlib.Path("fc3.hdf5").exists():
         if fc3_filename is None:
             _fc3_filename = "fc3.hdf5"
@@ -532,8 +538,17 @@ def _get_dataset_or_fc3(
             cutoff_pair_distance,
             log_level,
         )
-        if not forces_in_dataset(dataset):
-            dataset = None
+    elif ph3py_yaml is not None and ph3py_yaml.dataset is not None:
+        # not forces_in_dataset(ph3py_yaml.dataset)
+        # but want to read displacement dataset.
+        dataset = _get_dataset_for_fc3(
+            ph3py,
+            ph3py_yaml,
+            None,
+            phono3py_yaml_filename,
+            cutoff_pair_distance,
+            log_level,
+        )
 
     return read_fc3, dataset
 
@@ -558,7 +573,7 @@ def _get_dataset_phonon_dataset_or_fc2(
         ph3py.fc2 = fc2
         read_fc2 = True
         if log_level:
-            print(f'fc2 was read from "{fc2_filename}".')
+            print(f'fc2 was read from "{_fc2_filename}".')
     elif (
         ph3py_yaml is not None
         and ph3py_yaml.phonon_dataset is not None
@@ -585,8 +600,16 @@ def _get_dataset_phonon_dataset_or_fc2(
             "phonon_fc2",
             log_level,
         )
-        if not forces_in_dataset(phonon_dataset):
-            phonon_dataset = None
+    elif ph3py_yaml is not None and ph3py_yaml.phonon_dataset is not None:
+        # not forces_in_dataset(ph3py_yaml.dataset)
+        # but want to read displacement dataset.
+        phonon_dataset = _get_dataset_for_fc2(
+            ph3py,
+            ph3py_yaml,
+            None,
+            "phonon_fc2",
+            log_level,
+        )
 
     return read_fc2, phonon_dataset
 

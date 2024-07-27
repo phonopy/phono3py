@@ -68,6 +68,7 @@ from phono3py.file_IO import (
 )
 from phono3py.interface.fc_calculator import extract_fc2_fc3_calculators
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
+from phono3py.phonon3.dataset import forces_in_dataset
 from phono3py.phonon3.fc3 import (
     set_permutation_symmetry_fc3,
     set_translational_invariance_fc3,
@@ -95,8 +96,6 @@ def create_phono3py_force_constants(
     symmetrize_fc3r = settings.is_symmetrize_fc3_r or settings.fc_symmetry
     symmetrize_fc2 = settings.is_symmetrize_fc2 or settings.fc_symmetry
 
-    (fc_calculator, fc_calculator_options) = get_fc_calculator_params(settings)
-
     if log_level:
         show_phono3py_force_constants_settings(settings)
 
@@ -113,6 +112,9 @@ def create_phono3py_force_constants(
     ):
         pass
     else:
+        (fc_calculator, fc_calculator_options) = get_fc_calculator_params(
+            settings, log_level=(not settings.read_fc3) * 1
+        )
         if settings.read_fc3:
             _read_phono3py_fc3(phono3py, symmetrize_fc3r, input_filename, log_level)
         else:  # fc3 from FORCES_FC3 or ph3py_yaml
@@ -292,10 +294,17 @@ def parse_forces(
     # Type-1 FORCES_FC*.
     # dataset comes either from disp_fc*.yaml or phono3py*.yaml.
     if not forces_in_dataset(dataset):
-        if fc_type == "phonon_fc2":
-            parse_FORCES_FC2(dataset, filename=force_filename)
-        else:
-            parse_FORCES_FC3(dataset, filename=force_filename)
+        if force_filename is not None:
+            if fc_type == "phonon_fc2":
+                parse_FORCES_FC2(dataset, filename=force_filename)
+            else:
+                parse_FORCES_FC3(dataset, filename=force_filename)
+
+            if log_level:
+                print(
+                    f'Sets of supercell forces were read from "{force_filename}".',
+                    flush=True,
+                )
 
         # Unit of displacements is already converted.
         # Therefore, only unit of forces is converted.
@@ -305,28 +314,10 @@ def parse_forces(
                 force_to_eVperA=physical_units["force_to_eVperA"],
             )
 
-        if log_level:
-            print('Sets of supercell forces were read from "%s".' % force_filename)
-            sys.stdout.flush()
-
     return dataset
 
 
-def forces_in_dataset(dataset: dict) -> bool:
-    """Return whether forces in dataset or not."""
-    return "forces" in dataset or (
-        "first_atoms" in dataset and "forces" in dataset["first_atoms"][0]
-    )
-
-
-def displacements_in_dataset(dataset: Optional[dict]) -> bool:
-    """Return whether displacements in dataset or not."""
-    if dataset is None:
-        return False
-    return "displacements" in dataset or "first_atoms" in dataset
-
-
-def get_fc_calculator_params(settings):
+def get_fc_calculator_params(settings, log_level=0):
     """Return fc_calculator and fc_calculator_params from settings."""
     fc_calculator = None
     fc_calculator_list = []
@@ -339,11 +330,47 @@ def get_fc_calculator_params(settings):
         if fc_calculator_list:
             fc_calculator = "|".join(fc_calculator_list)
 
-    fc_calculator_options = None
-    if settings.fc_calculator_options is not None:
-        fc_calculator_options = settings.fc_calculator_options
+    fc_calculator_options = settings.fc_calculator_options
+    if settings.cutoff_pair_distance:
+        if fc_calculator_list and fc_calculator_list[-1] in ("alm", "symfc"):
+            if fc_calculator_list[-1] == "alm":
+                cutoff_str = f"-1 {settings.cutoff_pair_distance}"
+            if fc_calculator_list[-1] == "symfc":
+                cutoff_str = f"{settings.cutoff_pair_distance}"
+            fc_calculator_options = _set_cutoff_in_fc_calculator_options(
+                fc_calculator_options,
+                cutoff_str,
+                log_level,
+            )
 
     return fc_calculator, fc_calculator_options
+
+
+def _set_cutoff_in_fc_calculator_options(
+    fc_calculator_options: Optional[str],
+    cutoff_str: str,
+    log_level: int,
+):
+    str_appended = f"cutoff={cutoff_str}"
+    calc_opts = fc_calculator_options
+    if calc_opts is None:
+        calc_opts = "|"
+    if "|" in calc_opts:
+        calc_opts_fc2, calc_opts_fc3 = [v.strip() for v in calc_opts.split("|")][:2]
+    else:
+        calc_opts_fc2 = calc_opts
+        calc_opts_fc3 = calc_opts
+
+    if calc_opts_fc3 == "":
+        calc_opts_fc3 += f"{str_appended}"
+        if log_level:
+            print(f'Set "{str_appended}" to fc_calculator_options for fc3.')
+    elif "cutoff" not in calc_opts_fc3:
+        calc_opts_fc3 += f", {str_appended}"
+        if log_level:
+            print(f'Appended "{str_appended}" to fc_calculator_options for fc3.')
+
+    return f"{calc_opts_fc2}|{calc_opts_fc3}"
 
 
 def _read_phono3py_fc3(phono3py: Phono3py, symmetrize_fc3r, input_filename, log_level):
@@ -417,7 +444,7 @@ def _read_phono3py_fc2(phono3py, symmetrize_fc2, input_filename, log_level):
 
 def read_type2_dataset(natom, filename="FORCES_FC3", log_level=0) -> Optional[dict]:
     """Read type-2 FORCES_FC3."""
-    if not pathlib.Path(filename).exists():
+    if filename is None or not pathlib.Path(filename).exists():
         return None
 
     with open(filename, "r") as f:

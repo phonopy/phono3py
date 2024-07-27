@@ -34,6 +34,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from typing import Optional
+
 import numpy as np
 
 
@@ -94,3 +96,12 @@ def get_displacements_and_forces_fc3(disp_dataset):
         return disp_dataset["displacements"], disp_dataset["forces"]
     else:
         raise RuntimeError("disp_dataset doesn't contain correct information.")
+
+
+def forces_in_dataset(dataset: Optional[dict]) -> bool:
+    """Return whether forces in dataset or not."""
+    if dataset is None:
+        return False
+    return "forces" in dataset or (
+        "first_atoms" in dataset and "forces" in dataset["first_atoms"][0]
+    )

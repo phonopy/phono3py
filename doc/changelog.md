@@ -2,6 +2,15 @@
 
 # Change Log
 
+## Jul-22-2024: Version 3.3.2
+
+- Minor fix of `phono3py.load` function for reading displacements from
+  `phono3py_disp.yaml` like file that doesn't contain forces.
+
+## Jul-8-2024: Version 3.3.1
+
+- Major refactoring to isolate reciprocal space grid code.
+
 ## Jul-8-2024: Version 3.3.0
 
 - Build system of phono3py was renewed. Now nanobind, cmake, and

@@ -38,9 +38,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "funcs.h"
 #include "lagrid.h"
 #include "phonoc_array.h"
-#include "phonoc_utils.h"
 #include "triplet.h"
 
 static long set_g_pos_frequency_point(long (*g_pos)[4], const long num_band0,
@@ -455,12 +455,12 @@ static void set_occupations(double *n1, double *n2, const long num_band,
         f1 = frequencies[triplet[1] * num_band + j];
         f2 = frequencies[triplet[2] * num_band + j];
         if (f1 > cutoff_frequency) {
-            n1[j] = phonoc_bose_einstein(f1, temperature);
+            n1[j] = funcs_bose_einstein(f1, temperature);
         } else {
             n1[j] = -1;
         }
         if (f2 > cutoff_frequency) {
-            n2[j] = phonoc_bose_einstein(f2, temperature);
+            n2[j] = funcs_bose_einstein(f2, temperature);
         } else {
             n2[j] = -1;
         }

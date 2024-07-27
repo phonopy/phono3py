@@ -41,6 +41,7 @@
 #include "grgrid.h"
 #include "lagrid.h"
 #include "niggli.h"
+#include "recgrid.h"
 #include "tetrahedron_method.h"
 #include "triplet.h"
 #include "triplet_iw.h"
@@ -111,13 +112,13 @@ long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3], long *bz_map,
                                    const long Q[3][3], const long PS[3],
                                    const double rec_lattice[3][3],
                                    const long bz_grid_type) {
-    BZGrid *bzgrid;
+    RecgridBZGrid *bzgrid;
     long i, j, size;
     long inv_Mpr_int[3][3];
     double inv_Lr[3][3], inv_Mpr[3][3];
     double niggli_lattice[9];
 
-    if ((bzgrid = (BZGrid *)malloc(sizeof(BZGrid))) == NULL) {
+    if ((bzgrid = (RecgridBZGrid *)malloc(sizeof(RecgridBZGrid))) == NULL) {
         warning_print("Memory could not be allocated.");
         return 0;
     }
@@ -171,10 +172,11 @@ long gridsys_rotate_bz_grid_index(const long bz_grid_index,
                                   const long (*bz_grid_addresses)[3],
                                   const long *bz_map, const long D_diag[3],
                                   const long PS[3], const long bz_grid_type) {
-    ConstBZGrid *bzgrid;
+    RecgridConstBZGrid *bzgrid;
     long i, rot_bz_gp;
 
-    if ((bzgrid = (ConstBZGrid *)malloc(sizeof(ConstBZGrid))) == NULL) {
+    if ((bzgrid = (RecgridConstBZGrid *)malloc(sizeof(RecgridConstBZGrid))) ==
+        NULL) {
         warning_print("Memory could not be allocated.");
         return 0;
     }
@@ -212,10 +214,11 @@ long gridsys_get_bz_triplets_at_q(long (*ir_triplets)[3],
                                   const long num_map_triplets,
                                   const long D_diag[3], const long Q[3][3],
                                   const long bz_grid_type) {
-    ConstBZGrid *bzgrid;
+    RecgridConstBZGrid *bzgrid;
     long i, j, num_ir;
 
-    if ((bzgrid = (ConstBZGrid *)malloc(sizeof(ConstBZGrid))) == NULL) {
+    if ((bzgrid = (RecgridConstBZGrid *)malloc(sizeof(RecgridConstBZGrid))) ==
+        NULL) {
         warning_print("Memory could not be allocated.");
         return 0;
     }
@@ -267,10 +270,11 @@ long gridsys_get_integration_weight(
     const long bz_grid_type, const double *frequencies1, const long num_band1,
     const double *frequencies2, const long num_band2, const long tp_type,
     const long openmp_per_triplets) {
-    ConstBZGrid *bzgrid;
+    RecgridConstBZGrid *bzgrid;
     long i;
 
-    if ((bzgrid = (ConstBZGrid *)malloc(sizeof(ConstBZGrid))) == NULL) {
+    if ((bzgrid = (RecgridConstBZGrid *)malloc(sizeof(RecgridConstBZGrid))) ==
+        NULL) {
         warning_print("Memory could not be allocated.");
         return 0;
     }

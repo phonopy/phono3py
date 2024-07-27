@@ -70,6 +70,22 @@ def si_pbesol(request) -> Phono3py:
 
 
 @pytest.fixture(scope="session")
+def si_pbesol_without_forcesets(request) -> Phono3py:
+    """Return Phono3py instance of Si 2x2x2 without force sets.
+
+    * with symmetry
+
+    """
+    yaml_filename = cwd / "phono3py_si_pbesol.yaml"
+    enable_v2 = request.config.getoption("--v2")
+    return phono3py.load(
+        yaml_filename,
+        make_r0_average=not enable_v2,
+        log_level=1,
+    )
+
+
+@pytest.fixture(scope="session")
 def si_pbesol_grg(request) -> Phono3py:
     """Return Phono3py instance of Si 2x2x2.
 
