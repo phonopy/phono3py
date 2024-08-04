@@ -16,7 +16,7 @@ presented with using symfc that can be installed via pip or conda easily.
 
 The option `--rd NUM` is used instead of `-d` in generating displacements as follows:
 
-```
+```bash
 % phono3py --rd 100 --dim 2 2 2 --pa auto -c POSCAR-unitcell
 ```
 
@@ -25,3 +25,12 @@ must be specified, and the initial guess may be from around the number of
 supecells generated for the systematic displacements by `-d`. In the case of the
 `NaCl-rd` example, 146 supercells are generated with `-d`, so similar
 number `--rd 100` was chosen here.
+
+If random directional displacements for fc2 are expected, `--rd-fc2` and
+`--dim-fc2` have to be specified:
+
+```bash
+% phono3py --rd 100 --dim 2 2 2 --rd-fc2 2 --dim-fc2 4 4 4 --pa auto -c POSCAR-unitcell
+```
+
+where `--dim` is necessary but `--rd` is not.

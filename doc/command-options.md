@@ -174,6 +174,25 @@ created from `FORCES_FC2` and `phono3py_disp.yaml` instead of `FORCES_FC3` and
 % phono3py --cfs --dim-fc2="x x x"
 ```
 
+### `--sp` or `--save-params`
+
+Instead of `FORCES_FC3`, `phono3py_params.yaml` is generated. This option must
+be used with `--cf3`, and optionally with `--cf2`. If the force calculator
+supports reading energy of supercell, those are written into
+`phono3y_params.yaml`. These energies are necessary for using `--pypolymlp`
+option.
+
+```bash
+% phono3py --cf3 disp-{00001..00755}/vasprun.xml --sp
+```
+
+When using with `--cf2`, `--cf3` has to be specified simultaneously as below,
+
+```bash
+% phono3py --cf3 disp-{00001..00755}/vasprun.xml --cf2 disp_fc2-{00001..00002}/vasprun.xml --sp
+```
+
+
 ## Supercell, primitive cell, masses, magnetic moments
 
 (dim_option)=
