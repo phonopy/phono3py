@@ -36,8 +36,10 @@
 
 from __future__ import annotations
 
+import argparse
 import datetime
 import sys
+from typing import Optional
 
 import numpy as np
 from phonopy.cui.collect_cell_info import collect_cell_info
@@ -75,7 +77,7 @@ from phono3py.cui.load import (
     set_dataset_and_force_constants,
 )
 from phono3py.cui.phono3py_argparse import get_parser
-from phono3py.cui.settings import Phono3pyConfParser
+from phono3py.cui.settings import Phono3pyConfParser, Phono3pySettings
 from phono3py.cui.show_log import (
     show_general_settings,
     show_phono3py_cells,
@@ -212,7 +214,7 @@ def get_run_mode(settings):
     return run_mode
 
 
-def start_phono3py(**argparse_control):
+def start_phono3py(**argparse_control) -> tuple[argparse.Namespace, int]:
     """Parse arguments and set some basic parameters."""
     parser, deprecated = get_parser(**argparse_control)
     args = parser.parse_args()
@@ -310,7 +312,9 @@ def get_input_output_filenames_from_args(args):
     return input_filename, output_filename
 
 
-def get_cell_info(settings, cell_filename, log_level):
+def get_cell_info(
+    settings: Phono3pySettings, cell_filename: str, log_level: int
+) -> dict:
     """Return calculator interface and crystal structure information."""
     cell_info = collect_cell_info(
         supercell_matrix=settings.supercell_matrix,
@@ -511,6 +515,46 @@ def grid_addresses_to_grid_points(grid_addresses, bz_grid):
         get_grid_point_from_address(ga, bz_grid.D_diag) for ga in grid_addresses
     ]
     return bz_grid.grg2bzg[grid_points]
+
+
+def create_supercells(
+    settings: Phono3pySettings,
+    cell_info: dict,
+    confs_dict: dict,
+    interface_mode: Optional[str],
+    symprec: float,
+    log_level: int,
+):
+    """Create supercells and write displacements."""
+    if (
+        settings.create_displacements
+        or settings.random_displacements
+        or settings.random_displacements_fc2
+    ):
+        phono3py = create_phono3py_supercells(
+            cell_info,
+            settings,
+            symprec,
+            interface_mode=interface_mode,
+            log_level=log_level,
+        )
+
+        if log_level:
+            if phono3py.supercell.magnetic_moments is None:
+                print("Spacegroup: %s" % phono3py.symmetry.get_international_table())
+            else:
+                print(
+                    "Number of symmetry operations in supercell: %d"
+                    % len(phono3py.symmetry.symmetry_operations["rotations"])
+                )
+
+        finalize_phono3py(
+            phono3py,
+            confs_dict,
+            log_level,
+            write_displacements=True,
+            filename="phono3py_disp.yaml",
+        )
 
 
 def store_force_constants(
@@ -853,7 +897,7 @@ def main(**argparse_control):
     # warnings.simplefilter("error")
     load_phono3py_yaml = argparse_control.get("load_phono3py_yaml", False)
 
-    if "args" in argparse_control:  # For pytest
+    if "args" in argparse_control:  # This is for pytest.
         args = argparse_control["args"]
         log_level = args.log_level
     else:
@@ -926,29 +970,9 @@ def main(**argparse_control):
     ######################################################
     # Create supercells with displacements and then exit #
     ######################################################
-    if settings.create_displacements:
-        phono3py = create_phono3py_supercells(
-            cell_info,
-            settings,
-            symprec,
-            interface_mode=interface_mode,
-            log_level=log_level,
-        )
-
-        if phono3py.supercell.magnetic_moments is None:
-            print("Spacegroup: %s" % phono3py.symmetry.get_international_table())
-        else:
-            print(
-                "Number of symmetry operations in supercell: %d"
-                % len(phono3py.symmetry.symmetry_operations["rotations"])
-            )
-
-        finalize_phono3py(
-            phono3py,
-            confs_dict,
-            log_level,
-            write_displacements=True,
-            filename="phono3py_disp.yaml",
+    if not settings.use_pypolymlp:
+        create_supercells(
+            settings, cell_info, confs_dict, interface_mode, symprec, log_level
         )
 
     #######################
