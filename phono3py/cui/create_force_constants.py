@@ -168,14 +168,9 @@ def create_phono3py_force_constants(
     if settings.read_fc2:
         _read_phono3py_fc2(phono3py, symmetrize_fc2, input_filename, log_level)
     else:
-        if phono3py.phonon_supercell_matrix is None:
-            force_filename = "FORCES_FC3"
-        else:
-            force_filename = "FORCES_FC2"
         _create_phono3py_fc2(
             phono3py,
             ph3py_yaml,
-            force_filename,
             symmetrize_fc2,
             settings.is_compact_fc,
             fc_calculator,
@@ -219,20 +214,22 @@ def parse_forces(
 
     """
     filename_read_from: Optional[str] = None
-
+    dataset = None
     calculator = phono3py.calculator
+
     # Get dataset from ph3py_yaml. dataset can be None.
     # physical_units can be overwritten if calculator is found in ph3py_yaml.
-    dataset = _extract_dataset_from_ph3py_yaml(ph3py_yaml, fc_type)
+    if ph3py_yaml:
+        dataset = _extract_dataset_from_ph3py_yaml(ph3py_yaml, fc_type)
     if dataset and ph3py_yaml.calculator:
         calculator = ph3py_yaml.calculator
 
     physical_units = get_default_physical_units(calculator)
 
-    if fc_type == "phonon_fc2":
-        natom = len(phono3py.phonon_supercell)
-    else:
+    if phono3py.phonon_supercell is None or fc_type == "fc3":
         natom = len(phono3py.supercell)
+    else:
+        natom = len(phono3py.phonon_supercell)
 
     if dataset:
         filename_read_from = phono3py_yaml_filename
@@ -269,20 +266,18 @@ def parse_forces(
     assert dataset is not None
 
     if "natom" in dataset and dataset["natom"] != natom:
-        msg = (
+        raise RuntimeError(
             "Number of atoms in supercell is not consistent with "
-            '"%s".' % filename_read_from
+            f'"{filename_read_from}".'
         )
-        raise RuntimeError(msg)
 
     if log_level and filename_read_from is not None:
         print(
-            'Displacement dataset for %s was read from "%s".'
-            % (fc_type, filename_read_from)
+            f'Displacement dataset for {fc_type} was read from "{filename_read_from}".'
         )
 
     # Overwrite dataset['cutoff_distance'] when necessary.
-    if cutoff_pair_distance:
+    if fc_type == "fc3" and cutoff_pair_distance:
         if "cutoff_distance" not in dataset or (
             "cutoff_distance" in dataset
             and cutoff_pair_distance < dataset["cutoff_distance"]
@@ -295,10 +290,10 @@ def parse_forces(
     # dataset comes either from disp_fc*.yaml or phono3py*.yaml.
     if not forces_in_dataset(dataset):
         if force_filename is not None:
-            if fc_type == "phonon_fc2":
-                parse_FORCES_FC2(dataset, filename=force_filename)
-            else:
+            if fc_type == "fc3":
                 parse_FORCES_FC3(dataset, filename=force_filename)
+            else:
+                parse_FORCES_FC2(dataset, filename=force_filename)
 
             if log_level:
                 print(
@@ -452,10 +447,8 @@ def read_type2_dataset(natom, filename="FORCES_FC3", log_level=0) -> Optional[di
         if len_first_line == 6:
             dataset = get_dataset_type2(f, natom)
             if log_level:
-                print(
-                    "%d snapshots were found in %s."
-                    % (len(dataset["displacements"]), "FORCES_FC3")
-                )
+                n_disp = len(dataset["displacements"])
+                print(f'{n_disp} snapshots were found in "{filename}".')
         else:
             dataset = None
     return dataset
@@ -663,7 +656,6 @@ def run_pypolymlp_to_compute_phonon_forces(
 def _create_phono3py_fc2(
     phono3py: Phono3py,
     ph3py_yaml: Optional[Phono3pyYaml],
-    force_filename,
     symmetrize_fc2,
     is_compact_fc,
     fc_calculator,
@@ -675,6 +667,11 @@ def _create_phono3py_fc2(
     force_filename is either "FORCES_FC2" or "FORCES_FC3".
 
     """
+    if phono3py.phonon_supercell_matrix is None:
+        force_filename = "FORCES_FC3"
+    else:
+        force_filename = "FORCES_FC2"
+
     _ph3py_yaml = _get_default_ph3py_yaml(ph3py_yaml)
 
     try:
@@ -682,7 +679,7 @@ def _create_phono3py_fc2(
             phono3py,
             ph3py_yaml=_ph3py_yaml,
             force_filename=force_filename,
-            fc_type="fc2",
+            fc_type="phonon_fc2",
             log_level=log_level,
         )
     except RuntimeError as e:
@@ -752,12 +749,13 @@ def _to_ndarray(array, dtype="double"):
         return array
 
 
-def _extract_dataset_from_ph3py_yaml(ph3py_yaml: Optional[Phono3pyYaml], fc_type):
-    dataset = None
-    if fc_type == "phonon_fc2":
-        if ph3py_yaml and ph3py_yaml.phonon_dataset is not None:
-            dataset = copy.deepcopy(ph3py_yaml.phonon_dataset)
+def _extract_dataset_from_ph3py_yaml(
+    ph3py_yaml: Optional[Phono3pyYaml], fc_type
+) -> Optional[dict]:
+    if ph3py_yaml.phonon_supercell is None or fc_type == "fc3":
+        if ph3py_yaml.dataset is not None:
+            return copy.deepcopy(ph3py_yaml.dataset)
     else:
-        if ph3py_yaml and ph3py_yaml.dataset is not None:
-            dataset = copy.deepcopy(ph3py_yaml.dataset)
-    return dataset
+        if ph3py_yaml.phonon_dataset is not None:
+            return copy.deepcopy(ph3py_yaml.phonon_dataset)
+    return None
