@@ -715,6 +715,7 @@ class Phono3pyConfParser(ConfParser):
                 "conductivity_type",
                 "create_forces_fc3_file",
                 "output_yaml_filename",
+                "subtract_forces",
             ):
                 self.set_parameter(conf_key, confs[conf_key])
 

@@ -38,7 +38,7 @@ from __future__ import annotations
 import os
 import warnings
 from collections.abc import Sequence
-from typing import Optional, Union
+from typing import Optional, TextIO, Union
 
 import h5py
 import numpy as np
@@ -46,7 +46,11 @@ from phonopy.cui.load_helper import read_force_constants_from_hdf5
 
 # This import is deactivated for a while.
 # from phonopy.file_IO import write_force_constants_to_hdf5
-from phonopy.file_IO import check_force_constants_indices, get_cell_from_disp_yaml
+from phonopy.file_IO import (
+    check_force_constants_indices,
+    get_cell_from_disp_yaml,
+    write_FORCE_SETS,
+)
 
 from phono3py.version import __version__
 
@@ -196,33 +200,71 @@ def write_FORCES_FC2(disp_dataset, forces_fc2=None, fp=None, filename="FORCES_FC
     else:
         w = fp
 
-    for i, disp1 in enumerate(disp_dataset["first_atoms"]):
-        w.write("# File: %-5d\n" % (i + 1))
-        w.write("# %-5d " % (disp1["number"] + 1))
-        w.write("%20.16f %20.16f %20.16f\n" % tuple(disp1["displacement"]))
-        if "forces" in disp1 and forces_fc2 is None:
-            force_set = disp1["forces"]
+    if "first_atoms" in disp_dataset:
+        for i, disp1 in enumerate(disp_dataset["first_atoms"]):
+            w.write("# File: %-5d\n" % (i + 1))
+            w.write("# %-5d " % (disp1["number"] + 1))
+            w.write("%20.16f %20.16f %20.16f\n" % tuple(disp1["displacement"]))
+            if "forces" in disp1 and forces_fc2 is None:
+                force_set = disp1["forces"]
+            else:
+                force_set = forces_fc2[i]
+            for forces in force_set:
+                w.write("%15.10f %15.10f %15.10f\n" % tuple(forces))
+    else:
+        if "forces" in disp_dataset:
+            write_FORCE_SETS(disp_dataset, filename="FORCES_FC2")
         else:
-            force_set = forces_fc2[i]
-        for forces in force_set:
-            w.write("%15.10f %15.10f %15.10f\n" % tuple(forces))
+            if forces_fc2 is None:
+                raise RuntimeError("No forces are found.")
+            dataset = disp_dataset.copy()
+            dataset["forces"] = forces_fc2
+            write_FORCE_SETS(dataset, filename="FORCES_FC2")
 
     if fp is None:
         w.close()
 
 
-def write_FORCES_FC3(disp_dataset, forces_fc3=None, fp=None, filename="FORCES_FC3"):
+def write_FORCES_FC3(
+    disp_dataset: dict,
+    forces_fc3: Optional[Sequence] = None,
+    fp: Optional[TextIO] = None,
+    filename: str = "FORCES_FC3",
+):
     """Write FORCES_FC3.
 
     fp : IO object, optional, default=None
         When this is given, FORCES_FC3 content is written into this IO object.
 
     """
-    if fp is None:
-        w = open(filename, "w")
+    if "first_atoms" in disp_dataset:
+        if fp is None:
+            with open(filename, "w") as w:
+                _write_FORCES_FC3_typeI(disp_dataset, w, forces_fc3=forces_fc3)
+        else:
+            _write_FORCES_FC3_typeI(disp_dataset, fp, forces_fc3=forces_fc3)
     else:
-        w = fp
+        if "forces" in disp_dataset:
+            write_FORCE_SETS(disp_dataset, filename="FORCES_FC3")
+        else:
+            if forces_fc3 is None:
+                raise RuntimeError("No forces are found.")
+            dataset = disp_dataset.copy()
+            dataset["forces"] = forces_fc3
+            write_FORCE_SETS(dataset, filename="FORCES_FC3")
 
+
+def _write_FORCES_FC3_typeI(
+    disp_dataset: dict,
+    w: Optional[TextIO],
+    forces_fc3: Optional[Sequence] = None,
+):
+    """Write FORCES_FC3.
+
+    w : TextIO object, optional, default=None
+        When this is given, FORCES_FC3 content is written into this IO object.
+
+    """
     natom = disp_dataset["natom"]
     num_disp1 = len(disp_dataset["first_atoms"])
     count = num_disp1
@@ -253,14 +295,9 @@ def write_FORCES_FC3(disp_dataset, forces_fc3=None, fp=None, filename="FORCES_FC
                     w.write("%15.10f %15.10f %15.10f\n" % tuple(force))
                 file_count += 1
             else:
-                # for forces in forces_fc3[i]:
-                #     w.write("%15.10f %15.10f %15.10f\n" % (tuple(forces)))
                 for _ in range(natom):
                     w.write("%15.10f %15.10f %15.10f\n" % (0, 0, 0))
             count += 1
-
-    if fp is None:
-        w.close()
 
 
 def write_fc3_to_hdf5(fc3, filename="fc3.hdf5", p2s_map=None, compression="gzip"):
