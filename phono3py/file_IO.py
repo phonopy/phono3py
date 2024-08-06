@@ -200,16 +200,26 @@ def write_FORCES_FC2(disp_dataset, forces_fc2=None, fp=None, filename="FORCES_FC
     else:
         w = fp
 
-    for i, disp1 in enumerate(disp_dataset["first_atoms"]):
-        w.write("# File: %-5d\n" % (i + 1))
-        w.write("# %-5d " % (disp1["number"] + 1))
-        w.write("%20.16f %20.16f %20.16f\n" % tuple(disp1["displacement"]))
-        if "forces" in disp1 and forces_fc2 is None:
-            force_set = disp1["forces"]
+    if "first_atoms" in disp_dataset:
+        for i, disp1 in enumerate(disp_dataset["first_atoms"]):
+            w.write("# File: %-5d\n" % (i + 1))
+            w.write("# %-5d " % (disp1["number"] + 1))
+            w.write("%20.16f %20.16f %20.16f\n" % tuple(disp1["displacement"]))
+            if "forces" in disp1 and forces_fc2 is None:
+                force_set = disp1["forces"]
+            else:
+                force_set = forces_fc2[i]
+            for forces in force_set:
+                w.write("%15.10f %15.10f %15.10f\n" % tuple(forces))
+    else:
+        if "forces" in disp_dataset:
+            write_FORCE_SETS(disp_dataset, filename="FORCES_FC2")
         else:
-            force_set = forces_fc2[i]
-        for forces in force_set:
-            w.write("%15.10f %15.10f %15.10f\n" % tuple(forces))
+            if forces_fc2 is None:
+                raise RuntimeError("No forces are found.")
+            dataset = disp_dataset.copy()
+            dataset["forces"] = forces_fc2
+            write_FORCE_SETS(dataset, filename="FORCES_FC2")
 
     if fp is None:
         w.close()

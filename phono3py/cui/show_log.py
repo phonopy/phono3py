@@ -35,6 +35,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import sys
+from collections.abc import Sequence
+from typing import Optional, Union
 
 import numpy as np
 from phonopy.structure.cells import print_cell
@@ -68,6 +70,23 @@ def show_general_settings(
         print("Calculator interface: %s" % phono3py.calculator)
     print('Crystal structure was read from "%s".' % cell_filename)
 
+    print_supercell_matrix(supercell_matrix, phonon_supercell_matrix)
+
+    if is_primitive_axes_auto:
+        print("Primitive matrix (Auto):")
+        for v in primitive_matrix:
+            print("  %s" % v)
+    elif primitive_matrix is not None:
+        print("Primitive matrix:")
+        for v in primitive_matrix:
+            print("  %s" % v)
+
+
+def print_supercell_matrix(
+    supercell_matrix: Union[Sequence, np.ndarray],
+    phonon_supercell_matrix: Optional[Union[Sequence, np.ndarray]] = None,
+):
+    """Print supercell matrix."""
     if (np.diag(np.diag(supercell_matrix)) - supercell_matrix).any():
         print("Supercell matrix (dim):")
         for v in supercell_matrix:
@@ -81,14 +100,6 @@ def show_general_settings(
                 print("  %s" % v)
         else:
             print("Phonon supercell (dim-fc2): %s" % np.diag(phonon_supercell_matrix))
-    if is_primitive_axes_auto:
-        print("Primitive matrix (Auto):")
-        for v in primitive_matrix:
-            print("  %s" % v)
-    elif primitive_matrix is not None:
-        print("Primitive matrix:")
-        for v in primitive_matrix:
-            print("  %s" % v)
 
 
 def show_phono3py_cells(phono3py: Phono3py):
