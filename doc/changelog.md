@@ -2,6 +2,14 @@
 
 # Change Log
 
+## Jul-22-2024: Version 3.3.3
+
+- Provide functionality by `--cf3` and `--cf2` command options to create force
+  constants from displacement-force dataset of random displacements when
+  an external force constants calculator is specified.
+- New command line options `--rd`, `--rd-fc2`, `--fc-calc`, `--fc-calc-opt` and
+  `--sp` to support random displacements.
+
 ## Jul-22-2024: Version 3.3.2
 
 - Minor fix of `phono3py.load` function for reading displacements from

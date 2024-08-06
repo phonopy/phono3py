@@ -517,11 +517,13 @@ def grid_addresses_to_grid_points(grid_addresses, bz_grid):
     return bz_grid.grg2bzg[grid_points]
 
 
-def create_supercells(
+def create_supercells_with_displacements(
     settings: Phono3pySettings,
     cell_info: dict,
     confs_dict: dict,
+    unitcell_filename: str,
     interface_mode: Optional[str],
+    load_phono3py_yaml: bool,
     symprec: float,
     log_level: int,
 ):
@@ -537,6 +539,16 @@ def create_supercells(
             symprec,
             interface_mode=interface_mode,
             log_level=log_level,
+        )
+
+        store_nac_params(
+            phono3py,
+            settings,
+            cell_info["phonopy_yaml"],
+            unitcell_filename,
+            log_level,
+            nac_factor=Hartree * Bohr,
+            load_phonopy_yaml=load_phono3py_yaml,
         )
 
         if log_level:
@@ -971,8 +983,15 @@ def main(**argparse_control):
     # Create supercells with displacements and then exit #
     ######################################################
     if not settings.use_pypolymlp:
-        create_supercells(
-            settings, cell_info, confs_dict, interface_mode, symprec, log_level
+        create_supercells_with_displacements(
+            settings,
+            cell_info,
+            confs_dict,
+            unitcell_filename,
+            interface_mode,
+            load_phono3py_yaml,
+            symprec,
+            log_level,
         )
 
     #######################
@@ -1091,15 +1110,16 @@ def main(**argparse_control):
     ##################################
     # Non-analytical term correction #
     ##################################
-    store_nac_params(
-        phono3py,
-        settings,
-        cell_info["phonopy_yaml"],
-        unitcell_filename,
-        log_level,
-        nac_factor=Hartree * Bohr,
-        load_phonopy_yaml=load_phono3py_yaml,
-    )
+    if settings.is_nac:
+        store_nac_params(
+            phono3py,
+            settings,
+            cell_info["phonopy_yaml"],
+            unitcell_filename,
+            log_level,
+            nac_factor=Hartree * Bohr,
+            load_phonopy_yaml=load_phono3py_yaml,
+        )
 
     ###################
     # Force constants #
