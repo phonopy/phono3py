@@ -1,0 +1,554 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Force constants calculation with randan displacements of atoms &#8212; Phono3py v.3.3.3</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=a3416100" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="_static/documentation_options.js?v=a32a189e"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'random-displacements';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Force constants calculation with cutoff pair-distance" href="cutoff-pair.html" />
+    <link rel="prev" title="Workload distribution" href="workload-distribution.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Phono3py v.3.3.3</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qe.html">Quantum ESPRESSO (pw) &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="crystal.html">CRYSTAL &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbomole.html">TURBOMOLE &amp; phono3py calculation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options / Setting tags</a></li>
+<li class="toctree-l1"><a class="reference internal" href="input-output-files.html">Input / Output files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">How to read the results stored in hdf5 files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="direct-solution.html">Direct solution of linearized phonon Boltzmann equation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wigner-solution.html">Solution of the Wigner transport equation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Force constants calculation with randan displacements of atoms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Force constants calculation with cutoff pair-distance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-api.html">Phono3py API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-load.html">phono3py-load command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a></li>
+<li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/random-displacements.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Force constants calculation with randan displacements of atoms</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-setting-tags">Related setting tags</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#generation-of-random-directional-displacements">Generation of random directional displacements</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#create-forces-fc3-and-forces-fc2">Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#create-phono3py-params-yaml">Create <code class="docutils literal notranslate"><span class="pre">phono3py_params.yaml</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#calculation-of-force-constants">Calculation of force constants</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cutoff-pair-distance-for-fc3-calculation">Cutoff pair-distance for fc3 calculation</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="force-constants-calculation-with-randan-displacements-of-atoms">
+<span id="random-displacements"></span><h1>Force constants calculation with randan displacements of atoms<a class="headerlink" href="#force-constants-calculation-with-randan-displacements-of-atoms" title="Link to this heading">#</a></h1>
+<p>Random displacements and corresponding forces in supercells can be employed as a
+displacement-force dataset for computing force constants. This requires an
+external force constants calculator, e.g., symfc or ALM. Here, examples are
+presented with using symfc that can be installed via pip or conda easily.</p>
+<section id="related-setting-tags">
+<h2>Related setting tags<a class="headerlink" href="#related-setting-tags" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="command-options.html#random-displacements-option"><span class="std std-ref">--rd (RANDOM_DISPLACEMENTS), --rd-fc2 (RANDOM_DISPLACEMENTS_FC2) and --random-seed (RANDOM_SEED)</span></a> (<code class="docutils literal notranslate"><span class="pre">--rd</span></code>, <code class="docutils literal notranslate"><span class="pre">--random-seed</span></code>)</p></li>
+<li><p><a class="reference internal" href="command-options.html#fc-calculator-option"><span class="std std-ref">--fc-calc, --fc-calculator (FC_CALCULATOR)</span></a> (<code class="docutils literal notranslate"><span class="pre">--fc-calc</span></code>)</p></li>
+<li><p><a class="reference internal" href="command-options.html#fc-calculator-options-option"><span class="std std-ref">--fc-calc-opt, --fc-calculator-options (FC_CALCULATOR_OPTIONS)</span></a> (<code class="docutils literal notranslate"><span class="pre">--fc-calc-opt</span></code>)</p></li>
+</ul>
+</section>
+<section id="generation-of-random-directional-displacements">
+<h2>Generation of random directional displacements<a class="headerlink" href="#generation-of-random-directional-displacements" title="Link to this heading">#</a></h2>
+<p>The option <code class="docutils literal notranslate"><span class="pre">--rd</span> <span class="pre">NUM</span></code> is used instead of <code class="docutils literal notranslate"><span class="pre">-d</span></code> in generating displacements as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--rd<span class="w"> </span><span class="m">100</span><span class="w"> </span>--dim<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>--pa<span class="w"> </span>auto<span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">NUM</span></code> means the number of supercells with random directional displacements. This
+must be specified, and the initial guess may be from around the number of
+supecells generated for the systematic displacements by <code class="docutils literal notranslate"><span class="pre">-d</span></code>. In the case of the
+<code class="docutils literal notranslate"><span class="pre">NaCl-rd</span></code> example, 146 supercells are generated with <code class="docutils literal notranslate"><span class="pre">-d</span></code>, so similar
+number <code class="docutils literal notranslate"><span class="pre">--rd</span> <span class="pre">100</span></code> was chosen here.</p>
+<p>If random directional displacements for fc2 are expected, <code class="docutils literal notranslate"><span class="pre">--rd-fc2</span></code> and
+<code class="docutils literal notranslate"><span class="pre">--dim-fc2</span></code> have to be specified:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--rd<span class="w"> </span><span class="m">100</span><span class="w"> </span>--dim<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>--rd-fc2<span class="w"> </span><span class="m">2</span><span class="w"> </span>--dim-fc2<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span>--pa<span class="w"> </span>auto<span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">--dim</span></code> is necessary but <code class="docutils literal notranslate"><span class="pre">--rd</span></code> is not.</p>
+</section>
+<section id="create-forces-fc3-and-forces-fc2">
+<h2>Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code><a class="headerlink" href="#create-forces-fc3-and-forces-fc2" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and optionally <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code>, which contains forces corresponding to
+displacements, can be created by</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cf3<span class="w"> </span>vasprun_xmls/vasprun-00<span class="o">{</span><span class="m">001</span>..100<span class="o">}</span>.xml
+</pre></div>
+</div>
+<p>Here it is assumed that the forces were calculated by VASP, and the output files
+(<code class="docutils literal notranslate"><span class="pre">vasprun.xml</span></code>) are stored in <code class="docutils literal notranslate"><span class="pre">vasprun_xmls</span></code> directory after renaming. When
+running this command, <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> is automatically read. For the
+different file name, e.g. <code class="docutils literal notranslate"><span class="pre">phono3py_disp_rd.yaml</span></code>, it is specified with <code class="docutils literal notranslate"><span class="pre">-c</span></code>
+option:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-c<span class="w"> </span>phono3py_disp_rd.yaml<span class="w"> </span>--cf3<span class="w"> </span>vasprun_xmls/vasprun-00<span class="o">{</span><span class="m">001</span>..100<span class="o">}</span>.xml
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> is created similarly, e.g., from the VASP output stored as
+<code class="docutils literal notranslate"><span class="pre">vasprun_xmls/vasprun-ph000{1,2}.xml</span></code>,</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cf2<span class="w"> </span>vasprun_xmls/vasprun-ph000<span class="o">{</span><span class="m">1</span>,2<span class="o">}</span>.xml
+</pre></div>
+</div>
+</section>
+<section id="create-phono3py-params-yaml">
+<h2>Create <code class="docutils literal notranslate"><span class="pre">phono3py_params.yaml</span></code><a class="headerlink" href="#create-phono3py-params-yaml" title="Link to this heading">#</a></h2>
+<p>Instead of creating <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code>, more convenient data file to
+store displacement-force dataset is created by <code class="docutils literal notranslate"><span class="pre">--sp</span></code> option:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cf3<span class="w"> </span>vasprun_xmls/vasprun-00<span class="o">{</span><span class="m">001</span>..100<span class="o">}</span>.xml<span class="w"> </span>--cf2<span class="w"> </span>vasprun_xmls/vasprun-ph0000<span class="o">{</span><span class="m">1</span>,2<span class="o">}</span>.xml<span class="w"> </span>--sp
+</pre></div>
+</div>
+<p>The advantage to employ <code class="docutils literal notranslate"><span class="pre">phono3py_params.yaml</span></code> is that this file can contain all
+the information required to run phono3py such as crystal structure, supercell
+information, displacements, forces, and parameters for non-analytical term
+correction. This file is immediately usable for <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code> command (<a class="reference internal" href="phono3py-load.html#phono3py-load-command"><span class="std std-ref">phono3py-load command</span></a>).</p>
+</section>
+<section id="calculation-of-force-constants">
+<h2>Calculation of force constants<a class="headerlink" href="#calculation-of-force-constants" title="Link to this heading">#</a></h2>
+<p>If <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> is located in current directory, force constants are
+calculated from <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> (and optionally <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code>) and
+<code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> by</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--symfc<span class="w"> </span>-v
+</pre></div>
+</div>
+<p>or with <code class="docutils literal notranslate"><span class="pre">phono3py_params.yaml</span></code></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-c<span class="w"> </span>phono3py_params.yaml<span class="w"> </span>--symfc<span class="w"> </span>-v
+</pre></div>
+</div>
+<p>Similarly, it is performed by also using <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code> command,</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--symfc<span class="w"> </span>-v
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>phono3py_params.yaml<span class="w"> </span>--symfc<span class="w"> </span>-v
+</pre></div>
+</div>
+</section>
+<section id="cutoff-pair-distance-for-fc3-calculation">
+<h2>Cutoff pair-distance for fc3 calculation<a class="headerlink" href="#cutoff-pair-distance-for-fc3-calculation" title="Link to this heading">#</a></h2>
+<p>The number of supercells required for calculating fc3 depends on crystal
+structure, crystal symmetry, and supercell size. For larger supercells, the
+number can be very large. In addition, the required computational time and
+memory space can also become large. In such case, it may be good to consider
+introducing cutoff distance for pairs of atoms. It is performed by
+<code class="docutils literal notranslate"><span class="pre">--fc-calc-opt</span></code> option as</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--symfc<span class="w"> </span>-v<span class="w"> </span>--fc-calc-opt<span class="w"> </span><span class="s2">&quot;cutoff=8&quot;</span>
+</pre></div>
+</div>
+<p>The shortcut of <code class="docutils literal notranslate"><span class="pre">--fc-calc-opt</span> <span class="pre">&quot;cutoff=8&quot;</span></code> is <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span> <span class="pre">8</span></code>.</p>
+<p>The convergence of fc3 has to be checked. With the same input of
+displacement-force dataset, calculated force constants gradually converge by
+increasing cutoff pair-distance. The convergence may be checked by lattice
+thermal conductivity, but it may depend on quantity that is expected to be
+calculated.</p>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="workload-distribution.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Workload distribution</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="cutoff-pair.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Force constants calculation with cutoff pair-distance</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#related-setting-tags">Related setting tags</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#generation-of-random-directional-displacements">Generation of random directional displacements</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#create-forces-fc3-and-forces-fc2">Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#create-phono3py-params-yaml">Create <code class="docutils literal notranslate"><span class="pre">phono3py_params.yaml</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#calculation-of-force-constants">Calculation of force constants</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cutoff-pair-distance-for-fc3-calculation">Cutoff pair-distance for fc3 calculation</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Author name not set
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2015, Atsushi Togo.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

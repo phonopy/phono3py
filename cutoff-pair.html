@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Force constants calculation with cutoff pair-distance &#8212; Phono3py v.3.3.2</title>
+    <title>Force constants calculation with cutoff pair-distance &#8212; Phono3py v.3.3.3</title>
   
   
   
@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="_static/documentation_options.js?v=18d69a83"></script>
+    <script src="_static/documentation_options.js?v=a32a189e"></script>
     <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -46,7 +46,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="External tools" href="external-tools.html" />
-    <link rel="prev" title="Workload distribution" href="workload-distribution.html" />
+    <link rel="prev" title="Force constants calculation with randan displacements of atoms" href="random-displacements.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -134,7 +134,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.3.2</p>
+    <p class="title logo__title">Phono3py v.3.3.3</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -168,6 +168,7 @@
 <li class="toctree-l1"><a class="reference internal" href="direct-solution.html">Direct solution of linearized phonon Boltzmann equation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="wigner-solution.html">Solution of the Wigner transport equation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="random-displacements.html">Force constants calculation with randan displacements of atoms</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Force constants calculation with cutoff pair-distance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="phono3py-api.html">Phono3py API</a></li>
@@ -352,7 +353,10 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="force-constants-calculation-with-cutoff-pair-distance">
 <span id="command-cutoff-pair"></span><h1>Force constants calculation with cutoff pair-distance<a class="headerlink" href="#force-constants-calculation-with-cutoff-pair-distance" title="Link to this heading">#</a></h1>
-<p>Here the detail of the command option <a class="reference internal" href="command-options.html#cutoff-pair-option"><span class="std std-ref">–cutoff_pair</span></a>
+<p>Since this calculation is a little bit tricky. It may be recommended to try
+<a class="reference internal" href="random-displacements.html#random-displacements"><span class="std std-ref">Force constants calculation with randan displacements of atoms</span></a> with <code class="docutils literal notranslate"><span class="pre">--fc-calc-opt</span> <span class="pre">&quot;cutoff</span> <span class="pre">=</span> <span class="pre">VAL&quot;</span></code> before trying
+this option.</p>
+<p>Here the detail of the command option <a class="reference internal" href="command-options.html#cutoff-pair-option"><span class="std std-ref">–cutoff-pair</span></a>
 is explained.</p>
 <!-- See also reference {cite}`Mizokami-PRB-2018`. -->
 <p>See also <a class="reference internal" href="reference.html#cutoff-pair-reference"><span class="std std-ref">a reference paper</span></a>.</p>
@@ -795,12 +799,12 @@ number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">1248</span>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="workload-distribution.html"
+       href="random-displacements.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Workload distribution</p>
+        <p class="prev-next-title">Force constants calculation with randan displacements of atoms</p>
       </div>
     </a>
     <a class="right-next"

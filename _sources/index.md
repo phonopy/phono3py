@@ -58,6 +58,7 @@ auxiliary-tools
 direct-solution
 wigner-solution
 workload-distribution
+random-displacements
 cutoff-pair
 external-tools
 phono3py-api

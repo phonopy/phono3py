@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Change Log &#8212; Phono3py v.3.3.2</title>
+    <title>Change Log &#8212; Phono3py v.3.3.3</title>
   
   
   
@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="_static/documentation_options.js?v=18d69a83"></script>
+    <script src="_static/documentation_options.js?v=a32a189e"></script>
     <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -133,7 +133,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.3.2</p>
+    <p class="title logo__title">Phono3py v.3.3.3</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -167,6 +167,7 @@
 <li class="toctree-l1"><a class="reference internal" href="direct-solution.html">Direct solution of linearized phonon Boltzmann equation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="wigner-solution.html">Solution of the Wigner transport equation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="random-displacements.html">Force constants calculation with randan displacements of atoms</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Force constants calculation with cutoff pair-distance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="phono3py-api.html">Phono3py API</a></li>
@@ -323,6 +324,7 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jul-22-2024-version-3-3-3">Jul-22-2024: Version 3.3.3</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jul-22-2024-version-3-3-2">Jul-22-2024: Version 3.3.2</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jul-8-2024-version-3-3-1">Jul-8-2024: Version 3.3.1</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jul-8-2024-version-3-3-0">Jul-8-2024: Version 3.3.0</a></li>
@@ -410,6 +412,16 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="change-log">
 <span id="changelog"></span><h1>Change Log<a class="headerlink" href="#change-log" title="Link to this heading">#</a></h1>
+<section id="jul-22-2024-version-3-3-3">
+<h2>Jul-22-2024: Version 3.3.3<a class="headerlink" href="#jul-22-2024-version-3-3-3" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Provide functionality by <code class="docutils literal notranslate"><span class="pre">--cf3</span></code> and <code class="docutils literal notranslate"><span class="pre">--cf2</span></code> command options to create force
+constants from displacement-force dataset of random displacements when
+an external force constants calculator is specified.</p></li>
+<li><p>New command line options <code class="docutils literal notranslate"><span class="pre">--rd</span></code>, <code class="docutils literal notranslate"><span class="pre">--rd-fc2</span></code>, <code class="docutils literal notranslate"><span class="pre">--fc-calc</span></code>, <code class="docutils literal notranslate"><span class="pre">--fc-calc-opt</span></code> and
+<code class="docutils literal notranslate"><span class="pre">--sp</span></code> to support random displacements.</p></li>
+</ul>
+</section>
 <section id="jul-22-2024-version-3-3-2">
 <h2>Jul-22-2024: Version 3.3.2<a class="headerlink" href="#jul-22-2024-version-3-3-2" title="Link to this heading">#</a></h2>
 <ul class="simple">
@@ -1132,6 +1144,7 @@ a mesh number is an even number, it is more carefully treated.</p></li>
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jul-22-2024-version-3-3-3">Jul-22-2024: Version 3.3.3</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jul-22-2024-version-3-3-2">Jul-22-2024: Version 3.3.2</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jul-8-2024-version-3-3-1">Jul-8-2024: Version 3.3.1</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jul-8-2024-version-3-3-0">Jul-8-2024: Version 3.3.0</a></li>
