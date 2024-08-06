@@ -588,9 +588,9 @@ def _get_dataset_phonon_dataset_or_fc2(
         )
     elif (
         forces_fc2_filename is not None or pathlib.Path("FORCES_FC2").exists()
-    ) and ph3py.phonon_supercell_matrix:
+    ) and ph3py.phonon_supercell_matrix is not None:
         if forces_fc2_filename is None:
-            force_filename = forces_fc2_filename
+            force_filename = "FORCES_FC2"
         else:
             force_filename = forces_fc2_filename
         phonon_dataset = _get_dataset_for_fc2(

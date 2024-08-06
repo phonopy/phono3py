@@ -35,8 +35,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from phonopy.interface.calculator import write_supercells_with_displacements
+from phonopy.structure.cells import print_cell
 
 from phono3py import Phono3py
+from phono3py.cui.show_log import print_supercell_matrix
 from phono3py.interface.calculator import (
     get_additional_info_to_write_fc2_supercells,
     get_additional_info_to_write_supercells,
@@ -92,6 +94,16 @@ def create_phono3py_supercells(
     if log_level:
         print("")
         print('Unit cell was read from "%s".' % optional_structure_info[0])
+        print("-" * 32 + " unit cell " + "-" * 33)  # 32 + 11 + 33 = 76
+        print_cell(phono3py.unitcell)
+        print("-" * 76)
+        print_supercell_matrix(
+            phono3py.supercell_matrix, phono3py.phonon_supercell_matrix
+        )
+        if phono3py.primitive_matrix is not None:
+            print("Primitive matrix:")
+            for v in phono3py.primitive_matrix:
+                print("  %s" % v)
         print("Displacement distance: %s" % distance)
 
     ids = []
@@ -125,6 +137,7 @@ def create_phono3py_supercells(
             print("Number of displacement supercell files created: %d" % num_disp_files)
 
     if phono3py.phonon_supercell_matrix is not None:
+        num_disps = len(phono3py.phonon_supercells_with_displacements)
         additional_info = get_additional_info_to_write_fc2_supercells(
             interface_mode, phono3py.phonon_supercell_matrix
         )

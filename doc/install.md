@@ -136,12 +136,13 @@ wrong python libraries can be imported.
    % cd phonopy
    % pip install -e . -vvv
    % cd ../phono3py
-   % pip install -e . -vvv
+   % pip install . -vvv
    ```
 
-   The conda packages dependency can often change and this recipe may not work
-   properly. So if you find this instruction doesn't work, it is very
-   appreciated if letting us know it in the phonopy mailing list.
+   The editable install (`pip install -e`) may not work depending on the
+   computer environment. The conda packages dependency can often change and this
+   recipe may not work properly. So if you find this instruction doesn't work,
+   it is very appreciated if letting us know it in the phonopy mailing list.
 
 (install_lapacke)=
 ## Installation of LAPACKE

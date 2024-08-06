@@ -2,7 +2,11 @@
 
 # Force constants calculation with cutoff pair-distance
 
-Here the detail of the command option {ref}`--cutoff_pair <cutoff_pair_option>`
+Since this calculation is a little bit tricky. It may be recommended to try
+{ref}`random-displacements` with `--fc-calc-opt "cutoff = VAL"` before trying
+this option.
+
+Here the detail of the command option {ref}`--cutoff-pair <cutoff_pair_option>`
 is explained.
 
 <!-- See also reference {cite}`Mizokami-PRB-2018`. -->
