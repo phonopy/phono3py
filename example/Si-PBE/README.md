@@ -13,18 +13,18 @@ conventional unit cell to the primitive cell.
 To create `fc3.hdf5` and `fc2.hdf5`,
 
 ```
-% phono3py --sym-fc
+% phono3py-load
 ```
 
 Using 11x11x11 sampling mesh, lattice thermal conductivity is calculated by
 
 ```
-% phono3py --mesh 11 11 11 --fc3 --fc2 --br
+% phono3py-load --mesh 11 11 11 --fc3 --fc2 --br
 ```
 
 `kappa-m111111.hdf5` is written as the result. The lattice thermal conductivity
-is calculated as 119.3 W/m-K at 300 K. This becomes, with 19x19x19 sampling
-mesh, 132.4 W/m-K.
+is calculated as 119.5 W/m-K at 300 K. This becomes, with 19x19x19 sampling
+mesh, 130.1 W/m-K.
 
 Accumulated lattice thermal conductivity is calculated using `phono3py-kaccum`
 script.

@@ -217,51 +217,40 @@ def parse_forces(
     dataset = None
     calculator = phono3py.calculator
 
-    # Get dataset from ph3py_yaml. dataset can be None.
-    # physical_units can be overwritten if calculator is found in ph3py_yaml.
-    if ph3py_yaml:
-        dataset = _extract_dataset_from_ph3py_yaml(ph3py_yaml, fc_type)
-    if dataset and ph3py_yaml.calculator:
-        calculator = ph3py_yaml.calculator
-
-    physical_units = get_default_physical_units(calculator)
-
     if phono3py.phonon_supercell is None or fc_type == "fc3":
         natom = len(phono3py.supercell)
     else:
         natom = len(phono3py.phonon_supercell)
 
-    if dataset:
-        filename_read_from = phono3py_yaml_filename
+    # Get dataset from ph3py_yaml. dataset can be None.
+    # physical_units can be overwritten if calculator is found in ph3py_yaml.
+    if ph3py_yaml:
+        dataset = _extract_dataset_from_ph3py_yaml(ph3py_yaml, fc_type)
+        if dataset:
+            filename_read_from = phono3py_yaml_filename
+            if ph3py_yaml.calculator:
+                calculator = ph3py_yaml.calculator
 
-        # Units of displacements and forces are converted. If forces don't
-        # exist, the convesion will not be performed for forces.
-        if calculator is not None:
-            _convert_unit_in_dataset(
-                dataset,
-                distance_to_A=physical_units["distance_to_A"],
-                force_to_eVperA=physical_units["force_to_eVperA"],
+    physical_units = get_default_physical_units(calculator)
+
+    # Forces are not yet found in dataset. Then try to read from FORCES_FC3 or
+    # FORCES_FC2.
+    if force_filename is not None:
+        if dataset is None or (dataset is not None and not forces_in_dataset(dataset)):
+            dataset = _read_FORCES_FC3_or_FC2(
+                natom, dataset, fc_type, filename=force_filename, log_level=log_level
             )
+            if dataset:
+                filename_read_from = force_filename
 
-    # Try to read FORCES_FC* if type-2 and return dataset.
-    # None is returned unless type-2.
-    # can emit FileNotFoundError.
-    if dataset is None or (dataset is not None and not forces_in_dataset(dataset)):
-        _dataset = read_type2_dataset(
-            natom, filename=force_filename, log_level=log_level
+    # Units of displacements and forces are converted. If forces don't
+    # exist, the convesion will not be performed for forces.
+    if calculator is not None:
+        _convert_unit_in_dataset(
+            dataset,
+            distance_to_A=physical_units["distance_to_A"],
+            force_to_eVperA=physical_units["force_to_eVperA"],
         )
-        # Do not overwrite dataset when _dataset is None.
-        if _dataset:
-            filename_read_from = force_filename
-            dataset = _dataset
-
-            # Units of displacements and forces are converted.
-            if calculator is not None:
-                _convert_unit_in_dataset(
-                    dataset,
-                    distance_to_A=physical_units["distance_to_A"],
-                    force_to_eVperA=physical_units["force_to_eVperA"],
-                )
 
     assert dataset is not None
 
@@ -285,29 +274,6 @@ def parse_forces(
             dataset["cutoff_distance"] = cutoff_pair_distance
             if log_level:
                 print("Cutoff-pair-distance: %f" % cutoff_pair_distance)
-
-    # Type-1 FORCES_FC*.
-    # dataset comes either from disp_fc*.yaml or phono3py*.yaml.
-    if not forces_in_dataset(dataset):
-        if force_filename is not None:
-            if fc_type == "fc3":
-                parse_FORCES_FC3(dataset, filename=force_filename)
-            else:
-                parse_FORCES_FC2(dataset, filename=force_filename)
-
-            if log_level:
-                print(
-                    f'Sets of supercell forces were read from "{force_filename}".',
-                    flush=True,
-                )
-
-        # Unit of displacements is already converted.
-        # Therefore, only unit of forces is converted.
-        if calculator is not None:
-            _convert_unit_in_dataset(
-                dataset,
-                force_to_eVperA=physical_units["force_to_eVperA"],
-            )
 
     return dataset
 
@@ -437,20 +403,40 @@ def _read_phono3py_fc2(phono3py, symmetrize_fc2, input_filename, log_level):
     phono3py.fc2 = phonon_fc2
 
 
-def read_type2_dataset(natom, filename="FORCES_FC3", log_level=0) -> Optional[dict]:
-    """Read type-2 FORCES_FC3."""
+def _read_FORCES_FC3_or_FC2(
+    natom: int,
+    dataset: Optional[dict],
+    fc_type: str,
+    filename: str = "FORCES_FC3",
+    log_level: int = 0,
+) -> Optional[dict]:
+    """Read FORCES_FC3 or FORCES_FC2.
+
+    Read the first line of forces file to determine the type of the file.
+
+    """
     if filename is None or not pathlib.Path(filename).exists():
         return None
 
     with open(filename, "r") as f:
         len_first_line = get_length_of_first_line(f)
-        if len_first_line == 6:
-            dataset = get_dataset_type2(f, natom)
+        if len_first_line == 6:  # Type-2
+            _dataset = get_dataset_type2(f, natom)
             if log_level:
-                n_disp = len(dataset["displacements"])
+                n_disp = len(_dataset["displacements"])
                 print(f'{n_disp} snapshots were found in "{filename}".')
-        else:
-            dataset = None
+            return _dataset
+
+    # Type-1
+    if fc_type == "fc3":
+        parse_FORCES_FC3(dataset, filename)
+    else:
+        parse_FORCES_FC2(dataset, filename)
+    if log_level:
+        print(
+            f'Sets of supercell forces were read from "{filename}".',
+            flush=True,
+        )
     return dataset
 
 
