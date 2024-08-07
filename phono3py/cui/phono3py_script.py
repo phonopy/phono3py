@@ -487,7 +487,6 @@ def init_phono3py(
         use_grg=settings.use_grg,
         make_r0_average=settings.is_fc3_r0_average,
         symprec=symprec,
-        calculator=interface_mode,
         log_level=log_level,
     )
     phono3py.masses = settings.masses
@@ -577,6 +576,7 @@ def store_force_constants(
     settings,
     ph3py_yaml: Phono3pyYaml,
     phono3py_yaml_filename,
+    calculator,
     input_filename,
     output_filename,
     load_phono3py_yaml,
@@ -593,6 +593,7 @@ def store_force_constants(
             phono3py_yaml_filename=phono3py_yaml_filename,
             cutoff_pair_distance=settings.cutoff_pair_distance,
             use_pypolymlp=settings.use_pypolymlp,
+            calculator=calculator,
             log_level=log_level,
         )
         (fc_calculator, fc_calculator_options) = get_fc_calculator_params(
@@ -672,6 +673,7 @@ def store_force_constants(
                 settings,
                 ph3py_yaml=ph3py_yaml,
                 phono3py_yaml_filename=phono3py_yaml_filename,
+                calculator=calculator,
                 input_filename=input_filename,
                 output_filename=output_filename,
                 log_level=log_level,
@@ -1140,6 +1142,7 @@ def main(**argparse_control):
         settings,
         cell_info["phonopy_yaml"],
         unitcell_filename,
+        interface_mode,
         input_filename,
         output_filename,
         load_phono3py_yaml,
