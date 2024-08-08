@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Workload distribution &#8212; Phono3py v.3.3.3</title>
+    <title>Workload distribution &#8212; Phono3py v.3.3.4</title>
   
   
   
@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="_static/documentation_options.js?v=a32a189e"></script>
+    <script src="_static/documentation_options.js?v=363f9a4f"></script>
     <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -132,7 +132,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.3.3</p>
+    <p class="title logo__title">Phono3py v.3.3.4</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -361,12 +361,12 @@ obtained, those data are collected by <a class="reference internal" href="comman
 <p>The following example is executed in the <code class="docutils literal notranslate"><span class="pre">Si-PBE</span></code> example.</p>
 <p>To avoid re-calculating fc3 and fc2, <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code> and <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code> are
 created on a single node:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--sym-fc<span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load
 </pre></div>
 </div>
 <p>The indices of the irreducible grid-points neccesarry to specify
 <code class="docutils literal notranslate"><span class="pre">--ga</span></code> option are found by <a class="reference internal" href="command-options.html#wgp-option"><span class="std std-ref">–wgp option</span></a></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--pa<span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--fc3<span class="w"> </span>--fc2<span class="w"> </span>--br<span class="w"> </span>--wgp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--br<span class="w"> </span>--wgp
 </pre></div>
 </div>
 <p>and they are stored in <code class="docutils literal notranslate"><span class="pre">ir_grid_points.yaml</span></code>.</p>
@@ -378,7 +378,7 @@ created on a single node:</p>
 necessary to obtain lattice thermal conductivity. To distribute
 computational demands into computer nodes, a set of the grid-point
 indices are chosen and executed as follows:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--pa<span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--fc3<span class="w"> </span>--fc2<span class="w"> </span>--br<span class="w"> </span>--gp<span class="o">=</span><span class="s2">&quot;0,1,2,3,4,5,6,7,8,9,20,21,22,23,24,25&quot;</span><span class="w"> </span>--write-gamma
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--br<span class="w"> </span>--gp<span class="w"> </span><span class="s2">&quot;0,1,2,3,4,5,6,7,8,9,20,21,22,23,24,25&quot;</span><span class="w"> </span>--write-gamma
 </pre></div>
 </div>
 <p>Then many <code class="docutils literal notranslate"><span class="pre">kappa-m191919-gx.hdf5</span></code> files are generated. These file
@@ -388,7 +388,7 @@ freedom to arrange those file names, for which see <a class="reference internal"
 options. After completing calculations for all irreducible grid-point
 indices, the RTA thermal conductivity is computed by another run in a
 short time from the stored data:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--pa<span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--fc3<span class="w"> </span>--fc2<span class="w"> </span>--br<span class="w"> </span>--read-gamma
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--br<span class="w"> </span>--read-gamma
 </pre></div>
 </div>
 </section>
@@ -418,7 +418,7 @@ indices for workload distribution.</p>
 </pre></div>
 </div>
 <p>Supposed that this script is saved as <code class="docutils literal notranslate"><span class="pre">divide_gps.py</span></code>,</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--pa<span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--wgp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--wgp
 ...
 %<span class="w"> </span>python<span class="w"> </span>divide_gps.py<span class="w"> </span><span class="m">20</span>
 <span class="m">0</span>,30,52,82,120,402,434,468,524,844,1206
@@ -456,7 +456,7 @@ system,</p>
 <span class="c1">#$ -e err-phono3py-num.log</span>
 <span class="c1">#$ -o std-phono3py-num.log</span>
 
-phono3py<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--pa<span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--fc3<span class="w"> </span>--fc2<span class="w"> </span>--br<span class="w"> </span>--gp<span class="o">=</span><span class="s2">&quot;gps&quot;</span><span class="w"> </span>--write-gamma
+phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--br<span class="w"> </span>--gp<span class="w"> </span><span class="s2">&quot;gps&quot;</span><span class="w"> </span>--write-gamma
 </pre></div>
 </div>
 </section>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Force constants calculation with cutoff pair-distance &#8212; Phono3py v.3.3.3</title>
+    <title>Force constants calculation with cutoff pair-distance &#8212; Phono3py v.3.3.4</title>
   
   
   
@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="_static/documentation_options.js?v=a32a189e"></script>
+    <script src="_static/documentation_options.js?v=363f9a4f"></script>
     <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -134,7 +134,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.3.3</p>
+    <p class="title logo__title">Phono3py v.3.3.4</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -353,13 +353,14 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="force-constants-calculation-with-cutoff-pair-distance">
 <span id="command-cutoff-pair"></span><h1>Force constants calculation with cutoff pair-distance<a class="headerlink" href="#force-constants-calculation-with-cutoff-pair-distance" title="Link to this heading">#</a></h1>
-<p>Since this calculation is a little bit tricky. It may be recommended to try
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Since usage of this calculation is complicated. It is recommended to try
 <a class="reference internal" href="random-displacements.html#random-displacements"><span class="std std-ref">Force constants calculation with randan displacements of atoms</span></a> with <code class="docutils literal notranslate"><span class="pre">--fc-calc-opt</span> <span class="pre">&quot;cutoff</span> <span class="pre">=</span> <span class="pre">VAL&quot;</span></code> before trying
 this option.</p>
+</div>
 <p>Here the detail of the command option <a class="reference internal" href="command-options.html#cutoff-pair-option"><span class="std std-ref">–cutoff-pair</span></a>
-is explained.</p>
-<!-- See also reference {cite}`Mizokami-PRB-2018`. -->
-<p>See also <a class="reference internal" href="reference.html#cutoff-pair-reference"><span class="std std-ref">a reference paper</span></a>.</p>
+is explained. See also <a class="reference internal" href="reference.html#cutoff-pair-reference"><span class="std std-ref">a reference paper</span></a>.</p>
 <nav class="contents local" id="contents">
 <ul class="simple">
 <li><p><a class="reference internal" href="#what-is-cutff-pair-distance-in-phono3py" id="id1">What is cutff pair-distance in phono3py?</a></p></li>
@@ -671,7 +672,7 @@ number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">110</span>
 <span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">119</span>.501<span class="w">    </span><span class="m">119</span>.501<span class="w">    </span><span class="m">119</span>.501<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
 <span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">119</span>.483<span class="w">    </span><span class="m">119</span>.483<span class="w">    </span><span class="m">119</span>.483<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
 <span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">119</span>.481<span class="w">    </span><span class="m">119</span>.481<span class="w">    </span><span class="m">119</span>.481<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
-%<span class="w"> </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">2</span>..10<span class="o">}</span><span class="p">;</span><span class="k">do</span><span class="w"> </span>cp<span class="w"> </span>phono3py_disp.<span class="nv">$i</span>.yaml<span class="w"> </span>phono3py_disp.yaml<span class="p">;</span><span class="w"> </span>phono3py<span class="w"> </span>--sym-fc<span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span><span class="w"> </span>--br<span class="p">|</span>tee<span class="w"> </span>std.sym-<span class="nv">$i</span>.out<span class="p">;</span><span class="k">done</span>
+%<span class="w"> </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">2</span>..10<span class="o">}</span><span class="p">;</span><span class="k">do</span><span class="w"> </span>cp<span class="w"> </span>phono3py_disp.<span class="nv">$i</span>.yaml<span class="w"> </span>phono3py_disp.yaml<span class="p">;</span><span class="w"> </span>phono3py<span class="w"> </span>--fc-symmetry<span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span><span class="w"> </span>--br<span class="p">|</span>tee<span class="w"> </span>std.sym-<span class="nv">$i</span>.out<span class="p">;</span><span class="k">done</span>
 %<span class="w"> </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">2</span>..10<span class="o">}</span><span class="p">;</span><span class="k">do</span><span class="w"> </span>egrep<span class="w"> </span><span class="s1">&#39;^\s+300&#39;</span><span class="w"> </span>std.sym-<span class="nv">$i</span>.out<span class="p">;</span><span class="k">done</span>
 <span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">124</span>.650<span class="w">    </span><span class="m">124</span>.650<span class="w">    </span><span class="m">124</span>.650<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
 <span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">119</span>.765<span class="w">    </span><span class="m">119</span>.765<span class="w">    </span><span class="m">119</span>.765<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000

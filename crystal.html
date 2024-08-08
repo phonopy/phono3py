@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>CRYSTAL &amp; phono3py calculation &#8212; Phono3py v.3.3.3</title>
+    <title>CRYSTAL &amp; phono3py calculation &#8212; Phono3py v.3.3.4</title>
   
   
   
@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="_static/documentation_options.js?v=a32a189e"></script>
+    <script src="_static/documentation_options.js?v=363f9a4f"></script>
     <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -132,7 +132,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.3.3</p>
+    <p class="title logo__title">Phono3py v.3.3.4</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -397,10 +397,10 @@ atoms, e.g., as follows:</p>
 <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code>, therefore they must exist in current directory.</p>
 </li>
 <li><p>Calculate 3rd and 2nd order force constants in files <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code> and <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--crystal<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--dim-fc2<span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span><span class="w"> </span>--sym-fc
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--crystal<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--dim-fc2<span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span><span class="w"> </span>--fc-symmetry
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">--sym-fc</span></code> is used to symmetrize second- and third-order force constants.</p>
+<p><code class="docutils literal notranslate"><span class="pre">--fc-symmetry</span></code> is used to symmetrize second- and third-order force constants.</p>
 </li>
 <li><p>Thermal conductivity calculation:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--crystal<span class="w"> </span>--fc3<span class="w"> </span>--fc2<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--dim-fc2<span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span><span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;20 20 20&quot;</span><span class="w"> </span>--br

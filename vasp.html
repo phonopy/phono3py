@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>VASP &amp; phono3py calculation &#8212; Phono3py v.3.3.3</title>
+    <title>VASP &amp; phono3py calculation &#8212; Phono3py v.3.3.4</title>
   
   
   
@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="_static/documentation_options.js?v=a32a189e"></script>
+    <script src="_static/documentation_options.js?v=363f9a4f"></script>
     <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -132,7 +132,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.3.3</p>
+    <p class="title logo__title">Phono3py v.3.3.4</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -379,10 +379,10 @@ step 1 is required. Then <code class="docutils literal notranslate"><span class=
 created.</p>
 </li>
 <li><p>Create <code class="docutils literal notranslate"><span class="pre">fc2.hdf</span></code> and <code class="docutils literal notranslate"><span class="pre">fc3.hdf</span></code></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--sym-fc
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--fc-symmetry
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">--sym-fc</span></code> symmetrizes fc3 and fc2. <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code> and <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code>
+<p><code class="docutils literal notranslate"><span class="pre">--fc-symmetry</span></code> symmetrizes fc3 and fc2. <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code> and <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code>
 are created from <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> (and
 optionally <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code>) and <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code>. This step is
 not mandatory, but you can avoid calculating fc2 and fc3 at every
