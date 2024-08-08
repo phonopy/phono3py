@@ -29,4 +29,4 @@ lattice thermal conductivity at 300 K is calculated by
 % phono3py-load phono3py_params_NaCl222.yaml.xz --mesh 50 --ts 300 --br
 ```
 
-The result is ~7.2 W/m-K at 300 K.
+The result is ~7.3 W/m-K at 300 K.

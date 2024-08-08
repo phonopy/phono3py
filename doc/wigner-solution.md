@@ -38,7 +38,7 @@ As discussed in the references above, the term $\kappa_{\rm P}^{\alpha \beta}$ c
 To compute the Wigner conductivity with scattering in the RTA approximation, specify `--br` and `--wigner`. For `example/Wigner_La2Zr2O7`, the command is:
 
 ```bash
-phono3py --nac --cell POSCAR --fc2 --dim="2 2 2" --dim-fc2="4 4 4" --mesh="19 19 19" --tmin=300 --tmax=1000 --tstep=700 --sym-fc --isotope --br --wigner --read-gamma > tc_La2Zr2O7.out
+phono3py --nac --cell POSCAR --fc2 --dim="2 2 2" --dim-fc2="4 4 4" --mesh="19 19 19" --tmin=300 --tmax=1000 --tstep=700 --fc-symmetry --isotope --br --wigner --read-gamma > tc_La2Zr2O7.out
 ```
 The example above uses the `--read-gamma` option to read the phonon linewidths stored in the file  `kappa-m191919.hdf5`. The calculation of these linewidths is computationally expensive, more details are reported in the {ref}`paper on the Wigner formulation <citation_wigner_formulation>`, and in this example the linewidths are provided.
 To learn how to compute the linewidths, the reader is referred to the documentation of the `--write-gamma` option.

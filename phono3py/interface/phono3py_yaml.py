@@ -133,10 +133,34 @@ class Phono3pyYamlLoader(PhonopyYamlLoaderBase):
 
         This method override PhonopyYaml._parse_dataset.
 
+        Phonon_displacements in type1 in old format is represented in yaml by
+
+        displacements:
+
+        But displacements (for fc3) in type2 in old format is also represented
+        by
+
+        displacements:
+
+        Therefore, these have to be distinguished by phonon_supercell_matrix.
+
+        In new format of type1
+
+        displacements: -> phonon_displacements:
+
+        and displacements: of type2 is put under phonon_dataset: block.
+
         """
-        self._data.phonon_dataset = self._get_dataset(
-            self._data.phonon_supercell, key_prefix="phonon_"
-        )
+        if (
+            self._data.phonon_supercell_matrix is not None
+            and "phonon_displacements" not in self._yaml
+            and "displacements" in self._yaml
+        ):  # old type1
+            self._data.phonon_dataset = self._get_dataset(self._data.phonon_supercell)
+        else:
+            self._data.phonon_dataset = self._get_dataset(
+                self._data.phonon_supercell, key_prefix="phonon_"
+            )
 
     def _parse_fc3_dataset(self):
         """Parse force dataset for fc3.

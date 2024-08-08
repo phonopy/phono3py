@@ -61,10 +61,10 @@
 4. Create `fc2.hdf` and `fc3.hdf`
 
    ```bash
-   % phono3py --sym-fc
+   % phono3py --fc-symmetry
    ```
 
-   `--sym-fc` symmetrizes fc3 and fc2. `fc2.hdf5` and `fc3.hdf5`
+   `--fc-symmetry` symmetrizes fc3 and fc2. `fc2.hdf5` and `fc3.hdf5`
    are created from `FORCES_FC3` (and
    optionally `FORCES_FC2`) and `phono3py_disp.yaml`. This step is
    not mandatory, but you can avoid calculating fc2 and fc3 at every
