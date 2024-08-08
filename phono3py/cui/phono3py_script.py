@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import pathlib
 import sys
 from typing import Optional
 
@@ -92,6 +93,7 @@ from phono3py.file_IO import (
 )
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon.grid import get_grid_point_from_address, get_ir_grid_points
+from phono3py.phonon3.dataset import forces_in_dataset
 from phono3py.phonon3.fc3 import show_drift_fc3
 from phono3py.phonon3.gruneisen import run_gruneisen_parameters
 from phono3py.version import __version__
@@ -485,7 +487,6 @@ def init_phono3py(
         use_grg=settings.use_grg,
         make_r0_average=settings.is_fc3_r0_average,
         symprec=symprec,
-        calculator=interface_mode,
         log_level=log_level,
     )
     phono3py.masses = settings.masses
@@ -541,15 +542,16 @@ def create_supercells_with_displacements(
             log_level=log_level,
         )
 
-        store_nac_params(
-            phono3py,
-            settings,
-            cell_info["phonopy_yaml"],
-            unitcell_filename,
-            log_level,
-            nac_factor=Hartree * Bohr,
-            load_phonopy_yaml=load_phono3py_yaml,
-        )
+        if pathlib.Path("BORN").exists():
+            store_nac_params(
+                phono3py,
+                settings,
+                cell_info["phonopy_yaml"],
+                unitcell_filename,
+                log_level,
+                nac_factor=Hartree * Bohr,
+                load_phonopy_yaml=load_phono3py_yaml,
+            )
 
         if log_level:
             if phono3py.supercell.magnetic_moments is None:
@@ -574,6 +576,7 @@ def store_force_constants(
     settings,
     ph3py_yaml: Phono3pyYaml,
     phono3py_yaml_filename,
+    calculator,
     input_filename,
     output_filename,
     load_phono3py_yaml,
@@ -590,6 +593,7 @@ def store_force_constants(
             phono3py_yaml_filename=phono3py_yaml_filename,
             cutoff_pair_distance=settings.cutoff_pair_distance,
             use_pypolymlp=settings.use_pypolymlp,
+            calculator=calculator,
             log_level=log_level,
         )
         (fc_calculator, fc_calculator_options) = get_fc_calculator_params(
@@ -616,10 +620,18 @@ def store_force_constants(
         if log_level:
             if phono3py.fc3 is None:
                 print("fc3 could not be obtained.")
+                if not forces_in_dataset(phono3py.dataset):
+                    print("Forces were not found.")
             else:
                 show_drift_fc3(phono3py.fc3, primitive=phono3py.primitive)
             if phono3py.fc2 is None:
                 print("fc2 could not be obtained.")
+                if phono3py.phonon_supercell_matrix is None:
+                    if not forces_in_dataset(phono3py.dataset):
+                        print("Forces were not found.")
+                else:
+                    if not forces_in_dataset(phono3py.phonon_dataset):
+                        print("Forces for dim-fc2 were not found.")
             else:
                 show_drift_force_constants(
                     phono3py.fc2, primitive=phono3py.phonon_primitive, name="fc2"
@@ -661,6 +673,7 @@ def store_force_constants(
                 settings,
                 ph3py_yaml=ph3py_yaml,
                 phono3py_yaml_filename=phono3py_yaml_filename,
+                calculator=calculator,
                 input_filename=input_filename,
                 output_filename=output_filename,
                 log_level=log_level,
@@ -1129,6 +1142,7 @@ def main(**argparse_control):
         settings,
         cell_info["phonopy_yaml"],
         unitcell_filename,
+        interface_mode,
         input_filename,
         output_filename,
         load_phono3py_yaml,

@@ -14,52 +14,56 @@ from all displaced supercell forces.
 
 Perfect and displaced supercells were created by
 
-```
+```bash
 % phono3py --dim 3 3 2 -c POSCAR-unitcell -d
 ```
 
-In the example directory, `FORCES_FC3` is compressed to `FORCES_FC3.lzma`. After
-unzipping `FORCES_FC3.lzma` (e.g., using `tar xvfz` or `tar xvfa`), to obtain
-`fc3.hdf5` and normal `fc2.hdf5`,
+In the example directory, `FORCES_FC3` is compressed to `FORCES_FC3.xz`. After
+unzipping `FORCES_FC3.xz` (e.g., using `xz -d`), to obtain `fc3.hdf5` and
+`fc2.hdf5` using symfc (the results without using symfc, i.e., finite difference
+method, are shown at the bottom of this README)
 
-```
-% phono3py --sym-fc
-```
-
-Using 13x13x9 sampling mesh, lattice thermal conductivity is calculated by
-
-```
-% phono3py --mesh 13 13 9 --fc3 --fc2 --br
+```bash
+% phono3py-load --symfc -v
 ```
 
-`kappa-m13139.hdf5` is written as the result. The lattice thermal conductivity
-is calculated as k_xx=228.2 and k_zz=224.1 W/m-K at 300 K.
+Lattice thermal conductivity is calculated by
 
-With `--nac` option, non-analytical term correction is applied reading the Born
-effective charges and dielectric constant from `BORN` file:
-
-```
-% phono3py --mesh 13 13 9 --fc3 --fc2 --br --nac
+```bash
+% phono3py-load --mesh 40 --br --ts 300
 ```
 
-This changes thermal conductivity at 300 K to k_xx=235.7 and k_zz=219.1. The
-shape of phonon band structure is important to fullfil energy and momentum
-conservations.
+`kappa-m15158.hdf5` is written as the result. Parameters for non-analytical term
+correction (NAC) is automatically read from those stored in `phono3py_disp.yaml` or
+`BORN` file. The lattice thermal conductivity is calculated as k_xx=242.8 and
+k_zz=226.5 W/m-K at 300 K. Without NAC, k_xx=233.6 and k_zz=222.2.
 
-Use of larger supercell of fc2 may change the shape of phonon band structure. To
-see it, first regenerate `phono3py_disp.yaml` with `--dim-fc2` option,
+Use of larger supercell for fc2 may change the shape of phonon band structure.
+To see it, first regenerate `phono3py_disp.yaml` with `--dim-fc2` option,
 
-```
+```bash
 % phono3py --dim 3 3 2 --dim-fc2 5 5 3 -c POSCAR-unitcell -d
 ```
 
 Then re-create force constants and calculate thermal conductivity,
 
-```
-% phono3py --sym-fc
-% phono3py --mesh="13 13 9" --fc3 --fc2 --br --nac
+```bash
+% phono3py-load --symfc -v
+% phono3py-load --br --mesh=40 --ts 300
 ```
 
-k_xx=236.0 and k_zz=222.2 are obtained. In the case of this example, we can see
+If `phono3py_disp.yaml` is renamed to `phono3py_disp_dimfc2.yaml`, it can be
+specified at the first argument of `phono3py-load` command:
+
+```bash
+% phono3py-load phono3py_disp_dimfc2.yaml --symfc -v
+% phono3py-load phono3py_disp_dimfc2.yaml --br --mesh=40 --ts 300
+```
+
+k_xx=240.2 and k_zz=230.1 are obtained. In the case of this example, we can see
 that the larger fc2 supercell contributes little, which means that the 3x3x2
 supercell was good enough to obtain a good shape of phonon band structure.
+
+Using the finite difference method implemented in phono3py, lattice thermal
+conductivities are obtained as k_xx=251.2 and k_zz=233,4 without using the large
+fc2 supercell and k_xx=249.4 k_zz=236.9 using the large fc2 supercell.

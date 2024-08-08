@@ -1487,6 +1487,9 @@ class Phono3py:
             fc2 = None
         if fc_calculator_options is not None and "|" in fc_calculator_options:
             fc2 = None
+        # fc2 should not be set if phonon_supercell_matrix is available.
+        if self._phonon_supercell_matrix is not None:
+            fc2 = None
 
         # Normally self._fc2 is overwritten in produce_fc2
         if self._fc2 is None:
@@ -1527,6 +1530,9 @@ class Phono3py:
         else:
             disp_dataset = self._phonon_dataset
 
+        if not forces_in_dataset(disp_dataset):
+            raise RuntimeError("Forces are not set in the dataset.")
+
         if is_compact_fc:
             p2s_map = self._phonon_primitive.p2s_map
         else:
@@ -1548,10 +1554,7 @@ class Phono3py:
             )
         else:
             if "displacements" in disp_dataset:
-                msg = (
-                    "fc_calculator has to be set to produce force "
-                    "constans from this dataset for fc2."
-                )
+                msg = "fc_calculator to solve fc2 has to be set."
                 raise RuntimeError(msg)
             self._fc2 = get_phonopy_fc2(
                 self._phonon_supercell,

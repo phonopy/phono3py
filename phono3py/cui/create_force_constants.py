@@ -37,11 +37,10 @@
 from __future__ import annotations
 
 import copy
-import os
 import pathlib
 import sys
 from dataclasses import asdict
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
 import numpy as np
 from phonopy.cui.phonopy_script import file_exists, print_error
@@ -81,6 +80,7 @@ def create_phono3py_force_constants(
     settings,
     ph3py_yaml: Optional[Phono3pyYaml] = None,
     phono3py_yaml_filename: Optional[str] = None,
+    calculator: Optional[str] = None,
     input_filename: Optional[str] = None,
     output_filename: Optional[str] = None,
     log_level=1,
@@ -118,21 +118,26 @@ def create_phono3py_force_constants(
         if settings.read_fc3:
             _read_phono3py_fc3(phono3py, symmetrize_fc3r, input_filename, log_level)
         else:  # fc3 from FORCES_FC3 or ph3py_yaml
-            _create_phono3py_fc3(
+            _read_dataset_fc3(
                 phono3py,
                 ph3py_yaml,
                 phono3py_yaml_filename,
-                symmetrize_fc3r,
-                settings.is_compact_fc,
                 settings.cutoff_pair_distance,
-                fc_calculator,
-                fc_calculator_options,
+                calculator,
                 settings.use_pypolymlp,
                 settings.mlp_params,
                 settings.displacement_distance,
                 settings.random_displacements,
                 settings.random_seed,
                 log_level,
+            )
+            phono3py.produce_fc3(
+                symmetrize_fc3r=symmetrize_fc3r,
+                is_compact_fc=settings.is_compact_fc,
+                fc_calculator=extract_fc2_fc3_calculators(fc_calculator, 3),
+                fc_calculator_options=extract_fc2_fc3_calculators(
+                    fc_calculator_options, 3
+                ),
             )
 
         cutoff_distance = settings.cutoff_fc3_distance
@@ -168,15 +173,20 @@ def create_phono3py_force_constants(
     if settings.read_fc2:
         _read_phono3py_fc2(phono3py, symmetrize_fc2, input_filename, log_level)
     else:
-        _create_phono3py_fc2(
-            phono3py,
-            ph3py_yaml,
-            symmetrize_fc2,
-            settings.is_compact_fc,
-            fc_calculator,
-            fc_calculator_options,
-            log_level,
+        if phono3py.dataset is None or phono3py.phonon_supercell_matrix is not None:
+            _read_dataset_fc2(
+                phono3py,
+                ph3py_yaml,
+                calculator,
+                log_level,
+            )
+        phono3py.produce_fc2(
+            symmetrize_fc2=symmetrize_fc2,
+            is_compact_fc=settings.is_compact_fc,
+            fc_calculator=extract_fc2_fc3_calculators(fc_calculator, 2),
+            fc_calculator_options=extract_fc2_fc3_calculators(fc_calculator_options, 2),
         )
+
         if output_filename is None:
             filename = "fc2.hdf5"
         else:
@@ -201,7 +211,8 @@ def parse_forces(
     cutoff_pair_distance=None,
     force_filename: str = "FORCES_FC3",
     phono3py_yaml_filename: Optional[str] = None,
-    fc_type=None,
+    fc_type: Literal["fc3", "phonon_fc2"] = "fc3",
+    calculator: Optional[str] = None,
     log_level=0,
 ):
     """Read displacements and forces.
@@ -215,53 +226,39 @@ def parse_forces(
     """
     filename_read_from: Optional[str] = None
     dataset = None
-    calculator = phono3py.calculator
-
-    # Get dataset from ph3py_yaml. dataset can be None.
-    # physical_units can be overwritten if calculator is found in ph3py_yaml.
-    if ph3py_yaml:
-        dataset = _extract_dataset_from_ph3py_yaml(ph3py_yaml, fc_type)
-    if dataset and ph3py_yaml.calculator:
-        calculator = ph3py_yaml.calculator
-
-    physical_units = get_default_physical_units(calculator)
 
     if phono3py.phonon_supercell is None or fc_type == "fc3":
         natom = len(phono3py.supercell)
     else:
         natom = len(phono3py.phonon_supercell)
 
-    if dataset:
-        filename_read_from = phono3py_yaml_filename
+    # Get dataset from ph3py_yaml. dataset can be None.
+    # physical_units can be overwritten if calculator is found in ph3py_yaml.
+    if ph3py_yaml:
+        dataset = _extract_dataset_from_ph3py_yaml(ph3py_yaml, fc_type)
+        if dataset:
+            filename_read_from = phono3py_yaml_filename
 
-        # Units of displacements and forces are converted. If forces don't
-        # exist, the convesion will not be performed for forces.
-        if calculator is not None:
-            _convert_unit_in_dataset(
-                dataset,
-                distance_to_A=physical_units["distance_to_A"],
-                force_to_eVperA=physical_units["force_to_eVperA"],
+    physical_units = get_default_physical_units(calculator)
+
+    # Forces are not yet found in dataset. Then try to read from FORCES_FC3 or
+    # FORCES_FC2.
+    if force_filename is not None:
+        if dataset is None or (dataset is not None and not forces_in_dataset(dataset)):
+            dataset = _read_FORCES_FC3_or_FC2(
+                natom, dataset, fc_type, filename=force_filename, log_level=log_level
             )
+            if dataset:
+                filename_read_from = force_filename
 
-    # Try to read FORCES_FC* if type-2 and return dataset.
-    # None is returned unless type-2.
-    # can emit FileNotFoundError.
-    if dataset is None or (dataset is not None and not forces_in_dataset(dataset)):
-        _dataset = read_type2_dataset(
-            natom, filename=force_filename, log_level=log_level
+    # Units of displacements and forces are converted. If forces don't
+    # exist, the convesion will not be performed for forces.
+    if calculator is not None:
+        _convert_unit_in_dataset(
+            dataset,
+            distance_to_A=physical_units["distance_to_A"],
+            force_to_eVperA=physical_units["force_to_eVperA"],
         )
-        # Do not overwrite dataset when _dataset is None.
-        if _dataset:
-            filename_read_from = force_filename
-            dataset = _dataset
-
-            # Units of displacements and forces are converted.
-            if calculator is not None:
-                _convert_unit_in_dataset(
-                    dataset,
-                    distance_to_A=physical_units["distance_to_A"],
-                    force_to_eVperA=physical_units["force_to_eVperA"],
-                )
 
     assert dataset is not None
 
@@ -285,29 +282,6 @@ def parse_forces(
             dataset["cutoff_distance"] = cutoff_pair_distance
             if log_level:
                 print("Cutoff-pair-distance: %f" % cutoff_pair_distance)
-
-    # Type-1 FORCES_FC*.
-    # dataset comes either from disp_fc*.yaml or phono3py*.yaml.
-    if not forces_in_dataset(dataset):
-        if force_filename is not None:
-            if fc_type == "fc3":
-                parse_FORCES_FC3(dataset, filename=force_filename)
-            else:
-                parse_FORCES_FC2(dataset, filename=force_filename)
-
-            if log_level:
-                print(
-                    f'Sets of supercell forces were read from "{force_filename}".',
-                    flush=True,
-                )
-
-        # Unit of displacements is already converted.
-        # Therefore, only unit of forces is converted.
-        if calculator is not None:
-            _convert_unit_in_dataset(
-                dataset,
-                force_to_eVperA=physical_units["force_to_eVperA"],
-            )
 
     return dataset
 
@@ -437,32 +411,49 @@ def _read_phono3py_fc2(phono3py, symmetrize_fc2, input_filename, log_level):
     phono3py.fc2 = phonon_fc2
 
 
-def read_type2_dataset(natom, filename="FORCES_FC3", log_level=0) -> Optional[dict]:
-    """Read type-2 FORCES_FC3."""
+def _read_FORCES_FC3_or_FC2(
+    natom: int,
+    dataset: Optional[dict],
+    fc_type: str,
+    filename: str = "FORCES_FC3",
+    log_level: int = 0,
+) -> Optional[dict]:
+    """Read FORCES_FC3 or FORCES_FC2.
+
+    Read the first line of forces file to determine the type of the file.
+
+    """
     if filename is None or not pathlib.Path(filename).exists():
         return None
 
     with open(filename, "r") as f:
         len_first_line = get_length_of_first_line(f)
-        if len_first_line == 6:
-            dataset = get_dataset_type2(f, natom)
+        if len_first_line == 6:  # Type-2
+            _dataset = get_dataset_type2(f, natom)
             if log_level:
-                n_disp = len(dataset["displacements"])
+                n_disp = len(_dataset["displacements"])
                 print(f'{n_disp} snapshots were found in "{filename}".')
-        else:
-            dataset = None
+            return _dataset
+
+    # Type-1
+    if fc_type == "fc3":
+        parse_FORCES_FC3(dataset, filename)
+    else:
+        parse_FORCES_FC2(dataset, filename)
+    if log_level:
+        print(
+            f'Sets of supercell forces were read from "{filename}".',
+            flush=True,
+        )
     return dataset
 
 
-def _create_phono3py_fc3(
+def _read_dataset_fc3(
     phono3py: Phono3py,
     ph3py_yaml: Optional[Phono3pyYaml],
     phono3py_yaml_filename: Optional[str],
-    symmetrize_fc3r: bool,
-    is_compact_fc: bool,
     cutoff_pair_distance: Optional[float],
-    fc_calculator: Optional[str],
-    fc_calculator_options: Optional[str],
+    calculator: Optional[str],
     use_pypolymlp: bool,
     mlp_params: Union[str, dict, PypolymlpParams],
     displacement_distance: Optional[float],
@@ -484,16 +475,15 @@ def _create_phono3py_fc3(
     when the former value is smaller than the later.
 
     """
-    _ph3py_yaml = _get_default_ph3py_yaml(ph3py_yaml)
-
     try:
         dataset = parse_forces(
             phono3py,
-            ph3py_yaml=_ph3py_yaml,
+            ph3py_yaml=ph3py_yaml,
             cutoff_pair_distance=cutoff_pair_distance,
             force_filename="FORCES_FC3",
             phono3py_yaml_filename=phono3py_yaml_filename,
             fc_type="fc3",
+            calculator=calculator,
             log_level=log_level,
         )
     except RuntimeError as e:
@@ -518,12 +508,6 @@ def _create_phono3py_fc3(
         )
     else:
         phono3py.dataset = dataset
-    phono3py.produce_fc3(
-        symmetrize_fc3r=symmetrize_fc3r,
-        is_compact_fc=is_compact_fc,
-        fc_calculator=extract_fc2_fc3_calculators(fc_calculator, 3),
-        fc_calculator_options=extract_fc2_fc3_calculators(fc_calculator_options, 3),
-    )
 
 
 def run_pypolymlp_to_compute_forces(
@@ -653,13 +637,10 @@ def run_pypolymlp_to_compute_phonon_forces(
     ph3py.evaluate_phonon_mlp()
 
 
-def _create_phono3py_fc2(
+def _read_dataset_fc2(
     phono3py: Phono3py,
     ph3py_yaml: Optional[Phono3pyYaml],
-    symmetrize_fc2,
-    is_compact_fc,
-    fc_calculator,
-    fc_calculator_options,
+    calculator,
     log_level,
 ):
     """Read forces and produce fc2.
@@ -667,19 +648,22 @@ def _create_phono3py_fc2(
     force_filename is either "FORCES_FC2" or "FORCES_FC3".
 
     """
-    if phono3py.phonon_supercell_matrix is None:
+    # _ph3py_yaml = _get_default_ph3py_yaml(ph3py_yaml)
+
+    if phono3py.phonon_supercell_matrix is not None:
+        force_filename = "FORCES_FC2"
+    elif phono3py.dataset is None:
         force_filename = "FORCES_FC3"
     else:
-        force_filename = "FORCES_FC2"
-
-    _ph3py_yaml = _get_default_ph3py_yaml(ph3py_yaml)
+        raise RuntimeError("Force filename is not determined.")
 
     try:
         dataset = parse_forces(
             phono3py,
-            ph3py_yaml=_ph3py_yaml,
+            ph3py_yaml=ph3py_yaml,
             force_filename=force_filename,
             fc_type="phonon_fc2",
+            calculator=calculator,
             log_level=log_level,
         )
     except RuntimeError as e:
@@ -690,18 +674,15 @@ def _create_phono3py_fc2(
     except FileNotFoundError as e:
         file_exists(e.filename, log_level)
 
-    phono3py.phonon_dataset = dataset
-    phono3py.produce_fc2(
-        symmetrize_fc2=symmetrize_fc2,
-        is_compact_fc=is_compact_fc,
-        fc_calculator=extract_fc2_fc3_calculators(fc_calculator, 2),
-        fc_calculator_options=extract_fc2_fc3_calculators(fc_calculator_options, 2),
-    )
+    if phono3py.phonon_supercell_matrix is not None:
+        phono3py.phonon_dataset = dataset
+    elif phono3py.dataset is None:
+        phono3py.dataset = dataset
 
 
 def _get_default_ph3py_yaml(ph3py_yaml: Optional[Phono3pyYaml]):
     _ph3py_yaml = ph3py_yaml
-    if _ph3py_yaml is None and os.path.isfile("phono3py_disp.yaml"):
+    if _ph3py_yaml is None and pathlib.Path("phono3py_disp.yaml").exists():
         _ph3py_yaml = Phono3pyYaml()
         _ph3py_yaml.read("phono3py_disp.yaml")
     return _ph3py_yaml

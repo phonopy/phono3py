@@ -78,10 +78,10 @@ so the -c crystal.o parameter is not needed.
 4) Calculate 3rd and 2nd order force constants in files `fc3.hdf5` and `fc2.hdf5`:
 
    ```bash
-   % phono3py --crystal --dim="2 2 2" --dim-fc2="4 4 4" --sym-fc
+   % phono3py --crystal --dim="2 2 2" --dim-fc2="4 4 4" --fc-symmetry
    ```
 
-   `--sym-fc` is used to symmetrize second- and third-order force constants.
+   `--fc-symmetry` is used to symmetrize second- and third-order force constants.
 
 5) Thermal conductivity calculation:
 
