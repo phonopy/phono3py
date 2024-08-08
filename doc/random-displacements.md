@@ -6,7 +6,7 @@ displacement-force dataset for computing force constants. This requires an
 external force constants calculator, e.g., symfc or ALM. Here, examples are
 presented with using symfc that can be installed via pip or conda easily.
 
-## Related setting tags
+## Related command options
 
 - {ref}`random_displacements_option` (`--rd`, `--random-seed`)
 - {ref}`fc_calculator_option` (`--fc-calc`)
@@ -82,6 +82,18 @@ calculated from `FORCES_FC3` (and optionally `FORCES_FC2`) and
 `phono3py_disp.yaml` by
 
 ```bash
+% phono3py-load --symfc -v
+```
+
+or
+
+```bash
+% phono3py-load phono3py_params.yaml --symfc -v
+```
+
+Similarly, it is performed by also using `phono3py` command,
+
+```bash
 % phono3py --symfc -v
 ```
 
@@ -91,17 +103,6 @@ or with `phono3py_params.yaml`
 % phono3py -c phono3py_params.yaml --symfc -v
 ```
 
-Similarly, it is performed by also using `phono3py-load` command,
-
-```bash
-% phono3py-load --symfc -v
-```
-
-or
-
-```bash
-% phono3py-load phono3py_params.yaml --symfc -v
-```
 
 ## Cutoff pair-distance for fc3 calculation
 
@@ -113,7 +114,7 @@ introducing cutoff distance for pairs of atoms. It is performed by
 `--fc-calc-opt` option as
 
 ```bash
-% phono3py --symfc -v --fc-calc-opt "cutoff=8"
+% phono3py-load --symfc -v --fc-calc-opt "cutoff=8"
 ```
 
 The shortcut of `--fc-calc-opt "cutoff=8"` is `--cutoff-pair 8`.

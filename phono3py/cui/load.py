@@ -46,6 +46,7 @@ from phonopy.harmonic.force_constants import show_drift_force_constants
 from phonopy.interface.calculator import get_default_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import determinant
+from phonopy.units import VaspToTHz
 
 from phono3py import Phono3py
 from phono3py.cui.create_force_constants import (
@@ -261,6 +262,7 @@ def load(
         or unitcell is not None
         or unitcell_filename is not None
     ):
+        _calculator = calculator
         cell, smat, pmat = load_helper.get_cell_settings(
             supercell_matrix=supercell_matrix,
             primitive_matrix=primitive_matrix,
@@ -268,7 +270,7 @@ def load(
             supercell=supercell,
             unitcell_filename=unitcell_filename,
             supercell_filename=supercell_filename,
-            calculator=calculator,
+            calculator=_calculator,
             symprec=symprec,
         )
         if phonon_supercell_matrix is not None:
@@ -286,7 +288,8 @@ def load(
     elif phono3py_yaml is not None:
         ph3py_yaml = Phono3pyYaml()
         ph3py_yaml.read(phono3py_yaml)
-        cell = ph3py_yaml.unitcell
+        cell = ph3py_yaml.unitcell.copy()
+        _calculator = ph3py_yaml.calculator
         smat = ph3py_yaml.supercell_matrix
         ph_smat = ph3py_yaml.phonon_supercell_matrix
         if smat is None:
@@ -303,10 +306,13 @@ def load(
         else:
             _nac_params = None
 
-    # units keywords: factor, nac_factor, distance_to_A
-    physical_units = get_default_physical_units(calculator)
+    # Convert distance unit of unit cell to Angstrom
+    physical_units = get_default_physical_units(_calculator)
+    factor_to_A = physical_units["distance_to_A"]
+    cell.cell = cell.cell * factor_to_A
+
     if factor is None:
-        _factor = physical_units["factor"]
+        _factor = VaspToTHz
     else:
         _factor = factor
     ph3py = Phono3py(
@@ -320,7 +326,6 @@ def load(
         is_mesh_symmetry=is_mesh_symmetry,
         use_grg=use_grg,
         make_r0_average=make_r0_average,
-        calculator=calculator,
         log_level=log_level,
     )
 
@@ -343,6 +348,7 @@ def load(
         forces_fc3_filename=forces_fc3_filename,
         forces_fc2_filename=forces_fc2_filename,
         phono3py_yaml_filename=phono3py_yaml,
+        calculator=_calculator,
         use_pypolymlp=use_pypolymlp,
         log_level=log_level,
     )
@@ -379,6 +385,7 @@ def set_dataset_and_force_constants(
     forces_fc2_filename: Optional[Union[os.PathLike, Sequence]] = None,
     phono3py_yaml_filename: Optional[os.PathLike] = None,
     cutoff_pair_distance: Optional[float] = None,
+    calculator: Optional[str] = None,
     use_pypolymlp: bool = False,
     log_level: int = 0,
 ) -> dict:
@@ -404,6 +411,7 @@ def set_dataset_and_force_constants(
         forces_fc3_filename=forces_fc3_filename,
         phono3py_yaml_filename=phono3py_yaml_filename,
         cutoff_pair_distance=cutoff_pair_distance,
+        calculator=calculator,
         log_level=log_level,
     )
     if not read_fc["fc3"]:
@@ -416,6 +424,7 @@ def set_dataset_and_force_constants(
         ph3py_yaml=ph3py_yaml,
         fc2_filename=fc2_filename,
         forces_fc2_filename=forces_fc2_filename,
+        calculator=calculator,
         log_level=log_level,
     )
     if not read_fc["fc2"]:
@@ -475,17 +484,23 @@ def compute_force_constants_from_datasets(
             if log_level and symmetrize_fc and fc_calculator is None:
                 print("fc3 was symmetrized.")
 
-    if not read_fc["fc2"] and (
-        forces_in_dataset(ph3py.dataset) or forces_in_dataset(ph3py.phonon_dataset)
-    ):
-        ph3py.produce_fc2(
-            symmetrize_fc2=symmetrize_fc,
-            is_compact_fc=is_compact_fc,
-            fc_calculator=fc2_calculator,
-            fc_calculator_options=extract_fc2_fc3_calculators(fc_calculator_options, 2),
-        )
-        if log_level and symmetrize_fc and fc_calculator is None:
-            print("fc2 was symmetrized.")
+    if not read_fc["fc2"]:
+        if (
+            ph3py.phonon_supercell_matrix is None and forces_in_dataset(ph3py.dataset)
+        ) or (
+            ph3py.phonon_supercell_matrix is not None
+            and forces_in_dataset(ph3py.phonon_dataset)
+        ):
+            ph3py.produce_fc2(
+                symmetrize_fc2=symmetrize_fc,
+                is_compact_fc=is_compact_fc,
+                fc_calculator=fc2_calculator,
+                fc_calculator_options=extract_fc2_fc3_calculators(
+                    fc_calculator_options, 2
+                ),
+            )
+            if log_level and symmetrize_fc and fc_calculator is None:
+                print("fc2 was symmetrized.")
 
 
 def _get_dataset_or_fc3(
@@ -495,6 +510,7 @@ def _get_dataset_or_fc3(
     forces_fc3_filename: Optional[Union[os.PathLike, Sequence]] = None,
     phono3py_yaml_filename: Optional[os.PathLike] = None,
     cutoff_pair_distance: Optional[float] = None,
+    calculator: Optional[str] = None,
     log_level: int = 0,
 ) -> tuple[bool, dict]:
     p2s_map = ph3py.primitive.p2s_map
@@ -523,6 +539,7 @@ def _get_dataset_or_fc3(
             None,
             phono3py_yaml_filename,
             cutoff_pair_distance,
+            calculator,
             log_level,
         )
     elif forces_fc3_filename is not None or pathlib.Path("FORCES_FC3").exists():
@@ -536,6 +553,7 @@ def _get_dataset_or_fc3(
             force_filename,
             phono3py_yaml_filename,
             cutoff_pair_distance,
+            calculator,
             log_level,
         )
     elif ph3py_yaml is not None and ph3py_yaml.dataset is not None:
@@ -547,6 +565,7 @@ def _get_dataset_or_fc3(
             None,
             phono3py_yaml_filename,
             cutoff_pair_distance,
+            calculator,
             log_level,
         )
 
@@ -558,6 +577,7 @@ def _get_dataset_phonon_dataset_or_fc2(
     ph3py_yaml: Optional[Phono3pyYaml] = None,
     fc2_filename: Optional[os.PathLike] = None,
     forces_fc2_filename: Optional[Union[os.PathLike, Sequence]] = None,
+    calculator: Optional[str] = None,
     log_level: int = 0,
 ) -> tuple[bool, dict, dict]:
     phonon_p2s_map = ph3py.phonon_primitive.p2s_map
@@ -584,6 +604,7 @@ def _get_dataset_phonon_dataset_or_fc2(
             ph3py_yaml,
             None,
             "phonon_fc2",
+            calculator,
             log_level,
         )
     elif (
@@ -598,6 +619,7 @@ def _get_dataset_phonon_dataset_or_fc2(
             ph3py_yaml,
             force_filename,
             "phonon_fc2",
+            calculator,
             log_level,
         )
     elif ph3py_yaml is not None and ph3py_yaml.phonon_dataset is not None:
@@ -608,6 +630,7 @@ def _get_dataset_phonon_dataset_or_fc2(
             ph3py_yaml,
             None,
             "phonon_fc2",
+            calculator,
             log_level,
         )
 
@@ -620,6 +643,7 @@ def _get_dataset_for_fc3(
     force_filename,
     phono3py_yaml_filename,
     cutoff_pair_distance,
+    calculator,
     log_level,
 ) -> dict:
     dataset = parse_forces(
@@ -629,6 +653,7 @@ def _get_dataset_for_fc3(
         force_filename=force_filename,
         phono3py_yaml_filename=phono3py_yaml_filename,
         fc_type="fc3",
+        calculator=calculator,
         log_level=log_level,
     )
     return dataset
@@ -639,6 +664,7 @@ def _get_dataset_for_fc2(
     ph3py_yaml: Optional[Phono3pyYaml],
     force_filename,
     fc_type,
+    calculator,
     log_level,
 ):
     dataset = parse_forces(
@@ -646,6 +672,7 @@ def _get_dataset_for_fc2(
         ph3py_yaml=ph3py_yaml,
         force_filename=force_filename,
         fc_type=fc_type,
+        calculator=calculator,
         log_level=log_level,
     )
     return dataset

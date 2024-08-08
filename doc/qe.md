@@ -67,10 +67,10 @@ only limited number of keywords that are shown in the phonopy web site
    `fc3.hdf5` and `fc2.hdf5` files are created by:
 
    ```bash
-   % phono3py --sym-fc
+   % phono3py --fc-symmetry
    ```
 
-   where `--sym-fc` symmetrizes fc3 and fc2.
+   where `--fc-symmetry` symmetrizes fc3 and fc2.
 
 5) Calculate lattice thermal conductivity, e.g., by:
 

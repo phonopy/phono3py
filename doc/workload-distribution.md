@@ -28,14 +28,14 @@ To avoid re-calculating fc3 and fc2, `fc3.hdf5` and `fc2.hdf5` are
 created on a single node:
 
 ```bash
-% phono3py --dim="2 2 2" --sym-fc -c POSCAR-unitcell
+% phono3py-load
 ```
 
 The indices of the irreducible grid-points neccesarry to specify
 `--ga` option are found by {ref}`--wgp option <wgp_option>`
 
 ```bash
-% phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --br --wgp
+% phono3py-load --mesh 19 19 19 --br --wgp
 ```
 
 and they are stored in `ir_grid_points.yaml`.
@@ -51,7 +51,7 @@ computational demands into computer nodes, a set of the grid-point
 indices are chosen and executed as follows:
 
 ```bash
-% phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --br --gp="0,1,2,3,4,5,6,7,8,9,20,21,22,23,24,25" --write-gamma
+% phono3py-load --mesh 19 19 19 --br --gp "0,1,2,3,4,5,6,7,8,9,20,21,22,23,24,25" --write-gamma
 ```
 
 Then many `kappa-m191919-gx.hdf5` files are generated. These file
@@ -63,7 +63,7 @@ indices, the RTA thermal conductivity is computed by another run in a
 short time from the stored data:
 
 ```bash
-% phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --br --read-gamma
+% phono3py-load --mesh 19 19 19 --br --read-gamma
 ```
 
 ## A convenient script
@@ -96,7 +96,7 @@ with open("ir_grid_points.yaml") as f:
 Supposed that this script is saved as `divide_gps.py`,
 
 ```bash
-% phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="19 19 19" --wgp
+% phono3py-load --mesh 19 19 19 --wgp
 ...
 % python divide_gps.py 20
 0,30,52,82,120,402,434,468,524,844,1206
@@ -138,5 +138,5 @@ with `job.sh` (here for grid-engine):
 #$ -e err-phono3py-num.log
 #$ -o std-phono3py-num.log
 
-phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --br --gp="gps" --write-gamma
+phono3py-load --mesh 19 19 19 --br --gp "gps" --write-gamma
 ```

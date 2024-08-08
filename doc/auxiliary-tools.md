@@ -39,7 +39,7 @@ Let's compute lattice thermal conductivity of Si using the `Si-PBEsol` example
 found in the example directory.
 
 ```bash
-% phono3py --mesh="11 11 11" --sym-fc --br
+% phono3py --mesh="11 11 11" --fc-symmetry --br
 ```
 
 Then using the output file, `kappa-m111111.hdf5`, run `phono3py-kaccum` as
