@@ -69,7 +69,7 @@ so the `-c control` parameter is not needed.
 4) Calculate 3rd and 2nd order force constants in files `fc3.hdf5` and `fc2.hdf5`:
 
    ```bash
-   % phono3py --turbomole --dim="2 2 2" --dim-fc2="3 3 3" --sym-fc
+   % phono3py --turbomole --dim="2 2 2" --dim-fc2="3 3 3" --fc-symmetry
    ```
 
    `--sym-fc` is used to symmetrize second- and third-order force constants.

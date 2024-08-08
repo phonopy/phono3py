@@ -2,6 +2,10 @@
 
 # Command options / Setting tags
 
+(use_config_with_option)=
+
+## Use of configuration file
+
 Phono3py is operated with command options or with a configuration file that
 contains setting tags. In this page, the command options are explained. Most of
 command options have their respective setting tags.
@@ -27,13 +31,19 @@ CELL_FILENAME = POSCAR-unitcell
 where the setting tag names are case insensitive. This is run by
 
 ```bash
-% phono3py setting.conf [command options]
+% phono3py setting.conf [OPTIONS]
 ```
 
 or
 
 ```bash
-% phono3py [command options] -- setting.conf
+% phono3py [OPTIONS] -- setting.conf
+```
+
+When using `phono3py-load` (see also {ref}`phono3py_load_command`)
+
+```bash
+% phono3py-load --config setting.conf [OPTIONS]
 ```
 
 ```{contents}
@@ -201,14 +211,31 @@ When using with `--cf2`, `--cf3` has to be specified simultaneously as below,
 
 ### `--dim` (`DIM`)
 
+**`phono3py-load` doesn't have this option.**
+
 Supercell dimension is specified. See the detail at
-<http://phonopy.github.io/phonopy/setting-tags.html#dim>. When a proper
-`phono3py_disp.yaml` exists in the current directory, this is unnecessary to be
-specified.
+<http://phonopy.github.io/phonopy/setting-tags.html#dim>. When
+`phono3py_disp.yaml` is found in the current directory, it is read
+automatically. Since supercell dimension is written in this file, `--dim` is
+unnecessary to specify. For example, just
+
+```bash
+% phono3py --fc-symmetry
+```
+
+or
+
+```bash
+% phono3py --symfc
+```
+
+can be used to calculate force constants.
 
 (dim_fc2_option)=
 
 ### `--dim-fc2` (`DIM_FC2`)
+
+**`phono3py-load` doesn't have this option.**
 
 Supercell dimension for 2nd order force constants (for harmonic phonons) is
 specified. This is optional. When a proper `phono3py_disp.yaml` exists in the
@@ -228,7 +255,7 @@ supercell size and these force calculations have to be done in addition to the
 usual force calculations for 3rd order force constants.
 
 ```bash
-% phono3py -d --dim="2 2 2" --dim-fc2="4 4 4" -c POSCAR-unitcell
+% phono3py -d --dim 2 2 2 --dim-fc2 4 4 4 --pa auto -c POSCAR-unitcell
 ```
 
 After the force calculations, `--cf2` option is used to create `FORCES_FC2`.
@@ -253,10 +280,11 @@ that created in the usual phono3py run without `--dim-fc2` option.
 ### `--pa`, `--primitive-axes` (`PRIMITIVE_AXES`)
 
 Transformation matrix from a non-primitive cell to the primitive cell. See
-phonopy `PRIMITIVE_AXES` tag (`--pa` option) at
-<http://phonopy.github.io/phonopy/setting-tags.html#primitive-axis>. When a proper
-`phono3py_disp.yaml` exists in the current directory, this is unnecessary to be
-specified.
+phonopy `PRIMITIVE_AXES` tag (`--pa` option) at [primitive-axis
+(phonopy)](https://phonopy.github.io/phonopy/setting-tags.html#primitive-axes-or-primitive-axis).
+When `phono3py_disp.yaml` contains this information and `phono3py_disp.yaml` is
+read when running `phono3py` or `phono3py-load` command, this is unnecessary to
+be specified.
 
 ### `--mass` (`MASS`)
 
@@ -273,23 +301,44 @@ web page](https://phonopy.github.io/phonopy/setting-tags.html#magmom).
 (create_displacements_option)=
 ### `-d` (`CREATE_DISPLACEMENTS = .TRUE.`)
 
-Supercell with displacements are created. Using with `--amplitude` option,
-atomic displacement distances are controlled. With this option, files for
-supercells with displacements and `phono3py_disp.yaml` file are created. `--pa`
-should be specified if the input unit cell structure is not a primitive cell,
-e.g., `--pa="F"` if the input unit cell has F-centring.
+**`phono3py-load` doesn't have this option.**
 
+Supercells with displacements and `phono3py_disp.yaml` are created. Using with
+`--amplitude` option, atomic displacement distances are controlled. With this
+option, files for supercells with displacements and `phono3py_disp.yaml` file
+are created.
+
+It is recommended to use this option with `--pa auto` option to store
+information about primitive cell (`primitive_matrix` key) in
+`phono3py_disp.yaml`, e.g.,
+
+```bash
+% phono3py -c POSCAR-unitcell -d --dim 2 2 2 --dim-fc2 4 4 4 --pa auto
+```
 
 (random_displacements_option)=
 ### `--rd` (`RANDOM_DISPLACEMENTS`), `--rd-fc2` (`RANDOM_DISPLACEMENTS_FC2`) and `--random-seed` (`RANDOM_SEED`)
+
+**`phono3py-load` doesn't have this option.**
+
+See also {ref}`random-displacements`.
 
 Random directional displacements are generated for fc3 and fc2 supercells by
 `--rd` and `--rd-fc2`, respectively. `--amplitude` and `--random-seed` options
 may be used together. These are used in the equivalent way to [`--rd` of
 phonopy](https://phonopy.github.io/phonopy/setting-tags.html#random-displacements).
 
+Like `-d` option, it is recommended to specify `--pa auto` together with `--rd`
+and/or `--rd-fc2`,
+
+```bash
+% phono3py -c POSCAR-unitcell --dim 2 2 2 --dim-fc2 4 4 4 --rd 100 --rd-fc2 2 --pa auto
+```
+
 (amplitude_option)=
 ### `--amplitude` (`DISPLACEMENT_DISTANCE`)
+
+**`phono3py-load` doesn't have this option.**
 
 Atomic displacement distance is specified. This value may be increased for the
 weak interaction systems and decreased when the force calculator is numerically
@@ -303,13 +352,13 @@ The default value depends on calculator. See
 
 Choice of force constants calculator.
 
-```
-% phono3py --fc-calc symfc ...
+```bash
+% phono3py-load --fc-calc symfc ...
 ```
 
 To use different force constants calculators for fc2 and fc3
-```
-% phono3py --fc-calc "symfc|" ...
+```bash
+% phono3py-load --fc-calc "symfc|" ...
 ```
 Those for fc2 and fc3 are seprated by `|` such as `symfc|` . Blank means to
 employ the finite difference method for systematic displacements generated by
@@ -320,8 +369,8 @@ the option `-d`.
 
 Special options for force constants calculators.
 
-```
-% phono3py --fc-calc-opt "cutoff=8" ...
+```bash
+% phono3py-load --fc-calc-opt "cutoff=8" ...
 ```
 
 Similarly to `--fc-calc`, `|` can be used to separated those for fc2 and fc3.
@@ -335,6 +384,9 @@ Similarly to `--fc-calc`, `|` can be used to separated those for fc2 and fc3.
 ### `--symfc` and `--alm`
 
 These are shortcuts of `--fc-calc symfc` and `--fc-calc alm`, respectively.
+
+Please be careful that `--symfc` and `--sym-fc` (deprecated) are similar, but
+different.
 
 ## Force constants
 
@@ -352,16 +404,16 @@ data size becomes large. If the input crystal structure has centring
 {ref}`--pa <pa_option>` is necessary to have smallest data size. In this case,
 `--pa` option has to be specified on reading. Otherwise phono3py can recognize
 if `fc2.hdf5` and `fc3.hdf5` are compact or full automatically. When using with
-`--sym-fc`, the calculated results will become slightly different due to
+`--fc-symmetry`, the calculated results will become slightly different due to
 imperfect symmetrization scheme that phono3py employs.
 
 ```bash
-% phono3py --dim="2 2 2" --cfc --pa="F" -c POSCAR-unitcell
+% phono3py-load --compact-fc
 ```
 
 (symmetrization_option)=
 
-### `--sym-fc` (`FC_SYMMETRY = .TRUE.`)
+### `--fc-symmetry` (`FC_SYMMETRY = .TRUE.`)
 
 Second- and third-order force constants are symmetrized. The index exchange of
 real space force constants and translational invariance symmetry are applied in a
@@ -390,15 +442,16 @@ supercell size and the second choice is using `--cutoff-pair` option.
 
 ### `--cutoff-pair` or `--cutoff-pair-distance` (`CUTOFF_PAIR_DISTANCE`)
 
-This option works differently for the `-d` and `--rd` options.
+This option works in two ways.
 
-For `-d`, A cutoff pair-distance in a supercell is used to reduce the number of
-necessary supercells with displacements to obtain third order force constants.
-As the drawback, a certain number of third-order-force-constants elements are
-abandoned or computed with less numerical accuracy. More details are found at
-{ref}`command_cutoff_pair`.
+When using with `-d` options, a cutoff pair-distance in a supercell is used to
+reduce the number of necessary supercells with displacements to obtain third
+order force constants. As the drawback, a certain number of
+third-order-force-constants elements are abandoned or computed with less
+numerical accuracy. More details are found at {ref}`command_cutoff_pair`.
 
-For `--rd`, `--cutoff-pair VAL` is equivalent to `--fc-calc-opt "cutoff=VAL"`.
+When using with an external force constants calculator, `--cutoff-pair VAL` works
+equivalent to `--fc-calc-opt "cutoff=VAL"`.
 
 ### `--alm`
 
@@ -436,10 +489,10 @@ The mapping table between grid points to its indices is obtained by running with
 `--loglevel=2` option.
 
 ```bash
-% phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --br --write-gamma --gp="0 1 2 3 4 5"
+% phono3py-load --mesh 19 19 19 --br --write-gamma --gp 0 1 2 3 4 5
 ```
 
-where `--gp="0 1 2 3 4 5"` can be also written `--gp="0,1,2,3,4,5"`. `--ga`
+where `--gp 0 1 2 3 4 5` can be also written `--gp="0,1,2,3,4,5"`. `--ga`
 option below can be used similarly for the same purpose.
 
 (ga_option)=
@@ -447,10 +500,10 @@ option below can be used similarly for the same purpose.
 ### `--ga` (`GRID_ADDRESSES`)
 
 This is used to specify grid points like `--gp` option but in their addresses
-represented by integer numbers. For example with `--mesh="16 16 16"`, a q-point
-of (0.5, 0.5, 0.5) is given by `--ga="8 8 8"`. The values have to be integers.
+represented by integer numbers. For example with `--mesh 16 16 16`, a q-point
+of (0.5, 0.5, 0.5) is given by `--ga 8 8 8`. The values have to be integers.
 If you want to specify the point on a path,
-`--ga="0 0 0 1 1 1 2 2 2 3 3 3 ..."`, where each three values are recognized as
+`--ga 0 0 0 1 1 1 2 2 2 3 3 3 ...`, where each three values are recognized as
 a grid point. The grid points given by `--ga` option are translated to grid
 point indices as given by `--gp` option, and the values given by `--ga` option
 will not be shown in log files.
@@ -466,7 +519,7 @@ band indices where the values are calculated and summed and averaged over those
 bands.
 
 ```bash
-% phono3py --fc3 --fc2 --dim="2 2 2" --mesh="16 16 16" -c POSCAR-unitcell --nac --gp="34" --bi="4 5, 6"
+% phono3py-load --mesh 16 16 16 --nac --gp 34 --bi "4 5, 6"
 ```
 
 This option may be also useful to distribute the computational demand such like
@@ -489,7 +542,7 @@ calculated divided these integers by sampling mesh numbers for respective
 reciprocal axes.
 
 ```bash
-% phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="19 19 19" --wgp
+% phono3py-load --mesh 19 19 19 --wgp
 ```
 
 (stp_option)=
@@ -502,7 +555,7 @@ large a calculation is. Only those for specific grid points are shown by using
 with `--gp` or `--ga` option.
 
 ```bash
-% phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="19 19 19" --stp --gp 20
+% phono3py-load --mesh 19 19 19 --stp --gp 20
 ```
 
 ## Brillouin zone integration
@@ -533,7 +586,7 @@ This is used when we want to test several $\sigma$ values simultaneously.
 The tails of the Gaussian functions that are used to replace delta functions in
 the equation shown at {ref}`--full-pp <full_pp_option>` are cut with this
 option. The value is specified in number of standard deviation.
-`--sigma-cutoff=5` gives the Gaussian functions to be cut at $5\sigma$. Using
+`--sigma-cutoff 5` gives the Gaussian functions to be cut at $5\sigma$. Using
 this option scarifies the numerical accuracy. So the number has to be carefully
 tested. But computation of phonon-phonon interaction strength becomes much
 faster in exchange for it.
@@ -614,27 +667,27 @@ database of the natural abundance data for elements, which refers Laeter _et
 al._, Pure Appl. Chem., **75**, 683 (2003).
 
 ```bash
-% phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br --isotope
+% phono3py-load -v --mesh 32 32 20 --br --isotope
 ```
 
 ### `--mass-variances` or `--mv` (`MASS_VARIANCES`)
 
 Mass variance parameters are specified by this option to include phonon-isotope
 scattering effect in the same way as `--isotope` option. For example of GaN,
-this may be set like `--mv="1.97e-4 1.97e-4 0 0"`. The number of elements has to
+this may be set like `--mv 1.97e-4 1.97e-4 0 0`. The number of elements has to
 correspond to the number of atoms in the primitive cell.
 
 Isotope effect to thermal conductivity may be checked first running without
 isotope calculation:
 
 ```bash
-% phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br
+% phono3py-load -v --mesh 32 32 20 --br
 ```
 
 Then running with isotope calculation:
 
 ```bash
-% phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br --read-gamma --mv="1.97e-4 1.97e-4 0 0"
+% phono3py -v --mesh 32 32 20 --br --read-gamma --mv 1.97e-4 1.97e-4 0 0
 ```
 
 In the result hdf5 file, currently isotope scattering strength is not written
@@ -648,7 +701,7 @@ A most simple phonon boundary scattering treatment is included. $v_g/L$ is just
 used as the scattering rate, where $v_g$ is the group velocity and $L$ is the
 boundary mean free path. The value is given in micrometre. The default value, 1
 metre, is just used to avoid divergence of phonon lifetime and the contribution
-to the thermal conducitivity is considered negligible.
+to the thermal conductivity is considered negligible.
 
 (ave_pp_option)=
 
@@ -691,13 +744,13 @@ option is strongly recommended.
 First, run full conductivity calculation,
 
 ```bash
-% phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br
+% phono3py-load -v --mesh 32 32 20 --br
 ```
 
 Then
 
 ```bash
-% phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br --read-gamma --ave-pp -o ave_pp
+% phono3py-load -v --mesh 32 32 20 --br --read-gamma --ave-pp -o ave_pp
 ```
 
 ### `--const-ave-pp` (`CONST_AVE_PP = .TRUE.`)
@@ -715,7 +768,7 @@ $\text{eV}^2$.
 See also {ref}`reference papers <ave_pp_reference>`.
 
 ```bash
-% phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br --const-ave-pp=1e-10
+% phono3py-load -v --mesh 32 32 20 --br --const-ave-pp 1e-10
 ```
 
 (normal_umklapp_option)=
@@ -739,7 +792,7 @@ The data are stored in `kappa-mxxx(-gx-sx-sdx).hdf5` file and accessed by
 below:
 
 ```bash
-% phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="11 11 11" --fc3 --fc2 --br --nu
+% phono3py-load --mesh 11 11 11 --fc3 --fc2 --br --nu
 ...
 % ipython
 
@@ -820,7 +873,7 @@ $$
 Specific temperatures are specified by `--ts`.
 
 ```bash
-% phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="11 11 11" -c POSCAR-unitcell --br --ts="200 300 400"
+% phono3py-load -v --mesh 11 11 11 -c POSCAR-unitcell --br --ts 200 300 400
 ```
 
 ### `--tmax`, `--tmin`, `--tstep` (`TMAX`, `TMIN`, `TSTEP`)
@@ -830,7 +883,7 @@ See phonopy's document for the same tags at
 <http://phonopy.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep>.
 
 ```bash
-% phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="11 11 11" -c POSCAR-unitcell --br --tmin=100 --tmax=1000 --tstep=50
+% phono3py-load -v --mesh 11 11 11 --br --tmin 100 --tmax 1000 --tstep 50
 ```
 
 ## Non-analytical term correction
@@ -918,7 +971,7 @@ to `gammas-mxxx-gx(-sx)-tx-bx.dat` in THz (without $2\pi$) with respect to
 samplied frequency points of $\omega$ in THz (without $2\pi$).
 
 ```bash
-% phono3py --fc3 --fc2 --dim="2 2 2" --mesh="16 16 16" -c POSCAR-unitcell --nac --q-direction="1 0 0" --gp=0 --ise --bi="4 5, 6"
+% phono3py-load --mesh 16 16 16 --nac --q-direction 1 0 0 --gp 0 --ise --bi "4 5, 6"
 ```
 
 (rse_option)=
@@ -945,7 +998,7 @@ $\Delta_\lambda(\omega)$ is written to `deltas-mxxx-gx-sx-tx-bx.dat` in THz
 (without $2\pi$).
 
 ```bash
-% phono3py --fc3 --fc2 --dim="2 2 2" --mesh="16 16 16" -c POSCAR-unitcell --nac --q-direction="1 0 0" --gp=0 --rse --sigma="0.1" --bi="4 5, 6"
+% phono3py-load --mesh 16 16 16 --nac --q-direction 1 0 0 --gp 0 --rse --sigma 0.1 --bi "4 5, 6"
 ```
 
 (spectral_function_option)=
@@ -982,7 +1035,7 @@ THz (without $2\pi$) with respect to samplied frequency points of $\omega$ in
 THz (without $2\pi$), and `spectral-mxxx-gx.hdf5`.
 
 ```bash
-% phono3py --fc3 --fc2 --dim="2 2 2" --mesh="16 16 16" -c POSCAR-unitcell --nac --q-direction="1 0 0" --gp=0 --spf
+% phono3py-load --mesh 16 16 16 --nac --q-direction 1 0 0 --gp 0 --spf
 ```
 
 ```{note}
@@ -1026,7 +1079,7 @@ $$
 See also {ref}`reference papers <spectral_function_reference>`.
 
 ```bash
-% phono3py --fc2 --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="16 16 16" --jdos --ga="0 0 0  8 8 8"
+% phono3py-load --mesh 16 16 16 --jdos --ga 0 0 0 8 8 8
 ```
 
 When temperatures are specified, two classes of weighted JDOS are calculated.
@@ -1052,7 +1105,7 @@ $$
 See also {ref}`reference papers <spectral_function_reference>`.
 
 ```bash
-% phono3py --fc2 --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="16 16 16" --jdos --ga="0 0 0  8 8 8" --ts=300
+% phono3py-load --mesh 16 16 16 --jdos --ga 0 0 0 8 8 8 --ts 300
 ```
 
 This is an example of `Si-PBEsol`.
@@ -1081,13 +1134,13 @@ Mode-Gruneisen-parameters are calculated from fc3.
 Mesh sampling mode:
 
 ```bash
-% phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="16 16 16" -c POSCAR-unitcell --nac --gruneisen
+% phono3py-load -v --mesh 16 16 16 --nac --gruneisen
 ```
 
 Band path mode:
 
 ```bash
-% phono3py --fc3 --fc2 --dim="2 2 2" -v -c POSCAR-unitcell --nac --gruneisen --band="0 0 0  0 0 1/2"
+% phono3py-load -v --nac --gruneisen --band "0 0 0  0 0 1/2"
 ```
 
 ## File I/O
@@ -1199,7 +1252,7 @@ Phonon frequencies, eigenvectors, and grid point addresses are stored in
 may be required depending on calculation setting.
 
 ```bash
-% phono3py --fc2 --dim="2 2 2" --pa="F" --mesh="11 11 11" -c POSCAR-unitcell --nac --write-phoonon
+% phono3py-load --mesh 11 11 11 --nac --write-phoonon
 ```
 
 Contents of `phonon-mxxx.hdf5` are watched by:
@@ -1248,7 +1301,7 @@ different CPU architectures. {ref}`--pa <pa_option>` and
 {ref}`--nac <nac_option>` may be required depending on calculation setting.
 
 ```bash
-% phono3py --fc2 --fc3 --dim="2 2  2" --pa="F" --mesh="11 11 11" -c POSCAR-unitcell --nac --read-phoonon --br
+% phono3py-load --mesh 11 11 11 --nac --read-phoonon --br
 ```
 
 (write_read_pp_option)=
@@ -1266,11 +1319,11 @@ calculation, in writing and reading, ph-ph interaction strength has to be stored
 in memory, so there is overhead in memory than usual RTA calculation.
 
 ```bash
-% phono3py --fc2 --fc3 --dim="2 2 2" --pa="F" --mesh="11 11 11" -c POSCAR-unitcell --nac --write-pp --br --gp=1
+% phono3py-load --mesh 11 11 11 --nac --write-pp --br --gp 1
 ```
 
 ```bash
-% phono3py --fc2 --dim="2 2 2" --pa="F" --mesh="11 11 11" -c POSCAR-unitcell --nac --read-pp --br --gp=1
+% phono3py-load --mesh 11 11 11 --nac --read-pp --br --gp 1
 ```
 
 (hdf5_compression_option)=

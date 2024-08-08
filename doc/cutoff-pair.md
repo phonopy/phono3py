@@ -1,17 +1,14 @@
 (command_cutoff_pair)=
 
 # Force constants calculation with cutoff pair-distance
-
-Since this calculation is a little bit tricky. It may be recommended to try
+```{note}
+Since usage of this calculation is complicated. It is recommended to try
 {ref}`random-displacements` with `--fc-calc-opt "cutoff = VAL"` before trying
 this option.
+```
 
 Here the detail of the command option {ref}`--cutoff-pair <cutoff_pair_option>`
-is explained.
-
-<!-- See also reference {cite}`Mizokami-PRB-2018`. -->
-
-See also {ref}`a reference paper <cutoff_pair_reference>`.
+is explained. See also {ref}`a reference paper <cutoff_pair_reference>`.
 
 ```{contents}
 :depth: 2
@@ -329,7 +326,7 @@ number_of_pairs_in_cutoff: 110
   300.0     119.501    119.501    119.501     -0.000     -0.000      0.000
   300.0     119.483    119.483    119.483     -0.000     -0.000      0.000
   300.0     119.481    119.481    119.481     -0.000     -0.000      0.000
-% for i in {2..10};do cp phono3py_disp.$i.yaml phono3py_disp.yaml; phono3py --sym-fc --mesh="11 11 11" --br|tee std.sym-$i.out;done
+% for i in {2..10};do cp phono3py_disp.$i.yaml phono3py_disp.yaml; phono3py --fc-symmetry --mesh="11 11 11" --br|tee std.sym-$i.out;done
 % for i in {2..10};do egrep '^\s+300' std.sym-$i.out;done
   300.0     124.650    124.650    124.650     -0.000     -0.000      0.000
   300.0     119.765    119.765    119.765     -0.000     -0.000      0.000

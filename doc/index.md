@@ -20,28 +20,16 @@ the Wigner transport equation <LTC_options>`
 Papers that may introduce phono3py:
 
 - Theoretical background is summarized in this paper:
-  <http://dx.doi.org/10.1103/PhysRevB.91.094306> (arxiv
-  <http://arxiv.org/abs/1501.00691>).
+  [PRB.91.094306](http://dx.doi.org/10.1103/PhysRevB.91.094306) (arxiv
+  [1501.00691](http://arxiv.org/abs/1501.00691>)).
 - Introduction to phono3py application:
-  <https://journals.jps.jp/doi/10.7566/JPSJ.92.012001> (open access),
+  [JPSJ.92.012001](https://journals.jps.jp/doi/10.7566/JPSJ.92.012001) (open access),
   and phono3py inputs for 103 compounds found in Fig.17
   <https://github.com/atztogo/phonondb/blob/main/mdr/phono3py_103compounds_fd/README.md>
 - Implementation of phono3py:
-  <https://iopscience.iop.org/article/10.1088/1361-648X/acd831> (open access)
+  [JPCM.35.353001](https://iopscience.iop.org/article/10.1088/1361-648X/acd831)
+  (open access)
 
-A set of pre-calculated data for phono3py in
-
-```{image} Si-kaccum.png
-:width: 20%
-```
-
-```{image} Si-kaccum-MFP.png
-:width: 20%
-```
-
-```{image} Si-kdeplot.png
-:width: 22%
-```
 
 ## Documentation
 
