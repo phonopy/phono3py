@@ -2,7 +2,12 @@
 
 # Change Log
 
-## Jul-22-2024: Version 3.3.3
+## Aug-8-2024: Version 3.3.4
+
+- Fix of command line user interface.
+- Fix of phono3py yaml parser.
+
+## Aug-6-2024: Version 3.3.3
 
 - Provide functionality by `--cf3` and `--cf2` command options to create force
   constants from displacement-force dataset of random displacements when
