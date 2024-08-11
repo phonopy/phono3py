@@ -114,7 +114,7 @@ def print_phono3py():
  | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
  |_|                                |_|    |___/ """
     )
-    print_version(__version__)
+    print_version(__version__, package_name="phono3py")
     print_time()
 
 
@@ -264,7 +264,7 @@ def read_phono3py_settings(args, argparse_control, log_level):
     load_phono3py_yaml = argparse_control.get("load_phono3py_yaml", False)
 
     if len(args.filename) > 0:
-        file_exists(args.filename[0], log_level)
+        file_exists(args.filename[0], log_level=log_level)
         if load_phono3py_yaml:
             phono3py_conf_parser = Phono3pyConfParser(
                 filename=args.conf_filename,
