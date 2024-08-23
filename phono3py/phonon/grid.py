@@ -38,6 +38,13 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Sequence
+
+try:
+    from spglib import SpglibDataset
+except ImportError:
+    from types import SimpleNamespace as SpglibDataset
+
+
 from typing import Optional, Union
 
 import numpy as np
@@ -137,7 +144,7 @@ class BZGrid:
         mesh: Union[int, float, Sequence, np.ndarray],
         reciprocal_lattice=None,
         lattice=None,
-        symmetry_dataset: Optional[dict] = None,
+        symmetry_dataset: Optional[Union[SpglibDataset]] = None,
         transformation_matrix: Optional[Union[Sequence, np.ndarray]] = None,
         is_shift: Optional[Union[list, np.ndarray]] = None,
         is_time_reversal: bool = True,
@@ -156,9 +163,10 @@ class BZGrid:
         lattice : array_like
             Direct primitive basis vectors given as row vectors shape=(3, 3),
             dtype='double', order='C'
-        symmetry_dataset : dict, optional
+        symmetry_dataset : SpglibDataset, optional
             Symmetry dataset (Symmetry.dataset) searched for the primitive cell
-            corresponding to ``reciprocal_lattice`` or ``lattice``.
+            corresponding to ``reciprocal_lattice`` or ``lattice``. For spglib <
+            v2.5, SimpleNamespace is used instead of SpglibDataset.
         transformation_matrix : array_like, optional
             Transformation matrix equivalent to ``transformation_matrix`` in
             spglib-dataset. This is only used when ``use_grg=True`` and
@@ -384,7 +392,7 @@ class BZGrid:
         return self._reciprocal_operations
 
     @property
-    def symmetry_dataset(self):
+    def symmetry_dataset(self) -> SpglibDataset:
         """Return Symmetry.dataset."""
         return self._symmetry_dataset
 
@@ -472,7 +480,7 @@ class BZGrid:
             direct_rotations = np.eye(3, dtype="int_", order="C").reshape(1, 3, 3)
         else:
             direct_rotations = np.array(
-                self._symmetry_dataset["rotations"], dtype="int_", order="C"
+                self._symmetry_dataset.rotations, dtype="int_", order="C"
             )
         rec_rotations = np.zeros((48, 3, 3), dtype="int_", order="C")
         num_rec_rot = recgrid.reciprocal_rotations(
@@ -530,7 +538,7 @@ class GridMatrix:
         self,
         mesh: Union[int, float, Sequence, np.ndarray],
         lattice: Union[Sequence, np.ndarray],
-        symmetry_dataset: Optional[dict] = None,
+        symmetry_dataset: Optional[SpglibDataset] = None,
         transformation_matrix: Optional[Union[list, np.ndarray]] = None,
         use_grg: bool = True,
         force_SNF: bool = False,
@@ -547,9 +555,10 @@ class GridMatrix:
         lattice : array_like
             Primitive basis vectors in direct space given as row vectors.
             shape=(3, 3), dtype='double', order='C'
-        symmetry_dataset : dict, optional
+        symmetry_dataset : SpglibDataset, optional
             Symmetry dataset of spglib (Symmetry.dataset) of primitive cell that
-            has `lattice`. Default is None.
+            has `lattice`. Default is None. For spglib <
+            v2.5, SimpleNamespace is used instead of SpglibDataset.
         transformation_matrix : array_like, optional
             Transformation matrix equivalent to ``transformation_matrix`` in
             spglib-dataset. This is only used when ``use_grg=True`` and
@@ -627,7 +636,7 @@ class GridMatrix:
         self,
         mesh: Union[int, float, Sequence, np.ndarray],
         use_grg: bool = False,
-        symmetry_dataset: Optional[dict] = None,
+        symmetry_dataset: Optional[SpglibDataset] = None,
         transformation_matrix: Optional[Union[list, np.ndarray]] = None,
         force_SNF=False,
         coordinates="reciprocal",
@@ -673,7 +682,7 @@ class GridMatrix:
                     self._D_diag = length2mesh(length, self._lattice)
                 else:
                     self._D_diag = length2mesh(
-                        length, self._lattice, rotations=symmetry_dataset["rotations"]
+                        length, self._lattice, rotations=symmetry_dataset.rotations
                     )
         if num_values == 9:
             self._run_grg(
@@ -703,7 +712,7 @@ class GridMatrix:
             sym_dataset = symmetry_dataset
         else:  # transformation_matrix is not None
             sym_dataset = self._get_mock_symmetry_dataset(transformation_matrix)
-        if is_primitive_cell(sym_dataset["rotations"]):
+        if is_primitive_cell(sym_dataset.rotations):
             self._set_GRG_mesh(
                 sym_dataset,
                 length=length,
@@ -742,18 +751,23 @@ class GridMatrix:
                 "be equal to or larger than 1."
             )
             raise RuntimeError(msg)
-        sym_dataset = {
-            "rotations": np.eye(3, dtype="intc", order="C").reshape(1, 3, 3),
-            "transformation_matrix": transformation_matrix,
-            "std_lattice": self._lattice,
-            "std_types": np.array([1], dtype="intc"),
-            "number": 1,
-        }
+
+        from types import SimpleNamespace
+
+        sym_dataset = SimpleNamespace(
+            **{
+                "rotations": np.eye(3, dtype="intc", order="C").reshape(1, 3, 3),
+                "transformation_matrix": transformation_matrix,
+                "std_lattice": self._lattice,
+                "std_types": np.array([1], dtype="intc"),
+                "number": 1,
+            }
+        )
         return sym_dataset
 
     def _set_GRG_mesh(
         self,
-        sym_dataset: dict,
+        sym_dataset: SpglibDataset,
         length: Optional[float] = None,
         grid_matrix=None,
         force_SNF=False,
@@ -807,22 +821,22 @@ class GridMatrix:
             `reciprocal` (default) or `direct`.
 
         """
-        tmat = sym_dataset["transformation_matrix"]
+        tmat = sym_dataset.transformation_matrix
         conv_lat = np.dot(np.linalg.inv(tmat).T, self._lattice)
 
         # GRG is wanted to be generated with respect to std_lattice if possible.
         if _can_use_std_lattice(
             conv_lat,
             tmat,
-            sym_dataset["std_lattice"],
-            sym_dataset["rotations"],
+            sym_dataset.std_lattice,
+            sym_dataset.rotations,
         ):
-            conv_lat = sym_dataset["std_lattice"]
+            conv_lat = sym_dataset.std_lattice
             tmat = np.dot(self._lattice, np.linalg.inv(conv_lat)).T
 
         if coordinates == "direct":
             num_cells = int(np.prod(length2mesh(length, conv_lat)))
-            max_num_atoms = num_cells * len(sym_dataset["std_types"])
+            max_num_atoms = num_cells * len(sym_dataset.std_types)
             conv_mesh_numbers = estimate_supercell_matrix(
                 sym_dataset, max_num_atoms=max_num_atoms, max_iter=200
             )

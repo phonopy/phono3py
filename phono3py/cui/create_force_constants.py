@@ -347,7 +347,7 @@ def _read_phono3py_fc3(phono3py: Phono3py, symmetrize_fc3r, input_filename, log_
         filename = "fc3.hdf5"
     else:
         filename = "fc3." + input_filename + ".hdf5"
-    file_exists(filename, log_level)
+    file_exists(filename, log_level=log_level)
     if log_level:
         print('Reading fc3 from "%s".' % filename)
 
@@ -380,7 +380,7 @@ def _read_phono3py_fc2(phono3py, symmetrize_fc2, input_filename, log_level):
         filename = "fc2.hdf5"
     else:
         filename = "fc2." + input_filename + ".hdf5"
-    file_exists(filename, log_level)
+    file_exists(filename, log_level=log_level)
     if log_level:
         print('Reading fc2 from "%s".' % filename)
 
@@ -494,7 +494,7 @@ def _read_dataset_fc3(
         sys.exit(1)
     except FileNotFoundError as e:
         # from _get_type2_dataset
-        file_exists(e.filename, log_level)
+        file_exists(e.filename, log_level=log_level)
 
     if use_pypolymlp:
         phono3py.mlp_dataset = dataset
@@ -672,7 +672,7 @@ def _read_dataset_fc2(
             print_error()
         sys.exit(1)
     except FileNotFoundError as e:
-        file_exists(e.filename, log_level)
+        file_exists(e.filename, log_level=log_level)
 
     if phono3py.phonon_supercell_matrix is not None:
         phono3py.phonon_dataset = dataset
