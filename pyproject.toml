@@ -16,7 +16,7 @@ dependencies = [
     "matplotlib>=2.2.2",
     "h5py>=3.0",
     "spglib>=2.3",
-    "phonopy>=2.26,<2.27",
+    "phonopy>=2.27,<2.28",
 ]
 license = { file = "LICENSE" }
 
