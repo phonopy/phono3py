@@ -772,8 +772,8 @@ class Interaction:
         # perms.shape = (len(spg_ops), len(primitive)), dtype='intc'
         perms = compute_all_sg_permutations(
             self._primitive.scaled_positions,
-            self._bz_grid.symmetry_dataset["rotations"],
-            self._bz_grid.symmetry_dataset["translations"],
+            self._bz_grid.symmetry_dataset.rotations,
+            self._bz_grid.symmetry_dataset.translations,
             np.array(self._primitive.cell.T, dtype="double", order="C"),
             symprec=self._symprec,
         )
@@ -821,13 +821,13 @@ class Interaction:
 
         """
         d2r_map = []
-        for r in self._bz_grid.symmetry_dataset["rotations"]:
+        for r in self._bz_grid.symmetry_dataset.rotations:
             for i, rec_r in enumerate(self._bz_grid.reciprocal_operations):
                 if (rec_r.T == r).all():
                     d2r_map.append(i)
                     break
 
-        assert len(d2r_map) == len(self._bz_grid.symmetry_dataset["rotations"])
+        assert len(d2r_map) == len(self._bz_grid.symmetry_dataset.rotations)
 
         return d2r_map
 
@@ -838,7 +838,7 @@ class Interaction:
 
         """
         Rq = np.dot(self._bz_grid.QDinv, self._bz_grid.addresses[bzgp])
-        tau = self._bz_grid.symmetry_dataset["translations"][t_i]
+        tau = self._bz_grid.symmetry_dataset.translations[t_i]
         phase_factor = np.exp(-2j * np.pi * np.dot(Rq, tau))
         self._phonon_done[bzgp] = 1
         self._frequencies[bzgp, :] = self._frequencies[orig_gp, :]

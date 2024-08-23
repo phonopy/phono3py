@@ -244,7 +244,10 @@ def start_phono3py(**argparse_control) -> tuple[argparse.Namespace, int]:
         print("Python version %d.%d.%d" % sys.version_info[:3])
         import spglib
 
-        print("Spglib version %d.%d.%d" % spglib.get_version())
+        try:  # spglib.get_version() is deprecated.
+            print(f"Spglib version {spglib.spg_get_version()}")
+        except AttributeError:
+            print("Spglib version %d.%d.%d" % spglib.get_version())
 
         if deprecated:
             show_deprecated_option_warnings(deprecated)
