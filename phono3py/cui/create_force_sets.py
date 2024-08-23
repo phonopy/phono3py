@@ -77,7 +77,9 @@ def create_FORCES_FC3_and_FORCES_FC2(
     ]
     if cell_filename is not None:
         disp_filename_candidates.insert(0, cell_filename)
-    disp_filenames = files_exist(disp_filename_candidates, log_level, is_any=True)
+    disp_filenames = files_exist(
+        disp_filename_candidates, log_level=log_level, is_any=True
+    )
     disp_filename = disp_filenames[0]
     ph3py_yaml = Phono3pyYaml(settings={"force_sets": True})
     ph3py_yaml.read(disp_filename)
@@ -152,7 +154,7 @@ def create_FORCES_FC3_and_FORCES_FC2(
 def create_FORCES_FC2_from_FORCE_SETS(log_level):
     """Convert FORCE_SETS to FORCES_FC2."""
     filename = "FORCE_SETS"
-    file_exists(filename, log_level)
+    file_exists(filename, log_level=log_level)
     disp_dataset = parse_FORCE_SETS(filename=filename)
     write_FORCES_FC2(disp_dataset)
 
@@ -189,8 +191,8 @@ def create_FORCE_SETS_from_FORCES_FCx(
         len_first_line = get_length_of_first_line(f)
 
     if len_first_line == 3:
-        file_exists(disp_filename, log_level)
-        file_exists(forces_filename, log_level)
+        file_exists(disp_filename, log_level=log_level)
+        file_exists(forces_filename, log_level=log_level)
         ph3yml = Phono3pyYaml()
         ph3yml.read(disp_filename)
         if phonon_smat is None:
@@ -242,7 +244,7 @@ def _get_force_sets_fc2(
 
     force_filenames = settings.create_forces_fc2
     for filename in force_filenames:
-        file_exists(filename, log_level)
+        file_exists(filename, log_level=log_level)
 
     if log_level > 0:
         print(f"  Number of displacements: {num_disps}")
@@ -258,7 +260,7 @@ def _get_force_sets_fc2(
 
     if settings.subtract_forces:
         force_filename = settings.subtract_forces
-        file_exists(force_filename, log_level)
+        file_exists(force_filename, log_level=log_level)
         calc_dataset_zero = get_calc_dataset(
             interface_mode,
             num_atoms,
@@ -301,13 +303,13 @@ def _get_force_sets_fc3(
         raise RuntimeError("FC3 displacement dataset is broken.")
 
     if settings.create_forces_fc3_file:
-        file_exists(settings.create_forces_fc3_file, log_level)
+        file_exists(settings.create_forces_fc3_file, log_level=log_level)
         force_filenames = [x.strip() for x in open(settings.create_forces_fc3_file)]
     else:
         force_filenames = settings.create_forces_fc3
 
     for filename in force_filenames:
-        file_exists(filename, log_level)
+        file_exists(filename, log_level=log_level)
 
     if log_level > 0:
         print(f"  Number of displacements: {num_disps}")
@@ -326,7 +328,7 @@ def _get_force_sets_fc3(
 
     if settings.subtract_forces:
         force_filename = settings.subtract_forces
-        file_exists(force_filename, log_level)
+        file_exists(force_filename, log_level=log_level)
         calc_dataset = get_calc_dataset(
             interface_mode,
             num_atoms,

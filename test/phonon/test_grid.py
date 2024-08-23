@@ -2425,7 +2425,7 @@ def test_GridMatrix_with_grid_matrix(ph_nacl: Phonopy):
     np.testing.assert_array_equal(gm.grid_matrix, mesh)
     np.testing.assert_array_equal(gm.D_diag, [9, 18, 18])
 
-    tmat = ph_nacl.primitive_symmetry.dataset["transformation_matrix"]
+    tmat = ph_nacl.primitive_symmetry.dataset.transformation_matrix
     gm = GridMatrix(mesh, ph_nacl.primitive.cell, transformation_matrix=tmat)
     np.testing.assert_array_equal(gm.grid_matrix, mesh)
     np.testing.assert_array_equal(gm.D_diag, [9, 18, 18])
@@ -2439,7 +2439,7 @@ def test_GridMatrix_with_transformation_matrix(ph_nacl: Phonopy):
 
     """
     mesh = 50.0
-    tmat = ph_nacl.primitive_symmetry.dataset["transformation_matrix"]
+    tmat = ph_nacl.primitive_symmetry.dataset.transformation_matrix
     gm = GridMatrix(
         mesh,
         ph_nacl.primitive.cell,

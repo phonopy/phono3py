@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Aug-23-2024: Version 3.4
+
+- Update for spglib v2.5 and for following the change in phonopy.
+
 ## Aug-8-2024: Version 3.3.4
 
 - Fix of command line user interface.
