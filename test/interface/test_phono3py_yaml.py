@@ -31,7 +31,7 @@ def test_read_phono3py_yaml():
             [0.0, 0.5, 0.0],
             [0.0, 0.0, 0.5],
         ],
-        numbers=[11, 11, 11, 11, 17, 17, 17, 17],
+        symbols=["Na", "Na", "Na", "Na", "Cl", "Cl", "Cl", "Cl"],
     )
     assert isclose(cell, cell_ref)
 
