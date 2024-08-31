@@ -44,7 +44,7 @@ import numpy as np
 from phonopy.cui.create_force_sets import check_number_of_force_files
 from phonopy.cui.load_helper import get_nac_params
 from phonopy.cui.phonopy_script import file_exists, files_exist, print_error
-from phonopy.file_IO import parse_FORCE_SETS, write_FORCE_SETS
+from phonopy.file_IO import is_file_phonopy_yaml, parse_FORCE_SETS, write_FORCE_SETS
 from phonopy.interface.calculator import get_calc_dataset
 
 from phono3py.file_IO import (
@@ -72,10 +72,24 @@ def create_FORCES_FC3_and_FORCES_FC2(
 
     """
     interface_mode = settings.calculator
+
     disp_filename_candidates = [
         "phono3py_disp.yaml",
     ]
-    if cell_filename is not None:
+
+    if log_level:
+        print("")
+
+    if (
+        log_level
+        and cell_filename is not None
+        and not is_file_phonopy_yaml(cell_filename, keyword="phono3py")
+    ):
+        print(f'*Unnecessary to specify "{cell_filename}".')
+
+    if cell_filename is not None and is_file_phonopy_yaml(
+        cell_filename, keyword="phono3py"
+    ):
         disp_filename_candidates.insert(0, cell_filename)
     disp_filenames = files_exist(
         disp_filename_candidates, log_level=log_level, is_any=True
@@ -85,6 +99,10 @@ def create_FORCES_FC3_and_FORCES_FC2(
     ph3py_yaml.read(disp_filename)
     if ph3py_yaml.calculator is not None:
         interface_mode = ph3py_yaml.calculator  # overwrite
+
+    if interface_mode is not None:
+        if log_level:
+            print(f"Calculator interface: {interface_mode}")
 
     if settings.create_forces_fc3 or settings.create_forces_fc3_file:
         calc_dataset_fc3 = _get_force_sets_fc3(
@@ -172,7 +190,9 @@ def create_FORCE_SETS_from_FORCES_FCx(
     phonon_smat, input_filename: Optional[str], cell_filename: Optional[str], log_level
 ):
     """Convert FORCES_FC3 or FORCES_FC2 to FORCE_SETS."""
-    if cell_filename is not None:
+    if cell_filename is not None and is_file_phonopy_yaml(
+        cell_filename, keyword="phono3py"
+    ):
         disp_filename = cell_filename
     elif input_filename is None:
         disp_filename = "phono3py_disp.yaml"
@@ -286,7 +306,6 @@ def _get_force_sets_fc3(
     settings, disp_dataset, disp_filename, interface_mode, log_level
 ) -> dict:
     if log_level:
-        print("")
         print(f'FC3 Displacement dataset was read from "{disp_filename}".')
 
     if "first_atoms" in disp_dataset:  # type-1

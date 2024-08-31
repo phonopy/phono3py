@@ -46,7 +46,13 @@ from phono3py.cui.settings import Phono3pySettings
 
 
 def show_general_settings(
-    settings, run_mode, phono3py, cell_filename, input_filename, output_filename
+    settings,
+    run_mode,
+    phono3py,
+    cell_filename,
+    input_filename,
+    output_filename,
+    interface_mode,
 ):
     """Show general setting information."""
     is_primitive_axes_auto = (
@@ -58,28 +64,32 @@ def show_general_settings(
     phonon_supercell_matrix = phono3py.phonon_supercell_matrix
 
     print("-" * 29 + " General settings " + "-" * 29)
-    print("Run mode: %s" % run_mode)
+    if run_mode:
+        print("Run mode: {run_mode}")
     if output_filename:
-        print("Output filename is modified by %s." % output_filename)
+        print(f"Output filename is modified by {output_filename}.")
     if input_filename:
-        print("Input filename is modified by %s." % input_filename)
+        print(f"Input filename is modified by {input_filename}.")
     if settings.hdf5_compression:
-        print("HDF5 data compression filter: %s" % settings.hdf5_compression)
-
-    if phono3py.calculator:
-        print("Calculator interface: %s" % phono3py.calculator)
-    print('Crystal structure was read from "%s".' % cell_filename)
+        print(f"HDF5 data compression filter: {settings.hdf5_compression}")
+    if interface_mode:
+        print(
+            f'Crystal structure was read from "{cell_filename}" '
+            f"in {interface_mode} unit."
+        )
+    else:
+        print(f'Crystal structure was read from "{cell_filename}".')
 
     print_supercell_matrix(supercell_matrix, phonon_supercell_matrix)
 
     if is_primitive_axes_auto:
         print("Primitive matrix (Auto):")
         for v in primitive_matrix:
-            print("  %s" % v)
+            print(f"  {v}")
     elif primitive_matrix is not None:
         print("Primitive matrix:")
         for v in primitive_matrix:
-            print("  %s" % v)
+            print(f"  {v}")
 
 
 def print_supercell_matrix(
