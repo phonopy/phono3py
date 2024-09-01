@@ -259,7 +259,6 @@ def parse_forces(
             distance_to_A=physical_units["distance_to_A"],
             force_to_eVperA=physical_units["force_to_eVperA"],
         )
-
     assert dataset is not None
 
     if "natom" in dataset and dataset["natom"] != natom:
@@ -271,6 +270,12 @@ def parse_forces(
     if log_level and filename_read_from is not None:
         print(
             f'Displacement dataset for {fc_type} was read from "{filename_read_from}".'
+        )
+
+    if calculator is not None and log_level:
+        print(
+            f"Displacements and forces were converted from {calculator} "
+            "unit to A and eV/A."
         )
 
     # Overwrite dataset['cutoff_distance'] when necessary.
