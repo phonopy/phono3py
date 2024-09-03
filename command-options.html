@@ -532,21 +532,31 @@ file <code class="docutils literal notranslate"><span class="pre">setting.conf</
 <span id="cf3-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--cf3</span></code> (command option only)<a class="headerlink" href="#cf3-command-option-only" title="Link to this heading">#</a></h3>
 <p>This is used to create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> from <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> and force
 calculator outputs containing forces in supercells. <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> has to
-be located at the current directory. Calculator interface has to be specified
-except for VASP (default) case.</p>
+be located at the current directory.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cf3<span class="w"> </span>disp-<span class="o">{</span><span class="m">00001</span>..00755<span class="o">}</span>/vasprun.xml
 </pre></div>
 </div>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cf3<span class="w"> </span>supercell_out/disp-<span class="o">{</span><span class="m">00001</span>..00111<span class="o">}</span>/Si.out
 </pre></div>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The calculator interface should be stored in <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code>, so it is not
+needed to set it manually. Command-line-options like <code class="docutils literal notranslate"><span class="pre">--qe</span></code> will be ignored. If
+the calculator interface is missing from <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> but needed, please
+update the <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> section in the file as follows:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">phono3py</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">calculator</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">qe</span>
+</pre></div>
+</div>
+</div>
 </section>
 <section id="cf3-file-command-option-only">
 <span id="cf3-file-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--cf3-file</span></code> (command option only)<a class="headerlink" href="#cf3-file-command-option-only" title="Link to this heading">#</a></h3>
 <p>This is used to create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> from a text file containing a list of
 calculator output file names. <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> has to be located at the
-current directory. Calculator interface has to be specified except for VASP
-(default) case.</p>
+current directory. The calculator interface is unnecessary to specify, see the
+note at <a class="reference internal" href="#cf3-option"><span class="std std-ref">–cf3</span></a>.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cf3-file<span class="w"> </span>file_list.dat
 </pre></div>
 </div>
@@ -566,8 +576,8 @@ together with <code class="docutils literal notranslate"><span class="pre">--cut
 <span id="cf2-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--cf2</span></code> (command option only)<a class="headerlink" href="#cf2-command-option-only" title="Link to this heading">#</a></h3>
 <p>This is used to create <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> similarly to <code class="docutils literal notranslate"><span class="pre">--cf3</span></code> option.
 <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> has to be located at the current directory. This is
-optional. Calculator interface has to be specified except for VASP (default)
-case. <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> is necessary to run with <code class="docutils literal notranslate"><span class="pre">--dim-fc2</span></code> option.</p>
+optional. <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> is necessary to run with <code class="docutils literal notranslate"><span class="pre">--dim-fc2</span></code> option. The
+calculator interface is unnecessary to specify, see the note at <a class="reference internal" href="#cf3-option"><span class="std std-ref">–cf3</span></a>.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cf2<span class="w"> </span>disp_fc2-<span class="o">{</span><span class="m">00001</span>..00002<span class="o">}</span>/vasprun.xml
 </pre></div>
 </div>
@@ -575,8 +585,8 @@ case. <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</s
 <section id="cfz-command-option-only">
 <span id="cfz-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--cfz</span></code> (command option only)<a class="headerlink" href="#cfz-command-option-only" title="Link to this heading">#</a></h3>
 <p>This is used to create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> subtracting residual forces
-combined with <code class="docutils literal notranslate"><span class="pre">--cf3</span></code> and <code class="docutils literal notranslate"><span class="pre">--cf2</span></code>, respectively. Calculator interface has to be
-specified except for VASP (default) case.</p>
+combined with <code class="docutils literal notranslate"><span class="pre">--cf3</span></code> and <code class="docutils literal notranslate"><span class="pre">--cf2</span></code>, respectively. The calculator interface is
+unnecessary to specify, see the note at <a class="reference internal" href="#cf3-option"><span class="std std-ref">–cf3</span></a>.</p>
 <p>In the following example, it is supposed that <code class="docutils literal notranslate"><span class="pre">disp3-00000/vasprun.xml</span></code> and
 <code class="docutils literal notranslate"><span class="pre">disp2-00000/vasprun.xml</span></code> contain the forces of the perfect supercells. In ideal
 case, these forces are zero, but often they are not. Here, this is called
@@ -956,9 +966,9 @@ functions in calculation of <span class="math notranslate nohighlight">\(\Gamma_
  \bigl|\Phi_{-\lambda\lambda'\lambda''}\bigl|^2
  \left\{(n_{\lambda'}+ n_{\lambda''}+1)
   \delta(\omega-\omega_{\lambda'}-\omega_{\lambda''}) \right.
-  + (n_{\lambda'}-n_{\lambda''})
+  * (n_{\lambda'}-n_{\lambda''})
  \left[\delta(\omega+\omega_{\lambda'}-\omega_{\lambda''})
-+ \left. \delta(\omega-\omega_{\lambda'}+\omega_{\lambda''})
+* \left. \delta(\omega-\omega_{\lambda'}+\omega_{\lambda''})
 \right]\right\}.
 \]</div>
 <p>But using this option, full elements of phonon-phonon interaction strength are
@@ -1160,7 +1170,7 @@ given by</p>
  \bigl|\Phi_{-\lambda\lambda_1\lambda_2}\bigl|^2
  (n_{\lambda_1}-n_{\lambda_2})
  \left[\delta(\omega+\omega_{\lambda_1}-\omega_{\lambda_2})
- +  \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2})
+ *  \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2})
  \right]
  \end{align*}
 \]</div>
@@ -1173,7 +1183,7 @@ given by</p>
  \bigl|\Phi_{-\lambda\lambda_1\lambda_2}\bigl|^2
 (n_{\lambda_1}+ n_{\lambda_2}+1)
  \left[ \delta(\omega-\omega_{\lambda_1}-\omega_{\lambda_2})
- + \delta(\omega + \omega_{\lambda_1} + \omega_{\lambda_2}) \right]
+ * \delta(\omega + \omega_{\lambda_1} + \omega_{\lambda_2}) \right]
  \end{align*},
 \]</div>
 <p>respectively, and</p>
@@ -1234,11 +1244,11 @@ file.</p>
  \bigl|\Phi_{-\lambda\lambda_1\lambda_2}\bigl|^2 &amp;
  \left\{(n_{\lambda_1}+ n_{\lambda_2}+1)
  \left[ \delta(\omega-\omega_{\lambda_1}-\omega_{\lambda_2})
- + \delta(\omega+\omega_{\lambda_1}+\omega_{\lambda_2}) \right] \right.
+ * \delta(\omega+\omega_{\lambda_1}+\omega_{\lambda_2}) \right] \right.
  \\
  &amp; + (n_{\lambda_1}-n_{\lambda_2})
  \left[\delta(\omega+\omega_{\lambda_1}-\omega_{\lambda_2})
- + \left. \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2})
+ * \left. \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2})
  \right]\right\},
 \end{align*}
 \end{split}\]</div>
@@ -1252,14 +1262,14 @@ file.</p>
  \left\{
  \left[ \frac{(n_{\lambda_1}+ n_{\lambda_2}+1)}{
  (\omega-\omega_{\lambda_1}-\omega_{\lambda_2})_\mathrm{p}}
- + \frac{(n_{\lambda_1}+ n_{\lambda_2}+1)}{
+ * \frac{(n_{\lambda_1}+ n_{\lambda_2}+1)}{
  (\omega+\omega_{\lambda_1}+\omega_{\lambda_2})_\mathrm{p}}
  \right]
  \right. \\
   &amp; + \left[
  \frac{(n_{\lambda_1}-n_{\lambda_2})}{(\omega +
  \omega_{\lambda_1} - \omega_{\lambda_2})_\mathrm{p}}
- + \left. \frac{(n_{\lambda_1}-n_{\lambda_2})}{(\omega -
+ * \left. \frac{(n_{\lambda_1}-n_{\lambda_2})}{(\omega -
  \omega_{\lambda_1} + \omega_{\lambda_2})_\mathrm{p}}
  \right]\right\},
 \end{align*}
@@ -1312,7 +1322,7 @@ A_\lambda(\omega) = \frac{1}{\pi} \frac{4\Omega^2_\lambda
  \Gamma_\lambda(\omega)}
  {\left[\omega^2 - \Omega^2_\lambda -
  2\Omega_\lambda \Delta_\lambda(\omega) \right]^2
- + \left[ 2\Omega_\lambda
+ * \left[ 2\Omega_\lambda
  \Gamma_\lambda(\omega) \right]^2},
 \]</div>
 <p>where <span class="math notranslate nohighlight">\(A_\lambda(\omega)\)</span> is defined to be normalized as</p>
