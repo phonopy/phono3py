@@ -88,7 +88,7 @@ class ReciprocalToNormal:
                 self._fc3_normal[i, j, k] = fc3_elem / fff
 
     def _sum_in_atoms(self, band_indices, eigvecs):
-        num_atom = self._primitive.get_number_of_atoms()
+        num_atom = len(self._primitive)
         (e1, e2, e3) = eigvecs
         (b1, b2, b3) = band_indices
 
