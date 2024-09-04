@@ -118,19 +118,28 @@ def create_phono3py_force_constants(
         if settings.read_fc3:
             _read_phono3py_fc3(phono3py, symmetrize_fc3r, input_filename, log_level)
         else:  # fc3 from FORCES_FC3 or ph3py_yaml
-            _read_dataset_fc3(
+            dataset = _read_dataset_fc3(
                 phono3py,
                 ph3py_yaml,
                 phono3py_yaml_filename,
                 settings.cutoff_pair_distance,
                 calculator,
-                settings.use_pypolymlp,
-                settings.mlp_params,
-                settings.displacement_distance,
-                settings.random_displacements,
-                settings.random_seed,
                 log_level,
             )
+
+            if settings.use_pypolymlp:
+                phono3py.mlp_dataset = dataset
+                run_pypolymlp_to_compute_forces(
+                    phono3py,
+                    settings.mlp_params,
+                    displacement_distance=settings.displacement_distance,
+                    number_of_snapshots=settings.random_displacements,
+                    random_seed=settings.random_seed,
+                    log_level=log_level,
+                )
+            else:
+                phono3py.dataset = dataset
+
             phono3py.produce_fc3(
                 symmetrize_fc3r=symmetrize_fc3r,
                 is_compact_fc=settings.is_compact_fc,
@@ -214,7 +223,7 @@ def parse_forces(
     fc_type: Literal["fc3", "phonon_fc2"] = "fc3",
     calculator: Optional[str] = None,
     log_level=0,
-):
+) -> dict:
     """Read displacements and forces.
 
     Physical units of displacements and forces are converted following the
@@ -454,13 +463,8 @@ def _read_dataset_fc3(
     phono3py_yaml_filename: Optional[str],
     cutoff_pair_distance: Optional[float],
     calculator: Optional[str],
-    use_pypolymlp: bool,
-    mlp_params: Union[str, dict, PypolymlpParams],
-    displacement_distance: Optional[float],
-    number_of_snapshots: Optional[int],
-    random_seed: Optional[int],
     log_level: int,
-):
+) -> dict:
     """Read or calculate fc3.
 
     Note
@@ -496,18 +500,7 @@ def _read_dataset_fc3(
         # from _get_type2_dataset
         file_exists(e.filename, log_level=log_level)
 
-    if use_pypolymlp:
-        phono3py.mlp_dataset = dataset
-        run_pypolymlp_to_compute_forces(
-            phono3py,
-            mlp_params,
-            displacement_distance=displacement_distance,
-            number_of_snapshots=number_of_snapshots,
-            random_seed=random_seed,
-            log_level=log_level,
-        )
-    else:
-        phono3py.dataset = dataset
+    return dataset
 
 
 def run_pypolymlp_to_compute_forces(
@@ -529,8 +522,6 @@ def run_pypolymlp_to_compute_forces(
             for k, v in asdict(parse_mlp_params(mlp_params)).items():
                 if v is not None:
                     print(f"  {k}: {v}")
-    if log_level > 1:
-        print("")
     if log_level:
         print("Developing MLPs by pypolymlp...", flush=True)
 
@@ -579,6 +570,7 @@ def run_pypolymlp_to_compute_forces(
         raise RuntimeError("Displacements are not set. Run generate_displacements.")
 
     ph3py.evaluate_mlp()
+    ph3py.save("phono3py_mlp_eval_dataset.yaml")
 
 
 def run_pypolymlp_to_compute_phonon_forces(
@@ -601,8 +593,6 @@ def run_pypolymlp_to_compute_phonon_forces(
                 for k, v in asdict(parse_mlp_params(mlp_params)).items():
                     if v is not None:
                         print(f"  {k}: {v}")
-        if log_level > 1:
-            print("")
         if log_level:
             print("Developing MLPs by pypolymlp...", flush=True)
 

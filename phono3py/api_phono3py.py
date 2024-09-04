@@ -2208,16 +2208,37 @@ class Phono3py:
         else:
             _params = params
 
-        disps = self._mlp_dataset["displacements"]
-        forces = self._mlp_dataset["forces"]
-        energies = self._mlp_dataset["supercell_energies"]
-        n = int(len(disps) * (1 - test_size))
-        train_data = PypolymlpData(
-            displacements=disps[:n], forces=forces[:n], supercell_energies=energies[:n]
-        )
-        test_data = PypolymlpData(
-            displacements=disps[n:], forces=forces[n:], supercell_energies=energies[n:]
-        )
+        if _params.ntrain is not None and _params.ntest is not None:
+            ntrain = _params.ntrain
+            ntest = _params.ntest
+            disps = self._mlp_dataset["displacements"]
+            forces = self._mlp_dataset["forces"]
+            energies = self._mlp_dataset["supercell_energies"]
+            train_data = PypolymlpData(
+                displacements=disps[:ntrain],
+                forces=forces[:ntrain],
+                supercell_energies=energies[:ntrain],
+            )
+            test_data = PypolymlpData(
+                displacements=disps[-ntest:],
+                forces=forces[-ntest:],
+                supercell_energies=energies[-ntest:],
+            )
+        else:
+            disps = self._mlp_dataset["displacements"]
+            forces = self._mlp_dataset["forces"]
+            energies = self._mlp_dataset["supercell_energies"]
+            n = int(len(disps) * (1 - test_size))
+            train_data = PypolymlpData(
+                displacements=disps[:n],
+                forces=forces[:n],
+                supercell_energies=energies[:n],
+            )
+            test_data = PypolymlpData(
+                displacements=disps[n:],
+                forces=forces[n:],
+                supercell_energies=energies[n:],
+            )
         self._mlp = develop_polymlp(
             self._supercell,
             train_data,

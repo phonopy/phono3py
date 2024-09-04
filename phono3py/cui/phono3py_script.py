@@ -165,16 +165,13 @@ def finalize_phono3py(
 
     _physical_units = get_default_physical_units(phono3py.calculator)
 
-    write_force_sets = phono3py.mlp is not None
-    _write_displacements = write_displacements or phono3py.mlp is not None
-
     ph3py_yaml = Phono3pyYaml(
         configuration=confs_dict,
         calculator=phono3py.calculator,
         physical_units=_physical_units,
         settings={
-            "force_sets": write_force_sets,
-            "displacements": _write_displacements,
+            "force_sets": False,
+            "displacements": write_displacements,
         },
     )
     ph3py_yaml.set_phonon_info(phono3py)
