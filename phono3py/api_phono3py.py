@@ -60,6 +60,7 @@ from phonopy.interface.pypolymlp import (
     PypolymlpParams,
     develop_polymlp,
     evalulate_polymlp,
+    load_polymlp,
     parse_mlp_params,
 )
 from phonopy.structure.atoms import PhonopyAtoms
@@ -2247,8 +2248,12 @@ class Phono3py:
             verbose=self._log_level - 1 > 0,
         )
 
+    def load_mlp(self, filename: str = "pypolymlp.mlp"):
+        """Load machine learning potential of pypolymlp."""
+        self._mlp = load_polymlp(filename=filename)
+
     def evaluate_mlp(self):
-        """Evaluate the machine learning potential of pypolymlp.
+        """Evaluate machine learning potential of pypolymlp.
 
         This method calculates the supercell energies and forces from the MLP
         for the displacements in self._dataset of type 2. The results are stored

@@ -272,7 +272,7 @@ def get_bond_symmetry(
 def get_least_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
     """Find least orbits for a centering atom."""
     orbits = _get_orbits(atom_index, cell, site_symmetry, symprec)
-    mapping = np.arange(cell.get_number_of_atoms())
+    mapping = np.arange(len(cell))
 
     for i, orb in enumerate(orbits):
         for num in np.unique(orb):

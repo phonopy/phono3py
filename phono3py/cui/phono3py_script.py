@@ -278,7 +278,7 @@ def read_phono3py_settings(args, argparse_control, log_level):
                     args=args, default_settings=argparse_control
                 )
                 cell_filename = args.filename[0]
-            else:
+            else:  # args.filename[0] is assumed to be phono3py-conf file.
                 phono3py_conf_parser = Phono3pyConfParser(
                     filename=args.filename[0],
                     args=args,
@@ -1030,6 +1030,7 @@ def main(**argparse_control):
             unitcell_filename,
             input_filename,
             output_filename,
+            interface_mode,
         )
 
         if phono3py.supercell.magnetic_moments is None:
