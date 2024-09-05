@@ -142,7 +142,7 @@ def test_phono3py_load_with_pypolymlp_si():
             file_path.unlink()
 
     argparse_control = _get_phono3py_load_args(
-        cwd / "phono3py.yaml",
+        cwd_called / "phono3py.yaml",
         fc_calculator="symfc",
         use_pypolymlp=True,
     )
