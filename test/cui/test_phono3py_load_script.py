@@ -36,6 +36,7 @@ class MockArgs:
     is_bterta: Optional[bool] = None
     mesh_numbers: Optional[Sequence] = None
     temperatures: Optional[Sequence] = None
+    use_pypolymlp: bool = False
     input_filename = None
     output_filename = None
     input_output_filename = None
@@ -114,6 +115,54 @@ def test_phono3py_with_QE_calculator(load_phono3py_yaml):
             file_path.unlink()
 
 
+def test_phono3py_load_with_pypolymlp_si():
+    """Test phono3py-load script with pypolymlp.
+
+    First run generates phono3py.pmlp.
+    Second run uses phono3py.pmlp.
+
+    """
+    pytest.importorskip("pypolymlp")
+    pytest.importorskip("symfc")
+
+    argparse_control = _get_phono3py_load_args(
+        cwd / ".." / "phono3py_params_Si-111-222-rd.yaml.xz",
+        fc_calculator="symfc",
+        use_pypolymlp=True,
+    )
+
+    with pytest.raises(SystemExit) as excinfo:
+        main(**argparse_control)
+    assert excinfo.value.code == 0
+
+    # phono3py.yaml and fc2.hd5 are used in the next run. So they are not deleted.
+    for created_filename in ("fc3.hdf5", "phono3py_mlp_eval_dataset.yaml"):
+        file_path = pathlib.Path(cwd_called / created_filename)
+        if file_path.exists():
+            file_path.unlink()
+
+    argparse_control = _get_phono3py_load_args(
+        cwd / "phono3py.yaml",
+        fc_calculator="symfc",
+        use_pypolymlp=True,
+    )
+
+    with pytest.raises(SystemExit) as excinfo:
+        main(**argparse_control)
+    assert excinfo.value.code == 0
+
+    for created_filename in (
+        "phono3py.yaml",
+        "fc2.hdf5",
+        "fc3.hdf5",
+        "phono3py.pmlp",
+        "phono3py_mlp_eval_dataset.yaml",
+    ):
+        file_path = pathlib.Path(cwd_called / created_filename)
+        if file_path.exists():
+            file_path.unlink()
+
+
 def _get_phono3py_load_args(
     phono3py_yaml_filepath: Union[str, pathlib.Path],
     fc_calculator: Optional[str] = None,
@@ -121,6 +170,7 @@ def _get_phono3py_load_args(
     is_bterta: bool = False,
     temperatures: Optional[Sequence] = None,
     mesh_numbers: Optional[Sequence] = None,
+    use_pypolymlp: bool = False,
 ):
     # Mock of ArgumentParser.args.
     if load_phono3py_yaml:
@@ -130,6 +180,7 @@ def _get_phono3py_load_args(
             is_bterta=is_bterta,
             temperatures=temperatures,
             mesh_numbers=mesh_numbers,
+            use_pypolymlp=use_pypolymlp,
             log_level=1,
         )
     else:
@@ -141,6 +192,7 @@ def _get_phono3py_load_args(
             is_bterta=is_bterta,
             temperatures=temperatures,
             mesh_numbers=mesh_numbers,
+            use_pypolymlp=use_pypolymlp,
         )
 
     # See phono3py-load script.

@@ -163,6 +163,14 @@ def finalize_phono3py(
     else:
         yaml_filename = filename
 
+    if phono3py.mlp_dataset is not None:
+        mlp_eval_filename = "phono3py_mlp_eval_dataset.yaml"
+        if log_level:
+            print(
+                f'Dataset generated using MMLPs was written in "{mlp_eval_filename}".'
+            )
+        phono3py.save(mlp_eval_filename)
+
     _physical_units = get_default_physical_units(phono3py.calculator)
 
     ph3py_yaml = Phono3pyYaml(

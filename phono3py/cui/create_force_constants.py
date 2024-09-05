@@ -514,7 +514,7 @@ def run_pypolymlp_to_compute_forces(
     displacement_distance: Optional[float] = None,
     number_of_snapshots: Optional[int] = None,
     random_seed: Optional[int] = None,
-    mlp_filename: str = "pypolymlp.mlp",
+    mlp_filename: str = "phono3py.pmlp",
     log_level: int = 0,
 ):
     """Run pypolymlp to compute forces."""
@@ -533,6 +533,9 @@ def run_pypolymlp_to_compute_forces(
         if log_level:
             print("Developing MLPs by pypolymlp...", flush=True)
         ph3py.develop_mlp(params=mlp_params)
+        ph3py.mlp.save_mlp(filename=mlp_filename)
+        if log_level:
+            print(f'MLPs were written into "{mlp_filename}"', flush=True)
     else:
         if pathlib.Path(mlp_filename).exists():
             if log_level:
@@ -581,7 +584,6 @@ def run_pypolymlp_to_compute_forces(
         raise RuntimeError("Displacements are not set. Run generate_displacements.")
 
     ph3py.evaluate_mlp()
-    ph3py.save("phono3py_mlp_eval_dataset.yaml")
 
 
 def run_pypolymlp_to_compute_phonon_forces(

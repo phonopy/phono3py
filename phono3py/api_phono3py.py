@@ -2209,7 +2209,11 @@ class Phono3py:
         else:
             _params = params
 
-        if _params.ntrain is not None and _params.ntest is not None:
+        if (
+            _params is not None
+            and _params.ntrain is not None
+            and _params.ntest is not None
+        ):
             ntrain = _params.ntrain
             ntest = _params.ntest
             disps = self._mlp_dataset["displacements"]
