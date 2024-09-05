@@ -42,7 +42,7 @@ jobs:
     - name: Install phonopy develop branch
       run: |
         conda activate test
-        git clone --depth 1 https://github.com/phonopy/phonopy.git
+        git clone https://github.com/phonopy/phonopy.git
         cd phonopy
         pip install -e . -vvv
         cd ..
