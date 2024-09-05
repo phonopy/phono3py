@@ -2209,7 +2209,11 @@ class Phono3py:
         else:
             _params = params
 
-        if _params.ntrain is not None and _params.ntest is not None:
+        if (
+            _params is not None
+            and _params.ntrain is not None
+            and _params.ntest is not None
+        ):
             ntrain = _params.ntrain
             ntest = _params.ntest
             disps = self._mlp_dataset["displacements"]
@@ -2248,7 +2252,7 @@ class Phono3py:
             verbose=self._log_level - 1 > 0,
         )
 
-    def load_mlp(self, filename: str = "pypolymlp.mlp"):
+    def load_mlp(self, filename: str = "phono3py.pmlp"):
         """Load machine learning potential of pypolymlp."""
         self._mlp = load_polymlp(filename=filename)
 
