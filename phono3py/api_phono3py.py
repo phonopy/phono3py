@@ -58,8 +58,10 @@ from phonopy.interface.fc_calculator import get_fc2
 from phonopy.interface.pypolymlp import (
     PypolymlpData,
     PypolymlpParams,
+    develop_mlp_by_pypolymlp,
     develop_polymlp,
     evalulate_polymlp,
+    load_polymlp,
     parse_mlp_params,
 )
 from phonopy.structure.atoms import PhonopyAtoms
@@ -2203,31 +2205,20 @@ class Phono3py:
         if self._mlp_dataset is None:
             raise RuntimeError("MLP dataset is not set.")
 
-        if params is not None:
-            _params = parse_mlp_params(params)
-        else:
-            _params = params
-
-        disps = self._mlp_dataset["displacements"]
-        forces = self._mlp_dataset["forces"]
-        energies = self._mlp_dataset["supercell_energies"]
-        n = int(len(disps) * (1 - test_size))
-        train_data = PypolymlpData(
-            displacements=disps[:n], forces=forces[:n], supercell_energies=energies[:n]
-        )
-        test_data = PypolymlpData(
-            displacements=disps[n:], forces=forces[n:], supercell_energies=energies[n:]
-        )
-        self._mlp = develop_polymlp(
+        self._mlp = develop_mlp_by_pypolymlp(
+            self._mlp_dataset,
             self._supercell,
-            train_data,
-            test_data,
-            params=_params,
-            verbose=self._log_level - 1 > 0,
+            params=params,
+            test_size=test_size,
+            log_level=self._log_level,
         )
+
+    def load_mlp(self, filename: str = "phono3py.pmlp"):
+        """Load machine learning potential of pypolymlp."""
+        self._mlp = load_polymlp(filename=filename)
 
     def evaluate_mlp(self):
-        """Evaluate the machine learning potential of pypolymlp.
+        """Evaluate machine learning potential of pypolymlp.
 
         This method calculates the supercell energies and forces from the MLP
         for the displacements in self._dataset of type 2. The results are stored

@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Sep-13-2024: Version 3.5
+
+- Maintenance release.
+
 ## Aug-23-2024: Version 3.4
 
 - Update for spglib v2.5 and for following the change in phonopy.

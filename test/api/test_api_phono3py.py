@@ -173,6 +173,7 @@ def test_type2_forces_energies_setter_Si(si_111_222_rd: Phono3py):
 def test_use_pypolymlp_mgo(mgo_222rd_444rd: Phono3py):
     """Test use_pypolymlp in produce_fc3."""
     pytest.importorskip("pypolymlp")
+    pytest.importorskip("symfc")
 
     ph3_in = mgo_222rd_444rd
     ph3 = Phono3py(

@@ -416,7 +416,8 @@ def set_dataset_and_force_constants(
     )
     if not read_fc["fc3"]:
         if use_pypolymlp:
-            ph3py.mlp_dataset = dataset
+            if forces_in_dataset(dataset):
+                ph3py.mlp_dataset = dataset
         else:
             ph3py.dataset = dataset
     read_fc["fc2"], phonon_dataset = _get_dataset_phonon_dataset_or_fc2(
@@ -461,8 +462,8 @@ def compute_force_constants_from_datasets(
     """
     fc3_calculator = extract_fc2_fc3_calculators(fc_calculator, 3)
     fc2_calculator = extract_fc2_fc3_calculators(fc_calculator, 2)
-    if not read_fc["fc3"] and (ph3py.dataset or ph3py.mlp_dataset):
-        if use_pypolymlp and forces_in_dataset(ph3py.mlp_dataset):
+    if not read_fc["fc3"]:
+        if use_pypolymlp:
             run_pypolymlp_to_compute_forces(
                 ph3py,
                 mlp_params=mlp_params,
