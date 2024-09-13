@@ -163,18 +163,23 @@ def finalize_phono3py(
     else:
         yaml_filename = filename
 
-    _physical_units = get_default_physical_units(phono3py.calculator)
+    if phono3py.mlp_dataset is not None:
+        mlp_eval_filename = "phono3py_mlp_eval_dataset.yaml"
+        if log_level:
+            print(
+                f'Dataset generated using MMLPs was written in "{mlp_eval_filename}".'
+            )
+        phono3py.save(mlp_eval_filename)
 
-    write_force_sets = phono3py.mlp is not None
-    _write_displacements = write_displacements or phono3py.mlp is not None
+    _physical_units = get_default_physical_units(phono3py.calculator)
 
     ph3py_yaml = Phono3pyYaml(
         configuration=confs_dict,
         calculator=phono3py.calculator,
         physical_units=_physical_units,
         settings={
-            "force_sets": write_force_sets,
-            "displacements": _write_displacements,
+            "force_sets": False,
+            "displacements": write_displacements,
         },
     )
     ph3py_yaml.set_phonon_info(phono3py)
@@ -281,7 +286,7 @@ def read_phono3py_settings(args, argparse_control, log_level):
                     args=args, default_settings=argparse_control
                 )
                 cell_filename = args.filename[0]
-            else:
+            else:  # args.filename[0] is assumed to be phono3py-conf file.
                 phono3py_conf_parser = Phono3pyConfParser(
                     filename=args.filename[0],
                     args=args,
@@ -1033,6 +1038,7 @@ def main(**argparse_control):
             unitcell_filename,
             input_filename,
             output_filename,
+            interface_mode,
         )
 
         if phono3py.supercell.magnetic_moments is None:
