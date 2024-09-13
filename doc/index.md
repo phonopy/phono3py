@@ -30,11 +30,8 @@ Papers that may introduce phono3py:
   [JPCM.35.353001](https://iopscience.iop.org/article/10.1088/1361-648X/acd831)
   (open access)
 
-
-## Documentation
-
 ```{toctree}
-:maxdepth: 1
+:hidden:
 install
 workflow
 examples
