@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Sep-19-2024: Version 3.5.1
+
+- A small fix.
+
 ## Sep-13-2024: Version 3.5
 
 - Maintenance release.
