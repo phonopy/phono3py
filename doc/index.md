@@ -44,6 +44,7 @@ direct-solution
 wigner-solution
 workload-distribution
 random-displacements
+pypolymlp
 cutoff-pair
 external-tools
 phono3py-api
