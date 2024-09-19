@@ -417,6 +417,7 @@ def _set_forces_and_nac_params(
                 calc_dataset_fc2["supercell_energies"], dtype="double"
             )
 
-    nac_params = get_nac_params(primitive=ph3py_yaml.primitive)
-    if nac_params:
-        ph3py_yaml.nac_params = nac_params
+    if ph3py_yaml.nac_params is None:
+        nac_params = get_nac_params(primitive=ph3py_yaml.primitive)
+        if nac_params:
+            ph3py_yaml.nac_params = nac_params
