@@ -331,6 +331,10 @@ document.write(`
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#steps-4-6-force-constants-calculation-random-displacements-in-step-5">Steps 4-6: Force constants calculation (random displacements in step 5)</a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-for-developing-mlps">Parameters for developing MLPs</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ntrain-and-ntest"><code class="docutils literal notranslate"><span class="pre">ntrain</span></code> and <code class="docutils literal notranslate"><span class="pre">ntest</span></code></a></li>
+</ul>
+</li>
 </ul>
             </nav>
         </div>
@@ -374,7 +378,8 @@ interface is recommended for <a class="reference internal" href="command-options
 <li><p>Prepare dataset composed of displacements, forces, and energies in
 supercells. The dataset must be stored in a phono3py-yaml-like file, e.g.,
 <code class="docutils literal notranslate"><span class="pre">phono3py_params.yaml</span></code>. Use <a class="reference internal" href="command-options.html#cf3-option"><span class="std std-ref">–cf3</span></a> and <a class="reference internal" href="command-options.html#sp-option"><span class="std std-ref">–sp</span></a> option simultaneously.</p></li>
-<li><p>Develop MLPs. At this step <code class="docutils literal notranslate"><span class="pre">phono3py.pmlp</span></code> is saved.</p></li>
+<li><p>Develop MLPs. By default, 90 and 10 percents of the dataset are used for the
+training and test, respectively. At this step <code class="docutils literal notranslate"><span class="pre">phono3py.pmlp</span></code> is saved.</p></li>
 <li><p>Generate displacements in supercells either systematic or random displacements.</p></li>
 <li><p>Evaluate MLPs for forces of the supercells generated in step 5.</p></li>
 <li><p>Calculate force constants from displacement-force dataset from steps 5 and 6.</p></li>
@@ -567,7 +572,7 @@ For this, symfc is used which is invoked by <code class="docutils literal notran
  <span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="p">)</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="o">|</span><span class="n">__</span><span class="p">)</span> <span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="p">)</span> <span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span>
  <span class="o">|</span> <span class="o">.</span><span class="n">__</span><span class="o">/|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span>\<span class="n">___</span><span class="o">/|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span>\<span class="n">___</span><span class="o">/</span><span class="n">____</span><span class="o">/|</span> <span class="o">.</span><span class="n">__</span><span class="o">/</span> \<span class="n">__</span><span class="p">,</span> <span class="o">|</span>
  <span class="o">|</span><span class="n">_</span><span class="o">|</span>                                <span class="o">|</span><span class="n">_</span><span class="o">|</span>    <span class="o">|</span><span class="n">___</span><span class="o">/</span>
-                       <span class="mf">3.5.0</span><span class="o">-</span><span class="n">dev22</span><span class="o">+</span><span class="n">g575c4107</span>
+                                           <span class="mf">3.5.0</span>
 
 <span class="o">-------------------------</span><span class="p">[</span><span class="n">time</span> <span class="mi">2024</span><span class="o">-</span><span class="mi">09</span><span class="o">-</span><span class="mi">19</span> <span class="mi">15</span><span class="p">:</span><span class="mi">33</span><span class="p">:</span><span class="mi">23</span><span class="p">]</span><span class="o">-------------------------</span>
 <span class="n">Compiled</span> <span class="k">with</span> <span class="n">OpenMP</span> <span class="n">support</span> <span class="p">(</span><span class="nb">max</span> <span class="mi">10</span> <span class="n">threads</span><span class="p">)</span><span class="o">.</span>
@@ -651,6 +656,38 @@ for these supercells are then evaluated. Finally, the force constants are
 calculated using symfc.</p>
 </section>
 </section>
+<section id="parameters-for-developing-mlps">
+<h2>Parameters for developing MLPs<a class="headerlink" href="#parameters-for-developing-mlps" title="Link to this heading">#</a></h2>
+<p>A few parameters can be specified using the <code class="docutils literal notranslate"><span class="pre">--mlp-params</span></code> option for the
+development of MLPs. The parameters are provided as a string, e.g.,</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>phono3py_params.yaml<span class="w"> </span>--pypolymlp<span class="w"> </span>--mlp-params<span class="o">=</span><span class="s2">&quot;ntrain=80, ntest=20&quot;</span>
+</pre></div>
+</div>
+<p>Parameters are separated by commas for configuration. A brief explanation of the
+available parameters can be found in the docstring of <code class="docutils literal notranslate"><span class="pre">PypolymlpParams</span></code> that is
+found by</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">from</span> <span class="nn">phonopy.interface.pypolymlp</span> <span class="kn">import</span> <span class="n">PypolymlpParams</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">help</span><span class="p">(</span><span class="n">PypolymlpParams</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">ntrain</span></code> and <code class="docutils literal notranslate"><span class="pre">ntest</span></code> are implemented in phono3py, while the remaining parameters
+are directly passed to pypolymlp. Optimizing pypolymlp parameters can be
+difficult, both in terms of achieving accuracy and managing the computational
+resources required. The current default parameters are likely suitable for
+systems up to ternary compounds. For binary systems, the calculations can
+generally be run on standard laptop computers, but for ternary systems, around
+40 GB of memory or more may be necessary.</p>
+<p>For parameter adjustments, it is recommended to consult the
+<a class="reference external" href="https://github.com/sekocha/pypolymlp">pypolymlp</a> documentation and review the
+relevant research papers.</p>
+<section id="ntrain-and-ntest">
+<h3><code class="docutils literal notranslate"><span class="pre">ntrain</span></code> and <code class="docutils literal notranslate"><span class="pre">ntest</span></code><a class="headerlink" href="#ntrain-and-ntest" title="Link to this heading">#</a></h3>
+<p>This method provides a straightforward dataset split: the first <code class="docutils literal notranslate"><span class="pre">ntrain</span></code>
+supercells from the list are used for training, while the last <code class="docutils literal notranslate"><span class="pre">ntest</span></code>
+supercells are reserved for testing.</p>
+</section>
+</section>
 </section>
 
 
@@ -703,6 +740,10 @@ calculated using symfc.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#steps-1-3-dataset-preparation">Steps 1-3: Dataset preparation</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#steps-4-7-force-constants-calculation-systematic-displacements-in-step-5">Steps 4-7: Force constants calculation (systematic displacements in step 5)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#steps-4-6-force-constants-calculation-random-displacements-in-step-5">Steps 4-6: Force constants calculation (random displacements in step 5)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-for-developing-mlps">Parameters for developing MLPs</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ntrain-and-ntest"><code class="docutils literal notranslate"><span class="pre">ntrain</span></code> and <code class="docutils literal notranslate"><span class="pre">ntest</span></code></a></li>
 </ul>
 </li>
 </ul>

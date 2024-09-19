@@ -36,7 +36,8 @@ in the distribution from GitHub or PyPI.
    supercells. The dataset must be stored in a phono3py-yaml-like file, e.g.,
    `phono3py_params.yaml`. Use {ref}`--cf3 <cf3_option>` and {ref}`--sp
    <sp_option>` option simultaneously.
-4. Develop MLPs. At this step `phono3py.pmlp` is saved.
+4. Develop MLPs. By default, 90 and 10 percents of the dataset are used for the
+   training and test, respectively. At this step `phono3py.pmlp` is saved.
 5. Generate displacements in supercells either systematic or random displacements.
 6. Evaluate MLPs for forces of the supercells generated in step 5.
 7. Calculate force constants from displacement-force dataset from steps 5 and 6.
@@ -244,7 +245,7 @@ Having `phono3py_params.yaml`, phono3py is executed with `--pypolymlp` option,
  | |_) | | | | (_) | | | | (_) |__) | |_) | |_| |
  | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
  |_|                                |_|    |___/
-                       3.5.0-dev22+g575c4107
+                                           3.5.0
 
 -------------------------[time 2024-09-19 15:33:23]-------------------------
 Compiled with OpenMP support (max 10 threads).
@@ -327,3 +328,40 @@ displacements are generated. These displacements are then inverted, resulting in
 an additional 200 supercells. In total, 400 supercells are created. The forces
 for these supercells are then evaluated. Finally, the force constants are
 calculated using symfc.
+
+## Parameters for developing MLPs
+
+A few parameters can be specified using the `--mlp-params` option for the
+development of MLPs. The parameters are provided as a string, e.g.,
+
+```bash
+% phono3py-load phono3py_params.yaml --pypolymlp --mlp-params="ntrain=80, ntest=20"
+```
+
+Parameters are separated by commas for configuration. A brief explanation of the
+available parameters can be found in the docstring of `PypolymlpParams` that is
+found by
+
+```python
+In [1]: from phonopy.interface.pypolymlp import PypolymlpParams
+
+In [2]: help(PypolymlpParams)
+```
+
+`ntrain` and `ntest` are implemented in phono3py, while the remaining parameters
+are directly passed to pypolymlp. Optimizing pypolymlp parameters can be
+difficult, both in terms of achieving accuracy and managing the computational
+resources required. The current default parameters are likely suitable for
+systems up to ternary compounds. For binary systems, the calculations can
+generally be run on standard laptop computers, but for ternary systems, around
+40 GB of memory or more may be necessary.
+
+For parameter adjustments, it is recommended to consult the
+[pypolymlp](https://github.com/sekocha/pypolymlp) documentation and review the
+ relevant research papers.
+
+### `ntrain` and `ntest`
+
+This method provides a straightforward dataset split: the first `ntrain`
+supercells from the list are used for training, while the last `ntest`
+supercells are reserved for testing.
