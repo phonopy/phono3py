@@ -333,7 +333,11 @@ calculated using symfc.
 
 ## Convergence with respect to dataset size
 
-In general, increasing the amount of data improves the accuracy of representing force constants. Therefore, it is recommended to check the convergence of the target property as the dataset size grows. Lattice thermal conductivity is a convenient property to monitor when assessing convergence with respect to the number of supercells in the training dataset.
+In general, increasing the amount of data improves the accuracy of representing
+force constants. Therefore, it is recommended to check the convergence of the
+target property with respect to the number of supercells in the training
+dataset. Lattice thermal conductivity may be a convenient property to monitor
+when assessing convergence.
 
 ## Parameters for developing MLPs
 
