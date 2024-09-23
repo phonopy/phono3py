@@ -304,7 +304,7 @@ class Interaction:
 
     def get_triplets_at_q(
         self,
-    ) -> tuple(np.ndarray, np.ndarray, np.ndarray, np.ndarray):
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Return grid point triplets information.
 
         triplets_at_q is in BZ-grid.
@@ -414,7 +414,7 @@ class Interaction:
         )
         return self.zero_value_positions
 
-    def get_phonons(self) -> tuple(np.ndarray, np.ndarray, np.ndarray):
+    def get_phonons(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Return phonons on grid.
 
         Returns
@@ -538,7 +538,7 @@ class Interaction:
 
     def get_primitive_and_supercell_correspondence(
         self,
-    ) -> tuple(np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray):
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Return atomic pair information."""
         return (self._svecs, self._multi, self._p2s, self._s2p, self._masses)
 

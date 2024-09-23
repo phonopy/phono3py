@@ -80,8 +80,8 @@ void r2r_real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
                             const AtomTriplets *atom_triplets,
                             const long openmp_per_triplets) {
     long i, j, num_band, num_patom, num_satom, adrs_vec;
-    lapack_complex_double *pre_phase_factors, *phase_factor0, *phase_factor1,
-        *phase_factor2;
+    lapack_complex_double *pre_phase_factors, *phase_factors, *phase_factor0,
+        *phase_factor1, *phase_factor2;
 
     num_patom = atom_triplets->multi_dims[1];
     num_satom = atom_triplets->multi_dims[0];
@@ -92,12 +92,11 @@ void r2r_real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
         pre_phase_factors[i] = get_pre_phase_factor(i, q_vecs, atom_triplets);
     }
 
-    phase_factor0 = (lapack_complex_double *)malloc(
-        sizeof(lapack_complex_double) * num_patom * num_satom);
-    phase_factor1 = (lapack_complex_double *)malloc(
-        sizeof(lapack_complex_double) * num_patom * num_satom);
-    phase_factor2 = (lapack_complex_double *)malloc(
-        sizeof(lapack_complex_double) * num_patom * num_satom);
+    phase_factors = (lapack_complex_double *)malloc(
+        sizeof(lapack_complex_double) * 3 * num_patom * num_satom);
+    phase_factor0 = phase_factors;
+    phase_factor1 = phase_factors + num_patom * num_satom;
+    phase_factor2 = phase_factors + 2 * num_patom * num_satom;
     for (i = 0; i < num_patom; i++) {
         for (j = 0; j < num_satom; j++) {
             adrs_vec = j * atom_triplets->multi_dims[1] + i;
@@ -132,11 +131,10 @@ void r2r_real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
 
     free(pre_phase_factors);
     pre_phase_factors = NULL;
-    free(phase_factor0);
+    free(phase_factors);
+    phase_factors = NULL;
+    phase_factor0 = NULL;
     phase_factor1 = NULL;
-    free(phase_factor1);
-    phase_factor1 = NULL;
-    free(phase_factor2);
     phase_factor2 = NULL;
 }
 
