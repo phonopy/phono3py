@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Sep-24-2024: Version 3.5.2
+
+- Fix a memory leak.
+
 ## Sep-19-2024: Version 3.5.1
 
 - A small fix.
