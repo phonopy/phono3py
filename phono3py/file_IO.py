@@ -413,6 +413,26 @@ def read_fc2_from_hdf5(filename="fc2.hdf5", p2s_map=None):
     )
 
 
+def write_datasets_to_hdf5(
+    dataset: dict,
+    phonon_dataset: dict = None,
+    filename: str = "datasets.hdf5",
+    compression: str = "gzip",
+):
+    """Write dataset and phonon_dataset in datasets.hdf5."""
+
+    def _write_dataset(w, dataset: dict, group_name: str):
+        dataset_w = w.create_group(group_name)
+        for key in dataset:
+            dataset_w.create_dataset(key, data=dataset[key], compression=compression)
+
+    with h5py.File(filename, "w") as w:
+        w.create_dataset("version", data=np.bytes_(__version__))
+        _write_dataset(w, dataset, "dataset")
+        if phonon_dataset:
+            _write_dataset(w, phonon_dataset, "phonon_dataset")
+
+
 def write_grid_address_to_hdf5(
     grid_address,
     mesh,
