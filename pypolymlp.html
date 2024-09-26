@@ -324,8 +324,10 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#citation-of-pypolymlp">Citation of pypolymlp</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#requirements">Requirements</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">Workflow</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-calculate">How to calculate</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">Workflow</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#steps-1-3-dataset-preparation">Steps 1-3: Dataset preparation</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#steps-4-7-force-constants-calculation-systematic-displacements-in-step-5">Steps 4-7: Force constants calculation (systematic displacements in step 5)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#steps-4-7-force-constants-calculation-random-displacements-in-step-5">Steps 4-7: Force constants calculation (random displacements in step 5)</a></li>
@@ -365,15 +367,39 @@ compute forces for supercells with specific displacements.</p>
 [<a class="reference external" href="https://arxiv.org/abs/2401.17531">arxiv</a>].</p>
 <p>An example of its usage can be found in the <code class="docutils literal notranslate"><span class="pre">example/NaCl-pypolymlp</span></code> directory
 in the distribution from GitHub or PyPI.</p>
+<section id="citation-of-pypolymlp">
+<h2>Citation of pypolymlp<a class="headerlink" href="#citation-of-pypolymlp" title="Link to this heading">#</a></h2>
+<p>“Tutorial: Systematic development of polynomial machine learning potentials for elemental and alloy systems”, A. Seko, J. Appl. Phys. <strong>133</strong>, 011101 (2023).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@article</span><span class="p">{</span><span class="n">pypolymlp</span><span class="p">,</span>
+    <span class="n">author</span> <span class="o">=</span> <span class="p">{</span><span class="n">Seko</span><span class="p">,</span> <span class="n">Atsuto</span><span class="p">},</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;{&quot;</span><span class="n">Tutorial</span><span class="p">:</span> <span class="n">Systematic</span> <span class="n">development</span> <span class="n">of</span> <span class="n">polynomial</span> <span class="n">machine</span> <span class="n">learning</span> <span class="n">potentials</span> <span class="k">for</span> <span class="n">elemental</span> <span class="ow">and</span> <span class="n">alloy</span> <span class="n">systems</span><span class="s2">&quot;}&quot;</span><span class="p">,</span>
+    <span class="n">journal</span> <span class="o">=</span> <span class="p">{</span><span class="n">J</span><span class="o">.</span> <span class="n">Appl</span><span class="o">.</span> <span class="n">Phys</span><span class="o">.</span><span class="p">},</span>
+    <span class="n">volume</span> <span class="o">=</span> <span class="p">{</span><span class="mi">133</span><span class="p">},</span>
+    <span class="n">number</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">},</span>
+    <span class="n">pages</span> <span class="o">=</span> <span class="p">{</span><span class="mi">011101</span><span class="p">},</span>
+    <span class="n">year</span> <span class="o">=</span> <span class="p">{</span><span class="mi">2023</span><span class="p">},</span>
+    <span class="n">month</span> <span class="o">=</span> <span class="p">{</span><span class="mi">01</span><span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
 <section id="requirements">
 <h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p><a class="reference external" href="https://github.com/sekocha/pypolymlp">pypolymlp</a></p></li>
-<li><p><a class="reference external" href="https://github.com/symfc/symfc">symfc</a></p></li>
+<ul>
+<li><p><a class="reference external" href="https://github.com/sekocha/pypolymlp">pypolymlp</a></p>
+<p>For linux (x86-64), a compiled package of pypolymlp can be installed via
+conda-forge (recommended). Otherwise, pypolymlp can be installed from
+source-code.</p>
+</li>
+<li><p><a class="reference external" href="https://github.com/symfc/symfc">symfc</a></p>
+<p>Installed via pip, conda-forge, or source code.</p>
+</li>
 </ul>
 </section>
+<section id="how-to-calculate">
+<h2>How to calculate<a class="headerlink" href="#how-to-calculate" title="Link to this heading">#</a></h2>
 <section id="workflow">
-<h2>Workflow<a class="headerlink" href="#workflow" title="Link to this heading">#</a></h2>
+<h3>Workflow<a class="headerlink" href="#workflow" title="Link to this heading">#</a></h3>
 <ol class="arabic simple">
 <li><p>Generate random displacements in supercells. Use <a class="reference internal" href="command-options.html#random-displacements-option"><span class="std std-ref">–rd</span></a> option.</p></li>
 <li><p>Calculate corresponding forces and energies in supercells. Use of VASP
@@ -389,6 +415,7 @@ training and test, respectively. At this step <code class="docutils literal notr
 </ol>
 <p>The steps 4-7 are executed in running phono3py with <code class="docutils literal notranslate"><span class="pre">--pypolymlp</span></code>
 option.</p>
+</section>
 <section id="steps-1-3-dataset-preparation">
 <h3>Steps 1-3: Dataset preparation<a class="headerlink" href="#steps-1-3-dataset-preparation" title="Link to this heading">#</a></h3>
 <p>For the training, the following supercell data are required in the phono3py
@@ -746,8 +773,10 @@ supercells are reserved for testing.</p>
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#citation-of-pypolymlp">Citation of pypolymlp</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#requirements">Requirements</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">Workflow</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-calculate">How to calculate</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">Workflow</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#steps-1-3-dataset-preparation">Steps 1-3: Dataset preparation</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#steps-4-7-force-constants-calculation-systematic-displacements-in-step-5">Steps 4-7: Force constants calculation (systematic displacements in step 5)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#steps-4-7-force-constants-calculation-random-displacements-in-step-5">Steps 4-7: Force constants calculation (random displacements in step 5)</a></li>
