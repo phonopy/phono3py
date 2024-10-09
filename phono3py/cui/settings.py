@@ -95,6 +95,7 @@ class Phono3pySettings(Settings):
         "solve_collective_phonon": False,
         "emulate_v2": False,
         "subtract_forces": None,
+        "subtract_forces_fc2": None,
         "temperatures": None,
         "use_ave_pp": False,
         "use_grg": False,
@@ -320,6 +321,10 @@ class Phono3pySettings(Settings):
     def set_subtract_forces(self, val):
         """Set subtract_forces."""
         self._v["subtract_forces"] = val
+
+    def set_subtract_forces_fc2(self, val):
+        """Set subtract_forces_fc2."""
+        self._v["subtract_forces_fc2"] = val
 
     def set_temperatures(self, val):
         """Set temperatures."""
@@ -605,6 +610,10 @@ class Phono3pyConfParser(ConfParser):
             if self._args.subtract_forces:
                 self._confs["subtract_forces"] = self._args.subtract_forces
 
+        if "subtract_forces_fc2" in self._args:
+            if self._args.subtract_forces_fc2:
+                self._confs["subtract_forces_fc2"] = self._args.subtract_forces_fc2
+
         if "temperatures" in self._args:
             if self._args.temperatures is not None:
                 self._confs["temperatures"] = " ".join(self._args.temperatures)
@@ -716,6 +725,7 @@ class Phono3pyConfParser(ConfParser):
                 "create_forces_fc3_file",
                 "output_yaml_filename",
                 "subtract_forces",
+                "subtract_forces_fc2",
             ):
                 self.set_parameter(conf_key, confs[conf_key])
 
@@ -1008,6 +1018,10 @@ class Phono3pyConfParser(ConfParser):
         # Subtract residual forces to create FORCES_FC2 and FORCES_FC3
         if "subtract_forces" in params:
             self._settings.set_subtract_forces(params["subtract_forces"])
+
+        # Subtract residual forces to create FORCES_FC2
+        if "subtract_forces_fc2" in params:
+            self._settings.set_subtract_forces_fc2(params["subtract_forces_fc2"])
 
         # Temperatures for scatterings
         if "temperatures" in params:
