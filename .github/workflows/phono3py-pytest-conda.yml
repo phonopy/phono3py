@@ -24,7 +24,7 @@ jobs:
       run: |
         conda activate test
         conda install --yes python=${{ matrix.python-version }}
-        conda install --yes matplotlib-base pyyaml "libblas=*=*openblas" openblas h5py scipy pytest spglib alm cmake c-compiler cxx-compiler pypolymlp
+        conda install --yes matplotlib-base pyyaml "libblas=*=*openblas" openblas h5py "numpy>=2.1" scipy pytest spglib alm cmake c-compiler cxx-compiler pypolymlp symfc
     - name: Install phonopy develop branch
       run: |
         conda activate test
