@@ -23,12 +23,38 @@ For further details on combining phono3py calculations with pypolymlp, refer to
 An example of its usage can be found in the `example/NaCl-pypolymlp` directory
 in the distribution from GitHub or PyPI.
 
+## Citation of pypolymlp
+
+"Tutorial: Systematic development of polynomial machine learning potentials for elemental and alloy systems", A. Seko, J. Appl. Phys. **133**, 011101 (2023).
+
+```
+@article{pypolymlp,
+    author = {Seko, Atsuto},
+    title = "{"Tutorial: Systematic development of polynomial machine learning potentials for elemental and alloy systems"}",
+    journal = {J. Appl. Phys.},
+    volume = {133},
+    number = {1},
+    pages = {011101},
+    year = {2023},
+    month = {01},
+}
+```
+
 ## Requirements
 
 - [pypolymlp](https://github.com/sekocha/pypolymlp)
+
+  For linux (x86-64), a compiled package of pypolymlp can be installed via
+  conda-forge (recommended). Otherwise, pypolymlp can be installed from
+  source-code.
+
 - [symfc](https://github.com/symfc/symfc)
 
-## Workflow
+  Installed via pip, conda-forge, or source code.
+
+## How to calculate
+
+### Workflow
 
 1. Generate random displacements in supercells. Use {ref}`--rd
    <random_displacements_option>` option.
