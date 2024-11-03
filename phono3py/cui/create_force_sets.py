@@ -41,12 +41,18 @@ import sys
 from typing import Optional
 
 import numpy as np
-from phonopy.cui.create_force_sets import check_number_of_force_files
+from phonopy.cui.create_force_sets import (
+    check_agreement_of_supercell_positions,
+    check_agreements_of_displacements,
+    check_number_of_force_files,
+)
 from phonopy.cui.load_helper import get_nac_params
 from phonopy.cui.phonopy_script import file_exists, files_exist, print_error
 from phonopy.file_IO import is_file_phonopy_yaml, parse_FORCE_SETS, write_FORCE_SETS
 from phonopy.interface.calculator import get_calc_dataset
+from phonopy.structure.atoms import PhonopyAtoms
 
+from phono3py.cui.settings import Phono3pySettings
 from phono3py.file_IO import (
     get_length_of_first_line,
     parse_FORCES_FC2,
@@ -60,7 +66,7 @@ from phono3py.interface.phono3py_yaml import (
 
 
 def create_FORCES_FC3_and_FORCES_FC2(
-    settings,
+    settings: Phono3pySettings,
     cell_filename: Optional[str],
     log_level: int = 0,
 ):
@@ -106,11 +112,16 @@ def create_FORCES_FC3_and_FORCES_FC2(
 
     if settings.create_forces_fc3 or settings.create_forces_fc3_file:
         calc_dataset_fc3 = _get_force_sets_fc3(
-            settings, ph3py_yaml.dataset, disp_filename, interface_mode, log_level
+            settings,
+            ph3py_yaml.dataset,
+            ph3py_yaml.supercell,
+            disp_filename,
+            interface_mode,
+            log_level,
         )
         if not calc_dataset_fc3["forces"]:
             if log_level:
-                print("%s could not be created." % "FORCES_FC3")
+                print('"FORCES_FC3" could not be created.')
                 print_error()
             sys.exit(1)
 
@@ -118,13 +129,14 @@ def create_FORCES_FC3_and_FORCES_FC2(
         calc_dataset_fc2 = _get_force_sets_fc2(
             settings,
             ph3py_yaml.phonon_dataset,
+            ph3py_yaml.phonon_supercell,
             disp_filename,
             interface_mode,
             log_level,
         )
         if not calc_dataset_fc2["forces"]:
             if log_level:
-                print("%s could not be created." % "FORCES_FC2")
+                print('"FORCES_FC2" could not be created.')
                 print_error()
             sys.exit(1)
     else:
@@ -157,7 +169,7 @@ def create_FORCES_FC3_and_FORCES_FC2(
                 filename="FORCES_FC3",
             )
             if log_level:
-                print("%s has been created." % "FORCES_FC3")
+                print('"FORCES_FC3" has been created.')
 
         if settings.create_forces_fc2:
             write_FORCES_FC2(
@@ -166,7 +178,7 @@ def create_FORCES_FC3_and_FORCES_FC2(
                 filename="FORCES_FC2",
             )
             if log_level:
-                print("%s has been created." % "FORCES_FC2")
+                print('"FORCES_FC2" has been created.')
 
 
 def create_FORCES_FC2_from_FORCE_SETS(log_level):
@@ -247,7 +259,12 @@ def create_FORCE_SETS_from_FORCES_FCx(
 
 
 def _get_force_sets_fc2(
-    settings, disp_dataset, disp_filename, interface_mode, log_level
+    settings: Phono3pySettings,
+    disp_dataset: dict,
+    supercell: PhonopyAtoms,
+    disp_filename: str,
+    interface_mode: Optional[str],
+    log_level: int,
 ) -> dict:
     interface_mode = settings.calculator
     if log_level:
@@ -277,9 +294,19 @@ def _get_force_sets_fc2(
         verbose=(log_level > 0),
     )
     force_sets = calc_dataset["forces"]
+    if "points" in calc_dataset:
+        if filename := check_agreements_of_displacements(
+            supercell, disp_dataset, calc_dataset["points"], force_filenames
+        ):
+            raise RuntimeError(
+                f'Displacements don\'t match with atomic positions in "{filename}".'
+            )
 
-    if settings.subtract_forces:
-        force_filename = settings.subtract_forces
+    if settings.subtract_forces or settings.subtract_forces_fc2:
+        if settings.subtract_forces_fc2:
+            force_filename = settings.subtract_forces_fc2
+        else:
+            force_filename = settings.subtract_forces
         file_exists(force_filename, log_level=log_level)
         calc_dataset_zero = get_calc_dataset(
             interface_mode,
@@ -289,12 +316,26 @@ def _get_force_sets_fc2(
             ],
             verbose=(log_level > 0),
         )
+        if "points" in calc_dataset_zero:
+            if check_agreement_of_supercell_positions(
+                supercell, calc_dataset_zero["points"][0]
+            ):
+                raise RuntimeError(
+                    "Supercell doesn't match with atomic positions in "
+                    f'"{force_filename}".'
+                )
         force_set_zero = calc_dataset_zero["forces"][0]
         for fs in force_sets:
             fs -= force_set_zero
 
         if log_level > 0:
-            print("Forces in '{force_filename}' were subtracted from supercell forces.")
+            print(
+                f'Forces in "{force_filename}" were subtracted from supercell forces.'
+            )
+
+    if log_level > 0 and "first_atoms" not in disp_dataset:
+        if len(force_filenames) < num_disps:
+            print("** Number of supercell files is less than displacements. **")
 
     if log_level > 0:
         print("")
@@ -303,7 +344,12 @@ def _get_force_sets_fc2(
 
 
 def _get_force_sets_fc3(
-    settings, disp_dataset, disp_filename, interface_mode, log_level
+    settings: Phono3pySettings,
+    disp_dataset: dict,
+    supercell: PhonopyAtoms,
+    disp_filename: str,
+    interface_mode: Optional[str],
+    log_level: int,
 ) -> dict:
     if log_level:
         print(f'FC3 Displacement dataset was read from "{disp_filename}".')
@@ -331,12 +377,14 @@ def _get_force_sets_fc3(
         file_exists(filename, log_level=log_level)
 
     if log_level > 0:
-        print(f"  Number of displacements: {num_disps}")
         print(f"  Number of supercell files: {len(force_filenames)}")
+        print(f'  Number of displacements in "{disp_filename}": {num_disps}')
 
-    if not check_number_of_force_files(num_disps, force_filenames, disp_filename):
+    if "first_atoms" in disp_dataset and not check_number_of_force_files(
+        num_disps, force_filenames, disp_filename
+    ):  # type-1
         calc_dataset = {"forces": []}
-    else:
+    else:  # type-2
         calc_dataset = get_calc_dataset(
             interface_mode,
             num_atoms,
@@ -344,11 +392,18 @@ def _get_force_sets_fc3(
             verbose=(log_level > 0),
         )
         force_sets = calc_dataset["forces"]
+        if "points" in calc_dataset:
+            if filename := check_agreements_of_displacements(
+                supercell, disp_dataset, calc_dataset["points"], force_filenames
+            ):
+                raise RuntimeError(
+                    f'Displacements don\'t match with atomic positions in "{filename}".'
+                )
 
     if settings.subtract_forces:
         force_filename = settings.subtract_forces
         file_exists(force_filename, log_level=log_level)
-        calc_dataset = get_calc_dataset(
+        calc_dataset_zero = get_calc_dataset(
             interface_mode,
             num_atoms,
             [
@@ -356,7 +411,16 @@ def _get_force_sets_fc3(
             ],
             verbose=(log_level > 0),
         )
-        force_set_zero = calc_dataset["forces"][0]
+        force_set_zero = calc_dataset_zero["forces"][0]
+        if "points" in calc_dataset_zero:
+            if check_agreement_of_supercell_positions(
+                supercell, calc_dataset_zero["points"][0]
+            ):
+                raise RuntimeError(
+                    "Supercell doesn't match with atomic positions in "
+                    f'"{force_filename}".'
+                )
+
         for fs in force_sets:
             fs -= force_set_zero
 
@@ -364,6 +428,10 @@ def _get_force_sets_fc3(
             print(
                 f"Forces in '{force_filename}' were subtracted from supercell forces."
             )
+
+    if log_level > 0 and "first_atoms" not in disp_dataset:
+        if len(force_filenames) < num_disps:
+            print("** Number of supercell files is less than displacements. **")
 
     if log_level > 0:
         print("")
@@ -377,6 +445,7 @@ def _set_forces_and_nac_params(
     calc_dataset_fc3: dict,
     calc_dataset_fc2: Optional[dict],
 ):
+    """Set forces, energies and nac_params to phono3py_yaml."""
     if "first_atoms" in ph3py_yaml.dataset:
         count = len(ph3py_yaml.dataset["first_atoms"])
         for i, d1 in enumerate(ph3py_yaml.dataset["first_atoms"]):
@@ -400,6 +469,12 @@ def _set_forces_and_nac_params(
         ph3py_yaml.dataset["supercell_energies"] = np.array(
             calc_dataset_fc3["supercell_energies"], dtype="double"
         )
+        if len(ph3py_yaml.dataset["forces"]) != len(
+            ph3py_yaml.dataset["displacements"]
+        ):
+            ph3py_yaml.dataset["displacements"] = ph3py_yaml.dataset["displacements"][
+                : len(ph3py_yaml.dataset["forces"])
+            ]
 
     if settings.create_forces_fc2 and calc_dataset_fc2:
         if "first_atoms" in ph3py_yaml.phonon_dataset:
@@ -416,6 +491,12 @@ def _set_forces_and_nac_params(
             ph3py_yaml.phonon_dataset["supercell_energies"] = np.array(
                 calc_dataset_fc2["supercell_energies"], dtype="double"
             )
+            if len(ph3py_yaml.phonon_dataset["forces"]) != len(
+                ph3py_yaml.phonon_dataset["displacements"]
+            ):
+                ph3py_yaml.phonon_dataset["displacements"] = ph3py_yaml.phonon_dataset[
+                    "displacements"
+                ][: len(ph3py_yaml.phonon_dataset["forces"])]
 
     if ph3py_yaml.nac_params is None:
         nac_params = get_nac_params(primitive=ph3py_yaml.primitive)
