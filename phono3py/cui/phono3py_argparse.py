@@ -160,6 +160,14 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         help="Subtract recidual forces from supercell forces",
     )
     parser.add_argument(
+        "--cfz-fc2",
+        "--subtract-forces-fc2",
+        metavar="FILE",
+        dest="subtract_forces_fc2",
+        default=None,
+        help="Subtract recidual forces from supercell forces for fc2",
+    )
+    parser.add_argument(
         "--cfc",
         "--compact-fc",
         dest="is_compact_fc",

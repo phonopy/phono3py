@@ -626,9 +626,9 @@ $$
  \bigl|\Phi_{-\lambda\lambda'\lambda''}\bigl|^2
  \left\{(n_{\lambda'}+ n_{\lambda''}+1)
   \delta(\omega-\omega_{\lambda'}-\omega_{\lambda''}) \right.
-  * (n_{\lambda'}-n_{\lambda''})
+  + (n_{\lambda'}-n_{\lambda''})
  \left[\delta(\omega+\omega_{\lambda'}-\omega_{\lambda''})
-* \left. \delta(\omega-\omega_{\lambda'}+\omega_{\lambda''})
+- \left. \delta(\omega-\omega_{\lambda'}+\omega_{\lambda''})
 \right]\right\}.
 $$
 
@@ -858,7 +858,7 @@ $$
  \bigl|\Phi_{-\lambda\lambda_1\lambda_2}\bigl|^2
  (n_{\lambda_1}-n_{\lambda_2})
  \left[\delta(\omega+\omega_{\lambda_1}-\omega_{\lambda_2})
- *  \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2})
+ - \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2})
  \right]
  \end{align*}
 $$
@@ -872,7 +872,7 @@ $$
  \bigl|\Phi_{-\lambda\lambda_1\lambda_2}\bigl|^2
 (n_{\lambda_1}+ n_{\lambda_2}+1)
  \left[ \delta(\omega-\omega_{\lambda_1}-\omega_{\lambda_2})
- * \delta(\omega + \omega_{\lambda_1} + \omega_{\lambda_2}) \right]
+ - \delta(\omega + \omega_{\lambda_1} + \omega_{\lambda_2}) \right]
  \end{align*},
 $$
 
@@ -940,11 +940,11 @@ $$
  \bigl|\Phi_{-\lambda\lambda_1\lambda_2}\bigl|^2 &
  \left\{(n_{\lambda_1}+ n_{\lambda_2}+1)
  \left[ \delta(\omega-\omega_{\lambda_1}-\omega_{\lambda_2})
- * \delta(\omega+\omega_{\lambda_1}+\omega_{\lambda_2}) \right] \right.
+ - \delta(\omega+\omega_{\lambda_1}+\omega_{\lambda_2}) \right] \right.
  \\
  & + (n_{\lambda_1}-n_{\lambda_2})
  \left[\delta(\omega+\omega_{\lambda_1}-\omega_{\lambda_2})
- * \left. \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2})
+ - \left. \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2})
  \right]\right\},
 \end{align*}
 $$
@@ -959,14 +959,14 @@ $$
  \left\{
  \left[ \frac{(n_{\lambda_1}+ n_{\lambda_2}+1)}{
  (\omega-\omega_{\lambda_1}-\omega_{\lambda_2})_\mathrm{p}}
- * \frac{(n_{\lambda_1}+ n_{\lambda_2}+1)}{
+ - \frac{(n_{\lambda_1}+ n_{\lambda_2}+1)}{
  (\omega+\omega_{\lambda_1}+\omega_{\lambda_2})_\mathrm{p}}
  \right]
  \right. \\
   & + \left[
  \frac{(n_{\lambda_1}-n_{\lambda_2})}{(\omega +
  \omega_{\lambda_1} - \omega_{\lambda_2})_\mathrm{p}}
- * \left. \frac{(n_{\lambda_1}-n_{\lambda_2})}{(\omega -
+ - \left. \frac{(n_{\lambda_1}-n_{\lambda_2})}{(\omega -
  \omega_{\lambda_1} + \omega_{\lambda_2})_\mathrm{p}}
  \right]\right\},
 \end{align*}
@@ -1030,7 +1030,7 @@ A_\lambda(\omega) = \frac{1}{\pi} \frac{4\Omega^2_\lambda
  \Gamma_\lambda(\omega)}
  {\left[\omega^2 - \Omega^2_\lambda -
  2\Omega_\lambda \Delta_\lambda(\omega) \right]^2
- * \left[ 2\Omega_\lambda
+ - \left[ 2\Omega_\lambda
  \Gamma_\lambda(\omega) \right]^2},
 $$
 
