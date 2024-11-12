@@ -58,7 +58,7 @@ When using `phono3py-load` (see also {ref}`phono3py_load_command`)
 This specifies input unit cell filename.
 
 ```bash
-% phono3py -c POSCAR-unitcell ... (options)
+% phono3py -c POSCAR-unitcell [OPTIONS]
 ```
 
 ## Calculator interface
@@ -193,7 +193,7 @@ created from `FORCES_FC2` and `phono3py_disp.yaml` instead of `FORCES_FC3` and
 `phono3py_disp.yaml`.
 
 ```bash
-% phono3py --cfs --dim-fc2="x x x"
+% phono3py --cfs --dim-fc2 4 4 4
 ```
 
 (sp_option)=
@@ -283,7 +283,7 @@ order force constants with larger supercell size. The filename is the same as
 that created in the usual phono3py run without `--dim-fc2` option.
 
 ```bash
-% phono3py --dim="2 2 2" --dim_fc2="4 4 4" -c POSCAR-unitcell ... (many options)
+% phono3py --dim 2 2 2 --dim_fc2 4 4 4 -c POSCAR-unitcell [OPTIONS]
 ```
 
 (pa_option)=

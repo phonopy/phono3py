@@ -48,10 +48,6 @@ in the distribution from GitHub or PyPI.
   conda-forge (recommended). Otherwise, pypolymlp can be installed from
   source-code.
 
-- [symfc](https://github.com/symfc/symfc)
-
-  Installed via pip, conda-forge, or source code.
-
 ## How to calculate
 
 ### Workflow
@@ -357,14 +353,6 @@ an additional 200 supercells. In total, 400 supercells are created. The forces
 for these supercells are then evaluated. Finally, the force constants are
 calculated using symfc.
 
-## Convergence with respect to dataset size
-
-In general, increasing the amount of data improves the accuracy of representing
-force constants. Therefore, it is recommended to check the convergence of the
-target property with respect to the number of supercells in the training
-dataset. Lattice thermal conductivity may be a convenient property to monitor
-when assessing convergence.
-
 ## Parameters for developing MLPs
 
 A few parameters can be specified using the `--mlp-params` option for the
@@ -401,3 +389,30 @@ For parameter adjustments, it is recommended to consult the
 This method provides a straightforward dataset split: the first `ntrain`
 supercells from the list are used for training, while the last `ntest`
 supercells are reserved for testing.
+
+## Convergence with respect to dataset size
+
+In general, increasing the amount of data improves the accuracy of representing
+force constants. Therefore, it is recommended to check the convergence of the
+target property with respect to the number of supercells in the training
+dataset. Lattice thermal conductivity may be a convenient property to monitor
+when assessing convergence.
+
+For example, by preparing an initial set with 100 supercell data, calculations
+can then be performed by varying the size of the training dataset while keeping
+the test dataset unchanged as follows:
+
+```bash
+% phono3py-load --pypolymlp --mlp-params="ntrain=20, ntest=20" --br --mesh 40 phono3py_params.yaml | tee log-20
+% phono3py-load --pypolymlp --mlp-params="ntrain=40, ntest=20" --br --mesh 40 phono3py_params.yaml | tee log-40
+% phono3py-load --pypolymlp --mlp-params="ntrain=60, ntest=20" --br --mesh 40 phono3py_params.yaml | tee log-60
+% phono3py-load --pypolymlp --mlp-params="ntrain=80, ntest=20" --br --mesh 40 phono3py_params.yaml | tee log-80
+```
+
+The computed lattice thermal conductivities (LTCs) are plotted against the size
+of the training dataset to observe LTC convergence. If the LTC has not
+converged, an additional set of supercell data (e.g., forces and energies in
+the next 100 supercells) will be computed and included. With this procedure in
+mind, it may be convenient to generate a sufficiently large number of supercells
+with random displacements in advance, such as 1000 supercells, before starting
+the LTC calculation with pypolymlp.
