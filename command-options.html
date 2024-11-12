@@ -486,7 +486,7 @@ file <code class="docutils literal notranslate"><span class="pre">setting.conf</
 <section id="c-cell-filename">
 <h3><code class="docutils literal notranslate"><span class="pre">-c</span></code> (<code class="docutils literal notranslate"><span class="pre">CELL_FILENAME</span></code>)<a class="headerlink" href="#c-cell-filename" title="Link to this heading">#</a></h3>
 <p>This specifies input unit cell filename.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>...<span class="w"> </span><span class="o">(</span>options<span class="o">)</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 </section>
@@ -595,7 +595,7 @@ for <code class="docutils literal notranslate"><span class="pre">phono3py_disp.y
 <p>In conjunction with <a class="reference internal" href="#dim-fc2-option"><span class="std std-ref">–dim-fc2</span></a>, phonopy’s <code class="docutils literal notranslate"><span class="pre">FORCE_SETS</span></code> is
 created from <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> and <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> instead of <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and
 <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cfs<span class="w"> </span>--dim-fc2<span class="o">=</span><span class="s2">&quot;x x x&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cfs<span class="w"> </span>--dim-fc2<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span>
 </pre></div>
 </div>
 </section>
@@ -664,7 +664,7 @@ for the larger 2nd order force constants, <code class="docutils literal notransl
 specified. <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code> created as a result of running phono3py contains the 2nd
 order force constants with larger supercell size. The filename is the same as
 that created in the usual phono3py run without <code class="docutils literal notranslate"><span class="pre">--dim-fc2</span></code> option.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--dim_fc2<span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>...<span class="w"> </span><span class="o">(</span>many<span class="w"> </span>options<span class="o">)</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--dim<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>--dim_fc2<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 </section>

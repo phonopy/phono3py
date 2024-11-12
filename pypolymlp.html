@@ -314,11 +314,11 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#steps-4-7-force-constants-calculation-random-displacements-in-step-5">Steps 4-7: Force constants calculation (random displacements in step 5)</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#convergence-with-respect-to-dataset-size">Convergence with respect to dataset size</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-for-developing-mlps">Parameters for developing MLPs</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ntrain-and-ntest"><code class="docutils literal notranslate"><span class="pre">ntrain</span></code> and <code class="docutils literal notranslate"><span class="pre">ntest</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#convergence-with-respect-to-dataset-size">Convergence with respect to dataset size</a></li>
 </ul>
             </nav>
         </div>
@@ -371,9 +371,6 @@ in the distribution from GitHub or PyPI.</p>
 <p>For linux (x86-64), a compiled package of pypolymlp can be installed via
 conda-forge (recommended). Otherwise, pypolymlp can be installed from
 source-code.</p>
-</li>
-<li><p><a class="reference external" href="https://github.com/symfc/symfc">symfc</a></p>
-<p>Installed via pip, conda-forge, or source code.</p>
 </li>
 </ul>
 </section>
@@ -667,14 +664,6 @@ for these supercells are then evaluated. Finally, the force constants are
 calculated using symfc.</p>
 </section>
 </section>
-<section id="convergence-with-respect-to-dataset-size">
-<h2>Convergence with respect to dataset size<a class="headerlink" href="#convergence-with-respect-to-dataset-size" title="Link to this heading">#</a></h2>
-<p>In general, increasing the amount of data improves the accuracy of representing
-force constants. Therefore, it is recommended to check the convergence of the
-target property with respect to the number of supercells in the training
-dataset. Lattice thermal conductivity may be a convenient property to monitor
-when assessing convergence.</p>
-</section>
 <section id="parameters-for-developing-mlps">
 <h2>Parameters for developing MLPs<a class="headerlink" href="#parameters-for-developing-mlps" title="Link to this heading">#</a></h2>
 <p>A few parameters can be specified using the <code class="docutils literal notranslate"><span class="pre">--mlp-params</span></code> option for the
@@ -706,6 +695,30 @@ relevant research papers.</p>
 supercells from the list are used for training, while the last <code class="docutils literal notranslate"><span class="pre">ntest</span></code>
 supercells are reserved for testing.</p>
 </section>
+</section>
+<section id="convergence-with-respect-to-dataset-size">
+<h2>Convergence with respect to dataset size<a class="headerlink" href="#convergence-with-respect-to-dataset-size" title="Link to this heading">#</a></h2>
+<p>In general, increasing the amount of data improves the accuracy of representing
+force constants. Therefore, it is recommended to check the convergence of the
+target property with respect to the number of supercells in the training
+dataset. Lattice thermal conductivity may be a convenient property to monitor
+when assessing convergence.</p>
+<p>For example, by preparing an initial set with 100 supercell data, calculations
+can then be performed by varying the size of the training dataset while keeping
+the test dataset unchanged as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--pypolymlp<span class="w"> </span>--mlp-params<span class="o">=</span><span class="s2">&quot;ntrain=20, ntest=20&quot;</span><span class="w"> </span>--br<span class="w"> </span>--mesh<span class="w"> </span><span class="m">40</span><span class="w"> </span>phono3py_params.yaml<span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>log-20
+%<span class="w"> </span>phono3py-load<span class="w"> </span>--pypolymlp<span class="w"> </span>--mlp-params<span class="o">=</span><span class="s2">&quot;ntrain=40, ntest=20&quot;</span><span class="w"> </span>--br<span class="w"> </span>--mesh<span class="w"> </span><span class="m">40</span><span class="w"> </span>phono3py_params.yaml<span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>log-40
+%<span class="w"> </span>phono3py-load<span class="w"> </span>--pypolymlp<span class="w"> </span>--mlp-params<span class="o">=</span><span class="s2">&quot;ntrain=60, ntest=20&quot;</span><span class="w"> </span>--br<span class="w"> </span>--mesh<span class="w"> </span><span class="m">40</span><span class="w"> </span>phono3py_params.yaml<span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>log-60
+%<span class="w"> </span>phono3py-load<span class="w"> </span>--pypolymlp<span class="w"> </span>--mlp-params<span class="o">=</span><span class="s2">&quot;ntrain=80, ntest=20&quot;</span><span class="w"> </span>--br<span class="w"> </span>--mesh<span class="w"> </span><span class="m">40</span><span class="w"> </span>phono3py_params.yaml<span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>log-80
+</pre></div>
+</div>
+<p>The computed lattice thermal conductivities (LTCs) are plotted against the size
+of the training dataset to observe LTC convergence. If the LTC has not
+converged, an additional set of supercell data (e.g., forces and energies in
+the next 100 supercells) will be computed and included. With this procedure in
+mind, it may be convenient to generate a sufficiently large number of supercells
+with random displacements in advance, such as 1000 supercells, before starting
+the LTC calculation with pypolymlp.</p>
 </section>
 </section>
 
@@ -764,11 +777,11 @@ supercells are reserved for testing.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#steps-4-7-force-constants-calculation-random-displacements-in-step-5">Steps 4-7: Force constants calculation (random displacements in step 5)</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#convergence-with-respect-to-dataset-size">Convergence with respect to dataset size</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-for-developing-mlps">Parameters for developing MLPs</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ntrain-and-ntest"><code class="docutils literal notranslate"><span class="pre">ntrain</span></code> and <code class="docutils literal notranslate"><span class="pre">ntest</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#convergence-with-respect-to-dataset-size">Convergence with respect to dataset size</a></li>
 </ul>
   </nav></div>
 
