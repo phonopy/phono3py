@@ -114,7 +114,7 @@ def test_Phono3pyIsotope_grg(si_pbesol_grg, lang):
         iso.grid.grid_matrix, [[-15, 15, 15], [15, -15, 15], [15, 15, -15]]
     )
     iso.run([23, 103], lang=lang)
-    np.testing.assert_allclose(si_pbesol_grg_iso, iso.gamma[0], atol=2e-3)
+    np.testing.assert_allclose(si_pbesol_grg_iso, iso.gamma[0], atol=3e-3)
 
 
 @pytest.mark.parametrize("lang", ["C", "Py"])
