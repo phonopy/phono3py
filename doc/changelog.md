@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Nov-13-2024: Version 3.7.0
+
+- Update to follow the change of phonopy's internal functions
+
 ## Nov-3-2024: Version 3.6.0
 
 - Maintenance release.
