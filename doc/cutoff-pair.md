@@ -2,9 +2,9 @@
 
 # Force constants calculation with cutoff pair-distance
 ```{note}
-Since usage of this calculation is complicated. It is recommended to try
-{ref}`random-displacements` with `--fc-calc-opt "cutoff = VAL"` before trying
-this option.
+To reduce the computational demands of force constants or lattice thermal
+conductivity calculations, it is recommended to try {ref}`pypolymlp-interface`
+instead of using the `--cutoff-pair` option.
 ```
 
 Here the detail of the command option {ref}`--cutoff-pair <cutoff_pair_option>`

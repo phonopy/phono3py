@@ -57,15 +57,17 @@ def get_supercell_phonon(ph3):
     return SupercellPhonon(supercell, fc2, frequency_factor_to_THz=factor)
 
 
-def mass_sand(matrix, mass):
+def mass_sand(matrix: np.ndarray, mass: np.ndarray) -> np.ndarray:
     """Calculate mass sandwich."""
     return ((matrix * mass).T * mass).T
 
 
-def mass_inv(matrix, mass):
+def mass_inv(matrix: np.ndarray, mass: np.ndarray, tol: float = 1e-5) -> np.ndarray:
     """Calculate inverse mass sandwich."""
     bare = mass_sand(matrix, mass)
-    inv_bare = np.linalg.pinv(bare)
+    eigvals, eigvecs = np.linalg.eigh(bare)
+    inv_eigvals = [1 / x if x > tol else 0 for x in eigvals]
+    inv_bare = (eigvecs * inv_eigvals) @ eigvecs.T
     return mass_sand(inv_bare, mass)
 
 

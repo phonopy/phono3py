@@ -47,7 +47,6 @@ from phonopy.harmonic.displacement import (
     get_random_displacements_dataset,
 )
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix
-from phonopy.harmonic.force_constants import get_fc2 as get_phonopy_fc2
 from phonopy.harmonic.force_constants import (
     set_permutation_symmetry,
     set_translational_invariance,
@@ -74,7 +73,6 @@ from phonopy.structure.cells import (
     guess_primitive_matrix,
     shape_supercell_matrix,
 )
-from phonopy.structure.dataset import get_displacements_and_forces
 from phonopy.structure.symmetry import Symmetry
 from phonopy.units import VaspToTHz
 
@@ -1540,30 +1538,19 @@ class Phono3py:
         else:
             p2s_map = None
 
-        if fc_calculator is not None:
-            disps, forces = get_displacements_and_forces(disp_dataset)
-            self._fc2 = get_fc2(
-                self._phonon_supercell,
-                self._phonon_primitive,
-                disps,
-                forces,
-                fc_calculator=fc_calculator,
-                fc_calculator_options=fc_calculator_options,
-                atom_list=p2s_map,
-                symmetry=self._phonon_supercell_symmetry,
-                symprec=self._symprec,
-                log_level=self._log_level,
-            )
-        else:
-            if "displacements" in disp_dataset:
-                msg = "fc_calculator to solve fc2 has to be set."
-                raise RuntimeError(msg)
-            self._fc2 = get_phonopy_fc2(
-                self._phonon_supercell,
-                self._phonon_supercell_symmetry,
-                disp_dataset,
-                atom_list=p2s_map,
-            )
+        self._fc2 = get_fc2(
+            self._phonon_supercell,
+            self._phonon_primitive,
+            disp_dataset,
+            fc_calculator=fc_calculator,
+            fc_calculator_options=fc_calculator_options,
+            atom_list=p2s_map,
+            symmetry=self._phonon_supercell_symmetry,
+            symprec=self._symprec,
+            log_level=self._log_level,
+        )
+
+        if fc_calculator is None or fc_calculator == "traditional":
             if symmetrize_fc2:
                 if is_compact_fc:
                     symmetrize_compact_force_constants(

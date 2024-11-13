@@ -1,5 +1,5 @@
 (random-displacements)=
-# Force constants calculation with randan displacements of atoms
+# Force constants calculation with random displacements of atoms
 
 Random displacements and corresponding forces in supercells can be employed as a
 displacement-force dataset for computing force constants. This requires an
