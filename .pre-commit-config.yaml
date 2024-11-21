@@ -37,9 +37,3 @@ repos:
         # - '-I/Users/togo/.miniforge/envs/dev/include/python3.10'
         # - '-I/Users/togo/.miniforge/envs/dev/lib/python3.10/site-packages/numpy/core/include'
       stages: [manual]
-
-- repo: https://github.com/cheshirekow/cmake-format-precommit
-  rev: v0.6.13
-  hooks:
-  - id: cmake-format
-  - id: cmake-lint
