@@ -533,7 +533,7 @@ def run_pypolymlp_to_compute_forces(
         if log_level:
             print("Developing MLPs by pypolymlp...", flush=True)
         ph3py.develop_mlp(params=mlp_params)
-        ph3py.mlp.save_mlp(filename=mlp_filename)
+        ph3py.save_mlp(filename=mlp_filename)
         if log_level:
             print(f'MLPs were written into "{mlp_filename}"', flush=True)
     else:
