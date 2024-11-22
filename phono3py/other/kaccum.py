@@ -20,12 +20,9 @@ class KappaDOSTHM:
     To compute usual DOS,
 
     kappados = KappaDOSTHM(
-        np.ones(freqs.shape)[None, :, :, None],
+        np.ones(freqs.shape, dtype=float)[None, :, :, None],
         freqs,
         bzgrid,
-        ir_grid_points,
-        ir_grid_weights=ir_weights,
-        ir_grid_map=ir_grid_map,
         num_sampling_points=201
     )
 
@@ -36,7 +33,7 @@ class KappaDOSTHM:
         mode_kappa: np.ndarray,
         frequencies: np.ndarray,
         bz_grid: BZGrid,
-        ir_grid_points: np.ndarray,
+        ir_grid_points: Optional[np.ndarray] = None,
         ir_grid_weights: Optional[np.ndarray] = None,
         ir_grid_map: Optional[np.ndarray] = None,
         frequency_points: Optional[Union[np.ndarray, Sequence]] = None,
@@ -54,20 +51,24 @@ class KappaDOSTHM:
             Frequencies at ir-grid points.
             shape=(ir_grid_points, num_band), dtype='double'
         bz_grid : BZGrid
+            BZGrid instance.
         ir_grid_points : ndarray
-            Irreducible grid point indices in GR-grid.
+            Irreducible grid point indices in GR-grid (as obtained by
+            get_ir_grid_points).
             shape=(num_ir_grid_points, ), dtype='int_'
         ir_grid_weights : ndarray
-            Weights of irreducible grid points. Its sum is the number of
-            grid points in GR-grid (prod(D_diag)).
+            Weights of irreducible grid points. Its sum is the number of grid
+            points in GR-grid (prod(D_diag)) (as obtained by
+            get_ir_grid_points).
             shape=(num_ir_grid_points, ), dtype='int_'
         ir_grid_map : ndarray
             Index mapping table to irreducible grid points from all grid points
-            such as, [0, 0, 2, 3, 3, ...].
+            in GR-grid such as, [0, 0, 2, 3, 3, ...]. (as obtained by
+            get_ir_grid_points).
             shape=(prod(D_diag), ), dtype='int_'
         frequency_points : array_like, optional, default=None
-            This is used as the frequency points. When None,
-            frequency points are created from `num_sampling_points`.
+            This is used as the frequency points. When None, frequency points
+            are created from `num_sampling_points`.
         num_sampling_points : int, optional, default=100
             Number of uniform sampling points.
 
@@ -85,13 +86,20 @@ class KappaDOSTHM:
         self._kdos = np.zeros(
             (n_temp, len(self._frequency_points), 2, n_elem), dtype="double"
         )
-
-        if ir_grid_map is None:
-            bzgp2irgp_map = None
+        if ir_grid_points is None:
+            _ir_grid_points = np.arange(len(frequencies), dtype=int)
         else:
-            bzgp2irgp_map = self._get_bzgp2irgp_map(bz_grid, ir_grid_map)
+            _ir_grid_points = ir_grid_points
+        grid_points = bz_grid.grg2bzg[_ir_grid_points]
+        if ir_grid_map is None:
+            _ir_grid_map = np.arange(len(frequencies), dtype=int)
+        else:
+            _ir_grid_map = ir_grid_map
+        bzgp2irgp_map = self._get_bzgp2irgp_map(
+            bz_grid.bzg2grg, _ir_grid_map, _ir_grid_points
+        )
         if ir_grid_weights is None:
-            grid_weights = np.ones(mode_kappa.shape[1])
+            grid_weights = np.ones(mode_kappa.shape[1], dtype="int_")
         else:
             grid_weights = ir_grid_weights
         for j, function in enumerate(("J", "I")):
@@ -99,7 +107,7 @@ class KappaDOSTHM:
                 self._frequency_points,
                 frequencies,
                 bz_grid,
-                grid_points=bz_grid.grg2bzg[ir_grid_points],
+                grid_points=grid_points,
                 bzgp2irgp_map=bzgp2irgp_map,
                 function=function,
             )
@@ -124,11 +132,38 @@ class KappaDOSTHM:
         """
         return self._frequency_points, self._kdos
 
-    def _get_bzgp2irgp_map(self, bz_grid, ir_grid_map):
+    def _get_bzgp2irgp_map(self, bzg2grg, ir_grid_map, ir_grid_points):
+        """Return mapping table from BZ-grid indices to ir-grid point indices.
+
+        More precisely, return mapping table from grid points in BZ-grid to
+        indices of ir-grid points. The length of the set of the indices is the
+        number of the ir-grid points.
+
+        Parameters
+        ----------
+        bzg2grg : ndarray
+            Mapping table from BZ-grid to GR-grid.
+            shape=(len(all-BZ-grid-points), ), dtype='int_'
+        ir_grid_map : ndarray
+            Mapping table from all grid points to ir-grid points in GR-grid.
+            shape=(np.prod(D_diag), ), dtype='int_'
+        ir_grid_points : ndarray
+            Irreducible grid points in GR-grid. shape=(num_ir_grid_points, ),
+            dtype='int_'
+
+        Returns
+        -------
+        np.ndarray
+            Mapping table from BZ-grid to indices of ir-grid points.
+            shape=(len(ir-grid-points), ), dtype='
+
+        """
         unique_gps = np.unique(ir_grid_map)
+        assert np.array_equal(unique_gps, ir_grid_points)
+        # ir-grid points in GR-grid to the index of unique grid points.
         gp_map = {j: i for i, j in enumerate(unique_gps)}
         bzgp2irgp_map = np.array(
-            [gp_map[ir_grid_map[grgp]] for grgp in bz_grid.bzg2grg], dtype="int_"
+            [gp_map[ir_grid_map[grgp]] for grgp in bzg2grg], dtype="int_"
         )
         return bzgp2irgp_map
 
@@ -236,7 +271,7 @@ def run_prop_dos(
         mode_prop,
         frequencies,
         bz_grid,
-        bz_grid.bzg2grg[ir_grid_points],
+        ir_grid_points=ir_grid_points,
         ir_grid_map=ir_grid_map,
         num_sampling_points=num_sampling_points,
     )
@@ -266,7 +301,7 @@ def run_mfp_dos(
             mode_prop[i : i + 1, :, :],
             mean_freepath[i],
             bz_grid,
-            bz_grid.bzg2grg[ir_grid_points],
+            ir_grid_points=ir_grid_points,
             ir_grid_map=ir_grid_map,
             num_sampling_points=num_sampling_points,
         )
