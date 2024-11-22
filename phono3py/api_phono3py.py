@@ -54,14 +54,9 @@ from phonopy.harmonic.force_constants import (
     symmetrize_force_constants,
 )
 from phonopy.interface.fc_calculator import get_fc2
+from phonopy.interface.mlp import PhonopyMLP
 from phonopy.interface.pypolymlp import (
-    PypolymlpData,
     PypolymlpParams,
-    develop_mlp_by_pypolymlp,
-    develop_pypolymlp,
-    evalulate_pypolymlp,
-    load_pypolymlp,
-    parse_mlp_params,
 )
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import (
@@ -720,6 +715,15 @@ class Phono3py:
     def phonon_mlp_dataset(self, mlp_dataset: dict):
         self._check_mlp_dataset(mlp_dataset)
         self._phonon_mlp_dataset = mlp_dataset
+
+    @property
+    def mlp(self) -> Optional[PhonopyMLP]:
+        """Setter and getter of PhonopyMLP dataclass."""
+        return self._mlp
+
+    @mlp.setter
+    def mlp(self, mlp) -> Optional[PhonopyMLP]:
+        self._mlp = mlp
 
     @property
     def band_indices(self) -> list[np.ndarray]:
@@ -2176,7 +2180,7 @@ class Phono3py:
         params: Optional[Union[PypolymlpParams, dict, str]] = None,
         test_size: float = 0.1,
     ):
-        """Develop MLP of pypolymlp.
+        """Develop machine learning potential.
 
         Parameters
         ----------
@@ -2192,20 +2196,28 @@ class Phono3py:
         if self._mlp_dataset is None:
             raise RuntimeError("MLP dataset is not set.")
 
-        self._mlp = develop_mlp_by_pypolymlp(
+        self._mlp = PhonopyMLP(log_level=self._log_level)
+        self._mlp.develop(
             self._mlp_dataset,
             self._supercell,
             params=params,
             test_size=test_size,
-            log_level=self._log_level,
         )
 
-    def load_mlp(self, filename: str = "phono3py.pmlp"):
-        """Load machine learning potential of pypolymlp."""
-        self._mlp = load_pypolymlp(filename=filename)
+    def save_mlp(self, filename: Optional[str] = None):
+        """Save machine learning potential."""
+        if self._mlp is None:
+            raise RuntimeError("MLP is not developed yet.")
+
+        self._mlp.save(filename=filename)
+
+    def load_mlp(self, filename: Optional[str] = None):
+        """Load machine learning potential."""
+        self._mlp = PhonopyMLP(log_level=self._log_level)
+        self._mlp.load(filename=filename)
 
     def evaluate_mlp(self):
-        """Evaluate machine learning potential of pypolymlp.
+        """Evaluate machine learning potential.
 
         This method calculates the supercell energies and forces from the MLP
         for the displacements in self._dataset of type 2. The results are stored
@@ -2223,9 +2235,7 @@ class Phono3py:
         if self.supercells_with_displacements is None:
             raise RuntimeError("Displacements are not set. Run generate_displacements.")
 
-        energies, forces, _ = evalulate_pypolymlp(
-            self._mlp, self.supercells_with_displacements
-        )
+        energies, forces, _ = self._mlp.evaluate(self.supercells_with_displacements)
         self.supercell_energies = energies
         self.forces = forces
 
@@ -2234,7 +2244,7 @@ class Phono3py:
         params: Optional[Union[PypolymlpParams, dict, str]] = None,
         test_size: float = 0.1,
     ):
-        """Develop MLP of pypolymlp for fc2.
+        """Develop MLP for fc2.
 
         Parameters
         ----------
@@ -2250,31 +2260,28 @@ class Phono3py:
         if self._phonon_mlp_dataset is None:
             raise RuntimeError("MLP dataset is not set.")
 
-        if params is not None:
-            _params = parse_mlp_params(params)
-        else:
-            _params = params
-
-        disps = self._phonon_mlp_dataset["displacements"]
-        forces = self._phonon_mlp_dataset["forces"]
-        energies = self._phonon_mlp_dataset["supercell_energies"]
-        n = int(len(disps) * (1 - test_size))
-        train_data = PypolymlpData(
-            displacements=disps[:n], forces=forces[:n], supercell_energies=energies[:n]
-        )
-        test_data = PypolymlpData(
-            displacements=disps[n:], forces=forces[n:], supercell_energies=energies[n:]
-        )
-        self._phonon_mlp = develop_pypolymlp(
+        self._phonon_mlp = PhonopyMLP(log_level=self._log_level)
+        self._phonon_mlp.develop(
+            self._phonon_mlp_dataset,
             self._phonon_supercell,
-            train_data,
-            test_data,
-            params=_params,
-            verbose=self._log_level - 1 > 0,
+            params=params,
+            test_size=test_size,
         )
+
+    def save_phonon_mlp(self, filename: Optional[str] = None):
+        """Save machine learning potential."""
+        if self._mlp is None:
+            raise RuntimeError("MLP is not developed yet.")
+
+        self._phonon_mlp.save(filename=filename)
+
+    def load_phonon_mlp(self, filename: Optional[str] = None):
+        """Load machine learning potential."""
+        self._phonon_mlp = PhonopyMLP(log_level=self._log_level)
+        self._phonon_mlp.load(filename=filename)
 
     def evaluate_phonon_mlp(self):
-        """Evaluate the machine learning potential of pypolymlp.
+        """Evaluate the machine learning potential.
 
         This method calculates the supercell energies and forces from the MLP
         for the displacements in self._dataset of type 2. The results are stored
@@ -2298,9 +2305,7 @@ class Phono3py:
             mlp = self._mlp
         else:
             mlp = self._phonon_mlp
-        energies, forces, _ = evalulate_pypolymlp(
-            mlp, self.phonon_supercells_with_displacements
-        )
+        energies, forces, _ = mlp.evaluate(self.phonon_supercells_with_displacements)
         self.phonon_supercell_energies = energies
         self.phonon_forces = forces
 
