@@ -58,9 +58,9 @@ from phonopy.interface.pypolymlp import (
     PypolymlpData,
     PypolymlpParams,
     develop_mlp_by_pypolymlp,
-    develop_polymlp,
-    evalulate_polymlp,
-    load_polymlp,
+    develop_pypolymlp,
+    evalulate_pypolymlp,
+    load_pypolymlp,
     parse_mlp_params,
 )
 from phonopy.structure.atoms import PhonopyAtoms
@@ -2202,7 +2202,7 @@ class Phono3py:
 
     def load_mlp(self, filename: str = "phono3py.pmlp"):
         """Load machine learning potential of pypolymlp."""
-        self._mlp = load_polymlp(filename=filename)
+        self._mlp = load_pypolymlp(filename=filename)
 
     def evaluate_mlp(self):
         """Evaluate machine learning potential of pypolymlp.
@@ -2223,7 +2223,7 @@ class Phono3py:
         if self.supercells_with_displacements is None:
             raise RuntimeError("Displacements are not set. Run generate_displacements.")
 
-        energies, forces, _ = evalulate_polymlp(
+        energies, forces, _ = evalulate_pypolymlp(
             self._mlp, self.supercells_with_displacements
         )
         self.supercell_energies = energies
@@ -2265,7 +2265,7 @@ class Phono3py:
         test_data = PypolymlpData(
             displacements=disps[n:], forces=forces[n:], supercell_energies=energies[n:]
         )
-        self._phonon_mlp = develop_polymlp(
+        self._phonon_mlp = develop_pypolymlp(
             self._phonon_supercell,
             train_data,
             test_data,
@@ -2298,7 +2298,7 @@ class Phono3py:
             mlp = self._mlp
         else:
             mlp = self._phonon_mlp
-        energies, forces, _ = evalulate_polymlp(
+        energies, forces, _ = evalulate_pypolymlp(
             mlp, self.phonon_supercells_with_displacements
         )
         self.phonon_supercell_energies = energies
