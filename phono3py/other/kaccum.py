@@ -17,14 +17,35 @@ epsilon = 1.0e-8
 class KappaDOSTHM:
     """Class to calculate DOS like spectram with tetrahedron method.
 
-    To compute usual DOS,
+    To compute usual DOS on all GR grid points:
 
+    ```
+    freqs, _, _ = ph3.get_phonon_data()
+    freqs_grg = freqs[bzgrid.grg2bzg]
     kappados = KappaDOSTHM(
-        np.ones(freqs.shape, dtype=float)[None, :, :, None],
-        freqs,
+        np.ones(freqs_grg.shape, dtype=float)[None, :, :, None],
+        freqs_grg,
         bzgrid,
         num_sampling_points=201
     )
+    ```
+
+    To compute DOS on ir-grid points:
+
+    ```
+    freqs, _, _ = ph3.get_phonon_data()
+    ir_grid_points, ir_grid_weights, ir_grid_map = get_ir_grid_points(bzgrid)
+    freqs_ir = freqs[bzgrid.grg2bzg[ir_grid_points]]
+    kappados = KappaDOSTHM(
+        np.ones(freqs_ir.shape, dtype=float)[None, :, :, None],
+        freqs_ir,
+        bzgrid,
+        ir_grid_points=ir_grid_points,
+        ir_grid_weights=ir_grid_weights,
+        ir_grid_map=ir_grid_map,
+        num_sampling_points=201,
+    )
+    ```
 
     """
 
