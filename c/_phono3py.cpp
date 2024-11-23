@@ -1049,6 +1049,20 @@ long py_rotate_bz_grid_addresses(long bz_grid_index, nb::ndarray<> py_rotation,
     return ret_bz_gp;
 }
 
+long py_get_default_colmat_solver() {
+#if defined(MKL_BLAS) || defined(SCIPY_MKL_H) || !defined(NO_INCLUDE_LAPACKE)
+    return (long)1;
+#else
+    return (long)4;
+#endif
+}
+
+long py_get_omp_max_threads() { return ph3py_get_max_threads(); }
+
+#ifdef NO_INCLUDE_LAPACKE
+long py_include_lapacke() { return 0; }
+#else
+long py_include_lapacke() { return 1; }
 long py_diagonalize_collision_matrix(nb::ndarray<> py_collision_matrix,
                                      nb::ndarray<> py_eigenvalues, long i_sigma,
                                      long i_temp, double cutoff, long solver,
@@ -1118,14 +1132,6 @@ void py_pinv_from_eigensolution(nb::ndarray<> py_collision_matrix,
                                   num_column, cutoff, pinv_method);
 }
 
-long py_get_default_colmat_solver() {
-#if defined(MKL_LAPACKE) || defined(SCIPY_MKL_H)
-    return (long)1;
-#else
-    return (long)4;
-#endif
-}
-
 long py_lapacke_pinv(nb::ndarray<> data_out_py, nb::ndarray<> data_in_py,
                      double cutoff) {
     long m;
@@ -1143,8 +1149,7 @@ long py_lapacke_pinv(nb::ndarray<> data_out_py, nb::ndarray<> data_in_py,
 
     return info;
 }
-
-long py_get_omp_max_threads() { return ph3py_get_max_threads(); }
+#endif
 
 NB_MODULE(_phono3py, m) {
     m.def("interaction", &py_get_interaction);
@@ -1179,9 +1184,12 @@ NB_MODULE(_phono3py, m) {
     m.def("triplets_integration_weights", &py_get_triplets_integration_weights);
     m.def("triplets_integration_weights_with_sigma",
           &py_get_triplets_integration_weights_with_sigma);
+    m.def("default_colmat_solver", &py_get_default_colmat_solver);
+    m.def("omp_max_threads", &py_get_omp_max_threads);
+    m.def("include_lapacke", &py_include_lapacke);
+#ifndef NO_INCLUDE_LAPACKE
     m.def("diagonalize_collision_matrix", &py_diagonalize_collision_matrix);
     m.def("pinv_from_eigensolution", &py_pinv_from_eigensolution);
-    m.def("default_colmat_solver", &py_get_default_colmat_solver);
     m.def("lapacke_pinv", &py_lapacke_pinv);
-    m.def("omp_max_threads", &py_get_omp_max_threads);
+#endif
 }

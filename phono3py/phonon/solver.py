@@ -73,6 +73,7 @@ def run_phonon_solver_c(
         'U' or 'L' for lapack zheev solver. Default is 'L'.
 
     """
+    import phono3py._phono3py as phono3c
     import phono3py._phononcalc as phononcalc
 
     (
@@ -124,6 +125,9 @@ def run_phonon_solver_c(
     assert QDinv.flags.c_contiguous
     assert lapack_zheev_uplo in ("L", "U")
 
+    if not phono3c.include_lapacke():
+        phonon_undone = np.where(phonon_done == 0)[0]
+
     fc_p2s, fc_s2p = _get_fc_elements_mapping(dm, fc)
     phononcalc.phonons_at_gridpoints(
         frequencies,
@@ -153,6 +157,15 @@ def run_phonon_solver_c(
         use_GL_NAC * 1,
         lapack_zheev_uplo,
     )
+
+    if not phono3c.include_lapacke():
+        for gp in phonon_undone:
+            frequencies[gp], eigenvectors[gp] = np.linalg.eigh(eigenvectors[gp])
+        frequencies[phonon_undone] = (
+            np.sign(frequencies[phonon_undone])
+            * np.sqrt(np.abs(frequencies[phonon_undone]))
+            * frequency_conversion_factor
+        )
 
 
 def run_phonon_solver_py(
