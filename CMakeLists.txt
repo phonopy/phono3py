@@ -9,6 +9,7 @@ option(PHONO3PY_USE_OMP "Option to search OpenMP library" ON)
 option(PHONO3PY_USE_MTBLAS "Use multithread BLAS if it exists" ON)
 option(PHONO3PY_WITH_TESTS "build unit tests" OFF)
 option(BUILD_SHARED_LIBS "Option to build shared library" OFF)
+option(BUILD_WITHOUT_LAPACKE "Option to build without LAPACKE" ON)
 
 if(PHONO3PY_WITH_Fortran)
     enable_language(Fortran)
@@ -89,7 +90,8 @@ endif()
 
 if(BUILD_PHPHCALC_LIB
    OR BUILD_PHONONCALC_LIB
-   OR BUILD_NANOBIND_MODULE)
+   OR BUILD_NANOBIND_MODULE
+   AND (NOT BUILD_WITHOUT_LAPACKE))
     find_package(BLAS REQUIRED) # set BLAS_LIBRARIES
 
     if(BLAS_FOUND)
@@ -105,7 +107,7 @@ if(BUILD_PHPHCALC_LIB
     endif()
 
     if(BLAS_LIBRARIES MATCHES "libmkl")
-        message(STATUS "MKL detected: Set C-macro MKL_LAPACKE.")
+        message(STATUS "MKL detected.")
 
         if(PHONO3PY_USE_MTBLAS)
             message(
@@ -190,68 +192,95 @@ if(BUILD_PHPHCALC_LIB OR BUILD_NANOBIND_MODULE)
         # Shared library
         add_library(phphcalc_lib SHARED ${SOURCES_PHPHCALC})
 
-        if(OpenMP_FOUND)
-            target_link_libraries(
-                phphcalc_lib PRIVATE recgrid_lib BLAS::BLAS LAPACK::LAPACK
-                                     OpenMP::OpenMP_C)
+        if(BUILD_WITHOUT_LAPACKE)
+            if(OpenMP_FOUND)
+                target_link_libraries(phphcalc_lib PRIVATE recgrid_lib
+                                                           OpenMP::OpenMP_C)
+            else()
+                target_link_libraries(phphcalc_lib PRIVATE recgrid_lib)
+            endif()
+
+            target_compile_definitions(phphcalc_lib PRIVATE NO_INCLUDE_LAPACKE
+                                                            THM_EPSILON=1e-10)
         else()
-            target_link_libraries(phphcalc_lib PRIVATE recgrid_lib BLAS::BLAS
-                                                       LAPACK::LAPACK)
+            if(OpenMP_FOUND)
+                target_link_libraries(
+                    phphcalc_lib PRIVATE recgrid_lib BLAS::BLAS LAPACK::LAPACK
+                                         OpenMP::OpenMP_C)
+            else()
+                target_link_libraries(phphcalc_lib PRIVATE recgrid_lib BLAS::BLAS
+                                                           LAPACK::LAPACK)
+            endif()
+
+            if(BLAS_LIBRARIES MATCHES "libmkl")
+                if(PHONO3PY_USE_MTBLAS)
+                    target_compile_definitions(
+                        phphcalc_lib PRIVATE MKL_BLAS MULTITHREADED_BLAS
+                                             THM_EPSILON=1e-10)
+                else()
+                    target_compile_definitions(phphcalc_lib
+                                               PRIVATE MKL_BLAS THM_EPSILON=1e-10)
+                endif()
+            endif()
+
+            if(BLAS_LIBRARIES MATCHES "libopenblas")
+                if(PHONO3PY_USE_MTBLAS)
+                    target_compile_definitions(
+                        phphcalc_lib PRIVATE MULTITHREADED_BLAS THM_EPSILON=1e-10)
+                else()
+                    target_compile_definitions(phphcalc_lib
+                                               PRIVATE THM_EPSILON=1e-10)
+                endif()
+            endif()
         endif()
 
         target_include_directories(phphcalc_lib PRIVATE ${MY_INCLUDES})
 
-        if(BLAS_LIBRARIES MATCHES "libmkl")
-            if(PHONO3PY_USE_MTBLAS)
-                target_compile_definitions(
-                    phphcalc_lib PRIVATE MKL_LAPACKE MULTITHREADED_BLAS
-                                         THM_EPSILON=1e-10)
-            else()
-                target_compile_definitions(phphcalc_lib PRIVATE MKL_LAPACKE
-                                                                THM_EPSILON=1e-10)
-            endif()
-        endif()
-
-        if(BLAS_LIBRARIES MATCHES "libopenblas")
-            if(PHONO3PY_USE_MTBLAS)
-                target_compile_definitions(phphcalc_lib PRIVATE MULTITHREADED_BLAS
-                                                                THM_EPSILON=1e-10)
-            else()
-                target_compile_definitions(phphcalc_lib PRIVATE THM_EPSILON=1e-10)
-            endif()
-        endif()
     else()
         # Static link library
         add_library(phphcalc_lib STATIC ${SOURCES_PHPHCALC})
 
-        if(OpenMP_FOUND)
-            target_link_libraries(phphcalc_lib recgrid_lib BLAS::BLAS LAPACK::LAPACK
-                                  OpenMP::OpenMP_C)
+        if(BUILD_WITHOUT_LAPACKE)
+            if(OpenMP_FOUND)
+                target_link_libraries(phphcalc_lib recgrid_lib OpenMP::OpenMP_C)
+            else()
+                target_link_libraries(phphcalc_lib recgrid_lib)
+            endif()
+
+            target_compile_definitions(phphcalc_lib PRIVATE NO_INCLUDE_LAPACKE
+                                                            THM_EPSILON=1e-10)
         else()
-            target_link_libraries(phphcalc_lib recgrid_lib BLAS::BLAS LAPACK::LAPACK)
+            if(OpenMP_FOUND)
+                target_link_libraries(phphcalc_lib recgrid_lib BLAS::BLAS
+                                      LAPACK::LAPACK OpenMP::OpenMP_C)
+            else()
+                target_link_libraries(phphcalc_lib recgrid_lib BLAS::BLAS
+                                      LAPACK::LAPACK)
+            endif()
+
+            if(BLAS_LIBRARIES MATCHES "libmkl")
+                if(PHONO3PY_USE_MTBLAS)
+                    target_compile_definitions(
+                        phphcalc_lib PRIVATE MKL_BLAS MULTITHREADED_BLAS
+                                             THM_EPSILON=1e-10)
+                else()
+                    target_compile_definitions(phphcalc_lib
+                                               PRIVATE MKL_BLAS THM_EPSILON=1e-10)
+                endif()
+            endif()
+
+            if(BLAS_LIBRARIES MATCHES "libopenblas")
+                if(PHONO3PY_USE_MTBLAS)
+                    target_compile_definitions(
+                        phphcalc_lib PRIVATE MULTITHREADED_BLAS THM_EPSILON=1e-10)
+                else()
+                    target_compile_definitions(phphcalc_lib
+                                               PRIVATE THM_EPSILON=1e-10)
+                endif()
+            endif()
         endif()
 
         target_include_directories(phphcalc_lib PRIVATE ${MY_INCLUDES})
-
-        if(BLAS_LIBRARIES MATCHES "libmkl")
-            if(PHONO3PY_USE_MTBLAS)
-                target_compile_definitions(
-                    phphcalc_lib PRIVATE MKL_LAPACKE MULTITHREADED_BLAS
-                                         THM_EPSILON=1e-10)
-            else()
-                target_compile_definitions(phphcalc_lib PRIVATE MKL_LAPACKE
-                                                                THM_EPSILON=1e-10)
-            endif()
-        endif()
-
-        if(BLAS_LIBRARIES MATCHES "libopenblas")
-            if(PHONO3PY_USE_MTBLAS)
-                target_compile_definitions(phphcalc_lib PRIVATE MULTITHREADED_BLAS
-                                                                THM_EPSILON=1e-10)
-            else()
-                target_compile_definitions(phphcalc_lib PRIVATE THM_EPSILON=1e-10)
-            endif()
-        endif()
     endif()
 
     if(NOT BUILD_NANOBIND_MODULE)
@@ -285,45 +314,67 @@ if(BUILD_PHONONCALC_LIB OR BUILD_NANOBIND_MODULE)
         # Shared library
         add_library(phononcalc_lib SHARED ${SOURCES_PHONONCALC})
 
-        if(OpenMP_FOUND)
-            target_link_libraries(phononcalc_lib BLAS::BLAS LAPACK::LAPACK
-                                  OpenMP::OpenMP_C)
+        if(BUILD_WITHOUT_LAPACKE)
+            if(OpenMP_FOUND)
+                target_link_libraries(phononcalc_lib OpenMP::OpenMP_C)
+            else()
+                target_link_libraries(phononcalc_lib)
+            endif()
+
+            target_compile_definitions(phononcalc_lib PRIVATE NO_INCLUDE_LAPACKE)
         else()
-            target_link_libraries(phononcalc_lib BLAS::BLAS LAPACK::LAPACK)
+            if(OpenMP_FOUND)
+                target_link_libraries(phononcalc_lib BLAS::BLAS LAPACK::LAPACK
+                                      OpenMP::OpenMP_C)
+            else()
+                target_link_libraries(phononcalc_lib BLAS::BLAS LAPACK::LAPACK)
+            endif()
+
+            if(BLAS_LIBRARIES MATCHES "libmkl")
+                target_compile_definitions(phononcalc_lib PRIVATE MKL_BLAS
+                                                                  MULTITHREADED_BLAS)
+            endif()
+
+            if(BLAS_LIBRARIES MATCHES "libopenblas")
+                target_compile_definitions(phononcalc_lib PRIVATE MULTITHREADED_BLAS)
+            endif()
         endif()
 
         target_include_directories(phononcalc_lib PRIVATE ${MY_INCLUDES})
-
-        if(BLAS_LIBRARIES MATCHES "libmkl")
-            target_compile_definitions(phononcalc_lib PRIVATE MKL_LAPACKE
-                                                              MULTITHREADED_BLAS)
-        endif()
-
-        if(BLAS_LIBRARIES MATCHES "libopenblas")
-            target_compile_definitions(phononcalc_lib PRIVATE MULTITHREADED_BLAS)
-        endif()
 
     else()
         # Static link library
         add_library(phononcalc_lib STATIC ${SOURCES_PHONONCALC})
 
-        if(OpenMP_FOUND)
-            target_link_libraries(phononcalc_lib PRIVATE BLAS::BLAS LAPACK::LAPACK
-                                                         OpenMP::OpenMP_C)
+        if(BUILD_WITHOUT_LAPACKE)
+            if(OpenMP_FOUND)
+                target_link_libraries(phononcalc_lib PRIVATE OpenMP::OpenMP_C)
+            else()
+                target_link_libraries(phononcalc_lib PRIVATE)
+            endif()
+
+            target_compile_definitions(phononcalc_lib PRIVATE NO_INCLUDE_LAPACKE)
         else()
-            target_link_libraries(phononcalc_lib PRIVATE BLAS::BLAS LAPACK::LAPACK)
+            if(OpenMP_FOUND)
+                target_link_libraries(
+                    phononcalc_lib PRIVATE BLAS::BLAS LAPACK::LAPACK
+                                           OpenMP::OpenMP_C)
+            else()
+                target_link_libraries(phononcalc_lib PRIVATE BLAS::BLAS
+                                                             LAPACK::LAPACK)
+            endif()
+
+            if(BLAS_LIBRARIES MATCHES "libmkl")
+                target_compile_definitions(phononcalc_lib PRIVATE MKL_BLAS
+                                                                  MULTITHREADED_BLAS)
+            endif()
+
+            if(BLAS_LIBRARIES MATCHES "libopenblas")
+                target_compile_definitions(phononcalc_lib PRIVATE MULTITHREADED_BLAS)
+            endif()
         endif()
 
         target_include_directories(phononcalc_lib PRIVATE ${MY_INCLUDES})
-
-        if(BLAS_LIBRARIES MATCHES "libmkl")
-            target_compile_definitions(phononcalc_lib PRIVATE MKL_LAPACKE
-                                                              MULTITHREADED_BLAS)
-        endif()
-
-        if(BLAS_LIBRARIES MATCHES "libopenblas")
-            target_compile_definitions(phononcalc_lib PRIVATE MULTITHREADED_BLAS)
-        endif()
     endif()
 
     if(NOT BUILD_NANOBIND_MODULE)
@@ -432,7 +483,17 @@ if(BUILD_NANOBIND_MODULE)
     target_link_libraries(_phononcalc PRIVATE phononcalc_lib)
     target_link_libraries(_recgrid PRIVATE recgrid_lib)
 
-    target_compile_definitions(_phono3py PRIVATE THM_EPSILON=1e-10)
+    if(BUILD_WITHOUT_LAPACKE)
+        target_compile_definitions(_phono3py PRIVATE NO_INCLUDE_LAPACKE
+                                                     THM_EPSILON=1e-10)
+    else()
+        if(BLAS_LIBRARIES MATCHES "libmkl")
+            target_compile_definitions(_phono3py PRIVATE MKL_BLAS THM_EPSILON=1e-10)
+        else()
+            target_compile_definitions(_phono3py PRIVATE THM_EPSILON=1e-10)
+        endif()
+    endif()
+
     install(TARGETS _phono3py LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME})
     install(TARGETS _phononcalc LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME})
     install(TARGETS _recgrid LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME})

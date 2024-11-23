@@ -233,6 +233,9 @@ long ph3py_get_thm_integration_weights_at_grid_points(
     const long *grid_points, const long (*bz_grid_addresses)[3],
     const long *bz_map, const long bz_grid_type, const double *frequencies,
     const long *gp2irgp_map, const char function);
+long ph3py_get_max_threads(void);
+
+#ifndef NO_INCLUDE_LAPACKE
 long ph3py_phonopy_dsyev(double *data, double *eigvals, const long size,
                          const long algorithm);
 long ph3py_phonopy_pinv(double *data_out, const double *data_in, const long m,
@@ -240,7 +243,7 @@ long ph3py_phonopy_pinv(double *data_out, const double *data_in, const long m,
 void ph3py_pinv_from_eigensolution(double *data, const double *eigvals,
                                    const long size, const double cutoff,
                                    const long pinv_method);
-long ph3py_get_max_threads(void);
+#endif
 
 #ifdef __cplusplus
 }
