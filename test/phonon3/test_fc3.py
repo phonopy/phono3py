@@ -261,7 +261,7 @@ def test_phonon_smat_alm_cutoff_fc3(si_pbesol_111_222_alm_cutoff_fc3: Phono3py):
 @pytest.mark.skipif(
     not phono3c.include_lapacke(), reason="requires to complile with lapacke"
 )
-def test_fc3_lapacke_solver(si_pbesol_111: Phono3py, pinv_solver: str):
+def test_fc3_lapacke_solver(si_pbesol_111: Phono3py):
     """Test fc3 with Si PBEsol 1x1x1 using lapacke solver."""
     for pinv_solver in ["lapacke", "numpy"]:
         ph = si_pbesol_111
