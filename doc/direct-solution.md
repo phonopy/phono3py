@@ -307,7 +307,7 @@ is used through them. Multithreaded OpenBLAS is installed by conda and can be
 used via LAPACKE in phono3py. MKL LAPACK and BLAS are also able to be used via
 LAPACKE in phono3py with appropriate setting in `setup.py`.
 
-Using `--pinv-solver=[number]`, one of the following solver is chosen:
+Using `--pinv-solver NUMBER`, one of the following solver is chosen:
 
 1. Lapacke `dsyev`: Smaller memory consumption than `dsyevd`, but slower. This
    is the default solver when MKL LAPACKE is integrated or scipy is not
@@ -323,3 +323,8 @@ Using `--pinv-solver=[number]`, one of the following solver is chosen:
    LAPACKE is not integrated.
 5. Scipy's `dsyevd`: Similar to solver (2), this solver should be used
    carefully.
+
+```{note}
+`pinv-solver` =3, 4, and 5 are only available when phono3py is compiled
+without LAPACKE.
+```

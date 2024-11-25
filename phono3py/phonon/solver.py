@@ -53,6 +53,14 @@ def run_phonon_solver_c(
 ):
     """Bulid and solve dynamical matrices on grid in C-API.
 
+    Note
+    ----
+    When LAPACKE is linked in C, `phononcalc.phonons_at_gridpoints` constucts
+    and solves dynamical matrices on grid points. Otherwise, it only constructs
+    dynamical matrices and solves them in python.
+
+    Parameters
+    ----------
     dm : DynamicalMatrix
         DynamicalMatrix instance.
     frequencies, eigenvectors, phonon_done :
@@ -65,8 +73,8 @@ def run_phonon_solver_c(
     QDinv : ndarray
         See BZGrid.QDinv.
     frequency_conversion_factor : float, optional
-        Frequency convertion factor that is multiplied with
-        sqrt or eigenvalue of dynamical matrix. Default is VaspToTHz.
+        Frequency convertion factor that is multiplied with sqrt or eigenvalue
+        of dynamical matrix. Default is VaspToTHz.
     nac_q_direction : array_like, optional
         See Interaction.nac_q_direction. Default is None.
     lapack_zheev_uplo : str, optional
@@ -126,6 +134,9 @@ def run_phonon_solver_c(
     assert lapack_zheev_uplo in ("L", "U")
 
     if not phono3c.include_lapacke():
+        # phonon_done is set even with phono3c.include_lapacke() == 0 for which
+        # dynamical matrices are not diagonalized in
+        # phononcalc.phonons_at_gridpoints.
         phonon_undone = np.where(phonon_done == 0)[0]
 
     fc_p2s, fc_s2p = _get_fc_elements_mapping(dm, fc)
@@ -159,8 +170,12 @@ def run_phonon_solver_c(
     )
 
     if not phono3c.include_lapacke():
+        # The variable `eigenvectors` contains dynamical matrices.
+        # They are diagonalized in python as follows.
         for gp in phonon_undone:
-            frequencies[gp], eigenvectors[gp] = np.linalg.eigh(eigenvectors[gp])
+            frequencies[gp], eigenvectors[gp] = np.linalg.eigh(
+                eigenvectors[gp], UPLO=lapack_zheev_uplo
+            )
         frequencies[phonon_undone] = (
             np.sign(frequencies[phonon_undone])
             * np.sqrt(np.abs(frequencies[phonon_undone]))

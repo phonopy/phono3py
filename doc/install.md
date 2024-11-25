@@ -49,7 +49,7 @@ conda environment. Automatic search of required libraries and flags that are
 already on the system is performed by cmake.
 
 (install_with_cmake)=
-### Build with automatic search of library configurations by cmake
+### Building with automatic search of library configurations by cmake
 
 With installed cmake and required libraries on the system, cmake tries to find
 libraries to be linked and the compiler flags that are required during the build.
@@ -60,6 +60,21 @@ This phono3py build can be launched by
 See an example at {ref}`install_an_example`. In the standard output, flags and
 libraries found by cmake are shown. Please carefully check if those
 configurations are expected ones or not.
+
+### Building without linking LAPACKE
+
+**Experimental**
+
+To compile phono3py without linking LAPACKE in C, use the following command:
+
+```
+% BUILD_WITHOUT_LAPACKE=ON pip install -e . -vvv
+```
+
+When this option is enabled, linking to BLAS and LAPACKE libraries is not
+required, so installing these libraries for C compilation may not be necessary.
+However, since numpy and scipy rely on BLAS and LAPACK libraries, their runtime
+versions are still required.
 
 (install_an_example)=
 
