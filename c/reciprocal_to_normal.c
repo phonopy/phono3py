@@ -35,7 +35,7 @@
 #include "reciprocal_to_normal.h"
 
 #ifdef MULTITHREADED_BLAS
-#if defined(MKL_LAPACKE) || defined(SCIPY_MKL_H)
+#if defined(MKL_BLAS) || defined(SCIPY_MKL_H)
 #include <mkl_cblas.h>
 #else
 #include <cblas.h>

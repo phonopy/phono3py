@@ -243,6 +243,8 @@ def start_phono3py(**argparse_control) -> tuple[argparse.Namespace, int]:
         max_threads = phono3c.omp_max_threads()
         if max_threads > 0:
             print(f"Compiled with OpenMP support (max {max_threads} threads).")
+        if phono3c.include_lapacke():
+            print("Compiled with LAPACKE.")
 
         if argparse_control.get("load_phono3py_yaml", False):
             print("Running in phono3py.load mode.")

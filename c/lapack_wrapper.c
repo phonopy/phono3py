@@ -38,13 +38,16 @@
 
 #define min(a, b) ((a) > (b) ? (b) : (a))
 
-#if defined(MKL_LAPACKE) || defined(SCIPY_MKL_H)
-MKL_Complex16 lapack_make_complex_double(double re, double im) {
-    MKL_Complex16 z;
+#if (defined(MKL_BLAS) || defined(SCIPY_MKL_H)) && !defined(NO_INCLUDE_LAPACKE)
+lapack_complex_double lapack_make_complex_double(double re, double im) {
+    lapack_complex_double z;
     z.real = re;
     z.imag = im;
     return z;
 }
+#endif
+
+#if defined(MKL_BLAS) || defined(SCIPY_MKL_H) || defined(NO_INCLUDE_LAPACKE)
 #ifndef LAPACKE_malloc
 #define LAPACKE_malloc(size) malloc(size)
 #endif
@@ -53,6 +56,18 @@ MKL_Complex16 lapack_make_complex_double(double re, double im) {
 #endif
 #endif
 
+lapack_complex_double phonoc_complex_prod(const lapack_complex_double a,
+                                          const lapack_complex_double b) {
+    lapack_complex_double c;
+    c = lapack_make_complex_double(
+        lapack_complex_double_real(a) * lapack_complex_double_real(b) -
+            lapack_complex_double_imag(a) * lapack_complex_double_imag(b),
+        lapack_complex_double_imag(a) * lapack_complex_double_real(b) +
+            lapack_complex_double_real(a) * lapack_complex_double_imag(b));
+    return c;
+}
+
+#ifndef NO_INCLUDE_LAPACKE
 int phonopy_zheev(double *w, lapack_complex_double *a, const int n,
                   const char uplo) {
     lapack_int info;
@@ -186,17 +201,6 @@ int phonopy_dsyev(double *data, double *eigvals, const int size,
     return (int)info;
 }
 
-lapack_complex_double phonoc_complex_prod(const lapack_complex_double a,
-                                          const lapack_complex_double b) {
-    lapack_complex_double c;
-    c = lapack_make_complex_double(
-        lapack_complex_double_real(a) * lapack_complex_double_real(b) -
-            lapack_complex_double_imag(a) * lapack_complex_double_imag(b),
-        lapack_complex_double_imag(a) * lapack_complex_double_real(b) +
-            lapack_complex_double_real(a) * lapack_complex_double_imag(b));
-    return c;
-}
-
 void pinv_from_eigensolution(double *data, const double *eigvals,
                              const long size, const double cutoff,
                              const long pinv_method) {
@@ -284,3 +288,4 @@ void pinv_from_eigensolution(double *data, const double *eigvals,
     free(tmp_data);
     tmp_data = NULL;
 }
+#endif
