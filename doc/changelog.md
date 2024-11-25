@@ -2,6 +2,12 @@
 
 # Change Log
 
+## Nov-25-2024: Version 3.8.0
+
+- Follow the change due to phonopy's refactoring of MLP interface.
+- Experimental option (`BUILD_WITHOUT_LAPACKE=ON`) to compile phono3py without
+  LAPACKE in C
+
 ## Nov-13-2024: Version 3.7.0
 
 - Update to follow the change of phonopy's internal functions

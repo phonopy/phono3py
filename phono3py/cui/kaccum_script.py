@@ -85,7 +85,6 @@ def _get_ir_grid_info(bz_grid: BZGrid, weights, qpoints=None, ir_grid_points=Non
 
     """
     (ir_grid_points_ref, weights_ref, ir_grid_map) = get_ir_grid_points(bz_grid)
-    ir_grid_points_ref = np.array(bz_grid.grg2bzg[ir_grid_points_ref], dtype="int_")
 
     _assert_grid_in_hdf5(
         weights, qpoints, ir_grid_points, weights_ref, ir_grid_points_ref, bz_grid
@@ -300,13 +299,13 @@ def main():
     if "weight" in f_kappa:
         frequencies = f_kappa["frequency"][:]
         ir_weights = f_kappa["weight"][:]
-        ir_grid_points = None
+        ir_grid_points_BZ = None
         qpoints = f_kappa["qpoint"][:]
     elif "ir_grid_weights" in f_kappa and not args.no_gridsym:
         ir_weights = f_kappa["ir_grid_weights"][:]
-        ir_grid_points = f_kappa["ir_grid_points"][:]
+        ir_grid_points_BZ = f_kappa["ir_grid_points"][:]
         qpoints = None
-        frequencies = np.array(f_kappa["frequency"][ir_grid_points], dtype="double")
+        frequencies = np.array(f_kappa["frequency"][ir_grid_points_BZ], dtype="double")
     else:
         frequencies = f_kappa["frequency"][:]
         ir_weights = np.ones(len(frequencies), dtype="int_")
@@ -318,14 +317,14 @@ def main():
         store_dense_gp_map=True,
     )
     if args.no_gridsym or (ir_weights == 1).all():
-        ir_grid_points = bz_grid.grg2bzg
+        ir_grid_points = None
         ir_grid_map = None
     else:
         ir_grid_points, ir_grid_map = _get_ir_grid_info(
             bz_grid,
             ir_weights,
             qpoints=qpoints,
-            ir_grid_points=ir_grid_points,
+            ir_grid_points=bz_grid.bzg2grg[ir_grid_points_BZ],
         )
     conditions = frequencies > 0
     if np.logical_not(conditions).sum() > 3:

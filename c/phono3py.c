@@ -697,6 +697,15 @@ long ph3py_get_thm_integration_weights_at_grid_points(
     return 1;
 }
 
+long ph3py_get_max_threads(void) {
+#ifdef _OPENMP
+    return omp_get_max_threads();
+#else
+    return 0;
+#endif
+}
+
+#ifndef NO_INCLUDE_LAPACKE
 long ph3py_phonopy_dsyev(double *data, double *eigvals, const long size,
                          const long algorithm) {
     return (long)phonopy_dsyev(data, eigvals, (int)size, (int)algorithm);
@@ -712,11 +721,4 @@ void ph3py_pinv_from_eigensolution(double *data, const double *eigvals,
                                    const long pinv_method) {
     pinv_from_eigensolution(data, eigvals, size, cutoff, pinv_method);
 }
-
-long ph3py_get_max_threads(void) {
-#ifdef _OPENMP
-    return omp_get_max_threads();
-#else
-    return 0;
 #endif
-}

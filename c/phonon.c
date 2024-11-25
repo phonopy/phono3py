@@ -36,6 +36,7 @@
 
 #include <math.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "dynmat.h"
@@ -66,16 +67,6 @@ static void get_gonze_undone_phonons(
     const double *q_direction, const double nac_factor,
     const double (*dd_q0)[2], const double (*G_list)[3],
     const long num_G_points, const double lambda, const char uplo);
-static void get_phonons(lapack_complex_double *eigvecs, const double q[3],
-                        const double *fc2, const double *masses,
-                        const long *p2s, const long *s2p,
-                        const long (*multi)[2], const long num_patom,
-                        const long num_satom, const double (*svecs)[3],
-                        const long is_nac, const double (*born)[3][3],
-                        const double dielectric[3][3],
-                        const double reciprocal_lattice[3][3],
-                        const double *q_direction, const double nac_factor,
-                        const double unit_conversion_factor);
 static void get_gonze_phonons(
     lapack_complex_double *eigvecs, const double q[3], const double *fc2,
     const double *masses, const long *p2s, const long *s2p,
@@ -208,12 +199,13 @@ static void get_undone_phonons(
         }
 
         is_nac = needs_nac(born, grid_address, gp, q_direction);
-        get_phonons(eigenvectors + num_band * num_band * gp, q, fc2, masses_fc2,
-                    p2s_fc2, s2p_fc2, multi_fc2, num_patom, num_satom,
-                    svecs_fc2, is_nac, born, dielectric, reciprocal_lattice,
-                    q_direction, nac_factor, unit_conversion_factor);
+        get_dynamical_matrix(eigenvectors + num_band * num_band * gp, q, fc2,
+                             masses_fc2, p2s_fc2, s2p_fc2, multi_fc2, num_patom,
+                             num_satom, svecs_fc2, is_nac, born, dielectric,
+                             reciprocal_lattice, q_direction, nac_factor);
     }
 
+#ifndef NO_INCLUDE_LAPACKE
 /* To avoid multithreaded BLAS in OpenMP loop */
 #ifndef MULTITHREADED_BLAS
 #ifdef _OPENMP
@@ -235,6 +227,7 @@ static void get_undone_phonons(
                            unit_conversion_factor;
         }
     }
+#endif
 }
 
 static void get_gonze_undone_phonons(
@@ -274,6 +267,7 @@ static void get_gonze_undone_phonons(
                           nac_factor, dd_q0, G_list, num_G_points, lambda);
     }
 
+#ifndef NO_INCLUDE_LAPACKE
 /* To avoid multithreaded BLAS in OpenMP loop */
 #ifndef MULTITHREADED_BLAS
 #ifdef _OPENMP
@@ -295,22 +289,7 @@ static void get_gonze_undone_phonons(
                            unit_conversion_factor;
         }
     }
-}
-
-static void get_phonons(lapack_complex_double *eigvecs, const double q[3],
-                        const double *fc2, const double *masses,
-                        const long *p2s, const long *s2p,
-                        const long (*multi)[2], const long num_patom,
-                        const long num_satom, const double (*svecs)[3],
-                        const long is_nac, const double (*born)[3][3],
-                        const double dielectric[3][3],
-                        const double reciprocal_lattice[3][3],
-                        const double *q_direction, const double nac_factor,
-                        const double unit_conversion_factor) {
-    /* Store dynamical matrix in eigvecs array. */
-    get_dynamical_matrix(eigvecs, q, fc2, masses, p2s, s2p, multi, num_patom,
-                         num_satom, svecs, is_nac, born, dielectric,
-                         reciprocal_lattice, q_direction, nac_factor);
+#endif
 }
 
 static void get_gonze_phonons(

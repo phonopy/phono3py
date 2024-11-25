@@ -686,6 +686,13 @@ def select_colmat_solver(pinv_solver):
         print("Phono3py C-routine is not compiled correctly.")
         default_solver = 4
 
+    if not phono3c.include_lapacke():
+        if pinv_solver in (1, 2, 6):
+            raise RuntimeError(
+                "Use pinv-solver 3, 4, or 5 because "
+                "phono3py is not compiled with LAPACKE."
+            )
+
     solver_numbers = (1, 2, 3, 4, 5, 6)
 
     solver = pinv_solver
