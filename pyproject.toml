@@ -16,7 +16,7 @@ dependencies = [
     "matplotlib>=2.2.2",
     "h5py>=3.0",
     "spglib>=2.3",
-    "phonopy>=2.30,<2.31",
+    "phonopy>=2.31,<2.32",
 ]
 license = { file = "LICENSE" }
 
@@ -52,6 +52,7 @@ sdist.include = [
 PHONO3PY_USE_MTBLAS = {env="PHONO3PY_USE_MTBLAS", default="ON"}
 USE_CONDA_PATH = {env="USE_CONDA_PATH", default="ON"}
 PHONO3PY_USE_OMP = {env="PHONO3PY_USE_OMP", default="ON"}
+BUILD_WITHOUT_LAPACKE = {env="BUILD_WITHOUT_LAPACKE", default="OFF"}
 
 [tool.setuptools_scm]
 write_to = "phono3py/_version.py"
