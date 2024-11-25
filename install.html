@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Installation &#8212; Phono3py v.3.7.0</title>
+    <title>Installation &#8212; Phono3py v.3.8.0</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
 
-    <script src="_static/documentation_options.js?v=f1d443ca"></script>
+    <script src="_static/documentation_options.js?v=e15476e9"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -50,7 +50,7 @@
     <link rel="prev" title="Welcome to phono3py" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="3.7" />
+  <meta name="docsearch:version" content="3.8" />
   </head>
   
   
@@ -125,7 +125,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.7.0</p>
+    <p class="title logo__title">Phono3py v.3.8.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -307,7 +307,8 @@
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-using-conda">Installation using conda</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-from-source-code">Installation from source code</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-with-automatic-search-of-library-configurations-by-cmake">Build with automatic search of library configurations by cmake</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#building-with-automatic-search-of-library-configurations-by-cmake">Building with automatic search of library configurations by cmake</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#building-without-linking-lapacke">Building without linking LAPACKE</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-instruction-of-latest-development-version-of-phono3py">Installation instruction of latest development version of phono3py</a></li>
@@ -373,8 +374,8 @@ modification of <code class="docutils literal notranslate"><span class="pre">CMa
 <p>These packages may be installed by the package manager of OS (e.g. <code class="docutils literal notranslate"><span class="pre">apt</span></code>) or
 conda environment. Automatic search of required libraries and flags that are
 already on the system is performed by cmake.</p>
-<section id="build-with-automatic-search-of-library-configurations-by-cmake">
-<span id="install-with-cmake"></span><h3>Build with automatic search of library configurations by cmake<a class="headerlink" href="#build-with-automatic-search-of-library-configurations-by-cmake" title="Link to this heading">#</a></h3>
+<section id="building-with-automatic-search-of-library-configurations-by-cmake">
+<span id="install-with-cmake"></span><h3>Building with automatic search of library configurations by cmake<a class="headerlink" href="#building-with-automatic-search-of-library-configurations-by-cmake" title="Link to this heading">#</a></h3>
 <p>With installed cmake and required libraries on the system, cmake tries to find
 libraries to be linked and the compiler flags that are required during the build.
 This phono3py build can be launched by</p>
@@ -384,6 +385,18 @@ This phono3py build can be launched by</p>
 <p>See an example at <a class="reference internal" href="#install-an-example"><span class="std std-ref">Installation instruction of latest development version of phono3py</span></a>. In the standard output, flags and
 libraries found by cmake are shown. Please carefully check if those
 configurations are expected ones or not.</p>
+</section>
+<section id="building-without-linking-lapacke">
+<h3>Building without linking LAPACKE<a class="headerlink" href="#building-without-linking-lapacke" title="Link to this heading">#</a></h3>
+<p><strong>Experimental</strong></p>
+<p>To compile phono3py without linking LAPACKE in C, use the following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">BUILD_WITHOUT_LAPACKE</span><span class="o">=</span><span class="n">ON</span> <span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span> <span class="o">-</span><span class="n">vvv</span>
+</pre></div>
+</div>
+<p>When this option is enabled, linking to BLAS and LAPACKE libraries is not
+required, so installing these libraries for C compilation may not be necessary.
+However, since numpy and scipy rely on BLAS and LAPACK libraries, their runtime
+versions are still required.</p>
 </section>
 </section>
 <section id="installation-instruction-of-latest-development-version-of-phono3py">
@@ -559,7 +572,8 @@ system. If you don’t have it and you use Ubuntu linux, it is installed by:</p>
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-using-conda">Installation using conda</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-from-source-code">Installation from source code</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-with-automatic-search-of-library-configurations-by-cmake">Build with automatic search of library configurations by cmake</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#building-with-automatic-search-of-library-configurations-by-cmake">Building with automatic search of library configurations by cmake</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#building-without-linking-lapacke">Building without linking LAPACKE</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-instruction-of-latest-development-version-of-phono3py">Installation instruction of latest development version of phono3py</a></li>

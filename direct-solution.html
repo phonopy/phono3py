@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Direct solution of linearized phonon Boltzmann equation &#8212; Phono3py v.3.7.0</title>
+    <title>Direct solution of linearized phonon Boltzmann equation &#8212; Phono3py v.3.8.0</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
 
-    <script src="_static/documentation_options.js?v=f1d443ca"></script>
+    <script src="_static/documentation_options.js?v=e15476e9"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -52,7 +52,7 @@
     <link rel="prev" title="Auxiliary tools" href="auxiliary-tools.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="3.7" />
+  <meta name="docsearch:version" content="3.8" />
   </head>
   
   
@@ -127,7 +127,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.7.0</p>
+    <p class="title logo__title">Phono3py v.3.8.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -617,7 +617,7 @@ and numpy distributed by anaconda are MKL linked, therefore MKL multithread BLAS
 is used through them. Multithreaded OpenBLAS is installed by conda and can be
 used via LAPACKE in phono3py. MKL LAPACK and BLAS are also able to be used via
 LAPACKE in phono3py with appropriate setting in <code class="docutils literal notranslate"><span class="pre">setup.py</span></code>.</p>
-<p>Using <code class="docutils literal notranslate"><span class="pre">--pinv-solver=[number]</span></code>, one of the following solver is chosen:</p>
+<p>Using <code class="docutils literal notranslate"><span class="pre">--pinv-solver</span> <span class="pre">NUMBER</span></code>, one of the following solver is chosen:</p>
 <ol class="arabic simple">
 <li><p>Lapacke <code class="docutils literal notranslate"><span class="pre">dsyev</span></code>: Smaller memory consumption than <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code>, but slower. This
 is the default solver when MKL LAPACKE is integrated or scipy is not
@@ -634,6 +634,11 @@ LAPACKE is not integrated.</p></li>
 <li><p>Scipy’s <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code>: Similar to solver (2), this solver should be used
 carefully.</p></li>
 </ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">pinv-solver</span></code> =3, 4, and 5 are only available when phono3py is compiled
+without LAPACKE.</p>
+</div>
 </section>
 </section>
 
