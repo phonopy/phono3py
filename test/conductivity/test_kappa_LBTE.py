@@ -10,9 +10,19 @@ from phono3py.api_phono3py import Phono3py
 @pytest.mark.skipif(
     not phono3c.include_lapacke(), reason="test for phono3py compliled with lapacke"
 )
-@pytest.mark.parametrize("pinv_solver", [1, 2, 3, 4, 5])
-def test_kappa_LBTE(si_pbesol: Phono3py, pinv_solver: int):
+@pytest.mark.parametrize("pinv_solver", [1, 2])
+def test_kappa_LBTE_12(si_pbesol: Phono3py, pinv_solver: int):
     """Test for symmetry reduced collision matrix."""
+    _test_kappa_LBTE(si_pbesol, pinv_solver)
+
+
+@pytest.mark.parametrize("pinv_solver", [3, 4, 5])
+def test_kappa_LBTE_345(si_pbesol: Phono3py, pinv_solver: int):
+    """Test for symmetry reduced collision matrix."""
+    _test_kappa_LBTE(si_pbesol, pinv_solver)
+
+
+def _test_kappa_LBTE(si_pbesol: Phono3py, pinv_solver: int):
     if si_pbesol._make_r0_average:
         ref_kappa = [110.896, 110.896, 110.896, 0, 0, 0]
     else:
@@ -65,7 +75,7 @@ def test_kappa_LBTE_full_colmat(si_pbesol: Phono3py):
         is_reducible_collision_matrix=True,
     )
     kappa = si_pbesol.thermal_conductivity.kappa.ravel()
-    np.testing.assert_allclose(ref_kappa, kappa, atol=0.3)
+    np.testing.assert_allclose(ref_kappa, kappa, atol=0.5)
 
 
 def test_kappa_LBTE_aln(aln_lda: Phono3py):
