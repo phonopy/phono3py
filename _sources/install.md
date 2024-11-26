@@ -61,6 +61,7 @@ See an example at {ref}`install_an_example`. In the standard output, flags and
 libraries found by cmake are shown. Please carefully check if those
 configurations are expected ones or not.
 
+(install_without_lapacke)=
 ### Building without linking LAPACKE
 
 **Experimental**
@@ -118,7 +119,14 @@ wrong python libraries can be imported.
    For x86-64 system:
 
    ```bash
-   % conda install numpy scipy h5py pyyaml matplotlib-base c-compiler cxx-compiler "libblas=*=*mkl" spglib mkl-include cmake
+   % conda install numpy scipy h5py pyyaml matplotlib-base c-compiler cxx-compiler cmake spglib
+   ```
+
+   Unless {ref}`install_without_lapacke`, the following packages will be
+   necessary to compile phono3py:
+
+   ```bash
+   % conda install "libblas=*=*mkl" mkl-include
    ```
 
    A libblas library can be chosen among `[openblas, mkl, blis, netlib]`. If
@@ -128,20 +136,21 @@ wrong python libraries can be imported.
    % conda install "libblas=*=*openblas"
    ```
 
-   For macOS ARM64 system, currently only openblas can be chosen:
+   For macOS ARM64 system:
 
    ```bash
-   % conda install numpy scipy h5py pyyaml matplotlib-base c-compiler cxx-compiler spglib cmake openblas
+   % conda install numpy scipy h5py pyyaml matplotlib-base c-compiler cxx-compiler spglib cmake
    ```
 
-   Note that using hdf5 files on NFS mounted file system, you may have to disable
-   file locking by setting
+   Unless {ref}`install_without_lapacke`, the following package will be
+   necessary to compile phono3py:
 
    ```bash
-   export HDF5_USE_FILE_LOCKING=FALSE
+   % conda install openblas
    ```
 
-   Install the latest phonopy and phono3py from github sources:
+   The latest phonopy and phono3py are obtained from github, and they are
+   compiled and installed by:
 
    ```bash
    % mkdir dev
@@ -154,20 +163,29 @@ wrong python libraries can be imported.
    % pip install . -vvv
    ```
 
-   The editable install (`pip install -e`) may not work depending on the
-   computer environment. The conda packages dependency can often change and this
-   recipe may not work properly. So if you find this instruction doesn't work,
-   it is very appreciated if letting us know it in the phonopy mailing list.
+## Dependent libraries
+
+### OpenMP
+
+#### GCC on Ubuntu
+
+With system provided gcc, `libgomp1` may be necessary to enable OpenMP
+multithreading support. This library is probably installed already in your
+system. If you don't have it and you use Ubuntu linux, it is installed by:
+
+```bash
+% sudo apt-get install libgomp1
+```
 
 (install_lapacke)=
-## Installation of LAPACKE
+### LAPACKE
 
 LAPACK library is used in a few parts of the code to diagonalize matrices.
 LAPACK*E* is the C-wrapper of LAPACK and LAPACK relies on BLAS. Both
 single-thread or multithread BLAS can be used in phono3py. In the following,
 multiple different ways of installation of LAPACKE are explained.
 
-### OpenBLAS provided by conda
+#### OpenBLAS provided by conda
 
 The installation of LAPACKE is easy by conda. It is:
 
@@ -175,7 +193,7 @@ The installation of LAPACKE is easy by conda. It is:
 % conda install -c conda-forge openblas
 ```
 
-### Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)
+#### Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)
 
 LAPACKE (http://www.netlib.org/lapack/lapacke.html) can be installed from the
 Ubuntu package manager (`liblapacke` and `liblapacke-dev`):
@@ -184,7 +202,17 @@ Ubuntu package manager (`liblapacke` and `liblapacke-dev`):
 % sudo apt-get install liblapack-dev liblapacke-dev
 ```
 
-(install_openmp)=
+## Using HDF5 files on NFS mounted file system
+
+If you are using HDF5 files on an NFS-mounted file system, you might need to
+disable file locking. This can be done by setting the following environment
+variable:
+
+```bash
+export HDF5_USE_FILE_LOCKING=FALSE
+```
+
+<!-- (install_openmp)=
 ## Multithreading and its controlling by C macro
 
 Phono3py uses multithreading concurrency in two ways. One is that written in the
@@ -201,17 +229,7 @@ be deactivated at the compilation time. This is achieved by setting the C macro
 `MULTITHREADED_BLAS`, which can be written in `CMakeLists.txt`. Deactivating the
 multithreading of BLAS using the environment variables is not recommended
 because it is also used in the non-nested parts of the code and these
-multithreadings are unnecessary to be deactivated.
-
-### OpenMP library of gcc
-
-With system provided gcc, `libgomp1` may be necessary to enable OpenMP
-multithreading support. This library is probably installed already in your
-system. If you don't have it and you use Ubuntu linux, it is installed by:
-
-```bash
-% sudo apt-get install libgomp1
-```
+multithreadings are unnecessary to be deactivated. -->
 
 ## Trouble shooting
 

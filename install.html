@@ -312,15 +312,19 @@
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-instruction-of-latest-development-version-of-phono3py">Installation instruction of latest development version of phono3py</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-of-lapacke">Installation of LAPACKE</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-provided-by-conda">OpenBLAS provided by conda</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas">Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dependent-libraries">Dependent libraries</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#openmp">OpenMP</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gcc-on-ubuntu">GCC on Ubuntu</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#multithreading-and-its-controlling-by-c-macro">Multithreading and its controlling by C macro</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#openmp-library-of-gcc">OpenMP library of gcc</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lapacke">LAPACKE</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-provided-by-conda">OpenBLAS provided by conda</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas">Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#using-hdf5-files-on-nfs-mounted-file-system">Using HDF5 files on NFS mounted file system</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#trouble-shooting">Trouble shooting</a></li>
 </ul>
             </nav>
@@ -369,7 +373,7 @@ removed.</p>
 modification of <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code> may be needed.</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="#install-lapacke"><span class="std std-ref">Linear algebra library</span></a>: BLAS, LAPACK, and LAPACKE</p></li>
-<li><p><a class="reference internal" href="#install-openmp"><span class="std std-ref">OpenMP library</span></a>: For the multithreding support.</p></li>
+<li><p><span class="xref std std-ref">OpenMP library</span>: For the multithreding support.</p></li>
 </ul>
 <p>These packages may be installed by the package manager of OS (e.g. <code class="docutils literal notranslate"><span class="pre">apt</span></code>) or
 conda environment. Automatic search of required libraries and flags that are
@@ -387,7 +391,7 @@ libraries found by cmake are shown. Please carefully check if those
 configurations are expected ones or not.</p>
 </section>
 <section id="building-without-linking-lapacke">
-<h3>Building without linking LAPACKE<a class="headerlink" href="#building-without-linking-lapacke" title="Link to this heading">#</a></h3>
+<span id="install-without-lapacke"></span><h3>Building without linking LAPACKE<a class="headerlink" href="#building-without-linking-lapacke" title="Link to this heading">#</a></h3>
 <p><strong>Experimental</strong></p>
 <p>To compile phono3py without linking LAPACKE in C, use the following command:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">BUILD_WITHOUT_LAPACKE</span><span class="o">=</span><span class="n">ON</span> <span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span> <span class="o">-</span><span class="n">vvv</span>
@@ -430,7 +434,12 @@ virtual environment.</p>
 </li>
 <li><p>Install necessary conda packages for phono3py</p>
 <p>For x86-64 system:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>numpy<span class="w"> </span>scipy<span class="w"> </span>h5py<span class="w"> </span>pyyaml<span class="w"> </span>matplotlib-base<span class="w"> </span>c-compiler<span class="w"> </span>cxx-compiler<span class="w"> </span><span class="s2">&quot;libblas=*=*mkl&quot;</span><span class="w"> </span>spglib<span class="w"> </span>mkl-include<span class="w"> </span>cmake
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>numpy<span class="w"> </span>scipy<span class="w"> </span>h5py<span class="w"> </span>pyyaml<span class="w"> </span>matplotlib-base<span class="w"> </span>c-compiler<span class="w"> </span>cxx-compiler<span class="w"> </span>cmake<span class="w"> </span>spglib
+</pre></div>
+</div>
+<p>Unless <a class="reference internal" href="#install-without-lapacke"><span class="std std-ref">Building without linking LAPACKE</span></a>, the following packages will be
+necessary to compile phono3py:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;libblas=*=*mkl&quot;</span><span class="w"> </span>mkl-include
 </pre></div>
 </div>
 <p>A libblas library can be chosen among <code class="docutils literal notranslate"><span class="pre">[openblas,</span> <span class="pre">mkl,</span> <span class="pre">blis,</span> <span class="pre">netlib]</span></code>. If
@@ -438,16 +447,17 @@ specific one is expected, it is installed by (e.g. openblas)</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;libblas=*=*openblas&quot;</span>
 </pre></div>
 </div>
-<p>For macOS ARM64 system, currently only openblas can be chosen:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>numpy<span class="w"> </span>scipy<span class="w"> </span>h5py<span class="w"> </span>pyyaml<span class="w"> </span>matplotlib-base<span class="w"> </span>c-compiler<span class="w"> </span>cxx-compiler<span class="w"> </span>spglib<span class="w"> </span>cmake<span class="w"> </span>openblas
+<p>For macOS ARM64 system:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>numpy<span class="w"> </span>scipy<span class="w"> </span>h5py<span class="w"> </span>pyyaml<span class="w"> </span>matplotlib-base<span class="w"> </span>c-compiler<span class="w"> </span>cxx-compiler<span class="w"> </span>spglib<span class="w"> </span>cmake
 </pre></div>
 </div>
-<p>Note that using hdf5 files on NFS mounted file system, you may have to disable
-file locking by setting</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">HDF5_USE_FILE_LOCKING</span><span class="o">=</span>FALSE
+<p>Unless <a class="reference internal" href="#install-without-lapacke"><span class="std std-ref">Building without linking LAPACKE</span></a>, the following package will be
+necessary to compile phono3py:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>openblas
 </pre></div>
 </div>
-<p>Install the latest phonopy and phono3py from github sources:</p>
+<p>The latest phonopy and phono3py are obtained from github, and they are
+compiled and installed by:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>mkdir<span class="w"> </span>dev
 %<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>dev
 %<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/phonopy/phonopy.git
@@ -458,54 +468,15 @@ file locking by setting</p>
 %<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.<span class="w"> </span>-vvv
 </pre></div>
 </div>
-<p>The editable install (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span></code>) may not work depending on the
-computer environment. The conda packages dependency can often change and this
-recipe may not work properly. So if you find this instruction doesn’t work,
-it is very appreciated if letting us know it in the phonopy mailing list.</p>
 </li>
 </ol>
 </section>
-<section id="installation-of-lapacke">
-<span id="install-lapacke"></span><h2>Installation of LAPACKE<a class="headerlink" href="#installation-of-lapacke" title="Link to this heading">#</a></h2>
-<p>LAPACK library is used in a few parts of the code to diagonalize matrices.
-LAPACK<em>E</em> is the C-wrapper of LAPACK and LAPACK relies on BLAS. Both
-single-thread or multithread BLAS can be used in phono3py. In the following,
-multiple different ways of installation of LAPACKE are explained.</p>
-<section id="openblas-provided-by-conda">
-<h3>OpenBLAS provided by conda<a class="headerlink" href="#openblas-provided-by-conda" title="Link to this heading">#</a></h3>
-<p>The installation of LAPACKE is easy by conda. It is:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>openblas
-</pre></div>
-</div>
-</section>
-<section id="netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas">
-<h3>Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)<a class="headerlink" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas" title="Link to this heading">#</a></h3>
-<p>LAPACKE (<a class="reference external" href="http://www.netlib.org/lapack/lapacke.html">http://www.netlib.org/lapack/lapacke.html</a>) can be installed from the
-Ubuntu package manager (<code class="docutils literal notranslate"><span class="pre">liblapacke</span></code> and <code class="docutils literal notranslate"><span class="pre">liblapacke-dev</span></code>):</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>liblapack-dev<span class="w"> </span>liblapacke-dev
-</pre></div>
-</div>
-</section>
-</section>
-<section id="multithreading-and-its-controlling-by-c-macro">
-<span id="install-openmp"></span><h2>Multithreading and its controlling by C macro<a class="headerlink" href="#multithreading-and-its-controlling-by-c-macro" title="Link to this heading">#</a></h2>
-<p>Phono3py uses multithreading concurrency in two ways. One is that written in the
-code with OpenMP <code class="docutils literal notranslate"><span class="pre">parallel</span> <span class="pre">for</span></code>. The other is achieved by using multithreaded
-BLAS. The BLAS multithreading is depending on which BLAS library is chosen by
-users and the number of threads to be used may be controlled by the library’s
-environment variables (e.g., <code class="docutils literal notranslate"><span class="pre">OPENBLAS_NUM_THREADS</span></code> or <code class="docutils literal notranslate"><span class="pre">MKL_NUM_THREADS</span></code>). In
-the phono3py C code, these two are written in a nested way, but of course the
-nested use of multiple multithreadings has to be avoided. The outer loop of the
-nesting is done by the OpenMP <code class="docutils literal notranslate"><span class="pre">parallel</span> <span class="pre">for</span></code> code. The inner loop calls LAPACKE
-functions and then the LAPACKE functions call the BLAS routines. If both of the
-inner and outer multithreadings can be activated, the inner multithreading must
-be deactivated at the compilation time. This is achieved by setting the C macro
-<code class="docutils literal notranslate"><span class="pre">MULTITHREADED_BLAS</span></code>, which can be written in <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code>. Deactivating the
-multithreading of BLAS using the environment variables is not recommended
-because it is also used in the non-nested parts of the code and these
-multithreadings are unnecessary to be deactivated.</p>
-<section id="openmp-library-of-gcc">
-<h3>OpenMP library of gcc<a class="headerlink" href="#openmp-library-of-gcc" title="Link to this heading">#</a></h3>
+<section id="dependent-libraries">
+<h2>Dependent libraries<a class="headerlink" href="#dependent-libraries" title="Link to this heading">#</a></h2>
+<section id="openmp">
+<h3>OpenMP<a class="headerlink" href="#openmp" title="Link to this heading">#</a></h3>
+<section id="gcc-on-ubuntu">
+<h4>GCC on Ubuntu<a class="headerlink" href="#gcc-on-ubuntu" title="Link to this heading">#</a></h4>
 <p>With system provided gcc, <code class="docutils literal notranslate"><span class="pre">libgomp1</span></code> may be necessary to enable OpenMP
 multithreading support. This library is probably installed already in your
 system. If you don’t have it and you use Ubuntu linux, it is installed by:</p>
@@ -513,6 +484,56 @@ system. If you don’t have it and you use Ubuntu linux, it is installed by:</p>
 </pre></div>
 </div>
 </section>
+</section>
+<section id="lapacke">
+<span id="install-lapacke"></span><h3>LAPACKE<a class="headerlink" href="#lapacke" title="Link to this heading">#</a></h3>
+<p>LAPACK library is used in a few parts of the code to diagonalize matrices.
+LAPACK<em>E</em> is the C-wrapper of LAPACK and LAPACK relies on BLAS. Both
+single-thread or multithread BLAS can be used in phono3py. In the following,
+multiple different ways of installation of LAPACKE are explained.</p>
+<section id="openblas-provided-by-conda">
+<h4>OpenBLAS provided by conda<a class="headerlink" href="#openblas-provided-by-conda" title="Link to this heading">#</a></h4>
+<p>The installation of LAPACKE is easy by conda. It is:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>openblas
+</pre></div>
+</div>
+</section>
+<section id="netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas">
+<h4>Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)<a class="headerlink" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas" title="Link to this heading">#</a></h4>
+<p>LAPACKE (<a class="reference external" href="http://www.netlib.org/lapack/lapacke.html">http://www.netlib.org/lapack/lapacke.html</a>) can be installed from the
+Ubuntu package manager (<code class="docutils literal notranslate"><span class="pre">liblapacke</span></code> and <code class="docutils literal notranslate"><span class="pre">liblapacke-dev</span></code>):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>liblapack-dev<span class="w"> </span>liblapacke-dev
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="using-hdf5-files-on-nfs-mounted-file-system">
+<h2>Using HDF5 files on NFS mounted file system<a class="headerlink" href="#using-hdf5-files-on-nfs-mounted-file-system" title="Link to this heading">#</a></h2>
+<p>If you are using HDF5 files on an NFS-mounted file system, you might need to
+disable file locking. This can be done by setting the following environment
+variable:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">HDF5_USE_FILE_LOCKING</span><span class="o">=</span>FALSE
+</pre></div>
+</div>
+<!-- (install_openmp)=
+## Multithreading and its controlling by C macro
+
+Phono3py uses multithreading concurrency in two ways. One is that written in the
+code with OpenMP `parallel for`. The other is achieved by using multithreaded
+BLAS. The BLAS multithreading is depending on which BLAS library is chosen by
+users and the number of threads to be used may be controlled by the library's
+environment variables (e.g., `OPENBLAS_NUM_THREADS` or `MKL_NUM_THREADS`). In
+the phono3py C code, these two are written in a nested way, but of course the
+nested use of multiple multithreadings has to be avoided. The outer loop of the
+nesting is done by the OpenMP `parallel for` code. The inner loop calls LAPACKE
+functions and then the LAPACKE functions call the BLAS routines. If both of the
+inner and outer multithreadings can be activated, the inner multithreading must
+be deactivated at the compilation time. This is achieved by setting the C macro
+`MULTITHREADED_BLAS`, which can be written in `CMakeLists.txt`. Deactivating the
+multithreading of BLAS using the environment variables is not recommended
+because it is also used in the non-nested parts of the code and these
+multithreadings are unnecessary to be deactivated. -->
 </section>
 <section id="trouble-shooting">
 <h2>Trouble shooting<a class="headerlink" href="#trouble-shooting" title="Link to this heading">#</a></h2>
@@ -577,15 +598,19 @@ system. If you don’t have it and you use Ubuntu linux, it is installed by:</p>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-instruction-of-latest-development-version-of-phono3py">Installation instruction of latest development version of phono3py</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-of-lapacke">Installation of LAPACKE</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-provided-by-conda">OpenBLAS provided by conda</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas">Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dependent-libraries">Dependent libraries</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#openmp">OpenMP</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gcc-on-ubuntu">GCC on Ubuntu</a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#multithreading-and-its-controlling-by-c-macro">Multithreading and its controlling by C macro</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#openmp-library-of-gcc">OpenMP library of gcc</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lapacke">LAPACKE</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-provided-by-conda">OpenBLAS provided by conda</a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas">Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#using-hdf5-files-on-nfs-mounted-file-system">Using HDF5 files on NFS mounted file system</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#trouble-shooting">Trouble shooting</a></li>
 </ul>
   </nav></div>
