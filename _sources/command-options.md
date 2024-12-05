@@ -406,6 +406,10 @@ These are shortcuts of `--fc-calc symfc` and `--fc-calc alm`, respectively.
 Please be careful that `--symfc` and `--sym-fc` (deprecated) are similar, but
 different.
 
+Refer to the [symfc](https://phonopy.github.io/phonopy/setting-tags.html#symfc)
+and [alm](https://phonopy.github.io/phonopy/setting-tags.html#alm) sections in
+the Phonopy documentation for additional details.
+
 ## Force constants
 
 (compact_fc_option)=
