@@ -1231,8 +1231,7 @@ class Phono3py:
         is_diagonal: bool = True,
         number_of_snapshots: Optional[int] = None,
         random_seed: Optional[int] = None,
-        is_random_distance: bool = False,
-        min_distance: Optional[float] = None,
+        max_distance: Optional[float] = None,
     ):
         """Generate displacement dataset in supercell for fc3.
 
@@ -1270,7 +1269,10 @@ class Phono3py:
         Parameters
         ----------
         distance : float, optional
-            Constant displacement Euclidean distance. Default is 0.03.
+            Constant displacement Euclidean distance. Default is 0.03. For
+            random direction and random distance displacements generation, this
+            value is also used as `min_distance`, is used to replace generated
+            random distances smaller than this value by this value.
         cutoff_pair_distance : float, optional
             This is used as a cutoff Euclidean distance to determine if each
             pair of displacements is considered to calculate fc3 or not. Default
@@ -1295,14 +1297,10 @@ class Phono3py:
             None.
         random_seed : int or None, optional
             Random seed for random displacements generation. Default is None.
-        is_random_distance : bool, optional
-            Random direction displacements are generated also with random
-            amplitudes. The maximum value is defined by `distance` and minimum
-            value is given by `min_distance`. Default is False.
-        min_distance : float or None, optional
-            In random direction displacements generation with random distance
-            (`is_random_distance=True`), the minimum distance is given by this
-            value.
+        max_distance : float or None, optional
+            In random direction and distance displacements generation, this
+            value is specified. In random direction and random distance
+            displacements generation, this value is used as `max_distance`.
 
         """
         if number_of_snapshots is not None and number_of_snapshots > 0:
@@ -1312,8 +1310,7 @@ class Phono3py:
                 distance=distance,
                 is_plusminus=is_plusminus is True,
                 random_seed=random_seed,
-                is_random_distance=is_random_distance,
-                min_distance=min_distance,
+                max_distance=max_distance,
             )
         else:
             direction_dataset = get_third_order_displacements(
@@ -1342,37 +1339,39 @@ class Phono3py:
         is_diagonal: bool = False,
         number_of_snapshots: Optional[int] = None,
         random_seed: Optional[int] = None,
-        is_random_distance: bool = False,
-        min_distance: Optional[float] = None,
+        max_distance: Optional[float] = None,
     ):
         """Generate displacement dataset in phonon supercell for fc2.
 
-        This systematically generates single atomic displacements
-        in supercells to calculate phonon_fc2 considering crystal symmetry.
-        When this method is called, existing cache of supercells with
-        displacements for fc2 are removed.
+        This systematically generates single atomic displacements in supercells
+        to calculate phonon_fc2 considering crystal symmetry. When this method
+        is called, existing cache of supercells with displacements for fc2 are
+        removed.
 
         Note
         ----
-        is_diagonal=False is chosen as the default setting intentionally
-        to be consistent to the first displacements of the fc3 pair
-        displacemets in supercell.
+        is_diagonal=False is chosen as the default setting intentionally to be
+        consistent to the first displacements of the fc3 pair displacemets in
+        supercell.
 
         Parameters
         ----------
         distance : float, optional
-            Constant displacement Euclidean distance. Default is 0.03.
+            Constant displacement Euclidean distance. Default is 0.03. For
+            random direction and random distance displacements generation, this
+            value is also used as `min_distance`, is used to replace generated
+            random distances smaller than this value by this value.
         is_plusminus : True, False, or 'auto', optional
             With True, atomis are displaced in both positive and negative
-            directions. With False, only one direction. With 'auto',
-            mostly equivalent to is_plusminus=True, but only one direction
-            is chosen when the displacements in both directions are
-            symmetrically equivalent. Default is 'auto'.
+            directions. With False, only one direction. With 'auto', mostly
+            equivalent to is_plusminus=True, but only one direction is chosen
+            when the displacements in both directions are symmetrically
+            equivalent. Default is 'auto'.
         is_diagonal : Bool, optional
-            With False, the displacements are made along the basis
-            vectors of the supercell. With True, direction not along the basis
-            vectors can be chosen when the number of the displacements
-            may be reduced. Default is False.
+            With False, the displacements are made along the basis vectors of
+            the supercell. With True, direction not along the basis vectors can
+            be chosen when the number of the displacements may be reduced.
+            Default is False.
         number_of_snapshots : int or None, optional
             Number of snapshots of supercells with random displacements. Random
             displacements are generated displacing all atoms in random
@@ -1382,14 +1381,10 @@ class Phono3py:
             None.
         random_seed : int or None, optional
             Random seed for random displacements generation. Default is None.
-        is_random_distance : bool, optional
-            Random direction displacements are generated also with random
-            amplitudes. The maximum value is defined by `distance` and minimum
-            value is given by `min_distance`. Default is False.
-        min_distance : float or None, optional
-            In random direction displacements generation with random distance
-            (`is_random_distance=True`), the minimum distance is given by this
-            value.
+        max_distance : float or None, optional
+            In random direction and distance displacements generation, this
+            value is specified. In random direction and random distance
+            displacements generation, this value is used as `max_distance`.
 
         """
         if number_of_snapshots is not None and number_of_snapshots > 0:
@@ -1399,8 +1394,7 @@ class Phono3py:
                 distance=distance,
                 is_plusminus=is_plusminus is True,
                 random_seed=random_seed,
-                is_random_distance=is_random_distance,
-                min_distance=min_distance,
+                max_distance=max_distance,
             )
         else:
             phonon_displacement_directions = get_least_displacements(
@@ -2649,8 +2643,7 @@ class Phono3py:
         distance: float = 0.03,
         is_plusminus: bool = False,
         random_seed: Optional[int] = None,
-        is_random_distance: bool = False,
-        min_distance: Optional[float] = None,
+        max_distance: Optional[float] = None,
     ):
         if random_seed is not None and random_seed >= 0 and random_seed < 2**32:
             _random_seed = random_seed
@@ -2664,8 +2657,7 @@ class Phono3py:
             distance,
             random_seed=_random_seed,
             is_plusminus=is_plusminus,
-            is_random_distance=is_random_distance,
-            min_distance=min_distance,
+            max_distance=max_distance,
         )
         dataset["displacements"] = d
         return dataset
