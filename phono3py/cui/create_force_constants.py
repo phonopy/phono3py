@@ -529,7 +529,11 @@ def run_pypolymlp_to_compute_forces(
                 if v is not None:
                     print(f"  {k}: {v}")
 
-    if forces_in_dataset(ph3py.mlp_dataset):
+    if pathlib.Path(mlp_filename).exists():
+        if log_level:
+            print(f'Load MLPs from "{mlp_filename}".')
+        ph3py.load_mlp(mlp_filename)
+    elif forces_in_dataset(ph3py.mlp_dataset):
         if log_level:
             print("Developing MLPs by pypolymlp...", flush=True)
         ph3py.develop_mlp(params=mlp_params)
@@ -537,12 +541,7 @@ def run_pypolymlp_to_compute_forces(
         if log_level:
             print(f'MLPs were written into "{mlp_filename}"', flush=True)
     else:
-        if pathlib.Path(mlp_filename).exists():
-            if log_level:
-                print(f'Load MLPs from "{mlp_filename}".')
-            ph3py.load_mlp(mlp_filename)
-        else:
-            raise RuntimeError(f'"{mlp_filename}" is not found.')
+        raise RuntimeError(f'"{mlp_filename}" is not found.')
 
     if log_level:
         print("-" * 30 + " pypolymlp end " + "-" * 31, flush=True)
