@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Dec-6-2024: Version 3.9.0
+
+- Update to follow the change of phonopy's internal functions
+
 ## Nov-25-2024: Version 3.8.0
 
 - Follow the change due to phonopy's refactoring of MLP interface.
