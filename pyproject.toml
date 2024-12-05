@@ -10,12 +10,12 @@ description = "This is the phono3py module."
 authors = [{ name = "Atsushi Togo", email = "atztogo@gmail.com" }]
 requires-python = ">=3.9"
 dependencies = [
-    "numpy>=1.17.0",
+    "numpy",
     "scipy",
-    "PyYAML>=5.3",
-    "matplotlib>=2.2.2",
-    "h5py>=3.0",
-    "spglib>=2.3",
+    "PyYAML",
+    "matplotlib",
+    "h5py",
+    "spglib",
     "phonopy>=2.32,<2.33",
 ]
 license = { file = "LICENSE" }
