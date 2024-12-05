@@ -37,7 +37,6 @@
 from __future__ import annotations
 
 import argparse
-import datetime
 import pathlib
 import sys
 from typing import Optional
@@ -50,6 +49,7 @@ from phonopy.cui.phonopy_script import (
     print_end,
     print_error,
     print_error_message,
+    print_time,
     print_version,
     set_magnetic_moments,
     store_nac_params,
@@ -122,15 +122,6 @@ def print_end_phono3py():
     """Print END logo."""
     print_time()
     print_end()
-
-
-def print_time():
-    """Print current time."""
-    print(
-        "-------------------------"
-        f'[time {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}]'
-        "-------------------------"
-    )
 
 
 def finalize_phono3py(
