@@ -1544,7 +1544,6 @@ class Phono3py:
             fc_calculator_options=fc_calculator_options,
             atom_list=p2s_map,
             symmetry=self._phonon_supercell_symmetry,
-            symprec=self._symprec,
             log_level=self._log_level,
         )
 
