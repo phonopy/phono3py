@@ -1531,18 +1531,13 @@ class Phono3py:
         if not forces_in_dataset(disp_dataset):
             raise RuntimeError("Forces are not set in the dataset.")
 
-        if is_compact_fc:
-            p2s_map = self._phonon_primitive.p2s_map
-        else:
-            p2s_map = None
-
         self._fc2 = get_fc2(
             self._phonon_supercell,
-            self._phonon_primitive,
             disp_dataset,
+            primitive=self._phonon_primitive,
             fc_calculator=fc_calculator,
             fc_calculator_options=fc_calculator_options,
-            atom_list=p2s_map,
+            is_compact_fc=is_compact_fc,
             symmetry=self._phonon_supercell_symmetry,
             log_level=self._log_level,
         )
