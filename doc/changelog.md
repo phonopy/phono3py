@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Dec-6-2024: Version 3.10.0
+
+- Update to follow the change of phonopy's internal functions
+
 ## Dec-6-2024: Version 3.9.0
 
 - Update to follow the change of phonopy's internal functions
