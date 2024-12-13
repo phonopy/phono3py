@@ -55,13 +55,7 @@ def get_fc3(
     symmetry: Optional[Symmetry] = None,
     log_level: int = 0,
 ):
-    """Supercell 2nd order force constants (fc2) are calculated.
-
-    The expected shape of supercell fc3 to be returned is
-        (len(atom_list), num_atoms, num_atom, 3, 3, 3),
-    where atom_list is either all atoms in primitive cell or supercell,
-    which is chosen by is_compact_fc=True for primitive cell and False for
-    supercell.
+    """Calculate 2upercell 2nd and 3rd order force constants.
 
     Parameters
     ----------
@@ -86,31 +80,28 @@ def get_fc3(
 
     Returns
     -------
-    fc3 : ndarray
-        3rd order force constants.
-        shape=(len(atom_list), num_atoms, num_atoms, 3, 3, 3)
-        dtype='double', order='C'.
-        Here atom_list is either all atoms in primitive cell or supercell,
-        which is chosen by is_compact_fc=True for primitive cell and False
-        for supercell.
+    (fc2, fc3) : tuple[ndarray]
+        2nd and 3rd order force constants.
 
     """
     if fc_calculator == "alm":
-        from phono3py.interface.alm import get_fc3 as get_fc3_alm
+        from phonopy.interface.alm import run_alm
 
-        return get_fc3_alm(
+        fc = run_alm(
             supercell,
             primitive,
             displacements,
             forces,
+            2,
             options=fc_calculator_options,
             is_compact_fc=is_compact_fc,
             log_level=log_level,
         )
+        return fc[2], fc[3]
     elif fc_calculator == "symfc":
         from phonopy.interface.symfc import run_symfc
 
-        return run_symfc(
+        fc = run_symfc(
             supercell,
             primitive,
             displacements,
@@ -121,6 +112,7 @@ def get_fc3(
             options=fc_calculator_options,
             log_level=log_level,
         )
+        return fc[2], fc[3]
     else:
         msg = "Force constants calculator of %s was not found ." % fc_calculator
         raise RuntimeError(msg)
