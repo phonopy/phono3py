@@ -438,7 +438,7 @@ def write_grid_address_to_hdf5(
     mesh,
     grid_mapping_table,
     bz_grid=None,
-    compression="gzip",
+    compression: Union[str, int] = "gzip",
     filename=None,
 ):
     """Write grid addresses to grid_address.hdf5."""
@@ -714,7 +714,7 @@ def write_spectral_function_to_hdf5(
     if all_band_exist:
         _band_indices = None
     else:
-        _band_indices = np.hstack(band_indices).astype("int_")
+        _band_indices = np.hstack(band_indices).astype("long")
     suffix = _get_filename_suffix(
         mesh, grid_point=grid_point, band_indices=_band_indices, sigma=sigma
     )

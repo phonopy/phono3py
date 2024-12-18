@@ -57,23 +57,23 @@ def get_unique_grid_points(grid_points, bz_grid: BZGrid):
     -------
     ndarray
         Unique grid points on tetrahedron vertices around input grid points.
-        shape=(unique_grid_points, ), dtype='int_'.
+        shape=(unique_grid_points, ), dtype='long'.
 
     """
     import phono3py._phono3py as phono3c
 
-    if _check_ndarray_state(grid_points, "int_"):
+    if _check_ndarray_state(grid_points, "long"):
         _grid_points = grid_points
     else:
-        _grid_points = np.array(grid_points, dtype="int_")
+        _grid_points = np.array(grid_points, dtype="long")
     thm = TetrahedronMethod(bz_grid.microzone_lattice)
     unique_vertices = np.array(
         np.dot(thm.get_unique_tetrahedra_vertices(), bz_grid.P.T),
-        dtype="int_",
+        dtype="long",
         order="C",
     )
     neighboring_grid_points = np.zeros(
-        len(unique_vertices) * len(_grid_points), dtype="int_"
+        len(unique_vertices) * len(_grid_points), dtype="long"
     )
     phono3c.neighboring_grid_points(
         neighboring_grid_points,
@@ -84,7 +84,7 @@ def get_unique_grid_points(grid_points, bz_grid: BZGrid):
         bz_grid.gp_map,
         bz_grid.store_dense_gp_map * 1 + 1,
     )
-    unique_grid_points = np.array(np.unique(neighboring_grid_points), dtype="int_")
+    unique_grid_points = np.array(np.unique(neighboring_grid_points), dtype="long")
     return unique_grid_points
 
 
@@ -111,7 +111,7 @@ def get_integration_weights(
         Grid information in reciprocal space.
     grid_points : array_like, optional, default=None
         Grid point indices in BZ-grid. If None, all regular grid points in
-        BZ-grid. shape=(grid_points, ), dtype='int_'
+        BZ-grid. shape=(grid_points, ), dtype='long'
     bzgp2irgp_map : array_like, optional, default=None
         Grid point index mapping from bz_grid to index of the first dimension of
         `grid_values` array, i.e., usually irreducible grid point count.
@@ -131,15 +131,15 @@ def get_integration_weights(
         np.dot(
             get_tetrahedra_relative_grid_address(bz_grid.microzone_lattice), bz_grid.P.T
         ),
-        dtype="int_",
+        dtype="long",
         order="C",
     )
     if grid_points is None:
         _grid_points = bz_grid.grg2bzg
-    elif _check_ndarray_state(grid_points, "int_"):
+    elif _check_ndarray_state(grid_points, "long"):
         _grid_points = grid_points
     else:
-        _grid_points = np.array(grid_points, dtype="int_")
+        _grid_points = np.array(grid_points, dtype="long")
     if _check_ndarray_state(grid_values, "double"):
         _grid_values = grid_values
     else:
@@ -149,11 +149,11 @@ def get_integration_weights(
     else:
         _sampling_points = np.array(sampling_points, dtype="double")
     if bzgp2irgp_map is None:
-        _bzgp2irgp_map = np.arange(len(grid_values), dtype="int_")
-    elif _check_ndarray_state(bzgp2irgp_map, "int_"):
+        _bzgp2irgp_map = np.arange(len(grid_values), dtype="long")
+    elif _check_ndarray_state(bzgp2irgp_map, "long"):
         _bzgp2irgp_map = bzgp2irgp_map
     else:
-        _bzgp2irgp_map = np.array(bzgp2irgp_map, dtype="int_")
+        _bzgp2irgp_map = np.array(bzgp2irgp_map, dtype="long")
 
     num_grid_points = len(_grid_points)
     num_band = _grid_values.shape[1]
@@ -188,7 +188,7 @@ def get_tetrahedra_relative_grid_address(microzone_lattice):
     """
     import phono3py._phono3py as phono3c
 
-    relative_grid_address = np.zeros((24, 4, 3), dtype="int_", order="C")
+    relative_grid_address = np.zeros((24, 4, 3), dtype="long", order="C")
     phono3c.tetrahedra_relative_grid_address(
         relative_grid_address, np.array(microzone_lattice, dtype="double", order="C")
     )
