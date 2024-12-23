@@ -35,21 +35,21 @@
 #ifndef __lapack_wrapper_H__
 #define __lapack_wrapper_H__
 
-#ifdef NO_INCLUDE_LAPACKE
+#if defined(_MSC_VER) || defined(MKL_BLAS) || defined(SCIPY_MKL_H)
 #if defined(_MSC_VER)
 typedef struct {
     double real;
     double imag;
 } lapack_complex_double;
-lapack_complex_double lapack_make_complex_double(double re, double im) {
-    lapack_complex_double c;
-    c.real = re;
-    c.imag = im;
-    return c;
-}
+#else
+#include <mkl.h>
+#define lapack_complex_double MKL_Complex16
+#endif
+lapack_complex_double lapack_make_complex_double(double re, double im);
 #define lapack_complex_double_real(z) ((z).real)
 #define lapack_complex_double_imag(z) ((z).imag)
 #else
+#if defined(NO_INCLUDE_LAPACKE)
 #include <complex.h>
 #define lapack_complex_double double _Complex
 #ifdef CMPLX
@@ -59,19 +59,11 @@ lapack_complex_double lapack_make_complex_double(double re, double im) {
 #endif
 #define lapack_complex_double_real(z) (creal(z))
 #define lapack_complex_double_imag(z) (cimag(z))
-#endif
-#endif
-
-#if defined(MKL_BLAS) || defined(SCIPY_MKL_H)
-#include <mkl.h>
-#define lapack_complex_double MKL_Complex16
-MKL_Complex16 lapack_make_complex_double(double re, double im);
-#define lapack_complex_double_real(z) ((z).real)
-#define lapack_complex_double_imag(z) ((z).imag)
-#endif
-
-#if !defined(MKL_BLAS) && !defined(SCIPY_MKL_H) && !defined(NO_INCLUDE_LAPACKE)
+#else
+#if !defined(MKL_BLAS) && !defined(SCIPY_MKL_H)
 #include <lapacke.h>
+#endif
+#endif
 #endif
 
 lapack_complex_double phonoc_complex_prod(const lapack_complex_double a,
