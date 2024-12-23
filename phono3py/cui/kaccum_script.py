@@ -79,7 +79,7 @@ def _get_ir_grid_info(bz_grid: BZGrid, weights, qpoints=None, ir_grid_points=Non
     -------
     ir_grid_points : ndarray
         Ir-grid point indices in BZ-grid.
-        shape=(ir_grid_points, ), dtype='int_'
+        shape=(ir_grid_points, ), dtype='long'
     ir_grid_map : ndarray, optional, default=None
         Mapping table to ir-grid point indices in GR-grid.
 
@@ -289,9 +289,9 @@ def main():
         f_kappa = h5py.File(args.filenames[0], "r")
 
     if "grid_matrix" in f_kappa:
-        mesh = np.array(f_kappa["grid_matrix"][:], dtype="int_")
+        mesh = np.array(f_kappa["grid_matrix"][:], dtype="long")
     else:
-        mesh = np.array(f_kappa["mesh"][:], dtype="int_")
+        mesh = np.array(f_kappa["mesh"][:], dtype="long")
     if "temperature" in f_kappa:
         temperatures = f_kappa["temperature"][:]
     else:
@@ -308,7 +308,7 @@ def main():
         frequencies = np.array(f_kappa["frequency"][ir_grid_points_BZ], dtype="double")
     else:
         frequencies = f_kappa["frequency"][:]
-        ir_weights = np.ones(len(frequencies), dtype="int_")
+        ir_weights = np.ones(len(frequencies), dtype="long")
     primitive_symmetry = Symmetry(primitive)
     bz_grid = BZGrid(
         mesh,
