@@ -36,6 +36,20 @@
 #define __lapack_wrapper_H__
 
 #ifdef NO_INCLUDE_LAPACKE
+#if defined(_MSC_VER)
+typedef struct {
+    double real;
+    double imag;
+} lapack_complex_double;
+lapack_complex_double lapack_make_complex_double(double re, double im) {
+    lapack_complex_double c;
+    c.real = re;
+    c.imag = im;
+    return c;
+}
+#define lapack_complex_double_real(z) ((z).real)
+#define lapack_complex_double_imag(z) ((z).imag)
+#else
 #include <complex.h>
 #define lapack_complex_double double _Complex
 #ifdef CMPLX
@@ -45,6 +59,7 @@
 #endif
 #define lapack_complex_double_real(z) (creal(z))
 #define lapack_complex_double_imag(z) (cimag(z))
+#endif
 #endif
 
 #if defined(MKL_BLAS) || defined(SCIPY_MKL_H)
