@@ -372,7 +372,7 @@ class ConductivityRTABase(ConductivityBase):
                     collisions,
                     np.array(
                         np.dot(tetrahedra, self._pp.bz_grid.P.T),
-                        dtype="int_",
+                        dtype="long",
                         order="C",
                     ),
                     self._frequencies,

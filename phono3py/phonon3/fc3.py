@@ -110,13 +110,13 @@ def get_fc3(
     if is_compact_fc and "cutoff_distance" not in disp_dataset:
         s2p_map = primitive.s2p_map
         p2p_map = primitive.p2p_map
-        s2compact = np.array([p2p_map[i] for i in s2p_map], dtype="int_")
+        s2compact = np.array([p2p_map[i] for i in s2p_map], dtype="long")
         target_atoms = [i for i in p2s_map if i not in first_disp_atoms]
     else:
         # distribute_fc3 prefers pure translation operations in distributing
         # fc3. Below, fc3 already computed are distributed to the first index
         # atoms in primitive cell, and then distribute to all the other atoms.
-        s2compact = np.arange(len(supercell), dtype="int_")
+        s2compact = np.arange(len(supercell), dtype="long")
         target_atoms = [i for i in p2s_map if i not in first_disp_atoms]
         distribute_fc3(
             fc3,
@@ -211,7 +211,7 @@ def distribute_fc3(
                     if rot_i in pure_trans_indices:
                         rot_index = rot_i
                         break
-                atom_mapping = np.array(permutations[rot_index], dtype="int_")
+                atom_mapping = np.array(permutations[rot_index], dtype="long")
                 rot = rotations[rot_index]
                 rot_cart_inv = np.array(
                     similarity_transformation(lattice, rot).T, dtype="double", order="C"
@@ -271,10 +271,10 @@ def set_permutation_symmetry_compact_fc3(fc3, primitive):
         s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map, p2p_map, permutations)
         phono3c.permutation_symmetry_compact_fc3(
             fc3,
-            np.array(permutations, dtype="int_", order="C"),
-            np.array(s2pp_map, dtype="int_"),
-            np.array(p2s_map, dtype="int_"),
-            np.array(nsym_list, dtype="int_"),
+            np.array(permutations, dtype="long", order="C"),
+            np.array(s2pp_map, dtype="long"),
+            np.array(p2s_map, dtype="long"),
+            np.array(nsym_list, dtype="long"),
         )
     except ImportError as exc:
         text = (
@@ -325,10 +325,10 @@ def set_translational_invariance_compact_fc3(fc3, primitive: Primitive):
         permutations = primitive.atomic_permutations
         s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map, p2p_map, permutations)
 
-        permutations = np.array(permutations, dtype="int_", order="C")
-        s2pp_map = np.array(s2pp_map, dtype="int_")
-        p2s_map = np.array(p2s_map, dtype="int_")
-        nsym_list = np.array(nsym_list, dtype="int_")
+        permutations = np.array(permutations, dtype="long", order="C")
+        s2pp_map = np.array(s2pp_map, dtype="long")
+        p2s_map = np.array(p2s_map, dtype="long")
+        nsym_list = np.array(nsym_list, dtype="long")
         phono3c.transpose_compact_fc3(
             fc3, permutations, s2pp_map, p2s_map, nsym_list, 0
         )  # dim[0] <--> dim[1]
@@ -492,7 +492,7 @@ def _solve_fc3(
     rot_map_syms = get_positions_sent_by_rot_inv(
         lattice, positions, site_symmetry, symprec
     )
-    rot_map_syms = np.array(rot_map_syms, dtype="int_", order="C")
+    rot_map_syms = np.array(rot_map_syms, dtype="long", order="C")
     rot_disps = get_rotated_displacement(displacements_first, site_sym_cart)
 
     logger.debug("pinv")
@@ -599,10 +599,10 @@ def show_drift_fc3(fc3, primitive=None, name="fc3"):
             p2p_map = primitive.p2p_map
             permutations = primitive.atomic_permutations
             s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map, p2p_map, permutations)
-            permutations = np.array(permutations, dtype="int_", order="C")
-            s2pp_map = np.array(s2pp_map, dtype="int_")
-            p2s_map = np.array(p2s_map, dtype="int_")
-            nsym_list = np.array(nsym_list, dtype="int_")
+            permutations = np.array(permutations, dtype="long", order="C")
+            s2pp_map = np.array(s2pp_map, dtype="long")
+            p2s_map = np.array(p2s_map, dtype="long")
+            nsym_list = np.array(nsym_list, dtype="long")
             num_patom = fc3.shape[0]
             num_satom = fc3.shape[1]
             maxval1 = 0

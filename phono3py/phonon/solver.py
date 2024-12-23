@@ -67,7 +67,7 @@ def run_phonon_solver_c(
         See Interaction.get_phonons().
     grid_points : ndarray
         Grid point indices.
-        shape=(grid_points, ), dtype='int_'
+        shape=(grid_points, ), dtype='long'
     grid_address : ndarray
         See BZGrid.addresses.
     QDinv : ndarray
@@ -127,7 +127,7 @@ def run_phonon_solver_c(
         is_nac_q_zero = True
         _nac_q_direction = np.array(nac_q_direction, dtype="double")
 
-    assert grid_points.dtype == np.dtype("int_")
+    assert grid_points.dtype == np.dtype("long")
     assert grid_points.flags.c_contiguous
     assert QDinv.dtype == np.dtype("double")
     assert QDinv.flags.c_contiguous
@@ -256,4 +256,4 @@ def _get_fc_elements_mapping(dm, fc):
         fc_p2s = np.arange(len(p2s_map), dtype="intc")
         fc_s2p = s2pp_map
 
-    return np.array(fc_p2s, dtype="int_"), np.array(fc_s2p, dtype="int_")
+    return np.array(fc_p2s, dtype="long"), np.array(fc_s2p, dtype="long")
