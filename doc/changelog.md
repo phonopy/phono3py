@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Dec-23-2024: Version 3.10.1
+
+- Replace `dtype="int_"` by `dtype="long"`.
+
 ## Dec-6-2024: Version 3.10.0
 
 - Update to follow the change of phonopy's internal functions
