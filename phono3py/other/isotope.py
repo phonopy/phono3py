@@ -136,9 +136,9 @@ class Isotope:
 
         num_band = len(self._primitive) * 3
         if band_indices is None:
-            self._band_indices = np.arange(num_band, dtype="int_")
+            self._band_indices = np.arange(num_band, dtype="long")
         else:
-            self._band_indices = np.array(band_indices, dtype="int_")
+            self._band_indices = np.array(band_indices, dtype="long")
 
         if self._bz_grid is None:
             primitive_symmetry = Symmetry(self._primitive, self._symprec)
@@ -153,7 +153,7 @@ class Isotope:
     def set_grid_point(self, grid_point):
         """Initialize grid points."""
         self._grid_point = grid_point
-        self._grid_points = np.arange(len(self._bz_grid.addresses), dtype="int_")
+        self._grid_points = np.arange(len(self._bz_grid.addresses), dtype="long")
 
         if self._phonon_done is None:
             self._allocate_phonon()
@@ -319,7 +319,7 @@ class Isotope:
                 self._bz_grid.addresses,
                 np.array(
                     np.dot(thm.tetrahedra, self._bz_grid.P.T),
-                    dtype="int_",
+                    dtype="long",
                     order="C",
                 ),
                 self._bz_grid.grg2bzg,

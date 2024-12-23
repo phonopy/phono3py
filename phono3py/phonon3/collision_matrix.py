@@ -91,7 +91,7 @@ class CollisionMatrix(ImagSelfEnergy):
         if not self._is_reducible_collision_matrix:
             self._num_ir_grid_points = num_ir_grid_points
             self._rot_grid_points = np.array(
-                self._pp.bz_grid.bzg2grg[rot_grid_points], dtype="int_", order="C"
+                self._pp.bz_grid.bzg2grg[rot_grid_points], dtype="long", order="C"
             )
             self._rotations_cartesian = rotations_cartesian
 
@@ -269,8 +269,8 @@ class CollisionMatrix(ImagSelfEnergy):
         """
         map_triplets = self._triplets_map_at_q
         map_q = self._ir_map_at_q
-        gp2tp = -np.ones(len(map_triplets), dtype="int_")
-        tp2s = -np.ones(len(map_triplets), dtype="int_")
+        gp2tp = -np.ones(len(map_triplets), dtype="long")
+        tp2s = -np.ones(len(map_triplets), dtype="long")
         swapped = np.zeros(len(map_triplets), dtype="bytes")
         num_tps = 0
 

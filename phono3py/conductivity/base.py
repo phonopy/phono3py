@@ -281,7 +281,7 @@ class ConductivityBase(ABC):
         grid_points : array_like or None, optional
             Grid point indices in BZgrid. When None, ir-grid points are searched
             internally. Default is None.
-            shape=(grid_points, ), dtype='int_'.
+            shape=(grid_points, ), dtype='long'.
         temperatures : array_like, optional, default is None
             Temperatures at which thermal conductivity is calculated.
             shape=(temperature_points, ), dtype='double'.
@@ -676,7 +676,7 @@ class ConductivityBase(ABC):
         -------
         point_operations : ndarray
             Operations in reduced coordinates.
-            shape=(num_operations, 3, 3), dtype='int_'
+            shape=(num_operations, 3, 3), dtype='long'
         rotations_cartesian : ndarray
             Operations in Cartesian coordinates.
             shape=(num_operations, 3, 3), dtype='double'
@@ -684,7 +684,7 @@ class ConductivityBase(ABC):
         """
         if not self._is_kappa_star:
             point_operations = np.array(
-                [np.eye(3, dtype="int_")], dtype="int_", order="C"
+                [np.eye(3, dtype="long")], dtype="long", order="C"
             )
             rotations_cartesian = np.array(
                 [np.eye(3, dtype="double")], dtype="double", order="C"
@@ -702,10 +702,10 @@ class ConductivityBase(ABC):
         -------
         grid_points : ndarray
             Grid point indices in BZ-grid to be iterated over.
-            shape=(len(grid_points),), dtype='int_'
+            shape=(len(grid_points),), dtype='long'
         ir_grid_points : ndarray
             Irreducible grid points in BZ-grid on regular grid.
-            shape=(len(ir_grid_points),), dtype='int_'
+            shape=(len(ir_grid_points),), dtype='long'
         grid_weights : ndarray
             Grid weights of `grid_points`. If grid symmetry is not broken,
             these values are equivalent to numbers of k-star arms.
@@ -713,13 +713,13 @@ class ConductivityBase(ABC):
         """
         ir_grid_points, grid_weights = self._get_ir_grid_points(grid_points)
         if grid_points is not None:  # Specify grid points
-            _grid_points = np.array(grid_points, dtype="int_")
+            _grid_points = np.array(grid_points, dtype="long")
             _ir_grid_points = ir_grid_points
             _grid_weights = grid_weights
         elif not self._is_kappa_star:  # All grid points
             _grid_points = self._pp.bz_grid.grg2bzg
             _ir_grid_points = _grid_points
-            _grid_weights = np.ones(len(_grid_points), dtype="int_")
+            _grid_weights = np.ones(len(_grid_points), dtype="long")
         else:  # Automatic sampling
             _grid_points = ir_grid_points
             _ir_grid_points = ir_grid_points
@@ -777,7 +777,7 @@ class ConductivityBase(ABC):
             self._pp.bz_grid
         )
         ir_grid_points = np.array(
-            self._pp.bz_grid.grg2bzg[ir_grid_points], dtype="int_"
+            self._pp.bz_grid.grg2bzg[ir_grid_points], dtype="long"
         )
         if grid_points is None:
             grid_weights = ir_grid_weights
@@ -787,7 +787,7 @@ class ConductivityBase(ABC):
                 weights[gp] += 1
             grid_weights = np.array(
                 weights[ir_grid_map[self._pp.bz_grid.bzg2grg[grid_points]]],
-                dtype="int_",
+                dtype="long",
             )
 
         return ir_grid_points, grid_weights

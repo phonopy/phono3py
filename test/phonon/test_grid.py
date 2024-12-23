@@ -1446,7 +1446,7 @@ def test_agno2_BZGrid_with_shift(agno2_cell: PhonopyAtoms):
 def test_relocate_BZ_grid_address_FCC():
     """Test of _relocate_BZ_grid_address by FCC."""
     D_diag = [4, 4, 4]
-    Q = np.eye(3, dtype="int_")
+    Q = np.eye(3, dtype="long")
     reciprocal_lattice = np.array([[-1, 1, 1], [1, -1, 1], [1, 1, -1]], dtype="double")
     bz_grid_addresses, bz_map, bzg2grg = _relocate_BZ_grid_address(
         D_diag,
