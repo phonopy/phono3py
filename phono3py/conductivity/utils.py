@@ -550,7 +550,7 @@ class ConductivityLBTEWriter:
         mfp = lbte.get_mean_free_path()
         boundary_mfp = lbte.boundary_mfp
 
-        coleigs = lbte.get_collision_eigenvalues()
+        coleigs = lbte.collision_eigenvalues
         # After kappa calculation, the variable is overwritten by unitary matrix
         unitary_matrix = lbte.collision_matrix
 
