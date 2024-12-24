@@ -838,7 +838,7 @@ class ConductivityLBTEBase(ConductivityBase):
             w = self._collision_eigenvalues[i_sigma, i_temp]
             null_space = (np.abs(w) < self._pinv_cutoff).sum()
             print(
-                f"Pseudo-inv by ignoring {null_space}/{len(w)} dims "
+                f"Pinv by ignoring {null_space}/{len(w)} dims "
                 f"under {eig_str}<{self._pinv_cutoff:<.1e}",
                 end="",
             )
@@ -1906,14 +1906,14 @@ def diagonalize_collision_matrix(
         )  # only diagonalization
     elif solver == 3:  # np.linalg.eigh depends on dsyevd.
         if log_level:
-            sys.stdout.write("Diagonalizing by np.linalg.eigh ... ")
+            sys.stdout.write("Diagonalize by np.linalg.eigh ")
             sys.stdout.flush()
         col_mat = collision_matrices[i_sigma, i_temp].reshape(size, size)
         w, col_mat[:] = np.linalg.eigh(col_mat)
 
     elif solver == 4:  # fully scipy dsyev
         if log_level:
-            sys.stdout.write("Diagonalizing by " "scipy.linalg.lapack.dsyev ... ")
+            sys.stdout.write("Diagonalize by scipy.linalg.lapack.dsyev ")
             sys.stdout.flush()
         import scipy.linalg
 
@@ -1921,7 +1921,7 @@ def diagonalize_collision_matrix(
         w, _, info = scipy.linalg.lapack.dsyev(col_mat.T, overwrite_a=1)
     elif solver == 5:  # fully scipy dsyevd
         if log_level:
-            sys.stdout.write("Diagonalizing by " "scipy.linalg.lapack.dsyevd ... ")
+            sys.stdout.write("Diagnalize by scipy.linalg.lapack.dsyevd ")
             sys.stdout.flush()
         import scipy.linalg
 
@@ -1929,7 +1929,7 @@ def diagonalize_collision_matrix(
         w, _, info = scipy.linalg.lapack.dsyevd(col_mat.T, overwrite_a=1)
 
     if log_level:
-        print(f"delta={trace - w.sum():<.1e} ", end="")
+        print(f"sum={w.sum():<.1e} d={trace - w.sum():<.1e} ", end="")
         print("[%.3fs]" % (time.time() - start))
         sys.stdout.flush()
 
