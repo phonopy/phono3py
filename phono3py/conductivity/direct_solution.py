@@ -1907,34 +1907,33 @@ def diagonalize_collision_matrix(
         )  # only diagonalization
     elif solver == 3:  # np.linalg.eigh depends on dsyevd.
         if log_level:
-            sys.stdout.write("Diagonalize by np.linalg.eigh ")
-            sys.stdout.flush()
+            print("Diagonalize by np.linalg.eigh ", end="")
         col_mat = collision_matrices[i_sigma, i_temp].reshape(size, size)
         w, col_mat[:] = np.linalg.eigh(col_mat)
-
+        info_str = ""
     elif solver == 4:  # fully scipy dsyev
         if log_level:
-            sys.stdout.write("Diagonalize by scipy.linalg.lapack.dsyev ")
-            sys.stdout.flush()
+            print("Diagonalize by scipy.linalg.lapack.dsyev ", end="")
         import scipy.linalg
 
         col_mat = collision_matrices[i_sigma, i_temp].reshape(size, size)
         w, _, info = scipy.linalg.lapack.dsyev(col_mat.T, overwrite_a=1)
+        info_str = f"info={info} "
     elif solver == 5:  # fully scipy dsyevd
         if log_level:
-            sys.stdout.write("Diagnalize by scipy.linalg.lapack.dsyevd ")
-            sys.stdout.flush()
+            print("Diagnalize by scipy.linalg.lapack.dsyevd ", end="")
         import scipy.linalg
 
         col_mat = collision_matrices[i_sigma, i_temp].reshape(size, size)
         w, _, info = scipy.linalg.lapack.dsyevd(col_mat.T, overwrite_a=1)
-
+        info_str = f"info={info} "
     if log_level:
+        print(f"[{time.time() - start:.3f}s]")
         print(
+            "  "
+            f"{info_str}"
             f"f_norm={f_norm:<.1e} tr={w.sum():<.1e} d={trace - w.sum():<.1e} ",
-            end="",
         )
-        print("[%.3fs]" % (time.time() - start))
         sys.stdout.flush()
 
     return w
