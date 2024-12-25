@@ -97,6 +97,7 @@ def get_displacements_and_forces_fc3(disp_dataset):
     else:
         raise RuntimeError("disp_dataset doesn't contain correct information.")
 
+
 def get_displacements_fc3(disp_dataset):
     """Return displacements and forces from disp_dataset.
 
@@ -121,13 +122,13 @@ def get_displacements_fc3(disp_dataset):
 
     """
     if "first_atoms" in disp_dataset:
-        natom = disp_dataset["natom"]    
-        ndisp = len(disp_dataset["first_atoms"])     
+        natom = disp_dataset["natom"]
+        ndisp = len(disp_dataset["first_atoms"])
         for disp1 in disp_dataset["first_atoms"]:
             ndisp += len(disp1["second_atoms"])
         displacements = np.zeros((ndisp, natom, 3), dtype="double", order="C")
         indices = []
-        count = 0       
+        count = 0
         for disp1 in disp_dataset["first_atoms"]:
             indices.append(count)
             displacements[count, disp1["number"]] = disp1["displacement"]
@@ -143,13 +144,14 @@ def get_displacements_fc3(disp_dataset):
                 displacements[count, disp1["number"]] = disp1["displacement"]
                 displacements[count, disp2["number"]] = disp2["displacement"]
                 count += 1
-                   
+
         return np.array(displacements[indices], dtype="double", order="C")
- 
-    elif "forces" in disp_dataset and "displacements" in disp_dataset:           
+
+    elif "forces" in disp_dataset and "displacements" in disp_dataset:
         return disp_dataset["displacements"]
-    else:            
-        raise RuntimeError("disp_dataset doesn't contain correct information.")   
+    else:
+        raise RuntimeError("disp_dataset doesn't contain correct information.")
+
 
 def forces_in_dataset(dataset: Optional[dict]) -> bool:
     """Return whether forces in dataset or not."""
