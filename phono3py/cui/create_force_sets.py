@@ -50,6 +50,7 @@ from phonopy.cui.load_helper import get_nac_params
 from phonopy.cui.phonopy_script import file_exists, files_exist, print_error
 from phonopy.file_IO import is_file_phonopy_yaml, parse_FORCE_SETS, write_FORCE_SETS
 from phonopy.interface.calculator import get_calc_dataset
+from phono3py.interface.wien2k import get_fc3_calc_dataset_wien2k
 from phonopy.structure.atoms import PhonopyAtoms
 
 from phono3py.cui.settings import Phono3pySettings
@@ -385,12 +386,23 @@ def _get_force_sets_fc3(
     ):  # type-1
         calc_dataset = {"forces": []}
     else:  # type-2
-        calc_dataset = get_calc_dataset(
-            interface_mode,
-            num_atoms,
-            force_filenames,
-            verbose=(log_level > 0),
-        )
+        if interface_mode == "wien2k":
+            calc_dataset = get_fc3_calc_dataset_wien2k(
+
+                force_filenames,
+                supercell,
+                disp_dataset,
+#                wien2k_P1_mode=wien2k_P1_mode,
+#                symmetry_tolerance=symmetry_tolerance,
+                verbose=(log_level > 0),
+            )
+        else:
+            calc_dataset = get_calc_dataset(
+                interface_mode,
+                num_atoms,
+                force_filenames,
+                verbose=(log_level > 0),
+            )
         force_sets = calc_dataset["forces"]
         if "points" in calc_dataset:
             if filename := check_agreements_of_displacements(
