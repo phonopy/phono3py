@@ -1881,6 +1881,7 @@ def diagonalize_collision_matrix(
         assert size == shape[1]
 
     solver = select_colmat_solver(pinv_solver)
+    f_norm = np.linalg.norm(collision_matrices[i_sigma, i_temp].ravel())
     trace = np.trace(collision_matrices[i_sigma, i_temp].reshape(size, size))
 
     # [1] dsyev: safer and slower than dsyevd and smallest memory usage
@@ -1929,7 +1930,10 @@ def diagonalize_collision_matrix(
         w, _, info = scipy.linalg.lapack.dsyevd(col_mat.T, overwrite_a=1)
 
     if log_level:
-        print(f"sum={w.sum():<.1e} d={trace - w.sum():<.1e} ", end="")
+        print(
+            f"f_norm={f_norm:<.1e} tr={w.sum():<.1e} d={trace - w.sum():<.1e} ",
+            end="",
+        )
         print("[%.3fs]" % (time.time() - start))
         sys.stdout.flush()
 
