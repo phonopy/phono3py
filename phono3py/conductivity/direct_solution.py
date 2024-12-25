@@ -1917,16 +1917,22 @@ def diagonalize_collision_matrix(
         import scipy.linalg
 
         col_mat = collision_matrices[i_sigma, i_temp].reshape(size, size)
+        print(col_mat.shape)
+        print(col_mat.flags, col_mat.dtype)
+        sym_str = f"sym={scipy.linalg.issymmetric(col_mat)} "
         w, _, info = scipy.linalg.lapack.dsyev(col_mat.T, overwrite_a=1)
-        info_str = f"info={info} "
+        info_str = f"info={info} {sym_str} "
     elif solver == 5:  # fully scipy dsyevd
         if log_level:
             print("Diagnalize by scipy.linalg.lapack.dsyevd ", end="")
         import scipy.linalg
 
         col_mat = collision_matrices[i_sigma, i_temp].reshape(size, size)
+        print(col_mat.shape)
+        print(col_mat.flags, col_mat.dtype)
+        sym_str = f"sym={scipy.linalg.issymmetric(col_mat)} "
         w, _, info = scipy.linalg.lapack.dsyevd(col_mat.T, overwrite_a=1)
-        info_str = f"info={info} "
+        info_str = f"info={info} {sym_str}"
     if log_level:
         print(f"[{time.time() - start:.3f}s]")
         print(
