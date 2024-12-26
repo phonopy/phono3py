@@ -1,4 +1,4 @@
-name: Pytest without linking BLAS and LAPACK in C
+name: Pytest with linking BLAS and LAPACK in C
 
 on:
   pull_request:

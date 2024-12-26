@@ -1,4 +1,4 @@
-name: Pytest with openblas
+name: Pytest without using LAPACKE
 
 on:
   pull_request:

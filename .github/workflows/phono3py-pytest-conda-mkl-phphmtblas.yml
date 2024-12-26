@@ -1,4 +1,4 @@
-name: Pytest with mkl  sing BLAS for phph-calc
+name: Pytest with mkl using BLAS for phph-calc
 
 on:
   pull_request:
