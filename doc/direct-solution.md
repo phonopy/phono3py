@@ -295,24 +295,23 @@ language implementation through the python C-API.
 
 ## Solver choice for diagonalization
 
-For larger systems, diagonalization of collision matrix takes longest time and
-requires large memory space. Phono3py relies on LAPACK for the diagonalization
-and so the performance is dependent on the choice of the diagonalization solver.
+Diagonalizing the collision matrix for larger systems is the most time-consuming
+step and requires significant memory. Phono3py uses LAPACK for diagonalization,
+making performance highly dependent on the solver choice. Utilizing
+multithreaded BLAS on many-core nodes can significantly reduce computation time,
+allowing calculations to complete within practical limits. Currently, Phono3py
+supports diagonalization via scipy, numpy, and LAPACKE as LAPACK wrappers.
 
-Using multithreaded BLAS with many-core computing node, computing time may be
-well reduced and the calculation can finish in a realistic time. Currently
-scipy, numpy and LAPACKE can be used as the LAPACK wrapper in phono3py. Scipy
-and numpy distributed by anaconda are MKL linked, therefore MKL multithread BLAS
-is used through them. Multithreaded OpenBLAS is installed by conda and can be
-used via LAPACKE in phono3py. MKL LAPACK and BLAS are also able to be used via
-LAPACKE in phono3py with appropriate setting in `setup.py`.
+The default choice of the diagonalization solver is `scipy.linalg.lapack.dsyev`
+(`--pinv-solver=4`). Using `--pinv-solver NUMBER`, one of the following solvers
+is specified:
 
-Using `--pinv-solver NUMBER`, one of the following solver is chosen:
-
-1. Lapacke `dsyev`: Smaller memory consumption than `dsyevd`, but slower. This
+1. (Only available when {ref}`compiling with LAPACKE <install_with_lapacke>`)
+   Lapacke `dsyev`: Smaller memory consumption than `dsyevd`, but slower. This
    is the default solver when MKL LAPACKE is integrated or scipy is not
    installed.
-2. Lapacke `dsyevd`: Larger memory consumption than `dsyev`, but faster. This is
+2. (Only available when {ref}`compiling with LAPACKE <install_with_lapacke>`)
+   Lapacke `dsyevd`: Larger memory consumption than `dsyev`, but faster. This is
    not considered as stable as `dsyev` but can be significantly faster than
    `dsyev` for solving large collision matrix. It is recommended to compare the
    result with that by `dsyev` solver using smaller collision matrix (e.g.,
@@ -323,8 +322,3 @@ Using `--pinv-solver NUMBER`, one of the following solver is chosen:
    LAPACKE is not integrated.
 5. Scipy's `dsyevd`: Similar to solver (2), this solver should be used
    carefully.
-
-```{note}
-`pinv-solver` =3, 4, and 5 are only available when phono3py is compiled
-without LAPACKE.
-```

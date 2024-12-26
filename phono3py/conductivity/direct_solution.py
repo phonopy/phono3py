@@ -177,9 +177,20 @@ class ConductivityLBTEBase(ConductivityBase):
         )
         self.collision_matrix = collision_matrix
 
-    def get_collision_eigenvalues(self):
+    @property
+    def collision_eigenvalues(self):
         """Return eigenvalues of collision matrix."""
         return self._collision_eigenvalues
+
+    def get_collision_eigenvalues(self):
+        """Return eigenvalues of collision matrix."""
+        warnings.warn(
+            "Use attribute, Conductivity_LBTE.collision_eigenvalues "
+            "instead of Conductivity_LBTE.get_collision_eigenvalues().",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.collision_eigenvalues
 
     def get_frequencies_all(self):
         """Return phonon frequencies on GR-grid."""
@@ -690,12 +701,12 @@ class ConductivityLBTEBase(ConductivityBase):
             import phono3py._phono3py as phono3c
 
             if self._log_level:
-                sys.stdout.write("- Making collision matrix symmetric " "(built-in) ")
+                sys.stdout.write("- Making collision matrix symmetric (built-in) ")
                 sys.stdout.flush()
             phono3c.symmetrize_collision_matrix(self._collision_matrix)
         except ImportError:
             if self._log_level:
-                sys.stdout.write("- Making collision matrix symmetric " "(numpy) ")
+                sys.stdout.write("- Making collision matrix symmetric (numpy) ")
                 sys.stdout.flush()
 
             if self._is_reducible_collision_matrix:
@@ -819,14 +830,18 @@ class ConductivityLBTEBase(ConductivityBase):
 
         start = time.time()
 
-        if self._pinv_method == 0:
-            eig_str = "abs(eig)"
-        else:
-            eig_str = "eig"
-        print(
-            f"Calculating pseudo-inv by ignoring {eig_str}<{self._pinv_cutoff:<.1e}",
-            end="",
-        )
+        if self._log_level:
+            if self._pinv_method == 0:
+                eig_str = "abs(eig)"
+            else:
+                eig_str = "eig"
+            w = self._collision_eigenvalues[i_sigma, i_temp]
+            null_space = (np.abs(w) < self._pinv_cutoff).sum()
+            print(
+                f"Pinv by ignoring {null_space}/{len(w)} dims "
+                f"under {eig_str}<{self._pinv_cutoff:<.1e}",
+                end="",
+            )
         if solver in [0, 1, 2, 3, 4, 5]:
             if self._log_level:
                 print(" (np.dot) ", end="")
@@ -1866,13 +1881,14 @@ def diagonalize_collision_matrix(
         assert size == shape[1]
 
     solver = select_colmat_solver(pinv_solver)
+    trace = np.trace(collision_matrices[i_sigma, i_temp].reshape(size, size))
 
     # [1] dsyev: safer and slower than dsyevd and smallest memory usage
     # [2] dsyevd: faster than dsyev and largest memory usage
     if solver in [1, 2]:
         if log_level:
             routine = ["dsyev", "dsyevd"][solver - 1]
-            sys.stdout.write("Diagonalizing by lapacke %s... " % routine)
+            sys.stdout.write("Diagonalizing by lapacke %s ... " % routine)
             sys.stdout.flush()
         import phono3py._phono3py as phono3c
 
@@ -1890,14 +1906,14 @@ def diagonalize_collision_matrix(
         )  # only diagonalization
     elif solver == 3:  # np.linalg.eigh depends on dsyevd.
         if log_level:
-            sys.stdout.write("Diagonalizing by np.linalg.eigh... ")
+            sys.stdout.write("Diagonalize by np.linalg.eigh ")
             sys.stdout.flush()
         col_mat = collision_matrices[i_sigma, i_temp].reshape(size, size)
         w, col_mat[:] = np.linalg.eigh(col_mat)
 
     elif solver == 4:  # fully scipy dsyev
         if log_level:
-            sys.stdout.write("Diagonalizing by " "scipy.linalg.lapack.dsyev... ")
+            sys.stdout.write("Diagonalize by scipy.linalg.lapack.dsyev ")
             sys.stdout.flush()
         import scipy.linalg
 
@@ -1905,7 +1921,7 @@ def diagonalize_collision_matrix(
         w, _, info = scipy.linalg.lapack.dsyev(col_mat.T, overwrite_a=1)
     elif solver == 5:  # fully scipy dsyevd
         if log_level:
-            sys.stdout.write("Diagonalizing by " "scipy.linalg.lapack.dsyevd... ")
+            sys.stdout.write("Diagnalize by scipy.linalg.lapack.dsyevd ")
             sys.stdout.flush()
         import scipy.linalg
 
@@ -1913,6 +1929,7 @@ def diagonalize_collision_matrix(
         w, _, info = scipy.linalg.lapack.dsyevd(col_mat.T, overwrite_a=1)
 
     if log_level:
+        print(f"sum={w.sum():<.1e} d={trace - w.sum():<.1e} ", end="")
         print("[%.3fs]" % (time.time() - start))
         sys.stdout.flush()
 
