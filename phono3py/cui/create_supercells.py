@@ -116,6 +116,9 @@ def create_phono3py_supercells(
     additional_info = get_additional_info_to_write_supercells(
         interface_mode, phono3py.supercell_matrix
     )
+
+    additional_info["supercell_matrix"] = phono3py.supercell_matrix
+    
     write_supercells_with_displacements(
         interface_mode,
         phono3py.supercell,
