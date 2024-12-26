@@ -42,7 +42,7 @@ jobs:
     - name: Install phono3py
       run: |
         conda activate test
-        pip install -e . -vvv
+        BUILD_WITHOUT_LAPACKE=OFF pip install -e . -vvv
     - name: Run pytest
       run: |
         conda activate test

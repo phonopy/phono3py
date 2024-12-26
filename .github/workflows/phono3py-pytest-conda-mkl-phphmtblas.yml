@@ -42,7 +42,7 @@ jobs:
     - name: Install phono3py
       run: |
         conda activate test
-        PHPHCALC_USE_MTBLAS=ON pip install -e . -vvv
+        BUILD_WITHOUT_LAPACKE=OFF PHPHCALC_USE_MTBLAS=ON pip install -e . -vvv
     - name: Run pytest
       run: |
         conda activate test
