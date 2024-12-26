@@ -176,37 +176,6 @@ void ph3py_get_integration_weight_with_sigma(
     const double *frequency_points, const long num_band0,
     const long (*triplets)[3], const long num_triplets,
     const double *frequencies, const long num_band, const long tp_type);
-long ph3py_get_grid_index_from_address(const long address[3],
-                                       const long mesh[3]);
-void ph3py_get_gr_grid_addresses(long gr_grid_addresses[][3],
-                                 const long D_diag[3]);
-long ph3py_get_reciprocal_rotations(long rec_rotations[48][3][3],
-                                    const long (*rotations)[3][3],
-                                    const long num_rot,
-                                    const long is_time_reversal);
-long ph3py_transform_rotations(long (*transformed_rots)[3][3],
-                               const long (*rotations)[3][3],
-                               const long num_rot, const long D_diag[3],
-                               const long Q[3][3]);
-long ph3py_get_snf3x3(long D_diag[3], long P[3][3], long Q[3][3],
-                      const long A[3][3]);
-long ph3py_transform_rotations(long (*transformed_rots)[3][3],
-                               const long (*rotations)[3][3],
-                               const long num_rot, const long D_diag[3],
-                               const long Q[3][3]);
-long ph3py_get_ir_grid_map(long *ir_grid_map, const long D_diag[3],
-                           const long PS[3], const long (*grg_rotations)[3][3],
-                           const long num_rot);
-long ph3py_get_bz_grid_addresses(long (*bz_grid_addresses)[3], long *bz_map,
-                                 long *bzg2grg, const long D_diag[3],
-                                 const long Q[3][3], const long PS[3],
-                                 const double rec_lattice[3][3],
-                                 const long type);
-long ph3py_rotate_bz_grid_index(const long bz_grid_index,
-                                const long rotation[3][3],
-                                const long (*bz_grid_addresses)[3],
-                                const long *bz_map, const long D_diag[3],
-                                const long PS[3], const long bz_grid_type);
 void ph3py_symmetrize_collision_matrix(double *collision_matrix,
                                        const long num_column,
                                        const long num_temp,

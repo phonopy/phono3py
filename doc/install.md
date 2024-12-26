@@ -41,8 +41,9 @@ removed.
 If phono3py is compiled with a special compiler or special options, manual
 modification of `CMakeLists.txt` may be needed.
 
-- {ref}`Linear algebra library <install_lapacke>`: BLAS, LAPACK, and LAPACKE
 - {ref}`OpenMP library <install_openmp>`: For the multithreding support.
+- {ref}`Linear algebra library <install_lapacke>`: BLAS, LAPACK, and LAPACKE
+  (optional, see {ref}`install_with_lapacke`)
 
 These packages may be installed by the package manager of OS (e.g. `apt`) or
 conda environment. Automatic search of required libraries and flags that are
@@ -60,24 +61,6 @@ This phono3py build can be launched by
 See an example at {ref}`install_an_example`. In the standard output, flags and
 libraries found by cmake are shown. Please carefully check if those
 configurations are expected ones or not.
-
-(install_without_lapacke)=
-### Building without linking LAPACKE
-
-**Experimental**
-
-To compile phono3py without linking LAPACKE in C, use the following command:
-
-```
-% BUILD_WITHOUT_LAPACKE=ON pip install -e . -vvv
-```
-
-When this option is enabled, linking to BLAS and LAPACKE libraries is not
-required, so installing these libraries for C compilation may not be necessary.
-However, since numpy and scipy rely on BLAS and LAPACK libraries, their runtime
-versions are still required.
-
-(install_an_example)=
 
 ## Installation instruction of latest development version of phono3py
 
@@ -122,7 +105,7 @@ wrong python libraries can be imported.
    % conda install numpy scipy h5py pyyaml matplotlib-base c-compiler cxx-compiler cmake spglib
    ```
 
-   Unless {ref}`install_without_lapacke`, the following packages will be
+   Unless {ref}`install_with_lapacke`, the following packages will be
    necessary to compile phono3py:
 
    ```bash
@@ -142,7 +125,7 @@ wrong python libraries can be imported.
    % conda install numpy scipy h5py pyyaml matplotlib-base c-compiler cxx-compiler spglib cmake
    ```
 
-   Unless {ref}`install_without_lapacke`, the following package will be
+   Unless {ref}`install_with_lapacke`, the following package will be
    necessary to compile phono3py:
 
    ```bash
@@ -184,6 +167,27 @@ LAPACK library is used in a few parts of the code to diagonalize matrices.
 LAPACK*E* is the C-wrapper of LAPACK and LAPACK relies on BLAS. Both
 single-thread or multithread BLAS can be used in phono3py. In the following,
 multiple different ways of installation of LAPACKE are explained.
+
+(install_with_lapacke)=
+#### Building with linking LAPACKE
+
+Phono3py can operate without linking to LAPACKE, which is the default
+compilation setting. However, it is also possible to compile Phono3py with
+LAPACKE support. When compiled this way, the diagonalization of the dynamical
+matrix is handled by LAPACK routines within the C code of Phono3py.
+Additionally, LAPACK is used for the diagonalization of the collision matrix
+in the direct solution.
+
+To compile phono3py with linking LAPACKE in C, use the following command:
+
+```
+% BUILD_WITHOUT_LAPACKE=OFF pip install -e . -vvv
+```
+
+For this, BLAS and LAPACKE libraries are required.
+
+(install_an_example)=
+
 
 #### OpenBLAS provided by conda
 

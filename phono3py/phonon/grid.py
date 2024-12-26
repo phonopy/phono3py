@@ -684,6 +684,7 @@ class GridMatrix:
                     self._D_diag = length2mesh(
                         length, self._lattice, rotations=symmetry_dataset.rotations
                     )
+                self._D_diag = np.array(self._D_diag, dtype="long")
         if num_values == 9:
             self._run_grg(
                 symmetry_dataset,

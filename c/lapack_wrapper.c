@@ -38,7 +38,7 @@
 
 #define min(a, b) ((a) > (b) ? (b) : (a))
 
-#if (defined(MKL_BLAS) || defined(SCIPY_MKL_H)) && !defined(NO_INCLUDE_LAPACKE)
+#if defined(_MSC_VER) || defined(MKL_BLAS) || defined(SCIPY_MKL_H)
 lapack_complex_double lapack_make_complex_double(double re, double im) {
     lapack_complex_double z;
     z.real = re;
@@ -47,7 +47,8 @@ lapack_complex_double lapack_make_complex_double(double re, double im) {
 }
 #endif
 
-#if defined(MKL_BLAS) || defined(SCIPY_MKL_H) || defined(NO_INCLUDE_LAPACKE)
+#if defined(_MSC_VER) || defined(MKL_BLAS) || defined(SCIPY_MKL_H) || \
+    defined(NO_INCLUDE_LAPACKE)
 #ifndef LAPACKE_malloc
 #define LAPACKE_malloc(size) malloc(size)
 #endif
