@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Installation &#8212; Phono3py v.3.10.1</title>
+    <title>Installation &#8212; Phono3py v.3.10.2</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=dd8aa3b8"></script>
+    <script src="_static/documentation_options.js?v=cafe23de"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -125,7 +125,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.10.1</p>
+    <p class="title logo__title">Phono3py v.3.10.2</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -313,7 +313,6 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-using-conda">Installation using conda</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-from-source-code">Installation from source code</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#building-with-automatic-search-of-library-configurations-by-cmake">Building with automatic search of library configurations by cmake</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#building-without-linking-lapacke">Building without linking LAPACKE</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-instruction-of-latest-development-version-of-phono3py">Installation instruction of latest development version of phono3py</a></li>
@@ -323,6 +322,7 @@
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lapacke">LAPACKE</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#building-with-linking-lapacke">Building with linking LAPACKE</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-provided-by-conda">OpenBLAS provided by conda</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas">Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)</a></li>
 </ul>
@@ -377,8 +377,9 @@ removed.</p>
 <p>If phono3py is compiled with a special compiler or special options, manual
 modification of <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code> may be needed.</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#install-lapacke"><span class="std std-ref">Linear algebra library</span></a>: BLAS, LAPACK, and LAPACKE</p></li>
 <li><p><span class="xref std std-ref">OpenMP library</span>: For the multithreding support.</p></li>
+<li><p><a class="reference internal" href="#install-lapacke"><span class="std std-ref">Linear algebra library</span></a>: BLAS, LAPACK, and LAPACKE
+(optional, see <a class="reference internal" href="#install-with-lapacke"><span class="std std-ref">Building with linking LAPACKE</span></a>)</p></li>
 </ul>
 <p>These packages may be installed by the package manager of OS (e.g. <code class="docutils literal notranslate"><span class="pre">apt</span></code>) or
 conda environment. Automatic search of required libraries and flags that are
@@ -391,25 +392,13 @@ This phono3py build can be launched by</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span> <span class="o">-</span><span class="n">vvv</span>
 </pre></div>
 </div>
-<p>See an example at <a class="reference internal" href="#install-an-example"><span class="std std-ref">Installation instruction of latest development version of phono3py</span></a>. In the standard output, flags and
+<p>See an example at <a class="reference internal" href="#install-an-example"><span class="std std-ref">OpenBLAS provided by conda</span></a>. In the standard output, flags and
 libraries found by cmake are shown. Please carefully check if those
 configurations are expected ones or not.</p>
 </section>
-<section id="building-without-linking-lapacke">
-<span id="install-without-lapacke"></span><h3>Building without linking LAPACKE<a class="headerlink" href="#building-without-linking-lapacke" title="Link to this heading">#</a></h3>
-<p><strong>Experimental</strong></p>
-<p>To compile phono3py without linking LAPACKE in C, use the following command:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">BUILD_WITHOUT_LAPACKE</span><span class="o">=</span><span class="n">ON</span> <span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span> <span class="o">-</span><span class="n">vvv</span>
-</pre></div>
-</div>
-<p>When this option is enabled, linking to BLAS and LAPACKE libraries is not
-required, so installing these libraries for C compilation may not be necessary.
-However, since numpy and scipy rely on BLAS and LAPACK libraries, their runtime
-versions are still required.</p>
-</section>
 </section>
 <section id="installation-instruction-of-latest-development-version-of-phono3py">
-<span id="install-an-example"></span><h2>Installation instruction of latest development version of phono3py<a class="headerlink" href="#installation-instruction-of-latest-development-version-of-phono3py" title="Link to this heading">#</a></h2>
+<h2>Installation instruction of latest development version of phono3py<a class="headerlink" href="#installation-instruction-of-latest-development-version-of-phono3py" title="Link to this heading">#</a></h2>
 <p>When using conda, <code class="docutils literal notranslate"><span class="pre">PYTHONPATH</span></code> should not be set if possible because potentially
 wrong python libraries can be imported.</p>
 <ol class="arabic">
@@ -442,7 +431,7 @@ virtual environment.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>numpy<span class="w"> </span>scipy<span class="w"> </span>h5py<span class="w"> </span>pyyaml<span class="w"> </span>matplotlib-base<span class="w"> </span>c-compiler<span class="w"> </span>cxx-compiler<span class="w"> </span>cmake<span class="w"> </span>spglib
 </pre></div>
 </div>
-<p>Unless <a class="reference internal" href="#install-without-lapacke"><span class="std std-ref">Building without linking LAPACKE</span></a>, the following packages will be
+<p>Unless <a class="reference internal" href="#install-with-lapacke"><span class="std std-ref">Building with linking LAPACKE</span></a>, the following packages will be
 necessary to compile phono3py:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;libblas=*=*mkl&quot;</span><span class="w"> </span>mkl-include
 </pre></div>
@@ -456,7 +445,7 @@ specific one is expected, it is installed by (e.g. openblas)</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>numpy<span class="w"> </span>scipy<span class="w"> </span>h5py<span class="w"> </span>pyyaml<span class="w"> </span>matplotlib-base<span class="w"> </span>c-compiler<span class="w"> </span>cxx-compiler<span class="w"> </span>spglib<span class="w"> </span>cmake
 </pre></div>
 </div>
-<p>Unless <a class="reference internal" href="#install-without-lapacke"><span class="std std-ref">Building without linking LAPACKE</span></a>, the following package will be
+<p>Unless <a class="reference internal" href="#install-with-lapacke"><span class="std std-ref">Building with linking LAPACKE</span></a>, the following package will be
 necessary to compile phono3py:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>openblas
 </pre></div>
@@ -496,8 +485,22 @@ system. If you don’t have it and you use Ubuntu linux, it is installed by:</p>
 LAPACK<em>E</em> is the C-wrapper of LAPACK and LAPACK relies on BLAS. Both
 single-thread or multithread BLAS can be used in phono3py. In the following,
 multiple different ways of installation of LAPACKE are explained.</p>
+<section id="building-with-linking-lapacke">
+<span id="install-with-lapacke"></span><h4>Building with linking LAPACKE<a class="headerlink" href="#building-with-linking-lapacke" title="Link to this heading">#</a></h4>
+<p>Phono3py can operate without linking to LAPACKE, which is the default
+compilation setting. However, it is also possible to compile Phono3py with
+LAPACKE support. When compiled this way, the diagonalization of the dynamical
+matrix is handled by LAPACK routines within the C code of Phono3py.
+Additionally, LAPACK is used for the diagonalization of the collision matrix
+in the direct solution.</p>
+<p>To compile phono3py with linking LAPACKE in C, use the following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">BUILD_WITHOUT_LAPACKE</span><span class="o">=</span><span class="n">OFF</span> <span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span> <span class="o">-</span><span class="n">vvv</span>
+</pre></div>
+</div>
+<p>For this, BLAS and LAPACKE libraries are required.</p>
+</section>
 <section id="openblas-provided-by-conda">
-<h4>OpenBLAS provided by conda<a class="headerlink" href="#openblas-provided-by-conda" title="Link to this heading">#</a></h4>
+<span id="install-an-example"></span><h4>OpenBLAS provided by conda<a class="headerlink" href="#openblas-provided-by-conda" title="Link to this heading">#</a></h4>
 <p>The installation of LAPACKE is easy by conda. It is:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>openblas
 </pre></div>
@@ -599,7 +602,6 @@ multithreadings are unnecessary to be deactivated. -->
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-using-conda">Installation using conda</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-from-source-code">Installation from source code</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#building-with-automatic-search-of-library-configurations-by-cmake">Building with automatic search of library configurations by cmake</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#building-without-linking-lapacke">Building without linking LAPACKE</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-instruction-of-latest-development-version-of-phono3py">Installation instruction of latest development version of phono3py</a></li>
@@ -609,6 +611,7 @@ multithreadings are unnecessary to be deactivated. -->
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lapacke">LAPACKE</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#building-with-linking-lapacke">Building with linking LAPACKE</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-provided-by-conda">OpenBLAS provided by conda</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas">Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)</a></li>
 </ul>
