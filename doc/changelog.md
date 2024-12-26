@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Dec-26-2024: Version 3.10.2
+
+- `BUILD_WITHOUT_LAPACKE=ON` was made as the default compilation choice.
+
 ## Dec-23-2024: Version 3.10.1
 
 - Replace `dtype="int_"` by `dtype="long"`.
