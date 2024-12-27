@@ -1,6 +1,6 @@
-Si                                                          
-P   LATTICE,NONEQUIV.ATOMS:  8                               
-MODE OF CALC=RELA unit=ang 
+Si
+P   LATTICE,NONEQUIV.ATOMS:  8
+MODE OF CALC=RELA unit=ang
  10.329744 10.329744 10.329744 90.000000 90.000000 90.000000
 ATOM  -1: X=0.87500000 Y=0.87500000 Z=0.87500000
           MULT= 1          ISPLIT= 8
