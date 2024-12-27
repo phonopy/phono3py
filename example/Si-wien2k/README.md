@@ -24,7 +24,7 @@ Using 11x11x11 sampling mesh, lattice thermal conductivity is calculated by
 is calculated as 119.1 W/m-K at 300 K. This becomes, with 19x19x19 sampling
 mesh, 128.1 W/m-K.
 
-The .scf files for supercells are found in `supercell_out.tar.lzma`. If phono3py
+The .scf files for supercells are found in `supercell_out.zip`. If phono3py
 is properly installed, the following command should work.
 
 ```
