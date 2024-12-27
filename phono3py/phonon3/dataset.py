@@ -98,6 +98,61 @@ def get_displacements_and_forces_fc3(disp_dataset):
         raise RuntimeError("disp_dataset doesn't contain correct information.")
 
 
+def get_displacements_fc3(disp_dataset):
+    """Return displacements and forces from disp_dataset.
+
+    Note
+    ----
+    Dipslacements and forces of all atoms in supercells are returned.
+
+    Parameters
+    ----------
+    disp_dataset : dict
+        Displacement dataset.
+
+    Returns
+    -------
+    displacements : ndarray
+        Displacements of all atoms in all supercells.
+        shape=(snapshots, supercell atoms, 3), dtype='double', order='C'
+    forces : ndarray or None
+        Forces of all atoms in all supercells.
+        shape=(snapshots, supercell atoms, 3), dtype='double', order='C'
+        None is returned when forces don't exist.
+
+    """
+    if "first_atoms" in disp_dataset:
+        natom = disp_dataset["natom"]
+        ndisp = len(disp_dataset["first_atoms"])
+        for disp1 in disp_dataset["first_atoms"]:
+            ndisp += len(disp1["second_atoms"])
+        displacements = np.zeros((ndisp, natom, 3), dtype="double", order="C")
+        indices = []
+        count = 0
+        for disp1 in disp_dataset["first_atoms"]:
+            indices.append(count)
+            displacements[count, disp1["number"]] = disp1["displacement"]
+            count += 1
+
+        for disp1 in disp_dataset["first_atoms"]:
+            for disp2 in disp1["second_atoms"]:
+                if "included" in disp2:
+                    if disp2["included"]:
+                        indices.append(count)
+                else:
+                    indices.append(count)
+                displacements[count, disp1["number"]] = disp1["displacement"]
+                displacements[count, disp2["number"]] = disp2["displacement"]
+                count += 1
+
+        return np.array(displacements[indices], dtype="double", order="C")
+
+    elif "forces" in disp_dataset and "displacements" in disp_dataset:
+        return disp_dataset["displacements"]
+    else:
+        raise RuntimeError("disp_dataset doesn't contain correct information.")
+
+
 def forces_in_dataset(dataset: Optional[dict]) -> bool:
     """Return whether forces in dataset or not."""
     if dataset is None:
