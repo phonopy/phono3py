@@ -1,5 +1,8 @@
 This is the example of silicon calculation. The supercell is 2x2x2 of the
-conventional unit cell. The Wien2k calculation was made to obtain forces with
+conventional unit cell. Note that Wien2k struct file have to be with the P lattice
+format and create supercells with the Wien2k struct format of P lattice
+
+The Wien2k calculation was made to obtain forces with
  2x2x2 k-point mesh for the supercell, PBE, and the lattice parameters in
 Si.struct.
 
