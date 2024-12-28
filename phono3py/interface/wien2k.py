@@ -34,7 +34,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from phono3py.phonon3.dataset import get_displacements_fc3
+from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
 
 
 def get_fc3_calc_dataset_wien2k(
@@ -48,8 +48,7 @@ def get_fc3_calc_dataset_wien2k(
     """Read Wien2k output files and parse force sets."""
     from phonopy.interface.wien2k import parse_set_of_forces
 
-    #    disps, _ = get_displacements_and_forces_fc3(disp_dataset)
-    disps = get_displacements_fc3(disp_dataset)
+    disps, _ = get_displacements_and_forces_fc3(disp_dataset)
     force_sets = parse_set_of_forces(
         disps,
         force_filenames,
