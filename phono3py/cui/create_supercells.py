@@ -34,6 +34,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import numpy as np
 from phonopy.interface.calculator import write_supercells_with_displacements
 from phonopy.structure.cells import print_cell
 
@@ -83,10 +84,13 @@ def create_phono3py_supercells(
         random_seed=settings.random_seed,
     )
 
-    if settings.random_displacements_fc2:
+    if (
+        settings.random_displacements_fc2
+        or settings.phonon_supercell_matrix is not None
+    ):
         phono3py.generate_fc2_displacements(
             distance=distance,
-            is_plusminus=settings.is_plusminus_displacement,
+            is_plusminus=settings.is_plusminus_displacement_fc2,
             number_of_snapshots=settings.random_displacements_fc2,
             random_seed=settings.random_seed,
         )
@@ -155,5 +159,22 @@ def create_phono3py_supercells(
 
         if log_level:
             print("Number of displacements for special fc2: %d" % num_disps)
+
+    if log_level:
+        identity = np.eye(3, dtype=int)
+        n_pure_trans = sum(
+            [
+                (r == identity).all()
+                for r in phono3py.symmetry.symmetry_operations["rotations"]
+            ]
+        )
+
+        if len(phono3py.supercell) // len(phono3py.primitive) != n_pure_trans:
+            print("*" * 72)
+            print(
+                "Note: "
+                'A better primitive cell can be chosen by using "--pa auto" option.'
+            )
+            print("*" * 72)
 
     return phono3py

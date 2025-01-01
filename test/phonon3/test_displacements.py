@@ -1,6 +1,11 @@
 """Tests of displacements.py."""
 
+import itertools
+from typing import Literal, Optional, Union
+
 import numpy as np
+import pytest
+from phonopy.structure.atoms import PhonopyAtoms
 
 import phono3py
 from phono3py import Phono3py
@@ -74,7 +79,49 @@ distances_NaCl = [
 ]
 
 
-def test_duplicates_agno2(agno2_cell):
+@pytest.mark.parametrize(
+    "is_plusminus,distance,number_of_snapshots",
+    itertools.product([False, True], [None, 0.06], [8, "auto"]),
+)
+def test_random_disps_agno2(
+    agno2_cell: PhonopyAtoms,
+    is_plusminus: bool,
+    distance: Optional[float],
+    number_of_snapshots: Union[int, Literal["auto"]],
+):
+    """Test duplicated pairs of displacements."""
+    ph3 = phono3py.load(unitcell=agno2_cell, supercell_matrix=[2, 1, 2])
+    ph3.generate_displacements(
+        number_of_snapshots=number_of_snapshots,
+        distance=distance,
+        is_plusminus=is_plusminus,
+    )
+
+    ph3.generate_fc2_displacements(
+        number_of_snapshots=number_of_snapshots,
+        distance=distance,
+        is_plusminus=is_plusminus,
+    )
+
+    for d, n_d in zip((ph3.displacements, ph3.phonon_displacements), (92, 4)):
+        if number_of_snapshots == "auto":
+            assert len(d) == n_d * (is_plusminus + 1)
+        else:
+            assert len(d) == 8 * (is_plusminus + 1)
+
+        if distance is None:
+            np.testing.assert_allclose(
+                np.linalg.norm(d, axis=2).ravel(), 0.03, atol=1e-8
+            )
+        else:
+            np.testing.assert_allclose(
+                np.linalg.norm(d, axis=2).ravel(), 0.06, atol=1e-8
+            )
+        if is_plusminus:
+            np.testing.assert_allclose(d[: len(d) // 2], -d[len(d) // 2 :], atol=1e-8)
+
+
+def test_duplicates_agno2(agno2_cell: PhonopyAtoms):
     """Test duplicated pairs of displacements."""
     ph3 = phono3py.load(unitcell=agno2_cell, supercell_matrix=[1, 1, 1])
     ph3.generate_displacements()
