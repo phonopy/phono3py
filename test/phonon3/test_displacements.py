@@ -90,6 +90,8 @@ def test_random_disps_agno2(
     number_of_snapshots: Union[int, Literal["auto"]],
 ):
     """Test duplicated pairs of displacements."""
+    pytest.importorskip("symfc")
+
     ph3 = phono3py.load(unitcell=agno2_cell, supercell_matrix=[2, 1, 2])
     ph3.generate_displacements(
         number_of_snapshots=number_of_snapshots,
