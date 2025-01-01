@@ -630,6 +630,13 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         help="Set plus minus displacements",
     )
     parser.add_argument(
+        "--pm-fc2",
+        dest="is_plusminus_displacements_fc2",
+        action="store_true",
+        default=False,
+        help="Set plus minus displacements for extra fc2",
+    )
+    parser.add_argument(
         "--pp-unit-conversion",
         dest="pp_unit_conversion",
         type=float,
@@ -676,17 +683,15 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         "--rd",
         "--random-displacements",
         dest="random_displacements",
-        type=int,
         default=None,
-        help="Number of supercells with random displacements",
+        help='Number of supercells with random displacements or "auto"',
     )
     parser.add_argument(
         "--rd-fc2",
         "--random-displacements-fc2",
         dest="random_displacements_fc2",
-        type=int,
         default=None,
-        help="Number of phonon supercells with random displacements",
+        help='Number of phonon supercells with random displacements or "auto"',
     )
     parser.add_argument(
         "--read-collision",
