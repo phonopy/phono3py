@@ -89,7 +89,7 @@ def test_random_disps_agno2(
     distance: Optional[float],
     number_of_snapshots: Union[int, Literal["auto"]],
 ):
-    """Test duplicated pairs of displacements."""
+    """Test random displacements."""
     pytest.importorskip("symfc")
 
     ph3 = phono3py.load(unitcell=agno2_cell, supercell_matrix=[2, 1, 2])
