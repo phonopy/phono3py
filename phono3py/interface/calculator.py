@@ -50,8 +50,7 @@ calculator_info = {
     #                       'help': "Invoke Siesta mode"}},
     "turbomole": {"option": {"name": "--turbomole", "help": "Invoke TURBOMOLE mode"}},
     "vasp": {"option": {"name": "--vasp", "help": "Invoke Vasp mode"}},
-    # 'wien2k': {'option': {'name': "--wien2k",
-    #                       'help': "Invoke Wien2k mode"}},
+    "wien2k": {"option": {"name": "--wien2k", "help": "Invoke Wien2k mode"}},
 }
 
 

@@ -326,7 +326,7 @@ def _get_BZ_triplets_at_q(bz_grid_index, bz_grid: BZGrid, map_triplets):
     for g in map_triplets:
         weights[g] += 1
     ir_weights = np.extract(weights > 0, weights)
-    triplets = -np.ones((len(ir_weights), 3), dtype="long")
+    triplets = -np.ones((len(ir_weights), 3), dtype="long", order="C")
     num_ir_ret = phono3c.BZ_triplets_at_q(
         triplets,
         bz_grid_index,
