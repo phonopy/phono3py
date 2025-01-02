@@ -679,12 +679,12 @@ class GridMatrix:
                 )
             if not use_grg or not found_grg:
                 if symmetry_dataset is None:
-                    self._D_diag = length2mesh(length, self._lattice)
+                    mesh_numbers = length2mesh(length, self._lattice)
                 else:
-                    self._D_diag = length2mesh(
+                    mesh_numbers = length2mesh(
                         length, self._lattice, rotations=symmetry_dataset.rotations
                     )
-                self._D_diag = np.array(self._D_diag, dtype="long")
+                self._D_diag = np.array(mesh_numbers, dtype="long")
         if num_values == 9:
             self._run_grg(
                 symmetry_dataset,

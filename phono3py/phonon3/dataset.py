@@ -39,7 +39,9 @@ from typing import Optional
 import numpy as np
 
 
-def get_displacements_and_forces_fc3(disp_dataset):
+def get_displacements_and_forces_fc3(
+    disp_dataset: dict,
+) -> tuple[np.ndarray, Optional[np.ndarray]]:
     """Return displacements and forces from disp_dataset.
 
     Note
@@ -71,10 +73,13 @@ def get_displacements_and_forces_fc3(disp_dataset):
         forces = np.zeros_like(displacements)
         indices = []
         count = 0
+        forces_count = 0
         for disp1 in disp_dataset["first_atoms"]:
             indices.append(count)
             displacements[count, disp1["number"]] = disp1["displacement"]
-            forces[count] = disp1["forces"]
+            if "forces" in disp1:
+                forces_count += 1
+                forces[count] = disp1["forces"]
             count += 1
 
         for disp1 in disp_dataset["first_atoms"]:
@@ -86,14 +91,26 @@ def get_displacements_and_forces_fc3(disp_dataset):
                     indices.append(count)
                 displacements[count, disp1["number"]] = disp1["displacement"]
                 displacements[count, disp2["number"]] = disp2["displacement"]
-                forces[count] = disp2["forces"]
+                if "forces" in disp2:
+                    forces_count += 1
+                    forces[count] = disp2["forces"]
                 count += 1
-        return (
-            np.array(displacements[indices], dtype="double", order="C"),
-            np.array(forces[indices], dtype="double", order="C"),
-        )
-    elif "forces" in disp_dataset and "displacements" in disp_dataset:
-        return disp_dataset["displacements"], disp_dataset["forces"]
+
+        if forces_count == 0:
+            forces = None
+        else:
+            forces = np.array(forces[indices], dtype="double", order="C")
+            assert forces_count == count
+
+        displacements = np.array(displacements[indices], dtype="double", order="C")
+        return displacements, forces
+    elif "displacements" in disp_dataset:
+        displacements = disp_dataset["displacements"]
+        if "forces" in disp_dataset:
+            forces = disp_dataset["forces"]
+        else:
+            forces = None
+        return displacements, forces
     else:
         raise RuntimeError("disp_dataset doesn't contain correct information.")
 

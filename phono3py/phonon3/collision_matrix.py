@@ -107,11 +107,13 @@ class CollisionMatrix(ImagSelfEnergy):
         if self._is_reducible_collision_matrix:
             num_mesh_points = np.prod(self._pp.mesh_numbers)
             self._collision_matrix = np.zeros(
-                (num_band0, num_mesh_points, num_band), dtype="double"
+                (num_band0, num_mesh_points, num_band), dtype="double", order="C"
             )
         else:
             self._collision_matrix = np.zeros(
-                (num_band0, 3, self._num_ir_grid_points, num_band, 3), dtype="double"
+                (num_band0, 3, self._num_ir_grid_points, num_band, 3),
+                dtype="double",
+                order="C",
             )
         self._run_with_band_indices()
         self._run_collision_matrix()
