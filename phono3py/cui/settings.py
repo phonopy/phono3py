@@ -66,6 +66,7 @@ class Phono3pySettings(Settings):
         "is_kappa_star": True,
         "is_lbte": False,
         "is_N_U": False,
+        "is_plusminus_displacement_fc2": "auto",
         "is_real_self_energy": False,
         "is_reducible_collision_matrix": False,
         "is_spectral_function": False,
@@ -213,6 +214,10 @@ class Phono3pySettings(Settings):
     def set_is_N_U(self, val):
         """Set is_N_U."""
         self._v["is_N_U"] = val
+
+    def set_is_plusminus_displacement_fc2(self, val):
+        """Set is_plusminus_displacement_fc2."""
+        self._v["is_plusminus_displacement_fc2"] = val
 
     def set_is_real_self_energy(self, val):
         """Set is_real_self_energy."""
@@ -488,6 +493,10 @@ class Phono3pyConfParser(ConfParser):
             if self._args.is_N_U:
                 self._confs["N_U"] = ".true."
 
+        if "is_plusminus_displacements_fc2" in self._args:
+            if self._args.is_plusminus_displacements_fc2:
+                self._confs["pm_fc2"] = ".true."
+
         if "is_real_self_energy" in self._args:
             if self._args.is_real_self_energy:
                 self._confs["real_self_energy"] = ".true."
@@ -714,7 +723,6 @@ class Phono3pyConfParser(ConfParser):
                 "pinv_method",
                 "pinv_solver",
                 "num_points_in_batch",
-                "random_displacements_fc2",
                 "scattering_event_class",
             ):
                 self.set_parameter(conf_key, int(confs[conf_key]))
@@ -802,6 +810,22 @@ class Phono3pyConfParser(ConfParser):
                     self.setting_error("Temperatures are incorrectly set.")
                 else:
                     self.set_parameter("temperatures", vals)
+
+            if conf_key == "random_displacements_fc2":
+                rd = confs["random_displacements_fc2"]
+                if rd.lower() == "auto":
+                    self.set_parameter("random_displacements_fc2", "auto")
+                else:
+                    try:
+                        self.set_parameter("random_displacements_fc2", int(rd))
+                    except ValueError:
+                        self.setting_error(f"{conf_key.upper()} is incorrectly set.")
+
+            if conf_key == "pm_fc2":
+                if confs["pm_fc2"].lower() == ".false.":
+                    self.set_parameter("pm_fc2", False)
+                elif confs["pm_fc2"].lower() == ".true.":
+                    self.set_parameter("pm_fc2", True)
 
     def _set_settings(self):
         self.set_settings()
@@ -918,6 +942,10 @@ class Phono3pyConfParser(ConfParser):
         # Calculate Normal and Umklapp processes
         if "N_U" in params:
             self._settings.set_is_N_U(params["N_U"])
+
+        # Plus minus displacement for fc2
+        if "pm_fc2" in params:
+            self._settings.set_is_plusminus_displacement_fc2(params["pm_fc2"])
 
         # Solve reducible collision matrix but not reduced matrix
         if "reducible_collision_matrix" in params:
