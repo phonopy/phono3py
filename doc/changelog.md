@@ -2,6 +2,11 @@
 
 # Change Log
 
+## Jan-2-2024: Version 3.11.0
+
+- Release to follow the change of phonopy
+- Add `--rd auto` and `--rd-fc2 auto` options
+
 ## Dec-26-2024: Version 3.10.2
 
 - `BUILD_WITHOUT_LAPACKE=ON` was made as the default compilation choice.
