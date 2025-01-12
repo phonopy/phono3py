@@ -57,16 +57,15 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         dest="use_alm",
         action="store_true",
         default=False,
-        help=("Use ALM for generating 2nd and 3rd force constants " "in one fitting"),
+        help=("Use ALM for generating 2nd and 3rd force constants in one fitting"),
     )
-    if not load_phono3py_yaml:
-        parser.add_argument(
-            "--amplitude",
-            dest="displacement_distance",
-            type=float,
-            default=None,
-            help="Distance of displacements",
-        )
+    parser.add_argument(
+        "--amplitude",
+        dest="displacement_distance",
+        type=float,
+        default=None,
+        help="Distance of displacements",
+    )
     parser.add_argument(
         "--ave-pp",
         dest="use_ave_pp",
@@ -106,8 +105,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         type=float,
         default=None,
         help=(
-            "Boundary mean free path in micrometre for thermal conductivity "
-            "calculation"
+            "Boundary mean free path in micrometre for thermal conductivity calculation"
         ),
     )
     parser.add_argument(
@@ -429,8 +427,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         action="store_true",
         default=False,
         help=(
-            "Atoms are clamped under applied strain in Gruneisen parameter "
-            "calculation"
+            "Atoms are clamped under applied strain in Gruneisen parameter calculation"
         ),
     )
     parser.add_argument(
@@ -747,7 +744,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         dest="scattering_event_class",
         type=int,
         default=None,
-        help=("Scattering event class 1 or 2 to draw imaginary part of self " "energy"),
+        help=("Scattering event class 1 or 2 to draw imaginary part of self energy"),
     )
     parser.add_argument(
         "--sigma",
@@ -787,8 +784,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         action="store_true",
         default=False,
         help=(
-            "Show reduced number of triplets to be calculated at "
-            "specified grid points"
+            "Show reduced number of triplets to be calculated at specified grid points"
         ),
     )
     if not load_phono3py_yaml:

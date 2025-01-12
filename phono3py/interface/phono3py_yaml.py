@@ -530,7 +530,7 @@ def _displacements_yaml_lines_type1_info(dataset):
     # 'duplicates' is dict, but written as a list of list in yaml.
     # See the docstring of _parse_fc3_dataset for the reason.
     if "duplicates" in dataset and dataset["duplicates"]:
-        lines.append("  duplicated_supercell_ids: " "# 0 means perfect supercell")
+        lines.append("  duplicated_supercell_ids: # 0 means perfect supercell")
         # Backward compatibility for dict type
         if isinstance(dataset["duplicates"], dict):
             for disp1_id, j in dataset["duplicates"].items():
