@@ -2,6 +2,12 @@
 
 # Change Log
 
+## Jan-12-2024: Version 3.11.1
+
+- `-i`, `-o`, `--io` options have been deprecated.
+- The `--amplitude` option can now be used to specify the displacement distance
+  for `phono3py-load --pypolymlp`.
+
 ## Jan-2-2024: Version 3.11.0
 
 - Release to follow the change of phonopy
