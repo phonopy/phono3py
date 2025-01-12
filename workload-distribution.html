@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Workload distribution &#8212; Phono3py v.3.11.0</title>
+    <title>Workload distribution &#8212; Phono3py v.3.11.1</title>
   
   
   
@@ -30,7 +30,7 @@
   <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 <link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=a3416100" />
   
   <!-- So that users can add custom icons -->
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=9aac1449"></script>
+    <script src="_static/documentation_options.js?v=21509654"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -125,7 +125,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.11.0</p>
+    <p class="title logo__title">Phono3py v.3.11.1</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -368,13 +368,11 @@ indices are chosen and executed as follows:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--br<span class="w"> </span>--gp<span class="w"> </span><span class="s2">&quot;0,1,2,3,4,5,6,7,8,9,20,21,22,23,24,25&quot;</span><span class="w"> </span>--write-gamma
 </pre></div>
 </div>
-<p>Then many <code class="docutils literal notranslate"><span class="pre">kappa-m191919-gx.hdf5</span></code> files are generated. These file
-names should not be altered because in reading the data by phono3py,
-those file names are supposed to be so, though there is a little
-freedom to arrange those file names, for which see <a class="reference internal" href="command-options.html#output-filename-option"><span class="std std-ref">-o</span></a> and <a class="reference internal" href="command-options.html#input-filename-option"><span class="std std-ref">-i</span></a>
-options. After completing calculations for all irreducible grid-point
-indices, the RTA thermal conductivity is computed by another run in a
-short time from the stored data:</p>
+<p>Then many <code class="docutils literal notranslate"><span class="pre">kappa-m191919-gx.hdf5</span></code> files are generated. These file names should
+not be altered because in reading the data by phono3py, those file names are
+supposed to be so. After completing calculations for all irreducible grid-point
+indices, the RTA thermal conductivity is computed by another run in a short time
+from the stored data:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--br<span class="w"> </span>--read-gamma
 </pre></div>
 </div>
@@ -386,8 +384,8 @@ grid-point indices into of reasonable number of sets of grid-point
 indices for workload distribution.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
 
-<span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
 
 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
     <span class="n">num</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>

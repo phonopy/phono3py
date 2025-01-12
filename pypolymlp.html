@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Force constants calculation using pypolymlp (machine learning potential) &#8212; Phono3py v.3.11.0</title>
+    <title>Force constants calculation using pypolymlp (machine learning potential) &#8212; Phono3py v.3.11.1</title>
   
   
   
@@ -30,7 +30,7 @@
   <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 <link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=a3416100" />
   
   <!-- So that users can add custom icons -->
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=9aac1449"></script>
+    <script src="_static/documentation_options.js?v=21509654"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -125,7 +125,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.11.0</p>
+    <p class="title logo__title">Phono3py v.3.11.1</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -317,6 +317,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#steps-1-3-dataset-preparation">Steps 1-3: Dataset preparation</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#steps-4-7-force-constants-calculation-systematic-displacements-in-step-5">Steps 4-7: Force constants calculation (systematic displacements in step 5)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#steps-4-7-force-constants-calculation-random-displacements-in-step-5">Steps 4-7: Force constants calculation (random displacements in step 5)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#command-options-for-force-constants-calculation">Command options for force constants calculation</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-for-developing-mlps">Parameters for developing MLPs</a><ul class="nav section-nav flex-column">
@@ -424,7 +425,7 @@ setting to use pypolymlp:</p>
 <span class="n">Python</span> <span class="n">version</span> <span class="mf">3.12.4</span>
 <span class="n">Spglib</span> <span class="n">version</span> <span class="mf">2.5.0</span>
 
-<span class="n">Unit</span> <span class="n">cell</span> <span class="n">was</span> <span class="n">read</span> <span class="kn">from</span> <span class="s2">&quot;POSCAR-unitcell&quot;</span><span class="o">.</span>
+<span class="n">Unit</span> <span class="n">cell</span> <span class="n">was</span> <span class="n">read</span> <span class="kn">from</span><span class="w"> </span><span class="s2">&quot;POSCAR-unitcell&quot;</span><span class="o">.</span>
 <span class="o">--------------------------------</span> <span class="n">unit</span> <span class="n">cell</span> <span class="o">---------------------------------</span>
 <span class="n">Lattice</span> <span class="n">vectors</span><span class="p">:</span>
   <span class="n">a</span>    <span class="mf">5.603287477054753</span>    <span class="mf">0.000000000000000</span>    <span class="mf">0.000000000000000</span>
@@ -447,7 +448,7 @@ setting to use pypolymlp:</p>
   <span class="p">[</span><span class="mf">0.5</span> <span class="mf">0.5</span> <span class="mf">0.</span> <span class="p">]</span>
 <span class="n">Displacement</span> <span class="n">distance</span><span class="p">:</span> <span class="mf">0.03</span>
 <span class="n">Number</span> <span class="n">of</span> <span class="n">displacements</span><span class="p">:</span> <span class="mi">100</span>
-<span class="n">NAC</span> <span class="n">parameters</span> <span class="n">were</span> <span class="n">read</span> <span class="kn">from</span> <span class="s2">&quot;BORN&quot;</span><span class="o">.</span>
+<span class="n">NAC</span> <span class="n">parameters</span> <span class="n">were</span> <span class="n">read</span> <span class="kn">from</span><span class="w"> </span><span class="s2">&quot;BORN&quot;</span><span class="o">.</span>
 <span class="n">Spacegroup</span><span class="p">:</span> <span class="n">Fm</span><span class="o">-</span><span class="mi">3</span><span class="n">m</span> <span class="p">(</span><span class="mi">225</span><span class="p">)</span>
 <span class="n">Displacement</span> <span class="n">dataset</span> <span class="n">was</span> <span class="n">written</span> <span class="ow">in</span> <span class="s2">&quot;phono3py_disp.yaml&quot;</span><span class="o">.</span>
 <span class="o">-------------------------</span><span class="p">[</span><span class="n">time</span> <span class="mi">2024</span><span class="o">-</span><span class="mi">09</span><span class="o">-</span><span class="mi">19</span> <span class="mi">14</span><span class="p">:</span><span class="mi">40</span><span class="p">:</span><span class="mi">00</span><span class="p">]</span><span class="o">-------------------------</span>
@@ -498,7 +499,7 @@ crystal symmetry.</p>
 <span class="n">Spglib</span> <span class="n">version</span> <span class="mf">2.5.0</span>
 <span class="o">-----------------------------</span> <span class="n">General</span> <span class="n">settings</span> <span class="o">-----------------------------</span>
 <span class="n">HDF5</span> <span class="n">data</span> <span class="n">compression</span> <span class="nb">filter</span><span class="p">:</span> <span class="n">gzip</span>
-<span class="n">Crystal</span> <span class="n">structure</span> <span class="n">was</span> <span class="n">read</span> <span class="kn">from</span> <span class="s2">&quot;phono3py_params.yaml&quot;</span><span class="o">.</span>
+<span class="n">Crystal</span> <span class="n">structure</span> <span class="n">was</span> <span class="n">read</span> <span class="kn">from</span><span class="w"> </span><span class="s2">&quot;phono3py_params.yaml&quot;</span><span class="o">.</span>
 <span class="n">Supercell</span> <span class="p">(</span><span class="n">dim</span><span class="p">):</span> <span class="p">[</span><span class="mi">2</span> <span class="mi">2</span> <span class="mi">2</span><span class="p">]</span>
 <span class="n">Primitive</span> <span class="n">matrix</span><span class="p">:</span>
   <span class="p">[</span><span class="mf">0.</span>  <span class="mf">0.5</span> <span class="mf">0.5</span><span class="p">]</span>
@@ -506,9 +507,9 @@ crystal symmetry.</p>
   <span class="p">[</span><span class="mf">0.5</span> <span class="mf">0.5</span> <span class="mf">0.</span> <span class="p">]</span>
 <span class="n">Spacegroup</span><span class="p">:</span> <span class="n">Fm</span><span class="o">-</span><span class="mi">3</span><span class="n">m</span> <span class="p">(</span><span class="mi">225</span><span class="p">)</span>
 <span class="n">Use</span> <span class="o">-</span><span class="n">v</span> <span class="n">option</span> <span class="n">to</span> <span class="n">watch</span> <span class="n">primitive</span> <span class="n">cell</span><span class="p">,</span> <span class="n">unit</span> <span class="n">cell</span><span class="p">,</span> <span class="ow">and</span> <span class="n">supercell</span> <span class="n">structures</span><span class="o">.</span>
-<span class="n">NAC</span> <span class="n">parameters</span> <span class="n">were</span> <span class="n">read</span> <span class="kn">from</span> <span class="s2">&quot;phono3py_params.yaml&quot;</span><span class="o">.</span>
+<span class="n">NAC</span> <span class="n">parameters</span> <span class="n">were</span> <span class="n">read</span> <span class="kn">from</span><span class="w"> </span><span class="s2">&quot;phono3py_params.yaml&quot;</span><span class="o">.</span>
 <span class="o">-----------------------------</span> <span class="n">Force</span> <span class="n">constants</span> <span class="o">------------------------------</span>
-<span class="n">Displacement</span> <span class="n">dataset</span> <span class="k">for</span> <span class="n">fc3</span> <span class="n">was</span> <span class="n">read</span> <span class="kn">from</span> <span class="s2">&quot;phono3py_params.yaml&quot;</span><span class="o">.</span>
+<span class="n">Displacement</span> <span class="n">dataset</span> <span class="k">for</span> <span class="n">fc3</span> <span class="n">was</span> <span class="n">read</span> <span class="kn">from</span><span class="w"> </span><span class="s2">&quot;phono3py_params.yaml&quot;</span><span class="o">.</span>
 <span class="o">-----------------------------</span> <span class="n">pypolymlp</span> <span class="n">start</span> <span class="o">------------------------------</span>
 <span class="n">Pypolymlp</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">generator</span> <span class="n">of</span> <span class="n">polynomial</span> <span class="n">machine</span> <span class="n">learning</span> <span class="n">potentials</span><span class="o">.</span>
 <span class="n">Please</span> <span class="n">cite</span> <span class="n">the</span> <span class="n">paper</span><span class="p">:</span> <span class="n">A</span><span class="o">.</span> <span class="n">Seko</span><span class="p">,</span> <span class="n">J</span><span class="o">.</span> <span class="n">Appl</span><span class="o">.</span> <span class="n">Phys</span><span class="o">.</span> <span class="mi">133</span><span class="p">,</span> <span class="mi">011101</span> <span class="p">(</span><span class="mi">2023</span><span class="p">)</span><span class="o">.</span>
@@ -550,7 +551,7 @@ crystal symmetry.</p>
 <span class="n">fc3</span> <span class="n">was</span> <span class="n">written</span> <span class="n">into</span> <span class="s2">&quot;fc3.hdf5&quot;</span><span class="o">.</span>
 <span class="n">fc2</span> <span class="n">was</span> <span class="n">written</span> <span class="n">into</span> <span class="s2">&quot;fc2.hdf5&quot;</span><span class="o">.</span>
 <span class="o">-----------</span> <span class="kc">None</span> <span class="n">of</span> <span class="n">ph</span><span class="o">-</span><span class="n">ph</span> <span class="n">interaction</span> <span class="n">calculation</span> <span class="n">was</span> <span class="n">performed</span><span class="o">.</span> <span class="o">-----------</span>
-<span class="n">Dataset</span> <span class="n">generated</span> <span class="n">using</span> <span class="n">MMLPs</span> <span class="n">was</span> <span class="n">written</span> <span class="ow">in</span> <span class="s2">&quot;phono3py_mlp_eval_dataset.yaml&quot;</span><span class="o">.</span>
+<span class="n">Dataset</span> <span class="n">generated</span> <span class="n">using</span> <span class="n">MLPs</span> <span class="n">was</span> <span class="n">written</span> <span class="ow">in</span> <span class="s2">&quot;phono3py_mlp_eval_dataset.yaml&quot;</span><span class="o">.</span>
 <span class="n">Summary</span> <span class="n">of</span> <span class="n">calculation</span> <span class="n">was</span> <span class="n">written</span> <span class="ow">in</span> <span class="s2">&quot;phono3py.yaml&quot;</span><span class="o">.</span>
 <span class="o">-------------------------</span><span class="p">[</span><span class="n">time</span> <span class="mi">2024</span><span class="o">-</span><span class="mi">09</span><span class="o">-</span><span class="mi">19</span> <span class="mi">15</span><span class="p">:</span><span class="mi">21</span><span class="p">:</span><span class="mi">41</span><span class="p">]</span><span class="o">-------------------------</span>
                  <span class="n">_</span>
@@ -594,7 +595,7 @@ For this, symfc is used which is invoked by <code class="docutils literal notran
 <span class="n">Spglib</span> <span class="n">version</span> <span class="mf">2.5.0</span>
 <span class="o">-----------------------------</span> <span class="n">General</span> <span class="n">settings</span> <span class="o">-----------------------------</span>
 <span class="n">HDF5</span> <span class="n">data</span> <span class="n">compression</span> <span class="nb">filter</span><span class="p">:</span> <span class="n">gzip</span>
-<span class="n">Crystal</span> <span class="n">structure</span> <span class="n">was</span> <span class="n">read</span> <span class="kn">from</span> <span class="s2">&quot;phono3py_params.yaml&quot;</span><span class="o">.</span>
+<span class="n">Crystal</span> <span class="n">structure</span> <span class="n">was</span> <span class="n">read</span> <span class="kn">from</span><span class="w"> </span><span class="s2">&quot;phono3py_params.yaml&quot;</span><span class="o">.</span>
 <span class="n">Supercell</span> <span class="p">(</span><span class="n">dim</span><span class="p">):</span> <span class="p">[</span><span class="mi">2</span> <span class="mi">2</span> <span class="mi">2</span><span class="p">]</span>
 <span class="n">Primitive</span> <span class="n">matrix</span><span class="p">:</span>
   <span class="p">[</span><span class="mf">0.</span>  <span class="mf">0.5</span> <span class="mf">0.5</span><span class="p">]</span>
@@ -602,9 +603,9 @@ For this, symfc is used which is invoked by <code class="docutils literal notran
   <span class="p">[</span><span class="mf">0.5</span> <span class="mf">0.5</span> <span class="mf">0.</span> <span class="p">]</span>
 <span class="n">Spacegroup</span><span class="p">:</span> <span class="n">Fm</span><span class="o">-</span><span class="mi">3</span><span class="n">m</span> <span class="p">(</span><span class="mi">225</span><span class="p">)</span>
 <span class="n">Use</span> <span class="o">-</span><span class="n">v</span> <span class="n">option</span> <span class="n">to</span> <span class="n">watch</span> <span class="n">primitive</span> <span class="n">cell</span><span class="p">,</span> <span class="n">unit</span> <span class="n">cell</span><span class="p">,</span> <span class="ow">and</span> <span class="n">supercell</span> <span class="n">structures</span><span class="o">.</span>
-<span class="n">NAC</span> <span class="n">parameters</span> <span class="n">were</span> <span class="n">read</span> <span class="kn">from</span> <span class="s2">&quot;phono3py_params.yaml&quot;</span><span class="o">.</span>
+<span class="n">NAC</span> <span class="n">parameters</span> <span class="n">were</span> <span class="n">read</span> <span class="kn">from</span><span class="w"> </span><span class="s2">&quot;phono3py_params.yaml&quot;</span><span class="o">.</span>
 <span class="o">-----------------------------</span> <span class="n">Force</span> <span class="n">constants</span> <span class="o">------------------------------</span>
-<span class="n">Displacement</span> <span class="n">dataset</span> <span class="k">for</span> <span class="n">fc3</span> <span class="n">was</span> <span class="n">read</span> <span class="kn">from</span> <span class="s2">&quot;phono3py_params.yaml&quot;</span><span class="o">.</span>
+<span class="n">Displacement</span> <span class="n">dataset</span> <span class="k">for</span> <span class="n">fc3</span> <span class="n">was</span> <span class="n">read</span> <span class="kn">from</span><span class="w"> </span><span class="s2">&quot;phono3py_params.yaml&quot;</span><span class="o">.</span>
 <span class="o">-----------------------------</span> <span class="n">pypolymlp</span> <span class="n">start</span> <span class="o">------------------------------</span>
 <span class="n">Pypolymlp</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">generator</span> <span class="n">of</span> <span class="n">polynomial</span> <span class="n">machine</span> <span class="n">learning</span> <span class="n">potentials</span><span class="o">.</span>
 <span class="n">Please</span> <span class="n">cite</span> <span class="n">the</span> <span class="n">paper</span><span class="p">:</span> <span class="n">A</span><span class="o">.</span> <span class="n">Seko</span><span class="p">,</span> <span class="n">J</span><span class="o">.</span> <span class="n">Appl</span><span class="o">.</span> <span class="n">Phys</span><span class="o">.</span> <span class="mi">133</span><span class="p">,</span> <span class="mi">011101</span> <span class="p">(</span><span class="mi">2023</span><span class="p">)</span><span class="o">.</span>
@@ -650,7 +651,7 @@ For this, symfc is used which is invoked by <code class="docutils literal notran
 <span class="n">fc3</span> <span class="n">was</span> <span class="n">written</span> <span class="n">into</span> <span class="s2">&quot;fc3.hdf5&quot;</span><span class="o">.</span>
 <span class="n">fc2</span> <span class="n">was</span> <span class="n">written</span> <span class="n">into</span> <span class="s2">&quot;fc2.hdf5&quot;</span><span class="o">.</span>
 <span class="o">-----------</span> <span class="kc">None</span> <span class="n">of</span> <span class="n">ph</span><span class="o">-</span><span class="n">ph</span> <span class="n">interaction</span> <span class="n">calculation</span> <span class="n">was</span> <span class="n">performed</span><span class="o">.</span> <span class="o">-----------</span>
-<span class="n">Dataset</span> <span class="n">generated</span> <span class="n">using</span> <span class="n">MMLPs</span> <span class="n">was</span> <span class="n">written</span> <span class="ow">in</span> <span class="s2">&quot;phono3py_mlp_eval_dataset.yaml&quot;</span><span class="o">.</span>
+<span class="n">Dataset</span> <span class="n">generated</span> <span class="n">using</span> <span class="n">MLPs</span> <span class="n">was</span> <span class="n">written</span> <span class="ow">in</span> <span class="s2">&quot;phono3py_mlp_eval_dataset.yaml&quot;</span><span class="o">.</span>
 <span class="n">Summary</span> <span class="n">of</span> <span class="n">calculation</span> <span class="n">was</span> <span class="n">written</span> <span class="ow">in</span> <span class="s2">&quot;phono3py.yaml&quot;</span><span class="o">.</span>
 <span class="o">-------------------------</span><span class="p">[</span><span class="n">time</span> <span class="mi">2024</span><span class="o">-</span><span class="mi">09</span><span class="o">-</span><span class="mi">19</span> <span class="mi">15</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">41</span><span class="p">]</span><span class="o">-------------------------</span>
                  <span class="n">_</span>
@@ -668,6 +669,86 @@ an additional 200 supercells. In total, 400 supercells are created. The forces
 for these supercells are then evaluated. Finally, the force constants are
 calculated using symfc.</p>
 </section>
+<section id="command-options-for-force-constants-calculation">
+<h3>Command options for force constants calculation<a class="headerlink" href="#command-options-for-force-constants-calculation" title="Link to this heading">#</a></h3>
+<p>After obtaining the MLPs, displacements are generated using those MLPs, and the
+resulting forces are computed accordingly. The displacement distance is set by
+the <code class="docutils literal notranslate"><span class="pre">--amplitude</span></code> option, whose default value is 0.001 Angstrom. When the <code class="docutils literal notranslate"><span class="pre">--rd</span></code>
+option is used, it specifies the number of supercells with random directional
+displacements. Note that to achieve accurate force constants, the actual number
+of generated supercells is twice the specified number. Additionally, when using
+<code class="docutils literal notranslate"><span class="pre">--rd</span></code>, the <code class="docutils literal notranslate"><span class="pre">--symfc</span></code> option must be used together. If <code class="docutils literal notranslate"><span class="pre">--rd</span></code> is omitted,
+systematic displacements are introduced, and thus <code class="docutils literal notranslate"><span class="pre">--symfc</span></code> is not required.</p>
+<p>Once the file <code class="docutils literal notranslate"><span class="pre">phono3py.pmlp</span></code> is obtained, force constants can be calculated
+using MLPs from <code class="docutils literal notranslate"><span class="pre">phono3py.pmlp</span></code>. After removing the <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code> and <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code>
+files, <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code> will detect <code class="docutils literal notranslate"><span class="pre">phono3py.pmlp</span></code> and then compute the force
+constants by loading the MLPs from <code class="docutils literal notranslate"><span class="pre">phono3py.pmlp</span></code> as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span><span class="o">-</span><span class="n">load</span> <span class="o">--</span><span class="n">pypolymlp</span> <span class="o">--</span><span class="n">rd</span> <span class="mi">100</span> <span class="o">--</span><span class="n">symfc</span> <span class="o">--</span><span class="n">amplitude</span> <span class="mf">0.01</span> <span class="n">phono3py</span><span class="o">.</span><span class="n">yaml</span>
+        <span class="n">_</span>                      <span class="n">_____</span>
+  <span class="n">_</span> <span class="n">__</span> <span class="o">|</span> <span class="o">|</span><span class="n">__</span>   <span class="n">___</span>  <span class="n">_</span> <span class="n">__</span>   <span class="n">___</span><span class="o">|</span><span class="n">___</span> <span class="o">/</span> <span class="n">_</span> <span class="n">__</span>  <span class="n">_</span>   <span class="n">_</span>
+ <span class="o">|</span> <span class="s1">&#39;_ \| &#39;</span><span class="n">_</span> \ <span class="o">/</span> <span class="n">_</span> \<span class="o">|</span> <span class="s1">&#39;_ \ / _ \ |_ \| &#39;</span><span class="n">_</span> \<span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span>
+ <span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="p">)</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="o">|</span><span class="n">__</span><span class="p">)</span> <span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="p">)</span> <span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span>
+ <span class="o">|</span> <span class="o">.</span><span class="n">__</span><span class="o">/|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span>\<span class="n">___</span><span class="o">/|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span>\<span class="n">___</span><span class="o">/</span><span class="n">____</span><span class="o">/|</span> <span class="o">.</span><span class="n">__</span><span class="o">/</span> \<span class="n">__</span><span class="p">,</span> <span class="o">|</span>
+ <span class="o">|</span><span class="n">_</span><span class="o">|</span>                                <span class="o">|</span><span class="n">_</span><span class="o">|</span>    <span class="o">|</span><span class="n">___</span><span class="o">/</span>
+                      <span class="mf">3.11.1</span><span class="o">-</span><span class="n">dev14</span><span class="o">+</span><span class="n">g5f281b65</span>
+
+<span class="o">-------------------------</span><span class="p">[</span><span class="n">time</span> <span class="mi">2025</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">12</span> <span class="mi">10</span><span class="p">:</span><span class="mi">08</span><span class="p">:</span><span class="mi">31</span><span class="p">]</span><span class="o">-------------------------</span>
+<span class="n">Compiled</span> <span class="k">with</span> <span class="n">OpenMP</span> <span class="n">support</span> <span class="p">(</span><span class="nb">max</span> <span class="mi">10</span> <span class="n">threads</span><span class="p">)</span><span class="o">.</span>
+<span class="n">Running</span> <span class="ow">in</span> <span class="n">phono3py</span><span class="o">.</span><span class="n">load</span> <span class="n">mode</span><span class="o">.</span>
+<span class="n">Python</span> <span class="n">version</span> <span class="mf">3.12.3</span>
+<span class="n">Spglib</span> <span class="n">version</span> <span class="mf">2.5.0</span>
+<span class="o">-----------------------------</span> <span class="n">General</span> <span class="n">settings</span> <span class="o">-----------------------------</span>
+<span class="n">HDF5</span> <span class="n">data</span> <span class="n">compression</span> <span class="nb">filter</span><span class="p">:</span> <span class="n">gzip</span>
+<span class="n">Crystal</span> <span class="n">structure</span> <span class="n">was</span> <span class="n">read</span> <span class="kn">from</span><span class="w"> </span><span class="s2">&quot;phono3py.yaml&quot;</span><span class="o">.</span>
+<span class="n">Supercell</span> <span class="p">(</span><span class="n">dim</span><span class="p">):</span> <span class="p">[</span><span class="mi">2</span> <span class="mi">2</span> <span class="mi">2</span><span class="p">]</span>
+<span class="n">Primitive</span> <span class="n">matrix</span><span class="p">:</span>
+  <span class="p">[</span><span class="mf">0.</span>  <span class="mf">0.5</span> <span class="mf">0.5</span><span class="p">]</span>
+  <span class="p">[</span><span class="mf">0.5</span> <span class="mf">0.</span>  <span class="mf">0.5</span><span class="p">]</span>
+  <span class="p">[</span><span class="mf">0.5</span> <span class="mf">0.5</span> <span class="mf">0.</span> <span class="p">]</span>
+<span class="n">Spacegroup</span><span class="p">:</span> <span class="n">Fm</span><span class="o">-</span><span class="mi">3</span><span class="n">m</span> <span class="p">(</span><span class="mi">225</span><span class="p">)</span>
+<span class="n">Use</span> <span class="o">-</span><span class="n">v</span> <span class="n">option</span> <span class="n">to</span> <span class="n">watch</span> <span class="n">primitive</span> <span class="n">cell</span><span class="p">,</span> <span class="n">unit</span> <span class="n">cell</span><span class="p">,</span> <span class="ow">and</span> <span class="n">supercell</span> <span class="n">structures</span><span class="o">.</span>
+<span class="n">NAC</span> <span class="n">parameters</span> <span class="n">were</span> <span class="n">read</span> <span class="kn">from</span><span class="w"> </span><span class="s2">&quot;phono3py.yaml&quot;</span><span class="o">.</span>
+<span class="o">-----------------------------</span> <span class="n">Force</span> <span class="n">constants</span> <span class="o">------------------------------</span>
+<span class="o">-----------------------------</span> <span class="n">pypolymlp</span> <span class="n">start</span> <span class="o">------------------------------</span>
+<span class="n">Pypolymlp</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">generator</span> <span class="n">of</span> <span class="n">polynomial</span> <span class="n">machine</span> <span class="n">learning</span> <span class="n">potentials</span><span class="o">.</span>
+<span class="n">Please</span> <span class="n">cite</span> <span class="n">the</span> <span class="n">paper</span><span class="p">:</span> <span class="n">A</span><span class="o">.</span> <span class="n">Seko</span><span class="p">,</span> <span class="n">J</span><span class="o">.</span> <span class="n">Appl</span><span class="o">.</span> <span class="n">Phys</span><span class="o">.</span> <span class="mi">133</span><span class="p">,</span> <span class="mi">011101</span> <span class="p">(</span><span class="mi">2023</span><span class="p">)</span><span class="o">.</span>
+<span class="n">Pypolymlp</span> <span class="ow">is</span> <span class="n">developed</span> <span class="n">at</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">sekocha</span><span class="o">/</span><span class="n">pypolymlp</span><span class="o">.</span>
+<span class="n">Load</span> <span class="n">MLPs</span> <span class="kn">from</span><span class="w"> </span><span class="s2">&quot;phono3py.pmlp&quot;</span><span class="o">.</span>
+<span class="o">------------------------------</span> <span class="n">pypolymlp</span> <span class="n">end</span> <span class="o">-------------------------------</span>
+<span class="n">Generate</span> <span class="n">random</span> <span class="n">displacements</span>
+  <span class="n">Twice</span> <span class="n">of</span> <span class="n">number</span> <span class="n">of</span> <span class="n">snapshots</span> <span class="n">will</span> <span class="n">be</span> <span class="n">generated</span> <span class="k">for</span> <span class="n">plus</span><span class="o">-</span><span class="n">minus</span> <span class="n">displacements</span><span class="o">.</span>
+  <span class="n">Displacement</span> <span class="n">distance</span><span class="p">:</span> <span class="mf">0.01</span>
+<span class="n">Evaluate</span> <span class="n">forces</span> <span class="ow">in</span> <span class="mi">200</span> <span class="n">supercells</span> <span class="n">by</span> <span class="n">pypolymlp</span>
+<span class="o">--------------------------------</span> <span class="n">Symfc</span> <span class="n">start</span> <span class="o">-------------------------------</span>
+<span class="n">Symfc</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">force</span> <span class="n">constants</span> <span class="n">calculator</span><span class="o">.</span> <span class="n">See</span> <span class="n">the</span> <span class="n">following</span> <span class="n">paper</span><span class="p">:</span>
+<span class="n">A</span><span class="o">.</span> <span class="n">Seko</span> <span class="ow">and</span> <span class="n">A</span><span class="o">.</span> <span class="n">Togo</span><span class="p">,</span> <span class="n">Phys</span><span class="o">.</span> <span class="n">Rev</span><span class="o">.</span> <span class="n">B</span><span class="p">,</span> <span class="mi">110</span><span class="p">,</span> <span class="mi">214302</span> <span class="p">(</span><span class="mi">2024</span><span class="p">)</span><span class="o">.</span>
+<span class="n">Symfc</span> <span class="ow">is</span> <span class="n">developed</span> <span class="n">at</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">symfc</span><span class="o">/</span><span class="n">symfc</span><span class="o">.</span>
+<span class="n">Computing</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="n">order</span> <span class="n">force</span> <span class="n">constants</span><span class="o">.</span>
+<span class="n">Increase</span> <span class="n">log</span><span class="o">-</span><span class="n">level</span> <span class="n">to</span> <span class="n">watch</span> <span class="n">detailed</span> <span class="n">symfc</span> <span class="n">log</span><span class="o">.</span>
+<span class="o">---------------------------------</span> <span class="n">Symfc</span> <span class="n">end</span> <span class="o">--------------------------------</span>
+<span class="o">--------------------------------</span> <span class="n">Symfc</span> <span class="n">start</span> <span class="o">-------------------------------</span>
+<span class="n">Symfc</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">force</span> <span class="n">constants</span> <span class="n">calculator</span><span class="o">.</span> <span class="n">See</span> <span class="n">the</span> <span class="n">following</span> <span class="n">paper</span><span class="p">:</span>
+<span class="n">A</span><span class="o">.</span> <span class="n">Seko</span> <span class="ow">and</span> <span class="n">A</span><span class="o">.</span> <span class="n">Togo</span><span class="p">,</span> <span class="n">Phys</span><span class="o">.</span> <span class="n">Rev</span><span class="o">.</span> <span class="n">B</span><span class="p">,</span> <span class="mi">110</span><span class="p">,</span> <span class="mi">214302</span> <span class="p">(</span><span class="mi">2024</span><span class="p">)</span><span class="o">.</span>
+<span class="n">Symfc</span> <span class="ow">is</span> <span class="n">developed</span> <span class="n">at</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">symfc</span><span class="o">/</span><span class="n">symfc</span><span class="o">.</span>
+<span class="n">Computing</span> <span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="n">order</span> <span class="n">force</span> <span class="n">constants</span><span class="o">.</span>
+<span class="n">Increase</span> <span class="n">log</span><span class="o">-</span><span class="n">level</span> <span class="n">to</span> <span class="n">watch</span> <span class="n">detailed</span> <span class="n">symfc</span> <span class="n">log</span><span class="o">.</span>
+<span class="o">---------------------------------</span> <span class="n">Symfc</span> <span class="n">end</span> <span class="o">--------------------------------</span>
+<span class="n">Max</span> <span class="n">drift</span> <span class="n">of</span> <span class="n">fc3</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.000000</span> <span class="p">(</span><span class="n">zxz</span><span class="p">)</span> <span class="o">-</span><span class="mf">0.000000</span> <span class="p">(</span><span class="n">xzz</span><span class="p">)</span> <span class="o">-</span><span class="mf">0.000000</span> <span class="p">(</span><span class="n">xzz</span><span class="p">)</span>
+<span class="n">Max</span> <span class="n">drift</span> <span class="n">of</span> <span class="n">fc2</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.000000</span> <span class="p">(</span><span class="n">yy</span><span class="p">)</span> <span class="o">-</span><span class="mf">0.000000</span> <span class="p">(</span><span class="n">yy</span><span class="p">)</span>
+<span class="n">fc3</span> <span class="n">was</span> <span class="n">written</span> <span class="n">into</span> <span class="s2">&quot;fc3.hdf5&quot;</span><span class="o">.</span>
+<span class="n">fc2</span> <span class="n">was</span> <span class="n">written</span> <span class="n">into</span> <span class="s2">&quot;fc2.hdf5&quot;</span><span class="o">.</span>
+<span class="o">-----------</span> <span class="kc">None</span> <span class="n">of</span> <span class="n">ph</span><span class="o">-</span><span class="n">ph</span> <span class="n">interaction</span> <span class="n">calculation</span> <span class="n">was</span> <span class="n">performed</span><span class="o">.</span> <span class="o">-----------</span>
+<span class="n">Dataset</span> <span class="n">generated</span> <span class="n">using</span> <span class="n">MLPs</span> <span class="n">was</span> <span class="n">written</span> <span class="ow">in</span> <span class="s2">&quot;phono3py_mlp_eval_dataset.yaml&quot;</span><span class="o">.</span>
+<span class="n">Summary</span> <span class="n">of</span> <span class="n">calculation</span> <span class="n">was</span> <span class="n">written</span> <span class="ow">in</span> <span class="s2">&quot;phono3py.yaml&quot;</span><span class="o">.</span>
+<span class="o">-------------------------</span><span class="p">[</span><span class="n">time</span> <span class="mi">2025</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">12</span> <span class="mi">10</span><span class="p">:</span><span class="mi">08</span><span class="p">:</span><span class="mi">40</span><span class="p">]</span><span class="o">-------------------------</span>
+                 <span class="n">_</span>
+   <span class="n">___</span> <span class="n">_</span> <span class="n">__</span>   <span class="n">__</span><span class="o">|</span> <span class="o">|</span>
+  <span class="o">/</span> <span class="n">_</span> \ <span class="s1">&#39;_ \ / _` |</span>
+ <span class="o">|</span>  <span class="n">__</span><span class="o">/</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="p">(</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span>
+  \<span class="n">___</span><span class="o">|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span>\<span class="n">__</span><span class="p">,</span><span class="n">_</span><span class="o">|</span>
+</pre></div>
+</div>
+</section>
 </section>
 <section id="parameters-for-developing-mlps">
 <h2>Parameters for developing MLPs<a class="headerlink" href="#parameters-for-developing-mlps" title="Link to this heading">#</a></h2>
@@ -679,7 +760,7 @@ development of MLPs. The parameters are provided as a string, e.g.,</p>
 <p>Parameters are separated by commas for configuration. A brief explanation of the
 available parameters can be found in the docstring of <code class="docutils literal notranslate"><span class="pre">PypolymlpParams</span></code> that is
 found by</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">from</span> <span class="nn">phonopy.interface.pypolymlp</span> <span class="kn">import</span> <span class="n">PypolymlpParams</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">from</span><span class="w"> </span><span class="nn">phonopy.interface.pypolymlp</span><span class="w"> </span><span class="kn">import</span> <span class="n">PypolymlpParams</span>
 
 <span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">help</span><span class="p">(</span><span class="n">PypolymlpParams</span><span class="p">)</span>
 </pre></div>
@@ -780,6 +861,7 @@ the LTC calculation with pypolymlp.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#steps-1-3-dataset-preparation">Steps 1-3: Dataset preparation</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#steps-4-7-force-constants-calculation-systematic-displacements-in-step-5">Steps 4-7: Force constants calculation (systematic displacements in step 5)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#steps-4-7-force-constants-calculation-random-displacements-in-step-5">Steps 4-7: Force constants calculation (random displacements in step 5)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#command-options-for-force-constants-calculation">Command options for force constants calculation</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#parameters-for-developing-mlps">Parameters for developing MLPs</a><ul class="nav section-nav flex-column">

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Command options / Setting tags &#8212; Phono3py v.3.11.0</title>
+    <title>Command options / Setting tags &#8212; Phono3py v.3.11.1</title>
   
   
   
@@ -30,7 +30,7 @@
   <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 <link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
 
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=a3416100" />
   
   <!-- So that users can add custom icons -->
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=9aac1449"></script>
+    <script src="_static/documentation_options.js?v=21509654"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -127,7 +127,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.11.0</p>
+    <p class="title logo__title">Phono3py v.3.11.1</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -434,9 +434,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#read-phonon-read-phonon-true"><code class="docutils literal notranslate"><span class="pre">--read-phonon</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_PHONON</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#write-pp-write-pp-true-and-read-pp-read-pp-true"><code class="docutils literal notranslate"><span class="pre">--write-pp</span></code> (<code class="docutils literal notranslate"><span class="pre">WRITE_PP</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>) and <code class="docutils literal notranslate"><span class="pre">--read-pp</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_PP</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hdf5-compression-command-option-only"><code class="docutils literal notranslate"><span class="pre">--hdf5-compression</span></code> (command option only)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#o-command-option-only"><code class="docutils literal notranslate"><span class="pre">-o</span></code> (command option only)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#i-command-option-only"><code class="docutils literal notranslate"><span class="pre">-i</span></code> (command option only)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#io-command-option-only"><code class="docutils literal notranslate"><span class="pre">--io</span></code> (command option only)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#o-i-io"><code class="docutils literal notranslate"><span class="pre">-o</span></code>, <code class="docutils literal notranslate"><span class="pre">-i</span></code>, <code class="docutils literal notranslate"><span class="pre">--io</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -1494,8 +1492,8 @@ information.</p>
 </div>
 <p>Imaginary part of self energy (linewidth/2) is recovered by the following
 script:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">h5py</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="n">gd</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;gamma_detail-mxxx-gx.hdf5&quot;</span><span class="p">)</span>
 <span class="n">temp_index</span> <span class="o">=</span> <span class="mi">30</span> <span class="c1"># index of temperature</span>
@@ -1514,8 +1512,8 @@ from this symmetrization, the values must be equivalent between them.</p>
 <p>To understand each contribution of triptle to imaginary part of self energy,
 reading <code class="docutils literal notranslate"><span class="pre">phonon-mxxx.hdf5</span></code> is useful (see <a class="reference internal" href="#write-phonon-option"><span class="std std-ref">--write-phonon (WRITE_PHONON = .TRUE.)</span></a>). For
 example, phonon triplets of three phonon scatterings are obtained by</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">h5py</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="n">gd</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;gamma_detail-mxxx-gx.hdf5&quot;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
 <span class="n">ph</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;phonon-mxxx.hdf5&quot;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
@@ -1611,41 +1609,49 @@ set. Other filters (<code class="docutils literal notranslate"><span class="pre"
 documentation
 (<a class="reference external" href="http://docs.h5py.org/en/stable/high/dataset.html#filter-pipeline">http://docs.h5py.org/en/stable/high/dataset.html#filter-pipeline</a>).</p>
 </section>
-<section id="o-command-option-only">
-<span id="output-filename-option"></span><h3><code class="docutils literal notranslate"><span class="pre">-o</span></code> (command option only)<a class="headerlink" href="#o-command-option-only" title="Link to this heading">#</a></h3>
-<p>This modifies default output file names to write.</p>
-<p>Using this option, output file names are slightly modified. For example, with
-<code class="docutils literal notranslate"><span class="pre">-o</span> <span class="pre">iso</span></code>, a file name <code class="docutils literal notranslate"><span class="pre">kappa-m191919.hdf5</span></code> is changed to
-<code class="docutils literal notranslate"><span class="pre">kappa-m191919.iso.hdf5</span></code>.</p>
-<p>This rule is applied to</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">kappa-xxx.hdf5</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">phonon-xxx.hdf5</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">pp-xxx.hdf5</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">gamma_detail-xxx.hdf5</span></code> (write only)</p></li>
-</ul>
-</section>
-<section id="i-command-option-only">
-<span id="input-filename-option"></span><h3><code class="docutils literal notranslate"><span class="pre">-i</span></code> (command option only)<a class="headerlink" href="#i-command-option-only" title="Link to this heading">#</a></h3>
-<p>This modifies default input file names to read.</p>
-<p>Using this option, input file names are slightly modified. For example,
-specifying <code class="docutils literal notranslate"><span class="pre">-i</span> <span class="pre">iso</span> <span class="pre">--fc3</span></code>, a file name <code class="docutils literal notranslate"><span class="pre">fc3.iso.hdf5</span></code> is read instead of
-<code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code>.</p>
-<p>This rule is applied to</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">kappa-xxx.hdf5</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">phonon-xxx.hdf5</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">pp-xxx.hdf5</span></code></p></li>
-</ul>
-</section>
-<section id="io-command-option-only">
-<h3><code class="docutils literal notranslate"><span class="pre">--io</span></code> (command option only)<a class="headerlink" href="#io-command-option-only" title="Link to this heading">#</a></h3>
-<p>This modifies default input and output file names.</p>
-<p>This is equivalent to setting <code class="docutils literal notranslate"><span class="pre">-i</span></code> and <code class="docutils literal notranslate"><span class="pre">-o</span></code> simultaneously.</p>
+<section id="o-i-io">
+<h3><code class="docutils literal notranslate"><span class="pre">-o</span></code>, <code class="docutils literal notranslate"><span class="pre">-i</span></code>, <code class="docutils literal notranslate"><span class="pre">--io</span></code><a class="headerlink" href="#o-i-io" title="Link to this heading">#</a></h3>
+<p>These options are deprecated.</p>
+<!-- (output_filename_option)=
+### `-o` (command option only)
+
+This modifies default output file names to write.
+
+Using this option, output file names are slightly modified. For example, with
+`-o iso`, a file name `kappa-m191919.hdf5` is changed to
+`kappa-m191919.iso.hdf5`.
+
+This rule is applied to
+
+* `fc3.hdf5`
+* `fc2.hdf5`
+* `kappa-xxx.hdf5`
+* `phonon-xxx.hdf5`
+* `pp-xxx.hdf5`
+* `gamma_detail-xxx.hdf5` (write only)
+
+(input_filename_option)=
+### `-i` (command option only)
+
+This modifies default input file names to read.
+
+Using this option, input file names are slightly modified. For example,
+specifying `-i iso --fc3`, a file name `fc3.iso.hdf5` is read instead of
+`fc3.hdf5`.
+
+This rule is applied to
+
+* `fc3.hdf5`
+* `fc2.hdf5`
+* `kappa-xxx.hdf5`
+* `phonon-xxx.hdf5`
+* `pp-xxx.hdf5`
+
+### `--io` (command option only)
+
+This modifies default input and output file names.
+
+This is equivalent to setting `-i` and `-o` simultaneously. -->
 <!-- ## References
 
 ```{bibliography}
@@ -1823,9 +1829,7 @@ specifying <code class="docutils literal notranslate"><span class="pre">-i</span
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#read-phonon-read-phonon-true"><code class="docutils literal notranslate"><span class="pre">--read-phonon</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_PHONON</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#write-pp-write-pp-true-and-read-pp-read-pp-true"><code class="docutils literal notranslate"><span class="pre">--write-pp</span></code> (<code class="docutils literal notranslate"><span class="pre">WRITE_PP</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>) and <code class="docutils literal notranslate"><span class="pre">--read-pp</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_PP</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#hdf5-compression-command-option-only"><code class="docutils literal notranslate"><span class="pre">--hdf5-compression</span></code> (command option only)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#o-command-option-only"><code class="docutils literal notranslate"><span class="pre">-o</span></code> (command option only)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#i-command-option-only"><code class="docutils literal notranslate"><span class="pre">-i</span></code> (command option only)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#io-command-option-only"><code class="docutils literal notranslate"><span class="pre">--io</span></code> (command option only)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#o-i-io"><code class="docutils literal notranslate"><span class="pre">-o</span></code>, <code class="docutils literal notranslate"><span class="pre">-i</span></code>, <code class="docutils literal notranslate"><span class="pre">--io</span></code></a></li>
 </ul>
 </li>
 </ul>
