@@ -1358,8 +1358,11 @@ set. Other filters (`lzf` or integer values of 0 to 9) may be used, see h5py
 documentation
 (<http://docs.h5py.org/en/stable/high/dataset.html#filter-pipeline>).
 
-(output_filename_option)=
+### `-o`, `-i`, `--io`
 
+These options are deprecated.
+
+<!-- (output_filename_option)=
 ### `-o` (command option only)
 
 This modifies default output file names to write.
@@ -1378,7 +1381,6 @@ This rule is applied to
 * `gamma_detail-xxx.hdf5` (write only)
 
 (input_filename_option)=
-
 ### `-i` (command option only)
 
 This modifies default input file names to read.
@@ -1399,7 +1401,7 @@ This rule is applied to
 
 This modifies default input and output file names.
 
-This is equivalent to setting `-i` and `-o` simultaneously.
+This is equivalent to setting `-i` and `-o` simultaneously. -->
 
 <!-- ## References
 

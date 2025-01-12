@@ -39,6 +39,7 @@ from __future__ import annotations
 import argparse
 import pathlib
 import sys
+import warnings
 from typing import Optional
 
 import numpy as np
@@ -154,12 +155,10 @@ def finalize_phono3py(
     else:
         yaml_filename = filename
 
-    if phono3py.mlp_dataset is not None:
+    if phono3py.mlp is not None and phono3py.dataset is not None:
         mlp_eval_filename = "phono3py_mlp_eval_dataset.yaml"
         if log_level:
-            print(
-                f'Dataset generated using MMLPs was written in "{mlp_eval_filename}".'
-            )
+            print(f'Dataset generated using MLPs was written in "{mlp_eval_filename}".')
         phono3py.save(mlp_eval_filename)
 
     _physical_units = get_default_physical_units(phono3py.calculator)
@@ -307,9 +306,26 @@ def read_phono3py_settings(args, argparse_control, log_level):
 
 def get_input_output_filenames_from_args(args):
     """Return strings inserted to input and output filenames."""
+    if args.input_filename is not None:
+        warnings.warn(
+            "-i option is deprecated and will be removed soon.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
     input_filename = args.input_filename
+    if args.output_filename is not None:
+        warnings.warn(
+            "-o option is deprecated and will be removed soon.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
     output_filename = args.output_filename
     if args.input_output_filename is not None:
+        warnings.warn(
+            "--io option is deprecated and will be removed soon.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         input_filename = args.input_output_filename
         output_filename = args.input_output_filename
     return input_filename, output_filename
