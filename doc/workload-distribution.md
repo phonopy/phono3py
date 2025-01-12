@@ -54,13 +54,11 @@ indices are chosen and executed as follows:
 % phono3py-load --mesh 19 19 19 --br --gp "0,1,2,3,4,5,6,7,8,9,20,21,22,23,24,25" --write-gamma
 ```
 
-Then many `kappa-m191919-gx.hdf5` files are generated. These file
-names should not be altered because in reading the data by phono3py,
-those file names are supposed to be so, though there is a little
-freedom to arrange those file names, for which see {ref}`-o <output_filename_option>` and {ref}`-i <input_filename_option>`
-options. After completing calculations for all irreducible grid-point
-indices, the RTA thermal conductivity is computed by another run in a
-short time from the stored data:
+Then many `kappa-m191919-gx.hdf5` files are generated. These file names should
+not be altered because in reading the data by phono3py, those file names are
+supposed to be so. After completing calculations for all irreducible grid-point
+indices, the RTA thermal conductivity is computed by another run in a short time
+from the stored data:
 
 ```bash
 % phono3py-load --mesh 19 19 19 --br --read-gamma
