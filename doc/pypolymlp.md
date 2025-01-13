@@ -230,7 +230,7 @@ Max drift of fc2: -0.000000 (zz) -0.000000 (zz)
 fc3 was written into "fc3.hdf5".
 fc2 was written into "fc2.hdf5".
 ----------- None of ph-ph interaction calculation was performed. -----------
-Dataset generated using MMLPs was written in "phono3py_mlp_eval_dataset.yaml".
+Dataset generated using MLPs was written in "phono3py_mlp_eval_dataset.yaml".
 Summary of calculation was written in "phono3py.yaml".
 -------------------------[time 2024-09-19 15:21:41]-------------------------
                  _
@@ -334,7 +334,7 @@ Max drift of fc2: 0.000000 (xx) 0.000000 (xx)
 fc3 was written into "fc3.hdf5".
 fc2 was written into "fc2.hdf5".
 ----------- None of ph-ph interaction calculation was performed. -----------
-Dataset generated using MMLPs was written in "phono3py_mlp_eval_dataset.yaml".
+Dataset generated using MLPs was written in "phono3py_mlp_eval_dataset.yaml".
 Summary of calculation was written in "phono3py.yaml".
 -------------------------[time 2024-09-19 15:34:41]-------------------------
                  _
@@ -352,6 +352,89 @@ displacements are generated. These displacements are then inverted, resulting in
 an additional 200 supercells. In total, 400 supercells are created. The forces
 for these supercells are then evaluated. Finally, the force constants are
 calculated using symfc.
+
+### Command options for force constants calculation
+
+After obtaining the MLPs, displacements are generated using those MLPs, and the
+resulting forces are computed accordingly. The displacement distance is set by
+the `--amplitude` option, whose default value is 0.001 Angstrom. When the `--rd`
+option is used, it specifies the number of supercells with random directional
+displacements. Note that to achieve accurate force constants, the actual number
+of generated supercells is twice the specified number. Additionally, when using
+`--rd`, the `--symfc` option must be used together. If `--rd` is omitted,
+systematic displacements are introduced, and thus `--symfc` is not required.
+
+Once the file `phono3py.pmlp` is obtained, force constants can be calculated
+using MLPs from `phono3py.pmlp`. After removing the `fc3.hdf5` and `fc2.hdf5`
+files, `phono3py-load` will detect `phono3py.pmlp` and then compute the force
+constants by loading the MLPs from `phono3py.pmlp` as follows:
+
+```
+% phono3py-load --pypolymlp --rd 100 --symfc --amplitude 0.01 phono3py.yaml
+        _                      _____
+  _ __ | |__   ___  _ __   ___|___ / _ __  _   _
+ | '_ \| '_ \ / _ \| '_ \ / _ \ |_ \| '_ \| | | |
+ | |_) | | | | (_) | | | | (_) |__) | |_) | |_| |
+ | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
+ |_|                                |_|    |___/
+                      3.11.1-dev14+g5f281b65
+
+-------------------------[time 2025-01-12 10:08:31]-------------------------
+Compiled with OpenMP support (max 10 threads).
+Running in phono3py.load mode.
+Python version 3.12.3
+Spglib version 2.5.0
+----------------------------- General settings -----------------------------
+HDF5 data compression filter: gzip
+Crystal structure was read from "phono3py.yaml".
+Supercell (dim): [2 2 2]
+Primitive matrix:
+  [0.  0.5 0.5]
+  [0.5 0.  0.5]
+  [0.5 0.5 0. ]
+Spacegroup: Fm-3m (225)
+Use -v option to watch primitive cell, unit cell, and supercell structures.
+NAC parameters were read from "phono3py.yaml".
+----------------------------- Force constants ------------------------------
+----------------------------- pypolymlp start ------------------------------
+Pypolymlp is a generator of polynomial machine learning potentials.
+Please cite the paper: A. Seko, J. Appl. Phys. 133, 011101 (2023).
+Pypolymlp is developed at https://github.com/sekocha/pypolymlp.
+Load MLPs from "phono3py.pmlp".
+------------------------------ pypolymlp end -------------------------------
+Generate random displacements
+  Twice of number of snapshots will be generated for plus-minus displacements.
+  Displacement distance: 0.01
+Evaluate forces in 200 supercells by pypolymlp
+-------------------------------- Symfc start -------------------------------
+Symfc is a force constants calculator. See the following paper:
+A. Seko and A. Togo, Phys. Rev. B, 110, 214302 (2024).
+Symfc is developed at https://github.com/symfc/symfc.
+Computing [2, 3] order force constants.
+Increase log-level to watch detailed symfc log.
+--------------------------------- Symfc end --------------------------------
+-------------------------------- Symfc start -------------------------------
+Symfc is a force constants calculator. See the following paper:
+A. Seko and A. Togo, Phys. Rev. B, 110, 214302 (2024).
+Symfc is developed at https://github.com/symfc/symfc.
+Computing [2] order force constants.
+Increase log-level to watch detailed symfc log.
+--------------------------------- Symfc end --------------------------------
+Max drift of fc3: -0.000000 (zxz) -0.000000 (xzz) -0.000000 (xzz)
+Max drift of fc2: -0.000000 (yy) -0.000000 (yy)
+fc3 was written into "fc3.hdf5".
+fc2 was written into "fc2.hdf5".
+----------- None of ph-ph interaction calculation was performed. -----------
+Dataset generated using MLPs was written in "phono3py_mlp_eval_dataset.yaml".
+Summary of calculation was written in "phono3py.yaml".
+-------------------------[time 2025-01-12 10:08:40]-------------------------
+                 _
+   ___ _ __   __| |
+  / _ \ '_ \ / _` |
+ |  __/ | | | (_| |
+  \___|_| |_|\__,_|
+```
+
 
 ## Parameters for developing MLPs
 

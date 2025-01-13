@@ -36,6 +36,7 @@
 from __future__ import annotations
 
 import copy
+import warnings
 from collections.abc import Sequence
 from typing import Literal, Optional, Union
 
@@ -2091,13 +2092,26 @@ class Phono3py:
             When writing results into files in hdf5, large data are compressed
             by this options. See the detail at h5py documentation.
         input_filename : str, optional, default is None
-            When specified, the string is inserted before filename extension
-            in reading files.
+            Deprecated. When specified, the string is inserted before filename
+            extension in reading files.
         output_filename : str, optional, default is None
-            When specified, the string is inserted before filename extension
-            in writing files.
+            Deprecated. When specified, the string is inserted before filename
+            extension in writing files.
 
         """
+        if input_filename is not None:
+            warnings.warn(
+                "input_filename parameter is deprecated.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        if output_filename is not None:
+            warnings.warn(
+                "output_filename parameter is deprecated.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
         if self._interaction is None:
             msg = (
                 "Phono3py.init_phph_interaction has to be called "

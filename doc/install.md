@@ -41,7 +41,6 @@ removed.
 If phono3py is compiled with a special compiler or special options, manual
 modification of `CMakeLists.txt` may be needed.
 
-- {ref}`OpenMP library <install_openmp>`: For the multithreding support.
 - {ref}`Linear algebra library <install_lapacke>`: BLAS, LAPACK, and LAPACKE
   (optional, see {ref}`install_with_lapacke`)
 
