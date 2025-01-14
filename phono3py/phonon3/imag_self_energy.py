@@ -732,7 +732,7 @@ def get_imag_self_energy(
                     "--------------------"
                 )
             print("Grid point: %d" % gp)
-            print("Number of ir-triplets: " "%d / %d" % (len(weights), weights.sum()))
+            print("Number of ir-triplets: %d / %d" % (len(weights), weights.sum()))
 
         ise.run_interaction()
         frequencies = interaction.get_phonons()[0][gp]
