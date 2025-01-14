@@ -741,7 +741,7 @@ class GridMatrix:
         tmat_inv = np.linalg.inv(transformation_matrix)
         tmat_inv_int = np.rint(tmat_inv).astype(int)
         if (tmat_inv - tmat_inv_int > 1e-8).all():
-            msg = "Inverse of transformation matrix has to be an " "integer matrix."
+            msg = "Inverse of transformation matrix has to be an integer matrix."
             raise RuntimeError(msg)
         if determinant(tmat_inv_int) < 0:
             msg = "Determinant of transformation matrix has to be positive."

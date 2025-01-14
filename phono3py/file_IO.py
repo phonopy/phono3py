@@ -1333,7 +1333,7 @@ def read_pp_from_hdf5(
             # check_consistency==True in write_pp_to_hdf5 required.
             if check_consistency and g_zero is not None:
                 if verbose:
-                    print("Checking consistency of ph-ph interanction " "strength.")
+                    print("Checking consistency of ph-ph interanction strength.")
                 assert (g_zero == f["g_zero"][:]).all()
                 assert np.allclose(pp, f["pp"][:])
         else:

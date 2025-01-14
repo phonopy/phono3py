@@ -230,7 +230,7 @@ def _get_parser():
     parser.add_argument(
         "--trace",
         action="store_true",
-        help=("Output the traces of the tensors " "rather than the unique elements"),
+        help=("Output the traces of the tensors rather than the unique elements"),
     )
     parser.add_argument(
         "--smearing",
@@ -329,7 +329,7 @@ def main():
     conditions = frequencies > 0
     if np.logical_not(conditions).sum() > 3:
         sys.stderr.write(
-            "# Imaginary frequencies are found. " "They are set to be zero.\n"
+            "# Imaginary frequencies are found. They are set to be zero.\n"
         )
         frequencies = np.where(conditions, frequencies, 0)
 
