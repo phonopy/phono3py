@@ -615,7 +615,18 @@ def _store_force_constants(ph3py: Phono3py, settings: Phono3pySettings, log_leve
             log_level=log_level,
         )
     except ForceCalculatorRequiredError:
-        _show_fc_calculator_not_found(log_level)
+        if log_level:
+            print("Symfc will be used to handle general (or random) displacements.")
+
+        compute_force_constants_from_datasets(
+            ph3py,
+            fc_calculator="symfc",
+            fc_calculator_options=fc_calculator_options,
+            symmetrize_fc=settings.fc_symmetry,
+            is_compact_fc=settings.is_compact_fc,
+            log_level=log_level,
+        )
+        # _show_fc_calculator_not_found(log_level)
 
     if log_level:
         if ph3py.fc3 is None:
