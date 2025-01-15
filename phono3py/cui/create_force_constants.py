@@ -514,6 +514,7 @@ def run_pypolymlp_to_compute_forces(
     displacement_distance: Optional[float] = None,
     number_of_snapshots: Optional[int] = None,
     random_seed: Optional[int] = None,
+    prepare_dataset: bool = False,
     mlp_filename: str = "phono3py.pmlp",
     log_level: int = 0,
 ):
@@ -546,43 +547,44 @@ def run_pypolymlp_to_compute_forces(
     if log_level:
         print("-" * 30 + " pypolymlp end " + "-" * 31, flush=True)
 
-    if displacement_distance is None:
-        _displacement_distance = 0.001
-    else:
-        _displacement_distance = displacement_distance
-
-    if log_level:
-        if number_of_snapshots:
-            print("Generate random displacements")
-            print(
-                "  Twice of number of snapshots will be generated "
-                "for plus-minus displacements."
-            )
+    if prepare_dataset:
+        if displacement_distance is None:
+            _displacement_distance = 0.001
         else:
-            print("Generate displacements")
-        print(
-            f"  Displacement distance: {_displacement_distance:.5f}".rstrip("0").rstrip(
-                "."
+            _displacement_distance = displacement_distance
+
+        if log_level:
+            if number_of_snapshots:
+                print("Generate random displacements")
+                print(
+                    "  Twice of number of snapshots will be generated "
+                    "for plus-minus displacements."
+                )
+            else:
+                print("Generate displacements")
+            print(
+                f"  Displacement distance: {_displacement_distance:.5f}".rstrip(
+                    "0"
+                ).rstrip(".")
             )
-        )
-    ph3py.generate_displacements(
-        distance=_displacement_distance,
-        is_plusminus=True,
-        number_of_snapshots=number_of_snapshots,
-        random_seed=random_seed,
-    )
-
-    if log_level:
-        print(
-            f"Evaluate forces in {ph3py.displacements.shape[0]} supercells "
-            "by pypolymlp",
-            flush=True,
+        ph3py.generate_displacements(
+            distance=_displacement_distance,
+            is_plusminus=True,
+            number_of_snapshots=number_of_snapshots,
+            random_seed=random_seed,
         )
 
-    if ph3py.supercells_with_displacements is None:
-        raise RuntimeError("Displacements are not set. Run generate_displacements.")
+        if log_level:
+            print(
+                f"Evaluate forces in {ph3py.displacements.shape[0]} supercells "
+                "by pypolymlp",
+                flush=True,
+            )
 
-    ph3py.evaluate_mlp()
+        if ph3py.supercells_with_displacements is None:
+            raise RuntimeError("Displacements are not set. Run generate_displacements.")
+
+        ph3py.evaluate_mlp()
 
 
 def run_pypolymlp_to_compute_phonon_forces(
