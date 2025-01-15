@@ -206,7 +206,9 @@ def get_run_mode(settings):
         run_mode = "conductivity-RTA"
     elif settings.is_lbte:
         run_mode = "conductivity-LBTE"
-    elif settings.create_displacements:
+    elif (
+        settings.create_displacements or settings.random_displacements is not None
+    ) and not settings.use_pypolymlp:
         run_mode = "displacements"
     elif settings.write_phonon:
         run_mode = "phonon"

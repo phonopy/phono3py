@@ -162,16 +162,16 @@ crystal symmetry.
 Having `phono3py_params.yaml`, phono3py is executed with `--pypolymlp` option,
 
 ```
-% phono3py-load --pypolymlp phono3py_params.yaml
+% phono3py-load phono3py_params.yaml --pypolymlp -d
         _                      _____
   _ __ | |__   ___  _ __   ___|___ / _ __  _   _
  | '_ \| '_ \ / _ \| '_ \ / _ \ |_ \| '_ \| | | |
  | |_) | | | | (_) | | | | (_) |__) | |_) | |_| |
  | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
  |_|                                |_|    |___/
-                                           3.5.0
+                                      3.11.2
 
--------------------------[time 2024-09-19 15:20:27]-------------------------
+-------------------------[time 2025-01-15 16:25:17]-------------------------
 Compiled with OpenMP support (max 10 threads).
 Running in phono3py.load mode.
 Python version 3.12.6
@@ -187,7 +187,6 @@ Primitive matrix:
 Spacegroup: Fm-3m (225)
 Use -v option to watch primitive cell, unit cell, and supercell structures.
 NAC parameters were read from "phono3py_params.yaml".
------------------------------ Force constants ------------------------------
 Displacement dataset for fc3 was read from "phono3py_params.yaml".
 ----------------------------- pypolymlp start ------------------------------
 Pypolymlp is a generator of polynomial machine learning potentials.
@@ -204,16 +203,17 @@ Clear training X.T @ X
 Calculate X.T @ X for test data
 Clear test X.T @ X
 Regression: model selection ...
-- alpha = 1.000e-03 : rmse (train, test) = 9.39542e+14 9.39543e+14
-- alpha = 1.000e-02 : rmse (train, test) = 9.39542e+14 9.39543e+14
-- alpha = 1.000e-01 : rmse (train, test) = 0.03738 0.04961
-- alpha = 1.000e+00 : rmse (train, test) = 0.03900 0.04742
-- alpha = 1.000e+01 : rmse (train, test) = 0.04058 0.04584
+- alpha = 1.000e-03 : rmse (train, test) = 1.12211e+15 1.12211e+15
+- alpha = 1.000e-02 : rmse (train, test) = 1.12211e+15 1.12211e+15
+- alpha = 1.000e-01 : rmse (train, test) = 0.00002 0.00002
+- alpha = 1.000e+00 : rmse (train, test) = 0.00002 0.00002
+- alpha = 1.000e+01 : rmse (train, test) = 0.00002 0.00002
 MLPs were written into "phono3py.pmlp"
 ------------------------------ pypolymlp end -------------------------------
 Generate displacements
   Displacement distance: 0.001
 Evaluate forces in 292 supercells by pypolymlp
+----------------------------- Force constants ------------------------------
 Computing fc3[ 1, x, x ] using numpy.linalg.pinv.
 Displacements (in Angstrom):
     [ 0.0010  0.0000  0.0000]
@@ -225,14 +225,14 @@ Displacements (in Angstrom):
 Expanding fc3.
 fc3 was symmetrized.
 fc2 was symmetrized.
-Max drift of fc3: -0.000000 (zzz) -0.000000 (zzz) -0.000000 (zzz)
-Max drift of fc2: -0.000000 (zz) -0.000000 (zz)
+Max drift of fc3: 0.000000 (xxx) 0.000000 (xxx) 0.000000 (xxx)
+Max drift of fc2: 0.000000 (yy) 0.000000 (yy)
 fc3 was written into "fc3.hdf5".
 fc2 was written into "fc2.hdf5".
 ----------- None of ph-ph interaction calculation was performed. -----------
 Dataset generated using MLPs was written in "phono3py_mlp_eval_dataset.yaml".
 Summary of calculation was written in "phono3py.yaml".
--------------------------[time 2024-09-19 15:21:41]-------------------------
+-------------------------[time 2025-01-15 16:26:37]-------------------------
                  _
    ___ _ __   __| |
   / _ \ '_ \ / _` |
