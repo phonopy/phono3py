@@ -67,9 +67,13 @@ def test_phono3py_load():
             file_path.unlink()
 
 
-@pytest.mark.parametrize("fc_calculator,exit_code", [(None, 1), ("symfc", 0)])
+@pytest.mark.parametrize("fc_calculator,exit_code", [(None, 0), ("symfc", 0)])
 def test_phono3py_load_with_typeII_dataset(fc_calculator, exit_code):
-    """Test phono3py-load script with typeII dataset."""
+    """Test phono3py-load script with typeII dataset.
+
+    When None, fallback to symfc.
+
+    """
     pytest.importorskip("symfc")
     argparse_control = _get_phono3py_load_args(
         cwd / ".." / "phono3py_params-Si111-rd.yaml.xz", fc_calculator=fc_calculator
