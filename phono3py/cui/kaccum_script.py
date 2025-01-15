@@ -85,7 +85,7 @@ def _get_ir_grid_info(bz_grid: BZGrid, weights, qpoints=None, ir_grid_points=Non
 
     """
     (ir_grid_points_ref, weights_ref, ir_grid_map) = get_ir_grid_points(bz_grid)
-
+    ir_grid_points_ref = bz_grid.grg2bzg[ir_grid_points_ref]
     _assert_grid_in_hdf5(
         weights, qpoints, ir_grid_points, weights_ref, ir_grid_points_ref, bz_grid
     )
@@ -116,7 +116,8 @@ def _assert_grid_in_hdf5(
         D_diag = bz_grid.D_diag.astype("double")
         qpoints_for_check = np.dot(addresses / D_diag, bz_grid.Q.T)
         diff_q = qpoints - qpoints_for_check
-        np.testing.assert_almost_equal(diff_q, np.rint(diff_q))
+        diff_q -= np.rint(diff_q)
+        np.testing.assert_allclose(diff_q, 0, atol=1e-5)
 
 
 def _get_calculator(args):
@@ -299,7 +300,10 @@ def main():
     if "weight" in f_kappa:
         frequencies = f_kappa["frequency"][:]
         ir_weights = f_kappa["weight"][:]
-        ir_grid_points_BZ = None
+        if "grid_point" in f_kappa:
+            ir_grid_points_BZ = f_kappa["grid_point"][:]
+        else:
+            ir_grid_points_BZ = None
         qpoints = f_kappa["qpoint"][:]
     elif "ir_grid_weights" in f_kappa and not args.no_gridsym:
         ir_weights = f_kappa["ir_grid_weights"][:]
@@ -321,11 +325,9 @@ def main():
         ir_grid_map = None
     else:
         ir_grid_points, ir_grid_map = _get_ir_grid_info(
-            bz_grid,
-            ir_weights,
-            qpoints=qpoints,
-            ir_grid_points=bz_grid.bzg2grg[ir_grid_points_BZ],
+            bz_grid, ir_weights, qpoints=qpoints, ir_grid_points=ir_grid_points_BZ
         )
+        ir_grid_points = bz_grid.bzg2grg[ir_grid_points]
     conditions = frequencies > 0
     if np.logical_not(conditions).sum() > 3:
         sys.stderr.write(
