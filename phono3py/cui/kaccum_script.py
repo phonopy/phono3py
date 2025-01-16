@@ -2,11 +2,12 @@
 
 import argparse
 import sys
+from typing import Optional
 
 import h5py
 import numpy as np
 from phonopy.cui.collect_cell_info import collect_cell_info
-from phonopy.interface.calculator import read_crystal_structure
+from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.symmetry import Symmetry
 
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
@@ -61,7 +62,12 @@ def _set_T_target(temperatures, mode_prop, T_target, mean_freepath=None):
                 return temperatures, mode_prop
 
 
-def _get_ir_grid_info(bz_grid: BZGrid, weights, qpoints=None, ir_grid_points=None):
+def _get_ir_grid_info(
+    bz_grid: BZGrid,
+    weights: np.ndarray,
+    qpoints: Optional[np.ndarray] = None,
+    ir_grid_points: Optional[np.ndarray] = None,
+) -> tuple[np.ndarray, np.ndarray]:
     """Return ir-grid point information.
 
     Parameters
@@ -80,7 +86,7 @@ def _get_ir_grid_info(bz_grid: BZGrid, weights, qpoints=None, ir_grid_points=Non
     ir_grid_points : ndarray
         Ir-grid point indices in BZ-grid.
         shape=(ir_grid_points, ), dtype='long'
-    ir_grid_map : ndarray, optional, default=None
+    ir_grid_map : ndarray
         Mapping table to ir-grid point indices in GR-grid.
 
     """
@@ -118,37 +124,6 @@ def _assert_grid_in_hdf5(
         diff_q = qpoints - qpoints_for_check
         diff_q -= np.rint(diff_q)
         np.testing.assert_allclose(diff_q, 0, atol=1e-5)
-
-
-def _get_calculator(args):
-    """Return calculator name."""
-    interface_mode = None
-    # if args.qe_mode:
-    #     interface_mode = "qe"
-    # elif args.crystal_mode:
-    #     interface_mode = "crystal"
-    # elif args.abinit_mode:
-    #     interface_mode = "abinit"
-    # elif args.turbomole_mode:
-    #     interface_mode = "turbomole"
-    return interface_mode
-
-
-def _read_files(args):
-    """Read crystal structure and kappa.hdf5 files."""
-    interface_mode = _get_calculator(args)
-    if len(args.filenames) > 1:
-        cell, _ = read_crystal_structure(
-            args.filenames[0], interface_mode=interface_mode
-        )
-        f = h5py.File(args.filenames[1], "r")
-    else:
-        cell, _ = read_crystal_structure(
-            args.cell_filename, interface_mode=interface_mode
-        )
-        f = h5py.File(args.filenames[0], "r")
-
-    return cell, f
 
 
 def _get_mode_property(args, f_kappa):
@@ -249,6 +224,200 @@ def _get_parser():
     return args
 
 
+def _read_files(args: argparse.Namespace) -> tuple[h5py.File, PhonopyAtoms]:
+    primitive = None
+    cell_info = collect_cell_info(
+        supercell_matrix=np.eye(3, dtype=int),
+        phonopy_yaml_cls=Phono3pyYaml,
+    )
+    cell_filename = cell_info["optional_structure_info"][0]
+    print(f'# Crystal structure was read from "{cell_filename}".')
+    cell = cell_info["unitcell"]
+    phpy_yaml = cell_info.get("phonopy_yaml", None)
+    if phpy_yaml is not None:
+        primitive = cell_info["phonopy_yaml"].primitive
+        if primitive is None:
+            primitive = cell
+    f_kappa = h5py.File(args.filenames[0], "r")
+    return f_kappa, primitive
+
+
+def _collect_data(
+    f_kappa: h5py.File, primitive: PhonopyAtoms, args: argparse.Namespace
+) -> tuple[
+    Optional[np.ndarray],
+    Optional[np.ndarray],
+    np.ndarray,
+    BZGrid,
+    np.ndarray,
+    np.ndarray,
+]:
+    # bz_grid
+    if "grid_matrix" in f_kappa:
+        mesh = np.array(f_kappa["grid_matrix"][:], dtype="long")
+    else:
+        mesh = np.array(f_kappa["mesh"][:], dtype="long")
+    primitive_symmetry = Symmetry(primitive)
+    bz_grid = BZGrid(
+        mesh,
+        lattice=primitive.cell,
+        symmetry_dataset=primitive_symmetry.dataset,
+        store_dense_gp_map=True,
+    )
+
+    # temperatures
+    if "temperature" in f_kappa:
+        temperatures = f_kappa["temperature"][:]
+    else:
+        temperatures = np.zeros(1, dtype="double")
+
+    # frequencies, ir_weights
+    if "weight" in f_kappa:
+        # This is to read "kappa-xxx.hdf5".
+        # ir_grid_points_BZ in BZ-grid index will be transformed to GR-grid index.
+        print("# Read frequency, weight, qpoint, and optionally grid_point.")
+        frequencies = f_kappa["frequency"][:]
+        ir_weights = f_kappa["weight"][:]
+        if "grid_point" in f_kappa:
+            ir_grid_points_BZ = f_kappa["grid_point"][:]
+        else:
+            ir_grid_points_BZ = None
+        qpoints = f_kappa["qpoint"][:]
+    elif "ir_grid_weights" in f_kappa and not args.no_gridsym:
+        # This is to read "phonon-xxx.hdf5".
+        print("# Read ir_grid_weights.")
+        ir_weights = f_kappa["ir_grid_weights"][:]
+        ir_grid_points_BZ = f_kappa["ir_grid_points"][:]
+        qpoints = None
+        frequencies = np.array(f_kappa["frequency"][ir_grid_points_BZ], dtype="double")
+    else:
+        print("# Read frequency.")
+        frequencies = f_kappa["frequency"][:]
+        ir_weights = np.ones(len(frequencies), dtype="long")
+
+    # ir_grid_points (GR-grid), ir_grid_map (GR-grid)
+    if args.no_gridsym or (ir_weights == 1).all():
+        ir_grid_points = None
+        ir_grid_map = None
+    else:
+        ir_grid_points, ir_grid_map = _get_ir_grid_info(
+            bz_grid, ir_weights, qpoints=qpoints, ir_grid_points=ir_grid_points_BZ
+        )
+        ir_grid_points = bz_grid.bzg2grg[ir_grid_points]
+
+    conditions = frequencies > 0
+    if np.logical_not(conditions).sum() > 3:
+        sys.stderr.write(
+            "# Imaginary frequencies are found. They are set to be zero.\n"
+        )
+        frequencies = np.where(conditions, frequencies, 0)
+
+    return ir_grid_points, ir_grid_map, ir_weights, bz_grid, frequencies, temperatures
+
+
+def _run_scalar(
+    args: argparse.Namespace,
+    f_kappa: h5py.File,
+    temperatures: np.ndarray,
+    frequencies: np.ndarray,
+    ir_weights: np.ndarray,
+    ir_grid_map: Optional[np.ndarray],
+    ir_grid_points: Optional[np.ndarray],
+    bz_grid: BZGrid,
+):
+    mode_prop = _get_mode_property(args, f_kappa)
+
+    if args.temperature is not None and not (
+        args.gv_norm or args.pqj or args.gruneisen or args.dos
+    ):
+        temperatures, mode_prop = _set_T_target(
+            temperatures, mode_prop, args.temperature
+        )
+    if args.smearing:
+        mode_prop_dos = GammaDOSsmearing(
+            mode_prop,
+            frequencies,
+            ir_weights,
+            num_sampling_points=args.num_sampling_points,
+        )
+        sampling_points, gdos = mode_prop_dos.get_gdos()
+        sampling_points = np.tile(sampling_points, (len(gdos), 1))
+        _show_scalar(gdos[:, :, :], temperatures, sampling_points, args)
+    else:
+        for i, w in enumerate(ir_weights):
+            mode_prop[:, i, :] *= w
+        kdos, sampling_points = run_prop_dos(
+            frequencies,
+            mode_prop[:, :, :, None],
+            ir_grid_map,
+            ir_grid_points,
+            args.num_sampling_points,
+            bz_grid,
+        )
+        _show_scalar(kdos[:, :, :, 0], temperatures, sampling_points, args)
+
+
+def _run_tensor(
+    args: argparse.Namespace,
+    f_kappa: h5py.File,
+    temperatures: np.ndarray,
+    frequencies: np.ndarray,
+    ir_grid_map: Optional[np.ndarray],
+    ir_grid_points: Optional[np.ndarray],
+    bz_grid: BZGrid,
+    primitive: PhonopyAtoms,
+):
+    if args.gv:
+        gv_sum2 = f_kappa["gv_by_gv"][:]
+        # gv x gv is divied by primitive cell volume.
+        unit_conversion = primitive.volume
+        mode_prop = gv_sum2.reshape((1,) + gv_sum2.shape) / unit_conversion
+    else:
+        if "mode_kappa" in f_kappa:
+            mode_prop = f_kappa["mode_kappa"][:]
+        else:
+            print('No "mode_kappa" in mode_prop.')
+            sys.exit(1)
+
+    if args.mfp:
+        if "mean_free_path" in f_kappa:
+            mfp = f_kappa["mean_free_path"][:]
+            mean_freepath = np.sqrt((mfp**2).sum(axis=3))
+        else:
+            mean_freepath = get_mfp(f_kappa["gamma"][:], f_kappa["group_velocity"][:])
+        if args.temperature is not None:
+            (temperatures, mode_prop, mean_freepath) = _set_T_target(
+                temperatures,
+                mode_prop,
+                args.temperature,
+                mean_freepath=mean_freepath,
+            )
+
+        kdos, sampling_points = run_mfp_dos(
+            mean_freepath,
+            mode_prop,
+            ir_grid_map,
+            ir_grid_points,
+            args.num_sampling_points,
+            bz_grid,
+        )
+        _show_tensor(kdos, temperatures, sampling_points, args)
+    else:
+        if args.temperature is not None and not args.gv:
+            temperatures, mode_prop = _set_T_target(
+                temperatures, mode_prop, args.temperature
+            )
+        kdos, sampling_points = run_prop_dos(
+            frequencies,
+            mode_prop,
+            ir_grid_map,
+            ir_grid_points,
+            args.num_sampling_points,
+            bz_grid,
+        )
+        _show_tensor(kdos, temperatures, sampling_points, args)
+
+
 def main():
     """Calculate kappa spectrum.
 
@@ -269,71 +438,16 @@ def main():
 
     """
     args = _get_parser()
-    primitive = None
     if len(args.filenames) > 1:
         raise RuntimeError(
             'Use of "phono3py-kaccum CRYSTAL_STRUCTURE_FILE" is not supported.'
         )
-    else:
-        cell_info = collect_cell_info(
-            supercell_matrix=np.eye(3, dtype=int),
-            phonopy_yaml_cls=Phono3pyYaml,
-        )
-        cell_filename = cell_info["optional_structure_info"][0]
-        print(f'# Crystal structure was read from "{cell_filename}".')
-        cell = cell_info["unitcell"]
-        phpy_yaml = cell_info.get("phonopy_yaml", None)
-        if phpy_yaml is not None:
-            primitive = cell_info["phonopy_yaml"].primitive
-            if primitive is None:
-                primitive = cell
-        f_kappa = h5py.File(args.filenames[0], "r")
 
-    if "grid_matrix" in f_kappa:
-        mesh = np.array(f_kappa["grid_matrix"][:], dtype="long")
-    else:
-        mesh = np.array(f_kappa["mesh"][:], dtype="long")
-    if "temperature" in f_kappa:
-        temperatures = f_kappa["temperature"][:]
-    else:
-        temperatures = np.zeros(1, dtype="double")
-    if "weight" in f_kappa:
-        frequencies = f_kappa["frequency"][:]
-        ir_weights = f_kappa["weight"][:]
-        if "grid_point" in f_kappa:
-            ir_grid_points_BZ = f_kappa["grid_point"][:]
-        else:
-            ir_grid_points_BZ = None
-        qpoints = f_kappa["qpoint"][:]
-    elif "ir_grid_weights" in f_kappa and not args.no_gridsym:
-        ir_weights = f_kappa["ir_grid_weights"][:]
-        ir_grid_points_BZ = f_kappa["ir_grid_points"][:]
-        qpoints = None
-        frequencies = np.array(f_kappa["frequency"][ir_grid_points_BZ], dtype="double")
-    else:
-        frequencies = f_kappa["frequency"][:]
-        ir_weights = np.ones(len(frequencies), dtype="long")
-    primitive_symmetry = Symmetry(primitive)
-    bz_grid = BZGrid(
-        mesh,
-        lattice=primitive.cell,
-        symmetry_dataset=primitive_symmetry.dataset,
-        store_dense_gp_map=True,
+    f_kappa, primitive = _read_files(args)
+
+    ir_grid_points, ir_grid_map, ir_weights, bz_grid, frequencies, temperatures = (
+        _collect_data(f_kappa, primitive, args)
     )
-    if args.no_gridsym or (ir_weights == 1).all():
-        ir_grid_points = None
-        ir_grid_map = None
-    else:
-        ir_grid_points, ir_grid_map = _get_ir_grid_info(
-            bz_grid, ir_weights, qpoints=qpoints, ir_grid_points=ir_grid_points_BZ
-        )
-        ir_grid_points = bz_grid.bzg2grg[ir_grid_points]
-    conditions = frequencies > 0
-    if np.logical_not(conditions).sum() > 3:
-        sys.stderr.write(
-            "# Imaginary frequencies are found. They are set to be zero.\n"
-        )
-        frequencies = np.where(conditions, frequencies, 0)
 
     # Run for scaler
     if (
@@ -345,82 +459,24 @@ def main():
         or args.gv_norm
         or args.dos
     ):
-        mode_prop = _get_mode_property(args, f_kappa)
-
-        if args.temperature is not None and not (
-            args.gv_norm or args.pqj or args.gruneisen or args.dos
-        ):
-            temperatures, mode_prop = _set_T_target(
-                temperatures, mode_prop, args.temperature
-            )
-        if args.smearing:
-            mode_prop_dos = GammaDOSsmearing(
-                mode_prop,
-                frequencies,
-                ir_weights,
-                num_sampling_points=args.num_sampling_points,
-            )
-            sampling_points, gdos = mode_prop_dos.get_gdos()
-            sampling_points = np.tile(sampling_points, (len(gdos), 1))
-            _show_scalar(gdos[:, :, :], temperatures, sampling_points, args)
-        else:
-            for i, w in enumerate(ir_weights):
-                mode_prop[:, i, :] *= w
-            kdos, sampling_points = run_prop_dos(
-                frequencies,
-                mode_prop[:, :, :, None],
-                ir_grid_map,
-                ir_grid_points,
-                args.num_sampling_points,
-                bz_grid,
-            )
-            _show_scalar(kdos[:, :, :, 0], temperatures, sampling_points, args)
-
+        _run_scalar(
+            args,
+            f_kappa,
+            temperatures,
+            frequencies,
+            ir_weights,
+            ir_grid_map,
+            ir_grid_points,
+            bz_grid,
+        )
     else:  # Run for tensor
-        if args.gv:
-            gv_sum2 = f_kappa["gv_by_gv"][:]
-            # gv x gv is divied by primitive cell volume.
-            unit_conversion = primitive.volume
-            mode_prop = gv_sum2.reshape((1,) + gv_sum2.shape) / unit_conversion
-        else:
-            mode_prop = f_kappa["mode_kappa"][:]
-
-        if args.mfp:
-            if "mean_free_path" in f_kappa:
-                mfp = f_kappa["mean_free_path"][:]
-                mean_freepath = np.sqrt((mfp**2).sum(axis=3))
-            else:
-                mean_freepath = get_mfp(
-                    f_kappa["gamma"][:], f_kappa["group_velocity"][:]
-                )
-            if args.temperature is not None:
-                (temperatures, mode_prop, mean_freepath) = _set_T_target(
-                    temperatures,
-                    mode_prop,
-                    args.temperature,
-                    mean_freepath=mean_freepath,
-                )
-
-            kdos, sampling_points = run_mfp_dos(
-                mean_freepath,
-                mode_prop,
-                ir_grid_map,
-                ir_grid_points,
-                args.num_sampling_points,
-                bz_grid,
-            )
-            _show_tensor(kdos, temperatures, sampling_points, args)
-        else:
-            if args.temperature is not None and not args.gv:
-                temperatures, mode_prop = _set_T_target(
-                    temperatures, mode_prop, args.temperature
-                )
-            kdos, sampling_points = run_prop_dos(
-                frequencies,
-                mode_prop,
-                ir_grid_map,
-                ir_grid_points,
-                args.num_sampling_points,
-                bz_grid,
-            )
-            _show_tensor(kdos, temperatures, sampling_points, args)
+        _run_tensor(
+            args,
+            f_kappa,
+            temperatures,
+            frequencies,
+            ir_grid_map,
+            ir_grid_points,
+            bz_grid,
+            primitive,
+        )
