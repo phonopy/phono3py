@@ -1,4 +1,4 @@
-name: wheel-build-and-deploy
+name: Build and publish wheels
 
 on:
   push:
@@ -8,12 +8,12 @@ on:
 
 jobs:
   build_wheels:
-    name: Build wheels on ${{ matrix.os }}
+    name: Build ${{ matrix.os }} wheels for Python ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        # os: [ubuntu-latest, windows-latest, macos-13, macos-latest]
+        os: [ubuntu-latest, macos-14, windows-latest]
+        python-version: ["310", "311", "312"]
 
     steps:
       - uses: actions/checkout@v4
@@ -29,25 +29,20 @@ jobs:
           git tag v`grep __version__ phono3py/version.py|awk -F'"' '{print($2)}'`
           python -m cibuildwheel --output-dir wheelhouse
         env:
-          CIBW_SKIP: "cp39-* pp* *_i686 *musllinux*"
+          CIBW_BUILD: cp${{ matrix.python-version }}-*
+          CIBW_SKIP: "pp* *_i686 *musllinux*"
           CIBW_BUILD_VERBOSITY: 1
-
-        # to supply options, put them in 'env', like:
-        # env:
-        #   CIBW_SOME_OPTION: value
+          CIBW_ARCHS_MACOS: universal2
 
       - uses: actions/upload-artifact@v4
         with:
-          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          name: cibw-wheels-${{ matrix.os }}-${{ matrix.python-version }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
 
   upload_pypi_test:
-    name: Upload to PyPI (test)
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
+    name: Upload to TestPyPI
     needs: [build_wheels]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/make-wheel-test')
     steps:
       - uses: actions/download-artifact@v4
@@ -55,20 +50,19 @@ jobs:
           pattern: cibw-wheels-*
           path: dist
           merge-multiple: true
+
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
           repository-url: https://test.pypi.org/legacy/
           skip-existing: true
+          verbose: true
 
   upload_pypi:
     name: Upload to PyPI
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
     needs: [build_wheels]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/make-wheel')
     steps:
       - uses: actions/download-artifact@v4
@@ -76,8 +70,10 @@ jobs:
           pattern: cibw-wheels-*
           path: dist
           merge-multiple: true
+
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
           skip-existing: true
+          verbose: true
