@@ -1317,9 +1317,13 @@ class Phono3py:
             if number_of_snapshots == "auto":
                 from phonopy.interface.symfc import SymfcFCSolver
 
+                if cutoff_pair_distance is None:
+                    options = None
+                else:
+                    options = {"cutoff": {3: cutoff_pair_distance}}
                 _number_of_snapshots = (
                     SymfcFCSolver(
-                        self._supercell, self._symmetry
+                        self._supercell, self._symmetry, options=options
                     ).estimate_numbers_of_supercells(orders=[3])[3]
                     * 2
                 )

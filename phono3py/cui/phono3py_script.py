@@ -66,6 +66,7 @@ from phonopy.units import Bohr, Hartree, VaspToTHz
 from phono3py import Phono3py, Phono3pyIsotope, Phono3pyJointDos
 from phono3py.cui.create_force_constants import (
     create_phono3py_force_constants,
+    get_cutoff_pair_distance,
     get_fc_calculator_params,
     run_pypolymlp_to_compute_forces,
 )
@@ -1156,12 +1157,14 @@ def main(**argparse_control):
         prepare_dataset = (
             settings.create_displacements or settings.random_displacements is not None
         )
+        cutoff_pair_distance = get_cutoff_pair_distance(settings)
         run_pypolymlp_to_compute_forces(
             ph3py,
             mlp_params=settings.mlp_params,
             displacement_distance=settings.displacement_distance,
             number_of_snapshots=settings.random_displacements,
             random_seed=settings.random_seed,
+            cutoff_pair_distance=cutoff_pair_distance,
             prepare_dataset=prepare_dataset,
             log_level=log_level,
         )

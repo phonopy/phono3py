@@ -53,8 +53,10 @@ from phonopy.harmonic.force_constants import (
 from phonopy.interface.calculator import get_default_physical_units
 from phonopy.interface.fc_calculator import fc_calculator_names
 from phonopy.interface.pypolymlp import PypolymlpParams, parse_mlp_params
+from phonopy.interface.symfc import parse_symfc_options
 
 from phono3py import Phono3py
+from phono3py.cui.settings import Phono3pySettings
 from phono3py.cui.show_log import show_phono3py_force_constants_settings
 from phono3py.file_IO import (
     get_length_of_first_line,
@@ -73,6 +75,22 @@ from phono3py.phonon3.fc3 import (
     set_translational_invariance_fc3,
     show_drift_fc3,
 )
+
+
+def get_cutoff_pair_distance(settings: Phono3pySettings) -> Optional[float]:
+    """Return cutoff_pair_distance from settings."""
+    _, fc_calculator_options = get_fc_calculator_params(settings)
+    if settings.cutoff_pair_distance is None:
+        cutoff = parse_symfc_options(
+            extract_fc2_fc3_calculators(fc_calculator_options, 3)
+        ).get("cutoff")
+        if cutoff is None:
+            cutoff_pair_distance = None
+        else:
+            cutoff_pair_distance = cutoff.get(3)
+    else:
+        cutoff_pair_distance = settings.cutoff_pair_distance
+    return cutoff_pair_distance
 
 
 def create_phono3py_force_constants(
@@ -126,15 +144,16 @@ def create_phono3py_force_constants(
                 calculator,
                 log_level,
             )
-
             if settings.use_pypolymlp:
                 phono3py.mlp_dataset = dataset
+                cutoff_pair_distance = get_cutoff_pair_distance(settings)
                 run_pypolymlp_to_compute_forces(
                     phono3py,
                     settings.mlp_params,
                     displacement_distance=settings.displacement_distance,
                     number_of_snapshots=settings.random_displacements,
                     random_seed=settings.random_seed,
+                    cutoff_pair_distance=cutoff_pair_distance,
                     log_level=log_level,
                 )
             else:
@@ -300,7 +319,9 @@ def parse_forces(
     return dataset
 
 
-def get_fc_calculator_params(settings, log_level=0):
+def get_fc_calculator_params(
+    settings: Phono3pySettings, log_level: int = 0
+) -> tuple[Optional[str], Optional[str]]:
     """Return fc_calculator and fc_calculator_params from settings."""
     fc_calculator = None
     fc_calculator_list = []
@@ -515,6 +536,7 @@ def run_pypolymlp_to_compute_forces(
     number_of_snapshots: Optional[int] = None,
     random_seed: Optional[int] = None,
     prepare_dataset: bool = False,
+    cutoff_pair_distance: Optional[float] = None,
     mlp_filename: str = "phono3py.pmlp",
     log_level: int = 0,
 ):
@@ -569,6 +591,7 @@ def run_pypolymlp_to_compute_forces(
             )
         ph3py.generate_displacements(
             distance=_displacement_distance,
+            cutoff_pair_distance=cutoff_pair_distance,
             is_plusminus=True,
             number_of_snapshots=number_of_snapshots,
             random_seed=random_seed,
