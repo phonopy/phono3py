@@ -11,8 +11,6 @@ option(PHONO3PY_WITH_TESTS "build unit tests" OFF)
 option(BUILD_SHARED_LIBS "Option to build shared library" OFF)
 option(BUILD_WITHOUT_LAPACKE "Option to build without LAPACKE" ON)
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
 if(PHONO3PY_WITH_Fortran)
     enable_language(Fortran)
     set(BUILD_GRIDSYS_LIB ON)
@@ -33,6 +31,7 @@ else()
 endif()
 
 if(BUILD_NANOBIND_MODULE)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
     project(${SKBUILD_PROJECT_NAME})
     set(DEV_MODULE Development.Module)
     find_package(
