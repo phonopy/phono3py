@@ -261,7 +261,7 @@ class Interaction:
     def get_fc3(self):
         """Return fc3."""
         warnings.warn(
-            "Use attribute, Interaction.fc3 " "instead of Interaction.get_fc3().",
+            "Use attribute, Interaction.fc3 instead of Interaction.get_fc3().",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -693,12 +693,12 @@ class Interaction:
         """Set phonons on grid."""
         if bz_grid_addresses.shape != self._bz_grid.addresses.shape:
             raise RuntimeError(
-                "Input grid address size is inconsistent. " "Setting phonons faild."
+                "Input grid address size is inconsistent. Setting phonons faild."
             )
 
         if (self._bz_grid.addresses - bz_grid_addresses).all():
             raise RuntimeError(
-                "Input grid addresses are inconsistent. " "Setting phonons faild."
+                "Input grid addresses are inconsistent. Setting phonons faild."
             )
         else:
             self._phonon_done[:] = 1
@@ -797,7 +797,7 @@ class Interaction:
 
         bz_grid_points_solved = self._get_phonons_at_minus_q()
         if bz_grid_points_solved:
-            print("DEBUG: BZ-grid points additionally solved " "than ir-grid-points.")
+            print("DEBUG: BZ-grid points additionally solved than ir-grid-points.")
             qpoints = np.dot(
                 self._bz_grid.addresses[bz_grid_points_solved]
                 / self._bz_grid.D_diag.astype("double"),

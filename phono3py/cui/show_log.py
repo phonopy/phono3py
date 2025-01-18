@@ -65,7 +65,7 @@ def show_general_settings(
 
     print("-" * 29 + " General settings " + "-" * 29)
     if run_mode:
-        print("Run mode: {run_mode}")
+        print(f"Run mode: {run_mode}")
     if output_filename:
         print(f"Output filename is modified by {output_filename}.")
     if input_filename:

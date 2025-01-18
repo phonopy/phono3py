@@ -236,15 +236,15 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             "force constants"
         ),
     )
+    parser.add_argument(
+        "-d",
+        "--disp",
+        dest="is_displacement",
+        action="store_true",
+        default=False,
+        help="As first stage, get least displacements",
+    )
     if not load_phono3py_yaml:
-        parser.add_argument(
-            "-d",
-            "--disp",
-            dest="is_displacement",
-            action="store_true",
-            default=False,
-            help="As first stage, get least displacements",
-        )
         parser.add_argument(
             "--dim",
             nargs="+",

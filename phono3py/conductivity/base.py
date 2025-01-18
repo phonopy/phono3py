@@ -128,7 +128,7 @@ class ConductivityMixIn(HeatCapacityMixIn):
     def get_kappa(self):
         """Return kappa."""
         warnings.warn(
-            "Use attribute, Conductivity.kappa " "instead of Conductivity.get_kappa().",
+            "Use attribute, Conductivity.kappa instead of Conductivity.get_kappa().",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -550,7 +550,7 @@ class ConductivityBase(ABC):
     def get_gamma(self):
         """Return gamma."""
         warnings.warn(
-            "Use attribute, Conductivity.gamma " "instead of Conductivity.get_gamma().",
+            "Use attribute, Conductivity.gamma instead of Conductivity.get_gamma().",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -559,7 +559,7 @@ class ConductivityBase(ABC):
     def set_gamma(self, gamma):
         """Set gamma."""
         warnings.warn(
-            "Use attribute, Conductivity.gamma " "instead of Conductivity.set_gamma().",
+            "Use attribute, Conductivity.gamma instead of Conductivity.set_gamma().",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -603,8 +603,7 @@ class ConductivityBase(ABC):
     def get_sigmas(self):
         """Return sigmas."""
         warnings.warn(
-            "Use attribute, Conductivity.sigmas "
-            "instead of Conductivity.get_sigmas().",
+            "Use attribute, Conductivity.sigmas instead of Conductivity.get_sigmas().",
             DeprecationWarning,
             stacklevel=2,
         )
