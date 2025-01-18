@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Jan-18-2024: Version 3.11.2
+
+- Maintenance release.
+
 ## Jan-12-2024: Version 3.11.1
 
 - `-i`, `-o`, `--io` options have been deprecated.

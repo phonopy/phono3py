@@ -741,7 +741,7 @@ class GridMatrix:
         tmat_inv = np.linalg.inv(transformation_matrix)
         tmat_inv_int = np.rint(tmat_inv).astype(int)
         if (tmat_inv - tmat_inv_int > 1e-8).all():
-            msg = "Inverse of transformation matrix has to be an " "integer matrix."
+            msg = "Inverse of transformation matrix has to be an integer matrix."
             raise RuntimeError(msg)
         if determinant(tmat_inv_int) < 0:
             msg = "Determinant of transformation matrix has to be positive."
@@ -908,7 +908,7 @@ def get_grid_point_from_address(address, D_diag):
     return gps
 
 
-def get_ir_grid_points(bz_grid: BZGrid):
+def get_ir_grid_points(bz_grid: BZGrid) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Return ir-grid-points in generalized regular grid.
 
     bz_grid : BZGrid
@@ -925,7 +925,7 @@ def get_ir_grid_points(bz_grid: BZGrid):
         shape=(num_ir_grid_points, ), dtype='long'
     ir_grid_map : ndarray
         Index mapping table to irreducible grid points from all grid points
-        such as, [0, 0, 2, 3, 3, ...].
+        such as, [0, 0, 2, 3, 3, ...] in GR-grid.
         shape=(prod(D_diag), ), dtype='long'
 
     """
@@ -1174,7 +1174,11 @@ def _relocate_BZ_grid_address(
     return bz_grid_addresses, bz_map, bzg2grg
 
 
-def _get_ir_grid_map(D_diag, grg_rotations, PS=None):
+def _get_ir_grid_map(
+    D_diag: Union[np.ndarray, Sequence],
+    grg_rotations: Union[np.ndarray, Sequence],
+    PS: Optional[Union[np.ndarray, Sequence]] = None,
+) -> np.ndarray:
     """Return mapping to irreducible grid points in GR-grid.
 
     Parameters
