@@ -136,17 +136,17 @@ if(BUILD_RECGRID_LIB
    OR BUILD_PHPHCALC_LIB
    OR BUILD_NANOBIND_MODULE)
     # Source code
-    set(SOURCES_PHPHCALC
+    set(SOURCES_RECGRID
         ${PROJECT_SOURCE_DIR}/c/bzgrid.c ${PROJECT_SOURCE_DIR}/c/grgrid.c
         ${PROJECT_SOURCE_DIR}/c/lagrid.c ${PROJECT_SOURCE_DIR}/c/snf3x3.c
         ${PROJECT_SOURCE_DIR}/c/recgrid.c)
 
     if(BUILD_SHARED_LIBS)
         # Shared library
-        add_library(recgrid_lib SHARED ${SOURCES_PHPHCALC})
+        add_library(recgrid_lib SHARED ${SOURCES_RECGRID})
     else()
         # Static link library
-        add_library(recgrid_lib STATIC ${SOURCES_PHPHCALC})
+        add_library(recgrid_lib STATIC ${SOURCES_RECGRID})
     endif()
 
     if(NOT BUILD_NANOBIND_MODULE)
