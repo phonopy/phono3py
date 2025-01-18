@@ -730,7 +730,7 @@ class ConductivityLBTEBase(ConductivityBase):
         # Average matrix elements belonging to degenerate bands
         if self._log_level:
             sys.stdout.write(
-                "- Averaging collision matrix elements " "by phonon degeneracy "
+                "- Averaging collision matrix elements by phonon degeneracy "
             )
             sys.stdout.flush()
 
