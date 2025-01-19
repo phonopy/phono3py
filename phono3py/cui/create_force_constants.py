@@ -561,7 +561,7 @@ def run_pypolymlp_to_compute_forces(
 
     if prepare_dataset:
         if displacement_distance is None:
-            _displacement_distance = 0.001
+            _displacement_distance = 0.01
         else:
             _displacement_distance = displacement_distance
 
@@ -629,7 +629,7 @@ def run_pypolymlp_to_compute_phonon_forces(
             print("-" * 30 + " pypolymlp end " + "-" * 31, flush=True)
 
     if displacement_distance is None:
-        _displacement_distance = 0.001
+        _displacement_distance = 0.01
     else:
         _displacement_distance = displacement_distance
     if log_level:
