@@ -144,20 +144,7 @@ def create_phono3py_force_constants(
                 calculator,
                 log_level,
             )
-            if settings.use_pypolymlp:
-                phono3py.mlp_dataset = dataset
-                cutoff_pair_distance = get_cutoff_pair_distance(settings)
-                run_pypolymlp_to_compute_forces(
-                    phono3py,
-                    settings.mlp_params,
-                    displacement_distance=settings.displacement_distance,
-                    number_of_snapshots=settings.random_displacements,
-                    random_seed=settings.random_seed,
-                    cutoff_pair_distance=cutoff_pair_distance,
-                    log_level=log_level,
-                )
-            else:
-                phono3py.dataset = dataset
+            phono3py.dataset = dataset
 
             phono3py.produce_fc3(
                 symmetrize_fc3r=symmetrize_fc3r,
@@ -546,11 +533,6 @@ def run_pypolymlp_to_compute_forces(
         print("Pypolymlp is a generator of polynomial machine learning potentials.")
         print("Please cite the paper: A. Seko, J. Appl. Phys. 133, 011101 (2023).")
         print("Pypolymlp is developed at https://github.com/sekocha/pypolymlp.")
-        if mlp_params:
-            print("Parameters:")
-            for k, v in asdict(parse_mlp_params(mlp_params)).items():
-                if v is not None:
-                    print(f"  {k}: {v}")
 
     if pathlib.Path(mlp_filename).exists():
         if log_level:
@@ -558,6 +540,14 @@ def run_pypolymlp_to_compute_forces(
         ph3py.load_mlp(mlp_filename)
     elif forces_in_dataset(ph3py.mlp_dataset):
         if log_level:
+            if mlp_params is None:
+                pmlp_params = PypolymlpParams()
+            else:
+                pmlp_params = parse_mlp_params(mlp_params)
+            print("Parameters:")
+            for k, v in asdict(pmlp_params).items():
+                if v is not None:
+                    print(f"  {k}: {v}")
             print("Developing MLPs by pypolymlp...", flush=True)
         ph3py.develop_mlp(params=mlp_params)
         ph3py.save_mlp(filename=mlp_filename)
