@@ -1,0 +1,23 @@
+name: Pytest on macOS
+
+on:
+  push:
+    branches:
+    - macos
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install phono3py
+      run: |
+        pip install -e . -v
+    - name: Run pytest
+      run: |
+        pip install pytest
+        pytest -v test
