@@ -35,6 +35,8 @@
 #ifndef __lapack_wrapper_H__
 #define __lapack_wrapper_H__
 
+#include <stdint.h>
+
 #if defined(_MSC_VER) || defined(MKL_BLAS) || defined(SCIPY_MKL_H)
 #if defined(_MSC_VER)
 typedef struct {
@@ -82,8 +84,8 @@ int phonopy_dsyev(double *data, double *eigvals, const int size,
                   const int algorithm);
 
 void pinv_from_eigensolution(double *data, const double *eigvals,
-                             const long size, const double cutoff,
-                             const long pinv_method);
+                             const int64_t size, const double cutoff,
+                             const int64_t pinv_method);
 #endif
 
 #endif

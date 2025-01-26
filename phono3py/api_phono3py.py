@@ -235,14 +235,16 @@ class Phono3py:
         # Create supercell and primitive cell
         self._unitcell = unitcell
         self._supercell_matrix = np.array(
-            shape_supercell_matrix(supercell_matrix), dtype="long", order="C"
+            shape_supercell_matrix(supercell_matrix), dtype="int64", order="C"
         )
         pmat = self._determine_primitive_matrix(primitive_matrix)
         self._primitive_matrix = pmat
         self._nac_params = None
         if phonon_supercell_matrix is not None:
             self._phonon_supercell_matrix = np.array(
-                shape_supercell_matrix(phonon_supercell_matrix), dtype="long", order="C"
+                shape_supercell_matrix(phonon_supercell_matrix),
+                dtype="int64",
+                order="C",
             )
         else:
             self._phonon_supercell_matrix = None
@@ -539,7 +541,7 @@ class Phono3py:
 
         ndarray
             Supercell matrix with respect to unit cell.
-            shape=(3, 3), dtype='long', order='C'
+            shape=(3, 3), dtype='int64', order='C'
 
         """
         return self._supercell_matrix
@@ -550,7 +552,7 @@ class Phono3py:
 
         ndarray
             Supercell matrix with respect to unit cell.
-            shape=(3, 3), dtype='long', order='C'
+            shape=(3, 3), dtype='int64', order='C'
 
         """
         return self._phonon_supercell_matrix
@@ -744,10 +746,10 @@ class Phono3py:
     def _set_band_indices(self, band_indices=None):
         if band_indices is None:
             num_band = len(self._primitive) * 3
-            self._band_indices = [np.arange(num_band, dtype="long")]
+            self._band_indices = [np.arange(num_band, dtype="int64")]
         else:
-            self._band_indices = [np.array(bi, dtype="long") for bi in band_indices]
-        self._band_indices_flatten = np.hstack(self._band_indices).astype("long")
+            self._band_indices = [np.array(bi, dtype="int64") for bi in band_indices]
+        self._band_indices_flatten = np.hstack(self._band_indices).astype("int64")
 
     @property
     def masses(self) -> np.ndarray:
@@ -1994,7 +1996,7 @@ class Phono3py:
             List of grid point indices where mode thermal conductivities are
             calculated. With None, all the grid points that are necessary
             for thermal conductivity are set internally.
-            shape(num_grid_points, ), dtype='long'.
+            shape(num_grid_points, ), dtype='int64'.
         boundary_mfp : float, optiona, default is None
             Mean free path in micrometre to calculate simple boundary
             scattering contribution to thermal conductivity.

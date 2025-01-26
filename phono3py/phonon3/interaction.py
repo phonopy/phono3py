@@ -170,8 +170,8 @@ class Interaction:
 
         self._svecs, self._multi = self._primitive.get_smallest_vectors()
         self._masses = np.array(self._primitive.masses, dtype="double")
-        self._p2s = np.array(self._primitive.p2s_map, dtype="long")
-        self._s2p = np.array(self._primitive.s2p_map, dtype="long")
+        self._p2s = np.array(self._primitive.p2s_map, dtype="int64")
+        self._s2p = np.array(self._primitive.s2p_map, dtype="int64")
         n_satom, n_patom, _ = self._multi.shape
         self._all_shortest = np.zeros(
             (n_patom, n_satom, n_satom), dtype="byte", order="C"
@@ -233,7 +233,7 @@ class Interaction:
         Returns
         -------
         ndarray
-           shape=(3, ), dtype='long'
+           shape=(3, ), dtype='int64'
 
         """
         return self._bz_grid.D_diag
@@ -332,7 +332,7 @@ class Interaction:
         Returns
         -------
         ndarray
-            shape=(num_specified_bands, ), dtype='long'
+            shape=(num_specified_bands, ), dtype='int64'
 
         """
         return self._band_indices
@@ -715,7 +715,7 @@ class Interaction:
                 self.run_phonon_solver_with_eigvec_rotation()
             else:
                 self._run_phonon_solver_c(
-                    np.arange(len(self._bz_grid.addresses), dtype="long")
+                    np.arange(len(self._bz_grid.addresses), dtype="int64")
                 )
         else:
             self._run_phonon_solver_c(grid_points)
@@ -743,12 +743,12 @@ class Interaction:
         self._phonon_done[self._bz_grid.gp_Gamma] = 0
         if is_nac:
             self._done_nac_at_gamma = True
-            self.run_phonon_solver(np.array([self._bz_grid.gp_Gamma], dtype="long"))
+            self.run_phonon_solver(np.array([self._bz_grid.gp_Gamma], dtype="int64"))
         else:
             self._done_nac_at_gamma = False
             _nac_q_direction = self._nac_q_direction
             self._nac_q_direction = None
-            self.run_phonon_solver(np.array([self._bz_grid.gp_Gamma], dtype="long"))
+            self.run_phonon_solver(np.array([self._bz_grid.gp_Gamma], dtype="int64"))
             self._nac_q_direction = _nac_q_direction
 
     def run_phonon_solver_with_eigvec_rotation(self):
@@ -860,7 +860,7 @@ class Interaction:
             in this method.
 
         """
-        r_inv = -np.eye(3, dtype="long")
+        r_inv = -np.eye(3, dtype="int64")
         bz_grid_points_solved = []
         for bzgp, done in enumerate(self._phonon_done):
             if done:
@@ -882,7 +882,7 @@ class Interaction:
                         [
                             bzgp_mq,
                         ],
-                        dtype="long",
+                        dtype="int64",
                     )
                 )
                 bz_grid_points_solved.append(bzgp_mq)
@@ -925,9 +925,9 @@ class Interaction:
     def _set_band_indices(self, band_indices):
         num_band = len(self._primitive) * 3
         if band_indices is None:
-            self._band_indices = np.arange(num_band, dtype="long")
+            self._band_indices = np.arange(num_band, dtype="int64")
         else:
-            self._band_indices = np.array(band_indices, dtype="long")
+            self._band_indices = np.array(band_indices, dtype="int64")
 
     def _run_c(self, g_zero):
         import phono3py._phono3py as phono3c

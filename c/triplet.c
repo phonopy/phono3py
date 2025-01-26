@@ -36,21 +36,25 @@
 
 #include "triplet.h"
 
+#include <stdint.h>
+
 #include "recgrid.h"
 #include "triplet_grid.h"
 #include "triplet_iw.h"
 
-long tpl_get_BZ_triplets_at_q(long (*triplets)[3], const long grid_point,
-                              const RecgridConstBZGrid *bzgrid,
-                              const long *map_triplets) {
+int64_t tpl_get_BZ_triplets_at_q(int64_t (*triplets)[3],
+                                 const int64_t grid_point,
+                                 const RecgridConstBZGrid *bzgrid,
+                                 const int64_t *map_triplets) {
     return tpk_get_BZ_triplets_at_q(triplets, grid_point, bzgrid, map_triplets);
 }
 
-long tpl_get_triplets_reciprocal_mesh_at_q(
-    long *map_triplets, long *map_q, const long grid_point, const long mesh[3],
-    const long is_time_reversal, const long num_rot,
-    const long (*rec_rotations)[3][3], const long swappable) {
-    long num_ir;
+int64_t tpl_get_triplets_reciprocal_mesh_at_q(
+    int64_t *map_triplets, int64_t *map_q, const int64_t grid_point,
+    const int64_t mesh[3], const int64_t is_time_reversal,
+    const int64_t num_rot, const int64_t (*rec_rotations)[3][3],
+    const int64_t swappable) {
+    int64_t num_ir;
 
     num_ir = tpk_get_ir_triplets_at_q(map_triplets, map_q, grid_point, mesh,
                                       is_time_reversal, rec_rotations, num_rot,
@@ -60,13 +64,14 @@ long tpl_get_triplets_reciprocal_mesh_at_q(
 
 void tpl_get_integration_weight(
     double *iw, char *iw_zero, const double *frequency_points,
-    const long num_band0, const long relative_grid_address[24][4][3],
-    const long (*triplets)[3], const long num_triplets,
+    const int64_t num_band0, const int64_t relative_grid_address[24][4][3],
+    const int64_t (*triplets)[3], const int64_t num_triplets,
     const RecgridConstBZGrid *bzgrid, const double *frequencies1,
-    const long num_band1, const double *frequencies2, const long num_band2,
-    const long tp_type, const long openmp_per_triplets) {
-    long i, num_band_prod;
-    long tp_relative_grid_address[2][24][4][3];
+    const int64_t num_band1, const double *frequencies2,
+    const int64_t num_band2, const int64_t tp_type,
+    const int64_t openmp_per_triplets) {
+    int64_t i, num_band_prod;
+    int64_t tp_relative_grid_address[2][24][4][3];
 
     tpl_set_relative_grid_address(tp_relative_grid_address,
                                   relative_grid_address, tp_type);
@@ -88,10 +93,10 @@ void tpl_get_integration_weight(
 
 void tpl_get_integration_weight_with_sigma(
     double *iw, char *iw_zero, const double sigma, const double sigma_cutoff,
-    const double *frequency_points, const long num_band0,
-    const long (*triplets)[3], const long num_triplets,
-    const double *frequencies, const long num_band, const long tp_type) {
-    long i, num_band_prod, const_adrs_shift;
+    const double *frequency_points, const int64_t num_band0,
+    const int64_t (*triplets)[3], const int64_t num_triplets,
+    const double *frequencies, const int64_t num_band, const int64_t tp_type) {
+    int64_t i, num_band_prod, const_adrs_shift;
     double cutoff;
 
     cutoff = sigma * sigma_cutoff;
@@ -109,8 +114,9 @@ void tpl_get_integration_weight_with_sigma(
     }
 }
 
-long tpl_is_N(const long triplet[3], const long (*bz_grid_addresses)[3]) {
-    long i, j, sum_q, is_N;
+int64_t tpl_is_N(const int64_t triplet[3],
+                 const int64_t (*bz_grid_addresses)[3]) {
+    int64_t i, j, sum_q, is_N;
 
     is_N = 1;
     for (i = 0; i < 3; i++) {
@@ -126,11 +132,11 @@ long tpl_is_N(const long triplet[3], const long (*bz_grid_addresses)[3]) {
     return is_N;
 }
 
-void tpl_set_relative_grid_address(long tp_relative_grid_address[2][24][4][3],
-                                   const long relative_grid_address[24][4][3],
-                                   const long tp_type) {
-    long i, j, k, l;
-    long signs[2];
+void tpl_set_relative_grid_address(
+    int64_t tp_relative_grid_address[2][24][4][3],
+    const int64_t relative_grid_address[24][4][3], const int64_t tp_type) {
+    int64_t i, j, k, l;
+    int64_t signs[2];
 
     signs[0] = 1;
     signs[1] = 1;
