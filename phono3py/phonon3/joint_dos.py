@@ -263,7 +263,7 @@ class JointDos:
                 )
                 raise RuntimeError(msg)
 
-        self.run_phonon_solver(np.array([gamma_gp, grid_point], dtype="long"))
+        self.run_phonon_solver(np.array([gamma_gp, grid_point], dtype="int64"))
 
     def run_phonon_solver(self, grid_points=None):
         """Calculate phonons at grid_points.
@@ -273,7 +273,7 @@ class JointDos:
 
         """
         if grid_points is None:
-            _grid_points = np.arange(len(self._bz_grid.addresses), dtype="long")
+            _grid_points = np.arange(len(self._bz_grid.addresses), dtype="int64")
         else:
             _grid_points = grid_points
 
@@ -306,11 +306,11 @@ class JointDos:
         """
         self._phonon_done[self._bz_grid.gp_Gamma] = 0
         if is_nac:
-            self.run_phonon_solver(np.array([self._bz_grid.gp_Gamma], dtype="long"))
+            self.run_phonon_solver(np.array([self._bz_grid.gp_Gamma], dtype="int64"))
         else:
             _nac_q_direction = self._nac_q_direction
             self._nac_q_direction = None
-            self.run_phonon_solver(np.array([self._bz_grid.gp_Gamma], dtype="long"))
+            self.run_phonon_solver(np.array([self._bz_grid.gp_Gamma], dtype="int64"))
             self._nac_q_direction = _nac_q_direction
 
     def run(self):

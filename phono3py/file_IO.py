@@ -714,7 +714,7 @@ def write_spectral_function_to_hdf5(
     if all_band_exist:
         _band_indices = None
     else:
-        _band_indices = np.hstack(band_indices).astype("long")
+        _band_indices = np.hstack(band_indices).astype("int64")
     suffix = _get_filename_suffix(
         mesh, grid_point=grid_point, band_indices=_band_indices, sigma=sigma
     )

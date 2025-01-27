@@ -1,6 +1,7 @@
 #include <math.h>
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
+#include <stdint.h>
 
 #include "phononcalc.h"
 
@@ -16,46 +17,46 @@ void py_get_phonons_at_gridpoints(
     double unit_conversion_factor, nb::ndarray<> py_born_effective_charge,
     nb::ndarray<> py_dielectric_constant, nb::ndarray<> py_reciprocal_lattice,
     nb::ndarray<> py_q_direction, double nac_factor, nb::ndarray<> py_dd_q0,
-    nb::ndarray<> py_G_list, double lambda, long is_nac, long is_nac_q_zero,
-    long use_GL_NAC, const char *uplo) {
+    nb::ndarray<> py_G_list, double lambda, int64_t is_nac,
+    int64_t is_nac_q_zero, int64_t use_GL_NAC, const char *uplo) {
     double(*born)[3][3];
     double(*dielectric)[3];
     double *q_dir;
     double *freqs;
     _lapack_complex_double *eigvecs;
     char *phonon_done;
-    long *grid_points;
-    long(*grid_address)[3];
+    int64_t *grid_points;
+    int64_t(*grid_address)[3];
     double(*QDinv)[3];
     double *fc2;
     double(*svecs_fc2)[3];
-    long(*multi_fc2)[2];
+    int64_t(*multi_fc2)[2];
     double(*positions_fc2)[3];
     double *masses_fc2;
-    long *p2s_fc2;
-    long *s2p_fc2;
+    int64_t *p2s_fc2;
+    int64_t *s2p_fc2;
     double(*rec_lat)[3];
     double(*dd_q0)[2];
     double(*G_list)[3];
-    long num_patom, num_satom, num_phonons, num_grid_points, num_G_points;
+    int64_t num_patom, num_satom, num_phonons, num_grid_points, num_G_points;
 
     freqs = (double *)py_frequencies.data();
     eigvecs = (_lapack_complex_double *)py_eigenvectors.data();
     phonon_done = (char *)py_phonon_done.data();
-    grid_points = (long *)py_grid_points.data();
-    grid_address = (long(*)[3])py_grid_address.data();
+    grid_points = (int64_t *)py_grid_points.data();
+    grid_address = (int64_t(*)[3])py_grid_address.data();
     QDinv = (double(*)[3])py_QDinv.data();
     fc2 = (double *)py_fc2.data();
     svecs_fc2 = (double(*)[3])py_shortest_vectors_fc2.data();
-    multi_fc2 = (long(*)[2])py_multiplicity_fc2.data();
+    multi_fc2 = (int64_t(*)[2])py_multiplicity_fc2.data();
     masses_fc2 = (double *)py_masses_fc2.data();
-    p2s_fc2 = (long *)py_p2s_map_fc2.data();
-    s2p_fc2 = (long *)py_s2p_map_fc2.data();
+    p2s_fc2 = (int64_t *)py_p2s_map_fc2.data();
+    s2p_fc2 = (int64_t *)py_s2p_map_fc2.data();
     rec_lat = (double(*)[3])py_reciprocal_lattice.data();
-    num_patom = (long)py_multiplicity_fc2.shape(1);
-    num_satom = (long)py_multiplicity_fc2.shape(0);
-    num_phonons = (long)py_frequencies.shape(0);
-    num_grid_points = (long)py_grid_points.shape(0);
+    num_patom = (int64_t)py_multiplicity_fc2.shape(1);
+    num_satom = (int64_t)py_multiplicity_fc2.shape(0);
+    num_phonons = (int64_t)py_frequencies.shape(0);
+    num_grid_points = (int64_t)py_grid_points.shape(0);
 
     if (is_nac) {
         born = (double(*)[3][3])py_born_effective_charge.data();
@@ -78,7 +79,7 @@ void py_get_phonons_at_gridpoints(
     if (use_GL_NAC) {
         dd_q0 = (double(*)[2])py_dd_q0.data();
         G_list = (double(*)[3])py_G_list.data();
-        num_G_points = (long)py_G_list.shape(0);
+        num_G_points = (int64_t)py_G_list.shape(0);
         positions_fc2 = (double(*)[3])py_positions_fc2.data();
     } else {
         dd_q0 = NULL;

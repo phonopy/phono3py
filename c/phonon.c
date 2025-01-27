@@ -36,78 +36,84 @@
 
 #include <math.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "dynmat.h"
 #include "lapack_wrapper.h"
 
-static long collect_undone_grid_points(long *undone, char *phonon_done,
-                                       const long num_grid_points,
-                                       const long *grid_points);
+static int64_t collect_undone_grid_points(int64_t *undone, char *phonon_done,
+                                          const int64_t num_grid_points,
+                                          const int64_t *grid_points);
 static void get_undone_phonons(
     double *frequencies, lapack_complex_double *eigenvectors,
-    const long *undone_grid_points, const long num_undone_grid_points,
-    const long (*grid_address)[3], const double QDinv[3][3], const double *fc2,
-    const double (*svecs_fc2)[3], const long (*multi_fc2)[2],
-    const long num_patom, const long num_satom, const double *masses_fc2,
-    const long *p2s_fc2, const long *s2p_fc2,
-    const double unit_conversion_factor, const double (*born)[3][3],
-    const double dielectric[3][3], const double reciprocal_lattice[3][3],
-    const double *q_direction, const double nac_factor, const char uplo);
+    const int64_t *undone_grid_points, const int64_t num_undone_grid_points,
+    const int64_t (*grid_address)[3], const double QDinv[3][3],
+    const double *fc2, const double (*svecs_fc2)[3],
+    const int64_t (*multi_fc2)[2], const int64_t num_patom,
+    const int64_t num_satom, const double *masses_fc2, const int64_t *p2s_fc2,
+    const int64_t *s2p_fc2, const double unit_conversion_factor,
+    const double (*born)[3][3], const double dielectric[3][3],
+    const double reciprocal_lattice[3][3], const double *q_direction,
+    const double nac_factor, const char uplo);
 static void get_gonze_undone_phonons(
     double *frequencies, lapack_complex_double *eigenvectors,
-    const long *undone_grid_points, const long num_undone_grid_points,
-    const long (*grid_address)[3], const double QDinv[3][3], const double *fc2,
-    const double (*svecs_fc2)[3], const long (*multi_fc2)[2],
-    const double (*positions)[3], const long num_patom, const long num_satom,
-    const double *masses_fc2, const long *p2s_fc2, const long *s2p_fc2,
+    const int64_t *undone_grid_points, const int64_t num_undone_grid_points,
+    const int64_t (*grid_address)[3], const double QDinv[3][3],
+    const double *fc2, const double (*svecs_fc2)[3],
+    const int64_t (*multi_fc2)[2], const double (*positions)[3],
+    const int64_t num_patom, const int64_t num_satom, const double *masses_fc2,
+    const int64_t *p2s_fc2, const int64_t *s2p_fc2,
     const double unit_conversion_factor, const double (*born)[3][3],
     const double dielectric[3][3], const double reciprocal_lattice[3][3],
     const double *q_direction, const double nac_factor,
     const double (*dd_q0)[2], const double (*G_list)[3],
-    const long num_G_points, const double lambda, const char uplo);
+    const int64_t num_G_points, const double lambda, const char uplo);
 static void get_gonze_phonons(
     lapack_complex_double *eigvecs, const double q[3], const double *fc2,
-    const double *masses, const long *p2s, const long *s2p,
-    const long (*multi)[2], const double (*positions)[3], const long num_patom,
-    const long num_satom, const double (*svecs)[3], const long is_nac,
-    const double (*born)[3][3], const double dielectric[3][3],
-    const double reciprocal_lattice[3][3], const double *q_direction,
-    const double nac_factor, const double (*dd_q0)[2],
-    const double (*G_list)[3], const long num_G_points, const double lambda);
+    const double *masses, const int64_t *p2s, const int64_t *s2p,
+    const int64_t (*multi)[2], const double (*positions)[3],
+    const int64_t num_patom, const int64_t num_satom, const double (*svecs)[3],
+    const int64_t is_nac, const double (*born)[3][3],
+    const double dielectric[3][3], const double reciprocal_lattice[3][3],
+    const double *q_direction, const double nac_factor,
+    const double (*dd_q0)[2], const double (*G_list)[3],
+    const int64_t num_G_points, const double lambda);
 static void get_dynamical_matrix(
     lapack_complex_double *dynmat, const double q[3], const double *fc2,
-    const double *masses, const long *p2s, const long *s2p,
-    const long (*multi)[2], const long num_patom, const long num_satom,
-    const double (*svecs)[3], const long is_nac,
+    const double *masses, const int64_t *p2s, const int64_t *s2p,
+    const int64_t (*multi)[2], const int64_t num_patom, const int64_t num_satom,
+    const double (*svecs)[3], const int64_t is_nac,
     const double (*born)[3][3], /* Wang NAC unless NULL */
     const double dielectric[3][3], const double reciprocal_lattice[3][3],
     const double *q_direction, const double nac_factor);
-static void get_charge_sum(double (*charge_sum)[3][3], const long num_patom,
-                           const long num_satom, const double q[3],
+static void get_charge_sum(double (*charge_sum)[3][3], const int64_t num_patom,
+                           const int64_t num_satom, const double q[3],
                            const double (*born)[3][3],
                            const double dielectric[3][3],
                            const double reciprocal_lattice[3][3],
                            const double *q_direction, const double nac_factor);
-static long needs_nac(const double (*born)[3][3], const long (*grid_address)[3],
-                      const long gp, const double *q_direction);
+static int64_t needs_nac(const double (*born)[3][3],
+                         const int64_t (*grid_address)[3], const int64_t gp,
+                         const double *q_direction);
 
 void phn_get_phonons_at_gridpoints(
     double *frequencies, lapack_complex_double *eigenvectors, char *phonon_done,
-    const long num_phonons, const long *grid_points, const long num_grid_points,
-    const long (*grid_address)[3], const double QDinv[3][3], const double *fc2,
-    const double (*svecs_fc2)[3], const long (*multi_fc2)[2],
-    const long num_patom, const long num_satom, const double *masses_fc2,
-    const long *p2s_fc2, const long *s2p_fc2,
-    const double unit_conversion_factor, const double (*born)[3][3],
-    const double dielectric[3][3], const double reciprocal_lattice[3][3],
+    const int64_t num_phonons, const int64_t *grid_points,
+    const int64_t num_grid_points, const int64_t (*grid_address)[3],
+    const double QDinv[3][3], const double *fc2, const double (*svecs_fc2)[3],
+    const int64_t (*multi_fc2)[2], const int64_t num_patom,
+    const int64_t num_satom, const double *masses_fc2, const int64_t *p2s_fc2,
+    const int64_t *s2p_fc2, const double unit_conversion_factor,
+    const double (*born)[3][3], const double dielectric[3][3],
+    const double reciprocal_lattice[3][3],
     const double *q_direction, /* must be pointer */
     const double nac_factor, const char uplo) {
-    long num_undone;
-    long *undone;
+    int64_t num_undone;
+    int64_t *undone;
 
-    undone = (long *)malloc(sizeof(long) * num_phonons);
+    undone = (int64_t *)malloc(sizeof(int64_t) * num_phonons);
     num_undone = collect_undone_grid_points(undone, phonon_done,
                                             num_grid_points, grid_points);
 
@@ -123,21 +129,22 @@ void phn_get_phonons_at_gridpoints(
 
 void phn_get_gonze_phonons_at_gridpoints(
     double *frequencies, lapack_complex_double *eigenvectors, char *phonon_done,
-    const long num_phonons, const long *grid_points, const long num_grid_points,
-    const long (*grid_address)[3], const double QDinv[3][3], const double *fc2,
-    const double (*svecs_fc2)[3], const long (*multi_fc2)[2],
-    const double (*positions)[3], const long num_patom, const long num_satom,
-    const double *masses_fc2, const long *p2s_fc2, const long *s2p_fc2,
+    const int64_t num_phonons, const int64_t *grid_points,
+    const int64_t num_grid_points, const int64_t (*grid_address)[3],
+    const double QDinv[3][3], const double *fc2, const double (*svecs_fc2)[3],
+    const int64_t (*multi_fc2)[2], const double (*positions)[3],
+    const int64_t num_patom, const int64_t num_satom, const double *masses_fc2,
+    const int64_t *p2s_fc2, const int64_t *s2p_fc2,
     const double unit_conversion_factor, const double (*born)[3][3],
     const double dielectric[3][3], const double reciprocal_lattice[3][3],
     const double *q_direction, /* pointer */
     const double nac_factor, const double (*dd_q0)[2],
-    const double (*G_list)[3], const long num_G_points, const double lambda,
+    const double (*G_list)[3], const int64_t num_G_points, const double lambda,
     const char uplo) {
-    long num_undone;
-    long *undone;
+    int64_t num_undone;
+    int64_t *undone;
 
-    undone = (long *)malloc(sizeof(long) * num_phonons);
+    undone = (int64_t *)malloc(sizeof(int64_t) * num_phonons);
     num_undone = collect_undone_grid_points(undone, phonon_done,
                                             num_grid_points, grid_points);
 
@@ -152,10 +159,10 @@ void phn_get_gonze_phonons_at_gridpoints(
     undone = NULL;
 }
 
-static long collect_undone_grid_points(long *undone, char *phonon_done,
-                                       const long num_grid_points,
-                                       const long *grid_points) {
-    long i, gp, num_undone;
+static int64_t collect_undone_grid_points(int64_t *undone, char *phonon_done,
+                                          const int64_t num_grid_points,
+                                          const int64_t *grid_points) {
+    int64_t i, gp, num_undone;
 
     num_undone = 0;
     for (i = 0; i < num_grid_points; i++) {
@@ -172,16 +179,17 @@ static long collect_undone_grid_points(long *undone, char *phonon_done,
 
 static void get_undone_phonons(
     double *frequencies, lapack_complex_double *eigenvectors,
-    const long *undone_grid_points, const long num_undone_grid_points,
-    const long (*grid_address)[3], const double QDinv[3][3], const double *fc2,
-    const double (*svecs_fc2)[3], const long (*multi_fc2)[2],
-    const long num_patom, const long num_satom, const double *masses_fc2,
-    const long *p2s_fc2, const long *s2p_fc2,
-    const double unit_conversion_factor, const double (*born)[3][3],
-    const double dielectric[3][3], const double reciprocal_lattice[3][3],
-    const double *q_direction, const double nac_factor, const char uplo) {
-    long i, j, gp, num_band;
-    long is_nac, info;
+    const int64_t *undone_grid_points, const int64_t num_undone_grid_points,
+    const int64_t (*grid_address)[3], const double QDinv[3][3],
+    const double *fc2, const double (*svecs_fc2)[3],
+    const int64_t (*multi_fc2)[2], const int64_t num_patom,
+    const int64_t num_satom, const double *masses_fc2, const int64_t *p2s_fc2,
+    const int64_t *s2p_fc2, const double unit_conversion_factor,
+    const double (*born)[3][3], const double dielectric[3][3],
+    const double reciprocal_lattice[3][3], const double *q_direction,
+    const double nac_factor, const char uplo) {
+    int64_t i, j, gp, num_band;
+    int64_t is_nac, info;
     double q[3];
     double *freqs_tmp;
 
@@ -232,18 +240,19 @@ static void get_undone_phonons(
 
 static void get_gonze_undone_phonons(
     double *frequencies, lapack_complex_double *eigenvectors,
-    const long *undone_grid_points, const long num_undone_grid_points,
-    const long (*grid_address)[3], const double QDinv[3][3], const double *fc2,
-    const double (*svecs_fc2)[3], const long (*multi_fc2)[2],
-    const double (*positions)[3], const long num_patom, const long num_satom,
-    const double *masses_fc2, const long *p2s_fc2, const long *s2p_fc2,
+    const int64_t *undone_grid_points, const int64_t num_undone_grid_points,
+    const int64_t (*grid_address)[3], const double QDinv[3][3],
+    const double *fc2, const double (*svecs_fc2)[3],
+    const int64_t (*multi_fc2)[2], const double (*positions)[3],
+    const int64_t num_patom, const int64_t num_satom, const double *masses_fc2,
+    const int64_t *p2s_fc2, const int64_t *s2p_fc2,
     const double unit_conversion_factor, const double (*born)[3][3],
     const double dielectric[3][3], const double reciprocal_lattice[3][3],
     const double *q_direction, const double nac_factor,
     const double (*dd_q0)[2], const double (*G_list)[3],
-    const long num_G_points, const double lambda, const char uplo) {
-    long i, j, gp, num_band;
-    long is_nac, info;
+    const int64_t num_G_points, const double lambda, const char uplo) {
+    int64_t i, j, gp, num_band;
+    int64_t is_nac, info;
     double q[3];
     double *freqs_tmp;
 
@@ -294,14 +303,15 @@ static void get_gonze_undone_phonons(
 
 static void get_gonze_phonons(
     lapack_complex_double *eigvecs, const double q[3], const double *fc2,
-    const double *masses, const long *p2s, const long *s2p,
-    const long (*multi)[2], const double (*positions)[3], const long num_patom,
-    const long num_satom, const double (*svecs)[3], const long is_nac,
-    const double (*born)[3][3], const double dielectric[3][3],
-    const double reciprocal_lattice[3][3], const double *q_direction,
-    const double nac_factor, const double (*dd_q0)[2],
-    const double (*G_list)[3], const long num_G_points, const double lambda) {
-    long i, j, k, l, adrs, num_band;
+    const double *masses, const int64_t *p2s, const int64_t *s2p,
+    const int64_t (*multi)[2], const double (*positions)[3],
+    const int64_t num_patom, const int64_t num_satom, const double (*svecs)[3],
+    const int64_t is_nac, const double (*born)[3][3],
+    const double dielectric[3][3], const double reciprocal_lattice[3][3],
+    const double *q_direction, const double nac_factor,
+    const double (*dd_q0)[2], const double (*G_list)[3],
+    const int64_t num_G_points, const double lambda) {
+    int64_t i, j, k, l, adrs, num_band;
     double mm;
     double q_cart[3];
     double *q_dir_cart;
@@ -365,9 +375,9 @@ static void get_gonze_phonons(
 
 static void get_dynamical_matrix(
     lapack_complex_double *dynmat, const double q[3], const double *fc2,
-    const double *masses, const long *p2s, const long *s2p,
-    const long (*multi)[2], const long num_patom, const long num_satom,
-    const double (*svecs)[3], const long is_nac,
+    const double *masses, const int64_t *p2s, const int64_t *s2p,
+    const int64_t (*multi)[2], const int64_t num_patom, const int64_t num_satom,
+    const double (*svecs)[3], const int64_t is_nac,
     const double (*born)[3][3], /* Wang NAC unless NULL */
     const double dielectric[3][3], const double reciprocal_lattice[3][3],
     const double *q_direction, const double nac_factor) {
@@ -391,13 +401,13 @@ static void get_dynamical_matrix(
     }
 }
 
-static void get_charge_sum(double (*charge_sum)[3][3], const long num_patom,
-                           const long num_satom, const double q[3],
+static void get_charge_sum(double (*charge_sum)[3][3], const int64_t num_patom,
+                           const int64_t num_satom, const double q[3],
                            const double (*born)[3][3],
                            const double dielectric[3][3],
                            const double reciprocal_lattice[3][3],
                            const double *q_direction, const double nac_factor) {
-    long i, j;
+    int64_t i, j;
     double inv_dielectric_factor, dielectric_factor, tmp_val;
     double q_cart[3];
 
@@ -432,9 +442,10 @@ static void get_charge_sum(double (*charge_sum)[3][3], const long num_patom,
     dym_get_charge_sum(charge_sum, num_patom, dielectric_factor, q_cart, born);
 }
 
-static long needs_nac(const double (*born)[3][3], const long (*grid_address)[3],
-                      const long gp, const double *q_direction) {
-    long is_nac;
+static int64_t needs_nac(const double (*born)[3][3],
+                         const int64_t (*grid_address)[3], const int64_t gp,
+                         const double *q_direction) {
+    int64_t is_nac;
 
     if (born) {
         if (grid_address[gp][0] == 0 && grid_address[gp][1] == 0 &&

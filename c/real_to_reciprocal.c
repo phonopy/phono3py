@@ -36,6 +36,7 @@
 
 #include <assert.h>
 #include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -48,27 +49,28 @@ static void real_to_reciprocal_legacy(
     const lapack_complex_double *pre_phase_factors,
     const lapack_complex_double *phase_factor1,
     const lapack_complex_double *phase_factor2, const double *fc3,
-    const long is_compact_fc3, const AtomTriplets *atom_triplets,
-    const long openmp_per_triplets);
+    const int64_t is_compact_fc3, const AtomTriplets *atom_triplets,
+    const int64_t openmp_per_triplets);
 static void real_to_reciprocal_r0_average(
     lapack_complex_double *fc3_reciprocal,
     const lapack_complex_double *pre_phase_factors,
     const lapack_complex_double *phase_factor0,
     const lapack_complex_double *phase_factor1,
     const lapack_complex_double *phase_factor2, const double *fc3,
-    const long is_compact_fc3, const AtomTriplets *atom_triplets,
-    const long openmp_per_triplets);
+    const int64_t is_compact_fc3, const AtomTriplets *atom_triplets,
+    const int64_t openmp_per_triplets);
 static void real_to_reciprocal_elements(
     lapack_complex_double *fc3_rec_elem,
     const lapack_complex_double *phase_factor1,
     const lapack_complex_double *phase_factor2, const double *fc3,
-    const long is_compact_fc3, const AtomTriplets *atom_triplets,
-    const long pi0, const long pi1, const long pi2, const long leg_index);
+    const int64_t is_compact_fc3, const AtomTriplets *atom_triplets,
+    const int64_t pi0, const int64_t pi1, const int64_t pi2,
+    const int64_t leg_index);
 static lapack_complex_double get_phase_factor(const double q[3],
                                               const double (*svecs)[3],
-                                              const long multi[2]);
+                                              const int64_t multi[2]);
 static lapack_complex_double get_pre_phase_factor(
-    const long i_patom, const double q_vecs[3][3],
+    const int64_t i_patom, const double q_vecs[3][3],
     const AtomTriplets *atom_triplets);
 static lapack_complex_double sum_lapack_complex_double(lapack_complex_double a,
                                                        lapack_complex_double b);
@@ -76,10 +78,10 @@ static lapack_complex_double sum_lapack_complex_double(lapack_complex_double a,
 /* fc3_reciprocal[num_patom, num_patom, num_patom, 3, 3, 3] */
 void r2r_real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
                             const double q_vecs[3][3], const double *fc3,
-                            const long is_compact_fc3,
+                            const int64_t is_compact_fc3,
                             const AtomTriplets *atom_triplets,
-                            const long openmp_per_triplets) {
-    long i, j, num_band, num_patom, num_satom, adrs_vec;
+                            const int64_t openmp_per_triplets) {
+    int64_t i, j, num_band, num_patom, num_satom, adrs_vec;
     lapack_complex_double *pre_phase_factors, *phase_factors, *phase_factor0,
         *phase_factor1, *phase_factor2;
 
@@ -143,10 +145,10 @@ static void real_to_reciprocal_legacy(
     const lapack_complex_double *pre_phase_factors,
     const lapack_complex_double *phase_factor1,
     const lapack_complex_double *phase_factor2, const double *fc3,
-    const long is_compact_fc3, const AtomTriplets *atom_triplets,
-    const long openmp_per_triplets) {
-    long i, j, k, l, m, n, ijk;
-    long num_patom, num_satom, num_band;
+    const int64_t is_compact_fc3, const AtomTriplets *atom_triplets,
+    const int64_t openmp_per_triplets) {
+    int64_t i, j, k, l, m, n, ijk;
+    int64_t num_patom, num_satom, num_band;
     lapack_complex_double fc3_rec_elem[27];
 
     num_patom = atom_triplets->multi_dims[1];
@@ -190,10 +192,10 @@ static void real_to_reciprocal_r0_average(
     const lapack_complex_double *phase_factor0,
     const lapack_complex_double *phase_factor1,
     const lapack_complex_double *phase_factor2, const double *fc3,
-    const long is_compact_fc3, const AtomTriplets *atom_triplets,
-    const long openmp_per_triplets) {
-    long i, j, k, l, m, n, ijk;
-    long num_patom, num_satom, num_band;
+    const int64_t is_compact_fc3, const AtomTriplets *atom_triplets,
+    const int64_t openmp_per_triplets) {
+    int64_t i, j, k, l, m, n, ijk;
+    int64_t num_patom, num_satom, num_band;
     lapack_complex_double fc3_rec_elem[27], fc3_rec;
 
     num_patom = atom_triplets->multi_dims[1];
@@ -271,10 +273,11 @@ static void real_to_reciprocal_elements(
     lapack_complex_double *fc3_rec_elem,
     const lapack_complex_double *phase_factor1,
     const lapack_complex_double *phase_factor2, const double *fc3,
-    const long is_compact_fc3, const AtomTriplets *atom_triplets,
-    const long pi0, const long pi1, const long pi2, const long leg_index) {
-    long i, j, k, l;
-    long num_satom, adrs_shift;
+    const int64_t is_compact_fc3, const AtomTriplets *atom_triplets,
+    const int64_t pi0, const int64_t pi1, const int64_t pi2,
+    const int64_t leg_index) {
+    int64_t i, j, k, l;
+    int64_t num_satom, adrs_shift;
     lapack_complex_double phase_factor;
     double fc3_rec_real[27], fc3_rec_imag[27];
 
@@ -344,9 +347,9 @@ static void real_to_reciprocal_elements(
 // This function doesn't need to think about position +
 // lattice-translation because q+q'+q''=G.
 static lapack_complex_double get_pre_phase_factor(
-    const long i_patom, const double q_vecs[3][3],
+    const int64_t i_patom, const double q_vecs[3][3],
     const AtomTriplets *atom_triplets) {
-    long j, svecs_adrs;
+    int64_t j, svecs_adrs;
     double pre_phase;
     lapack_complex_double pre_phase_factor;
 
@@ -366,8 +369,8 @@ static lapack_complex_double get_pre_phase_factor(
 
 static lapack_complex_double get_phase_factor(const double q[3],
                                               const double (*svecs)[3],
-                                              const long multi[2]) {
-    long i, j;
+                                              const int64_t multi[2]) {
+    int64_t i, j;
     double sum_real, sum_imag, phase;
 
     sum_real = 0;
