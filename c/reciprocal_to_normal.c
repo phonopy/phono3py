@@ -34,6 +34,8 @@
 
 #include "reciprocal_to_normal.h"
 
+#include <stdint.h>
+
 #ifdef MULTITHREADED_BLAS
 #if defined(MKL_BLAS) || defined(SCIPY_MKL_H)
 #include <mkl_cblas.h>
@@ -56,29 +58,29 @@ static double get_fc3_sum(const lapack_complex_double *e0,
                           const lapack_complex_double *e1,
                           const lapack_complex_double *e2,
                           const lapack_complex_double *fc3_reciprocal,
-                          const long num_band);
+                          const int64_t num_band);
 #ifdef MULTITHREADED_BLAS
 static double get_fc3_sum_blas(const lapack_complex_double *e0,
                                const lapack_complex_double *e1,
                                const lapack_complex_double *e2,
                                const lapack_complex_double *fc3_reciprocal,
-                               const long num_band);
+                               const int64_t num_band);
 #endif
 static double get_fc3_sum_blas_like(const lapack_complex_double *e0,
                                     const lapack_complex_double *e1,
                                     const lapack_complex_double *e2,
                                     const lapack_complex_double *fc3_reciprocal,
-                                    const long num_band);
+                                    const int64_t num_band);
 void reciprocal_to_normal_squared(
-    double *fc3_normal_squared, const long (*g_pos)[4], const long num_g_pos,
-    const lapack_complex_double *fc3_reciprocal, const double *freqs0,
-    const double *freqs1, const double *freqs2,
+    double *fc3_normal_squared, const int64_t (*g_pos)[4],
+    const int64_t num_g_pos, const lapack_complex_double *fc3_reciprocal,
+    const double *freqs0, const double *freqs1, const double *freqs2,
     const lapack_complex_double *eigvecs0,
     const lapack_complex_double *eigvecs1,
     const lapack_complex_double *eigvecs2, const double *masses,
-    const long *band_indices, const long num_band,
-    const double cutoff_frequency, const long openmp_per_triplets) {
-    long i, j, ij, num_atom, use_multithreaded_blas;
+    const int64_t *band_indices, const int64_t num_band,
+    const double cutoff_frequency, const int64_t openmp_per_triplets) {
+    int64_t i, j, ij, num_atom, use_multithreaded_blas;
     double *inv_sqrt_masses;
     lapack_complex_double *e0, *e1, *e2;
 
@@ -199,8 +201,8 @@ static double get_fc3_sum(const lapack_complex_double *e0,
                           const lapack_complex_double *e1,
                           const lapack_complex_double *e2,
                           const lapack_complex_double *fc3_reciprocal,
-                          const long num_band) {
-    long i, j, jk;
+                          const int64_t num_band) {
+    int64_t i, j, jk;
     double sum_real, sum_imag;
     lapack_complex_double e_012_fc3, fc3_i_e_12, *e_12_cache;
     const lapack_complex_double *fc3_i;
@@ -237,8 +239,8 @@ static double get_fc3_sum_blas(const lapack_complex_double *e0,
                                const lapack_complex_double *e1,
                                const lapack_complex_double *e2,
                                const lapack_complex_double *fc3_reciprocal,
-                               const long num_band) {
-    long i;
+                               const int64_t num_band) {
+    int64_t i;
     lapack_complex_double *fc3_e12, *e_12, zero, one, retval;
 
     e_12 = (lapack_complex_double *)malloc(sizeof(lapack_complex_double) *
@@ -274,8 +276,8 @@ static double get_fc3_sum_blas_like(const lapack_complex_double *e0,
                                     const lapack_complex_double *e1,
                                     const lapack_complex_double *e2,
                                     const lapack_complex_double *fc3_reciprocal,
-                                    const long num_band) {
-    long i, j;
+                                    const int64_t num_band) {
+    int64_t i, j;
     double sum_real, sum_imag, retval_real, retval_imag;
     lapack_complex_double *e_12, fc3_e_12, fc3_e_012;
 

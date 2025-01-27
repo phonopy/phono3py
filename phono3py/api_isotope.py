@@ -107,7 +107,7 @@ class Phono3pyIsotope:
             (len(self._sigmas), len(grid_points), len(self._iso.band_indices)),
             dtype="double",
         )
-        self._grid_points = np.array(grid_points, dtype="long")
+        self._grid_points = np.array(grid_points, dtype="int64")
 
         for j, gp in enumerate(grid_points):
             self._iso.set_grid_point(gp)

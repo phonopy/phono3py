@@ -34,6 +34,7 @@
 
 #include "pp_collision.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -48,37 +49,37 @@
 #include "triplet_iw.h"
 
 static void get_collision(
-    double *ise, const long num_band0, const long num_band,
-    const long num_temps, const double *temperatures, const double *g,
+    double *ise, const int64_t num_band0, const int64_t num_band,
+    const int64_t num_temps, const double *temperatures, const double *g,
     const char *g_zero, const double *frequencies,
-    const lapack_complex_double *eigenvectors, const long triplet[3],
-    const long triplet_weight, const RecgridConstBZGrid *bzgrid,
-    const double *fc3, const long is_compact_fc3,
+    const lapack_complex_double *eigenvectors, const int64_t triplet[3],
+    const int64_t triplet_weight, const RecgridConstBZGrid *bzgrid,
+    const double *fc3, const int64_t is_compact_fc3,
     const AtomTriplets *atom_triplets, const double *masses,
-    const long *band_indices, const long symmetrize_fc3_q,
-    const double cutoff_frequency, const long openmp_per_triplets);
+    const int64_t *band_indices, const int64_t symmetrize_fc3_q,
+    const double cutoff_frequency, const int64_t openmp_per_triplets);
 static void finalize_ise(double *imag_self_energy, const double *ise,
-                         const long (*bz_grid_address)[3],
-                         const long (*triplets)[3], const long num_triplets,
-                         const long num_temps, const long num_band0,
-                         const long is_NU);
+                         const int64_t (*bz_grid_address)[3],
+                         const int64_t (*triplets)[3],
+                         const int64_t num_triplets, const int64_t num_temps,
+                         const int64_t num_band0, const int64_t is_NU);
 
 void ppc_get_pp_collision(
     double *imag_self_energy,
-    const long relative_grid_address[24][4][3], /* thm */
+    const int64_t relative_grid_address[24][4][3], /* thm */
     const double *frequencies, const lapack_complex_double *eigenvectors,
-    const long (*triplets)[3], const long num_triplets,
-    const long *triplet_weights, const RecgridConstBZGrid *bzgrid,
-    const double *fc3, const long is_compact_fc3,
+    const int64_t (*triplets)[3], const int64_t num_triplets,
+    const int64_t *triplet_weights, const RecgridConstBZGrid *bzgrid,
+    const double *fc3, const int64_t is_compact_fc3,
     const AtomTriplets *atom_triplets, const double *masses,
-    const Larray *band_indices, const Darray *temperatures, const long is_NU,
-    const long symmetrize_fc3_q, const double cutoff_frequency,
-    const long openmp_per_triplets) {
-    long i;
-    long num_band, num_band0, num_band_prod, num_temps;
+    const Larray *band_indices, const Darray *temperatures, const int64_t is_NU,
+    const int64_t symmetrize_fc3_q, const double cutoff_frequency,
+    const int64_t openmp_per_triplets) {
+    int64_t i;
+    int64_t num_band, num_band0, num_band_prod, num_temps;
     double *ise, *freqs_at_gp, *g;
     char *g_zero;
-    long tp_relative_grid_address[2][24][4][3];
+    int64_t tp_relative_grid_address[2][24][4][3];
 
     ise = NULL;
     freqs_at_gp = NULL;
@@ -138,16 +139,16 @@ void ppc_get_pp_collision(
 void ppc_get_pp_collision_with_sigma(
     double *imag_self_energy, const double sigma, const double sigma_cutoff,
     const double *frequencies, const lapack_complex_double *eigenvectors,
-    const long (*triplets)[3], const long num_triplets,
-    const long *triplet_weights, const RecgridConstBZGrid *bzgrid,
-    const double *fc3, const long is_compact_fc3,
+    const int64_t (*triplets)[3], const int64_t num_triplets,
+    const int64_t *triplet_weights, const RecgridConstBZGrid *bzgrid,
+    const double *fc3, const int64_t is_compact_fc3,
     const AtomTriplets *atom_triplets, const double *masses,
-    const Larray *band_indices, const Darray *temperatures, const long is_NU,
-    const long symmetrize_fc3_q, const double cutoff_frequency,
-    const long openmp_per_triplets) {
-    long i;
-    long num_band, num_band0, num_band_prod, num_temps;
-    long const_adrs_shift;
+    const Larray *band_indices, const Darray *temperatures, const int64_t is_NU,
+    const int64_t symmetrize_fc3_q, const double cutoff_frequency,
+    const int64_t openmp_per_triplets) {
+    int64_t i;
+    int64_t num_band, num_band0, num_band_prod, num_temps;
+    int64_t const_adrs_shift;
     double cutoff;
     double *ise, *freqs_at_gp, *g;
     char *g_zero;
@@ -207,26 +208,26 @@ void ppc_get_pp_collision_with_sigma(
 }
 
 static void get_collision(
-    double *ise, const long num_band0, const long num_band,
-    const long num_temps, const double *temperatures, const double *g,
+    double *ise, const int64_t num_band0, const int64_t num_band,
+    const int64_t num_temps, const double *temperatures, const double *g,
     const char *g_zero, const double *frequencies,
-    const lapack_complex_double *eigenvectors, const long triplet[3],
-    const long triplet_weight, const RecgridConstBZGrid *bzgrid,
-    const double *fc3, const long is_compact_fc3,
+    const lapack_complex_double *eigenvectors, const int64_t triplet[3],
+    const int64_t triplet_weight, const RecgridConstBZGrid *bzgrid,
+    const double *fc3, const int64_t is_compact_fc3,
     const AtomTriplets *atom_triplets, const double *masses,
-    const long *band_indices, const long symmetrize_fc3_q,
-    const double cutoff_frequency, const long openmp_per_triplets) {
-    long i;
-    long num_band_prod, num_g_pos;
+    const int64_t *band_indices, const int64_t symmetrize_fc3_q,
+    const double cutoff_frequency, const int64_t openmp_per_triplets) {
+    int64_t i;
+    int64_t num_band_prod, num_g_pos;
     double *fc3_normal_squared;
-    long(*g_pos)[4];
+    int64_t(*g_pos)[4];
 
     fc3_normal_squared = NULL;
     g_pos = NULL;
 
     num_band_prod = num_band0 * num_band * num_band;
     fc3_normal_squared = (double *)malloc(sizeof(double) * num_band_prod);
-    g_pos = (long(*)[4])malloc(sizeof(long[4]) * num_band_prod);
+    g_pos = (int64_t(*)[4])malloc(sizeof(int64_t[4]) * num_band_prod);
 
     for (i = 0; i < num_band_prod; i++) {
         fc3_normal_squared[i] = 0;
@@ -252,12 +253,12 @@ static void get_collision(
 }
 
 static void finalize_ise(double *imag_self_energy, const double *ise,
-                         const long (*bz_grid_addresses)[3],
-                         const long (*triplets)[3], const long num_triplets,
-                         const long num_temps, const long num_band0,
-                         const long is_NU) {
-    long i, j, k;
-    long is_N;
+                         const int64_t (*bz_grid_addresses)[3],
+                         const int64_t (*triplets)[3],
+                         const int64_t num_triplets, const int64_t num_temps,
+                         const int64_t num_band0, const int64_t is_NU) {
+    int64_t i, j, k;
+    int64_t is_N;
 
     if (is_NU) {
         for (i = 0; i < 2 * num_temps * num_band0; i++) {

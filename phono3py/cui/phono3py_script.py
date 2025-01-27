@@ -872,7 +872,7 @@ def init_phph_interaction(
     if settings.write_phonon:
         freqs, eigvecs, grid_address = phono3py.get_phonon_data()
         ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(bz_grid)
-        ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype="long")
+        ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype="int64")
         filename = write_phonon_to_hdf5(
             freqs,
             eigvecs,
