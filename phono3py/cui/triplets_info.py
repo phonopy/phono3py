@@ -154,12 +154,12 @@ class _TripletsNumbers:
 def _get_ir_grid_points(bz_grid: BZGrid, is_kappa_star: bool = True):
     if is_kappa_star:
         ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(bz_grid)
-        ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype="long")
+        ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype="int64")
     else:
         ir_grid_points = np.array(
-            bz_grid.grg2bzg[: np.prod(bz_grid.D_diag)], dtype="long", order="C"
+            bz_grid.grg2bzg[: np.prod(bz_grid.D_diag)], dtype="int64", order="C"
         )
-        ir_grid_weights = np.ones(len(ir_grid_points), dtype="long")
+        ir_grid_weights = np.ones(len(ir_grid_points), dtype="int64")
 
     return ir_grid_points, ir_grid_weights
 

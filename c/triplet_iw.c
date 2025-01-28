@@ -35,6 +35,7 @@
 #include "triplet_iw.h"
 
 #include <math.h>
+#include <stdint.h>
 
 #include "funcs.h"
 #include "grgrid.h"
@@ -43,32 +44,36 @@
 static void set_freq_vertices(double freq_vertices[3][24][4],
                               const double *frequencies1,
                               const double *frequencies2,
-                              const long vertices[2][24][4],
-                              const long num_band1, const long num_band2,
-                              const long b1, const long b2, const long tp_type);
-static long set_g(double g[3], const double f0,
-                  const double freq_vertices[3][24][4], const long max_i);
+                              const int64_t vertices[2][24][4],
+                              const int64_t num_band1, const int64_t num_band2,
+                              const int64_t b1, const int64_t b2,
+                              const int64_t tp_type);
+static int64_t set_g(double g[3], const double f0,
+                     const double freq_vertices[3][24][4], const int64_t max_i);
 static void get_triplet_tetrahedra_vertices(
-    long vertices[2][24][4], const long tp_relative_grid_address[2][24][4][3],
-    const long triplet[3], const RecgridConstBZGrid *bzgrid);
+    int64_t vertices[2][24][4],
+    const int64_t tp_relative_grid_address[2][24][4][3],
+    const int64_t triplet[3], const RecgridConstBZGrid *bzgrid);
 static void get_neighboring_grid_points_type1(
-    long *neighboring_grid_points, const long grid_point,
-    const long (*relative_grid_address)[3],
-    const long num_relative_grid_address, const RecgridConstBZGrid *bzgrid);
+    int64_t *neighboring_grid_points, const int64_t grid_point,
+    const int64_t (*relative_grid_address)[3],
+    const int64_t num_relative_grid_address, const RecgridConstBZGrid *bzgrid);
 static void get_neighboring_grid_points_type2(
-    long *neighboring_grid_points, const long grid_point,
-    const long (*relative_grid_address)[3],
-    const long num_relative_grid_address, const RecgridConstBZGrid *bzgrid);
+    int64_t *neighboring_grid_points, const int64_t grid_point,
+    const int64_t (*relative_grid_address)[3],
+    const int64_t num_relative_grid_address, const RecgridConstBZGrid *bzgrid);
 
 void tpi_get_integration_weight(
     double *iw, char *iw_zero, const double *frequency_points,
-    const long num_band0, const long tp_relative_grid_address[2][24][4][3],
-    const long triplets[3], const long num_triplets,
+    const int64_t num_band0,
+    const int64_t tp_relative_grid_address[2][24][4][3],
+    const int64_t triplets[3], const int64_t num_triplets,
     const RecgridConstBZGrid *bzgrid, const double *frequencies1,
-    const long num_band1, const double *frequencies2, const long num_band2,
-    const long tp_type, const long openmp_per_triplets) {
-    long max_i, j, b1, b2, b12, num_band_prod, adrs_shift;
-    long vertices[2][24][4];
+    const int64_t num_band1, const double *frequencies2,
+    const int64_t num_band2, const int64_t tp_type,
+    const int64_t openmp_per_triplets) {
+    int64_t max_i, j, b1, b2, b12, num_band_prod, adrs_shift;
+    int64_t vertices[2][24][4];
     double g[3];
     double freq_vertices[3][24][4];
 
@@ -129,10 +134,11 @@ void tpi_get_integration_weight(
 
 void tpi_get_integration_weight_with_sigma(
     double *iw, char *iw_zero, const double sigma, const double cutoff,
-    const double *frequency_points, const long num_band0, const long triplet[3],
-    const long const_adrs_shift, const double *frequencies, const long num_band,
-    const long tp_type, const long openmp_per_triplets) {
-    long j, b12, b1, b2, adrs_shift;
+    const double *frequency_points, const int64_t num_band0,
+    const int64_t triplet[3], const int64_t const_adrs_shift,
+    const double *frequencies, const int64_t num_band, const int64_t tp_type,
+    const int64_t openmp_per_triplets) {
+    int64_t j, b12, b1, b2, adrs_shift;
     double f0, f1, f2, g0, g1, g2;
 
 #ifdef _OPENMP
@@ -199,10 +205,10 @@ void tpi_get_integration_weight_with_sigma(
  * @param num_relative_grid_address Number of relative grid addresses.
  * @param bzgrid
  */
-void tpi_get_neighboring_grid_points(long *neighboring_grid_points,
-                                     const long grid_point,
-                                     const long (*relative_grid_address)[3],
-                                     const long num_relative_grid_address,
+void tpi_get_neighboring_grid_points(int64_t *neighboring_grid_points,
+                                     const int64_t grid_point,
+                                     const int64_t (*relative_grid_address)[3],
+                                     const int64_t num_relative_grid_address,
                                      const RecgridConstBZGrid *bzgrid) {
     if (bzgrid->type == 1) {
         get_neighboring_grid_points_type1(neighboring_grid_points, grid_point,
@@ -218,11 +224,11 @@ void tpi_get_neighboring_grid_points(long *neighboring_grid_points,
 static void set_freq_vertices(double freq_vertices[3][24][4],
                               const double *frequencies1,
                               const double *frequencies2,
-                              const long vertices[2][24][4],
-                              const long num_band1, const long num_band2,
-                              const long b1, const long b2,
-                              const long tp_type) {
-    long i, j;
+                              const int64_t vertices[2][24][4],
+                              const int64_t num_band1, const int64_t num_band2,
+                              const int64_t b1, const int64_t b2,
+                              const int64_t tp_type) {
+    int64_t i, j;
     double f1, f2;
 
     for (i = 0; i < 24; i++) {
@@ -255,9 +261,10 @@ static void set_freq_vertices(double freq_vertices[3][24][4],
 /* iw_zero=1 information can be used to omit to compute particles */
 /* interaction strength that is often heaviest part in throughout */
 /* calculation. */
-static long set_g(double g[3], const double f0,
-                  const double freq_vertices[3][24][4], const long max_i) {
-    long i, iw_zero;
+static int64_t set_g(double g[3], const double f0,
+                     const double freq_vertices[3][24][4],
+                     const int64_t max_i) {
+    int64_t i, iw_zero;
 
     iw_zero = 1;
 
@@ -274,9 +281,10 @@ static long set_g(double g[3], const double f0,
 }
 
 static void get_triplet_tetrahedra_vertices(
-    long vertices[2][24][4], const long tp_relative_grid_address[2][24][4][3],
-    const long triplet[3], const RecgridConstBZGrid *bzgrid) {
-    long i, j;
+    int64_t vertices[2][24][4],
+    const int64_t tp_relative_grid_address[2][24][4][3],
+    const int64_t triplet[3], const RecgridConstBZGrid *bzgrid) {
+    int64_t i, j;
 
     for (i = 0; i < 2; i++) {
         for (j = 0; j < 24; j++) {
@@ -288,11 +296,11 @@ static void get_triplet_tetrahedra_vertices(
 }
 
 static void get_neighboring_grid_points_type1(
-    long *neighboring_grid_points, const long grid_point,
-    const long (*relative_grid_address)[3],
-    const long num_relative_grid_address, const RecgridConstBZGrid *bzgrid) {
-    long bzmesh[3], bz_address[3];
-    long i, j, bz_gp, prod_bz_mesh;
+    int64_t *neighboring_grid_points, const int64_t grid_point,
+    const int64_t (*relative_grid_address)[3],
+    const int64_t num_relative_grid_address, const RecgridConstBZGrid *bzgrid) {
+    int64_t bzmesh[3], bz_address[3];
+    int64_t i, j, bz_gp, prod_bz_mesh;
 
     for (i = 0; i < 3; i++) {
         bzmesh[i] = bzgrid->D_diag[i] * 2;
@@ -315,11 +323,11 @@ static void get_neighboring_grid_points_type1(
 }
 
 static void get_neighboring_grid_points_type2(
-    long *neighboring_grid_points, const long grid_point,
-    const long (*relative_grid_address)[3],
-    const long num_relative_grid_address, const RecgridConstBZGrid *bzgrid) {
-    long bz_address[3];
-    long i, j, gp;
+    int64_t *neighboring_grid_points, const int64_t grid_point,
+    const int64_t (*relative_grid_address)[3],
+    const int64_t num_relative_grid_address, const RecgridConstBZGrid *bzgrid) {
+    int64_t bz_address[3];
+    int64_t i, j, gp;
 
     for (i = 0; i < num_relative_grid_address; i++) {
         for (j = 0; j < 3; j++) {

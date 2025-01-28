@@ -34,6 +34,7 @@
 
 #include "interaction.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -45,43 +46,42 @@
 #include "recgrid.h"
 #include "reciprocal_to_normal.h"
 
-static const long index_exchange[6][3] = {{0, 1, 2}, {2, 0, 1}, {1, 2, 0},
-                                          {2, 1, 0}, {0, 2, 1}, {1, 0, 2}};
-static void real_to_normal(double *fc3_normal_squared, const long (*g_pos)[4],
-                           const long num_g_pos, const double *freqs0,
-                           const double *freqs1, const double *freqs2,
-                           const lapack_complex_double *eigvecs0,
-                           const lapack_complex_double *eigvecs1,
-                           const lapack_complex_double *eigvecs2,
-                           const double *fc3, const long is_compact_fc3,
-                           const double q_vecs[3][3], /* q0, q1, q2 */
-                           const AtomTriplets *atom_triplets,
-                           const double *masses, const long *band_indices,
-                           const long num_band, const double cutoff_frequency,
-                           const long triplet_index, const long num_triplets,
-                           const long openmp_per_triplets);
-static void real_to_normal_sym_q(
-    double *fc3_normal_squared, const long (*g_pos)[4], const long num_g_pos,
-    double *const freqs[3], lapack_complex_double *const eigvecs[3],
-    const double *fc3, const long is_compact_fc3,
-    const double q_vecs[3][3], /* q0, q1, q2 */
+static const int64_t index_exchange[6][3] = {{0, 1, 2}, {2, 0, 1}, {1, 2, 0},
+                                             {2, 1, 0}, {0, 2, 1}, {1, 0, 2}};
+static void real_to_normal(
+    double *fc3_normal_squared, const int64_t (*g_pos)[4],
+    const int64_t num_g_pos, const double *freqs0, const double *freqs1,
+    const double *freqs2, const lapack_complex_double *eigvecs0,
+    const lapack_complex_double *eigvecs1,
+    const lapack_complex_double *eigvecs2, const double *fc3,
+    const int64_t is_compact_fc3, const double q_vecs[3][3], /* q0, q1, q2 */
     const AtomTriplets *atom_triplets, const double *masses,
-    const long *band_indices, const long num_band0, const long num_band,
-    const double cutoff_frequency, const long triplet_index,
-    const long num_triplets, const long openmp_per_triplets);
+    const int64_t *band_indices, const int64_t num_band,
+    const double cutoff_frequency, const int64_t triplet_index,
+    const int64_t num_triplets, const int64_t openmp_per_triplets);
+static void real_to_normal_sym_q(
+    double *fc3_normal_squared, const int64_t (*g_pos)[4],
+    const int64_t num_g_pos, double *const freqs[3],
+    lapack_complex_double *const eigvecs[3], const double *fc3,
+    const int64_t is_compact_fc3, const double q_vecs[3][3], /* q0, q1, q2 */
+    const AtomTriplets *atom_triplets, const double *masses,
+    const int64_t *band_indices, const int64_t num_band0,
+    const int64_t num_band, const double cutoff_frequency,
+    const int64_t triplet_index, const int64_t num_triplets,
+    const int64_t openmp_per_triplets);
 
 /* fc3_normal_squared[num_triplets, num_band0, num_band, num_band] */
 void itr_get_interaction(
     Darray *fc3_normal_squared, const char *g_zero, const Darray *frequencies,
-    const lapack_complex_double *eigenvectors, const long (*triplets)[3],
-    const long num_triplets, const RecgridConstBZGrid *bzgrid,
-    const double *fc3, const long is_compact_fc3,
+    const lapack_complex_double *eigenvectors, const int64_t (*triplets)[3],
+    const int64_t num_triplets, const RecgridConstBZGrid *bzgrid,
+    const double *fc3, const int64_t is_compact_fc3,
     const AtomTriplets *atom_triplets, const double *masses,
-    const long *band_indices, const long symmetrize_fc3_q,
-    const double cutoff_frequency, const long openmp_per_triplets) {
-    long(*g_pos)[4];
-    long i;
-    long num_band, num_band0, num_band_prod, num_g_pos;
+    const int64_t *band_indices, const int64_t symmetrize_fc3_q,
+    const double cutoff_frequency, const int64_t openmp_per_triplets) {
+    int64_t(*g_pos)[4];
+    int64_t i;
+    int64_t num_band, num_band0, num_band_prod, num_g_pos;
 
     g_pos = NULL;
 
@@ -94,7 +94,7 @@ void itr_get_interaction(
         num_g_pos, g_pos) if (openmp_per_triplets)
 #endif
     for (i = 0; i < num_triplets; i++) {
-        g_pos = (long(*)[4])malloc(sizeof(long[4]) * num_band_prod);
+        g_pos = (int64_t(*)[4])malloc(sizeof(int64_t[4]) * num_band_prod);
         num_g_pos = ise_set_g_pos(g_pos, num_band0, num_band,
                                   g_zero + i * num_band_prod);
 
@@ -111,17 +111,18 @@ void itr_get_interaction(
 }
 
 void itr_get_interaction_at_triplet(
-    double *fc3_normal_squared, const long num_band0, const long num_band,
-    const long (*g_pos)[4], const long num_g_pos, const double *frequencies,
-    const lapack_complex_double *eigenvectors, const long triplet[3],
-    const RecgridConstBZGrid *bzgrid, const double *fc3,
-    const long is_compact_fc3, const AtomTriplets *atom_triplets,
-    const double *masses, const long *band_indices, const long symmetrize_fc3_q,
+    double *fc3_normal_squared, const int64_t num_band0, const int64_t num_band,
+    const int64_t (*g_pos)[4], const int64_t num_g_pos,
+    const double *frequencies, const lapack_complex_double *eigenvectors,
+    const int64_t triplet[3], const RecgridConstBZGrid *bzgrid,
+    const double *fc3, const int64_t is_compact_fc3,
+    const AtomTriplets *atom_triplets, const double *masses,
+    const int64_t *band_indices, const int64_t symmetrize_fc3_q,
     const double cutoff_frequency,
-    const long triplet_index, /* only for print */
-    const long num_triplets,  /* only for print */
-    const long openmp_per_triplets) {
-    long j, k;
+    const int64_t triplet_index, /* only for print */
+    const int64_t num_triplets,  /* only for print */
+    const int64_t openmp_per_triplets) {
+    int64_t j, k;
     double *freqs[3];
     lapack_complex_double *eigvecs[3];
     double q_vecs[3][3];
@@ -182,22 +183,20 @@ void itr_get_interaction_at_triplet(
     }
 }
 
-static void real_to_normal(double *fc3_normal_squared, const long (*g_pos)[4],
-                           const long num_g_pos, const double *freqs0,
-                           const double *freqs1, const double *freqs2,
-                           const lapack_complex_double *eigvecs0,
-                           const lapack_complex_double *eigvecs1,
-                           const lapack_complex_double *eigvecs2,
-                           const double *fc3, const long is_compact_fc3,
-                           const double q_vecs[3][3], /* q0, q1, q2 */
-                           const AtomTriplets *atom_triplets,
-                           const double *masses, const long *band_indices,
-                           const long num_band, const double cutoff_frequency,
-                           const long triplet_index, const long num_triplets,
-                           const long openmp_per_triplets) {
+static void real_to_normal(
+    double *fc3_normal_squared, const int64_t (*g_pos)[4],
+    const int64_t num_g_pos, const double *freqs0, const double *freqs1,
+    const double *freqs2, const lapack_complex_double *eigvecs0,
+    const lapack_complex_double *eigvecs1,
+    const lapack_complex_double *eigvecs2, const double *fc3,
+    const int64_t is_compact_fc3, const double q_vecs[3][3], /* q0, q1, q2 */
+    const AtomTriplets *atom_triplets, const double *masses,
+    const int64_t *band_indices, const int64_t num_band,
+    const double cutoff_frequency, const int64_t triplet_index,
+    const int64_t num_triplets, const int64_t openmp_per_triplets) {
     lapack_complex_double *fc3_reciprocal;
     lapack_complex_double comp_zero;
-    long i;
+    int64_t i;
 
     comp_zero = lapack_make_complex_double(0, 0);
     fc3_reciprocal = (lapack_complex_double *)malloc(
@@ -224,16 +223,17 @@ static void real_to_normal(double *fc3_normal_squared, const long (*g_pos)[4],
 }
 
 static void real_to_normal_sym_q(
-    double *fc3_normal_squared, const long (*g_pos)[4], const long num_g_pos,
-    double *const freqs[3], lapack_complex_double *const eigvecs[3],
-    const double *fc3, const long is_compact_fc3,
-    const double q_vecs[3][3], /* q0, q1, q2 */
+    double *fc3_normal_squared, const int64_t (*g_pos)[4],
+    const int64_t num_g_pos, double *const freqs[3],
+    lapack_complex_double *const eigvecs[3], const double *fc3,
+    const int64_t is_compact_fc3, const double q_vecs[3][3], /* q0, q1, q2 */
     const AtomTriplets *atom_triplets, const double *masses,
-    const long *band_indices, const long num_band0, const long num_band,
-    const double cutoff_frequency, const long triplet_index,
-    const long num_triplets, const long openmp_per_triplets) {
-    long i, j, k, l;
-    long band_ex[3];
+    const int64_t *band_indices, const int64_t num_band0,
+    const int64_t num_band, const double cutoff_frequency,
+    const int64_t triplet_index, const int64_t num_triplets,
+    const int64_t openmp_per_triplets) {
+    int64_t i, j, k, l;
+    int64_t band_ex[3];
     double q_vecs_ex[3][3];
     double *fc3_normal_squared_ex;
 

@@ -66,6 +66,7 @@ from phonopy.units import Bohr, Hartree, VaspToTHz
 from phono3py import Phono3py, Phono3pyIsotope, Phono3pyJointDos
 from phono3py.cui.create_force_constants import (
     create_phono3py_force_constants,
+    get_cutoff_pair_distance,
     get_fc_calculator_params,
     run_pypolymlp_to_compute_forces,
 )
@@ -871,7 +872,7 @@ def init_phph_interaction(
     if settings.write_phonon:
         freqs, eigvecs, grid_address = phono3py.get_phonon_data()
         ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(bz_grid)
-        ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype="long")
+        ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype="int64")
         filename = write_phonon_to_hdf5(
             freqs,
             eigvecs,
@@ -1156,12 +1157,14 @@ def main(**argparse_control):
         prepare_dataset = (
             settings.create_displacements or settings.random_displacements is not None
         )
+        cutoff_pair_distance = get_cutoff_pair_distance(settings)
         run_pypolymlp_to_compute_forces(
             ph3py,
             mlp_params=settings.mlp_params,
             displacement_distance=settings.displacement_distance,
             number_of_snapshots=settings.random_displacements,
             random_seed=settings.random_seed,
+            cutoff_pair_distance=cutoff_pair_distance,
             prepare_dataset=prepare_dataset,
             log_level=log_level,
         )

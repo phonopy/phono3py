@@ -34,6 +34,7 @@
 
 #include "recgrid.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -44,64 +45,71 @@
 
 #define GRID_TOLERANCE_FACTOR 0.01
 
-void recgrid_get_all_grid_addresses(long (*gr_grid_addresses)[3],
-                                    const long D_diag[3]) {
+void recgrid_get_all_grid_addresses(int64_t (*gr_grid_addresses)[3],
+                                    const int64_t D_diag[3]) {
     grg_get_all_grid_addresses(gr_grid_addresses, D_diag);
 }
 
-void recgrid_get_double_grid_address(long address_double[3],
-                                     const long address[3], const long PS[3]) {
+void recgrid_get_double_grid_address(int64_t address_double[3],
+                                     const int64_t address[3],
+                                     const int64_t PS[3]) {
     grg_get_double_grid_address(address_double, address, PS);
 }
 
-void recgrid_get_grid_address_from_index(long address[3], const long grid_index,
-                                         const long D_diag[3]) {
+void recgrid_get_grid_address_from_index(int64_t address[3],
+                                         const int64_t grid_index,
+                                         const int64_t D_diag[3]) {
     grg_get_grid_address_from_index(address, grid_index, D_diag);
 }
 
-long recgrid_get_double_grid_index(const long address_double[3],
-                                   const long D_diag[3], const long PS[3]) {
+int64_t recgrid_get_double_grid_index(const int64_t address_double[3],
+                                      const int64_t D_diag[3],
+                                      const int64_t PS[3]) {
     return grg_get_double_grid_index(address_double, D_diag, PS);
 }
 
-long recgrid_get_grid_index_from_address(const long address[3],
-                                         const long D_diag[3]) {
+int64_t recgrid_get_grid_index_from_address(const int64_t address[3],
+                                            const int64_t D_diag[3]) {
     return grg_get_grid_index(address, D_diag);
 }
 
-long recgrid_rotate_grid_index(const long grid_index, const long rotation[3][3],
-                               const long D_diag[3], const long PS[3]) {
+int64_t recgrid_rotate_grid_index(const int64_t grid_index,
+                                  const int64_t rotation[3][3],
+                                  const int64_t D_diag[3],
+                                  const int64_t PS[3]) {
     return grg_rotate_grid_index(grid_index, rotation, D_diag, PS);
 }
 
-long recgrid_get_reciprocal_point_group(long rec_rotations[48][3][3],
-                                        const long (*rotations)[3][3],
-                                        const long num_rot,
-                                        const long is_time_reversal,
-                                        const long is_transpose) {
+int64_t recgrid_get_reciprocal_point_group(int64_t rec_rotations[48][3][3],
+                                           const int64_t (*rotations)[3][3],
+                                           const int64_t num_rot,
+                                           const int64_t is_time_reversal,
+                                           const int64_t is_transpose) {
     return grg_get_reciprocal_point_group(rec_rotations, rotations, num_rot,
                                           is_time_reversal, is_transpose);
 }
 
-long recgrid_get_snf3x3(long D_diag[3], long P[3][3], long Q[3][3],
-                        const long A[3][3]) {
+int64_t recgrid_get_snf3x3(int64_t D_diag[3], int64_t P[3][3], int64_t Q[3][3],
+                           const int64_t A[3][3]) {
     return grg_get_snf3x3(D_diag, P, Q, A);
 }
 
-long recgrid_transform_rotations(long (*transformed_rots)[3][3],
-                                 const long (*rotations)[3][3],
-                                 const long num_rot, const long D_diag[3],
-                                 const long Q[3][3]) {
-    long succeeded;
+int64_t recgrid_transform_rotations(int64_t (*transformed_rots)[3][3],
+                                    const int64_t (*rotations)[3][3],
+                                    const int64_t num_rot,
+                                    const int64_t D_diag[3],
+                                    const int64_t Q[3][3]) {
+    int64_t succeeded;
     succeeded = grg_transform_rotations(transformed_rots, rotations, num_rot,
                                         D_diag, Q);
     return succeeded;
 }
 
-long recgrid_get_ir_grid_map(long *ir_grid_map, const long (*rotations)[3][3],
-                             const long num_rot, const long D_diag[3],
-                             const long PS[3]) {
-    long num_ir, i;
+int64_t recgrid_get_ir_grid_map(int64_t *ir_grid_map,
+                                const int64_t (*rotations)[3][3],
+                                const int64_t num_rot, const int64_t D_diag[3],
+                                const int64_t PS[3]) {
+    int64_t num_ir, i;
 
     grg_get_ir_grid_map(ir_grid_map, rotations, num_rot, D_diag, PS);
 
@@ -114,13 +122,12 @@ long recgrid_get_ir_grid_map(long *ir_grid_map, const long (*rotations)[3][3],
     return num_ir;
 }
 
-long recgrid_get_bz_grid_addresses(long (*bz_grid_addresses)[3], long *bz_map,
-                                   long *bzg2grg, const long D_diag[3],
-                                   const long Q[3][3], const long PS[3],
-                                   const double rec_lattice[3][3],
-                                   const long bz_grid_type) {
+int64_t recgrid_get_bz_grid_addresses(
+    int64_t (*bz_grid_addresses)[3], int64_t *bz_map, int64_t *bzg2grg,
+    const int64_t D_diag[3], const int64_t Q[3][3], const int64_t PS[3],
+    const double rec_lattice[3][3], const int64_t bz_grid_type) {
     RecgridBZGrid *bzgrid;
-    long i, j, size;
+    int64_t i, j, size;
 
     if ((bzgrid = (RecgridBZGrid *)malloc(sizeof(RecgridBZGrid))) == NULL) {
         warning_print("Memory could not be allocated.");
@@ -152,13 +159,12 @@ long recgrid_get_bz_grid_addresses(long (*bz_grid_addresses)[3], long *bz_map,
     return size;
 }
 
-long recgrid_rotate_bz_grid_index(const long bz_grid_index,
-                                  const long rotation[3][3],
-                                  const long (*bz_grid_addresses)[3],
-                                  const long *bz_map, const long D_diag[3],
-                                  const long PS[3], const long bz_grid_type) {
+int64_t recgrid_rotate_bz_grid_index(
+    const int64_t bz_grid_index, const int64_t rotation[3][3],
+    const int64_t (*bz_grid_addresses)[3], const int64_t *bz_map,
+    const int64_t D_diag[3], const int64_t PS[3], const int64_t bz_grid_type) {
     RecgridConstBZGrid *bzgrid;
-    long i, rot_bz_gp;
+    int64_t i, rot_bz_gp;
 
     if ((bzgrid = (RecgridConstBZGrid *)malloc(sizeof(RecgridConstBZGrid))) ==
         NULL) {
@@ -184,7 +190,7 @@ long recgrid_rotate_bz_grid_index(const long bz_grid_index,
 
 /* Note: Tolerance in squared distance. */
 double recgrid_get_tolerance_for_BZ_reduction(const RecgridBZGrid *bzgrid) {
-    long i, j;
+    int64_t i, j;
     double tolerance;
     double length[3];
     double reclatQ[3][3];
@@ -215,7 +221,7 @@ double recgrid_get_tolerance_for_BZ_reduction(const RecgridBZGrid *bzgrid) {
     return tolerance;
 }
 
-RecgridMats *recgrid_alloc_RotMats(const long size) {
+RecgridMats *recgrid_alloc_RotMats(const int64_t size) {
     RecgridMats *rotmats;
 
     rotmats = NULL;
@@ -227,8 +233,8 @@ RecgridMats *recgrid_alloc_RotMats(const long size) {
 
     rotmats->size = size;
     if (size > 0) {
-        if ((rotmats->mat = (long(*)[3][3])malloc(sizeof(long[3][3]) * size)) ==
-            NULL) {
+        if ((rotmats->mat = (int64_t(*)[3][3])malloc(sizeof(int64_t[3][3]) *
+                                                     size)) == NULL) {
             warning_print("Memory could not be allocated ");
             warning_print("(RecgridMats, line %d, %s).\n", __LINE__, __FILE__);
             free(rotmats);
