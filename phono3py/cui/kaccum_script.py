@@ -85,7 +85,7 @@ def _get_ir_grid_info(
     -------
     ir_grid_points : ndarray
         Ir-grid point indices in BZ-grid.
-        shape=(ir_grid_points, ), dtype='long'
+        shape=(ir_grid_points, ), dtype='int64'
     ir_grid_map : ndarray
         Mapping table to ir-grid point indices in GR-grid.
 
@@ -254,9 +254,9 @@ def _collect_data(
 ]:
     # bz_grid
     if "grid_matrix" in f_kappa:
-        mesh = np.array(f_kappa["grid_matrix"][:], dtype="long")
+        mesh = np.array(f_kappa["grid_matrix"][:], dtype="int64")
     else:
-        mesh = np.array(f_kappa["mesh"][:], dtype="long")
+        mesh = np.array(f_kappa["mesh"][:], dtype="int64")
     primitive_symmetry = Symmetry(primitive)
     bz_grid = BZGrid(
         mesh,
@@ -293,7 +293,7 @@ def _collect_data(
     else:
         print("# Read frequency.")
         frequencies = f_kappa["frequency"][:]
-        ir_weights = np.ones(len(frequencies), dtype="long")
+        ir_weights = np.ones(len(frequencies), dtype="int64")
 
     # ir_grid_points (GR-grid), ir_grid_map (GR-grid)
     if args.no_gridsym or (ir_weights == 1).all():

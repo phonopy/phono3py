@@ -35,10 +35,13 @@
 #ifndef __bzgrid_H__
 #define __bzgrid_H__
 
+#include <stdint.h>
+
 #include "recgrid.h"
 
-long bzg_rotate_grid_index(const long grid_index, const long rotation[3][3],
-                           const RecgridConstBZGrid *bzgrid);
-long bzg_get_bz_grid_addresses(RecgridBZGrid *bzgrid);
+int64_t bzg_rotate_grid_index(const int64_t grid_index,
+                              const int64_t rotation[3][3],
+                              const RecgridConstBZGrid *bzgrid);
+int64_t bzg_get_bz_grid_addresses(RecgridBZGrid *bzgrid);
 
 #endif

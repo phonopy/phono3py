@@ -1,0 +1,26 @@
+name: Pytest on windows
+
+on:
+  push:
+    branches:
+    - windows
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install phonopy
+      run: |
+        pip install git+https://github.com/phonopy/phonopy@develop
+    - name: Install phono3py
+      run: |
+        pip install -e . -v
+    - name: Run pytest
+      run: |
+        pip install pytest
+        pytest -v test

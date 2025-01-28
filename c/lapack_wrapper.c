@@ -35,6 +35,7 @@
 #include "lapack_wrapper.h"
 
 #include <math.h>
+#include <stdint.h>
 
 #define min(a, b) ((a) > (b) ? (b) : (a))
 
@@ -141,7 +142,7 @@ int phonopy_dsyev(double *data, double *eigvals, const int size,
     lapack_int info;
 
     lapack_int liwork;
-    long lwork;
+    int64_t lwork;
     lapack_int *iwork;
     double *work;
     lapack_int iwork_query;
@@ -164,7 +165,7 @@ int phonopy_dsyev(double *data, double *eigvals, const int size,
                                        eigvals, &work_query, lwork,
                                        &iwork_query, liwork);
             liwork = iwork_query;
-            lwork = (long)work_query;
+            lwork = (int64_t)work_query;
             /* printf("liwork %d, lwork %ld\n", liwork, lwork); */
             if ((iwork = (lapack_int *)LAPACKE_malloc(sizeof(lapack_int) *
                                                       liwork)) == NULL) {
@@ -203,12 +204,12 @@ int phonopy_dsyev(double *data, double *eigvals, const int size,
 }
 
 void pinv_from_eigensolution(double *data, const double *eigvals,
-                             const long size, const double cutoff,
-                             const long pinv_method) {
-    long i, ib, j, k, max_l, i_s, j_s;
+                             const int64_t size, const double cutoff,
+                             const int64_t pinv_method) {
+    int64_t i, ib, j, k, max_l, i_s, j_s;
     double *tmp_data;
     double e, sum;
-    long *l;
+    int64_t *l;
 
     l = NULL;
     tmp_data = NULL;
@@ -222,7 +223,7 @@ void pinv_from_eigensolution(double *data, const double *eigvals,
         tmp_data[i] = data[i];
     }
 
-    l = (long *)malloc(sizeof(long) * size);
+    l = (int64_t *)malloc(sizeof(int64_t) * size);
     max_l = 0;
     for (i = 0; i < size; i++) {
         if (pinv_method == 0) {

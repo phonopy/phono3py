@@ -67,7 +67,7 @@ def get_triplets_at_q(
     reciprocal_rotations : array_like or None, optional
         Rotation matrices {R} with respect to reciprocal basis vectors.
         Defined by q'=Rq.
-        dtype='long', shape=(rotations, 3, 3)
+        dtype='int64', shape=(rotations, 3, 3)
     is_time_reversal : bool, optional
         Inversion symemtry is added if it doesn't exist. Default is True.
     swappable : bool, optional
@@ -78,10 +78,10 @@ def get_triplets_at_q(
     triplets_at_q : ndarray
         Symmetry reduced number of triplets are stored as grid point
         integer numbers in BZGrid system.
-        shape=(n_triplets, 3), dtype='long'
+        shape=(n_triplets, 3), dtype='int64'
     weights : ndarray
         Weights of triplets in Brillouin zone
-        shape=(n_triplets,), dtype='long'
+        shape=(n_triplets,), dtype='int64'
     map_triplets : ndarray or None
         Mapping table of all triplets to symmetrically independent
         tripelts in generalized regular grid system. More precisely,
@@ -89,11 +89,11 @@ def get_triplets_at_q(
         independent q' of q+q'+q''=G. Considering q' is enough because
         q is fixed and q''=G-q-q' where G is automatically determined
         to choose smallest |G|.
-        shape=(prod(mesh),), dtype='long'
+        shape=(prod(mesh),), dtype='int64'
     map_q : ndarray
         Irreducible q-points stabilized by q-point of specified grid_point
         in generalized regular grid system.
-        shape=(prod(mesh),), dtype='long'
+        shape=(prod(mesh),), dtype='int64'
 
     """
     if reciprocal_rotations is None:
@@ -126,7 +126,7 @@ def get_all_triplets(grid_point: int, bz_grid: BZGrid):
 
     """
     triplets_at_q, _ = _get_BZ_triplets_at_q(
-        grid_point, bz_grid, np.arange(np.prod(bz_grid.D_diag), dtype="long")
+        grid_point, bz_grid, np.arange(np.prod(bz_grid.D_diag), dtype="int64")
     )
 
     return triplets_at_q
@@ -138,8 +138,8 @@ def get_nosym_triplets_at_q(grid_point: int, bz_grid: BZGrid):
     See the docstring of get_triplets_at_q.
 
     """
-    map_triplets = np.arange(np.prod(bz_grid.D_diag), dtype="long")
-    map_q = np.arange(np.prod(bz_grid.D_diag), dtype="long")
+    map_triplets = np.arange(np.prod(bz_grid.D_diag), dtype="int64")
+    map_q = np.arange(np.prod(bz_grid.D_diag), dtype="int64")
     triplets_at_q, weights = _get_BZ_triplets_at_q(grid_point, bz_grid, map_triplets)
 
     return triplets_at_q, weights, map_triplets, map_q
@@ -239,11 +239,11 @@ def _get_triplets_reciprocal_mesh_at_q(
     fixed_grid_number : int
         Grid point of q0
     D_diag : array_like
-        Diagonal part of the diagonal matrix by SNF. shape=(3,), dtype='long'
+        Diagonal part of the diagonal matrix by SNF. shape=(3,), dtype='int64'
     rec_rotations : array_like
         Rotation matrices in reciprocal space, where the rotation matrix R is
         defined like q'=Rq. Time reversal symmetry is taken care of by
-        is_time_reversal. shape=(n_rot, 3, 3), dtype='long'
+        is_time_reversal. shape=(n_rot, 3, 3), dtype='int64'
     is_time_reversal : bool
         Inversion symemtry is added if it doesn't exist.
     swappable : bool
@@ -257,24 +257,24 @@ def _get_triplets_reciprocal_mesh_at_q(
         independent q' of q+q'+q''=G. Considering q' is enough because q is
         fixed and q''=G-q-q' where G is automatically determined to choose
         smallest |G| without considering BZ surface (see docstring of
-        _get_BZ_triplets_at_q.) shape=(prod(mesh),), dtype='long'
+        _get_BZ_triplets_at_q.) shape=(prod(mesh),), dtype='int64'
     map_q : ndarray
         Irreducible q-points stabilized by q-point of specified grid_point.
-        shape=(prod(mesh),), dtype='long'
+        shape=(prod(mesh),), dtype='int64'
 
     """
     import phono3py._phono3py as phono3c
 
-    map_triplets = np.zeros(np.prod(D_diag), dtype="long")
-    map_q = np.zeros(np.prod(D_diag), dtype="long")
+    map_triplets = np.zeros(np.prod(D_diag), dtype="int64")
+    map_q = np.zeros(np.prod(D_diag), dtype="int64")
 
     num_triplets = phono3c.triplets_reciprocal_mesh_at_q(
         map_triplets,
         map_q,
         fixed_grid_number,
-        np.array(D_diag, dtype="long"),
+        np.array(D_diag, dtype="int64"),
         is_time_reversal * 1,
-        np.array(rec_rotations, dtype="long", order="C"),
+        np.array(rec_rotations, dtype="int64", order="C"),
         swappable * 1,
     )
     assert num_triplets == len(np.unique(map_triplets))
@@ -307,40 +307,40 @@ def _get_BZ_triplets_at_q(bz_grid_index, bz_grid: BZGrid, map_triplets):
         q''=G-q-q' where G is automatically determined to choose
         smallest |G| without considering BZ surface (see docstring of
         _get_BZ_triplets_at_q.)
-        shape=(prod(mesh),), dtype='long'
+        shape=(prod(mesh),), dtype='int64'
 
     Returns
     -------
     triplets : ndarray
         Symmetry reduced number of triplets are stored as grid point
         integer numbers.
-        shape=(n_triplets, 3), dtype='long'
+        shape=(n_triplets, 3), dtype='int64'
     ir_weights : ndarray
         Weights of triplets at a fixed q0.
-        shape=(n_triplets,), dtype='long'
+        shape=(n_triplets,), dtype='int64'
 
     """
     import phono3py._phono3py as phono3c
 
-    weights = np.zeros(len(map_triplets), dtype="long")
+    weights = np.zeros(len(map_triplets), dtype="int64")
     for g in map_triplets:
         weights[g] += 1
     ir_weights = np.extract(weights > 0, weights)
-    triplets = -np.ones((len(ir_weights), 3), dtype="long", order="C")
+    triplets = -np.ones((len(ir_weights), 3), dtype="int64", order="C")
     num_ir_ret = phono3c.BZ_triplets_at_q(
         triplets,
         bz_grid_index,
         bz_grid.addresses,
         bz_grid.gp_map,
         map_triplets,
-        np.array(bz_grid.D_diag, dtype="long"),
+        np.array(bz_grid.D_diag, dtype="int64"),
         bz_grid.Q,
         bz_grid.store_dense_gp_map * 1 + 1,
     )
 
     assert num_ir_ret == len(ir_weights)
 
-    return triplets, np.array(ir_weights, dtype="long")
+    return triplets, np.array(ir_weights, dtype="int64")
 
 
 def _set_triplets_integration_weights_c(
@@ -358,7 +358,7 @@ def _set_triplets_integration_weights_c(
         g,
         g_zero,
         frequency_points,  # f0
-        np.array(np.dot(tetrahedra, pp.bz_grid.P.T), dtype="long", order="C"),
+        np.array(np.dot(tetrahedra, pp.bz_grid.P.T), dtype="int64", order="C"),
         pp.bz_grid.D_diag,
         triplets_at_q,
         frequencies,  # f1
@@ -381,7 +381,7 @@ def _set_triplets_integration_weights_py(
     thm = TetrahedronMethod(pp.bz_grid.microzone_lattice)
     triplets_at_q = pp.get_triplets_at_q()[0]
     tetrahedra_vertices = _get_tetrahedra_vertices(
-        np.array(np.dot(thm.tetrahedra, pp.bz_grid.P.T), dtype="long", order="C"),
+        np.array(np.dot(thm.tetrahedra, pp.bz_grid.P.T), dtype="int64", order="C"),
         triplets_at_q,
         pp.bz_grid,
     )
@@ -415,7 +415,7 @@ def _get_tetrahedra_vertices(relative_address, triplets_at_q, bz_grid: BZGrid):
 
     """
     num_triplets = len(triplets_at_q)
-    vertices = np.zeros((num_triplets, 2, 24, 4), dtype="long")
+    vertices = np.zeros((num_triplets, 2, 24, 4), dtype="int64")
     for i, tp in enumerate(triplets_at_q):
         for j, adrs_shift in enumerate((relative_address, -relative_address)):
             adrs = bz_grid.addresses[tp[j + 1]] + adrs_shift

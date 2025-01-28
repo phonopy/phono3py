@@ -37,50 +37,57 @@
 #include "triplet_grid.h"
 
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #include "grgrid.h"
 
-static long get_ir_triplets_at_q(long *map_triplets, long *map_q,
-                                 const long grid_point, const long D_diag[3],
-                                 const RecgridMats *rot_reciprocal,
-                                 const long swappable);
-static long get_ir_triplets_at_q_perm_q1q2(long *map_triplets,
-                                           const long *map_q,
-                                           const long grid_point,
-                                           const long D_diag[3]);
-static long get_ir_triplets_at_q_noperm(long *map_triplets, const long *map_q,
-                                        const long grid_point,
-                                        const long D_diag[3]);
-static long get_BZ_triplets_at_q(long (*triplets)[3], const long grid_point,
-                                 const RecgridConstBZGrid *bzgrid,
-                                 const long *map_triplets);
-static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
-                                       const long grid_point,
+static int64_t get_ir_triplets_at_q(int64_t *map_triplets, int64_t *map_q,
+                                    const int64_t grid_point,
+                                    const int64_t D_diag[3],
+                                    const RecgridMats *rot_reciprocal,
+                                    const int64_t swappable);
+static int64_t get_ir_triplets_at_q_perm_q1q2(int64_t *map_triplets,
+                                              const int64_t *map_q,
+                                              const int64_t grid_point,
+                                              const int64_t D_diag[3]);
+static int64_t get_ir_triplets_at_q_noperm(int64_t *map_triplets,
+                                           const int64_t *map_q,
+                                           const int64_t grid_point,
+                                           const int64_t D_diag[3]);
+static int64_t get_BZ_triplets_at_q(int64_t (*triplets)[3],
+                                    const int64_t grid_point,
+                                    const RecgridConstBZGrid *bzgrid,
+                                    const int64_t *map_triplets);
+static void get_BZ_triplets_at_q_type1(int64_t (*triplets)[3],
+                                       const int64_t grid_point,
                                        const RecgridConstBZGrid *bzgrid,
-                                       const long *ir_q1_gps,
-                                       const long num_ir);
-static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
-                                       const long grid_point,
+                                       const int64_t *ir_q1_gps,
+                                       const int64_t num_ir);
+static void get_BZ_triplets_at_q_type2(int64_t (*triplets)[3],
+                                       const int64_t grid_point,
                                        const RecgridConstBZGrid *bzgrid,
-                                       const long *ir_q1_gps,
-                                       const long num_ir);
-static double get_squared_distance(const long G[3], const double LQD_inv[3][3]);
+                                       const int64_t *ir_q1_gps,
+                                       const int64_t num_ir);
+static double get_squared_distance(const int64_t G[3],
+                                   const double LQD_inv[3][3]);
 static void get_LQD_inv(double LQD_inv[3][3], const RecgridConstBZGrid *bzgrid);
 static RecgridMats *get_reciprocal_point_group_with_q(
-    const RecgridMats *rot_reciprocal, const long D_diag[3],
-    const long grid_point);
+    const RecgridMats *rot_reciprocal, const int64_t D_diag[3],
+    const int64_t grid_point);
 static RecgridMats *get_reciprocal_point_group(
-    const long (*rec_rotations_in)[3][3], const long num_rot,
-    const long is_time_reversal, const long is_transpose);
-static void copy_matrix_l3(long a[3][3], const long b[3][3]);
+    const int64_t (*rec_rotations_in)[3][3], const int64_t num_rot,
+    const int64_t is_time_reversal, const int64_t is_transpose);
+static void copy_matrix_l3(int64_t a[3][3], const int64_t b[3][3]);
 
-long tpk_get_ir_triplets_at_q(long *map_triplets, long *map_q,
-                              const long grid_point, const long D_diag[3],
-                              const long is_time_reversal,
-                              const long (*rec_rotations_in)[3][3],
-                              const long num_rot, const long swappable) {
-    long num_ir;
+int64_t tpk_get_ir_triplets_at_q(int64_t *map_triplets, int64_t *map_q,
+                                 const int64_t grid_point,
+                                 const int64_t D_diag[3],
+                                 const int64_t is_time_reversal,
+                                 const int64_t (*rec_rotations_in)[3][3],
+                                 const int64_t num_rot,
+                                 const int64_t swappable) {
+    int64_t num_ir;
     RecgridMats *rotations;
 
     rotations = get_reciprocal_point_group(rec_rotations_in, num_rot,
@@ -97,18 +104,20 @@ long tpk_get_ir_triplets_at_q(long *map_triplets, long *map_q,
     return num_ir;
 }
 
-long tpk_get_BZ_triplets_at_q(long (*triplets)[3], const long grid_point,
-                              const RecgridConstBZGrid *bzgrid,
-                              const long *map_triplets) {
+int64_t tpk_get_BZ_triplets_at_q(int64_t (*triplets)[3],
+                                 const int64_t grid_point,
+                                 const RecgridConstBZGrid *bzgrid,
+                                 const int64_t *map_triplets) {
     return get_BZ_triplets_at_q(triplets, grid_point, bzgrid, map_triplets);
 }
 
-static long get_ir_triplets_at_q(long *map_triplets, long *map_q,
-                                 const long grid_point, const long D_diag[3],
-                                 const RecgridMats *rot_reciprocal,
-                                 const long swappable) {
-    long i, num_ir_q, num_ir_triplets;
-    long PS[3];
+static int64_t get_ir_triplets_at_q(int64_t *map_triplets, int64_t *map_q,
+                                    const int64_t grid_point,
+                                    const int64_t D_diag[3],
+                                    const RecgridMats *rot_reciprocal,
+                                    const int64_t swappable) {
+    int64_t i, num_ir_q, num_ir_triplets;
+    int64_t PS[3];
     RecgridMats *rot_reciprocal_q;
 
     rot_reciprocal_q = NULL;
@@ -138,12 +147,12 @@ static long get_ir_triplets_at_q(long *map_triplets, long *map_q,
     return num_ir_triplets;
 }
 
-static long get_ir_triplets_at_q_perm_q1q2(long *map_triplets,
-                                           const long *map_q,
-                                           const long grid_point,
-                                           const long D_diag[3]) {
-    long j, num_grid, num_ir_triplets, gp1, gp2;
-    long adrs0[3], adrs1[3], adrs2[3];
+static int64_t get_ir_triplets_at_q_perm_q1q2(int64_t *map_triplets,
+                                              const int64_t *map_q,
+                                              const int64_t grid_point,
+                                              const int64_t D_diag[3]) {
+    int64_t j, num_grid, num_ir_triplets, gp1, gp2;
+    int64_t adrs0[3], adrs1[3], adrs2[3];
 
     num_ir_triplets = 0;
     num_grid = D_diag[0] * D_diag[1] * D_diag[2];
@@ -185,10 +194,11 @@ static long get_ir_triplets_at_q_perm_q1q2(long *map_triplets,
     return num_ir_triplets;
 }
 
-static long get_ir_triplets_at_q_noperm(long *map_triplets, const long *map_q,
-                                        const long grid_point,
-                                        const long D_diag[3]) {
-    long gp1, num_grid, num_ir_triplets;
+static int64_t get_ir_triplets_at_q_noperm(int64_t *map_triplets,
+                                           const int64_t *map_q,
+                                           const int64_t grid_point,
+                                           const int64_t D_diag[3]) {
+    int64_t gp1, num_grid, num_ir_triplets;
 
     num_ir_triplets = 0;
     num_grid = D_diag[0] * D_diag[1] * D_diag[2];
@@ -205,16 +215,18 @@ static long get_ir_triplets_at_q_noperm(long *map_triplets, const long *map_q,
     return num_ir_triplets;
 }
 
-static long get_BZ_triplets_at_q(long (*triplets)[3], const long grid_point,
-                                 const RecgridConstBZGrid *bzgrid,
-                                 const long *map_triplets) {
-    long gp1, num_ir;
-    long *ir_q1_gps;
+static int64_t get_BZ_triplets_at_q(int64_t (*triplets)[3],
+                                    const int64_t grid_point,
+                                    const RecgridConstBZGrid *bzgrid,
+                                    const int64_t *map_triplets) {
+    int64_t gp1, num_ir;
+    int64_t *ir_q1_gps;
 
     ir_q1_gps = NULL;
     num_ir = 0;
 
-    if ((ir_q1_gps = (long *)malloc(sizeof(long) * bzgrid->size)) == NULL) {
+    if ((ir_q1_gps = (int64_t *)malloc(sizeof(int64_t) * bzgrid->size)) ==
+        NULL) {
         warning_print("Memory could not be allocated.");
         goto ret;
     }
@@ -241,16 +253,16 @@ ret:
     return num_ir;
 }
 
-static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
-                                       const long grid_point,
+static void get_BZ_triplets_at_q_type1(int64_t (*triplets)[3],
+                                       const int64_t grid_point,
                                        const RecgridConstBZGrid *bzgrid,
-                                       const long *ir_q1_gps,
-                                       const long num_ir) {
-    long i, j, gp2, num_gp, num_bzgp, bz0, bz1, bz2;
-    long bzgp[3], G[3];
-    long bz_adrs0[3], bz_adrs1[3], bz_adrs2[3];
-    const long *gp_map;
-    const long(*bz_adrs)[3];
+                                       const int64_t *ir_q1_gps,
+                                       const int64_t num_ir) {
+    int64_t i, j, gp2, num_gp, num_bzgp, bz0, bz1, bz2;
+    int64_t bzgp[3], G[3];
+    int64_t bz_adrs0[3], bz_adrs1[3], bz_adrs2[3];
+    const int64_t *gp_map;
+    const int64_t(*bz_adrs)[3];
     double d2, min_d2, tolerance;
     double LQD_inv[3][3];
 
@@ -327,16 +339,16 @@ static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
     }
 }
 
-static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
-                                       const long grid_point,
+static void get_BZ_triplets_at_q_type2(int64_t (*triplets)[3],
+                                       const int64_t grid_point,
                                        const RecgridConstBZGrid *bzgrid,
-                                       const long *ir_q1_gps,
-                                       const long num_ir) {
-    long i, j, gp0, gp2;
-    long bzgp[3], G[3];
-    long bz_adrs0[3], bz_adrs1[3], bz_adrs2[3];
-    const long *gp_map;
-    const long(*bz_adrs)[3];
+                                       const int64_t *ir_q1_gps,
+                                       const int64_t num_ir) {
+    int64_t i, j, gp0, gp2;
+    int64_t bzgp[3], G[3];
+    int64_t bz_adrs0[3], bz_adrs1[3], bz_adrs2[3];
+    const int64_t *gp_map;
+    const int64_t(*bz_adrs)[3];
     double d2, min_d2, tolerance;
     double LQD_inv[3][3];
 
@@ -392,10 +404,10 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
     }
 }
 
-static double get_squared_distance(const long G[3],
+static double get_squared_distance(const int64_t G[3],
                                    const double LQD_inv[3][3]) {
     double d, d2;
-    long i;
+    int64_t i;
 
     d2 = 0;
     for (i = 0; i < 3; i++) {
@@ -408,7 +420,7 @@ static double get_squared_distance(const long G[3],
 
 static void get_LQD_inv(double LQD_inv[3][3],
                         const RecgridConstBZGrid *bzgrid) {
-    long i, j, k;
+    int64_t i, j, k;
 
     /* LQD^-1 */
     for (i = 0; i < 3; i++) {
@@ -423,11 +435,11 @@ static void get_LQD_inv(double LQD_inv[3][3],
 
 /* Return NULL if failed */
 static RecgridMats *get_reciprocal_point_group_with_q(
-    const RecgridMats *rot_reciprocal, const long D_diag[3],
-    const long grid_point) {
-    long i, j, num_rot, gp_rot;
-    long *ir_rot;
-    long adrs[3], adrs_rot[3];
+    const RecgridMats *rot_reciprocal, const int64_t D_diag[3],
+    const int64_t grid_point) {
+    int64_t i, j, num_rot, gp_rot;
+    int64_t *ir_rot;
+    int64_t adrs[3], adrs_rot[3];
     RecgridMats *rot_reciprocal_q;
 
     ir_rot = NULL;
@@ -436,7 +448,7 @@ static RecgridMats *get_reciprocal_point_group_with_q(
 
     recgrid_get_grid_address_from_index(adrs, grid_point, D_diag);
 
-    if ((ir_rot = (long *)malloc(sizeof(long) * rot_reciprocal->size)) ==
+    if ((ir_rot = (int64_t *)malloc(sizeof(int64_t) * rot_reciprocal->size)) ==
         NULL) {
         warning_print("Memory of ir_rot could not be allocated.");
         return NULL;
@@ -473,10 +485,10 @@ static RecgridMats *get_reciprocal_point_group_with_q(
 }
 
 static RecgridMats *get_reciprocal_point_group(
-    const long (*rec_rotations_in)[3][3], const long num_rot,
-    const long is_time_reversal, const long is_transpose) {
-    long i, num_rot_out;
-    long rec_rotations_out[48][3][3];
+    const int64_t (*rec_rotations_in)[3][3], const int64_t num_rot,
+    const int64_t is_time_reversal, const int64_t is_transpose) {
+    int64_t i, num_rot_out;
+    int64_t rec_rotations_out[48][3][3];
     RecgridMats *rec_rotations;
 
     num_rot_out = recgrid_get_reciprocal_point_group(
@@ -494,7 +506,7 @@ static RecgridMats *get_reciprocal_point_group(
     return rec_rotations;
 }
 
-static void copy_matrix_l3(long a[3][3], const long b[3][3]) {
+static void copy_matrix_l3(int64_t a[3][3], const int64_t b[3][3]) {
     a[0][0] = b[0][0];
     a[0][1] = b[0][1];
     a[0][2] = b[0][2];

@@ -2,6 +2,12 @@
 
 # Change Log
 
+## Jan-28-2024: Version 3.12.0
+
+- `dtype="long"` was replaced by `dtype="int64"` aiming making Windows build. In
+  C, `long` was replaced by `int64_t`.
+- Fix `phono3py-kaccum`.
+
 ## Jan-18-2024: Version 3.11.2
 
 - Maintenance release.

@@ -35,6 +35,7 @@
 #include "bzgrid.h"
 
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -43,7 +44,7 @@
 #include "recgrid.h"
 
 #define BZG_NUM_BZ_SEARCH_SPACE 125
-static long bz_search_space[BZG_NUM_BZ_SEARCH_SPACE][3] = {
+static int64_t bz_search_space[BZG_NUM_BZ_SEARCH_SPACE][3] = {
     {0, 0, 0},   {0, 0, 1},   {0, 0, 2},   {0, 0, -2},   {0, 0, -1},
     {0, 1, 0},   {0, 1, 1},   {0, 1, 2},   {0, 1, -2},   {0, 1, -1},
     {0, 2, 0},   {0, 2, 1},   {0, 2, 2},   {0, 2, -2},   {0, 2, -1},
@@ -71,27 +72,30 @@ static long bz_search_space[BZG_NUM_BZ_SEARCH_SPACE][3] = {
     {-1, -1, 0}, {-1, -1, 1}, {-1, -1, 2}, {-1, -1, -2}, {-1, -1, -1}};
 
 static void get_bz_grid_addresses_type1(RecgridBZGrid *bzgrid,
-                                        const long Qinv[3][3]);
+                                        const int64_t Qinv[3][3]);
 static void get_bz_grid_addresses_type2(RecgridBZGrid *bzgrid,
-                                        const long Qinv[3][3]);
-static void set_bz_address(long address[3], const long bz_index,
-                           const long grid_address[3], const long D_diag[3],
-                           const long nint[3], const long Qinv[3][3]);
-static double get_bz_distances(long nint[3], double distances[],
+                                        const int64_t Qinv[3][3]);
+static void set_bz_address(int64_t address[3], const int64_t bz_index,
+                           const int64_t grid_address[3],
+                           const int64_t D_diag[3], const int64_t nint[3],
+                           const int64_t Qinv[3][3]);
+static double get_bz_distances(int64_t nint[3], double distances[],
                                const RecgridBZGrid *bzgrid,
-                               const long grid_address[3],
+                               const int64_t grid_address[3],
                                const double tolerance);
 static void multiply_matrix_vector_d3(double v[3], const double a[3][3],
                                       const double b[3]);
-static void multiply_matrix_vector_ld3(double v[3], const long a[3][3],
+static void multiply_matrix_vector_ld3(double v[3], const int64_t a[3][3],
                                        const double b[3]);
-static long get_inverse_unimodular_matrix_l3(long m[3][3], const long a[3][3]);
+static int64_t get_inverse_unimodular_matrix_l3(int64_t m[3][3],
+                                                const int64_t a[3][3]);
 static double norm_squared_d3(const double a[3]);
 
-long bzg_rotate_grid_index(const long bz_grid_index, const long rotation[3][3],
-                           const RecgridConstBZGrid *bzgrid) {
-    long i, gp, num_bzgp, num_grgp;
-    long dadrs[3], dadrs_rot[3], adrs_rot[3];
+int64_t bzg_rotate_grid_index(const int64_t bz_grid_index,
+                              const int64_t rotation[3][3],
+                              const RecgridConstBZGrid *bzgrid) {
+    int64_t i, gp, num_bzgp, num_grgp;
+    int64_t dadrs[3], dadrs_rot[3], adrs_rot[3];
 
     grg_get_double_grid_address(dadrs, bzgrid->addresses[bz_grid_index],
                                 bzgrid->PS);
@@ -129,9 +133,9 @@ long bzg_rotate_grid_index(const long bz_grid_index, const long rotation[3][3],
     return bzgrid->gp_map[gp];
 }
 
-long bzg_get_bz_grid_addresses(RecgridBZGrid *bzgrid) {
-    long det;
-    long Qinv[3][3];
+int64_t bzg_get_bz_grid_addresses(RecgridBZGrid *bzgrid) {
+    int64_t det;
+    int64_t Qinv[3][3];
 
     det = get_inverse_unimodular_matrix_l3(Qinv, bzgrid->Q);
     if (det == 0) {
@@ -148,12 +152,12 @@ long bzg_get_bz_grid_addresses(RecgridBZGrid *bzgrid) {
 }
 
 static void get_bz_grid_addresses_type1(RecgridBZGrid *bzgrid,
-                                        const long Qinv[3][3]) {
+                                        const int64_t Qinv[3][3]) {
     double tolerance, min_distance;
     double distances[BZG_NUM_BZ_SEARCH_SPACE];
-    long bzmesh[3], bz_address_double[3], nint[3], gr_adrs[3];
-    long i, j, k, boundary_num_gp, total_num_gp, bzgp, gp, num_bzmesh;
-    long count, id_shift;
+    int64_t bzmesh[3], bz_address_double[3], nint[3], gr_adrs[3];
+    int64_t i, j, k, boundary_num_gp, total_num_gp, bzgp, gp, num_bzmesh;
+    int64_t count, id_shift;
 
     tolerance = recgrid_get_tolerance_for_BZ_reduction(bzgrid);
     for (j = 0; j < 3; j++) {
@@ -208,11 +212,11 @@ static void get_bz_grid_addresses_type1(RecgridBZGrid *bzgrid,
 }
 
 static void get_bz_grid_addresses_type2(RecgridBZGrid *bzgrid,
-                                        const long Qinv[3][3]) {
+                                        const int64_t Qinv[3][3]) {
     double tolerance, min_distance;
     double distances[BZG_NUM_BZ_SEARCH_SPACE];
-    long nint[3], gr_adrs[3];
-    long i, j, num_gp;
+    int64_t nint[3], gr_adrs[3];
+    int64_t i, j, num_gp;
 
     tolerance = recgrid_get_tolerance_for_BZ_reduction(bzgrid);
     num_gp = 0;
@@ -238,11 +242,12 @@ static void get_bz_grid_addresses_type2(RecgridBZGrid *bzgrid,
     bzgrid->size = num_gp;
 }
 
-static void set_bz_address(long address[3], const long bz_index,
-                           const long grid_address[3], const long D_diag[3],
-                           const long nint[3], const long Qinv[3][3]) {
-    long i;
-    long deltaG[3];
+static void set_bz_address(int64_t address[3], const int64_t bz_index,
+                           const int64_t grid_address[3],
+                           const int64_t D_diag[3], const int64_t nint[3],
+                           const int64_t Qinv[3][3]) {
+    int64_t i;
+    int64_t deltaG[3];
 
     for (i = 0; i < 3; i++) {
         deltaG[i] = bz_search_space[bz_index][i] - nint[i];
@@ -253,12 +258,12 @@ static void set_bz_address(long address[3], const long bz_index,
     }
 }
 
-static double get_bz_distances(long nint[3], double distances[],
+static double get_bz_distances(int64_t nint[3], double distances[],
                                const RecgridBZGrid *bzgrid,
-                               const long grid_address[3],
+                               const int64_t grid_address[3],
                                const double tolerance) {
-    long i, j;
-    long dadrs[3];
+    int64_t i, j;
+    int64_t dadrs[3];
     double min_distance;
     double q_vec[3], q_red[3];
 
@@ -297,7 +302,7 @@ static double get_bz_distances(long nint[3], double distances[],
 
 static void multiply_matrix_vector_d3(double v[3], const double a[3][3],
                                       const double b[3]) {
-    long i;
+    int64_t i;
     double c[3];
     for (i = 0; i < 3; i++) {
         c[i] = a[i][0] * b[0] + a[i][1] * b[1] + a[i][2] * b[2];
@@ -307,9 +312,9 @@ static void multiply_matrix_vector_d3(double v[3], const double a[3][3],
     }
 }
 
-static void multiply_matrix_vector_ld3(double v[3], const long a[3][3],
+static void multiply_matrix_vector_ld3(double v[3], const int64_t a[3][3],
                                        const double b[3]) {
-    long i;
+    int64_t i;
     double c[3];
     for (i = 0; i < 3; i++) {
         c[i] = a[i][0] * b[0] + a[i][1] * b[1] + a[i][2] * b[2];
@@ -319,9 +324,10 @@ static void multiply_matrix_vector_ld3(double v[3], const long a[3][3],
     }
 }
 
-static long get_inverse_unimodular_matrix_l3(long m[3][3], const long a[3][3]) {
-    long det;
-    long c[3][3];
+static int64_t get_inverse_unimodular_matrix_l3(int64_t m[3][3],
+                                                const int64_t a[3][3]) {
+    int64_t det;
+    int64_t c[3][3];
 
     det = lagmat_get_determinant_l3(a);
     if (labs(det) != 1) {
