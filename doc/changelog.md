@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Jan-28-2024: Version 3.12.1
+
+- Update `pyproject.toml`.
+
 ## Jan-28-2024: Version 3.12.0
 
 - `dtype="long"` was replaced by `dtype="int64"` aiming making Windows build. In
