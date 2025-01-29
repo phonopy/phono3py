@@ -878,7 +878,10 @@ class ConductivityLBTEBase(ConductivityBase):
             else:
                 Y = np.dot(v, X.ravel()).reshape(-1, 3)
         elif solver == 7:
-            Y = np.dot(v, X.ravel()).reshape(-1, 3)
+            if self._is_reducible_collision_matrix:
+                Y = np.dot(v, X)
+            else:
+                Y = np.dot(v, X.ravel()).reshape(-1, 3)
         else:
             raise ValueError(f"Unknown collision matrix solver {solver}")
 
