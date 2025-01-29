@@ -1936,7 +1936,8 @@ def diagonalize_collision_matrix(
         if log_level:
             print("Pseudo inversion using numpy.linalg.pinv ", end="", flush=True)
         col_mat = collision_matrices[i_sigma, i_temp].reshape(size, size)
-        col_mat[:, :] = np.linalg.pinv(col_mat, hermitian=True)
+        # hermitian=True calls eigh, which is not what we want.
+        col_mat[:, :] = np.linalg.pinv(col_mat, hermitian=False)
         w = None
 
     if log_level:
