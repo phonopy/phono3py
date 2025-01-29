@@ -1934,7 +1934,11 @@ def diagonalize_collision_matrix(
         w, _, info = scipy.linalg.lapack.dsyevd(col_mat.T, overwrite_a=1)
     elif solver == 7:
         if log_level:
-            print("Pseudo inversion using numpy.linalg.pinv ", end="", flush=True)
+            print(
+                "Pseudo inversion using np.linalg.pinv(a, hermitian=False) ",
+                end="",
+                flush=True,
+            )
         col_mat = collision_matrices[i_sigma, i_temp].reshape(size, size)
         # hermitian=True calls eigh, which is not what we want.
         col_mat[:, :] = np.linalg.pinv(col_mat, hermitian=False)
