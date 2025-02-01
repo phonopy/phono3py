@@ -38,7 +38,7 @@ import sys
 import time
 import warnings
 from abc import abstractmethod
-from typing import Type, Union
+from typing import Optional, Type, Union
 
 import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
@@ -133,7 +133,9 @@ class ConductivityLBTEBase(ConductivityBase):
 
         if self._is_reducible_collision_matrix:
             self._collision = CollisionMatrix(
-                self._pp, is_reducible_collision_matrix=True, log_level=self._log_level
+                self._pp,
+                is_reducible_collision_matrix=True,
+                log_level=self._log_level,
             )
         else:
             self._rot_grid_points = self._get_rot_grid_points()
@@ -817,6 +819,8 @@ class ConductivityLBTEBase(ConductivityBase):
     def _get_Y(self, i_sigma, i_temp, weights, X):
         r"""Calculate Y = (\Omega^-1, X)."""
         solver = select_colmat_solver(self._pinv_solver)
+        if self._pinv_solver == 6:
+            solver = 6
         num_band = len(self._pp.primitive) * 3
 
         if self._is_reducible_collision_matrix:
@@ -832,7 +836,7 @@ class ConductivityLBTEBase(ConductivityBase):
 
         start = time.time()
 
-        if self._log_level:
+        if self._log_level and solver != 7:
             if self._pinv_method == 0:
                 eig_str = "abs(eig)"
             else:
@@ -856,12 +860,11 @@ class ConductivityLBTEBase(ConductivityBase):
                 Y = np.dot(v, X1)
             else:
                 Y = np.dot(v, e * np.dot(v.T, X.ravel())).reshape(-1, 3)
-        else:  # solver=6 This is slower as far as tested.
+        elif solver == 6:  # solver=6 This is slower as far as tested.
             import phono3py._phono3py as phono3c
 
             if self._log_level:
-                print(" (built-in) ", end="")
-                sys.stdout.flush()
+                print(" (built-in-pinv) ", end="", flush=True)
 
             w = self._collision_eigenvalues[i_sigma, i_temp]
             phono3c.pinv_from_eigensolution(
@@ -876,11 +879,18 @@ class ConductivityLBTEBase(ConductivityBase):
                 Y = np.dot(v, X)
             else:
                 Y = np.dot(v, X.ravel()).reshape(-1, 3)
+        elif solver == 7:
+            if self._is_reducible_collision_matrix:
+                Y = np.dot(v, X)
+            else:
+                Y = np.dot(v, X.ravel()).reshape(-1, 3)
+        else:
+            raise ValueError(f"Unknown collision matrix solver {solver}")
 
         self._set_f_vectors(Y, num_grid_points, weights)
 
-        if self._log_level:
-            print("[%.3fs]" % (time.time() - start))
+        if self._log_level and solver != 7:
+            print("[%.3fs]" % (time.time() - start), flush=True)
             sys.stdout.flush()
 
         return Y
@@ -1359,7 +1369,8 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
                         pinv_solver=self._pinv_solver,
                         log_level=self._log_level,
                     )
-                    self._collision_eigenvalues[j, k] = w
+                    if w is not None:
+                        self._collision_eigenvalues[j, k] = w
 
                     self._set_kappa(j, k, weights)
 
@@ -1829,7 +1840,7 @@ def get_thermal_conductivity_LBTE(
 
 def diagonalize_collision_matrix(
     collision_matrices, i_sigma=None, i_temp=None, pinv_solver=0, log_level=0
-):
+) -> Optional[np.ndarray]:
     """Diagonalize collision matrices.
 
     Note
@@ -1862,6 +1873,7 @@ def diagonalize_collision_matrix(
     w : ndarray, optional
         Eigenvalues.
         shape=(size_of_collision_matrix,), dtype='double'
+        When pinv_solve==7, None is returned.
 
     """
     start = time.time()
@@ -1890,8 +1902,7 @@ def diagonalize_collision_matrix(
     if solver in [1, 2]:
         if log_level:
             routine = ["dsyev", "dsyevd"][solver - 1]
-            sys.stdout.write("Diagonalizing by lapacke %s ... " % routine)
-            sys.stdout.flush()
+            print("Diagonalizing by lapacke %s ... " % routine, end="", flush=True)
         import phono3py._phono3py as phono3c
 
         w = np.zeros(size, dtype="double")
@@ -1908,31 +1919,39 @@ def diagonalize_collision_matrix(
         )  # only diagonalization
     elif solver == 3:  # np.linalg.eigh depends on dsyevd.
         if log_level:
-            sys.stdout.write("Diagonalize by np.linalg.eigh ")
-            sys.stdout.flush()
+            print("Diagonalize by np.linalg.eigh ", end="", flush=True)
         col_mat = collision_matrices[i_sigma, i_temp].reshape(size, size)
         w, col_mat[:] = np.linalg.eigh(col_mat)
 
     elif solver == 4:  # fully scipy dsyev
         if log_level:
-            sys.stdout.write("Diagonalize by scipy.linalg.lapack.dsyev ")
-            sys.stdout.flush()
+            print("Diagonalize by scipy.linalg.lapack.dsyev ", end="", flush=True)
         import scipy.linalg
 
         col_mat = collision_matrices[i_sigma, i_temp].reshape(size, size)
         w, _, info = scipy.linalg.lapack.dsyev(col_mat.T, overwrite_a=1)
     elif solver == 5:  # fully scipy dsyevd
         if log_level:
-            sys.stdout.write("Diagnalize by scipy.linalg.lapack.dsyevd ")
-            sys.stdout.flush()
+            print("Diagnalize by scipy.linalg.lapack.dsyevd ", end="", flush=True)
         import scipy.linalg
 
         col_mat = collision_matrices[i_sigma, i_temp].reshape(size, size)
         w, _, info = scipy.linalg.lapack.dsyevd(col_mat.T, overwrite_a=1)
+    elif solver == 7:
+        if log_level:
+            print(
+                "Pseudo inversion using np.linalg.pinv(a, hermitian=False) ",
+                end="",
+                flush=True,
+            )
+        col_mat = collision_matrices[i_sigma, i_temp].reshape(size, size)
+        # hermitian=True calls eigh, which is not what we want.
+        col_mat[:, :] = np.linalg.pinv(col_mat, hermitian=False)
+        w = None
 
     if log_level:
-        print(f"sum={w.sum():<.1e} d={trace - w.sum():<.1e} ", end="")
-        print("[%.3fs]" % (time.time() - start))
-        sys.stdout.flush()
+        if w is not None:
+            print(f"sum={w.sum():<.1e} d={trace - w.sum():<.1e} ", end="")
+        print("[%.3fs]" % (time.time() - start), flush=True)
 
     return w
