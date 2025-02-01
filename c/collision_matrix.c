@@ -124,9 +124,9 @@ static void get_collision_matrix(
 
     gp2tp_map = create_gp2tp_map(triplets_map, num_gp);
 
-#ifdef _OPENMP
-#pragma omp parallel for private(j, k, l, m, n, ti, r_gp, collision, inv_sinh)
-#endif
+    // #ifdef _OPENMP
+    // #pragma omp parallel for private(j, k, l, m, n, ti, r_gp, collision,
+    // inv_sinh) #endif
     for (i = 0; i < num_ir_gp; i++) {
         inv_sinh = (double *)malloc(sizeof(double) * num_band);
         for (j = 0; j < num_rot; j++) {
@@ -194,9 +194,9 @@ static void get_reducible_collision_matrix(
 
     gp2tp_map = create_gp2tp_map(triplets_map, num_gp);
 
-#ifdef _OPENMP
-#pragma omp parallel for private(j, k, l, ti, collision, inv_sinh)
-#endif
+    // #ifdef _OPENMP
+    // #pragma omp parallel for private(j, k, l, ti, collision, inv_sinh)
+    // #endif
     for (i = 0; i < num_gp; i++) {
         inv_sinh = (double *)malloc(sizeof(double) * num_band);
         ti = gp2tp_map[triplets_map[i]];
