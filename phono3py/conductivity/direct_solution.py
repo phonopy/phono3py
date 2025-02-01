@@ -133,7 +133,9 @@ class ConductivityLBTEBase(ConductivityBase):
 
         if self._is_reducible_collision_matrix:
             self._collision = CollisionMatrix(
-                self._pp, is_reducible_collision_matrix=True, log_level=self._log_level
+                self._pp,
+                is_reducible_collision_matrix=True,
+                log_level=self._log_level,
             )
         else:
             self._rot_grid_points = self._get_rot_grid_points()
