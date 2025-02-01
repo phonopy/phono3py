@@ -51,6 +51,15 @@ static void get_collision_matrix(
     const double *rotations_cartesian, const double *g,
     const double temperature, const double unit_conversion_factor,
     const double cutoff_frequency);
+static void get_collision_matrix_at_gp(
+    double *collision_matrix, const double *fc3_normal_squared,
+    const int64_t num_band0, const int64_t num_band, const double *frequencies,
+    const int64_t (*triplets)[3], const int64_t *triplets_map,
+    const int64_t *map_q, const int64_t *rot_grid_points,
+    const int64_t num_ir_gp, const int64_t num_rot,
+    const double *rotations_cartesian, const double *g,
+    const double temperature, const double unit_conversion_factor,
+    const double cutoff_frequency, const int64_t *gp2tp_map, const int64_t i);
 static void get_reducible_collision_matrix(
     double *collision_matrix, const double *fc3_normal_squared,
     const int64_t num_band0, const int64_t num_band, const double *frequencies,
@@ -58,6 +67,13 @@ static void get_reducible_collision_matrix(
     const int64_t num_gp, const int64_t *map_q, const double *g,
     const double temperature, const double unit_conversion_factor,
     const double cutoff_frequency);
+static void get_reducible_collision_matrix_at_gp(
+    double *collision_matrix, const double *fc3_normal_squared,
+    const int64_t num_band0, const int64_t num_band, const double *frequencies,
+    const int64_t (*triplets)[3], const int64_t *triplets_map,
+    const int64_t num_gp, const int64_t *map_q, const double *g,
+    const double temperature, const double unit_conversion_factor,
+    const double cutoff_frequency, const int64_t *gp2tp_map, const int64_t i);
 static int64_t get_inv_sinh(double *inv_sinh, const int64_t gp,
                             const double temperature, const double *frequencies,
                             const int64_t triplet[3],
@@ -117,68 +133,85 @@ static void get_collision_matrix(
     const double *rotations_cartesian, const double *g,
     const double temperature, const double unit_conversion_factor,
     const double cutoff_frequency) {
-    int64_t i, j, k, l, m, n, ti, r_gp, swapped;
+    int64_t i;
     int64_t *gp2tp_map;
-    double collision;
-    double *inv_sinh;
 
     gp2tp_map = create_gp2tp_map(triplets_map, num_gp);
 
 #ifdef _OPENMP
-#pragma omp parallel for private(j, k, l, m, n, ti, r_gp, collision, inv_sinh, \
-                                     swapped)
+#pragma omp parallel for
 #endif
     for (i = 0; i < num_ir_gp; i++) {
-        inv_sinh = (double *)malloc(sizeof(double) * num_band);
-        for (j = 0; j < num_rot; j++) {
-            r_gp = rot_grid_points[i * num_rot + j];
-            ti = gp2tp_map[triplets_map[r_gp]];
-            swapped = get_inv_sinh(inv_sinh, r_gp, temperature, frequencies,
-                                   triplets[ti], triplets_map, map_q, num_band,
-                                   cutoff_frequency);
-
-            for (k = 0; k < num_band0; k++) {
-                for (l = 0; l < num_band; l++) {
-                    collision = 0;
-                    for (m = 0; m < num_band; m++) {
-                        if (swapped) {
-                            collision +=
-                                fc3_normal_squared[ti * num_band0 * num_band *
-                                                       num_band +
-                                                   k * num_band * num_band +
-                                                   m * num_band + l] *
-                                g[ti * num_band0 * num_band * num_band +
-                                  k * num_band * num_band + m * num_band + l] *
-                                inv_sinh[m] * unit_conversion_factor;
-                        } else {
-                            collision +=
-                                fc3_normal_squared[ti * num_band0 * num_band *
-                                                       num_band +
-                                                   k * num_band * num_band +
-                                                   l * num_band + m] *
-                                g[ti * num_band0 * num_band * num_band +
-                                  k * num_band * num_band + l * num_band + m] *
-                                inv_sinh[m] * unit_conversion_factor;
-                        }
-                    }
-                    for (m = 0; m < 3; m++) {
-                        for (n = 0; n < 3; n++) {
-                            collision_matrix[k * 3 * num_ir_gp * num_band * 3 +
-                                             m * num_ir_gp * num_band * 3 +
-                                             i * num_band * 3 + l * 3 + n] +=
-                                collision *
-                                rotations_cartesian[j * 9 + m * 3 + n];
-                        }
-                    }
-                }
-            }
-        }
-        free(inv_sinh);
-        inv_sinh = NULL;
+        get_collision_matrix_at_gp(
+            collision_matrix, fc3_normal_squared, num_band0, num_band,
+            frequencies, triplets, triplets_map, map_q, rot_grid_points,
+            num_ir_gp, num_rot, rotations_cartesian, g, temperature,
+            unit_conversion_factor, cutoff_frequency, gp2tp_map, i);
     }
 
     free(gp2tp_map);
     gp2tp_map = NULL;
+}
+
+static void get_collision_matrix_at_gp(
+    double *collision_matrix, const double *fc3_normal_squared,
+    const int64_t num_band0, const int64_t num_band, const double *frequencies,
+    const int64_t (*triplets)[3], const int64_t *triplets_map,
+    const int64_t *map_q, const int64_t *rot_grid_points,
+    const int64_t num_ir_gp, const int64_t num_rot,
+    const double *rotations_cartesian, const double *g,
+    const double temperature, const double unit_conversion_factor,
+    const double cutoff_frequency, const int64_t *gp2tp_map, const int64_t i) {
+    int64_t j, k, l, m, n, ti, r_gp, swapped;
+
+    double collision;
+    double *inv_sinh;
+
+    inv_sinh = (double *)malloc(sizeof(double) * num_band);
+    for (j = 0; j < num_rot; j++) {
+        r_gp = rot_grid_points[i * num_rot + j];
+        ti = gp2tp_map[triplets_map[r_gp]];
+        swapped =
+            get_inv_sinh(inv_sinh, r_gp, temperature, frequencies, triplets[ti],
+                         triplets_map, map_q, num_band, cutoff_frequency);
+
+        for (k = 0; k < num_band0; k++) {
+            for (l = 0; l < num_band; l++) {
+                collision = 0;
+                for (m = 0; m < num_band; m++) {
+                    if (swapped) {
+                        collision +=
+                            fc3_normal_squared[ti * num_band0 * num_band *
+                                                   num_band +
+                                               k * num_band * num_band +
+                                               m * num_band + l] *
+                            g[ti * num_band0 * num_band * num_band +
+                              k * num_band * num_band + m * num_band + l] *
+                            inv_sinh[m] * unit_conversion_factor;
+                    } else {
+                        collision +=
+                            fc3_normal_squared[ti * num_band0 * num_band *
+                                                   num_band +
+                                               k * num_band * num_band +
+                                               l * num_band + m] *
+                            g[ti * num_band0 * num_band * num_band +
+                              k * num_band * num_band + l * num_band + m] *
+                            inv_sinh[m] * unit_conversion_factor;
+                    }
+                }
+                for (m = 0; m < 3; m++) {
+                    for (n = 0; n < 3; n++) {
+                        collision_matrix[k * 3 * num_ir_gp * num_band * 3 +
+                                         m * num_ir_gp * num_band * 3 +
+                                         i * num_band * 3 + l * 3 + n] +=
+                            collision * rotations_cartesian[j * 9 + m * 3 + n];
+                    }
+                }
+            }
+        }
+    }
+    free(inv_sinh);
+    inv_sinh = NULL;
 }
 
 static void get_reducible_collision_matrix(
@@ -188,58 +221,70 @@ static void get_reducible_collision_matrix(
     const int64_t num_gp, const int64_t *map_q, const double *g,
     const double temperature, const double unit_conversion_factor,
     const double cutoff_frequency) {
-    int64_t i, j, k, l, ti, swapped;
+    int64_t i;
     int64_t *gp2tp_map;
-    double collision;
-    double *inv_sinh;
 
     gp2tp_map = create_gp2tp_map(triplets_map, num_gp);
 
 #ifdef _OPENMP
-#pragma omp parallel for private(j, k, l, ti, collision, inv_sinh, swapped)
+#pragma omp parallel for
 #endif
     for (i = 0; i < num_gp; i++) {
-        inv_sinh = (double *)malloc(sizeof(double) * num_band);
-        ti = gp2tp_map[triplets_map[i]];
-        swapped =
-            get_inv_sinh(inv_sinh, i, temperature, frequencies, triplets[ti],
-                         triplets_map, map_q, num_band, cutoff_frequency);
-
-        for (j = 0; j < num_band0; j++) {
-            for (k = 0; k < num_band; k++) {
-                collision = 0;
-                for (l = 0; l < num_band; l++) {
-                    if (swapped) {
-                        collision +=
-                            fc3_normal_squared[ti * num_band0 * num_band *
-                                                   num_band +
-                                               j * num_band * num_band +
-                                               l * num_band + k] *
-                            g[ti * num_band0 * num_band * num_band +
-                              j * num_band * num_band + l * num_band + k] *
-                            inv_sinh[l] * unit_conversion_factor;
-                    } else {
-                        collision +=
-                            fc3_normal_squared[ti * num_band0 * num_band *
-                                                   num_band +
-                                               j * num_band * num_band +
-                                               k * num_band + l] *
-                            g[ti * num_band0 * num_band * num_band +
-                              j * num_band * num_band + k * num_band + l] *
-                            inv_sinh[l] * unit_conversion_factor;
-                    }
-                }
-                collision_matrix[j * num_gp * num_band + i * num_band + k] +=
-                    collision;
-            }
-        }
-
-        free(inv_sinh);
-        inv_sinh = NULL;
+        get_reducible_collision_matrix_at_gp(
+            collision_matrix, fc3_normal_squared, num_band0, num_band,
+            frequencies, triplets, triplets_map, num_gp, map_q, g, temperature,
+            unit_conversion_factor, cutoff_frequency, gp2tp_map, i);
     }
 
     free(gp2tp_map);
     gp2tp_map = NULL;
+}
+
+static void get_reducible_collision_matrix_at_gp(
+    double *collision_matrix, const double *fc3_normal_squared,
+    const int64_t num_band0, const int64_t num_band, const double *frequencies,
+    const int64_t (*triplets)[3], const int64_t *triplets_map,
+    const int64_t num_gp, const int64_t *map_q, const double *g,
+    const double temperature, const double unit_conversion_factor,
+    const double cutoff_frequency, const int64_t *gp2tp_map, const int64_t i) {
+    int64_t j, k, l, ti, swapped;
+    double collision;
+    double *inv_sinh;
+
+    inv_sinh = (double *)malloc(sizeof(double) * num_band);
+    ti = gp2tp_map[triplets_map[i]];
+    swapped = get_inv_sinh(inv_sinh, i, temperature, frequencies, triplets[ti],
+                           triplets_map, map_q, num_band, cutoff_frequency);
+
+    for (j = 0; j < num_band0; j++) {
+        for (k = 0; k < num_band; k++) {
+            collision = 0;
+            for (l = 0; l < num_band; l++) {
+                if (swapped) {
+                    collision += fc3_normal_squared[ti * num_band0 * num_band *
+                                                        num_band +
+                                                    j * num_band * num_band +
+                                                    l * num_band + k] *
+                                 g[ti * num_band0 * num_band * num_band +
+                                   j * num_band * num_band + l * num_band + k] *
+                                 inv_sinh[l] * unit_conversion_factor;
+                } else {
+                    collision += fc3_normal_squared[ti * num_band0 * num_band *
+                                                        num_band +
+                                                    j * num_band * num_band +
+                                                    k * num_band + l] *
+                                 g[ti * num_band0 * num_band * num_band +
+                                   j * num_band * num_band + k * num_band + l] *
+                                 inv_sinh[l] * unit_conversion_factor;
+                }
+            }
+            collision_matrix[j * num_gp * num_band + i * num_band + k] +=
+                collision;
+        }
+    }
+
+    free(inv_sinh);
+    inv_sinh = NULL;
 }
 
 static int64_t get_inv_sinh(double *inv_sinh, const int64_t gp,
