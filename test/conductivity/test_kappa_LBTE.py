@@ -10,14 +10,14 @@ from phono3py.api_phono3py import Phono3py
 @pytest.mark.skipif(
     not phono3c.include_lapacke(), reason="test for phono3py compliled with lapacke"
 )
-@pytest.mark.parametrize("pinv_solver", [1, 2])
-def test_kappa_LBTE_12(si_pbesol: Phono3py, pinv_solver: int):
+@pytest.mark.parametrize("pinv_solver", [1, 2, 6])
+def test_kappa_LBTE_126(si_pbesol: Phono3py, pinv_solver: int):
     """Test for symmetry reduced collision matrix."""
     _test_kappa_LBTE(si_pbesol, pinv_solver)
 
 
-@pytest.mark.parametrize("pinv_solver", [3, 4, 5])
-def test_kappa_LBTE_345(si_pbesol: Phono3py, pinv_solver: int):
+@pytest.mark.parametrize("pinv_solver", [3, 4, 5, 7])
+def test_kappa_LBTE_3457(si_pbesol: Phono3py, pinv_solver: int):
     """Test for symmetry reduced collision matrix."""
     _test_kappa_LBTE(si_pbesol, pinv_solver)
 

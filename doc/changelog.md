@@ -2,27 +2,31 @@
 
 # Change Log
 
-## Jan-28-2024: Version 3.12.1
+## Feb-1-2025: Version 3.12.2
+
+- Fix an openmp related bug in computing collision matrix in C
+
+## Jan-28-2025: Version 3.12.1
 
 - Update `pyproject.toml`.
 
-## Jan-28-2024: Version 3.12.0
+## Jan-28-2025: Version 3.12.0
 
 - `dtype="long"` was replaced by `dtype="int64"` aiming making Windows build. In
   C, `long` was replaced by `int64_t`.
 - Fix `phono3py-kaccum`.
 
-## Jan-18-2024: Version 3.11.2
+## Jan-18-2025: Version 3.11.2
 
 - Maintenance release.
 
-## Jan-12-2024: Version 3.11.1
+## Jan-12-2025: Version 3.11.1
 
 - `-i`, `-o`, `--io` options have been deprecated.
 - The `--amplitude` option can now be used to specify the displacement distance
   for `phono3py-load --pypolymlp`.
 
-## Jan-2-2024: Version 3.11.0
+## Jan-2-2025: Version 3.11.0
 
 - Release to follow the change of phonopy
 - Add `--rd auto` and `--rd-fc2 auto` options

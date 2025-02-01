@@ -693,11 +693,13 @@ def select_colmat_solver(pinv_solver):
                 "phono3py is not compiled with LAPACKE."
             )
 
-    solver_numbers = (1, 2, 3, 4, 5, 6)
+    solver_numbers = (1, 2, 3, 4, 5, 6, 7)
 
     solver = pinv_solver
+    if solver == 6:  # 6 must return 3 for not transposing unitary matrix.
+        solver = 3
     if solver == 0:  # default solver
-        if default_solver in (4, 5, 6):
+        if default_solver in (3, 4, 5):
             try:
                 import scipy.linalg  # noqa F401
             except ImportError:
