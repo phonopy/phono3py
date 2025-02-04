@@ -71,7 +71,7 @@ def get_triplets_at_q(
     is_time_reversal : bool, optional
         Inversion symemtry is added if it doesn't exist. Default is True.
     swappable : bool, optional
-        q1 and q2 among (q0, q1, q2) can be swapped. Deafult is True.
+        q1 and q2 among (q0, q1, q2) can be swapped. Default is True.
 
     Returns
     -------

@@ -142,7 +142,7 @@ pygments_style = "sphinx"
 #     # Allow a separate homepage from the master_doc
 #     "homepage": "index",
 
-#     # Allow the project link to be overriden to a custom URL.
+#     # Allow the project link to be overridden to a custom URL.
 #     "projectlink": "http://myproject.url",
 
 #     # Visible levels of the global TOC; -1 means unlimited

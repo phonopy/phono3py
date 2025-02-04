@@ -260,7 +260,7 @@ def main(args):
     if os.path.isfile(args.filenames[0]):
         f = h5py.File(args.filenames[0], "r")
     else:
-        print("File %s doens't exist." % args.filenames[0])
+        print("File %s doesn't exist." % args.filenames[0])
         sys.exit(1)
 
     if args.title:

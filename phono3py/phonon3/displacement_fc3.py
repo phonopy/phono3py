@@ -133,7 +133,7 @@ def direction_to_displacement(
 def get_third_order_displacements(
     cell: PhonopyAtoms, symmetry: Symmetry, is_plusminus="auto", is_diagonal=False
 ):
-    """Create dispalcement dataset.
+    """Create displacement dataset.
 
     Note
     ----
@@ -143,7 +143,7 @@ def get_third_order_displacements(
             between Atoms 1, 2, and 3 is calculated.
     Atom 2: The second displaced atom. Second order force constant
             between Atoms 2 and 3 is calculated.
-    Atom 3: Force is mesuared on this atom.
+    Atom 3: Force is measured on this atom.
 
     Parameters
     ----------

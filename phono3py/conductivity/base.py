@@ -211,7 +211,7 @@ class ConductivityMixIn(HeatCapacityMixIn):
 
             unique_gps = np.unique(gps_rotated)
             gvs = {}
-            for bz_gp in unique_gps.tolist():  # To conver to int type.
+            for bz_gp in unique_gps.tolist():  # To convert to int type.
                 self._velocity_obj.run([self._get_qpoint_from_gp_index(bz_gp)])
                 gvs[bz_gp] = self._velocity_obj.group_velocities[
                     0, self._pp.band_indices, :
@@ -298,13 +298,13 @@ class ConductivityBase(ABC):
             Mass variances for isotope scattering calculation. When None,
             the values stored in phono3py are used with `is_isotope=True`.
             shape(atoms_in_primitive, ), dtype='double'.
-        boundary_mfp : float, optiona, default is None
-            Mean free path in micrometre to calculate simple boundary
+        boundary_mfp : float, optional, default is None
+            Mean free path in micrometer to calculate simple boundary
             scattering contribution to thermal conductivity.
             None ignores this contribution.
         is_kappa_star : bool, optional
             When True, reciprocal space symmetry is used to calculate
-            lattice thermal conductivity. This calculation is peformed
+            lattice thermal conductivity. This calculation is performed
             iterating over specific grid points. With `is_kappa_star=True`
             and `grid_points=None`, ir-grid points are used for the iteration.
             Default is True.
@@ -385,7 +385,7 @@ class ConductivityBase(ABC):
 
         # `self._velocity_obj` is the instance of an inherited class of
         # `GroupVelocity`. `self._init_velocity()` is the method setup the instance,
-        # which must be implmented in the inherited class of `ConductivityBase`.
+        # which must be implemented in the inherited class of `ConductivityBase`.
         self._velocity_obj: GroupVelocity
         self._init_velocity(gv_delta_q)
 
@@ -626,11 +626,11 @@ class ConductivityBase(ABC):
 
     @property
     def grid_point_count(self):
-        """Return interator count of self."""
+        """Return iterator count of self."""
         return self._grid_point_count
 
     def get_grid_point_count(self):
-        """Return interator count of self."""
+        """Return iterator count of self."""
         warnings.warn(
             "Use attribute, Conductivity.grid_point_count "
             "instead of Conductivity.get_grid_point_count().",
@@ -729,7 +729,7 @@ class ConductivityBase(ABC):
     def _run_at_grid_point(self):
         """Run at conductivity calculation at specified grid point.
 
-        Should be implementated in Conductivity* class.
+        Should be implemented in Conductivity* class.
 
         """
         raise NotImplementedError()
@@ -738,7 +738,7 @@ class ConductivityBase(ABC):
     def _allocate_values(self):
         """Allocate necessary data arrays.
 
-        Should be implementated in Conductivity* class.
+        Should be implemented in Conductivity* class.
 
         """
         raise NotImplementedError()
@@ -747,16 +747,16 @@ class ConductivityBase(ABC):
     def _set_velocities(self, i_gp, i_data):
         """Set velocities at grid point and at data location.
 
-        Should be implementated in Conductivity*MixIn.
+        Should be implemented in Conductivity*MixIn.
 
         """
         raise NotImplementedError()
 
     @abstractmethod
     def _init_velocity(self, gv_delta_q):
-        """Initialize velocitiy class instance.
+        """Initialize velocity class instance.
 
-        Should be implementated in Conductivity*MixIn.
+        Should be implemented in Conductivity*MixIn.
 
         """
         raise NotImplementedError()
@@ -765,7 +765,7 @@ class ConductivityBase(ABC):
     def _set_cv(self, i_gp, i_data):
         """Set heat capacity at grid point and at data location.
 
-        Should be implementated in Conductivity*MixIn.
+        Should be implemented in Conductivity*MixIn.
 
         """
         raise NotImplementedError()

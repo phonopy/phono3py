@@ -1105,7 +1105,7 @@ class Phono3py:
             Ph-ph interaction strength array is replaced by a scalar value.
             Default is None, which means this feature is not used.
         frequency_scale_factor : float, optional
-            All phonon frequences are scaled by this value. Default is None,
+            All phonon frequencies are scaled by this value. Default is None,
             which means phonon frequencies are not scaled.
         symmetrize_fc3q : bool, optional
             fc3 in phonon space is symmetrized by permutation symmetry.
@@ -1500,11 +1500,10 @@ class Phono3py:
             )
         else:
             if "displacements" in self._dataset:
-                msg = (
-                    "fc_calculator has to be set to produce force "
-                    "constans from this dataset."
+                raise ForceCalculatorRequiredError(
+                    "fc_calculator has to be set to produce force constants from this "
+                    "dataset."
                 )
-                raise ForceCalculatorRequiredError(msg)
             fc2, fc3 = get_phono3py_fc3(
                 self._supercell,
                 self._primitive,
@@ -1792,7 +1791,7 @@ class Phono3py:
             Temperatures where real part of self-energies  are calculated.
             dtype=float, shape=(temperatures,)
         frequency_points_at_bands : bool, optional
-            With False, frequency shifts are calculated at frquency sampling
+            With False, frequency shifts are calculated at frequency sampling
             points. When True, they are done at the phonon frequencies.
             Default is False.
         frequency_points : array_like, optional
@@ -1997,7 +1996,7 @@ class Phono3py:
             calculated. With None, all the grid points that are necessary
             for thermal conductivity are set internally.
             shape(num_grid_points, ), dtype='int64'.
-        boundary_mfp : float, optiona, default is None
+        boundary_mfp : float, optional, default is None
             Mean free path in micrometre to calculate simple boundary
             scattering contribution to thermal conductivity.
             None ignores this contribution.
@@ -2237,7 +2236,7 @@ class Phono3py:
             Parameters for developing MLP. Default is None. When dict is given,
             PypolymlpParams instance is created from the dict.
         test_size : float, optional
-            Training and test data are splitted by this ratio. test_size=0.1
+            Training and test data are split by this ratio. test_size=0.1
             means the first 90% of the data is used for training and the rest
             is used for test. Default is 0.1.
 
@@ -2301,7 +2300,7 @@ class Phono3py:
             Parameters for developing MLP. Default is None. When dict is given,
             PypolymlpParams instance is created from the dict.
         test_size : float, optional
-            Training and test data are splitted by this ratio. test_size=0.1
+            Training and test data are split by this ratio. test_size=0.1
             means the first 90% of the data is used for training and the rest
             is used for test. Default is 0.1.
 

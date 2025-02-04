@@ -137,7 +137,7 @@ def load(
            also searched in current directory. When 'FORCES_FC2' is not found,
            'FORCES_FC3' is used to create fc2.
 
-    Parameters for non-analytical term correctiion (NAC)
+    Parameters for non-analytical term correction (NAC)
     ----------------------------------------------------
     Optional. Means to provide NAC parameters and their priority:
         1. born_filename
@@ -163,10 +163,10 @@ def load(
         given, the centring type ('F', 'I', 'A', 'C', 'R', or primitive 'P') is
         automatically chosen. Default is 'auto'.
     phonon_supercell_matrix : array_like, optional
-        Supercell matrix used for fc2. In phono3py, supercell matrix for fc3 and
-        fc2 can be different to support longer range interaction of fc2 than
+        Supercell matrix used for fc2. In phono3py, supercell matrix for fc3
+        and fc2 can be different to support longer range interaction of fc2 than
         that of fc3. Unless setting this, supercell_matrix is used. This is only
-        valide when unitcell or unitcell_filename is given. Default is None.
+        valid when unitcell or unitcell_filename is given. Default is None.
     is_nac : bool, optional
         If True, look for 'BORN' file. If False, NAS is turned off. Default is
         True.
@@ -178,7 +178,7 @@ def load(
         Input unit cell. Default is None.
     supercell : PhonopyAtoms, optional
         Input supercell. With given, default value of primitive_matrix is set to
-        'auto' (can be overwitten). supercell_matrix is ignored. Default is
+        'auto' (can be overwritten). supercell_matrix is ignored. Default is
         None.
     nac_params : dict, optional
         Parameters required for non-analytical term correction. Default is None.
@@ -186,7 +186,7 @@ def load(
                  (array_like, shape=(primitive cell atoms, 3, 3), dtype=float),
          'dielectric': Dielectric constant matrix
                        (array_like, shape=(3, 3), dtype=float),
-         'factor': unit conversion facotr (float)}
+         'factor': unit conversion factor (float)}
     unitcell_filename : os.PathLike, optional
         Input unit cell filename. Default is None.
     supercell_filename : os.PathLike, optional
@@ -214,7 +214,7 @@ def load(
     fc_calculator_options : str, optional
         Optional parameters that are passed to the external fc-calculator. This
         is given as one text string. How to parse this depends on the
-        fc-calculator. For alm, each parameter is splitted by comma ',', and
+        fc-calculator. For alm, each parameter is split by comma ',', and
         each set of key and value pair is written in 'key = value'.
     factor : float, optional
         Phonon frequency unit conversion factor. Unless specified, default unit
@@ -233,10 +233,10 @@ def load(
         True.
     is_compact_fc : bool, optional
         fc3 are created in the array whose shape is
-            True: (primitive, supercell, supecell, 3, 3, 3) False: (supercell,
-            supercell, supecell, 3, 3, 3)
+            True: (primitive, supercell, supercell, 3, 3, 3) False: (supercell,
+            supercell, supercell, 3, 3, 3)
         and for fc2
-            True: (primitive, supecell, 3, 3) False: (supercell, supecell, 3, 3)
+            True: (primitive, supercell, 3, 3) False: (supercell, supercell, 3, 3)
         where 'supercell' and 'primitive' indicate number of atoms in these
         cells. Default is False.
     use_pypolymlp : bool, optional

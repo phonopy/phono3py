@@ -11,7 +11,7 @@ repos:
         exclude: ^example/AlN-LDA/
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.3
+    rev: v0.9.4
     hooks:
       - id: ruff
         args: [--fix, --show-fixes]
@@ -43,3 +43,13 @@ repos:
     hooks:
       - id: cmake-format
       - id: cmake-lint
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        stages: [pre-commit, commit-msg]
+        args:
+          - --ignore-words-list
+          - "te,groth,skelton,inout,mater"
+          - --check-filenames

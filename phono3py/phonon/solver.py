@@ -51,11 +51,11 @@ def run_phonon_solver_c(
     nac_q_direction=None,  # in reduced coordinates
     lapack_zheev_uplo="L",
 ):
-    """Bulid and solve dynamical matrices on grid in C-API.
+    """Build and solve dynamical matrices on grid in C-API.
 
     Note
     ----
-    When LAPACKE is linked in C, `phononcalc.phonons_at_gridpoints` constucts
+    When LAPACKE is linked in C, `phononcalc.phonons_at_gridpoints` constructs
     and solves dynamical matrices on grid points. Otherwise, it only constructs
     dynamical matrices and solves them in python.
 
@@ -73,7 +73,7 @@ def run_phonon_solver_c(
     QDinv : ndarray
         See BZGrid.QDinv.
     frequency_conversion_factor : float, optional
-        Frequency convertion factor that is multiplied with sqrt or eigenvalue
+        Frequency conversion factor that is multiplied with sqrt or eigenvalue
         of dynamical matrix. Default is VaspToTHz.
     nac_q_direction : array_like, optional
         See Interaction.nac_q_direction. Default is None.
@@ -194,7 +194,7 @@ def run_phonon_solver_py(
     frequency_conversion_factor,
     lapack_zheev_uplo,
 ):
-    """Bulid and solve dynamical matrices on grid in python."""
+    """Build and solve dynamical matrices on grid in python."""
     gp = grid_point
     if phonon_done[gp] == 0:
         phonon_done[gp] = 1

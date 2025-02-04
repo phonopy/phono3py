@@ -147,7 +147,7 @@ This is a major version release. There are backward-incompatible changes.
 - Calculation method to transform supercell third-order force constants fc3 in
   real to reciprocal space was changed as described at {ref}`changelog_v290`.
   This results in the change of results with respect to those obtained by
-  phono3py version 2. To emulate v2 behaviour, use `--v2` option in phono3py
+  phono3py version 2. To emulate v2 behavior, use `--v2` option in phono3py
   command line script. For `Phono3py` class , `make_r0_average=True` (default)
   when instantiating it, and similarly for `phono3py.load` function.
 - Completely dropped support of `disp_fc3.yaml` and `disp_fc2.yaml`.
@@ -175,7 +175,7 @@ This is a major version release. There are backward-incompatible changes.
 ## Dec-25-2023: Version 2.9.0
 
 - Pre-release of version 3.0.
-- `--v3` option enables phono3py version 3 behaviour. In phono3py-v3, it is
+- `--v3` option enables phono3py version 3 behavior. In phono3py-v3, it is
   planned to replace $\sum_{l'l''}\Phi_{\alpha\beta\gamma}(0\kappa, l'\kappa',
   l''\kappa'') \cdots$ in Eq.(41) of
   <https://journals.jps.jp/doi/10.7566/JPSJ.92.012001> by
@@ -235,7 +235,7 @@ This is a major version release. There are backward-incompatible changes.
 - Installation using `setup.py` now requires creating `site.cfg` file. See
   <https://phonopy.github.io/phono3py/install.html> and
   [PR #59](https://github.com/phonopy/phono3py/pull/59).
-- Dorp python 3.6 support, and dependencies of numpy and matplotlib versions are
+- Drop python 3.6 support, and dependencies of numpy and matplotlib versions are
   updated:
 
   - Python >= 3.7
@@ -265,9 +265,9 @@ This is a major version release. There are some backward-incompatible changes.
    from `dtype='intc'`.
 3. Python 3.5 or later is required.
 
-To emulate the version 1.x behaviour in `phono3py` command, try `--v1` option.
-To emurate the version 1.x behaviour in API, specify `store_dense_gp_map=False`
-and `store_dense_svecs=False` in instatiation of `Phono3py` class or phon3py
+To emulate the version 1.x behavior in `phono3py` command, try `--v1` option.
+To emurate the version 1.x behavior in API, specify `store_dense_gp_map=False`
+and `store_dense_svecs=False` in instantiation of `Phono3py` class or phono3py
 loader.
 
 ## Mar-17-2021: Version 1.22.3
@@ -281,7 +281,7 @@ loader.
 ## Feb-21-2021: Version 1.22.1
 
 - `phono3py` command didn't work. This was fixed.
-- Fix behaviour when specifying `--thm` and `--sigma` simultaneously.
+- Fix behavior when specifying `--thm` and `--sigma` simultaneously.
 
 ## Jan-29-2021: Version 1.22.0
 
@@ -366,7 +366,7 @@ loader.
 - Update to work with phonopy v1.14.2.
 - Ph-ph interaction can be read (`--read-pp`) and write (`--write-pp`) in RTA
   thermal conductivity calculation, too. Mind that the data stored are different
-  with and without `--full-pp`. Wihtout `--full-pp` the data are stored in
+  with and without `--full-pp`. Without `--full-pp` the data are stored in
   complicated way to save data side, so it is not considered readable by usual
   users.
 
@@ -395,7 +395,7 @@ loader.
 - `--sym-fc` option is added. This is just an alias to specify both `--sym-fc3r`
   and `--sym-fc2` together.
 - Documentation on `--write-phonon` and `--read-phonon` options is written.
-  These options are used to save harmonic phonon infromation on strage.
+  These options are used to save harmonic phonon information on storage.
 
 ## Nov-22-2017: version 1.12.5
 
@@ -410,7 +410,7 @@ loader.
   (3) happens when the primitive cell is relatively large. Number of triplets
   can be shown using `--stp` option. A race condition of OpenMP multithreading
   is the source of the bug. Therefore, if it occurs, the same calculation comes
-  up with the different thermal conductivity value in every run time, for whcih
+  up with the different thermal conductivity value in every run time, for which
   it behaves like randomly.
 
 - RTA thermal conductivity with smearing method (`--sigma`) is made to run with
@@ -466,7 +466,7 @@ loader.
 
 ## Apr-16-2016: version 1.10.7
 
-- API example is prepared and it is found in `Si` example. No doucment yet.
+- API example is prepared and it is found in `Si` example. No documentation yet.
 - Si pwscf example was placed in `example-phono3py` directory.
 - User interface bug fix.
 
@@ -478,10 +478,10 @@ loader.
   to phonopy-1.10.4.
 - Python3 support
 - For the RTA thermal conductivity calculation mode with using the linear
-  tetrahedron method, only necessary part of phonon-phonon interaction strengh
-  among phonons. This improves lifetime calculation performance, but as the
-  drawback, averaged ph-ph interaction strength can not be given. See
-  {ref}`full_pp_option`.
+  tetrahedron method, only necessary part of phonon-phonon interaction strength
+  among phonons is calculated. This improves lifetime calculation performance,
+  but as the drawback, averaged ph-ph interaction strength can not be given.
+  See {ref}`full_pp_option`.
 - Pwscf interface ({ref}`calculator_interfaces`)
 
 ## Oct-10-2015: version 0.9.14
@@ -578,7 +578,7 @@ loader.
 ## Changes in version 0.8.0
 
 - `--q_direction` didn't work. Fix it.
-- Implementation of tetrahedron method whcih is activated by `--thm`.
+- Implementation of tetrahedron method which is activated by `--thm`.
 - Grid addresses are written out by `--wgp` option.
 
 ## Changes in version 0.7.6
@@ -592,8 +592,9 @@ loader.
   that needed for creating fc3 if index permutation symmetry is considered.
   Therefore using index permutation symmetry, some elements of fc3 can be
   recovered even if some of supercell force calculations are missing. In
-  paticular, all pair distances among triplet atoms are larger than cutoff pair
-  distance, any fc3 elements are not recovered, i.e., the element will be zero.
+  particular, all pair distances among triplet atoms are larger than cutoff
+  pair distance, any fc3 elements are not recovered, i.e., the element will be
+  zero.
 
 ## Changes in version 0.7.2
 

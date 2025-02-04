@@ -115,7 +115,7 @@ void ise_get_imag_self_energy_with_g(
         /**
          * g_pos contains the indices of g that are known non-zeros in series.
          *
-         * ise_set_g_pos works for frquency points as bands.
+         * ise_set_g_pos works for frequency points as bands.
          * set_g_pos_frequency_point works for frequency sampling mode.
          */
         g_pos = (int64_t(*)[4])malloc(sizeof(int64_t[4]) * num_band_prod);

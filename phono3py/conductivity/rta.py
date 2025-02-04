@@ -161,7 +161,7 @@ class ConductivityRTABase(ConductivityBase):
 
     @abstractmethod
     def set_kappa_at_sigmas(self):
-        """Must be implementated in the inherited class."""
+        """Must be implemented in the inherited class."""
         raise NotImplementedError()
 
     def _allocate_values(self):

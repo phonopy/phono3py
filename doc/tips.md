@@ -1,4 +1,5 @@
 (tips)=
+
 # Tips
 
 ```{contents}
@@ -7,6 +8,7 @@
 ```
 
 (brillouinzone_sum)=
+
 ## Brillouin zone summation
 
 Brillouin zone (BZ) summations appear at different two points in
@@ -97,6 +99,7 @@ the displacement distance by the {ref}`amplitude option <amplitude_option>` redu
 higher order anharmonicity is involved (renormalized) into fc3 and fc2.
 
 (file_format_compatibility)=
+
 ## File format compatibility with phonopy
 
 - `FORCES_FC3` and `FORCES_FC2` are not
@@ -108,4 +111,4 @@ higher order anharmonicity is involved (renormalized) into fc3 and fc2.
 - `fc2.hdf5` can be used in phonopy in the `hdf5` mode when it is
   renamed to `force_constants.hdf5`. In the previous combinations of
   phonopy and phono3py, depending on the physical unit of force
-  constants of calculators, the direct compatibility is not guranteed.
+  constants of calculators, the direct compatibility is not guaranteed.

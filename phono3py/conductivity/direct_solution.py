@@ -728,7 +728,7 @@ class ConductivityLBTEBase(ConductivityBase):
             sys.stdout.flush()
 
     def _average_collision_matrix_by_degeneracy(self):
-        """Average symmetrically equivalent elemetns of collision matrix."""
+        """Average symmetrically equivalent elements of collision matrix."""
         start = time.time()
 
         # Average matrix elements belonging to degenerate bands
@@ -939,8 +939,8 @@ class ConductivityLBTEBase(ConductivityBase):
         if (np.abs(r_sum) < 1e-10).all():
             return None
 
-        # Same as np.kron(np.eye(size), r_sum), but writen as below
-        # to be sure the values in memory C-congiguous with 'double'.
+        # Same as np.kron(np.eye(size), r_sum), but written as below
+        # to be sure the values in memory C-contiguous with 'double'.
         I_mat = np.zeros((3 * size, 3 * size), dtype="double", order="C")
         for i in range(size):
             I_mat[(i * 3) : ((i + 1) * 3), (i * 3) : ((i + 1) * 3)] = r_sum

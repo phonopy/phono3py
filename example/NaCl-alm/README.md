@@ -1,6 +1,6 @@
 This is the example of NaCl calculation. Since all atoms are displaced, to
 obtain force constants, an external force constants calculator is necessary,
-i.e., build-in force constants calculator has no ability to compute force
+i.e., built-in force constants calculator has no ability to compute force
 constants for such dataset. In this example, ALM is used. See
 https://phonopy.github.io/phonopy/setting-tags.html#alm. The easiest way to
 install ALM is to use conda.
