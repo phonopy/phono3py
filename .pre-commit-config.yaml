@@ -1,45 +1,45 @@
-# See https://pre-commit.com for more informatio
+# See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v5.0.0
-  hooks:
-  - id: trailing-whitespace
-  - id: end-of-file-fixer
-  - id: check-yaml
-  - id: check-added-large-files
-    exclude: ^example/AlN-LDA/
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        exclude: ^example/AlN-LDA/
 
-- repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.9.3
-  hooks:
-  - id: ruff
-    args: [ "--fix", "--show-fixes" ]
-  - id: ruff-format
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.3
+    hooks:
+      - id: ruff
+        args: [--fix, --show-fixes]
+      - id: ruff-format
 
-- repo: https://github.com/Takishima/cmake-pre-commit-hooks
-  rev: v1.9.6
-  hooks:
-    - id: clang-format
-      args:
-        - '-B_build-pre-commit'
-        - '-DWITH_Fortran=ON'
-        - '-DWITH_TESTS=ON'
-        - '-i'
-      stages: [manual]
-    - id: clang-tidy
-      args:
-        - '-B_build-pre-commit'
-        - '-DWITH_Fortran=ON'
-        - '-DWITH_TESTS=ON'
-        # - '--'
-        # - '-I/Users/togo/.miniforge/envs/dev/include'
-        # - '-I/Users/togo/.miniforge/envs/dev/include/python3.10'
-        # - '-I/Users/togo/.miniforge/envs/dev/lib/python3.10/site-packages/numpy/core/include'
-      stages: [manual]
+  - repo: https://github.com/Takishima/cmake-pre-commit-hooks
+    rev: v1.9.6
+    hooks:
+      - id: clang-format
+        args:
+          - -B_build-pre-commit
+          - -DWITH_Fortran=ON
+          - -DWITH_TESTS=ON
+          - -i
+        stages: [manual]
+      - id: clang-tidy
+        args:
+          - -B_build-pre-commit
+          - -DWITH_Fortran=ON
+          - -DWITH_TESTS=ON
+          # - --
+          # - -I/Users/togo/.miniforge/envs/dev/include
+          # - -I/Users/togo/.miniforge/envs/dev/include/python3.10
+          # - -I/Users/togo/.miniforge/envs/dev/lib/python3.10/site-packages/numpy/core/include
+        stages: [manual]
 
-- repo: https://github.com/cheshirekow/cmake-format-precommit
-  rev: v0.6.13
-  hooks:
-  - id: cmake-format
-  - id: cmake-lint
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.13
+    hooks:
+      - id: cmake-format
+      - id: cmake-lint
