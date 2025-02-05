@@ -118,7 +118,10 @@ def get_fc3(
         raise RuntimeError(msg)
 
 
-def extract_fc2_fc3_calculators(fc_calculator: Optional[Union[str, dict]], order: int):
+def extract_fc2_fc3_calculators(
+    fc_calculator: Optional[Union[str, dict]],
+    order: int,
+) -> Optional[Union[str, dict]]:
     """Extract fc_calculator and fc_calculator_options for fc2 and fc3.
 
     fc_calculator : str
@@ -141,4 +144,32 @@ def extract_fc2_fc3_calculators(fc_calculator: Optional[Union[str, dict]], order
                 return None
             return fc_calculator
     else:
-        raise RuntimeError("fc_calculator should be str or dict.")
+        raise RuntimeError("fc_calculator should be str, dict, or None.")
+
+
+def update_cutoff_fc_calculator_options(
+    fc_calc_opts: Optional[Union[str, dict]],
+    cutoff_pair_distance: Optional[float],
+) -> Optional[Union[str, dict]]:
+    """Update fc_calculator_options with cutoff distances.
+
+    Parameters
+    ----------
+    fc_calc_opts : str or dict
+        FC calculator options.
+    cutoff_pair_distance : float, optional
+        Cutoff distance for pair interaction.
+
+    """
+    if cutoff_pair_distance is not None:
+        if not isinstance(fc_calc_opts, (str, dict)) and fc_calc_opts is not None:
+            raise RuntimeError("fc_calculator_options should be str, dict, or None.")
+
+        if isinstance(fc_calc_opts, dict) and "cutoff" not in fc_calc_opts:
+            fc_calc_opts["cutoff"] = float(cutoff_pair_distance)
+        elif isinstance(fc_calc_opts, str) and "cutoff" not in fc_calc_opts:
+            fc_calc_opts = f"{fc_calc_opts}, cutoff = {cutoff_pair_distance}"
+        elif fc_calc_opts is None:
+            fc_calc_opts = f"cutoff = {cutoff_pair_distance}"
+
+    return fc_calc_opts
