@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Feb-5-2025: Version 3.13.0
+
+- Release to follow the change of phonopy
+
 ## Feb-1-2025: Version 3.12.2
 
 - Fix an openmp related bug in computing collision matrix in C
