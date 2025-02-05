@@ -14,7 +14,7 @@ repos:
     rev: v0.9.4
     hooks:
       - id: ruff
-        args: [--fix, --show-fixes]
+        args: ["--fix", "--show-fixes"]
       - id: ruff-format
 
   - repo: https://github.com/Takishima/cmake-pre-commit-hooks
@@ -22,20 +22,20 @@ repos:
     hooks:
       - id: clang-format
         args:
-          - -B_build-pre-commit
-          - -DWITH_Fortran=ON
-          - -DWITH_TESTS=ON
-          - -i
+          - "-B_build-pre-commit"
+          - "-DWITH_Fortran=ON"
+          - "-DWITH_TESTS=ON"
+          - "-i"
         stages: [manual]
       - id: clang-tidy
         args:
-          - -B_build-pre-commit
-          - -DWITH_Fortran=ON
-          - -DWITH_TESTS=ON
-          # - --
-          # - -I/Users/togo/.miniforge/envs/dev/include
-          # - -I/Users/togo/.miniforge/envs/dev/include/python3.10
-          # - -I/Users/togo/.miniforge/envs/dev/lib/python3.10/site-packages/numpy/core/include
+          - "-B_build-pre-commit"
+          - "-DWITH_Fortran=ON"
+          - "-DWITH_TESTS=ON"
+          # "- --"
+          # "- -I/Users/togo/.miniforge/envs/dev/include"
+          # "- -I/Users/togo/.miniforge/envs/dev/include/python3.10"
+          # "- -I/Users/togo/.miniforge/envs/dev/lib/python3.10/site-packages/numpy/core/include"
         stages: [manual]
 
   - repo: https://github.com/cheshirekow/cmake-format-precommit
