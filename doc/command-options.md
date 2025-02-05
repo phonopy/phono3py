@@ -721,7 +721,7 @@ out, i.e., `gamma` is still imaginary part of self energy of ph-ph scattering.
 
 A most simple phonon boundary scattering treatment is included. $v_g/L$ is just
 used as the scattering rate, where $v_g$ is the group velocity and $L$ is the
-boundary mean free path. The value is given in micrometre. The default value, 1
+boundary mean free path. The value is given in micrometer. The default value, 1
 metre, is just used to avoid divergence of phonon lifetime and the contribution
 to the thermal conductivity is considered negligible.
 

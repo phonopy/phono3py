@@ -9,7 +9,7 @@ over many different force calculators. Once `phono3py_disp.yaml` is created, the
 following operations will be the same using this command.
 
 This is used almost in the same way as `phono3py` command, e.g., but there are
-some differences. The following default behaviours are different from that of
+some differences. The following default behaviors are different from that of
 those of `phono3py` command:
 
 1. `phono3py_xxx.yaml` type file is always necessary in either of two ways:

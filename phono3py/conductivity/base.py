@@ -921,12 +921,12 @@ class ConductivityBase(ABC):
             if self._boundary_mfp is not None:
                 if self._boundary_mfp > 1000:
                     print(
-                        "Boundary mean free path (millimetre): %.3f"
+                        "Boundary mean free path (millimeter): %.3f"
                         % (self._boundary_mfp / 1000.0)
                     )
                 else:
                     print(
-                        "Boundary mean free path (micrometre): %.5f"
+                        "Boundary mean free path (micrometer): %.5f"
                         % self._boundary_mfp
                     )
             if self._is_isotope:

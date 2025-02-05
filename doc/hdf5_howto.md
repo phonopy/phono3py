@@ -269,7 +269,7 @@ has to be specified (see {ref}`full_pp_option`).
 ### boundary_mfp
 
 A value specified by {ref}`boundary_mfp_option`. The physical unit is
-micrometre.
+micrometer.
 
 When `--boundary-mfp` option is explicitly specified, its value is stored here.
 

@@ -112,7 +112,7 @@ def load(
 
     When force_sets_filename and force_constants_filename are not given,
     'FORCES_FC3' and 'FORCES_FC2' are looked for in the current directory as the
-    default behaviour. When 'FORCES_FC3' ('FORCES_FC2') is given in the type-1
+    default behavior. When 'FORCES_FC3' ('FORCES_FC2') is given in the type-1
     format, 'phono3py_disp.yaml' is also necessary and read.
 
     Crystal structure

@@ -77,11 +77,11 @@ class ConductivityLBTEBase(ConductivityBase):
         sigma_cutoff=None,
         is_isotope=False,
         mass_variances=None,
-        boundary_mfp=None,  # in micrometre
+        boundary_mfp=None,  # in micrometer
         solve_collective_phonon=False,
         is_reducible_collision_matrix=False,
         is_kappa_star=True,
-        gv_delta_q=None,  # finite difference for group veolocity
+        gv_delta_q=None,  # finite difference for group velocity
         is_full_pp=False,
         read_pp=False,
         pp_filename=None,
@@ -1700,7 +1700,7 @@ def get_thermal_conductivity_LBTE(
     is_isotope=False,
     mass_variances=None,
     grid_points=None,
-    boundary_mfp=None,  # in micrometre
+    boundary_mfp=None,  # in micrometer
     solve_collective_phonon=False,
     is_reducible_collision_matrix=False,
     is_kappa_star=True,
@@ -1731,7 +1731,7 @@ def get_thermal_conductivity_LBTE(
     if sigmas is None:
         sigmas = []
     if log_level:
-        print("-" * 19 + " Lattice thermal conducitivity (LBTE) " + "-" * 19)
+        print("-" * 19 + " Lattice thermal conductivity (LBTE) " + "-" * 19)
         print(
             "Cutoff frequency of pseudo inversion of collision matrix: %s" % pinv_cutoff
         )

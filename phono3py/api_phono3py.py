@@ -1947,7 +1947,7 @@ class Phono3py:
         is_isotope: bool = False,
         mass_variances: Optional[Sequence] = None,
         grid_points: Optional[Sequence[int]] = None,
-        boundary_mfp: Optional[float] = None,  # in micrometre
+        boundary_mfp: Optional[float] = None,  # in micrometer
         solve_collective_phonon: bool = False,
         use_ave_pp: bool = False,
         is_reducible_collision_matrix: bool = False,
@@ -1997,7 +1997,7 @@ class Phono3py:
             for thermal conductivity are set internally.
             shape(num_grid_points, ), dtype='int64'.
         boundary_mfp : float, optional, default is None
-            Mean free path in micrometre to calculate simple boundary
+            Mean free path in micrometer to calculate simple boundary
             scattering contribution to thermal conductivity.
             None ignores this contribution.
         solve_collective_phonon : bool, optional, default is False
