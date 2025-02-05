@@ -54,7 +54,10 @@ from phono3py.cui.create_force_constants import (
     run_pypolymlp_to_compute_forces,
 )
 from phono3py.file_IO import read_fc2_from_hdf5, read_fc3_from_hdf5
-from phono3py.interface.fc_calculator import extract_fc2_fc3_calculators
+from phono3py.interface.fc_calculator import (
+    extract_fc2_fc3_calculators,
+    update_cutoff_fc_calculator_options,
+)
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon3.dataset import forces_in_dataset
 from phono3py.phonon3.fc3 import show_drift_fc3
@@ -435,6 +438,7 @@ def compute_force_constants_from_datasets(
     ph3py: Phono3py,
     fc_calculator: Optional[str] = None,
     fc_calculator_options: Optional[Union[dict, str]] = None,
+    cutoff_pair_distance: Optional[float] = None,
     symmetrize_fc: bool = True,
     is_compact_fc: bool = True,
     log_level: int = 0,
@@ -453,13 +457,18 @@ def compute_force_constants_from_datasets(
     """
     fc3_calculator = extract_fc2_fc3_calculators(fc_calculator, 3)
     fc2_calculator = extract_fc2_fc3_calculators(fc_calculator, 2)
+    fc3_calc_opts = extract_fc2_fc3_calculators(fc_calculator_options, 3)
+    fc3_calc_opts = update_cutoff_fc_calculator_options(
+        fc3_calc_opts, cutoff_pair_distance
+    )
+    fc2_calc_opts = extract_fc2_fc3_calculators(fc_calculator_options, 2)
     exist_fc2 = ph3py.fc2 is not None
     if ph3py.fc3 is None and forces_in_dataset(ph3py.dataset):
         ph3py.produce_fc3(
             symmetrize_fc3r=symmetrize_fc,
             is_compact_fc=is_compact_fc,
             fc_calculator=fc3_calculator,
-            fc_calculator_options=extract_fc2_fc3_calculators(fc_calculator_options, 3),
+            fc_calculator_options=fc3_calc_opts,
         )
 
         if log_level and symmetrize_fc and fc_calculator is None:
@@ -476,9 +485,7 @@ def compute_force_constants_from_datasets(
                 symmetrize_fc2=symmetrize_fc,
                 is_compact_fc=is_compact_fc,
                 fc_calculator=fc2_calculator,
-                fc_calculator_options=extract_fc2_fc3_calculators(
-                    fc_calculator_options, 2
-                ),
+                fc_calculator_options=fc2_calc_opts,
             )
             if log_level and symmetrize_fc and fc_calculator is None:
                 print("fc2 was symmetrized.")

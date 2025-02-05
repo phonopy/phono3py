@@ -158,12 +158,6 @@ def finalize_phono3py(
     else:
         yaml_filename = filename
 
-    if phono3py.mlp is not None and phono3py.dataset is not None:
-        mlp_eval_filename = "phono3py_mlp_eval_dataset.yaml"
-        if log_level:
-            print(f'Dataset generated using MLPs was written in "{mlp_eval_filename}".')
-        phono3py.save(mlp_eval_filename)
-
     _physical_units = get_default_physical_units(phono3py.calculator)
 
     ph3py_yaml = Phono3pyYaml(
@@ -603,6 +597,7 @@ def _store_force_constants(ph3py: Phono3py, settings: Phono3pySettings, log_leve
 
     load_fc2_and_fc3(ph3py, log_level=log_level)
 
+    cutoff_pair_distance = get_cutoff_pair_distance(settings)
     (fc_calculator, fc_calculator_options) = get_fc_calculator_params(
         settings, log_level=(not read_fc3) * 1
     )
@@ -611,6 +606,7 @@ def _store_force_constants(ph3py: Phono3py, settings: Phono3pySettings, log_leve
             ph3py,
             fc_calculator=fc_calculator,
             fc_calculator_options=fc_calculator_options,
+            cutoff_pair_distance=cutoff_pair_distance,
             symmetrize_fc=settings.fc_symmetry,
             is_compact_fc=settings.is_compact_fc,
             log_level=log_level,
@@ -623,6 +619,7 @@ def _store_force_constants(ph3py: Phono3py, settings: Phono3pySettings, log_leve
             ph3py,
             fc_calculator="symfc",
             fc_calculator_options=fc_calculator_options,
+            cutoff_pair_distance=cutoff_pair_distance,
             symmetrize_fc=settings.fc_symmetry,
             is_compact_fc=settings.is_compact_fc,
             log_level=log_level,
@@ -1168,6 +1165,15 @@ def main(**argparse_control):
             prepare_dataset=prepare_dataset,
             log_level=log_level,
         )
+
+        if ph3py.dataset is not None:
+            mlp_eval_filename = "phono3py_mlp_eval_dataset.yaml"
+            if log_level:
+                print(
+                    "Dataset generated using MLPs was written in "
+                    f'"{mlp_eval_filename}".'
+                )
+            ph3py.save(mlp_eval_filename)
 
         # pypolymlp dataset is stored in "phono3py.pmlp" and stop here.
         if not prepare_dataset:
