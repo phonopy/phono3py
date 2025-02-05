@@ -4,7 +4,7 @@ This directory contains python-sphinx documentation source.
 
 ## How to compile
 
-```sh
+```bash
 make html
 ```
 
@@ -17,20 +17,20 @@ make html
 
 Web page files are copied to `gh-pages` branch. At the phono3py github top directory,
 
-```sh
+```bash
 git checkout gh-pages
 rm -r .buildinfo .doctrees *
 ```
 
 From the directory the sphinx doc is complied,
 
-```sh
+```bash
 rsync -avh _build/ <phono3py-repository-directory>/
 ```
 
 Again, at the phono3py github top directory,
 
-```sh
+```bash
 git add .
 git commit -a -m "Update documentation ..."
 git push

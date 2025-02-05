@@ -6,7 +6,6 @@
 :depth: 2
 :local:
 ```
-
 (brillouinzone_sum)=
 
 ## Brillouin zone summation
