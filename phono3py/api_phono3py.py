@@ -335,8 +335,8 @@ class Phono3py:
         """Setter and getter of third order force constants (fc3).
 
         ndarray
-            fc3 shape is either (supercell, supecell, supercell, 3, 3, 3) or
-            (primitive, supercell, supecell, 3, 3, 3),
+            fc3 shape is either (supercell, supercell, supercell, 3, 3, 3) or
+            (primitive, supercell, supercell, 3, 3, 3),
             where 'supercell' and 'primitive' indicate number of atoms in
             these cells.
 
@@ -352,8 +352,8 @@ class Phono3py:
         """Setter and getter of second order force constants (fc2).
 
         ndarray
-            fc2 shape is either (supercell, supecell, 3, 3) or
-            (primitive, supecell, 3, 3),
+            fc2 shape is either (supercell, supercell, 3, 3) or
+            (primitive, supercell, 3, 3),
             where 'supercell' and 'primitive' indicate number of atoms in
             these cells.
 
@@ -1378,7 +1378,7 @@ class Phono3py:
         Note
         ----
         is_diagonal=False is chosen as the default setting intentionally to be
-        consistent to the first displacements of the fc3 pair displacemets in
+        consistent to the first displacements of the fc3 pair displacements in
         supercell.
 
         Parameters
@@ -1390,7 +1390,7 @@ class Phono3py:
             replace generated random distances smaller than this value by this
             value.
         is_plusminus : True, False, or 'auto', optional
-            With True, atomis are displaced in both positive and negative
+            With True, atoms are displaced in both positive and negative
             directions. With False, only one direction. With 'auto', mostly
             equivalent to is_plusminus=True, but only one direction is chosen
             when the displacements in both directions are symmetrically
@@ -1475,8 +1475,8 @@ class Phono3py:
             False.
         is_compact_fc : bool, optional
             fc3 shape is
-                False: (supercell, supercell, supecell, 3, 3, 3) True:
-                (primitive, supercell, supecell, 3, 3, 3)
+                False: (supercell, supercell, supercell, 3, 3, 3) True:
+                (primitive, supercell, supercell, 3, 3, 3)
             where 'supercell' and 'primitive' indicate number of atoms in these
             cells. Default is False.
         fc_calculator : str, optional
@@ -1560,8 +1560,8 @@ class Phono3py:
             calculator such as ALM. Default is False.
         is_compact_fc : bool
             fc2 shape is
-                False: (supercell, supecell, 3, 3)
-                True: (primitive, supecell, 3, 3)
+                False: (supercell, supercell, 3, 3)
+                True: (primitive, supercell, 3, 3)
             where 'supercell' and 'primitive' indicate number of atoms in these
             cells. Default is False.
         fc_calculator : str or None
