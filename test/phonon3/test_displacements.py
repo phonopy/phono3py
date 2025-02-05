@@ -105,7 +105,7 @@ def test_random_disps_agno2(
         is_plusminus=is_plusminus,
     )
 
-    for d, n_d in zip((ph3.displacements, ph3.phonon_displacements), (92, 4)):
+    for d, n_d in zip((ph3.displacements, ph3.phonon_displacements), (96, 4)):
         if number_of_snapshots == "auto":
             assert len(d) == n_d * (is_plusminus + 1)
         else:
