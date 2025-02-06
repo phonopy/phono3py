@@ -629,7 +629,7 @@ default. In versions 3.0.0 and 3.0.1, it was not the default by mistake.</p></li
 <li><p>Calculation method to transform supercell third-order force constants fc3 in
 real to reciprocal space was changed as described at <a class="reference internal" href="#changelog-v290"><span class="std std-ref">Dec-25-2023: Version 2.9.0</span></a>.
 This results in the change of results with respect to those obtained by
-phono3py version 2. To emulate v2 behaviour, use <code class="docutils literal notranslate"><span class="pre">--v2</span></code> option in phono3py
+phono3py version 2. To emulate v2 behavior, use <code class="docutils literal notranslate"><span class="pre">--v2</span></code> option in phono3py
 command line script. For <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class , <code class="docutils literal notranslate"><span class="pre">make_r0_average=True</span></code> (default)
 when instantiating it, and similarly for <code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code> function.</p></li>
 <li><p>Completely dropped support of <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> and <code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code>.</p></li>
@@ -663,7 +663,7 @@ when instantiating it, and similarly for <code class="docutils literal notransla
 <span id="changelog-v290"></span><h2>Dec-25-2023: Version 2.9.0<a class="headerlink" href="#dec-25-2023-version-2-9-0" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Pre-release of version 3.0.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--v3</span></code> option enables phono3py version 3 behaviour. In phono3py-v3, it is
+<li><p><code class="docutils literal notranslate"><span class="pre">--v3</span></code> option enables phono3py version 3 behavior. In phono3py-v3, it is
 planned to replace <span class="math notranslate nohighlight">\(\sum_{l'l''}\Phi_{\alpha\beta\gamma}(0\kappa, l'\kappa',
 l''\kappa'') \cdots\)</span> in Eq.(41) of
 <a class="reference external" href="https://journals.jps.jp/doi/10.7566/JPSJ.92.012001">https://journals.jps.jp/doi/10.7566/JPSJ.92.012001</a> by
@@ -745,7 +745,7 @@ slightly overestimated (commit c4c54c73).</p></li>
 <li><p>Installation using <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> now requires creating <code class="docutils literal notranslate"><span class="pre">site.cfg</span></code> file. See
 <a class="reference external" href="https://phonopy.github.io/phono3py/install.html">https://phonopy.github.io/phono3py/install.html</a> and
 <a class="reference external" href="https://github.com/phonopy/phono3py/pull/59">PR #59</a>.</p></li>
-<li><p>Dorp python 3.6 support, and dependencies of numpy and matplotlib versions are
+<li><p>Drop python 3.6 support, and dependencies of numpy and matplotlib versions are
 updated:</p>
 <ul>
 <li><p>Python &gt;= 3.7</p></li>
@@ -781,9 +781,9 @@ were changed to</p>
 from <code class="docutils literal notranslate"><span class="pre">dtype='intc'</span></code>.</p></li>
 <li><p>Python 3.5 or later is required.</p></li>
 </ol>
-<p>To emulate the version 1.x behaviour in <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command, try <code class="docutils literal notranslate"><span class="pre">--v1</span></code> option.
-To emurate the version 1.x behaviour in API, specify <code class="docutils literal notranslate"><span class="pre">store_dense_gp_map=False</span></code>
-and <code class="docutils literal notranslate"><span class="pre">store_dense_svecs=False</span></code> in instatiation of <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class or phon3py
+<p>To emulate the version 1.x behavior in <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command, try <code class="docutils literal notranslate"><span class="pre">--v1</span></code> option.
+To emurate the version 1.x behavior in API, specify <code class="docutils literal notranslate"><span class="pre">store_dense_gp_map=False</span></code>
+and <code class="docutils literal notranslate"><span class="pre">store_dense_svecs=False</span></code> in instantiation of <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class or phono3py
 loader.</p>
 </section>
 <section id="mar-17-2021-version-1-22-3">
@@ -802,7 +802,7 @@ loader.</p>
 <h2>Feb-21-2021: Version 1.22.1<a class="headerlink" href="#feb-21-2021-version-1-22-1" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command didn’t work. This was fixed.</p></li>
-<li><p>Fix behaviour when specifying <code class="docutils literal notranslate"><span class="pre">--thm</span></code> and <code class="docutils literal notranslate"><span class="pre">--sigma</span></code> simultaneously.</p></li>
+<li><p>Fix behavior when specifying <code class="docutils literal notranslate"><span class="pre">--thm</span></code> and <code class="docutils literal notranslate"><span class="pre">--sigma</span></code> simultaneously.</p></li>
 </ul>
 </section>
 <section id="jan-29-2021-version-1-22-0">
@@ -911,7 +911,7 @@ directory (secondary).</p></li>
 <li><p>Update to work with phonopy v1.14.2.</p></li>
 <li><p>Ph-ph interaction can be read (<code class="docutils literal notranslate"><span class="pre">--read-pp</span></code>) and write (<code class="docutils literal notranslate"><span class="pre">--write-pp</span></code>) in RTA
 thermal conductivity calculation, too. Mind that the data stored are different
-with and without <code class="docutils literal notranslate"><span class="pre">--full-pp</span></code>. Wihtout <code class="docutils literal notranslate"><span class="pre">--full-pp</span></code> the data are stored in
+with and without <code class="docutils literal notranslate"><span class="pre">--full-pp</span></code>. Without <code class="docutils literal notranslate"><span class="pre">--full-pp</span></code> the data are stored in
 complicated way to save data side, so it is not considered readable by usual
 users.</p></li>
 </ul>
@@ -948,7 +948,7 @@ translational invariance symmetry is also applied.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--sym-fc</span></code> option is added. This is just an alias to specify both <code class="docutils literal notranslate"><span class="pre">--sym-fc3r</span></code>
 and <code class="docutils literal notranslate"><span class="pre">--sym-fc2</span></code> together.</p></li>
 <li><p>Documentation on <code class="docutils literal notranslate"><span class="pre">--write-phonon</span></code> and <code class="docutils literal notranslate"><span class="pre">--read-phonon</span></code> options is written.
-These options are used to save harmonic phonon infromation on strage.</p></li>
+These options are used to save harmonic phonon information on storage.</p></li>
 </ul>
 </section>
 <section id="nov-22-2017-version-1-12-5">
@@ -965,7 +965,7 @@ These options are used to save harmonic phonon infromation on strage.</p></li>
 <p>(3) happens when the primitive cell is relatively large. Number of triplets
 can be shown using <code class="docutils literal notranslate"><span class="pre">--stp</span></code> option. A race condition of OpenMP multithreading
 is the source of the bug. Therefore, if it occurs, the same calculation comes
-up with the different thermal conductivity value in every run time, for whcih
+up with the different thermal conductivity value in every run time, for which
 it behaves like randomly.</p>
 </li>
 <li><p>RTA thermal conductivity with smearing method (<code class="docutils literal notranslate"><span class="pre">--sigma</span></code>) is made to run with
@@ -1037,7 +1037,7 @@ or later.</p></li>
 <section id="apr-16-2016-version-1-10-7">
 <h2>Apr-16-2016: version 1.10.7<a class="headerlink" href="#apr-16-2016-version-1-10-7" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>API example is prepared and it is found in <code class="docutils literal notranslate"><span class="pre">Si</span></code> example. No doucment yet.</p></li>
+<li><p>API example is prepared and it is found in <code class="docutils literal notranslate"><span class="pre">Si</span></code> example. No documentation yet.</p></li>
 <li><p>Si pwscf example was placed in <code class="docutils literal notranslate"><span class="pre">example-phono3py</span></code> directory.</p></li>
 <li><p>User interface bug fix.</p></li>
 </ul>
@@ -1051,10 +1051,10 @@ For example, the harmonic part of phono3py-1.10.5 is based on the code close
 to phonopy-1.10.4.</p></li>
 <li><p>Python3 support</p></li>
 <li><p>For the RTA thermal conductivity calculation mode with using the linear
-tetrahedron method, only necessary part of phonon-phonon interaction strengh
-among phonons. This improves lifetime calculation performance, but as the
-drawback, averaged ph-ph interaction strength can not be given. See
-<a class="reference internal" href="command-options.html#full-pp-option"><span class="std std-ref">--full-pp (FULL_PP = .TRUE.)</span></a>.</p></li>
+tetrahedron method, only necessary part of phonon-phonon interaction strength
+among phonons is calculated. This improves lifetime calculation performance,
+but as the drawback, averaged ph-ph interaction strength can not be given.
+See <a class="reference internal" href="command-options.html#full-pp-option"><span class="std std-ref">--full-pp (FULL_PP = .TRUE.)</span></a>.</p></li>
 <li><p>Pwscf interface (<a class="reference internal" href="interfaces.html#calculator-interfaces"><span class="std std-ref">Interfaces to calculators</span></a>)</p></li>
 </ul>
 </section>
@@ -1177,7 +1177,7 @@ backward compatibility is simple:
 <h2>Changes in version 0.8.0<a class="headerlink" href="#changes-in-version-0-8-0" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">--q_direction</span></code> didn’t work. Fix it.</p></li>
-<li><p>Implementation of tetrahedron method whcih is activated by <code class="docutils literal notranslate"><span class="pre">--thm</span></code>.</p></li>
+<li><p>Implementation of tetrahedron method which is activated by <code class="docutils literal notranslate"><span class="pre">--thm</span></code>.</p></li>
 <li><p>Grid addresses are written out by <code class="docutils literal notranslate"><span class="pre">--wgp</span></code> option.</p></li>
 </ul>
 </section>
@@ -1193,8 +1193,9 @@ this information. Usually sets of pair displacements are more redundant than
 that needed for creating fc3 if index permutation symmetry is considered.
 Therefore using index permutation symmetry, some elements of fc3 can be
 recovered even if some of supercell force calculations are missing. In
-paticular, all pair distances among triplet atoms are larger than cutoff pair
-distance, any fc3 elements are not recovered, i.e., the element will be zero.</p></li>
+particular, all pair distances among triplet atoms are larger than cutoff
+pair distance, any fc3 elements are not recovered, i.e., the element will be
+zero.</p></li>
 </ul>
 </section>
 <section id="changes-in-version-0-7-2">

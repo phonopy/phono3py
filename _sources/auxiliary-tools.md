@@ -102,7 +102,7 @@ Number of points to be sampled in the x-axis.
 
 ### Options for tensor properties
 
-For cummulative thermal conductivity, the last value is given as the thermal
+For cumulative thermal conductivity, the last value is given as the thermal
 conductivity in W/mK. For the other properties, the last value is effectively
 the sum of values on all mesh grids divided by number of mesh grids. This is
 understood as normalized for one primitive cell. Before version 1.11.13.1, the
