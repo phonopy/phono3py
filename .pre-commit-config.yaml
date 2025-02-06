@@ -10,12 +10,12 @@ repos:
       - id: check-added-large-files
         exclude: ^example/AlN-LDA/
 
-- repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.9.4
-  hooks:
-  - id: ruff
-    args: [ "--fix", "--show-fixes" ]
-  - id: ruff-format
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.4
+    hooks:
+      - id: ruff
+        args: [ "--fix", "--show-fixes" ]
+      - id: ruff-format
 
   - repo: https://github.com/Takishima/cmake-pre-commit-hooks
     rev: v1.9.6
