@@ -269,7 +269,7 @@ has to be specified (see {ref}`full_pp_option`).
 ### boundary_mfp
 
 A value specified by {ref}`boundary_mfp_option`. The physical unit is
-micrometre.
+micrometer.
 
 When `--boundary-mfp` option is explicitly specified, its value is stored here.
 
@@ -316,7 +316,7 @@ array([  1.02050201e+03,   1.02050201e+03,   1.02050201e+03,
 
 ## How to know grid point index number corresponding to grid address
 
-Runngin with `--write-gamma`, hdf5 files are written out with file names
+Running with `--write-gamma`, hdf5 files are written out with file names
 such as `kappa-m202020-g4448.hdf5`. You may want to know the grid point
 index number with given grid address. This is done as follows:
 

@@ -846,7 +846,7 @@ class ShowCalcProgress:
 
     @staticmethod
     def kappa_RTA(br: "ConductivityRTA", log_level):
-        """Show RTA calculation progess."""
+        """Show RTA calculation progress."""
         temperatures = br.temperatures
         sigmas = br.sigmas
         kappa = br.kappa
@@ -885,7 +885,7 @@ class ShowCalcProgress:
 
     @staticmethod
     def kappa_Wigner_RTA(br: "ConductivityWignerRTA", log_level):
-        """Show Wigner-RTA calculation progess."""
+        """Show Wigner-RTA calculation progress."""
         temperatures = br.temperatures
         sigmas = br.sigmas
         kappa_TOT_RTA = br.kappa_TOT_RTA

@@ -22,7 +22,7 @@ The option `--rd NUM` is used instead of `-d` in generating displacements as fol
 
 `NUM` means the number of supercells with random directional displacements. This
 must be specified, and the initial guess may be from around the number of
-supecells generated for the systematic displacements by `-d`. In the case of the
+supercells generated for the systematic displacements by `-d`. In the case of the
 `NaCl-rd` example, 146 supercells are generated with `-d`, so similar
 number `--rd 100` was chosen here.
 

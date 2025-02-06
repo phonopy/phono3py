@@ -162,7 +162,7 @@ void grg_get_double_grid_address(int64_t address_double[3],
 /* -------------------------------------------------------*/
 /* Get address in single grid from address in double grid */
 /* -------------------------------------------------------*/
-/* This function shifts double-grid adress by PS and divides it by 2. */
+/* This function shifts double-grid address by PS and divides it by 2. */
 /* No modulo operation is applied to returned single-grid address. */
 /* address : Single grid address. */
 /* address_double : Double grid address. */

@@ -42,7 +42,7 @@ class Phono3pySettings(Settings):
     """Setting parameter container."""
 
     _default = {
-        # In micrometre. The default value is just set to avoid divergence.
+        # In micrometer. The default value is just set to avoid divergence.
         "boundary_mfp": 1.0e6,
         "conductivity_type": None,
         "constant_averaged_pp_interaction": None,
@@ -879,7 +879,7 @@ class Phono3pyConfParser(ConfParser):
         if "cutoff_pair_distance" in params:
             self._settings.set_cutoff_pair_distance(params["cutoff_pair_distance"])
 
-        # Emulate v2.x behaviour
+        # Emulate v2.x behavior
         if "emulate_v2" in params:
             self._settings.set_emulate_v2(params["emulate_v2"])
 

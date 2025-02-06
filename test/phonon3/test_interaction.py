@@ -248,10 +248,10 @@ def test_interaction_nac_direction_phonon_NaCl_second_no_error(nacl_pbe: Phono3p
 def test_interaction_run_phonon_solver_at_gamma_NaCl(nacl_pbe: Phono3py):
     """Test run_phonon_solver_at_gamma with nac_q_direction on NaCl.
 
-    Phonon calculation at Gamma without NAC is peformed at itr.init_dynamical_matrix().
+    Phonon calculation at Gamma without NAC is performed at itr.init_dynamical_matrix().
     The phonons at Gamma without NAC are saved in dedicated variables.
 
-    Phonon calculation at Gamma with NAC is peformed at itr.set_grid_point(0) and
+    Phonon calculation at Gamma with NAC is performed at itr.set_grid_point(0) and
     stored in phonon variables on grid.
 
     itr.run_phonon_solver_at_gamma() stored phonons at Gamma without NAC are copied

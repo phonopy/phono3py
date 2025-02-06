@@ -63,9 +63,9 @@ class RealSelfEnergy:
 
     How to test epsilon
     -------------------
-    At a sampling mesh, choose one band and calcualte frequency shifts at
-    various epsilon values and plot over the epsilons. Decreasing epsinon,
-    at some point, discontinous change may be found.
+    At a sampling mesh, choose one band and calculate frequency shifts at
+    various epsilon values and plot over the epsilons. Decreasing epsilon,
+    at some point, discontinuous change may be found.
 
     """
 
