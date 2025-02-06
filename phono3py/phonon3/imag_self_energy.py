@@ -288,7 +288,7 @@ class ImagSelfEnergy:
             self._temperature = float(temperature)
 
     def set_temperature(self, temperature):
-        """Set temperatures where calculation will be peformed."""
+        """Set temperatures where calculation will be performed."""
         warnings.warn(
             "Use attribute, ImagSelfEnergy.temperature "
             "instead of ImagSelfEnergy.set_temperature().",
@@ -1052,7 +1052,7 @@ def run_ise_at_frequency_points_batch(
 
     if log_level:
         print(
-            "Calculations at %d frequency points are devided into "
+            "Calculations at %d frequency points are divided into "
             "%d batches." % (len(_frequency_points), len(batches))
         )
 

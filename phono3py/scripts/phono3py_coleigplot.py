@@ -64,7 +64,7 @@ def plot_one_file(ax, args):
             temperatures = f["temperature"][:]
         plot_one(ax, coleigs, temperatures, args)
     else:
-        print("File %s doens't exist." % filename)
+        print("File %s doesn't exist." % filename)
         sys.exit(1)
 
 
@@ -86,7 +86,7 @@ def plot_more_files(ax, args):
                 coleigs.append(f["collision_eigenvalues"][:])
                 temperatures.append(f["temperature"][:])
         else:
-            print("File %s doens't exist." % filename)
+            print("File %s doesn't exist." % filename)
             sys.exit(1)
     plot_more(ax, coleigs, temperatures, args)
 

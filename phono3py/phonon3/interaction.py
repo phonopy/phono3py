@@ -157,7 +157,7 @@ class Interaction:
         self._g_zero = None
 
         self._phonon_done = None
-        self._done_nac_at_gamma = False  # Phonon at Gamma is calculatd with NAC.
+        self._done_nac_at_gamma = False  # Phonon at Gamma is calculated with NAC.
         self._frequencies = None
         self._eigenvectors = None
         self._frequencies_at_gamma = None
@@ -428,7 +428,7 @@ class Interaction:
                 shape=(num_bz_grid, num_band, num_band),
                 dtype="c%d" % (np.dtype('double').itemsize * 2), order='C'
             phonon_done : ndarray
-                1 if phonon at a grid point is calcualted, otherwise 0.
+                1 if phonon at a grid point is calculated, otherwise 0.
                 shape=(num_bz_grid, ), dtype='byte'
 
         """
@@ -626,7 +626,7 @@ class Interaction:
                     self.run_phonon_solver_at_gamma()
                 else:
                     msg = (
-                        "Phonons at Gamma has been calcualted with NAC, "
+                        "Phonons at Gamma has been calculated with NAC, "
                         "but ph-ph interaction is expected to calculate at "
                         "non-Gamma point. Setting Interaction.nac_q_direction = "
                         "None, can avoid raising this exception to re-run phonon "
@@ -693,12 +693,12 @@ class Interaction:
         """Set phonons on grid."""
         if bz_grid_addresses.shape != self._bz_grid.addresses.shape:
             raise RuntimeError(
-                "Input grid address size is inconsistent. Setting phonons faild."
+                "Input grid address size is inconsistent. Setting phonons failed."
             )
 
         if (self._bz_grid.addresses - bz_grid_addresses).all():
             raise RuntimeError(
-                "Input grid addresses are inconsistent. Setting phonons faild."
+                "Input grid addresses are inconsistent. Setting phonons failed."
             )
         else:
             self._phonon_done[:] = 1

@@ -680,7 +680,7 @@ def _show_fc_calculator_not_found(log_level):
         print("")
         print(
             "Built-in force constants calculator doesn't support the "
-            "dispalcements-forces dataset. "
+            "displacements-forces dataset. "
             "An external force calculator, e.g., symfc (--symfc_ or ALM (--alm), "
             "has to be used to compute force constants."
         )

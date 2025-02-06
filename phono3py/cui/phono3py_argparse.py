@@ -105,7 +105,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         type=float,
         default=None,
         help=(
-            "Boundary mean free path in micrometre for thermal conductivity calculation"
+            "Boundary mean free path in micrometer for thermal conductivity calculation"
         ),
     )
     parser.add_argument(
@@ -264,7 +264,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
     #     dest="emulate_v2",
     #     action="store_true",
     #     default=False,
-    #     help="Emulate v2.x behaviour.",
+    #     help="Emulate v2.x behavior.",
     # )
     parser.add_argument(
         "--factor",

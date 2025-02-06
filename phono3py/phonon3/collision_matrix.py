@@ -251,7 +251,7 @@ class CollisionMatrix(ImagSelfEnergy):
         """Return mapping table from grid point index to triplet index.
 
         triplets_map_at_q contains index mapping of q1 in (q0, q1, q2) to
-        independet q1 under q0+q1+q2=G with a fixed q0.
+        independent q1 under q0+q1+q2=G with a fixed q0.
 
         Note
         ----

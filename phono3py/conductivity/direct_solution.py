@@ -77,11 +77,11 @@ class ConductivityLBTEBase(ConductivityBase):
         sigma_cutoff=None,
         is_isotope=False,
         mass_variances=None,
-        boundary_mfp=None,  # in micrometre
+        boundary_mfp=None,  # in micrometer
         solve_collective_phonon=False,
         is_reducible_collision_matrix=False,
         is_kappa_star=True,
-        gv_delta_q=None,  # finite difference for group veolocity
+        gv_delta_q=None,  # finite difference for group velocity
         is_full_pp=False,
         read_pp=False,
         pp_filename=None,
@@ -728,7 +728,7 @@ class ConductivityLBTEBase(ConductivityBase):
             sys.stdout.flush()
 
     def _average_collision_matrix_by_degeneracy(self):
-        """Average symmetrically equivalent elemetns of collision matrix."""
+        """Average symmetrically equivalent elements of collision matrix."""
         start = time.time()
 
         # Average matrix elements belonging to degenerate bands
@@ -939,8 +939,8 @@ class ConductivityLBTEBase(ConductivityBase):
         if (np.abs(r_sum) < 1e-10).all():
             return None
 
-        # Same as np.kron(np.eye(size), r_sum), but writen as below
-        # to be sure the values in memory C-congiguous with 'double'.
+        # Same as np.kron(np.eye(size), r_sum), but written as below
+        # to be sure the values in memory C-contiguous with 'double'.
         I_mat = np.zeros((3 * size, 3 * size), dtype="double", order="C")
         for i in range(size):
             I_mat[(i * 3) : ((i + 1) * 3), (i * 3) : ((i + 1) * 3)] = r_sum
@@ -1700,7 +1700,7 @@ def get_thermal_conductivity_LBTE(
     is_isotope=False,
     mass_variances=None,
     grid_points=None,
-    boundary_mfp=None,  # in micrometre
+    boundary_mfp=None,  # in micrometer
     solve_collective_phonon=False,
     is_reducible_collision_matrix=False,
     is_kappa_star=True,
@@ -1731,7 +1731,7 @@ def get_thermal_conductivity_LBTE(
     if sigmas is None:
         sigmas = []
     if log_level:
-        print("-" * 19 + " Lattice thermal conducitivity (LBTE) " + "-" * 19)
+        print("-" * 19 + " Lattice thermal conductivity (LBTE) " + "-" * 19)
         print(
             "Cutoff frequency of pseudo inversion of collision matrix: %s" % pinv_cutoff
         )

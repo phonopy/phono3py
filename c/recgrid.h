@@ -198,7 +198,7 @@ int64_t recgrid_get_reciprocal_point_group(int64_t rec_rotations[48][3][3],
 /**
  * @brief Return D, P, Q of Smith normal form of A.
  *
- * @param D_diag Diagonal elements of diagnoal matrix D
+ * @param D_diag Diagonal elements of diagonal matrix D
  * @param P Unimodular matrix P
  * @param Q Unimodular matrix Q
  * @param A Integer matrix
@@ -215,7 +215,7 @@ int64_t recgrid_get_snf3x3(int64_t D_diag[3], int64_t P[3][3], int64_t Q[3][3],
  * {tilde-R^T}
  * @param rotations Original rotations matrices in reciprocal space {R^T}
  * @param num_rot Number of rotation matrices
- * @param D_diag Diagonal elements of diagnoal matrix D of Smith normal form
+ * @param D_diag Diagonal elements of diagonal matrix D of Smith normal form
  * @param Q Unimodular matrix Q of Smith normal form
  * @return int64_t
  */
@@ -232,7 +232,7 @@ int64_t recgrid_transform_rotations(int64_t (*transformed_rots)[3][3],
  * array size of prod(D_diag)
  * @param rotations Transformed rotation matrices in reciprocal space
  * @param num_rot Number of rotation matrices
- * @param D_diag Diagonal elements of diagnoal matrix D of Smith normal form
+ * @param D_diag Diagonal elements of diagonal matrix D of Smith normal form
  * @param PS Shift in GR-grid
  * @return int64_t Number of ir_grid_points.
  */
@@ -252,7 +252,7 @@ int64_t recgrid_get_ir_grid_map(int64_t *ir_grid_map,
  * @param bzg2grg Mapping table of bz_grid_addresses to gr_grid_addresses. In
  * type-II, len(bzg2grg) == len(bz_grid_addresses) <= (D_diag[0] + 1) *
  * (D_diag[1] + 1) * (D_diag[2] + 1).
- * @param D_diag Diagonal elements of diagnoal matrix D of Smith normal form
+ * @param D_diag Diagonal elements of diagonal matrix D of Smith normal form
  * @param Q Unimodular matrix Q of Smith normal form
  * @param PS Shift in GR-grid
  * @param rec_lattice Reduced reciprocal basis vectors in column vectors
@@ -270,7 +270,7 @@ int64_t recgrid_get_bz_grid_addresses(
  *
  * @param bz_grid_index BZ grid point index
  * @param rotation Transformed rotation in reciprocal space tilde-R^T
- * @param bz_grid_addresses BZ grid point adddresses
+ * @param bz_grid_addresses BZ grid point addresses
  * @param bz_map List of accumulated numbers of BZ grid points from the
  * first GR grid point to the last grid point. In type-II, [0, 1, 3, 4, ...]
  * means multiplicities of [1, 2, 1, ...], with len(bz_map)=product(D_diag) + 1.
