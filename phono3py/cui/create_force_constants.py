@@ -274,7 +274,8 @@ def parse_forces(
             distance_to_A=physical_units["distance_to_A"],
             force_to_eVperA=physical_units["force_to_eVperA"],
         )
-    assert dataset is not None
+    if dataset is None:
+        raise RuntimeError("Dataset is not found.")
 
     if "natom" in dataset and dataset["natom"] != natom:
         raise RuntimeError(

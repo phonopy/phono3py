@@ -771,6 +771,13 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         help="Use symfc for generating force constants",
     )
     parser.add_argument(
+        "--symfc-memshow",
+        dest="show_symfc_memory_usage",
+        action="store_true",
+        default=None,
+        help="Show symfc memory usage with respect to cutoff distance",
+    )
+    parser.add_argument(
         "--spf",
         dest="is_spectral_function",
         action="store_true",
