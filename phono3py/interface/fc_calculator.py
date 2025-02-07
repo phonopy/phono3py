@@ -188,7 +188,7 @@ def estimate_symfc_memory_usage(
 
     """
     symfc_solver = SymfcFCSolver(supercell, symmetry, options={"cutoff": {3: cutoff}})
-    basis_size = symfc_solver._symfc.estimate_basis_size(orders=[3])[3]
+    basis_size = symfc_solver.estimate_basis_size(orders=[3])[3]
     memsize = basis_size**2 * 3 * 8 / 10**9
     memsize2 = len(supercell) * 3 * batch_size * basis_size * 8 / 10**9
     return memsize, memsize2
