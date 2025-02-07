@@ -266,7 +266,7 @@ int64_t gridsys_get_thm_relative_grid_address(
     return thm_get_relative_grid_address(relative_grid_addresses, rec_lattice);
 }
 
-/* relative_grid_addresses are given as P multipled with those from */
+/* relative_grid_addresses are given as P multiplied with those from */
 /* dataset, i.e., */
 /*     np.dot(relative_grid_addresses, P.T) */
 int64_t gridsys_get_integration_weight(

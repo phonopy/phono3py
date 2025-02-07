@@ -122,7 +122,7 @@ def run_gruneisen_parameters(
 
 
 class Gruneisen:
-    """Calculat mode Grueneisen parameters from fc3."""
+    """Calculate mode Grueneisen parameters from fc3."""
 
     def __init__(
         self,

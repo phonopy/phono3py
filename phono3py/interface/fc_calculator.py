@@ -39,6 +39,7 @@ from __future__ import annotations
 from typing import Optional, Union
 
 import numpy as np
+from phonopy.interface.symfc import SymfcFCSolver
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive
 from phonopy.structure.symmetry import Symmetry
@@ -173,3 +174,21 @@ def update_cutoff_fc_calculator_options(
             fc_calc_opts = f"cutoff = {cutoff_pair_distance}"
 
     return fc_calc_opts
+
+
+def estimate_symfc_memory_usage(
+    supercell: PhonopyAtoms, symmetry: Symmetry, cutoff: float, batch_size: int = 100
+):
+    """Estimate memory usage to run symfc for fc3 with cutoff.
+
+    Total memory usage is memsize + memsize2. These are separated because
+    they behave differently with respect to cutoff distance.
+
+    batch_size is hardcoded to 100 because it is so in symfc.
+
+    """
+    symfc_solver = SymfcFCSolver(supercell, symmetry, options={"cutoff": {3: cutoff}})
+    basis_size = symfc_solver.estimate_basis_size(orders=[3])[3]
+    memsize = basis_size**2 * 3 * 8 / 10**9
+    memsize2 = len(supercell) * 3 * batch_size * basis_size * 8 / 10**9
+    return memsize, memsize2

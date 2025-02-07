@@ -143,7 +143,7 @@ class VelocityOperator(GroupVelocity):
         # computed along several directions
         ddms = self._get_dsqrtD_FD(np.array(q))
         #
-        # ddms[0] cointains the FD derivative in the direction in which the velocity
+        # ddms[0] contains the FD derivative in the direction in which the velocity
         # operator is diagonalized
         for id_dir in range(0, 3):
             gv_operator[:, :, id_dir] = (

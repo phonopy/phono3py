@@ -76,7 +76,7 @@ class ConductivityRTABase(ConductivityBase):
         sigma_cutoff=None,
         is_isotope=False,
         mass_variances=None,
-        boundary_mfp=None,  # in micrometre
+        boundary_mfp=None,  # in micrometer
         use_ave_pp=False,
         is_kappa_star=True,
         gv_delta_q=None,
@@ -161,7 +161,7 @@ class ConductivityRTABase(ConductivityBase):
 
     @abstractmethod
     def set_kappa_at_sigmas(self):
-        """Must be implementated in the inherited class."""
+        """Must be implemented in the inherited class."""
         raise NotImplementedError()
 
     def _allocate_values(self):
@@ -539,7 +539,7 @@ class ConductivityRTA(ConductivityMixIn, ConductivityRTABase):
         sigma_cutoff=None,
         is_isotope=False,
         mass_variances=None,
-        boundary_mfp=None,  # in micrometre
+        boundary_mfp=None,  # in micrometer
         use_ave_pp=False,
         is_kappa_star=True,
         gv_delta_q=None,
@@ -669,7 +669,7 @@ class ConductivityWignerRTA(ConductivityWignerMixIn, ConductivityRTABase):
         sigma_cutoff=None,
         is_isotope=False,
         mass_variances=None,
-        boundary_mfp=None,  # in micrometre
+        boundary_mfp=None,  # in micrometer
         use_ave_pp=False,
         is_kappa_star=True,
         gv_delta_q=None,
@@ -867,7 +867,7 @@ class ConductivityKuboRTA(ConductivityKuboMixIn, ConductivityRTABase):
         sigma_cutoff=None,
         is_isotope=False,
         mass_variances=None,
-        boundary_mfp=None,  # in micrometre
+        boundary_mfp=None,  # in micrometer
         use_ave_pp=False,
         is_kappa_star=True,
         gv_delta_q=None,
@@ -1010,7 +1010,7 @@ def get_thermal_conductivity_RTA(
     mass_variances=None,
     grid_points=None,
     is_isotope=False,
-    boundary_mfp=None,  # in micrometre
+    boundary_mfp=None,  # in micrometer
     use_ave_pp=False,
     is_kappa_star=True,
     gv_delta_q=None,
@@ -1046,7 +1046,7 @@ def get_thermal_conductivity_RTA(
 
     if log_level:
         print(
-            "-------------------- Lattice thermal conducitivity (RTA) "
+            "-------------------- Lattice thermal conductivity (RTA) "
             "--------------------"
         )
 

@@ -8,7 +8,7 @@ from phono3py.api_phono3py import Phono3py
 
 
 @pytest.mark.skipif(
-    not phono3c.include_lapacke(), reason="test for phono3py compliled with lapacke"
+    not phono3c.include_lapacke(), reason="test for phono3py compiled with lapacke"
 )
 @pytest.mark.parametrize("pinv_solver", [1, 2, 6])
 def test_kappa_LBTE_126(si_pbesol: Phono3py, pinv_solver: int):
@@ -41,7 +41,7 @@ def _test_kappa_LBTE(si_pbesol: Phono3py, pinv_solver: int):
 
 
 @pytest.mark.skipif(
-    phono3c.include_lapacke(), reason="test for phono3py compliled without lapacke"
+    phono3c.include_lapacke(), reason="test for phono3py compiled without lapacke"
 )
 @pytest.mark.parametrize("pinv_solver", [1, 2])
 def test_kappa_LBTE_witout_lapacke(si_pbesol: Phono3py, pinv_solver: int):

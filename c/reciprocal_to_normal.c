@@ -84,7 +84,7 @@ void reciprocal_to_normal_squared(
     double *inv_sqrt_masses;
     lapack_complex_double *e0, *e1, *e2;
 
-    /* Inverse sqrt mass is multipled with eigenvectors to reduce number
+    /* Inverse sqrt mass is multiplied with eigenvectors to reduce number
      * of */
     /* operations in get_fc3_sum. Three eigenvector matrices are looped
      * by */

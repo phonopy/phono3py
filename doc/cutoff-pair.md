@@ -25,7 +25,7 @@ In phono3py, to obtain supercell-fc3,
 $\Phi_{\alpha\beta\gamma}(jl, j'l', j''l'')$, forces in many
 supercells having different pairs of displaced atoms are computed
 using some force-calculator such as ab-initio code. In the phono3py
-default behaviour, full elements of supercell-fc3 are computed. In
+default behavior, full elements of supercell-fc3 are computed. In
 this case, though depending on the number of atoms in the supercell
 and the crystal symmetry, the number of atomic-pair configuration can
 be huge and beyond our computational resource.

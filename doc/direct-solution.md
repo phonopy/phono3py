@@ -253,10 +253,10 @@ contained.
 :width: 50%
 :name: coleigplot
 
-Eigenvalues are plotted in log scale (Si-PBEsol exmaple with
+Eigenvalues are plotted in log scale (Si-PBEsol example with
 15x15x15 mesh). The number in x-axis is just the index where each
 eigenvalue is stored. Normally the eigenvalues are stored ascending
-order. The bule points show the positive values, and
+order. The blue points show the positive values, and
 the red points show the negative values as positive values
 (absolute values) to be able to plot in log scale. In this plot, we
 can see the gap between $10^{-4}$ and $10^{-16}$, which
