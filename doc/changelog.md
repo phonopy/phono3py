@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Feb-7-2025: Version 3.14.0
+
+- Release to follow the change of phonopy
+
 ## Feb-5-2025: Version 3.13.0
 
 - Release to follow the change of phonopy
