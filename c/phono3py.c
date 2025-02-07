@@ -435,7 +435,7 @@ int64_t ph3py_get_BZ_triplets_at_q(
     return num_ir;
 }
 
-/* relative_grid_addresses are given as P multipled with those from dataset,
+/* relative_grid_addresses are given as P multiplied with those from dataset,
  * i.e.,
  *     np.dot(relative_grid_addresses, P.T) */
 int64_t ph3py_get_integration_weight(
@@ -601,7 +601,7 @@ void ph3py_get_relative_grid_address(int64_t relative_grid_address[24][4][3],
 /* tpi_get_neighboring_grid_points around multiple grid points for using
  * openmp
  *
- * relative_grid_addresses are given as P multipled with those from dataset,
+ * relative_grid_addresses are given as P multiplied with those from dataset,
  * i.e.,
  *     np.dot(relative_grid_addresses, P.T) */
 int64_t ph3py_get_neighboring_gird_points(
@@ -644,7 +644,7 @@ int64_t ph3py_get_neighboring_gird_points(
 
 /* thm_get_integration_weight at multiple grid points for using openmp
  *
- * relative_grid_addresses are given as P multipled with those from dataset,
+ * relative_grid_addresses are given as P multiplied with those from dataset,
  * i.e.,
  *     np.dot(relative_grid_addresses, P.T) */
 int64_t ph3py_get_thm_integration_weights_at_grid_points(

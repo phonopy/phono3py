@@ -1,7 +1,7 @@
 /* Copyright (C) 2015 Atsushi Togo */
 /* All rights reserved. */
 
-/* These codes were originally parts of spglib, but only develped */
+/* These codes were originally parts of spglib, but only developed */
 /* and used for phono3py. Therefore these were moved from spglib to */
 /* phono3py. This file is part of phonopy. */
 

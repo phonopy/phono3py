@@ -103,7 +103,7 @@ class JointDos:
 
         self._tetrahedron_method = None
         self._phonon_done = None
-        self._done_nac_at_gamma = False  # Phonon at Gamma is calculatd with NAC.
+        self._done_nac_at_gamma = False  # Phonon at Gamma is calculated with NAC.
         self._frequencies = None
         self._eigenvectors = None
 
@@ -255,7 +255,7 @@ class JointDos:
                 self._phonon_done[gamma_gp] = 0
             else:
                 msg = (
-                    "Phonons at Gamma has been calcualted with NAC, "
+                    "Phonons at Gamma has been calculated with NAC, "
                     "but ph-ph interaction is expected to calculate at "
                     "non-Gamma point. Setting Interaction.nac_q_direction = "
                     "None, can avoid raising this exception to re-run phonon "

@@ -42,7 +42,7 @@ from phonopy.utils import similarity_transformation
 
 
 class GroupVelocityMatrix(GroupVelocity):
-    """Class to calculate group velocities matricies of phonons.
+    """Class to calculate group velocities matrices of phonons.
 
      v_qjj' = 1/(2*sqrt(omega_qj*omega_qj')) * <e(q,j)|dD/dq|e(q,j')>
 

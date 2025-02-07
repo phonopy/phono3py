@@ -840,7 +840,7 @@ def test_imag_self_energy_npoints_with_sigma(si_pbesol: Phono3py):
 def test_imag_self_energy_detailed(si_pbesol: Phono3py):
     """Imaginary part of self energy spectrum of Si.
 
-    * specified frquency points
+    * specified frequency points
     * contribution from each triplet is returned.
 
     """
@@ -914,7 +914,7 @@ def test_imag_self_energy_detailed(si_pbesol: Phono3py):
 def test_imag_self_energy_scat_classes(si_pbesol: Phono3py, scattering_class: int):
     """Imaginary part of self energy spectrum of Si.
 
-    * specified frquency points
+    * specified frequency points
     * scattering event class 1
 
     """

@@ -267,7 +267,7 @@ class Phono3pyJointDos:
                         print("Smearing method with sigma=%s is used." % sigma)
                     print(
                         f"Calculations at {len(self._frequency_points)} "
-                        f"frequency points are devided into {len(batches)} batches."
+                        f"frequency points are divided into {len(batches)} batches."
                     )
                 for i_t, temperature in enumerate(temperatures):
                     self._jdos.temperature = temperature

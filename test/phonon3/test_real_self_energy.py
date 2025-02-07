@@ -67,7 +67,7 @@ def test_real_self_energy_with_band_indices(si_pbesol: Phono3py):
 def test_real_self_energy_with_frequency_points(si_pbesol: Phono3py):
     """Real part of self energy spectrum of Si.
 
-    * specified frquency points
+    * specified frequency points
 
     """
     if si_pbesol._make_r0_average:

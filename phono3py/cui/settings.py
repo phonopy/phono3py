@@ -42,7 +42,7 @@ class Phono3pySettings(Settings):
     """Setting parameter container."""
 
     _default = {
-        # In micrometre. The default value is just set to avoid divergence.
+        # In micrometer. The default value is just set to avoid divergence.
         "boundary_mfp": 1.0e6,
         "conductivity_type": None,
         "constant_averaged_pp_interaction": None,
@@ -95,6 +95,7 @@ class Phono3pySettings(Settings):
         "sigma_cutoff_width": None,
         "solve_collective_phonon": False,
         "emulate_v2": False,
+        "show_symfc_memory_usage": False,
         "subtract_forces": None,
         "subtract_forces_fc2": None,
         "temperatures": None,
@@ -322,6 +323,10 @@ class Phono3pySettings(Settings):
     def set_solve_collective_phonon(self, val):
         """Set solve_collective_phonon."""
         self._v["solve_collective_phonon"] = val
+
+    def set_show_symfc_memory_usage(self, val):
+        """Set show_symfc_memory_usage."""
+        self._v["show_symfc_memory_usage"] = val
 
     def set_subtract_forces(self, val):
         """Set subtract_forces."""
@@ -615,6 +620,10 @@ class Phono3pyConfParser(ConfParser):
             if self._args.solve_collective_phonon:
                 self._confs["collective_phonon"] = ".true."
 
+        if "show_symfc_memory_usage" in self._args:
+            if self._args.show_symfc_memory_usage:
+                self._confs["show_symfc_memory_usage"] = ".true."
+
         if "subtract_forces" in self._args:
             if self._args.subtract_forces:
                 self._confs["subtract_forces"] = self._args.subtract_forces
@@ -695,6 +704,7 @@ class Phono3pyConfParser(ConfParser):
                 "N_U",
                 "spectral_function",
                 "reducible_collision_matrix",
+                "show_symfc_memory_usage",
                 "symmetrize_fc2",
                 "symmetrize_fc3_q",
                 "symmetrize_fc3_r",
@@ -879,7 +889,7 @@ class Phono3pyConfParser(ConfParser):
         if "cutoff_pair_distance" in params:
             self._settings.set_cutoff_pair_distance(params["cutoff_pair_distance"])
 
-        # Emulate v2.x behaviour
+        # Emulate v2.x behavior
         if "emulate_v2" in params:
             self._settings.set_emulate_v2(params["emulate_v2"])
 
@@ -1034,6 +1044,12 @@ class Phono3pyConfParser(ConfParser):
         # Scattering event class 1 or 2
         if "scattering_event_class" in params:
             self._settings.set_scattering_event_class(params["scattering_event_class"])
+
+        # Show symfc memory usage
+        if "show_symfc_memory_usage" in params:
+            self._settings.set_show_symfc_memory_usage(
+                params["show_symfc_memory_usage"]
+            )
 
         # Cutoff width of smearing function (ratio to sigma value)
         if "sigma_cutoff_width" in params:

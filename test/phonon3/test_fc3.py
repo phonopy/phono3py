@@ -36,7 +36,7 @@ def test_cutoff_fc3_all_forces(
     By definition, displacement datasets are kept unchanged when
     cutoff-pair-distance is specified.
 
-    This test checkes only supercell forces that satisfy specified cutoff pairs
+    This test checks only supercell forces that satisfy specified cutoff pairs
     are chosen properly.
 
     """
@@ -259,7 +259,7 @@ def test_phonon_smat_alm_cutoff_fc3(si_pbesol_111_222_alm_cutoff_fc3: Phono3py):
 
 
 @pytest.mark.skipif(
-    not phono3c.include_lapacke(), reason="requires to complile with lapacke"
+    not phono3c.include_lapacke(), reason="requires to compile with lapacke"
 )
 def test_fc3_lapacke_solver(si_pbesol_111: Phono3py):
     """Test fc3 with Si PBEsol 1x1x1 using lapacke solver."""
@@ -298,7 +298,7 @@ def test_fc3_lapacke_solver(si_pbesol_111: Phono3py):
 
 
 def test_fc3_symfc(si_pbesol_111_symfc: Phono3py):
-    """Test fc3 with Si PBEsol 1x1x1 calcualted using symfc."""
+    """Test fc3 with Si PBEsol 1x1x1 calculated using symfc."""
     ph = si_pbesol_111_symfc
     fc3_ref = [
         [

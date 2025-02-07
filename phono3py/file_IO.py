@@ -613,7 +613,7 @@ def write_real_self_energy_to_hdf5(
     frequencies=None,
     filename=None,
 ):
-    """Wirte real part of self energy (currently only bubble) in hdf5.
+    """Write real part of self energy (currently only bubble) in hdf5.
 
     deltas : ndarray
         Real part of self energy.
@@ -702,7 +702,7 @@ def write_spectral_function_to_hdf5(
     all_band_exist=False,
     filename=None,
 ):
-    """Wirte spectral functions (currently only bubble) in hdf5.
+    """Write spectral functions (currently only bubble) in hdf5.
 
     spectral_functions : ndarray
         Spectral functions.
@@ -792,7 +792,7 @@ def write_collision_to_hdf5(
 
         text = "Collisions "
         if grid_point is not None:
-            text += "at grid adress %d " % grid_point
+            text += "at grid address %d " % grid_point
         if sigma is not None:
             if grid_point is not None:
                 text += "and "
@@ -827,7 +827,7 @@ def write_unitary_matrix_to_hdf5(
 ):
     """Write eigenvectors of collision matrices at temperatures.
 
-    Depending on the choice of the solver, eigenvectors are sotred in
+    Depending on the choice of the solver, eigenvectors are stored in
     either column-wise or row-wise.
 
     """
@@ -1697,7 +1697,7 @@ def get_length_of_first_line(f):
             f.seek(0)
             return len(line.split())
 
-    raise RuntimeError("File doesn't contain relevant infomration.")
+    raise RuntimeError("File doesn't contain relevant information.")
 
 
 def _get_filename_suffix(

@@ -41,7 +41,7 @@ class ReciprocalToNormal:
     """Class to transform fc3 in reciprocal space to phonon space.
 
     This is an implementation in python for prototyping and the test.
-    Equivalent routine is implementated in C, and this is what usually
+    Equivalent routine is implemented in C, and this is what usually
     we use.
 
     """

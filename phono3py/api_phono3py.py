@@ -335,8 +335,8 @@ class Phono3py:
         """Setter and getter of third order force constants (fc3).
 
         ndarray
-            fc3 shape is either (supercell, supecell, supercell, 3, 3, 3) or
-            (primitive, supercell, supecell, 3, 3, 3),
+            fc3 shape is either (supercell, supercell, supercell, 3, 3, 3) or
+            (primitive, supercell, supercell, 3, 3, 3),
             where 'supercell' and 'primitive' indicate number of atoms in
             these cells.
 
@@ -352,8 +352,8 @@ class Phono3py:
         """Setter and getter of second order force constants (fc2).
 
         ndarray
-            fc2 shape is either (supercell, supecell, 3, 3) or
-            (primitive, supecell, 3, 3),
+            fc2 shape is either (supercell, supercell, 3, 3) or
+            (primitive, supercell, 3, 3),
             where 'supercell' and 'primitive' indicate number of atoms in
             these cells.
 
@@ -1105,7 +1105,7 @@ class Phono3py:
             Ph-ph interaction strength array is replaced by a scalar value.
             Default is None, which means this feature is not used.
         frequency_scale_factor : float, optional
-            All phonon frequences are scaled by this value. Default is None,
+            All phonon frequencies are scaled by this value. Default is None,
             which means phonon frequencies are not scaled.
         symmetrize_fc3q : bool, optional
             fc3 in phonon space is symmetrized by permutation symmetry.
@@ -1378,7 +1378,7 @@ class Phono3py:
         Note
         ----
         is_diagonal=False is chosen as the default setting intentionally to be
-        consistent to the first displacements of the fc3 pair displacemets in
+        consistent to the first displacements of the fc3 pair displacements in
         supercell.
 
         Parameters
@@ -1390,7 +1390,7 @@ class Phono3py:
             replace generated random distances smaller than this value by this
             value.
         is_plusminus : True, False, or 'auto', optional
-            With True, atomis are displaced in both positive and negative
+            With True, atoms are displaced in both positive and negative
             directions. With False, only one direction. With 'auto', mostly
             equivalent to is_plusminus=True, but only one direction is chosen
             when the displacements in both directions are symmetrically
@@ -1475,8 +1475,8 @@ class Phono3py:
             False.
         is_compact_fc : bool, optional
             fc3 shape is
-                False: (supercell, supercell, supecell, 3, 3, 3) True:
-                (primitive, supercell, supecell, 3, 3, 3)
+                False: (supercell, supercell, supercell, 3, 3, 3) True:
+                (primitive, supercell, supercell, 3, 3, 3)
             where 'supercell' and 'primitive' indicate number of atoms in these
             cells. Default is False.
         fc_calculator : str, optional
@@ -1500,11 +1500,10 @@ class Phono3py:
             )
         else:
             if "displacements" in self._dataset:
-                msg = (
-                    "fc_calculator has to be set to produce force "
-                    "constans from this dataset."
+                raise ForceCalculatorRequiredError(
+                    "fc_calculator has to be set to produce force constants from this "
+                    "dataset."
                 )
-                raise ForceCalculatorRequiredError(msg)
             fc2, fc3 = get_phono3py_fc3(
                 self._supercell,
                 self._primitive,
@@ -1561,8 +1560,8 @@ class Phono3py:
             calculator such as ALM. Default is False.
         is_compact_fc : bool
             fc2 shape is
-                False: (supercell, supecell, 3, 3)
-                True: (primitive, supecell, 3, 3)
+                False: (supercell, supercell, 3, 3)
+                True: (primitive, supercell, 3, 3)
             where 'supercell' and 'primitive' indicate number of atoms in these
             cells. Default is False.
         fc_calculator : str or None
@@ -1792,7 +1791,7 @@ class Phono3py:
             Temperatures where real part of self-energies  are calculated.
             dtype=float, shape=(temperatures,)
         frequency_points_at_bands : bool, optional
-            With False, frequency shifts are calculated at frquency sampling
+            With False, frequency shifts are calculated at frequency sampling
             points. When True, they are done at the phonon frequencies.
             Default is False.
         frequency_points : array_like, optional
@@ -1948,7 +1947,7 @@ class Phono3py:
         is_isotope: bool = False,
         mass_variances: Optional[Sequence] = None,
         grid_points: Optional[Sequence[int]] = None,
-        boundary_mfp: Optional[float] = None,  # in micrometre
+        boundary_mfp: Optional[float] = None,  # in micrometer
         solve_collective_phonon: bool = False,
         use_ave_pp: bool = False,
         is_reducible_collision_matrix: bool = False,
@@ -1997,8 +1996,8 @@ class Phono3py:
             calculated. With None, all the grid points that are necessary
             for thermal conductivity are set internally.
             shape(num_grid_points, ), dtype='int64'.
-        boundary_mfp : float, optiona, default is None
-            Mean free path in micrometre to calculate simple boundary
+        boundary_mfp : float, optional, default is None
+            Mean free path in micrometer to calculate simple boundary
             scattering contribution to thermal conductivity.
             None ignores this contribution.
         solve_collective_phonon : bool, optional, default is False
@@ -2237,7 +2236,7 @@ class Phono3py:
             Parameters for developing MLP. Default is None. When dict is given,
             PypolymlpParams instance is created from the dict.
         test_size : float, optional
-            Training and test data are splitted by this ratio. test_size=0.1
+            Training and test data are split by this ratio. test_size=0.1
             means the first 90% of the data is used for training and the rest
             is used for test. Default is 0.1.
 
@@ -2301,7 +2300,7 @@ class Phono3py:
             Parameters for developing MLP. Default is None. When dict is given,
             PypolymlpParams instance is created from the dict.
         test_size : float, optional
-            Training and test data are splitted by this ratio. test_size=0.1
+            Training and test data are split by this ratio. test_size=0.1
             means the first 90% of the data is used for training and the rest
             is used for test. Default is 0.1.
 

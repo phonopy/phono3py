@@ -109,7 +109,7 @@ def create_phono3py_force_constants(
     'phonopy-load' command.
 
     """
-    # Only for build-in fc calculator.
+    # Only for built-in fc calculator.
     # These are not applied to external fc calculators.
     symmetrize_fc3r = settings.is_symmetrize_fc3_r or settings.fc_symmetry
     symmetrize_fc2 = settings.is_symmetrize_fc2 or settings.fc_symmetry
@@ -267,14 +267,15 @@ def parse_forces(
                 filename_read_from = force_filename
 
     # Units of displacements and forces are converted. If forces don't
-    # exist, the convesion will not be performed for forces.
+    # exist, the conversion will not be performed for forces.
     if calculator is not None:
         _convert_unit_in_dataset(
             dataset,
             distance_to_A=physical_units["distance_to_A"],
             force_to_eVperA=physical_units["force_to_eVperA"],
         )
-    assert dataset is not None
+    if dataset is None:
+        raise RuntimeError("Dataset is not found.")
 
     if "natom" in dataset and dataset["natom"] != natom:
         raise RuntimeError(
