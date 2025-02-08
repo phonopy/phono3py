@@ -39,11 +39,14 @@ from __future__ import annotations
 from typing import Optional, Union
 
 import numpy as np
-from phonopy.interface.fc_calculator import get_fc_solver
+from phonopy.interface.fc_calculator import FCSolver
 from phonopy.interface.symfc import SymfcFCSolver
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive
 from phonopy.structure.symmetry import Symmetry
+
+from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
+from phono3py.phonon3.fc3 import get_fc3
 
 
 def get_fc3_solver(
@@ -55,7 +58,7 @@ def get_fc3_solver(
     is_compact_fc: bool = False,
     symmetry: Optional[Symmetry] = None,
     log_level: int = 0,
-):
+) -> FC3Solver:
     """Return force constants solver for fc3.
 
     Parameters
@@ -83,75 +86,23 @@ def get_fc3_solver(
 
     Returns
     -------
-    (fc2, fc3) : tuple[ndarray]
-        2nd and 3rd order force constants.
+    FC3Solver
+        Force constants solver for fc3.
 
     """
-    fc_solver = get_fc_solver(
+    fc_solver_name = fc_calculator if fc_calculator is not None else "traditional"
+    fc_solver = FC3Solver(
+        fc_solver_name,
         supercell,
-        dataset,
-        primitive=primitive,
-        fc_calculator=fc_calculator,
-        fc_calculator_options=fc_calculator_options,
-        orders=[2, 3],
-        is_compact_fc=is_compact_fc,
         symmetry=symmetry,
+        dataset=dataset,
+        is_compact_fc=is_compact_fc,
+        primitive=primitive,
+        orders=[2, 3],
+        options=fc_calculator_options,
         log_level=log_level,
     )
     return fc_solver
-
-
-def get_fc3(
-    supercell: PhonopyAtoms,
-    primitive: Primitive,
-    displacements: np.ndarray,
-    forces: np.ndarray,
-    fc_calculator: Optional[str] = None,
-    fc_calculator_options: Optional[str] = None,
-    is_compact_fc: bool = False,
-    symmetry: Optional[Symmetry] = None,
-    log_level: int = 0,
-):
-    """Calculate 2upercell 2nd and 3rd order force constants.
-
-    Parameters
-    ----------
-    supercell : PhonopyAtoms
-        Supercell
-    primitive : Primitive
-        Primitive cell
-    displacements : array_like
-        Displacements of atoms in supercell.
-        shape=(num_snapshots, num_atoms, 3), dtype='double', order='C'
-    forces : array_like
-        Forces of atoms in supercell.
-        shape=(num_snapshots, num_atoms, 3), dtype='double', order='C'
-    fc_calculator : str, optional
-        Currently only 'alm' is supported. Default is None, meaning invoking
-        'alm'.
-    fc_calculator_options : str, optional
-        This is arbitrary string.
-    log_level : integer or bool, optional
-        Verbosity level. False or 0 means quiet. True or 1 means normal level
-        of log to stdout. 2 gives verbose mode.
-
-    Returns
-    -------
-    (fc2, fc3) : tuple[ndarray]
-        2nd and 3rd order force constants.
-
-    """
-    fc_solver = get_fc3_solver(
-        supercell,
-        primitive,
-        {"displacements": displacements, "forces": forces},
-        fc_calculator=fc_calculator,
-        fc_calculator_options=fc_calculator_options,
-        is_compact_fc=is_compact_fc,
-        symmetry=symmetry,
-        log_level=log_level,
-    )
-    return fc_solver.force_constants[2], fc_solver.force_constants[3]
 
 
 def extract_fc2_fc3_calculators(
@@ -227,3 +178,70 @@ def estimate_symfc_memory_usage(
     memsize = basis_size**2 * 3 * 8 / 10**9
     memsize2 = len(supercell) * 3 * batch_size * basis_size * 8 / 10**9
     return memsize, memsize2
+
+
+class FDFC3Solver:
+    """Finite difference type force constants calculator.
+
+    This is phono3py's traditional force constants calculator.
+
+    """
+
+    def __init__(
+        self,
+        supercell: PhonopyAtoms,
+        primitive: Primitive,
+        symmetry: Symmetry,
+        dataset: dict,
+        is_compact_fc: bool = False,
+        log_level: int = 0,  # currently not used
+    ):
+        self._fc2, self._fc3 = self._run(
+            supercell,
+            primitive,
+            symmetry,
+            dataset,
+            is_compact_fc,
+            log_level,
+        )
+
+    @property
+    def force_constants(self) -> dict[int, np.ndarray]:
+        """Return force constants.
+
+        Returns
+        -------
+        dict[int, np.ndarray]
+            Force constants with order as key.
+
+        """
+        return {2: self._fc2, 3: self._fc3}
+
+    def _run(
+        self,
+        supercell: PhonopyAtoms,
+        primitive: Primitive,
+        symmetry: Symmetry,
+        dataset: dict,
+        is_compact_fc: bool,
+        log_level: int,
+    ):
+        return get_fc3(
+            supercell,
+            primitive,
+            dataset,
+            symmetry,
+            is_compact_fc=is_compact_fc,
+            verbose=log_level > 0,
+        )
+
+
+class FC3Solver(FCSolver):
+    """Force constants solver for fc3."""
+
+    def _set_traditional_solver(self, solver_class: Optional[type] = FDFC3Solver):
+        return super()._set_traditional_solver(solver_class=solver_class)
+
+    def _get_displacements_and_forces(self):
+        """Return displacements and forces for fc3."""
+        return get_displacements_and_forces_fc3(self._dataset)
