@@ -39,10 +39,66 @@ from __future__ import annotations
 from typing import Optional, Union
 
 import numpy as np
+from phonopy.interface.fc_calculator import get_fc_solver
 from phonopy.interface.symfc import SymfcFCSolver
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive
 from phonopy.structure.symmetry import Symmetry
+
+
+def get_fc3_solver(
+    supercell: PhonopyAtoms,
+    primitive: Primitive,
+    dataset: dict,
+    fc_calculator: Optional[str] = None,
+    fc_calculator_options: Optional[str] = None,
+    is_compact_fc: bool = False,
+    symmetry: Optional[Symmetry] = None,
+    log_level: int = 0,
+):
+    """Return force constants solver for fc3.
+
+    Parameters
+    ----------
+    supercell : PhonopyAtoms
+        Supercell
+    primitive : Primitive
+        Primitive cell
+    dataset : dict, optional
+        Dataset that contains displacements, forces, and optionally
+        energies. Default is None.
+    fc_calculator : str, optional
+        Currently only 'alm' is supported. Default is None, meaning invoking
+        'alm'.
+    fc_calculator_options : str, optional
+        This is arbitrary string.
+    is_compact_fc : bool, optional
+        If True, force constants are returned in the compact form.
+    symmetry : Symmetry, optional
+        Symmetry of supercell. This is used for the traditional and symfc FC
+        solver. Default is None.
+    log_level : integer or bool, optional
+        Verbosity level. False or 0 means quiet. True or 1 means normal level
+        of log to stdout. 2 gives verbose mode.
+
+    Returns
+    -------
+    (fc2, fc3) : tuple[ndarray]
+        2nd and 3rd order force constants.
+
+    """
+    fc_solver = get_fc_solver(
+        supercell,
+        dataset,
+        primitive=primitive,
+        fc_calculator=fc_calculator,
+        fc_calculator_options=fc_calculator_options,
+        orders=[2, 3],
+        is_compact_fc=is_compact_fc,
+        symmetry=symmetry,
+        log_level=log_level,
+    )
+    return fc_solver
 
 
 def get_fc3(
@@ -85,38 +141,17 @@ def get_fc3(
         2nd and 3rd order force constants.
 
     """
-    if fc_calculator == "alm":
-        from phonopy.interface.alm import run_alm
-
-        fc = run_alm(
-            supercell,
-            primitive,
-            displacements,
-            forces,
-            2,
-            options=fc_calculator_options,
-            is_compact_fc=is_compact_fc,
-            log_level=log_level,
-        )
-        return fc[2], fc[3]
-    elif fc_calculator == "symfc":
-        from phonopy.interface.symfc import run_symfc
-
-        fc = run_symfc(
-            supercell,
-            primitive,
-            displacements,
-            forces,
-            orders=[2, 3],
-            is_compact_fc=is_compact_fc,
-            symmetry=symmetry,
-            options=fc_calculator_options,
-            log_level=log_level,
-        )
-        return fc[2], fc[3]
-    else:
-        msg = "Force constants calculator of %s was not found ." % fc_calculator
-        raise RuntimeError(msg)
+    fc_solver = get_fc3_solver(
+        supercell,
+        primitive,
+        {"displacements": displacements, "forces": forces},
+        fc_calculator=fc_calculator,
+        fc_calculator_options=fc_calculator_options,
+        is_compact_fc=is_compact_fc,
+        symmetry=symmetry,
+        log_level=log_level,
+    )
+    return fc_solver.force_constants[2], fc_solver.force_constants[3]
 
 
 def extract_fc2_fc3_calculators(

@@ -1510,7 +1510,7 @@ class Phono3py:
                 self._dataset,
                 self._symmetry,
                 is_compact_fc=is_compact_fc,
-                verbose=self._log_level,
+                verbose=self._log_level > 0,
             )
             if symmetrize_fc3r:
                 if is_compact_fc:
