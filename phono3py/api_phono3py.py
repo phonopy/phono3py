@@ -41,7 +41,6 @@ from collections.abc import Sequence
 from typing import Literal, Optional, Union
 
 import numpy as np
-from phonopy.exception import ForceCalculatorRequiredError
 from phonopy.harmonic.displacement import (
     directions_to_displacement_dataset,
     get_least_displacements,
@@ -74,10 +73,10 @@ from phonopy.units import VaspToTHz
 
 from phono3py.conductivity.direct_solution import get_thermal_conductivity_LBTE
 from phono3py.conductivity.rta import get_thermal_conductivity_RTA
-from phono3py.interface.fc_calculator import get_fc3
+from phono3py.interface.fc_calculator import get_fc3_solver
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon.grid import BZGrid
-from phono3py.phonon3.dataset import forces_in_dataset, get_displacements_and_forces_fc3
+from phono3py.phonon3.dataset import forces_in_dataset
 from phono3py.phonon3.displacement_fc3 import (
     direction_to_displacement,
     get_third_order_displacements,
@@ -89,7 +88,6 @@ from phono3py.phonon3.fc3 import (
     set_translational_invariance_compact_fc3,
     set_translational_invariance_fc3,
 )
-from phono3py.phonon3.fc3 import get_fc3 as get_phono3py_fc3
 from phono3py.phonon3.imag_self_energy import (
     get_imag_self_energy,
     write_imag_self_energy,
@@ -1485,33 +1483,20 @@ class Phono3py:
             Options for external force constants calculator.
 
         """
-        if fc_calculator is not None:
-            disps, forces = get_displacements_and_forces_fc3(self._dataset)
-            fc2, fc3 = get_fc3(
-                self._supercell,
-                self._primitive,
-                disps,
-                forces,
-                fc_calculator=fc_calculator,
-                fc_calculator_options=fc_calculator_options,
-                is_compact_fc=is_compact_fc,
-                symmetry=self._symmetry,
-                log_level=self._log_level,
-            )
-        else:
-            if "displacements" in self._dataset:
-                raise ForceCalculatorRequiredError(
-                    "fc_calculator has to be set to produce force constants from this "
-                    "dataset."
-                )
-            fc2, fc3 = get_phono3py_fc3(
-                self._supercell,
-                self._primitive,
-                self._dataset,
-                self._symmetry,
-                is_compact_fc=is_compact_fc,
-                verbose=self._log_level,
-            )
+        fc_solver = get_fc3_solver(
+            self._supercell,
+            self._primitive,
+            self._dataset,
+            fc_calculator=fc_calculator,
+            fc_calculator_options=fc_calculator_options,
+            is_compact_fc=is_compact_fc,
+            symmetry=self._symmetry,
+            log_level=self._log_level,
+        )
+        fc2 = fc_solver.force_constants[2]
+        fc3 = fc_solver.force_constants[3]
+
+        if fc_calculator is None or fc_calculator == "traditional":
             if symmetrize_fc3r:
                 if is_compact_fc:
                     set_translational_invariance_compact_fc3(fc3, self._primitive)
