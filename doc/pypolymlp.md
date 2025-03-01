@@ -42,11 +42,14 @@ in the distribution from GitHub or PyPI.
 
 ## Requirements
 
-- [pypolymlp](https://github.com/sekocha/pypolymlp)
+- [pypolymlp](https://github.com/sekocha/pypolymlp) < 0.9
 
   For linux (x86-64), a compiled package of pypolymlp can be installed via
   conda-forge (recommended). Otherwise, pypolymlp can be installed from
   source-code.
+
+  From pypolymlp 0.9, its file format was changed. This will be taken care of
+  by the future version of phonopy and phono3py.
 
 ## How to calculate
 
