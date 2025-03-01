@@ -40,13 +40,13 @@ import sys
 import numpy as np
 from phonopy.harmonic.force_constants import (
     distribute_force_constants,
-    get_fc2,
     get_nsym_list_and_s2pp,
     get_positions_sent_by_rot_inv,
     get_rotated_displacement,
     similarity_transformation,
     solve_force_constants,
 )
+from phonopy.interface.fc_calculator import get_fc2
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive, compute_all_sg_permutations
 from phonopy.structure.symmetry import Symmetry
@@ -84,7 +84,13 @@ def get_fc3(
     """
     # fc2 has to be full matrix to compute delta-fc2
     # p2s_map elements are extracted if is_compact_fc=True at the last part.
-    fc2 = get_fc2(supercell, symmetry, disp_dataset)
+    fc2 = get_fc2(
+        supercell,
+        disp_dataset,
+        primitive=primitive,
+        is_compact_fc=False,
+        symmetry=symmetry,
+    )
     fc3 = _get_fc3_least_atoms(
         supercell,
         primitive,
