@@ -525,7 +525,7 @@ def run_pypolymlp_to_compute_forces(
     random_seed: Optional[int] = None,
     prepare_dataset: bool = False,
     cutoff_pair_distance: Optional[float] = None,
-    mlp_filename: str = "phono3py.pmlp",
+    mlp_filename: Optional[str] = None,
     log_level: int = 0,
 ):
     """Run pypolymlp to compute forces."""
@@ -535,27 +535,48 @@ def run_pypolymlp_to_compute_forces(
         print("Please cite the paper: A. Seko, J. Appl. Phys. 133, 011101 (2023).")
         print("Pypolymlp is developed at https://github.com/sekocha/pypolymlp.")
 
-    if pathlib.Path(mlp_filename).exists():
-        if log_level:
-            print(f'Load MLPs from "{mlp_filename}".')
-        ph3py.load_mlp(mlp_filename)
-    elif forces_in_dataset(ph3py.mlp_dataset):
-        if log_level:
-            if mlp_params is None:
-                pmlp_params = PypolymlpParams()
-            else:
-                pmlp_params = parse_mlp_params(mlp_params)
-            print("Parameters:")
-            for k, v in asdict(pmlp_params).items():
-                if v is not None:
-                    print(f"  {k}: {v}")
-            print("Developing MLPs by pypolymlp...", flush=True)
-        ph3py.develop_mlp(params=mlp_params)
-        ph3py.save_mlp(filename=mlp_filename)
-        if log_level:
-            print(f'MLPs were written into "{mlp_filename}"', flush=True)
-    else:
-        raise RuntimeError(f'"{mlp_filename}" is not found.')
+    mlp_loaded = False
+    for mlp_filename in ["polymlp.yaml", "phono3py.pmlp"]:
+        _mlp_filename_list = list(pathlib.Path().glob(f"{mlp_filename}*"))
+        if _mlp_filename_list:
+            _mlp_filename = _mlp_filename_list[0]
+            print(_mlp_filename)
+            if _mlp_filename.suffix not in [
+                ".yaml",
+                ".pmlp",
+                ".xz",
+                ".gz",
+                ".bz2",
+                "lzma",
+            ]:
+                continue
+            if log_level:
+                print(f'Load MLPs from "{mlp_filename}".')
+            ph3py.load_mlp(mlp_filename)
+            mlp_loaded = True
+            if log_level and mlp_filename == "phono3py.pmlp":
+                print(f'Loading MLPs from "{_mlp_filename}" is obsolete.')
+            break
+
+    mlp_filename = "polymlp.yaml"
+    if not mlp_loaded:
+        if forces_in_dataset(ph3py.mlp_dataset):
+            if log_level:
+                if mlp_params is None:
+                    pmlp_params = PypolymlpParams()
+                else:
+                    pmlp_params = parse_mlp_params(mlp_params)
+                print("Parameters:")
+                for k, v in asdict(pmlp_params).items():
+                    if v is not None:
+                        print(f"  {k}: {v}")
+                print("Developing MLPs by pypolymlp...", flush=True)
+            ph3py.develop_mlp(params=mlp_params)
+            ph3py.save_mlp(filename=mlp_filename)
+            if log_level:
+                print(f'MLPs were written into "{mlp_filename}"', flush=True)
+        else:
+            raise RuntimeError(f'"{mlp_filename}" is not found.')
 
     if log_level:
         print("-" * 30 + " pypolymlp end " + "-" * 31, flush=True)
