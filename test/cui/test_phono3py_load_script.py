@@ -122,11 +122,11 @@ def test_phono3py_with_QE_calculator(load_phono3py_yaml):
 def test_phono3py_load_with_pypolymlp_si():
     """Test phono3py-load script with pypolymlp.
 
-    First run generates phono3py.pmlp.
-    Second run uses phono3py.pmlp.
+    First run generates polymlp.yaml.
+    Second run uses polymlp.yaml.
 
     """
-    pytest.importorskip("pypolymlp")
+    pytest.importorskip("pypolymlp", minversion="0.9.2")
     pytest.importorskip("symfc")
 
     argparse_control = _get_phono3py_load_args(
@@ -159,7 +159,7 @@ def test_phono3py_load_with_pypolymlp_si():
         "phono3py.yaml",
         "fc2.hdf5",
         "fc3.hdf5",
-        "phono3py.pmlp",
+        "polymlp.yaml",
         "phono3py_mlp_eval_dataset.yaml",
     ):
         file_path = pathlib.Path(cwd_called / created_filename)

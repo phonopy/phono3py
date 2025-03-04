@@ -1200,7 +1200,7 @@ def main(**argparse_control):
                 )
             ph3py.save(mlp_eval_filename)
 
-        # pypolymlp dataset is stored in "phono3py.pmlp" and stop here.
+        # pypolymlp dataset is stored in "polymlp.yaml" and stop here.
         if not prepare_dataset:
             if log_level:
                 print(
