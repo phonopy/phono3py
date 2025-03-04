@@ -16,9 +16,10 @@ dependencies = [
     "matplotlib",
     "h5py",
     "spglib",
-    "phonopy>=2.37.1,<2.38",
+    "phonopy>=2.38.0,<2.39",
 ]
-license = { file = "LICENSE" }
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
 
 [project.urls]
 Homepage = "https://phonopy.github.io/phono3py/"
