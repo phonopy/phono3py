@@ -477,9 +477,10 @@ def _set_forces_and_nac_params(
         ph3py_yaml.dataset["forces"] = np.array(
             calc_dataset_fc3["forces"], dtype="double", order="C"
         )
-        ph3py_yaml.dataset["supercell_energies"] = np.array(
-            calc_dataset_fc3["supercell_energies"], dtype="double"
-        )
+        if "supercell_energies" in calc_dataset_fc3:
+            ph3py_yaml.dataset["supercell_energies"] = np.array(
+                calc_dataset_fc3["supercell_energies"], dtype="double"
+            )
         if len(ph3py_yaml.dataset["forces"]) != len(
             ph3py_yaml.dataset["displacements"]
         ):
@@ -499,9 +500,10 @@ def _set_forces_and_nac_params(
             ph3py_yaml.phonon_dataset["forces"] = np.array(
                 calc_dataset_fc2["forces"], dtype="double", order="C"
             )
-            ph3py_yaml.phonon_dataset["supercell_energies"] = np.array(
-                calc_dataset_fc2["supercell_energies"], dtype="double"
-            )
+            if "supercell_energies" in calc_dataset_fc2:
+                ph3py_yaml.phonon_dataset["supercell_energies"] = np.array(
+                    calc_dataset_fc2["supercell_energies"], dtype="double"
+                )
             if len(ph3py_yaml.phonon_dataset["forces"]) != len(
                 ph3py_yaml.phonon_dataset["displacements"]
             ):
