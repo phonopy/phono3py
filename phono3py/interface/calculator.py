@@ -38,7 +38,7 @@ calculator_info = {
     "abinit": {"option": {"name": "--abinit", "help": "Invoke Abinit mode"}},
     # 'aims': {'option': {'name': "--aims",
     #                     'help': "Invoke FHI-aims mode"}},
-    'cp2k': {'option': {'name': "--cp2k", 'help': "Invoke CP2K mode"}},
+    "cp2k": {"option": {"name": "--cp2k", "help": "Invoke CP2K mode"}},
     "crystal": {"option": {"name": "--crystal", "help": "Invoke CRYSTAL mode"}},
     # 'dftbp': {'option': {'name': "--dftb+",
     #                      'help': "Invoke dftb+ mode"}},

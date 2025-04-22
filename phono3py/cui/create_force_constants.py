@@ -527,7 +527,7 @@ def run_pypolymlp_to_compute_forces(
     cutoff_pair_distance: Optional[float] = None,
     mlp_filename: Optional[str] = None,
     log_level: int = 0,
-    forceunits: str = '',
+    forceunits: str = "",
 ):
     """Run pypolymlp to compute forces."""
     if log_level:
@@ -561,16 +561,15 @@ def run_pypolymlp_to_compute_forces(
 
     mlp_filename = "polymlp.yaml"
     if not mlp_loaded:
-        
         forcefactor = 1
         # hartree/au
         if len(forceunits) > 0:
-            if 'hartree' in forceunits.split('/')[0]:
+            if "hartree" in forceunits.split("/")[0]:
                 forcefactor *= 27.211396132
-            if 'au' in forceunits.split('/')[1]:
+            if "au" in forceunits.split("/")[1]:
                 forcefactor /= 0.52917721092
-        print('Convertion factor for FORCE_SETS: ', forcefactor)
-        ph3py.mlp_dataset['forces'] *= forcefactor
+        print("Convertion factor for FORCE_SETS: ", forcefactor)
+        ph3py.mlp_dataset["forces"] *= forcefactor
         if forces_in_dataset(ph3py.mlp_dataset):
             if log_level:
                 if mlp_params is None:
