@@ -1176,6 +1176,11 @@ def main(**argparse_control):
         if ph3py.dataset is not None:
             ph3py.mlp_dataset = ph3py.dataset
             ph3py.dataset = None
+        from phono3py.interface.phono3py_yaml import read_phono3py_yaml
+        ph3py_yaml=read_phono3py_yaml(unitcell_filename)
+        forceunits = ''
+        if 'forceunits' in ph3py_yaml.physical_units.keys():
+            forceunits = ph3py_yaml.physical_units['forceunits']
         prepare_dataset = (
             settings.create_displacements or settings.random_displacements is not None
         )
@@ -1189,6 +1194,7 @@ def main(**argparse_control):
             cutoff_pair_distance=cutoff_pair_distance,
             prepare_dataset=prepare_dataset,
             log_level=log_level,
+            forceunits = forceunits,
         )
 
         if ph3py.dataset is not None:
