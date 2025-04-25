@@ -34,13 +34,14 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from typing import Optional, Type, Union, cast
+from typing import Optional, Union, cast
 
 import numpy as np
 
 from phono3py.conductivity.base import unit_to_WmK
+from phono3py.conductivity.kubo_rta import ConductivityKuboRTA
 from phono3py.conductivity.rta import ConductivityRTA
-from phono3py.conductivity.rta_base import ConductivityKuboRTA, ConductivityRTABase
+from phono3py.conductivity.rta_base import ConductivityRTABase
 from phono3py.conductivity.utils import write_pp_interaction
 from phono3py.conductivity.wigner_rta import ConductivityWignerRTA
 from phono3py.file_IO import (
@@ -86,9 +87,6 @@ def get_thermal_conductivity_RTA(
     else:
         _temperatures = temperatures
 
-    conductivity_RTA_class: Type[
-        Union[ConductivityRTA, ConductivityWignerRTA, ConductivityKuboRTA]
-    ]
     if conductivity_type == "wigner":
         conductivity_RTA_class = ConductivityWignerRTA
     elif conductivity_type == "kubo":
