@@ -71,8 +71,8 @@ from phonopy.structure.cells import (
 from phonopy.structure.symmetry import Symmetry
 from phonopy.units import VaspToTHz
 
-from phono3py.conductivity.direct_solution import get_thermal_conductivity_LBTE
-from phono3py.conductivity.rta import get_thermal_conductivity_RTA
+from phono3py.conductivity.init_direct_solution import get_thermal_conductivity_LBTE
+from phono3py.conductivity.init_rta import get_thermal_conductivity_RTA
 from phono3py.interface.fc_calculator import get_fc3_solver
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon.grid import BZGrid
