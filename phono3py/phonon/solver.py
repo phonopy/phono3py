@@ -35,8 +35,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
+from phonopy.physical_units import get_physical_units
 from phonopy.structure.cells import sparse_to_dense_svecs
-from phonopy.units import VaspToTHz
 
 
 def run_phonon_solver_c(
@@ -47,7 +47,7 @@ def run_phonon_solver_c(
     grid_points,
     grid_address,
     QDinv,
-    frequency_conversion_factor=VaspToTHz,
+    frequency_conversion_factor=None,
     nac_q_direction=None,  # in reduced coordinates
     lapack_zheev_uplo="L",
 ):
@@ -83,6 +83,11 @@ def run_phonon_solver_c(
     """
     import phono3py._phono3py as phono3c
     import phono3py._phononcalc as phononcalc
+
+    if frequency_conversion_factor is None:
+        _frequency_conversion_factor = get_physical_units().defaultToTHz
+    else:
+        _frequency_conversion_factor = frequency_conversion_factor
 
     (
         svecs,
@@ -154,7 +159,7 @@ def run_phonon_solver_c(
         masses,
         fc_p2s,
         fc_s2p,
-        frequency_conversion_factor,
+        _frequency_conversion_factor,
         born,
         dielectric,
         rec_lattice,
@@ -179,7 +184,7 @@ def run_phonon_solver_c(
         frequencies[phonon_undone] = (
             np.sign(frequencies[phonon_undone])
             * np.sqrt(np.abs(frequencies[phonon_undone]))
-            * frequency_conversion_factor
+            * _frequency_conversion_factor
         )
 
 

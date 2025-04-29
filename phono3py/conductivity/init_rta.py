@@ -38,7 +38,7 @@ from typing import Optional, Union, cast
 
 import numpy as np
 
-from phono3py.conductivity.base import unit_to_WmK
+from phono3py.conductivity.base import get_unit_to_WmK
 from phono3py.conductivity.kubo_rta import ConductivityKuboRTA
 from phono3py.conductivity.rta import ConductivityRTA
 from phono3py.conductivity.rta_base import ConductivityRTABase
@@ -362,7 +362,7 @@ class ConductivityRTAWriter:
                     grid_point=gp,
                     sigma=sigma,
                     sigma_cutoff=sigma_cutoff,
-                    kappa_unit_conversion=unit_to_WmK / volume,
+                    kappa_unit_conversion=get_unit_to_WmK() / volume,
                     compression=compression,
                     filename=filename,
                     verbose=verbose,
@@ -417,7 +417,7 @@ class ConductivityRTAWriter:
                         band_index=bi,
                         sigma=sigma,
                         sigma_cutoff=sigma_cutoff,
-                        kappa_unit_conversion=unit_to_WmK / volume,
+                        kappa_unit_conversion=get_unit_to_WmK() / volume,
                         compression=compression,
                         filename=filename,
                         verbose=verbose,
@@ -544,7 +544,7 @@ class ConductivityRTAWriter:
                 weight=weights,
                 sigma=sigma,
                 sigma_cutoff=sigma_cutoff,
-                kappa_unit_conversion=unit_to_WmK / volume,
+                kappa_unit_conversion=get_unit_to_WmK() / volume,
                 compression=compression,
                 filename=filename,
                 verbose=log_level,

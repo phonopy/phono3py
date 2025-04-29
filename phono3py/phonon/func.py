@@ -35,7 +35,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phonopy.units import AMU, EV, Angstrom, Hbar, Kb, THz, THzToEv
+from phonopy.physical_units import get_physical_units
 
 
 def gaussian(x, sigma):
@@ -62,7 +62,9 @@ def bose_einstein(x, T):
         Temperature in K
 
     """
-    return 1.0 / (np.exp(THzToEv * x / (Kb * T)) - 1)
+    return 1.0 / (
+        np.exp(get_physical_units().THzToEv * x / (get_physical_units().Kb * T)) - 1
+    )
 
 
 def sigma_squared(x, T):
@@ -96,7 +98,13 @@ def sigma_squared(x, T):
 
     n = bose_einstein(x, T)
     # factor=1.0107576777968994
-    factor = Hbar * EV / (2 * np.pi * THz) / AMU / Angstrom**2
+    factor = (
+        get_physical_units().Hbar
+        * get_physical_units().EV
+        / (2 * np.pi * get_physical_units().THz)
+        / get_physical_units().AMU
+        / get_physical_units().Angstrom ** 2
+    )
 
     #########################
     np.seterr(**old_settings)

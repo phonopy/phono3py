@@ -36,7 +36,7 @@
 
 import numpy as np
 from phonopy.phonon.group_velocity import GroupVelocity
-from phonopy.units import VaspToTHz
+from phonopy.physical_units import get_physical_units
 
 
 class VelocityOperator(GroupVelocity):
@@ -47,7 +47,7 @@ class VelocityOperator(GroupVelocity):
         dynamical_matrix,
         q_length=None,
         symmetry=None,
-        frequency_factor_to_THz=VaspToTHz,
+        frequency_factor_to_THz=None,
         cutoff_frequency=1e-4,
     ):
         """Init method.
@@ -75,7 +75,10 @@ class VelocityOperator(GroupVelocity):
         if self._q_length is None:
             self._q_length = 5e-6
         self._symmetry = symmetry
-        self._factor = frequency_factor_to_THz
+        if frequency_factor_to_THz is None:
+            self._factor = get_physical_units().defaultToTHz
+        else:
+            self._factor = frequency_factor_to_THz
         self._cutoff_frequency = cutoff_frequency
 
         self._directions = np.array(

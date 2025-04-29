@@ -35,7 +35,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phonopy.units import THzToEv
+from phonopy.physical_units import get_physical_units
 
 from phono3py.conductivity.direct_solution import (
     ConductivityLBTEBase,
@@ -282,6 +282,7 @@ class ConductivityWignerLBTE(ConductivityWignerMixIn, ConductivityLBTEBase):
         N = self._num_sampling_grid_points
         num_band = len(self._pp.primitive) * 3
         # num_ir_grid_points = len(self._ir_grid_points)
+        THzToEv = get_physical_units().THzToEv
         for i, gp in enumerate(self._ir_grid_points):
             # linewidths at qpoint i, sigma i_sigma, and temperature i_temp
             g = self._get_main_diagonal(i, i_sigma, i_temp) * 2.0  # linewidth (FWHM)

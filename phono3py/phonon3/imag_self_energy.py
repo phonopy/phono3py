@@ -40,7 +40,7 @@ from typing import List, Optional
 
 import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
-from phonopy.units import EV, Hbar, THz
+from phonopy.physical_units import get_physical_units
 
 from phono3py.file_IO import (
     write_gamma_detail_to_hdf5,
@@ -97,7 +97,11 @@ class ImagSelfEnergy:
 
         # Unit to THz of Gamma
         self._unit_conversion = (
-            18 * np.pi / (Hbar * EV) ** 2 / (2 * np.pi * THz) ** 2 * EV**2
+            18
+            * np.pi
+            / (get_physical_units().Hbar * get_physical_units().EV) ** 2
+            / (2 * np.pi * get_physical_units().THz) ** 2
+            * get_physical_units().EV ** 2
         )
 
     def run(self):

@@ -43,10 +43,10 @@ from typing import Optional, Union
 import numpy as np
 import phonopy.cui.load_helper as load_helper
 from phonopy.harmonic.force_constants import show_drift_force_constants
-from phonopy.interface.calculator import get_default_physical_units
+from phonopy.interface.calculator import get_calculator_physical_units
+from phonopy.physical_units import get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import determinant
-from phonopy.units import VaspToTHz
 
 from phono3py import Phono3py
 from phono3py.cui.create_force_constants import (
@@ -310,12 +310,12 @@ def load(
             _nac_params = None
 
     # Convert distance unit of unit cell to Angstrom
-    physical_units = get_default_physical_units(_calculator)
+    physical_units = get_calculator_physical_units(_calculator)
     factor_to_A = physical_units["distance_to_A"]
     cell.cell = cell.cell * factor_to_A
 
     if factor is None:
-        _factor = VaspToTHz
+        _factor = get_physical_units().defaultToTHz
     else:
         _factor = factor
     ph3py = Phono3py(

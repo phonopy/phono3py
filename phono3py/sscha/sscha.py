@@ -43,7 +43,7 @@ Formulae implemented are based on these papers:
 
 import numpy as np
 from phonopy.harmonic.dynmat_to_fc import DynmatToForceConstants
-from phonopy.units import VaspToTHz
+from phonopy.physical_units import get_physical_units
 
 from phono3py.phonon.func import sigma_squared
 
@@ -97,7 +97,7 @@ class SupercellPhonon:
 
     """
 
-    def __init__(self, supercell, force_constants, frequency_factor_to_THz=VaspToTHz):
+    def __init__(self, supercell, force_constants, frequency_factor_to_THz=None):
         """Init method.
 
         Parameters
@@ -107,7 +107,7 @@ class SupercellPhonon:
         force_constants : array_like
             Second order force constants.
             shape=(num_satom, num_satom, 3, 3), dtype='double', order='C'
-        frequency_factor_to_THz : float
+        frequency_factor_to_THz : float, optional
             Frequency conversion factor to THz.
 
         """
@@ -124,7 +124,10 @@ class SupercellPhonon:
         )
         eigvals, eigvecs = np.linalg.eigh(dynmat)
         freqs = np.sqrt(np.abs(eigvals)) * np.sign(eigvals)
-        freqs *= frequency_factor_to_THz
+        if frequency_factor_to_THz is None:
+            freqs *= get_physical_units().defaultToTHz
+        else:
+            freqs *= frequency_factor_to_THz
         self._eigenvalues = np.array(eigvals, dtype="double", order="C")
         self._eigenvectors = np.array(eigvecs, dtype="double", order="C")
         self._frequencies = np.array(freqs, dtype="double", order="C")

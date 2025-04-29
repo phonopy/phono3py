@@ -58,10 +58,10 @@ from phonopy.cui.phonopy_script import (
 from phonopy.exception import ForceCalculatorRequiredError
 from phonopy.file_IO import is_file_phonopy_yaml
 from phonopy.harmonic.force_constants import show_drift_force_constants
-from phonopy.interface.calculator import get_default_physical_units
+from phonopy.interface.calculator import get_calculator_physical_units
 from phonopy.phonon.band_structure import get_band_qpoints
+from phonopy.physical_units import get_physical_units
 from phonopy.structure.cells import isclose as cells_isclose
-from phonopy.units import Bohr, Hartree, VaspToTHz
 
 from phono3py import Phono3py, Phono3pyIsotope, Phono3pyJointDos
 from phono3py.cui.create_force_constants import (
@@ -159,7 +159,7 @@ def finalize_phono3py(
     else:
         yaml_filename = filename
 
-    _physical_units = get_default_physical_units(phono3py.calculator)
+    _physical_units = get_calculator_physical_units(phono3py.calculator)
 
     ph3py_yaml = Phono3pyYaml(
         configuration=confs_dict,
@@ -390,7 +390,7 @@ def get_default_values(settings):
         temperatures = settings.temperatures  # For others
 
     if settings.frequency_conversion_factor is None:
-        frequency_factor_to_THz = VaspToTHz
+        frequency_factor_to_THz = get_physical_units().defaultToTHz
     else:
         frequency_factor_to_THz = settings.frequency_conversion_factor
 
@@ -475,7 +475,7 @@ def init_phono3py(
     settings, cell_info, interface_mode, symprec, log_level
 ) -> tuple[Phono3py, dict]:
     """Initialize phono3py and update settings by default values."""
-    physical_units = get_default_physical_units(interface_mode)
+    physical_units = get_calculator_physical_units(interface_mode)
     distance_to_A = physical_units["distance_to_A"]
 
     # Change unit of lattice parameters to angstrom
@@ -566,7 +566,7 @@ def create_supercells_with_displacements(
                 cell_info["phonopy_yaml"],
                 unitcell_filename,
                 log_level,
-                nac_factor=Hartree * Bohr,
+                nac_factor=get_physical_units().Hartree * get_physical_units().Bohr,
                 load_phonopy_yaml=load_phono3py_yaml,
             )
 
@@ -730,7 +730,7 @@ def run_gruneisen_then_exit(phono3py, settings, output_filename, log_level):
         nac_params=phono3py.nac_params,
         nac_q_direction=settings.nac_q_direction,
         ion_clamped=settings.ion_clamped,
-        factor=VaspToTHz,
+        factor=get_physical_units().defaultToTHz,
         symprec=phono3py.symmetry.tolerance,
         output_filename=output_filename,
         log_level=log_level,
@@ -1149,7 +1149,7 @@ def main(**argparse_control):
             cell_info["phonopy_yaml"],
             unitcell_filename,
             log_level,
-            nac_factor=Hartree * Bohr,
+            nac_factor=get_physical_units().Hartree * get_physical_units().Bohr,
             load_phonopy_yaml=load_phono3py_yaml,
         )
 

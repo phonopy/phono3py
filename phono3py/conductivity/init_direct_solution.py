@@ -37,7 +37,7 @@
 import sys
 from typing import Optional, Union
 
-from phono3py.conductivity.base import unit_to_WmK
+from phono3py.conductivity.base import get_unit_to_WmK
 from phono3py.conductivity.direct_solution import ConductivityLBTE
 from phono3py.conductivity.direct_solution_base import ConductivityLBTEBase
 from phono3py.conductivity.utils import (
@@ -438,7 +438,7 @@ class ConductivityLBTEWriter:
                 weight=weights,
                 sigma=sigma,
                 sigma_cutoff=sigma_cutoff,
-                kappa_unit_conversion=unit_to_WmK / volume,
+                kappa_unit_conversion=get_unit_to_WmK() / volume,
                 compression=compression,
                 filename=filename,
                 verbose=log_level,
