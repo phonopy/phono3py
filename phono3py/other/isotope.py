@@ -123,7 +123,7 @@ class Isotope:
         else:
             self._cutoff_frequency = cutoff_frequency
         if frequency_factor_to_THz is None:
-            self._frequency_factor_to_THz = get_physical_units().defaultToTHz
+            self._frequency_factor_to_THz = get_physical_units().DefaultToTHz
         else:
             self._frequency_factor_to_THz = frequency_factor_to_THz
         self._lapack_zheev_uplo = lapack_zheev_uplo

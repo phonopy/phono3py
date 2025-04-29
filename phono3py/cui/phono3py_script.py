@@ -390,7 +390,7 @@ def get_default_values(settings):
         temperatures = settings.temperatures  # For others
 
     if settings.frequency_conversion_factor is None:
-        frequency_factor_to_THz = get_physical_units().defaultToTHz
+        frequency_factor_to_THz = get_physical_units().DefaultToTHz
     else:
         frequency_factor_to_THz = settings.frequency_conversion_factor
 
@@ -730,7 +730,7 @@ def run_gruneisen_then_exit(phono3py, settings, output_filename, log_level):
         nac_params=phono3py.nac_params,
         nac_q_direction=settings.nac_q_direction,
         ion_clamped=settings.ion_clamped,
-        factor=get_physical_units().defaultToTHz,
+        factor=get_physical_units().DefaultToTHz,
         symprec=phono3py.symmetry.tolerance,
         output_filename=output_filename,
         log_level=log_level,

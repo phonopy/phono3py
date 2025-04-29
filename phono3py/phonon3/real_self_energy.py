@@ -245,7 +245,7 @@ class RealSelfEnergy:
             self._weights_at_q,
             self._frequencies,
             self._band_indices,
-            self._temperature,
+            self._temperature * get_physical_units().KB / get_physical_units().THzToEv,
             self._epsilon,
             self._unit_conversion,
             self._cutoff_frequency,
@@ -282,7 +282,9 @@ class RealSelfEnergy:
                 self._weights_at_q,
                 self._frequencies,
                 self._band_indices,
-                self._temperature,
+                self._temperature
+                * get_physical_units().KB
+                / get_physical_units().THzToEv,
                 self._epsilon,
                 self._unit_conversion,
                 self._cutoff_frequency,

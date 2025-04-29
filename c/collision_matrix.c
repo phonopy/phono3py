@@ -49,7 +49,7 @@ static void get_collision_matrix(
     const int64_t num_gp, const int64_t *map_q, const int64_t *rot_grid_points,
     const int64_t num_ir_gp, const int64_t num_rot,
     const double *rotations_cartesian, const double *g,
-    const double temperature, const double unit_conversion_factor,
+    const double temperature_THz, const double unit_conversion_factor,
     const double cutoff_frequency);
 static void get_collision_matrix_at_gp(
     double *collision_matrix, const double *fc3_normal_squared,
@@ -58,25 +58,25 @@ static void get_collision_matrix_at_gp(
     const int64_t *map_q, const int64_t *rot_grid_points,
     const int64_t num_ir_gp, const int64_t num_rot,
     const double *rotations_cartesian, const double *g,
-    const double temperature, const double unit_conversion_factor,
+    const double temperature_THz, const double unit_conversion_factor,
     const double cutoff_frequency, const int64_t *gp2tp_map, const int64_t i);
 static void get_reducible_collision_matrix(
     double *collision_matrix, const double *fc3_normal_squared,
     const int64_t num_band0, const int64_t num_band, const double *frequencies,
     const int64_t (*triplets)[3], const int64_t *triplets_map,
     const int64_t num_gp, const int64_t *map_q, const double *g,
-    const double temperature, const double unit_conversion_factor,
+    const double temperature_THz, const double unit_conversion_factor,
     const double cutoff_frequency);
 static void get_reducible_collision_matrix_at_gp(
     double *collision_matrix, const double *fc3_normal_squared,
     const int64_t num_band0, const int64_t num_band, const double *frequencies,
     const int64_t (*triplets)[3], const int64_t *triplets_map,
     const int64_t num_gp, const int64_t *map_q, const double *g,
-    const double temperature, const double unit_conversion_factor,
+    const double temperature_THz, const double unit_conversion_factor,
     const double cutoff_frequency, const int64_t *gp2tp_map, const int64_t i);
 static int64_t get_inv_sinh(double *inv_sinh, const int64_t gp,
-                            const double temperature, const double *frequencies,
-                            const int64_t triplet[3],
+                            const double temperature_THz,
+                            const double *frequencies, const int64_t triplet[3],
                             const int64_t *triplets_map, const int64_t *map_q,
                             const int64_t num_band,
                             const double cutoff_frequency);
@@ -89,7 +89,7 @@ void col_get_collision_matrix(
     const int64_t *triplets_map, const int64_t *map_q,
     const int64_t *rot_grid_points, const double *rotations_cartesian,
     const double *g, const int64_t num_ir_gp, const int64_t num_gp,
-    const int64_t num_rot, const double temperature,
+    const int64_t num_rot, const double temperature_THz,
     const double unit_conversion_factor, const double cutoff_frequency) {
     int64_t num_triplets, num_band0, num_band;
 
@@ -97,19 +97,19 @@ void col_get_collision_matrix(
     num_band0 = fc3_normal_squared->dims[1];
     num_band = fc3_normal_squared->dims[2];
 
-    get_collision_matrix(collision_matrix, fc3_normal_squared->data, num_band0,
-                         num_band, frequencies, triplets, triplets_map, num_gp,
-                         map_q, rot_grid_points, num_ir_gp, num_rot,
-                         rotations_cartesian,
-                         g + 2 * num_triplets * num_band0 * num_band * num_band,
-                         temperature, unit_conversion_factor, cutoff_frequency);
+    get_collision_matrix(
+        collision_matrix, fc3_normal_squared->data, num_band0, num_band,
+        frequencies, triplets, triplets_map, num_gp, map_q, rot_grid_points,
+        num_ir_gp, num_rot, rotations_cartesian,
+        g + 2 * num_triplets * num_band0 * num_band * num_band, temperature_THz,
+        unit_conversion_factor, cutoff_frequency);
 }
 
 void col_get_reducible_collision_matrix(
     double *collision_matrix, const Darray *fc3_normal_squared,
     const double *frequencies, const int64_t (*triplets)[3],
     const int64_t *triplets_map, const int64_t *map_q, const double *g,
-    const int64_t num_gp, const double temperature,
+    const int64_t num_gp, const double temperature_THz,
     const double unit_conversion_factor, const double cutoff_frequency) {
     int64_t num_triplets, num_band, num_band0;
 
@@ -120,7 +120,7 @@ void col_get_reducible_collision_matrix(
     get_reducible_collision_matrix(
         collision_matrix, fc3_normal_squared->data, num_band0, num_band,
         frequencies, triplets, triplets_map, num_gp, map_q,
-        g + 2 * num_triplets * num_band0 * num_band * num_band, temperature,
+        g + 2 * num_triplets * num_band0 * num_band * num_band, temperature_THz,
         unit_conversion_factor, cutoff_frequency);
 }
 
@@ -131,7 +131,7 @@ static void get_collision_matrix(
     const int64_t num_gp, const int64_t *map_q, const int64_t *rot_grid_points,
     const int64_t num_ir_gp, const int64_t num_rot,
     const double *rotations_cartesian, const double *g,
-    const double temperature, const double unit_conversion_factor,
+    const double temperature_THz, const double unit_conversion_factor,
     const double cutoff_frequency) {
     int64_t i;
     int64_t *gp2tp_map;
@@ -145,7 +145,7 @@ static void get_collision_matrix(
         get_collision_matrix_at_gp(
             collision_matrix, fc3_normal_squared, num_band0, num_band,
             frequencies, triplets, triplets_map, map_q, rot_grid_points,
-            num_ir_gp, num_rot, rotations_cartesian, g, temperature,
+            num_ir_gp, num_rot, rotations_cartesian, g, temperature_THz,
             unit_conversion_factor, cutoff_frequency, gp2tp_map, i);
     }
 
@@ -160,7 +160,7 @@ static void get_collision_matrix_at_gp(
     const int64_t *map_q, const int64_t *rot_grid_points,
     const int64_t num_ir_gp, const int64_t num_rot,
     const double *rotations_cartesian, const double *g,
-    const double temperature, const double unit_conversion_factor,
+    const double temperature_THz, const double unit_conversion_factor,
     const double cutoff_frequency, const int64_t *gp2tp_map, const int64_t i) {
     int64_t j, k, l, m, n, ti, r_gp, swapped;
 
@@ -171,9 +171,9 @@ static void get_collision_matrix_at_gp(
     for (j = 0; j < num_rot; j++) {
         r_gp = rot_grid_points[i * num_rot + j];
         ti = gp2tp_map[triplets_map[r_gp]];
-        swapped =
-            get_inv_sinh(inv_sinh, r_gp, temperature, frequencies, triplets[ti],
-                         triplets_map, map_q, num_band, cutoff_frequency);
+        swapped = get_inv_sinh(inv_sinh, r_gp, temperature_THz, frequencies,
+                               triplets[ti], triplets_map, map_q, num_band,
+                               cutoff_frequency);
 
         for (k = 0; k < num_band0; k++) {
             for (l = 0; l < num_band; l++) {
@@ -219,7 +219,7 @@ static void get_reducible_collision_matrix(
     const int64_t num_band0, const int64_t num_band, const double *frequencies,
     const int64_t (*triplets)[3], const int64_t *triplets_map,
     const int64_t num_gp, const int64_t *map_q, const double *g,
-    const double temperature, const double unit_conversion_factor,
+    const double temperature_THz, const double unit_conversion_factor,
     const double cutoff_frequency) {
     int64_t i;
     int64_t *gp2tp_map;
@@ -232,8 +232,9 @@ static void get_reducible_collision_matrix(
     for (i = 0; i < num_gp; i++) {
         get_reducible_collision_matrix_at_gp(
             collision_matrix, fc3_normal_squared, num_band0, num_band,
-            frequencies, triplets, triplets_map, num_gp, map_q, g, temperature,
-            unit_conversion_factor, cutoff_frequency, gp2tp_map, i);
+            frequencies, triplets, triplets_map, num_gp, map_q, g,
+            temperature_THz, unit_conversion_factor, cutoff_frequency,
+            gp2tp_map, i);
     }
 
     free(gp2tp_map);
@@ -245,7 +246,7 @@ static void get_reducible_collision_matrix_at_gp(
     const int64_t num_band0, const int64_t num_band, const double *frequencies,
     const int64_t (*triplets)[3], const int64_t *triplets_map,
     const int64_t num_gp, const int64_t *map_q, const double *g,
-    const double temperature, const double unit_conversion_factor,
+    const double temperature_THz, const double unit_conversion_factor,
     const double cutoff_frequency, const int64_t *gp2tp_map, const int64_t i) {
     int64_t j, k, l, ti, swapped;
     double collision;
@@ -253,8 +254,9 @@ static void get_reducible_collision_matrix_at_gp(
 
     inv_sinh = (double *)malloc(sizeof(double) * num_band);
     ti = gp2tp_map[triplets_map[i]];
-    swapped = get_inv_sinh(inv_sinh, i, temperature, frequencies, triplets[ti],
-                           triplets_map, map_q, num_band, cutoff_frequency);
+    swapped =
+        get_inv_sinh(inv_sinh, i, temperature_THz, frequencies, triplets[ti],
+                     triplets_map, map_q, num_band, cutoff_frequency);
 
     for (j = 0; j < num_band0; j++) {
         for (k = 0; k < num_band; k++) {
@@ -288,8 +290,8 @@ static void get_reducible_collision_matrix_at_gp(
 }
 
 static int64_t get_inv_sinh(double *inv_sinh, const int64_t gp,
-                            const double temperature, const double *frequencies,
-                            const int64_t triplet[3],
+                            const double temperature_THz,
+                            const double *frequencies, const int64_t triplet[3],
                             const int64_t *triplets_map, const int64_t *map_q,
                             const int64_t num_band,
                             const double cutoff_frequency) {
@@ -310,7 +312,7 @@ static int64_t get_inv_sinh(double *inv_sinh, const int64_t gp,
     for (i = 0; i < num_band; i++) {
         f = frequencies[gp2 * num_band + i];
         if (f > cutoff_frequency) {
-            inv_sinh[i] = funcs_inv_sinh_occupation(f, temperature);
+            inv_sinh[i] = funcs_inv_sinh_occupation(f, temperature_THz);
         } else {
             inv_sinh[i] = 0;
         }

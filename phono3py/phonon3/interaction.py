@@ -116,7 +116,7 @@ class Interaction:
         self._set_band_indices(band_indices)
         self._constant_averaged_interaction = constant_averaged_interaction
         if frequency_factor_to_THz is None:
-            self._frequency_factor_to_THz = get_physical_units().defaultToTHz
+            self._frequency_factor_to_THz = get_physical_units().DefaultToTHz
         else:
             self._frequency_factor_to_THz = frequency_factor_to_THz
         self._frequency_scale_factor = frequency_scale_factor

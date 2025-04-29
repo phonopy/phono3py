@@ -164,7 +164,7 @@ class CollisionMatrix(ImagSelfEnergy):
             self._ir_map_at_q,
             self._rot_grid_points,  # in GRGrid
             self._rotations_cartesian,
-            self._temperature,
+            self._temperature * get_physical_units().KB / get_physical_units().THzToEv,
             self._unit_conversion,
             self._cutoff_frequency,
         )
@@ -180,7 +180,7 @@ class CollisionMatrix(ImagSelfEnergy):
             self._triplets_at_q,
             self._triplets_map_at_q,
             self._ir_map_at_q,
-            self._temperature,
+            self._temperature * get_physical_units().KB / get_physical_units().THzToEv,
             self._unit_conversion,
             self._cutoff_frequency,
         )
@@ -314,7 +314,7 @@ class CollisionMatrix(ImagSelfEnergy):
             np.sinh(
                 freqs
                 * get_physical_units().THzToEv
-                / (2 * get_physical_units().Kb * self._temperature)
+                / (2 * get_physical_units().KB * self._temperature)
             ),
             -1.0,
         )

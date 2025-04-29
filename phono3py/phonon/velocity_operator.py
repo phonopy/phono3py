@@ -76,7 +76,7 @@ class VelocityOperator(GroupVelocity):
             self._q_length = 5e-6
         self._symmetry = symmetry
         if frequency_factor_to_THz is None:
-            self._factor = get_physical_units().defaultToTHz
+            self._factor = get_physical_units().DefaultToTHz
         else:
             self._factor = frequency_factor_to_THz
         self._cutoff_frequency = cutoff_frequency

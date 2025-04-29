@@ -292,7 +292,7 @@ class ImagSelfEnergy:
             self._temperature = float(temperature)
 
     def set_temperature(self, temperature):
-        """Set temperatures where calculation will be performed."""
+        """Set temperature where calculation will be performed."""
         warnings.warn(
             "Use attribute, ImagSelfEnergy.temperature "
             "instead of ImagSelfEnergy.set_temperature().",
@@ -391,7 +391,7 @@ class ImagSelfEnergy:
             self._triplets_at_q,
             self._weights_at_q,
             self._frequencies,
-            self._temperature,
+            self._temperature * get_physical_units().KB / get_physical_units().THzToEv,
             self._g,
             _g_zero,
             self._cutoff_frequency,
@@ -416,7 +416,7 @@ class ImagSelfEnergy:
             self._weights_at_q,
             self._pp.bz_grid.addresses,
             self._frequencies,
-            self._temperature,
+            self._temperature * get_physical_units().KB / get_physical_units().THzToEv,
             self._g,
             _g_zero,
             self._cutoff_frequency,
@@ -440,7 +440,9 @@ class ImagSelfEnergy:
                 self._triplets_at_q,
                 self._weights_at_q,
                 self._frequencies,
-                self._temperature,
+                self._temperature
+                * get_physical_units().KB
+                / get_physical_units().THzToEv,
                 self._g,
                 self._g_zero,
                 self._cutoff_frequency,
@@ -475,7 +477,9 @@ class ImagSelfEnergy:
                     self._weights_at_q,
                     self._pp.bz_grid.addresses,
                     self._frequencies,
-                    self._temperature,
+                    self._temperature
+                    * get_physical_units().KB
+                    / get_physical_units().THzToEv,
                     g,
                     _g_zero,
                     self._cutoff_frequency,

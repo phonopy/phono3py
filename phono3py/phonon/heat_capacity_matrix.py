@@ -67,8 +67,8 @@ def mode_cv_matrix(temp, freqs, cutoff=1e-4):
         shape=(num_band, num_band), dtype='double', order='C'.
 
     """
-    Kb = get_physical_units().Kb
-    x = freqs / Kb / temp
+    KB = get_physical_units().KB
+    x = freqs / KB / temp
     shape = (len(freqs), len(freqs))
     cvm = np.zeros(shape, dtype="double", order="C")
     for i, j in np.ndindex(shape):
@@ -78,5 +78,5 @@ def mode_cv_matrix(temp, freqs, cutoff=1e-4):
         sub = x[i] - x[j]
         add = x[i] + x[j]
         n_inv = np.exp([x[i], x[j], sub]) - 1
-        cvm[i, j] = Kb * n_inv[2] / sub * (add / 2) ** 2 / n_inv[0] * (1 / n_inv[1] + 1)
+        cvm[i, j] = KB * n_inv[2] / sub * (add / 2) ** 2 / n_inv[0] * (1 / n_inv[1] + 1)
     return cvm

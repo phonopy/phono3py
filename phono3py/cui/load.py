@@ -315,7 +315,7 @@ def load(
     cell.cell = cell.cell * factor_to_A
 
     if factor is None:
-        _factor = get_physical_units().defaultToTHz
+        _factor = get_physical_units().DefaultToTHz
     else:
         _factor = factor
     ph3py = Phono3py(

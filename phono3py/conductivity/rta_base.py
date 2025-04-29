@@ -38,6 +38,7 @@ import warnings
 from abc import abstractmethod
 
 import numpy as np
+from phonopy.physical_units import get_physical_units
 
 from phono3py.conductivity.base import ConductivityBase
 from phono3py.file_IO import read_pp_from_hdf5
@@ -328,6 +329,10 @@ class ConductivityRTABase(ConductivityBase):
             )
 
         # It is assumed that self._sigmas = [None].
+        temperatures_THz = np.array(
+            self._temperatures * get_physical_units().KB / get_physical_units().THzToEv,
+            dtype="double",
+        )
         for j, sigma in enumerate(self._sigmas):
             self._collision.set_sigma(sigma)
             if self._is_N_U:
@@ -378,7 +383,7 @@ class ConductivityRTABase(ConductivityBase):
                     p2s,
                     s2p,
                     band_indices,
-                    self._temperatures,
+                    temperatures_THz,
                     self._is_N_U * 1,
                     self._pp.symmetrize_fc3q * 1,
                     self._pp.make_r0_average * 1,
@@ -409,7 +414,7 @@ class ConductivityRTABase(ConductivityBase):
                     p2s,
                     s2p,
                     band_indices,
-                    self._temperatures,
+                    temperatures_THz,
                     self._is_N_U * 1,
                     self._pp.symmetrize_fc3q * 1,
                     self._pp.make_r0_average * 1,

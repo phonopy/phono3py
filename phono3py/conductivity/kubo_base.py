@@ -75,7 +75,7 @@ class ConductivityKuboMixIn:
         cutoff = self._pp.cutoff_frequency * get_physical_units().THzToEv
 
         for i_temp, temp in enumerate(self._temperatures):
-            if (freqs / (temp * get_physical_units().Kb) > 100).any():
+            if (freqs / (temp * get_physical_units().KB) > 100).any():
                 continue
             cvm = mode_cv_matrix(temp, freqs, cutoff=cutoff)
             self._cv_mat[i_temp, i_data] = cvm[self._pp.band_indices, :]
