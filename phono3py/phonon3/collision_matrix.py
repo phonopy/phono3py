@@ -37,7 +37,7 @@
 from typing import Optional
 
 import numpy as np
-from phonopy.units import Kb, THzToEv
+from phonopy.physical_units import get_physical_units
 
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy
 from phono3py.phonon3.interaction import Interaction
@@ -311,7 +311,11 @@ class CollisionMatrix(ImagSelfEnergy):
         freqs = self._frequencies[gp]
         sinh = np.where(
             freqs > self._cutoff_frequency,
-            np.sinh(freqs * THzToEv / (2 * Kb * self._temperature)),
+            np.sinh(
+                freqs
+                * get_physical_units().THzToEv
+                / (2 * get_physical_units().Kb * self._temperature)
+            ),
             -1.0,
         )
         inv_sinh = np.where(sinh > 0, 1.0 / sinh, 0)

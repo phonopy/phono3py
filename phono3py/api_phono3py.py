@@ -58,6 +58,7 @@ from phonopy.interface.mlp import PhonopyMLP
 from phonopy.interface.pypolymlp import (
     PypolymlpParams,
 )
+from phonopy.physical_units import get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import (
     Primitive,
@@ -69,7 +70,6 @@ from phonopy.structure.cells import (
     shape_supercell_matrix,
 )
 from phonopy.structure.symmetry import Symmetry
-from phonopy.units import VaspToTHz
 
 from phono3py.conductivity.init_direct_solution import get_thermal_conductivity_LBTE
 from phono3py.conductivity.init_rta import get_thermal_conductivity_RTA
@@ -149,7 +149,7 @@ class Phono3py:
         primitive_matrix=None,
         phonon_supercell_matrix=None,
         cutoff_frequency=1e-4,
-        frequency_factor_to_THz=VaspToTHz,
+        frequency_factor_to_THz=None,
         is_symmetry=True,
         is_mesh_symmetry=True,
         use_grg=False,
@@ -218,7 +218,10 @@ class Phono3py:
 
         """
         self._symprec = symprec
-        self._frequency_factor_to_THz = frequency_factor_to_THz
+        if frequency_factor_to_THz is None:
+            self._frequency_factor_to_THz = get_physical_units().defaultToTHz
+        else:
+            self._frequency_factor_to_THz = frequency_factor_to_THz
         self._is_symmetry = is_symmetry
         self._is_mesh_symmetry = is_mesh_symmetry
         self._use_grg = use_grg

@@ -35,7 +35,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phonopy.units import THzToEv
+from phonopy.physical_units import get_physical_units
 
 from phono3py.conductivity.rta_base import ConductivityRTABase
 from phono3py.conductivity.wigner_base import (
@@ -119,6 +119,7 @@ class ConductivityWignerRTA(ConductivityWignerMixIn, ConductivityRTABase):
 
         """
         num_band = len(self._pp.primitive) * 3
+        THzToEv = get_physical_units().THzToEv
         for i, _ in enumerate(self._grid_points):
             cv = self._cv[:, i, :]
             gp = self._grid_points[i]

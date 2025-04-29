@@ -41,9 +41,9 @@ from typing import Literal, Optional, Union
 
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
+from phonopy.physical_units import get_physical_units
 from phonopy.structure.cells import Primitive, compute_all_sg_permutations
 from phonopy.structure.symmetry import Symmetry
-from phonopy.units import AMU, EV, Angstrom, Hbar, THz, VaspToTHz
 
 from phono3py.phonon.grid import (
     BZGrid,
@@ -97,7 +97,7 @@ class Interaction:
         fc3: Optional[np.ndarray] = None,
         band_indices: Optional[Union[np.ndarray, Sequence]] = None,
         constant_averaged_interaction: Optional[float] = None,
-        frequency_factor_to_THz: float = VaspToTHz,
+        frequency_factor_to_THz: Optional[float] = None,
         frequency_scale_factor: Optional[float] = None,
         unit_conversion: Optional[float] = None,
         is_mesh_symmetry: bool = True,
@@ -115,7 +115,10 @@ class Interaction:
         self._band_indices = None
         self._set_band_indices(band_indices)
         self._constant_averaged_interaction = constant_averaged_interaction
-        self._frequency_factor_to_THz = frequency_factor_to_THz
+        if frequency_factor_to_THz is None:
+            self._frequency_factor_to_THz = get_physical_units().defaultToTHz
+        else:
+            self._frequency_factor_to_THz = frequency_factor_to_THz
         self._frequency_scale_factor = frequency_scale_factor
 
         if fc3 is not None:
@@ -125,15 +128,15 @@ class Interaction:
         if unit_conversion is None:
             num_grid = np.prod(self.mesh_numbers)
             self._unit_conversion = (
-                (Hbar * EV) ** 3
+                (get_physical_units().Hbar * get_physical_units().EV) ** 3
                 / 36
                 / 8
-                * EV**2
-                / Angstrom**6
-                / (2 * np.pi * THz) ** 3
-                / AMU**3
+                * get_physical_units().EV ** 2
+                / get_physical_units().Angstrom ** 6
+                / (2 * np.pi * get_physical_units().THz) ** 3
+                / get_physical_units().AMU ** 3
                 / num_grid
-                / EV**2
+                / get_physical_units().EV ** 2
             )
         else:
             self._unit_conversion = unit_conversion

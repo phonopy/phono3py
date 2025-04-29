@@ -50,7 +50,7 @@ from phonopy.harmonic.force_constants import (
     symmetrize_compact_force_constants,
     symmetrize_force_constants,
 )
-from phonopy.interface.calculator import get_default_physical_units
+from phonopy.interface.calculator import get_calculator_physical_units
 from phonopy.interface.fc_calculator import fc_calculator_names
 from phonopy.interface.pypolymlp import PypolymlpParams, parse_mlp_params
 from phonopy.interface.symfc import parse_symfc_options
@@ -254,7 +254,7 @@ def parse_forces(
         if dataset:
             filename_read_from = phono3py_yaml_filename
 
-    physical_units = get_default_physical_units(calculator)
+    physical_units = get_calculator_physical_units(calculator)
 
     # Forces are not yet found in dataset. Then try to read from FORCES_FC3 or
     # FORCES_FC2.

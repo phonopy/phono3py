@@ -42,7 +42,7 @@ from typing import Optional
 
 import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
-from phonopy.units import Kb, THzToEv
+from phonopy.physical_units import get_physical_units
 
 from phono3py.conductivity.base import ConductivityBase
 from phono3py.conductivity.utils import select_colmat_solver
@@ -791,11 +791,18 @@ class ConductivityLBTEBase(ConductivityBase):
         t = self._temperatures[i_temp]
         sinh = np.where(
             freqs > self._pp.cutoff_frequency,
-            np.sinh(freqs * THzToEv / (2 * Kb * t)),
+            np.sinh(
+                freqs * get_physical_units().THzToEv / (2 * get_physical_units().Kb * t)
+            ),
             -1.0,
         )
         inv_sinh = np.where(sinh > 0, 1.0 / sinh, 0)
-        freqs_sinh = freqs * THzToEv * inv_sinh / (4 * Kb * t**2)
+        freqs_sinh = (
+            freqs
+            * get_physical_units().THzToEv
+            * inv_sinh
+            / (4 * get_physical_units().Kb * t**2)
+        )
 
         for i, f in enumerate(freqs_sinh):
             X[i] *= weights[i]
@@ -1080,7 +1087,9 @@ class ConductivityLBTEBase(ConductivityBase):
                     mode_kappa[i_sigma, i_temp, i, j, k] = sum_k[vxf]
 
         t = self._temperatures[i_temp]
-        mode_kappa[i_sigma, i_temp] *= self._conversion_factor * Kb * t**2
+        mode_kappa[i_sigma, i_temp] *= (
+            self._conversion_factor * get_physical_units().Kb * t**2
+        )
 
     def _set_mode_kappa_Chaput(self, mode_kappa, i_sigma, i_temp, weights):
         """Calculate mode kappa by the way in Laurent Chaput's PRL paper.
@@ -1124,7 +1133,7 @@ class ConductivityLBTEBase(ConductivityBase):
                     vals = vals.reshape(num_ir_grid_points, num_band)
                     mode_kappa[i_sigma, i_temp, :, :, i] += vals
 
-        factor = self._conversion_factor * Kb * t**2
+        factor = self._conversion_factor * get_physical_units().Kb * t**2
         mode_kappa[i_sigma, i_temp] *= factor
 
     def _set_mode_kappa_from_mfp(self, weights, rotations_cartesian, i_sigma, i_temp):
@@ -1151,7 +1160,7 @@ class ConductivityLBTEBase(ConductivityBase):
                 if cv < 1e-10:
                     continue
                 self._mfp[i_sigma, i_temp, i, j] = (
-                    -2 * t * np.sqrt(Kb / cv) * f / (2 * np.pi)
+                    -2 * t * np.sqrt(get_physical_units().Kb / cv) * f / (2 * np.pi)
                 )
 
     def _show_log(self, i):

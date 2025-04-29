@@ -36,7 +36,7 @@
 
 import numpy as np
 from phonopy.phonon.thermal_properties import mode_cv
-from phonopy.units import Kb
+from phonopy.physical_units import get_physical_units
 
 
 def mode_cv_matrix(temp, freqs, cutoff=1e-4):
@@ -67,6 +67,7 @@ def mode_cv_matrix(temp, freqs, cutoff=1e-4):
         shape=(num_band, num_band), dtype='double', order='C'.
 
     """
+    Kb = get_physical_units().Kb
     x = freqs / Kb / temp
     shape = (len(freqs), len(freqs))
     cvm = np.zeros(shape, dtype="double", order="C")

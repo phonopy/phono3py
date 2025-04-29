@@ -38,10 +38,10 @@ import sys
 
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
+from phonopy.physical_units import get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive
 from phonopy.structure.grid_points import get_qpoints
-from phonopy.units import VaspToTHz
 
 
 def run_gruneisen_parameters(
@@ -133,7 +133,7 @@ class Gruneisen:
         nac_params=None,
         nac_q_direction=None,
         ion_clamped=False,
-        factor=VaspToTHz,
+        factor=None,
         symprec=1e-5,
     ):
         """Init method."""
@@ -142,7 +142,10 @@ class Gruneisen:
         self._scell = supercell
         self._pcell = primitive
         self._ion_clamped = ion_clamped
-        self._factor = factor
+        if factor is None:
+            self._factor = get_physical_units().defaultToTHz
+        else:
+            self._factor = factor
         self._symprec = symprec
         self._dm = get_dynamical_matrix(
             self._fc2,

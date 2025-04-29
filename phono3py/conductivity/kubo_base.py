@@ -35,7 +35,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phonopy.units import Kb, THzToEv
+from phonopy.physical_units import get_physical_units
 
 from phono3py.phonon.group_velocity_matrix import GroupVelocityMatrix
 from phono3py.phonon.heat_capacity_matrix import mode_cv_matrix
@@ -71,11 +71,11 @@ class ConductivityKuboMixIn:
 
         """
         irgp = self._grid_points[i_gp]
-        freqs = self._frequencies[irgp] * THzToEv
-        cutoff = self._pp.cutoff_frequency * THzToEv
+        freqs = self._frequencies[irgp] * get_physical_units().THzToEv
+        cutoff = self._pp.cutoff_frequency * get_physical_units().THzToEv
 
         for i_temp, temp in enumerate(self._temperatures):
-            if (freqs / (temp * Kb) > 100).any():
+            if (freqs / (temp * get_physical_units().Kb) > 100).any():
                 continue
             cvm = mode_cv_matrix(temp, freqs, cutoff=cutoff)
             self._cv_mat[i_temp, i_data] = cvm[self._pp.band_indices, :]
