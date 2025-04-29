@@ -125,7 +125,7 @@ class SupercellPhonon:
         eigvals, eigvecs = np.linalg.eigh(dynmat)
         freqs = np.sqrt(np.abs(eigvals)) * np.sign(eigvals)
         if frequency_factor_to_THz is None:
-            freqs *= get_physical_units().defaultToTHz
+            freqs *= get_physical_units().DefaultToTHz
         else:
             freqs *= frequency_factor_to_THz
         self._eigenvalues = np.array(eigvals, dtype="double", order="C")

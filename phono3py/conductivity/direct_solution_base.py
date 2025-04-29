@@ -792,7 +792,7 @@ class ConductivityLBTEBase(ConductivityBase):
         sinh = np.where(
             freqs > self._pp.cutoff_frequency,
             np.sinh(
-                freqs * get_physical_units().THzToEv / (2 * get_physical_units().Kb * t)
+                freqs * get_physical_units().THzToEv / (2 * get_physical_units().KB * t)
             ),
             -1.0,
         )
@@ -801,7 +801,7 @@ class ConductivityLBTEBase(ConductivityBase):
             freqs
             * get_physical_units().THzToEv
             * inv_sinh
-            / (4 * get_physical_units().Kb * t**2)
+            / (4 * get_physical_units().KB * t**2)
         )
 
         for i, f in enumerate(freqs_sinh):
@@ -1088,7 +1088,7 @@ class ConductivityLBTEBase(ConductivityBase):
 
         t = self._temperatures[i_temp]
         mode_kappa[i_sigma, i_temp] *= (
-            self._conversion_factor * get_physical_units().Kb * t**2
+            self._conversion_factor * get_physical_units().KB * t**2
         )
 
     def _set_mode_kappa_Chaput(self, mode_kappa, i_sigma, i_temp, weights):
@@ -1133,7 +1133,7 @@ class ConductivityLBTEBase(ConductivityBase):
                     vals = vals.reshape(num_ir_grid_points, num_band)
                     mode_kappa[i_sigma, i_temp, :, :, i] += vals
 
-        factor = self._conversion_factor * get_physical_units().Kb * t**2
+        factor = self._conversion_factor * get_physical_units().KB * t**2
         mode_kappa[i_sigma, i_temp] *= factor
 
     def _set_mode_kappa_from_mfp(self, weights, rotations_cartesian, i_sigma, i_temp):
@@ -1160,7 +1160,7 @@ class ConductivityLBTEBase(ConductivityBase):
                 if cv < 1e-10:
                     continue
                 self._mfp[i_sigma, i_temp, i, j] = (
-                    -2 * t * np.sqrt(get_physical_units().Kb / cv) * f / (2 * np.pi)
+                    -2 * t * np.sqrt(get_physical_units().KB / cv) * f / (2 * np.pi)
                 )
 
     def _show_log(self, i):

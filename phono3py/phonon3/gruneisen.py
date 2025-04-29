@@ -143,7 +143,7 @@ class Gruneisen:
         self._pcell = primitive
         self._ion_clamped = ion_clamped
         if factor is None:
-            self._factor = get_physical_units().defaultToTHz
+            self._factor = get_physical_units().DefaultToTHz
         else:
             self._factor = factor
         self._symprec = symprec

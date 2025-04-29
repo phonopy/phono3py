@@ -85,7 +85,7 @@ def run_phonon_solver_c(
     import phono3py._phononcalc as phononcalc
 
     if frequency_conversion_factor is None:
-        _frequency_conversion_factor = get_physical_units().defaultToTHz
+        _frequency_conversion_factor = get_physical_units().DefaultToTHz
     else:
         _frequency_conversion_factor = frequency_conversion_factor
 

@@ -130,10 +130,10 @@ int64_t ph3py_get_pp_collision(
     const double *fc3, const int64_t is_compact_fc3, const double (*svecs)[3],
     const int64_t multi_dims[2], const int64_t (*multiplicity)[2],
     const double *masses, const int64_t *p2s_map, const int64_t *s2p_map,
-    const Larray *band_indices, const Darray *temperatures, const int64_t is_NU,
-    const int64_t symmetrize_fc3_q, const int64_t make_r0_average,
-    const char *all_shortest, const double cutoff_frequency,
-    const int64_t openmp_per_triplets) {
+    const Larray *band_indices, const Darray *temperatures_THz,
+    const int64_t is_NU, const int64_t symmetrize_fc3_q,
+    const int64_t make_r0_average, const char *all_shortest,
+    const double cutoff_frequency, const int64_t openmp_per_triplets) {
     RecgridConstBZGrid *bzgrid;
     AtomTriplets *atom_triplets;
     int64_t i, j;
@@ -174,7 +174,7 @@ int64_t ph3py_get_pp_collision(
                          (lapack_complex_double *)eigenvectors, triplets,
                          num_triplets, triplet_weights, bzgrid, fc3,
                          is_compact_fc3, atom_triplets, masses, band_indices,
-                         temperatures, is_NU, symmetrize_fc3_q,
+                         temperatures_THz, is_NU, symmetrize_fc3_q,
                          cutoff_frequency, openmp_per_triplets);
 
     free(atom_triplets);
@@ -195,10 +195,10 @@ int64_t ph3py_get_pp_collision_with_sigma(
     const int64_t is_compact_fc3, const double (*svecs)[3],
     const int64_t multi_dims[2], const int64_t (*multiplicity)[2],
     const double *masses, const int64_t *p2s_map, const int64_t *s2p_map,
-    const Larray *band_indices, const Darray *temperatures, const int64_t is_NU,
-    const int64_t symmetrize_fc3_q, const int64_t make_r0_average,
-    const char *all_shortest, const double cutoff_frequency,
-    const int64_t openmp_per_triplets) {
+    const Larray *band_indices, const Darray *temperatures_THz,
+    const int64_t is_NU, const int64_t symmetrize_fc3_q,
+    const int64_t make_r0_average, const char *all_shortest,
+    const double cutoff_frequency, const int64_t openmp_per_triplets) {
     RecgridConstBZGrid *bzgrid;
     AtomTriplets *atom_triplets;
     int64_t i, j;
@@ -237,8 +237,8 @@ int64_t ph3py_get_pp_collision_with_sigma(
         imag_self_energy, sigma, sigma_cutoff, frequencies,
         (lapack_complex_double *)eigenvectors, triplets, num_triplets,
         triplet_weights, bzgrid, fc3, is_compact_fc3, atom_triplets, masses,
-        band_indices, temperatures, is_NU, symmetrize_fc3_q, cutoff_frequency,
-        openmp_per_triplets);
+        band_indices, temperatures_THz, is_NU, symmetrize_fc3_q,
+        cutoff_frequency, openmp_per_triplets);
 
     free(atom_triplets);
     atom_triplets = NULL;
@@ -253,11 +253,11 @@ void ph3py_get_imag_self_energy_at_bands_with_g(
     double *imag_self_energy, const Darray *fc3_normal_squared,
     const double *frequencies, const int64_t (*triplets)[3],
     const int64_t *triplet_weights, const double *g, const char *g_zero,
-    const double temperature, const double cutoff_frequency,
+    const double temperature_THz, const double cutoff_frequency,
     const int64_t num_frequency_points, const int64_t frequency_point_index) {
     ise_get_imag_self_energy_with_g(
         imag_self_energy, fc3_normal_squared, frequencies, triplets,
-        triplet_weights, g, g_zero, temperature, cutoff_frequency,
+        triplet_weights, g, g_zero, temperature_THz, cutoff_frequency,
         num_frequency_points, frequency_point_index);
 }
 
@@ -266,23 +266,23 @@ void ph3py_get_detailed_imag_self_energy_at_bands_with_g(
     double *imag_self_energy_U, const Darray *fc3_normal_squared,
     const double *frequencies, const int64_t (*triplets)[3],
     const int64_t *triplet_weights, const int64_t (*bz_grid_addresses)[3],
-    const double *g, const char *g_zero, const double temperature,
+    const double *g, const char *g_zero, const double temperature_THz,
     const double cutoff_frequency) {
     ise_get_detailed_imag_self_energy_with_g(
         detailed_imag_self_energy, imag_self_energy_N, imag_self_energy_U,
         fc3_normal_squared, frequencies, triplets, triplet_weights,
-        bz_grid_addresses, g, g_zero, temperature, cutoff_frequency);
+        bz_grid_addresses, g, g_zero, temperature_THz, cutoff_frequency);
 }
 
 void ph3py_get_real_self_energy_at_bands(
     double *real_self_energy, const Darray *fc3_normal_squared,
     const int64_t *band_indices, const double *frequencies,
     const int64_t (*triplets)[3], const int64_t *triplet_weights,
-    const double epsilon, const double temperature,
+    const double epsilon, const double temperature_THz,
     const double unit_conversion_factor, const double cutoff_frequency) {
     rse_get_real_self_energy_at_bands(real_self_energy, fc3_normal_squared,
                                       band_indices, frequencies, triplets,
-                                      triplet_weights, epsilon, temperature,
+                                      triplet_weights, epsilon, temperature_THz,
                                       unit_conversion_factor, cutoff_frequency);
 }
 
@@ -291,11 +291,11 @@ void ph3py_get_real_self_energy_at_frequency_point(
     const Darray *fc3_normal_squared, const int64_t *band_indices,
     const double *frequencies, const int64_t (*triplets)[3],
     const int64_t *triplet_weights, const double epsilon,
-    const double temperature, const double unit_conversion_factor,
+    const double temperature_THz, const double unit_conversion_factor,
     const double cutoff_frequency) {
     rse_get_real_self_energy_at_frequency_point(
         real_self_energy, frequency_point, fc3_normal_squared, band_indices,
-        frequencies, triplets, triplet_weights, epsilon, temperature,
+        frequencies, triplets, triplet_weights, epsilon, temperature_THz,
         unit_conversion_factor, cutoff_frequency);
 }
 
@@ -305,12 +305,12 @@ void ph3py_get_collision_matrix(
     const int64_t *triplets_map, const int64_t *map_q,
     const int64_t *rotated_grid_points, const double *rotations_cartesian,
     const double *g, const int64_t num_ir_gp, const int64_t num_gp,
-    const int64_t num_rot, const double temperature,
+    const int64_t num_rot, const double temperature_THz,
     const double unit_conversion_factor, const double cutoff_frequency) {
     col_get_collision_matrix(collision_matrix, fc3_normal_squared, frequencies,
                              triplets, triplets_map, map_q, rotated_grid_points,
                              rotations_cartesian, g, num_ir_gp, num_gp, num_rot,
-                             temperature, unit_conversion_factor,
+                             temperature_THz, unit_conversion_factor,
                              cutoff_frequency);
 }
 
@@ -318,11 +318,11 @@ void ph3py_get_reducible_collision_matrix(
     double *collision_matrix, const Darray *fc3_normal_squared,
     const double *frequencies, const int64_t (*triplets)[3],
     const int64_t *triplets_map, const int64_t *map_q, const double *g,
-    const int64_t num_gp, const double temperature,
+    const int64_t num_gp, const double temperature_THz,
     const double unit_conversion_factor, const double cutoff_frequency) {
     col_get_reducible_collision_matrix(
         collision_matrix, fc3_normal_squared, frequencies, triplets,
-        triplets_map, map_q, g, num_gp, temperature, unit_conversion_factor,
+        triplets_map, map_q, g, num_gp, temperature_THz, unit_conversion_factor,
         cutoff_frequency);
 }
 

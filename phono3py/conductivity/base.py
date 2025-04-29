@@ -115,7 +115,7 @@ class HeatCapacityMixIn:
         # Otherwise just set 0.
         for i, f in enumerate(freqs):
             if f > cutoff:
-                condition = f < 100 * self._temperatures * get_physical_units().Kb
+                condition = f < 100 * self._temperatures * get_physical_units().KB
                 cv[:, i] = np.where(
                     condition,
                     mode_cv(np.where(condition, self._temperatures, 10000), f),

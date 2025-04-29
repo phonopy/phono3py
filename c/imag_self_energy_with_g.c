@@ -53,7 +53,7 @@ static void detailed_imag_self_energy_at_triplet(
     const int64_t num_band0, const int64_t num_band,
     const double *fc3_normal_squared, const double *frequencies,
     const int64_t triplet[3], const double *g1, const double *g2_3,
-    const char *g_zero, const double *temperatures, const int64_t num_temps,
+    const char *g_zero, const double *temperatures_THz, const int64_t num_temps,
     const double cutoff_frequency);
 static double collect_detailed_imag_self_energy(
     double *imag_self_energy, const int64_t num_band,
@@ -72,11 +72,11 @@ void ise_get_imag_self_energy_with_g(
     double *imag_self_energy, const Darray *fc3_normal_squared,
     const double *frequencies, const int64_t (*triplets)[3],
     const int64_t *triplet_weights, const double *g, const char *g_zero,
-    const double temperature, const double cutoff_frequency,
+    const double temperature_THz, const double cutoff_frequency,
     const int64_t num_frequency_points, const int64_t frequency_point_index) {
     int64_t i, j, num_triplets, num_band0, num_band, num_band_prod;
     int64_t num_g_pos, g_index_dims, g_index_shift;
-    int64_t(*g_pos)[4];
+    int64_t (*g_pos)[4];
     double *ise;
     int64_t at_a_frequency_point;
 
@@ -118,7 +118,7 @@ void ise_get_imag_self_energy_with_g(
          * ise_set_g_pos works for frequency points as bands.
          * set_g_pos_frequency_point works for frequency sampling mode.
          */
-        g_pos = (int64_t(*)[4])malloc(sizeof(int64_t[4]) * num_band_prod);
+        g_pos = (int64_t (*)[4])malloc(sizeof(int64_t[4]) * num_band_prod);
         if (at_a_frequency_point) {
             num_g_pos = set_g_pos_frequency_point(
                 g_pos, num_band0, num_band,
@@ -134,7 +134,7 @@ void ise_get_imag_self_energy_with_g(
             triplets[i], triplet_weights[i],
             g + i * g_index_dims + g_index_shift,
             g + (i + num_triplets) * g_index_dims + g_index_shift, g_pos,
-            num_g_pos, &temperature, 1, cutoff_frequency, 0,
+            num_g_pos, &temperature_THz, 1, cutoff_frequency, 0,
             at_a_frequency_point);
 
         free(g_pos);
@@ -160,7 +160,7 @@ void ise_get_detailed_imag_self_energy_with_g(
     double *imag_self_energy_U, const Darray *fc3_normal_squared,
     const double *frequencies, const int64_t (*triplets)[3],
     const int64_t *triplet_weights, const int64_t (*bz_grid_addresses)[3],
-    const double *g, const char *g_zero, const double temperature,
+    const double *g, const char *g_zero, const double temperature_THz,
     const double cutoff_frequency) {
     double *ise;
     int64_t i, j, num_triplets, num_band0, num_band, num_band_prod;
@@ -187,7 +187,7 @@ void ise_get_detailed_imag_self_energy_with_g(
             num_band0, num_band, fc3_normal_squared->data + i * num_band_prod,
             frequencies, triplets[i], g + i * num_band_prod,
             g + (i + num_triplets) * num_band_prod, g_zero + i * num_band_prod,
-            &temperature, 1, cutoff_frequency);
+            &temperature_THz, 1, cutoff_frequency);
     }
 
     is_N = (int64_t *)malloc(sizeof(int64_t) * num_triplets);
@@ -224,7 +224,7 @@ void ise_imag_self_energy_at_triplet(
     const double *fc3_normal_squared, const double *frequencies,
     const int64_t triplet[3], const int64_t triplet_weight, const double *g1,
     const double *g2_3, const int64_t (*g_pos)[4], const int64_t num_g_pos,
-    const double *temperatures, const int64_t num_temps,
+    const double *temperatures_THz, const int64_t num_temps,
     const double cutoff_frequency, const int64_t openmp_per_triplets,
     const int64_t at_a_frequency_point) {
     int64_t i, j;
@@ -237,7 +237,7 @@ void ise_imag_self_energy_at_triplet(
 
     for (i = 0; i < num_temps; i++) {
         set_occupations(n1 + i * num_band, n2 + i * num_band, num_band,
-                        temperatures[i], triplet, frequencies,
+                        temperatures_THz[i], triplet, frequencies,
                         cutoff_frequency);
     }
 
@@ -259,7 +259,7 @@ void ise_imag_self_energy_at_triplet(
                 n2[j * num_band + g_pos[i][2]] < 0) {
                 ise_at_g_pos[i * num_temps + j] = 0;
             } else {
-                if (temperatures[j] > 0) {
+                if (temperatures_THz[j] > 0) {
                     ise_at_g_pos[i * num_temps + j] =
                         ((n1[j * num_band + g_pos[i][1]] +
                           n2[j * num_band + g_pos[i][2]] + 1) *
@@ -359,7 +359,7 @@ static void detailed_imag_self_energy_at_triplet(
     const int64_t num_band0, const int64_t num_band,
     const double *fc3_normal_squared, const double *frequencies,
     const int64_t triplet[3], const double *g1, const double *g2_3,
-    const char *g_zero, const double *temperatures, const int64_t num_temps,
+    const char *g_zero, const double *temperatures_THz, const int64_t num_temps,
     const double cutoff_frequency) {
     int64_t i, j, adrs_shift;
     double *n1, *n2;
@@ -371,12 +371,12 @@ static void detailed_imag_self_energy_at_triplet(
     n2 = (double *)malloc(sizeof(double) * num_band);
 
     for (i = 0; i < num_temps; i++) {
-        set_occupations(n1, n2, num_band, temperatures[i], triplet, frequencies,
-                        cutoff_frequency);
+        set_occupations(n1, n2, num_band, temperatures_THz[i], triplet,
+                        frequencies, cutoff_frequency);
 
         for (j = 0; j < num_band0; j++) {
             adrs_shift = j * num_band * num_band;
-            if (temperatures[i] > 0) {
+            if (temperatures_THz[i] > 0) {
                 imag_self_energy[i * num_band0 + j] =
                     collect_detailed_imag_self_energy(
                         detailed_imag_self_energy + adrs_shift, num_band,
@@ -452,8 +452,8 @@ static double collect_detailed_imag_self_energy_0K(
 }
 
 static void set_occupations(double *n1, double *n2, const int64_t num_band,
-                            const double temperature, const int64_t triplet[3],
-                            const double *frequencies,
+                            const double temperature_THz,
+                            const int64_t triplet[3], const double *frequencies,
                             const double cutoff_frequency) {
     int64_t j;
     double f1, f2;
@@ -462,12 +462,12 @@ static void set_occupations(double *n1, double *n2, const int64_t num_band,
         f1 = frequencies[triplet[1] * num_band + j];
         f2 = frequencies[triplet[2] * num_band + j];
         if (f1 > cutoff_frequency) {
-            n1[j] = funcs_bose_einstein(f1, temperature);
+            n1[j] = funcs_bose_einstein(f1, temperature_THz);
         } else {
             n1[j] = -1;
         }
         if (f2 > cutoff_frequency) {
-            n2[j] = funcs_bose_einstein(f2, temperature);
+            n2[j] = funcs_bose_einstein(f2, temperature_THz);
         } else {
             n2[j] = -1;
         }

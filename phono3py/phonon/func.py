@@ -63,7 +63,7 @@ def bose_einstein(x, T):
 
     """
     return 1.0 / (
-        np.exp(get_physical_units().THzToEv * x / (get_physical_units().Kb * T)) - 1
+        np.exp(get_physical_units().THzToEv * x / (get_physical_units().KB * T)) - 1
     )
 
 

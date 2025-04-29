@@ -91,7 +91,7 @@ class JointDos:
         else:
             self._cutoff_frequency = cutoff_frequency
         if frequency_factor_to_THz is None:
-            self._frequency_factor_to_THz = get_physical_units().defaultToTHz
+            self._frequency_factor_to_THz = get_physical_units().DefaultToTHz
         else:
             self._frequency_factor_to_THz = frequency_factor_to_THz
         self._frequency_scale_factor = frequency_scale_factor
@@ -391,7 +391,9 @@ class JointDos:
                 self._triplets_at_q,
                 self._weights_at_q,
                 self._frequencies,
-                self._temperature,
+                self._temperature
+                * get_physical_units().KB
+                / get_physical_units().THzToEv,
                 g,
                 self._g_zero,
                 self._cutoff_frequency,
