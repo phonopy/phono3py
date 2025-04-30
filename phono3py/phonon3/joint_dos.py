@@ -39,8 +39,8 @@ import warnings
 
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
+from phonopy.physical_units import get_physical_units
 from phonopy.structure.cells import Primitive, Supercell
-from phonopy.units import VaspToTHz
 
 from phono3py.phonon.func import bose_einstein
 from phono3py.phonon.grid import BZGrid, get_grid_point_from_address
@@ -66,7 +66,7 @@ class JointDos:
         sigma=None,
         sigma_cutoff=None,
         cutoff_frequency=None,
-        frequency_factor_to_THz=VaspToTHz,
+        frequency_factor_to_THz=None,
         frequency_scale_factor=1.0,
         is_mesh_symmetry=True,
         symprec=1e-5,
@@ -90,7 +90,10 @@ class JointDos:
             self._cutoff_frequency = 0
         else:
             self._cutoff_frequency = cutoff_frequency
-        self._frequency_factor_to_THz = frequency_factor_to_THz
+        if frequency_factor_to_THz is None:
+            self._frequency_factor_to_THz = get_physical_units().DefaultToTHz
+        else:
+            self._frequency_factor_to_THz = frequency_factor_to_THz
         self._frequency_scale_factor = frequency_scale_factor
         self._is_mesh_symmetry = is_mesh_symmetry
         self._symprec = symprec
@@ -388,7 +391,9 @@ class JointDos:
                 self._triplets_at_q,
                 self._weights_at_q,
                 self._frequencies,
-                self._temperature,
+                self._temperature
+                * get_physical_units().KB
+                / get_physical_units().THzToEv,
                 g,
                 self._g_zero,
                 self._cutoff_frequency,

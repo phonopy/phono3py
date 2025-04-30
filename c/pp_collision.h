@@ -50,9 +50,9 @@ void ppc_get_pp_collision(
     const int64_t *triplet_weights, const RecgridConstBZGrid *bzgrid,
     const double *fc3, const int64_t is_compact_fc3,
     const AtomTriplets *atom_triplets, const double *masses,
-    const Larray *band_indices, const Darray *temperatures, const int64_t is_NU,
-    const int64_t symmetrize_fc3_q, const double cutoff_frequency,
-    const int64_t openmp_per_triplets);
+    const Larray *band_indices, const Darray *temperatures_THz,
+    const int64_t is_NU, const int64_t symmetrize_fc3_q,
+    const double cutoff_frequency, const int64_t openmp_per_triplets);
 void ppc_get_pp_collision_with_sigma(
     double *imag_self_energy, const double sigma, const double sigma_cutoff,
     const double *frequencies, const lapack_complex_double *eigenvectors,
@@ -60,8 +60,8 @@ void ppc_get_pp_collision_with_sigma(
     const int64_t *triplet_weights, const RecgridConstBZGrid *bzgrid,
     const double *fc3, const int64_t is_compact_fc3,
     const AtomTriplets *atom_triplets, const double *masses,
-    const Larray *band_indices, const Darray *temperatures, const int64_t is_NU,
-    const int64_t symmetrize_fc3_q, const double cutoff_frequency,
-    const int64_t openmp_per_triplets);
+    const Larray *band_indices, const Darray *temperatures_THz,
+    const int64_t is_NU, const int64_t symmetrize_fc3_q,
+    const double cutoff_frequency, const int64_t openmp_per_triplets);
 
 #endif

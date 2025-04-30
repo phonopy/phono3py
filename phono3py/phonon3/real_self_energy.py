@@ -38,7 +38,7 @@ import sys
 
 import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
-from phonopy.units import EV, Hbar, THz
+from phonopy.physical_units import get_physical_units
 
 from phono3py.file_IO import (
     write_real_self_energy_at_grid_point,
@@ -115,7 +115,12 @@ class RealSelfEnergy:
         self._real_self_energies = None
 
         # Unit to THz of Delta
-        self._unit_conversion = 18 / (Hbar * EV) ** 2 / (2 * np.pi * THz) ** 2 * EV**2
+        self._unit_conversion = (
+            18
+            / (get_physical_units().Hbar * get_physical_units().EV) ** 2
+            / (2 * np.pi * get_physical_units().THz) ** 2
+            * get_physical_units().EV ** 2
+        )
 
     def run(self):
         """Calculate real-part of self-energies."""
@@ -240,7 +245,7 @@ class RealSelfEnergy:
             self._weights_at_q,
             self._frequencies,
             self._band_indices,
-            self._temperature,
+            self._temperature * get_physical_units().KB / get_physical_units().THzToEv,
             self._epsilon,
             self._unit_conversion,
             self._cutoff_frequency,
@@ -277,7 +282,9 @@ class RealSelfEnergy:
                 self._weights_at_q,
                 self._frequencies,
                 self._band_indices,
-                self._temperature,
+                self._temperature
+                * get_physical_units().KB
+                / get_physical_units().THzToEv,
                 self._epsilon,
                 self._unit_conversion,
                 self._cutoff_frequency,

@@ -41,12 +41,12 @@ from typing import Optional, Union
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
 from phonopy.phonon.tetrahedron_mesh import get_tetrahedra_frequencies
+from phonopy.physical_units import get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.atoms import isotope_data as phonopy_isotope_data
 from phonopy.structure.cells import Primitive
 from phonopy.structure.symmetry import Symmetry
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
-from phonopy.units import VaspToTHz
 
 from phono3py.other.tetrahedron_method import (
     get_integration_weights,
@@ -100,7 +100,7 @@ class Isotope:
         band_indices=None,
         sigma=None,
         bz_grid=None,
-        frequency_factor_to_THz=VaspToTHz,
+        frequency_factor_to_THz=None,
         use_grg=False,
         symprec=1e-5,
         cutoff_frequency=None,
@@ -122,7 +122,10 @@ class Isotope:
             self._cutoff_frequency = 0
         else:
             self._cutoff_frequency = cutoff_frequency
-        self._frequency_factor_to_THz = frequency_factor_to_THz
+        if frequency_factor_to_THz is None:
+            self._frequency_factor_to_THz = get_physical_units().DefaultToTHz
+        else:
+            self._frequency_factor_to_THz = frequency_factor_to_THz
         self._lapack_zheev_uplo = lapack_zheev_uplo
         self._nac_q_direction = None
 

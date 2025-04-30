@@ -50,7 +50,7 @@
 
 static void get_collision(
     double *ise, const int64_t num_band0, const int64_t num_band,
-    const int64_t num_temps, const double *temperatures, const double *g,
+    const int64_t num_temps, const double *temperatures_THz, const double *g,
     const char *g_zero, const double *frequencies,
     const lapack_complex_double *eigenvectors, const int64_t triplet[3],
     const int64_t triplet_weight, const RecgridConstBZGrid *bzgrid,
@@ -72,9 +72,9 @@ void ppc_get_pp_collision(
     const int64_t *triplet_weights, const RecgridConstBZGrid *bzgrid,
     const double *fc3, const int64_t is_compact_fc3,
     const AtomTriplets *atom_triplets, const double *masses,
-    const Larray *band_indices, const Darray *temperatures, const int64_t is_NU,
-    const int64_t symmetrize_fc3_q, const double cutoff_frequency,
-    const int64_t openmp_per_triplets) {
+    const Larray *band_indices, const Darray *temperatures_THz,
+    const int64_t is_NU, const int64_t symmetrize_fc3_q,
+    const double cutoff_frequency, const int64_t openmp_per_triplets) {
     int64_t i;
     int64_t num_band, num_band0, num_band_prod, num_temps;
     double *ise, *freqs_at_gp, *g;
@@ -89,7 +89,7 @@ void ppc_get_pp_collision(
     num_band0 = band_indices->dims[0];
     num_band = atom_triplets->multi_dims[1] * 3;
     num_band_prod = num_band0 * num_band * num_band;
-    num_temps = temperatures->dims[0];
+    num_temps = temperatures_THz->dims[0];
     ise =
         (double *)malloc(sizeof(double) * num_triplets * num_temps * num_band0);
     freqs_at_gp = (double *)malloc(sizeof(double) * num_band0);
@@ -101,8 +101,8 @@ void ppc_get_pp_collision(
     tpl_set_relative_grid_address(tp_relative_grid_address,
                                   relative_grid_address, 2);
 #ifdef _OPENMP
-#pragma omp parallel for schedule(guided) private( \
-        g, g_zero) if (openmp_per_triplets)
+#pragma omp parallel for schedule(guided) \
+    private(g, g_zero) if (openmp_per_triplets)
 #endif
     for (i = 0; i < num_triplets; i++) {
         g = (double *)malloc(sizeof(double) * 2 * num_band_prod);
@@ -115,7 +115,7 @@ void ppc_get_pp_collision(
                                    num_band, 2, openmp_per_triplets);
 
         get_collision(ise + i * num_temps * num_band0, num_band0, num_band,
-                      num_temps, temperatures->data, g, g_zero, frequencies,
+                      num_temps, temperatures_THz->data, g, g_zero, frequencies,
                       eigenvectors, triplets[i], triplet_weights[i], bzgrid,
                       fc3, is_compact_fc3, atom_triplets, masses,
                       band_indices->data, symmetrize_fc3_q, cutoff_frequency,
@@ -143,9 +143,9 @@ void ppc_get_pp_collision_with_sigma(
     const int64_t *triplet_weights, const RecgridConstBZGrid *bzgrid,
     const double *fc3, const int64_t is_compact_fc3,
     const AtomTriplets *atom_triplets, const double *masses,
-    const Larray *band_indices, const Darray *temperatures, const int64_t is_NU,
-    const int64_t symmetrize_fc3_q, const double cutoff_frequency,
-    const int64_t openmp_per_triplets) {
+    const Larray *band_indices, const Darray *temperatures_THz,
+    const int64_t is_NU, const int64_t symmetrize_fc3_q,
+    const double cutoff_frequency, const int64_t openmp_per_triplets) {
     int64_t i;
     int64_t num_band, num_band0, num_band_prod, num_temps;
     int64_t const_adrs_shift;
@@ -161,7 +161,7 @@ void ppc_get_pp_collision_with_sigma(
     num_band0 = band_indices->dims[0];
     num_band = atom_triplets->multi_dims[1] * 3;
     num_band_prod = num_band0 * num_band * num_band;
-    num_temps = temperatures->dims[0];
+    num_temps = temperatures_THz->dims[0];
     const_adrs_shift = num_band_prod;
 
     ise =
@@ -175,8 +175,8 @@ void ppc_get_pp_collision_with_sigma(
     cutoff = sigma * sigma_cutoff;
 
 #ifdef _OPENMP
-#pragma omp parallel for schedule(guided) private( \
-        g, g_zero) if (openmp_per_triplets)
+#pragma omp parallel for schedule(guided) \
+    private(g, g_zero) if (openmp_per_triplets)
 #endif
     for (i = 0; i < num_triplets; i++) {
         g = (double *)malloc(sizeof(double) * 2 * num_band_prod);
@@ -186,7 +186,7 @@ void ppc_get_pp_collision_with_sigma(
             const_adrs_shift, frequencies, num_band, 2, 1);
 
         get_collision(ise + i * num_temps * num_band0, num_band0, num_band,
-                      num_temps, temperatures->data, g, g_zero, frequencies,
+                      num_temps, temperatures_THz->data, g, g_zero, frequencies,
                       eigenvectors, triplets[i], triplet_weights[i], bzgrid,
                       fc3, is_compact_fc3, atom_triplets, masses,
                       band_indices->data, symmetrize_fc3_q, cutoff_frequency,
@@ -209,7 +209,7 @@ void ppc_get_pp_collision_with_sigma(
 
 static void get_collision(
     double *ise, const int64_t num_band0, const int64_t num_band,
-    const int64_t num_temps, const double *temperatures, const double *g,
+    const int64_t num_temps, const double *temperatures_THz, const double *g,
     const char *g_zero, const double *frequencies,
     const lapack_complex_double *eigenvectors, const int64_t triplet[3],
     const int64_t triplet_weight, const RecgridConstBZGrid *bzgrid,
@@ -220,14 +220,14 @@ static void get_collision(
     int64_t i;
     int64_t num_band_prod, num_g_pos;
     double *fc3_normal_squared;
-    int64_t(*g_pos)[4];
+    int64_t (*g_pos)[4];
 
     fc3_normal_squared = NULL;
     g_pos = NULL;
 
     num_band_prod = num_band0 * num_band * num_band;
     fc3_normal_squared = (double *)malloc(sizeof(double) * num_band_prod);
-    g_pos = (int64_t(*)[4])malloc(sizeof(int64_t[4]) * num_band_prod);
+    g_pos = (int64_t (*)[4])malloc(sizeof(int64_t[4]) * num_band_prod);
 
     for (i = 0; i < num_band_prod; i++) {
         fc3_normal_squared[i] = 0;
@@ -243,8 +243,8 @@ static void get_collision(
 
     ise_imag_self_energy_at_triplet(
         ise, num_band0, num_band, fc3_normal_squared, frequencies, triplet,
-        triplet_weight, g, g + num_band_prod, g_pos, num_g_pos, temperatures,
-        num_temps, cutoff_frequency, openmp_per_triplets, 0);
+        triplet_weight, g, g + num_band_prod, g_pos, num_g_pos,
+        temperatures_THz, num_temps, cutoff_frequency, openmp_per_triplets, 0);
 
     free(fc3_normal_squared);
     fc3_normal_squared = NULL;

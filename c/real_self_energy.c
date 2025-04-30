@@ -46,12 +46,12 @@ static double get_real_self_energy_at_band(
     const int64_t band_index, const Darray *fc3_normal_squared,
     const double fpoint, const double *frequencies,
     const int64_t (*triplets)[3], const int64_t *triplet_weights,
-    const double epsilon, const double temperature,
+    const double epsilon, const double temperature_THz,
     const double unit_conversion_factor, const double cutoff_frequency);
 static double sum_real_self_energy_at_band(
     const int64_t num_band, const double *fc3_normal_squared,
     const double fpoint, const double *freqs1, const double *freqs2,
-    const double epsilon, const double temperature,
+    const double epsilon, const double temperature_THz,
     const double cutoff_frequency);
 static double sum_real_self_energy_at_band_0K(
     const int64_t num_band, const double *fc3_normal_squared,
@@ -62,7 +62,7 @@ void rse_get_real_self_energy_at_bands(
     double *real_self_energy, const Darray *fc3_normal_squared,
     const int64_t *band_indices, const double *frequencies,
     const int64_t (*triplets)[3], const int64_t *triplet_weights,
-    const double epsilon, const double temperature,
+    const double epsilon, const double temperature_THz,
     const double unit_conversion_factor, const double cutoff_frequency) {
     int64_t i, num_band0, num_band, gp0;
     double fpoint;
@@ -79,8 +79,8 @@ void rse_get_real_self_energy_at_bands(
         } else {
             real_self_energy[i] = get_real_self_energy_at_band(
                 i, fc3_normal_squared, fpoint, frequencies, triplets,
-                triplet_weights, epsilon, temperature, unit_conversion_factor,
-                cutoff_frequency);
+                triplet_weights, epsilon, temperature_THz,
+                unit_conversion_factor, cutoff_frequency);
         }
     }
 }
@@ -90,7 +90,7 @@ void rse_get_real_self_energy_at_frequency_point(
     const Darray *fc3_normal_squared, const int64_t *band_indices,
     const double *frequencies, const int64_t (*triplets)[3],
     const int64_t *triplet_weights, const double epsilon,
-    const double temperature, const double unit_conversion_factor,
+    const double temperature_THz, const double unit_conversion_factor,
     const double cutoff_frequency) {
     int64_t i, num_band0;
 
@@ -103,8 +103,8 @@ void rse_get_real_self_energy_at_frequency_point(
         } else {
             real_self_energy[i] = get_real_self_energy_at_band(
                 i, fc3_normal_squared, frequency_point, frequencies, triplets,
-                triplet_weights, epsilon, temperature, unit_conversion_factor,
-                cutoff_frequency);
+                triplet_weights, epsilon, temperature_THz,
+                unit_conversion_factor, cutoff_frequency);
         }
     }
 }
@@ -113,7 +113,7 @@ static double get_real_self_energy_at_band(
     const int64_t band_index, const Darray *fc3_normal_squared,
     const double fpoint, const double *frequencies,
     const int64_t (*triplets)[3], const int64_t *triplet_weights,
-    const double epsilon, const double temperature,
+    const double epsilon, const double temperature_THz,
     const double unit_conversion_factor, const double cutoff_frequency) {
     int64_t i, num_triplets, num_band0, num_band, gp1, gp2;
     double shift;
@@ -129,14 +129,14 @@ static double get_real_self_energy_at_band(
     for (i = 0; i < num_triplets; i++) {
         gp1 = triplets[i][1];
         gp2 = triplets[i][2];
-        if (temperature > 0) {
+        if (temperature_THz > 0) {
             shift += sum_real_self_energy_at_band(
                          num_band,
                          fc3_normal_squared->data +
                              i * num_band0 * num_band * num_band +
                              band_index * num_band * num_band,
                          fpoint, frequencies + gp1 * num_band,
-                         frequencies + gp2 * num_band, epsilon, temperature,
+                         frequencies + gp2 * num_band, epsilon, temperature_THz,
                          cutoff_frequency) *
                      triplet_weights[i] * unit_conversion_factor;
         } else {
@@ -157,7 +157,7 @@ static double get_real_self_energy_at_band(
 static double sum_real_self_energy_at_band(
     const int64_t num_band, const double *fc3_normal_squared,
     const double fpoint, const double *freqs1, const double *freqs2,
-    const double epsilon, const double temperature,
+    const double epsilon, const double temperature_THz,
     const double cutoff_frequency) {
     int64_t i, j;
     double n1, n2, f1, f2, f3, f4, shift;
@@ -166,10 +166,10 @@ static double sum_real_self_energy_at_band(
     shift = 0;
     for (i = 0; i < num_band; i++) {
         if (freqs1[i] > cutoff_frequency) {
-            n1 = funcs_bose_einstein(freqs1[i], temperature);
+            n1 = funcs_bose_einstein(freqs1[i], temperature_THz);
             for (j = 0; j < num_band; j++) {
                 if (freqs2[j] > cutoff_frequency) {
-                    n2 = funcs_bose_einstein(freqs2[j], temperature);
+                    n2 = funcs_bose_einstein(freqs2[j], temperature_THz);
                     f1 = fpoint + freqs1[i] + freqs2[j];
                     f2 = fpoint - freqs1[i] - freqs2[j];
                     f3 = fpoint - freqs1[i] + freqs2[j];

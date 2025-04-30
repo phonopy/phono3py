@@ -42,7 +42,7 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.phonon.thermal_properties import mode_cv
-from phonopy.units import EV, Angstrom, Kb, THz, THzToEv
+from phonopy.physical_units import get_physical_units
 
 from phono3py.other.isotope import Isotope
 from phono3py.phonon.grid import get_grid_points_by_rotations, get_ir_grid_points
@@ -50,9 +50,17 @@ from phono3py.phonon3.collision_matrix import CollisionMatrix
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy
 from phono3py.phonon3.interaction import Interaction
 
-unit_to_WmK = (
-    (THz * Angstrom) ** 2 / (Angstrom**3) * EV / THz / (2 * np.pi)
-)  # 2pi comes from definition of lifetime.
+
+def get_unit_to_WmK() -> float:
+    """Return conversion factor to WmK."""
+    unit_to_WmK = (
+        (get_physical_units().THz * get_physical_units().Angstrom) ** 2
+        / (get_physical_units().Angstrom ** 3)
+        * get_physical_units().EV
+        / get_physical_units().THz
+        / (2 * np.pi)
+    )  # 2pi comes from definition of lifetime.
+    return unit_to_WmK
 
 
 class HeatCapacityMixIn:
@@ -96,15 +104,18 @@ class HeatCapacityMixIn:
 
         """
         grid_point = self._grid_points[i_gp]
-        freqs = self._frequencies[grid_point][self._pp.band_indices] * THzToEv
-        cutoff = self._pp.cutoff_frequency * THzToEv
+        freqs = (
+            self._frequencies[grid_point][self._pp.band_indices]
+            * get_physical_units().THzToEv
+        )
+        cutoff = self._pp.cutoff_frequency * get_physical_units().THzToEv
         cv = np.zeros((len(self._temperatures), len(freqs)), dtype="double")
         # x=freq/T has to be small enough to avoid overflow of exp(x).
         # x < 100 is the hard-corded criterion.
         # Otherwise just set 0.
         for i, f in enumerate(freqs):
             if f > cutoff:
-                condition = f < 100 * self._temperatures * Kb
+                condition = f < 100 * self._temperatures * get_physical_units().KB
                 cv[:, i] = np.where(
                     condition,
                     mode_cv(np.where(condition, self._temperatures, 10000), f),
@@ -379,7 +390,7 @@ class ConductivityBase(ABC):
         self._gamma_iso: Optional[np.ndarray] = None
 
         volume = self._pp.primitive.volume
-        self._conversion_factor = unit_to_WmK / volume
+        self._conversion_factor = get_unit_to_WmK() / volume
 
         self._averaged_pp_interaction = None
 
@@ -903,7 +914,7 @@ class ConductivityBase(ABC):
         for ll in range(num_band):
             g_boundary[ll] = (
                 np.linalg.norm(gv[i_gp, ll])
-                * Angstrom
+                * get_physical_units().Angstrom
                 * 1e6
                 / (4 * np.pi * self._boundary_mfp)
             )
