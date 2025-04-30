@@ -37,7 +37,6 @@
 import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.phonon.group_velocity import GroupVelocity
-from phonopy.units import VaspToTHz
 from phonopy.utils import similarity_transformation
 
 
@@ -57,7 +56,7 @@ class GroupVelocityMatrix(GroupVelocity):
         dynamical_matrix,
         q_length=None,
         symmetry=None,
-        frequency_factor_to_THz=VaspToTHz,
+        frequency_factor_to_THz=None,
         cutoff_frequency=1e-4,
     ):
         """Init method.

@@ -38,7 +38,7 @@ import textwrap
 
 import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
-from phonopy.units import EV, Angstrom, Hbar, THz
+from phonopy.physical_units import get_physical_units
 
 from phono3py.conductivity.base import HeatCapacityMixIn
 from phono3py.phonon.grid import get_grid_points_by_rotations
@@ -215,8 +215,9 @@ class ConductivityWignerMixIn(HeatCapacityMixIn):
 def get_conversion_factor_WTE(volume):
     """Return conversion factor of thermal conductivity."""
     return (
-        (THz * Angstrom) ** 2  # ----> group velocity
-        * EV  # ----> specific heat is in eV/
-        * Hbar  # ----> transform lorentzian_div_hbar from eV^-1 to s
-        / (volume * Angstrom**3)
-    )  # ----> unit cell volume
+        (get_physical_units().THz * get_physical_units().Angstrom)
+        ** 2  # --> group velocity
+        * get_physical_units().EV  # --> specific heat is in eV/
+        * get_physical_units().Hbar  # --> transform lorentzian_div_hbar from eV^-1 to s
+        / (volume * get_physical_units().Angstrom ** 3)
+    )  # --> unit cell volume

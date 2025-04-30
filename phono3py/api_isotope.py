@@ -35,7 +35,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phonopy.units import VaspToTHz
 
 from phono3py.other.isotope import Isotope
 
@@ -50,7 +49,7 @@ class Phono3pyIsotope:
         mass_variances=None,  # length of list is num_atom.
         band_indices=None,
         sigmas=None,
-        frequency_factor_to_THz=VaspToTHz,
+        frequency_factor_to_THz=None,
         use_grg=False,
         symprec=1e-5,
         cutoff_frequency=None,
