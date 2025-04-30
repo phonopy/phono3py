@@ -35,9 +35,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
+from phonopy.physical_units import get_physical_units
 from phonopy.structure.cells import Primitive, Supercell
 from phonopy.structure.symmetry import Symmetry
-from phonopy.units import VaspToTHz
 
 from phono3py.file_IO import write_joint_dos
 from phono3py.phonon.grid import BZGrid
@@ -65,7 +65,7 @@ class Phono3pyJointDos:
         num_frequency_points=None,
         num_points_in_batch=None,
         temperatures=None,
-        frequency_factor_to_THz=VaspToTHz,
+        frequency_factor_to_THz=None,
         frequency_scale_factor=None,
         use_grg=False,
         SNF_coordinates="reciprocal",
@@ -87,7 +87,10 @@ class Phono3pyJointDos:
         else:
             self._sigmas = sigmas
         self._cutoff_frequency = cutoff_frequency
-        self._frequency_factor_to_THz = frequency_factor_to_THz
+        if frequency_factor_to_THz is None:
+            self._frequency_factor_to_THz = get_physical_units().DefaultToTHz
+        else:
+            self._frequency_factor_to_THz = frequency_factor_to_THz
         self._frequency_scale_factor = frequency_scale_factor
         self._is_mesh_symmetry = is_mesh_symmetry
         self._is_symmetry = is_symmetry

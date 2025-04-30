@@ -2,7 +2,7 @@
 
 import numpy as np
 from phonopy import Phonopy
-from phonopy.units import THzToCm, VaspToTHz
+from phonopy.physical_units import get_physical_units
 
 from phono3py.phonon.velocity_operator import VelocityOperator
 
@@ -194,7 +194,7 @@ def test_gv_operator_nacl(ph_nacl: Phonopy):
     eigvals, eigvecs = np.linalg.eigh(dm)
 
     np.testing.assert_allclose(
-        eigvals * VaspToTHz * THzToCm,
+        eigvals * get_physical_units().DefaultToTHz * get_physical_units().THzToCm,
         eigvals_NaCl_Ref,
         atol=0.00001,
         rtol=0.00001,
@@ -406,7 +406,7 @@ def test_gv_operator_si(ph_si: Phonopy):
     eigvals, eigvecs = np.linalg.eigh(dm)
 
     np.testing.assert_allclose(
-        eigvals * VaspToTHz * THzToCm,
+        eigvals * get_physical_units().DefaultToTHz * get_physical_units().THzToCm,
         eigvals_si_Ref,
         atol=0.00001,
         rtol=0.00001,

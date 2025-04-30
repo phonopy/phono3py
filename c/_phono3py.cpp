@@ -65,15 +65,15 @@ void py_get_interaction(nb::ndarray<> py_fc3_normal_squared,
     Darray *fc3_normal_squared;
     Darray *freqs;
     _lapack_complex_double *eigvecs;
-    int64_t(*triplets)[3];
+    int64_t (*triplets)[3];
     int64_t num_triplets;
     char *g_zero;
-    int64_t(*bz_grid_addresses)[3];
+    int64_t (*bz_grid_addresses)[3];
     int64_t *D_diag;
-    int64_t(*Q)[3];
+    int64_t (*Q)[3];
     double *fc3;
-    double(*svecs)[3];
-    int64_t(*multi)[2];
+    double (*svecs)[3];
+    int64_t (*multi)[2];
     double *masses;
     char *all_shortest;
     int64_t *p2s;
@@ -88,23 +88,23 @@ void py_get_interaction(nb::ndarray<> py_fc3_normal_squared,
     /* npy_cdouble and lapack_complex_double may not be compatible. */
     /* So eigenvectors should not be used in Python side */
     eigvecs = (_lapack_complex_double *)py_eigenvectors.data();
-    triplets = (int64_t(*)[3])py_triplets.data();
+    triplets = (int64_t (*)[3])py_triplets.data();
     num_triplets = (int64_t)py_triplets.shape(0);
     g_zero = (char *)py_g_zero.data();
-    bz_grid_addresses = (int64_t(*)[3])py_bz_grid_addresses.data();
+    bz_grid_addresses = (int64_t (*)[3])py_bz_grid_addresses.data();
     D_diag = (int64_t *)py_D_diag.data();
-    Q = (int64_t(*)[3])py_Q.data();
+    Q = (int64_t (*)[3])py_Q.data();
     fc3 = (double *)py_fc3.data();
     if (py_fc3.shape(0) == py_fc3.shape(1)) {
         is_compact_fc3 = 0;
     } else {
         is_compact_fc3 = 1;
     }
-    svecs = (double(*)[3])py_svecs.data();
+    svecs = (double (*)[3])py_svecs.data();
     for (i = 0; i < 2; i++) {
         multi_dims[i] = py_multi.shape(i);
     }
-    multi = (int64_t(*)[2])py_multi.data();
+    multi = (int64_t (*)[2])py_multi.data();
     masses = (double *)py_masses.data();
     p2s = (int64_t *)py_p2s_map.data();
     s2p = (int64_t *)py_s2p_map.data();
@@ -131,74 +131,74 @@ void py_get_pp_collision(
     int64_t bz_grid_type, nb::ndarray<> py_D_diag, nb::ndarray<> py_Q,
     nb::ndarray<> py_fc3, nb::ndarray<> py_svecs, nb::ndarray<> py_multi,
     nb::ndarray<> py_masses, nb::ndarray<> py_p2s_map, nb::ndarray<> py_s2p_map,
-    nb::ndarray<> py_band_indices, nb::ndarray<> py_temperatures, int64_t is_NU,
-    int64_t symmetrize_fc3_q, int64_t make_r0_average,
+    nb::ndarray<> py_band_indices, nb::ndarray<> py_temperatures_THz,
+    int64_t is_NU, int64_t symmetrize_fc3_q, int64_t make_r0_average,
     nb::ndarray<> py_all_shortest, double cutoff_frequency,
     int64_t openmp_per_triplets) {
     double *gamma;
-    int64_t(*relative_grid_address)[4][3];
+    int64_t (*relative_grid_address)[4][3];
     double *frequencies;
     _lapack_complex_double *eigenvectors;
-    int64_t(*triplets)[3];
+    int64_t (*triplets)[3];
     int64_t num_triplets;
     int64_t *triplet_weights;
-    int64_t(*bz_grid_addresses)[3];
+    int64_t (*bz_grid_addresses)[3];
     int64_t *bz_map;
     int64_t *D_diag;
-    int64_t(*Q)[3];
+    int64_t (*Q)[3];
     double *fc3;
-    double(*svecs)[3];
-    int64_t(*multi)[2];
+    double (*svecs)[3];
+    int64_t (*multi)[2];
     double *masses;
     int64_t *p2s;
     int64_t *s2p;
     Larray *band_indices;
-    Darray *temperatures;
+    Darray *temperatures_THz;
     char *all_shortest;
     int64_t multi_dims[2];
     int64_t i;
     int64_t is_compact_fc3;
 
     gamma = (double *)py_gamma.data();
-    relative_grid_address = (int64_t(*)[4][3])py_relative_grid_address.data();
+    relative_grid_address = (int64_t (*)[4][3])py_relative_grid_address.data();
     frequencies = (double *)py_frequencies.data();
     eigenvectors = (_lapack_complex_double *)py_eigenvectors.data();
-    triplets = (int64_t(*)[3])py_triplets.data();
+    triplets = (int64_t (*)[3])py_triplets.data();
     num_triplets = (int64_t)py_triplets.shape(0);
     triplet_weights = (int64_t *)py_triplet_weights.data();
-    bz_grid_addresses = (int64_t(*)[3])py_bz_grid_addresses.data();
+    bz_grid_addresses = (int64_t (*)[3])py_bz_grid_addresses.data();
     bz_map = (int64_t *)py_bz_map.data();
     D_diag = (int64_t *)py_D_diag.data();
-    Q = (int64_t(*)[3])py_Q.data();
+    Q = (int64_t (*)[3])py_Q.data();
     fc3 = (double *)py_fc3.data();
     if (py_fc3.shape(0) == py_fc3.shape(1)) {
         is_compact_fc3 = 0;
     } else {
         is_compact_fc3 = 1;
     }
-    svecs = (double(*)[3])py_svecs.data();
+    svecs = (double (*)[3])py_svecs.data();
     for (i = 0; i < 2; i++) {
         multi_dims[i] = py_multi.shape(i);
     }
-    multi = (int64_t(*)[2])py_multi.data();
+    multi = (int64_t (*)[2])py_multi.data();
     masses = (double *)py_masses.data();
     p2s = (int64_t *)py_p2s_map.data();
     s2p = (int64_t *)py_s2p_map.data();
     band_indices = convert_to_larray(py_band_indices);
-    temperatures = convert_to_darray(py_temperatures);
+    temperatures_THz = convert_to_darray(py_temperatures_THz);
     all_shortest = (char *)py_all_shortest.data();
 
     ph3py_get_pp_collision(
         gamma, relative_grid_address, frequencies, eigenvectors, triplets,
         num_triplets, triplet_weights, bz_grid_addresses, bz_map, bz_grid_type,
         D_diag, Q, fc3, is_compact_fc3, svecs, multi_dims, multi, masses, p2s,
-        s2p, band_indices, temperatures, is_NU, symmetrize_fc3_q,
+        s2p, band_indices, temperatures_THz, is_NU, symmetrize_fc3_q,
         make_r0_average, all_shortest, cutoff_frequency, openmp_per_triplets);
 
     free(band_indices);
     band_indices = NULL;
-    free(temperatures);
-    temperatures = NULL;
+    free(temperatures_THz);
+    temperatures_THz = NULL;
 }
 
 void py_get_pp_collision_with_sigma(
@@ -209,26 +209,26 @@ void py_get_pp_collision_with_sigma(
     nb::ndarray<> py_Q, nb::ndarray<> py_fc3, nb::ndarray<> py_svecs,
     nb::ndarray<> py_multi, nb::ndarray<> py_masses, nb::ndarray<> py_p2s_map,
     nb::ndarray<> py_s2p_map, nb::ndarray<> py_band_indices,
-    nb::ndarray<> py_temperatures, int64_t is_NU, int64_t symmetrize_fc3_q,
+    nb::ndarray<> py_temperatures_THz, int64_t is_NU, int64_t symmetrize_fc3_q,
     int64_t make_r0_average, nb::ndarray<> py_all_shortest,
     double cutoff_frequency, int64_t openmp_per_triplets) {
     double *gamma;
     double *frequencies;
     _lapack_complex_double *eigenvectors;
-    int64_t(*triplets)[3];
+    int64_t (*triplets)[3];
     int64_t num_triplets;
     int64_t *triplet_weights;
-    int64_t(*bz_grid_addresses)[3];
+    int64_t (*bz_grid_addresses)[3];
     int64_t *D_diag;
-    int64_t(*Q)[3];
+    int64_t (*Q)[3];
     double *fc3;
-    double(*svecs)[3];
-    int64_t(*multi)[2];
+    double (*svecs)[3];
+    int64_t (*multi)[2];
     double *masses;
     int64_t *p2s;
     int64_t *s2p;
     Larray *band_indices;
-    Darray *temperatures;
+    Darray *temperatures_THz;
     char *all_shortest;
     int64_t multi_dims[2];
     int64_t i;
@@ -237,47 +237,47 @@ void py_get_pp_collision_with_sigma(
     gamma = (double *)py_gamma.data();
     frequencies = (double *)py_frequencies.data();
     eigenvectors = (_lapack_complex_double *)py_eigenvectors.data();
-    triplets = (int64_t(*)[3])py_triplets.data();
+    triplets = (int64_t (*)[3])py_triplets.data();
     num_triplets = (int64_t)py_triplets.shape(0);
     triplet_weights = (int64_t *)py_triplet_weights.data();
-    bz_grid_addresses = (int64_t(*)[3])py_bz_grid_addresses.data();
+    bz_grid_addresses = (int64_t (*)[3])py_bz_grid_addresses.data();
     D_diag = (int64_t *)py_D_diag.data();
-    Q = (int64_t(*)[3])py_Q.data();
+    Q = (int64_t (*)[3])py_Q.data();
     fc3 = (double *)py_fc3.data();
     if (py_fc3.shape(0) == py_fc3.shape(1)) {
         is_compact_fc3 = 0;
     } else {
         is_compact_fc3 = 1;
     }
-    svecs = (double(*)[3])py_svecs.data();
+    svecs = (double (*)[3])py_svecs.data();
     for (i = 0; i < 2; i++) {
         multi_dims[i] = py_multi.shape(i);
     }
-    multi = (int64_t(*)[2])py_multi.data();
+    multi = (int64_t (*)[2])py_multi.data();
     masses = (double *)py_masses.data();
     p2s = (int64_t *)py_p2s_map.data();
     s2p = (int64_t *)py_s2p_map.data();
     band_indices = convert_to_larray(py_band_indices);
-    temperatures = convert_to_darray(py_temperatures);
+    temperatures_THz = convert_to_darray(py_temperatures_THz);
     all_shortest = (char *)py_all_shortest.data();
 
     ph3py_get_pp_collision_with_sigma(
         gamma, sigma, sigma_cutoff, frequencies, eigenvectors, triplets,
         num_triplets, triplet_weights, bz_grid_addresses, D_diag, Q, fc3,
         is_compact_fc3, svecs, multi_dims, multi, masses, p2s, s2p,
-        band_indices, temperatures, is_NU, symmetrize_fc3_q, make_r0_average,
-        all_shortest, cutoff_frequency, openmp_per_triplets);
+        band_indices, temperatures_THz, is_NU, symmetrize_fc3_q,
+        make_r0_average, all_shortest, cutoff_frequency, openmp_per_triplets);
 
     free(band_indices);
     band_indices = NULL;
-    free(temperatures);
-    temperatures = NULL;
+    free(temperatures_THz);
+    temperatures_THz = NULL;
 }
 
 void py_get_imag_self_energy_with_g(
     nb::ndarray<> py_gamma, nb::ndarray<> py_fc3_normal_squared,
     nb::ndarray<> py_triplets, nb::ndarray<> py_triplet_weights,
-    nb::ndarray<> py_frequencies, double temperature, nb::ndarray<> py_g,
+    nb::ndarray<> py_frequencies, double temperature_THz, nb::ndarray<> py_g,
     nb::ndarray<> py_g_zero, double cutoff_frequency,
     int64_t frequency_point_index) {
     Darray *fc3_normal_squared;
@@ -285,7 +285,7 @@ void py_get_imag_self_energy_with_g(
     double *g;
     char *g_zero;
     double *frequencies;
-    int64_t(*triplets)[3];
+    int64_t (*triplets)[3];
     int64_t *triplet_weights;
     int64_t num_frequency_points;
 
@@ -294,13 +294,13 @@ void py_get_imag_self_energy_with_g(
     g = (double *)py_g.data();
     g_zero = (char *)py_g_zero.data();
     frequencies = (double *)py_frequencies.data();
-    triplets = (int64_t(*)[3])py_triplets.data();
+    triplets = (int64_t (*)[3])py_triplets.data();
     triplet_weights = (int64_t *)py_triplet_weights.data();
     num_frequency_points = (int64_t)py_g.shape(2);
 
     ph3py_get_imag_self_energy_at_bands_with_g(
         gamma, fc3_normal_squared, frequencies, triplets, triplet_weights, g,
-        g_zero, temperature, cutoff_frequency, num_frequency_points,
+        g_zero, temperature_THz, cutoff_frequency, num_frequency_points,
         frequency_point_index);
 
     free(fc3_normal_squared);
@@ -312,7 +312,7 @@ void py_get_detailed_imag_self_energy_with_g(
     nb::ndarray<> py_gamma_U, nb::ndarray<> py_fc3_normal_squared,
     nb::ndarray<> py_triplets, nb::ndarray<> py_triplet_weights,
     nb::ndarray<> py_bz_grid_addresses, nb::ndarray<> py_frequencies,
-    double temperature, nb::ndarray<> py_g, nb::ndarray<> py_g_zero,
+    double temperature_THz, nb::ndarray<> py_g, nb::ndarray<> py_g_zero,
     double cutoff_frequency) {
     Darray *fc3_normal_squared;
     double *gamma_detail;
@@ -321,9 +321,9 @@ void py_get_detailed_imag_self_energy_with_g(
     double *g;
     char *g_zero;
     double *frequencies;
-    int64_t(*triplets)[3];
+    int64_t (*triplets)[3];
     int64_t *triplet_weights;
-    int64_t(*bz_grid_addresses)[3];
+    int64_t (*bz_grid_addresses)[3];
 
     fc3_normal_squared = convert_to_darray(py_fc3_normal_squared);
     gamma_detail = (double *)py_gamma_detail.data();
@@ -332,14 +332,14 @@ void py_get_detailed_imag_self_energy_with_g(
     g = (double *)py_g.data();
     g_zero = (char *)py_g_zero.data();
     frequencies = (double *)py_frequencies.data();
-    triplets = (int64_t(*)[3])py_triplets.data();
+    triplets = (int64_t (*)[3])py_triplets.data();
     triplet_weights = (int64_t *)py_triplet_weights.data();
-    bz_grid_addresses = (int64_t(*)[3])py_bz_grid_addresses.data();
+    bz_grid_addresses = (int64_t (*)[3])py_bz_grid_addresses.data();
 
     ph3py_get_detailed_imag_self_energy_at_bands_with_g(
         gamma_detail, gamma_N, gamma_U, fc3_normal_squared, frequencies,
-        triplets, triplet_weights, bz_grid_addresses, g, g_zero, temperature,
-        cutoff_frequency);
+        triplets, triplet_weights, bz_grid_addresses, g, g_zero,
+        temperature_THz, cutoff_frequency);
 
     free(fc3_normal_squared);
     fc3_normal_squared = NULL;
@@ -349,25 +349,25 @@ void py_get_real_self_energy_at_bands(
     nb::ndarray<> py_shift, nb::ndarray<> py_fc3_normal_squared,
     nb::ndarray<> py_triplets, nb::ndarray<> py_triplet_weights,
     nb::ndarray<> py_frequencies, nb::ndarray<> py_band_indices,
-    double temperature, double epsilon, double unit_conversion_factor,
+    double temperature_THz, double epsilon, double unit_conversion_factor,
     double cutoff_frequency) {
     Darray *fc3_normal_squared;
     double *shift;
     double *frequencies;
     int64_t *band_indices;
-    int64_t(*triplets)[3];
+    int64_t (*triplets)[3];
     int64_t *triplet_weights;
 
     fc3_normal_squared = convert_to_darray(py_fc3_normal_squared);
     shift = (double *)py_shift.data();
     frequencies = (double *)py_frequencies.data();
     band_indices = (int64_t *)py_band_indices.data();
-    triplets = (int64_t(*)[3])py_triplets.data();
+    triplets = (int64_t (*)[3])py_triplets.data();
     triplet_weights = (int64_t *)py_triplet_weights.data();
 
     ph3py_get_real_self_energy_at_bands(
         shift, fc3_normal_squared, band_indices, frequencies, triplets,
-        triplet_weights, epsilon, temperature, unit_conversion_factor,
+        triplet_weights, epsilon, temperature_THz, unit_conversion_factor,
         cutoff_frequency);
 
     free(fc3_normal_squared);
@@ -378,26 +378,26 @@ void py_get_real_self_energy_at_frequency_point(
     nb::ndarray<> py_shift, double frequency_point,
     nb::ndarray<> py_fc3_normal_squared, nb::ndarray<> py_triplets,
     nb::ndarray<> py_triplet_weights, nb::ndarray<> py_frequencies,
-    nb::ndarray<> py_band_indices, double temperature, double epsilon,
+    nb::ndarray<> py_band_indices, double temperature_THz, double epsilon,
     double unit_conversion_factor, double cutoff_frequency) {
     Darray *fc3_normal_squared;
     double *shift;
     double *frequencies;
     int64_t *band_indices;
-    int64_t(*triplets)[3];
+    int64_t (*triplets)[3];
     int64_t *triplet_weights;
 
     fc3_normal_squared = convert_to_darray(py_fc3_normal_squared);
     shift = (double *)py_shift.data();
     frequencies = (double *)py_frequencies.data();
     band_indices = (int64_t *)py_band_indices.data();
-    triplets = (int64_t(*)[3])py_triplets.data();
+    triplets = (int64_t (*)[3])py_triplets.data();
     triplet_weights = (int64_t *)py_triplet_weights.data();
 
     ph3py_get_real_self_energy_at_frequency_point(
         shift, frequency_point, fc3_normal_squared, band_indices, frequencies,
-        triplets, triplet_weights, epsilon, temperature, unit_conversion_factor,
-        cutoff_frequency);
+        triplets, triplet_weights, epsilon, temperature_THz,
+        unit_conversion_factor, cutoff_frequency);
 
     free(fc3_normal_squared);
     fc3_normal_squared = NULL;
@@ -408,13 +408,13 @@ void py_get_collision_matrix(
     nb::ndarray<> py_frequencies, nb::ndarray<> py_g, nb::ndarray<> py_triplets,
     nb::ndarray<> py_triplets_map, nb::ndarray<> py_map_q,
     nb::ndarray<> py_rotated_grid_points, nb::ndarray<> py_rotations_cartesian,
-    double temperature, double unit_conversion_factor,
+    double temperature_THz, double unit_conversion_factor,
     double cutoff_frequency) {
     Darray *fc3_normal_squared;
     double *collision_matrix;
     double *g;
     double *frequencies;
-    int64_t(*triplets)[3];
+    int64_t (*triplets)[3];
     int64_t *triplets_map;
     int64_t *map_q;
     int64_t *rotated_grid_points;
@@ -425,7 +425,7 @@ void py_get_collision_matrix(
     collision_matrix = (double *)py_collision_matrix.data();
     g = (double *)py_g.data();
     frequencies = (double *)py_frequencies.data();
-    triplets = (int64_t(*)[3])py_triplets.data();
+    triplets = (int64_t (*)[3])py_triplets.data();
     triplets_map = (int64_t *)py_triplets_map.data();
     num_gp = (int64_t)py_triplets_map.shape(0);
     map_q = (int64_t *)py_map_q.data();
@@ -440,7 +440,7 @@ void py_get_collision_matrix(
     ph3py_get_collision_matrix(collision_matrix, fc3_normal_squared,
                                frequencies, triplets, triplets_map, map_q,
                                rotated_grid_points, rotations_cartesian, g,
-                               num_ir_gp, num_gp, num_rot, temperature,
+                               num_ir_gp, num_gp, num_rot, temperature_THz,
                                unit_conversion_factor, cutoff_frequency);
 
     free(fc3_normal_squared);
@@ -450,13 +450,14 @@ void py_get_collision_matrix(
 void py_get_reducible_collision_matrix(
     nb::ndarray<> py_collision_matrix, nb::ndarray<> py_fc3_normal_squared,
     nb::ndarray<> py_frequencies, nb::ndarray<> py_g, nb::ndarray<> py_triplets,
-    nb::ndarray<> py_triplets_map, nb::ndarray<> py_map_q, double temperature,
-    double unit_conversion_factor, double cutoff_frequency) {
+    nb::ndarray<> py_triplets_map, nb::ndarray<> py_map_q,
+    double temperature_THz, double unit_conversion_factor,
+    double cutoff_frequency) {
     Darray *fc3_normal_squared;
     double *collision_matrix;
     double *g;
     double *frequencies;
-    int64_t(*triplets)[3];
+    int64_t (*triplets)[3];
     int64_t *triplets_map;
     int64_t num_gp;
     int64_t *map_q;
@@ -465,14 +466,14 @@ void py_get_reducible_collision_matrix(
     collision_matrix = (double *)py_collision_matrix.data();
     g = (double *)py_g.data();
     frequencies = (double *)py_frequencies.data();
-    triplets = (int64_t(*)[3])py_triplets.data();
+    triplets = (int64_t (*)[3])py_triplets.data();
     triplets_map = (int64_t *)py_triplets_map.data();
     num_gp = (int64_t)py_triplets_map.shape(0);
     map_q = (int64_t *)py_map_q.data();
 
     ph3py_get_reducible_collision_matrix(
         collision_matrix, fc3_normal_squared, frequencies, triplets,
-        triplets_map, map_q, g, num_gp, temperature, unit_conversion_factor,
+        triplets_map, map_q, g, num_gp, temperature_THz, unit_conversion_factor,
         cutoff_frequency);
 
     free(fc3_normal_squared);
@@ -544,21 +545,21 @@ void py_rotate_delta_fc2s(nb::ndarray<> py_fc3, nb::ndarray<> py_delta_fc2s,
                           nb::ndarray<> py_inv_U,
                           nb::ndarray<> py_site_sym_cart,
                           nb::ndarray<> py_rot_map_syms) {
-    double(*fc3)[3][3][3];
-    double(*delta_fc2s)[3][3];
+    double (*fc3)[3][3][3];
+    double (*delta_fc2s)[3][3];
     double *inv_U;
-    double(*site_sym_cart)[3][3];
+    double (*site_sym_cart)[3][3];
     int64_t *rot_map_syms;
     int64_t num_atom, num_disp, num_site_sym;
 
     /* (num_atom, num_atom, 3, 3, 3) */
-    fc3 = (double(*)[3][3][3])py_fc3.data();
+    fc3 = (double (*)[3][3][3])py_fc3.data();
     /* (n_u1, num_atom, num_atom, 3, 3) */
-    delta_fc2s = (double(*)[3][3])py_delta_fc2s.data();
+    delta_fc2s = (double (*)[3][3])py_delta_fc2s.data();
     /* (3, n_u1 * n_sym) */
     inv_U = (double *)py_inv_U.data();
     /* (n_sym, 3, 3) */
-    site_sym_cart = (double(*)[3][3])py_site_sym_cart.data();
+    site_sym_cart = (double (*)[3][3])py_site_sym_cart.data();
     /* (n_sym, natom) */
     rot_map_syms = (int64_t *)py_rot_map_syms.data();
 
@@ -695,11 +696,11 @@ void py_transpose_compact_fc3(nb::ndarray<> py_fc3,
 
 void py_get_thm_relative_grid_address(nb::ndarray<> py_relative_grid_address,
                                       nb::ndarray<> py_reciprocal_lattice_py) {
-    int64_t(*relative_grid_address)[4][3];
-    double(*reciprocal_lattice)[3];
+    int64_t (*relative_grid_address)[4][3];
+    double (*reciprocal_lattice)[3];
 
-    relative_grid_address = (int64_t(*)[4][3])py_relative_grid_address.data();
-    reciprocal_lattice = (double(*)[3])py_reciprocal_lattice_py.data();
+    relative_grid_address = (int64_t (*)[4][3])py_relative_grid_address.data();
+    reciprocal_lattice = (double (*)[3])py_reciprocal_lattice_py.data();
 
     ph3py_get_relative_grid_address(relative_grid_address, reciprocal_lattice);
 }
@@ -714,18 +715,18 @@ void py_get_neighboring_grid_points(nb::ndarray<> py_relative_grid_points,
     int64_t *relative_grid_points;
     int64_t *grid_points;
     int64_t num_grid_points, num_relative_grid_address;
-    int64_t(*relative_grid_address)[3];
+    int64_t (*relative_grid_address)[3];
     int64_t *D_diag;
-    int64_t(*bz_grid_address)[3];
+    int64_t (*bz_grid_address)[3];
     int64_t *bz_map;
 
     relative_grid_points = (int64_t *)py_relative_grid_points.data();
     grid_points = (int64_t *)py_grid_points.data();
     num_grid_points = (int64_t)py_grid_points.shape(0);
-    relative_grid_address = (int64_t(*)[3])py_relative_grid_address.data();
+    relative_grid_address = (int64_t (*)[3])py_relative_grid_address.data();
     num_relative_grid_address = (int64_t)py_relative_grid_address.shape(0);
     D_diag = (int64_t *)py_D_diag.data();
-    bz_grid_address = (int64_t(*)[3])py_bz_grid_address.data();
+    bz_grid_address = (int64_t (*)[3])py_bz_grid_address.data();
     bz_map = (int64_t *)py_bz_map.data();
 
     ph3py_get_neighboring_gird_points(
@@ -743,10 +744,10 @@ void py_get_thm_integration_weights_at_grid_points(
     double *iw;
     double *frequency_points;
     int64_t num_frequency_points, num_band, num_gp;
-    int64_t(*relative_grid_address)[4][3];
+    int64_t (*relative_grid_address)[4][3];
     int64_t *D_diag;
     int64_t *grid_points;
-    int64_t(*bz_grid_address)[3];
+    int64_t (*bz_grid_address)[3];
     int64_t *bz_map;
     int64_t *gp2irgp_map;
     double *frequencies;
@@ -754,11 +755,11 @@ void py_get_thm_integration_weights_at_grid_points(
     iw = (double *)py_iw.data();
     frequency_points = (double *)py_frequency_points.data();
     num_frequency_points = (int64_t)py_frequency_points.shape(0);
-    relative_grid_address = (int64_t(*)[4][3])py_relative_grid_address.data();
+    relative_grid_address = (int64_t (*)[4][3])py_relative_grid_address.data();
     D_diag = (int64_t *)py_D_diag.data();
     grid_points = (int64_t *)py_grid_points.data();
     num_gp = (int64_t)py_grid_points.shape(0);
-    bz_grid_address = (int64_t(*)[3])py_bz_grid_address.data();
+    bz_grid_address = (int64_t (*)[3])py_bz_grid_address.data();
     bz_map = (int64_t *)py_bz_map.data();
     gp2irgp_map = (int64_t *)py_gp2irgp_map.data();
     frequencies = (double *)py_frequencies.data();
@@ -777,14 +778,14 @@ int64_t py_tpl_get_triplets_reciprocal_mesh_at_q(
     int64_t *map_triplets;
     int64_t *map_q;
     int64_t *D_diag;
-    int64_t(*rot)[3][3];
+    int64_t (*rot)[3][3];
     int64_t num_rot;
     int64_t num_ir;
 
     map_triplets = (int64_t *)py_map_triplets.data();
     map_q = (int64_t *)py_map_q.data();
     D_diag = (int64_t *)py_D_diag.data();
-    rot = (int64_t(*)[3][3])py_rotations.data();
+    rot = (int64_t (*)[3][3])py_rotations.data();
     num_rot = (int64_t)py_rotations.shape(0);
 
     num_ir = ph3py_get_triplets_reciprocal_mesh_at_q(
@@ -801,22 +802,22 @@ int64_t py_tpl_get_BZ_triplets_at_q(nb::ndarray<> py_triplets,
                                     nb::ndarray<> py_map_triplets,
                                     nb::ndarray<> py_D_diag, nb::ndarray<> py_Q,
                                     int64_t bz_grid_type) {
-    int64_t(*triplets)[3];
-    int64_t(*bz_grid_address)[3];
+    int64_t (*triplets)[3];
+    int64_t (*bz_grid_address)[3];
     int64_t *bz_map;
     int64_t *map_triplets;
     int64_t num_map_triplets;
     int64_t *D_diag;
-    int64_t(*Q)[3];
+    int64_t (*Q)[3];
     int64_t num_ir;
 
-    triplets = (int64_t(*)[3])py_triplets.data();
-    bz_grid_address = (int64_t(*)[3])py_bz_grid_address.data();
+    triplets = (int64_t (*)[3])py_triplets.data();
+    bz_grid_address = (int64_t (*)[3])py_bz_grid_address.data();
     bz_map = (int64_t *)py_bz_map.data();
     map_triplets = (int64_t *)py_map_triplets.data();
     num_map_triplets = (int64_t)py_map_triplets.shape(0);
     D_diag = (int64_t *)py_D_diag.data();
-    Q = (int64_t(*)[3])py_Q.data();
+    Q = (int64_t (*)[3])py_Q.data();
 
     num_ir = ph3py_get_BZ_triplets_at_q(triplets, grid_point, bz_grid_address,
                                         bz_map, map_triplets, num_map_triplets,
@@ -835,10 +836,10 @@ void py_get_triplets_integration_weights(
     double *iw;
     char *iw_zero;
     double *frequency_points;
-    int64_t(*relative_grid_address)[4][3];
+    int64_t (*relative_grid_address)[4][3];
     int64_t *D_diag;
-    int64_t(*triplets)[3];
-    int64_t(*bz_grid_addresses)[3];
+    int64_t (*triplets)[3];
+    int64_t (*bz_grid_addresses)[3];
     int64_t *bz_map;
     double *frequencies1, *frequencies2;
     int64_t num_band0, num_band1, num_band2, num_triplets;
@@ -847,11 +848,11 @@ void py_get_triplets_integration_weights(
     iw_zero = (char *)py_iw_zero.data();
     frequency_points = (double *)py_frequency_points.data();
     num_band0 = (int64_t)py_frequency_points.shape(0);
-    relative_grid_address = (int64_t(*)[4][3])py_relative_grid_address.data();
+    relative_grid_address = (int64_t (*)[4][3])py_relative_grid_address.data();
     D_diag = (int64_t *)py_D_diag.data();
-    triplets = (int64_t(*)[3])py_triplets.data();
+    triplets = (int64_t (*)[3])py_triplets.data();
     num_triplets = (int64_t)py_triplets.shape(0);
-    bz_grid_addresses = (int64_t(*)[3])py_bz_grid_addresses.data();
+    bz_grid_addresses = (int64_t (*)[3])py_bz_grid_addresses.data();
     bz_map = (int64_t *)py_bz_map.data();
     frequencies1 = (double *)py_frequencies1.data();
     frequencies2 = (double *)py_frequencies2.data();
@@ -871,7 +872,7 @@ void py_get_triplets_integration_weights_with_sigma(
     double *iw;
     char *iw_zero;
     double *frequency_points;
-    int64_t(*triplets)[3];
+    int64_t (*triplets)[3];
     double *frequencies;
     int64_t num_band0, num_band, num_iw, num_triplets;
 
@@ -879,7 +880,7 @@ void py_get_triplets_integration_weights_with_sigma(
     iw_zero = (char *)py_iw_zero.data();
     frequency_points = (double *)py_frequency_points.data();
     num_band0 = (int64_t)py_frequency_points.shape(0);
-    triplets = (int64_t(*)[3])py_triplets.data();
+    triplets = (int64_t (*)[3])py_triplets.data();
     num_triplets = (int64_t)py_triplets.shape(0);
     frequencies = (double *)py_frequencies.data();
     num_band = (int64_t)py_frequencies.shape(1);
