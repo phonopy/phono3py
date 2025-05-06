@@ -530,7 +530,10 @@ def run_pypolymlp_to_compute_forces(
 ):
     """Run pypolymlp to compute forces."""
     if log_level:
+        import pypolymlp
+
         print("-" * 29 + " pypolymlp start " + "-" * 30)
+        print("Pypolymlp version", pypolymlp.__version__)
         print("Pypolymlp is a generator of polynomial machine learning potentials.")
         print("Please cite the paper: A. Seko, J. Appl. Phys. 133, 011101 (2023).")
         print("Pypolymlp is developed at https://github.com/sekocha/pypolymlp.")
@@ -540,7 +543,6 @@ def run_pypolymlp_to_compute_forces(
         _mlp_filename_list = list(pathlib.Path().glob(f"{mlp_filename}*"))
         if _mlp_filename_list:
             _mlp_filename = _mlp_filename_list[0]
-            print(_mlp_filename)
             if _mlp_filename.suffix not in [
                 ".yaml",
                 ".pmlp",
@@ -633,7 +635,10 @@ def run_pypolymlp_to_compute_phonon_forces(
     """Run pypolymlp to compute phonon forces."""
     if ph3py.phonon_mlp_dataset is not None:
         if log_level:
+            import pypolymlp
+
             print("-" * 29 + " pypolymlp start " + "-" * 30)
+            print(f"Pypolymlp version {pypolymlp.__version__}")
             print("Pypolymlp is a generator of polynomial machine learning potentials.")
             print("Please cite the paper: A. Seko, J. Appl. Phys. 133, 011101 (2023).")
             print("Pypolymlp is developed at https://github.com/sekocha/pypolymlp.")
