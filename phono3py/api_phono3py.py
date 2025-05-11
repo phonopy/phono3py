@@ -1326,7 +1326,9 @@ class Phono3py:
                     options = {"cutoff": {3: cutoff_pair_distance}}
                 _number_of_snapshots = (
                     SymfcFCSolver(
-                        self._supercell, self._symmetry, options=options
+                        self._supercell,
+                        symmetry=self._symmetry,
+                        options=options,
                     ).estimate_numbers_of_supercells(orders=[3])[3]
                     * 2
                 )
@@ -1430,7 +1432,7 @@ class Phono3py:
 
                 _number_of_snapshots = (
                     SymfcFCSolver(
-                        self._supercell, self._symmetry
+                        self._supercell, symmetry=self._symmetry
                     ).estimate_numbers_of_supercells(orders=[2])[2]
                     * 2
                 )
