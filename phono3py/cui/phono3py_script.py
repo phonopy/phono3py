@@ -59,6 +59,7 @@ from phonopy.exception import ForceCalculatorRequiredError
 from phonopy.file_IO import is_file_phonopy_yaml
 from phonopy.harmonic.force_constants import show_drift_force_constants
 from phonopy.interface.calculator import get_calculator_physical_units
+from phonopy.interface.symfc import estimate_symfc_cutoff_from_memsize
 from phonopy.phonon.band_structure import get_band_qpoints
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.cells import isclose as cells_isclose
@@ -95,7 +96,6 @@ from phono3py.file_IO import (
     write_fc3_to_hdf5,
     write_phonon_to_hdf5,
 )
-from phono3py.interface.fc_calculator import estimate_symfc_memory_usage
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon.grid import get_grid_point_from_address, get_ir_grid_points
 from phono3py.phonon3.dataset import forces_in_dataset
@@ -1048,20 +1048,11 @@ def main(**argparse_control):
     ###############################
     if settings.show_symfc_memory_usage and load_phono3py_yaml:
         print("Quick estimation of memory size required for solving fc3 by symfc")
-        vecs, _ = ph3py.primitive.get_smallest_vectors()
-        dists = np.unique(
-            np.round(np.linalg.norm(vecs @ ph3py.primitive.cell, axis=-1), decimals=1)
-        )
         print("cutoff   memsize")
         print("------   -------")
-        for cutoff in dists[1:] + 0.1:
-            memsize, memsize2 = estimate_symfc_memory_usage(
-                ph3py.supercell, ph3py.symmetry, cutoff
-            )
-            print(
-                f"{cutoff:5.1f}  {memsize + memsize2:6.2f} GB "
-                f"({memsize:.2f}+{memsize2:.2f})"
-            )
+        estimate_symfc_cutoff_from_memsize(
+            ph3py.supercell, ph3py.primitive, ph3py.symmetry, 3, verbose=True
+        )
 
         if log_level:
             print_end_phono3py()

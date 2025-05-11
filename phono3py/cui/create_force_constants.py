@@ -82,7 +82,7 @@ def get_cutoff_pair_distance(settings: Phono3pySettings) -> Optional[float]:
     _, fc_calculator_options = get_fc_calculator_params(settings)
     if settings.cutoff_pair_distance is None:
         cutoff = parse_symfc_options(
-            extract_fc2_fc3_calculators(fc_calculator_options, 3)
+            extract_fc2_fc3_calculators(fc_calculator_options, 3), 3
         ).get("cutoff")
         if cutoff is None:
             cutoff_pair_distance = None
