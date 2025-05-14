@@ -36,6 +36,7 @@
 
 import numpy as np
 from phonopy.interface.calculator import write_supercells_with_displacements
+from phonopy.interface.symfc import update_symfc_cutoff_by_memsize
 from phonopy.structure.cells import print_cell
 
 from phono3py import Phono3py
@@ -57,7 +58,7 @@ def create_phono3py_supercells(
     """Create displacements and supercells.
 
     Distance unit used is that for the calculator interface.
-    The default unit is Angstron.
+    The default unit is Angstrom.
 
     """
     optional_structure_info = cell_info["optional_structure_info"]
@@ -66,7 +67,7 @@ def create_phono3py_supercells(
         distance = get_default_displacement_distance(interface_mode)
     else:
         distance = settings.displacement_distance
-    phono3py = Phono3py(
+    ph3 = Phono3py(
         cell_info["unitcell"],
         cell_info["supercell_matrix"],
         primitive_matrix=cell_info["primitive_matrix"],
@@ -75,9 +76,34 @@ def create_phono3py_supercells(
         symprec=symprec,
         calculator=interface_mode,
     )
-    phono3py.generate_displacements(
+
+    if log_level:
+        print("")
+        print('Unit cell was read from "%s".' % optional_structure_info[0])
+        print("-" * 32 + " unit cell " + "-" * 33)  # 32 + 11 + 33 = 76
+        print_cell(ph3.unitcell)
+        print("-" * 76)
+        print_supercell_matrix(ph3.supercell_matrix, ph3.phonon_supercell_matrix)
+        if ph3.primitive_matrix is not None:
+            print("Primitive matrix:")
+            for v in ph3.primitive_matrix:
+                print("  %s" % v)
+        print("Displacement distance: %s" % distance)
+
+    cutoff_pair_distance = settings.cutoff_pair_distance
+    if (
+        settings.random_displacements == "auto"
+        and settings.symfc_memory_size is not None
+    ):
+        symfc_options = {"memsize": {3: settings.symfc_memory_size}}
+        update_symfc_cutoff_by_memsize(
+            symfc_options, ph3.supercell, ph3.primitive, ph3.symmetry, log_level > 0
+        )
+        if symfc_options["cutoff"] is not None:
+            cutoff_pair_distance = symfc_options["cutoff"][3]
+    ph3.generate_displacements(
         distance=distance,
-        cutoff_pair_distance=settings.cutoff_pair_distance,
+        cutoff_pair_distance=cutoff_pair_distance,
         is_plusminus=settings.is_plusminus_displacement,
         is_diagonal=settings.is_diagonal_displacement,
         number_of_snapshots=settings.random_displacements,
@@ -88,44 +114,29 @@ def create_phono3py_supercells(
         settings.random_displacements_fc2
         or settings.phonon_supercell_matrix is not None
     ):
-        phono3py.generate_fc2_displacements(
+        ph3.generate_fc2_displacements(
             distance=distance,
             is_plusminus=settings.is_plusminus_displacement_fc2,
             number_of_snapshots=settings.random_displacements_fc2,
             random_seed=settings.random_seed,
         )
 
-    if log_level:
-        print("")
-        print('Unit cell was read from "%s".' % optional_structure_info[0])
-        print("-" * 32 + " unit cell " + "-" * 33)  # 32 + 11 + 33 = 76
-        print_cell(phono3py.unitcell)
-        print("-" * 76)
-        print_supercell_matrix(
-            phono3py.supercell_matrix, phono3py.phonon_supercell_matrix
-        )
-        if phono3py.primitive_matrix is not None:
-            print("Primitive matrix:")
-            for v in phono3py.primitive_matrix:
-                print("  %s" % v)
-        print("Displacement distance: %s" % distance)
-
     ids = []
     disp_cells = []
-    for i, cell in enumerate(phono3py.supercells_with_displacements):
+    for i, cell in enumerate(ph3.supercells_with_displacements):
         if cell is not None:
             ids.append(i + 1)
             disp_cells.append(cell)
 
     additional_info = get_additional_info_to_write_supercells(
-        interface_mode, phono3py.supercell_matrix
+        interface_mode, ph3.supercell_matrix
     )
 
-    additional_info["supercell_matrix"] = phono3py.supercell_matrix
+    additional_info["supercell_matrix"] = ph3.supercell_matrix
 
     write_supercells_with_displacements(
         interface_mode,
-        phono3py.supercell,
+        ph3.supercell,
         disp_cells,
         optional_structure_info,
         displacement_ids=ids,
@@ -134,24 +145,22 @@ def create_phono3py_supercells(
     )
 
     if log_level:
-        num_disps = len(phono3py.supercells_with_displacements)
+        num_disps = len(ph3.supercells_with_displacements)
         num_disp_files = len(disp_cells)
-        print("Number of displacements: %d" % num_disps)
-        if settings.cutoff_pair_distance is not None:
-            print(
-                "Cutoff distance for displacements: %s" % settings.cutoff_pair_distance
-            )
-            print("Number of displacement supercell files created: %d" % num_disp_files)
+        print(f"Number of displacements: {num_disps}")
+        if cutoff_pair_distance is not None:
+            print(f"Cutoff distance for displacements: {cutoff_pair_distance}")
+            print(f"Number of displacement supercell files created: {num_disp_files}")
 
-    if phono3py.phonon_supercell_matrix is not None:
-        num_disps = len(phono3py.phonon_supercells_with_displacements)
+    if ph3.phonon_supercell_matrix is not None:
+        num_disps = len(ph3.phonon_supercells_with_displacements)
         additional_info = get_additional_info_to_write_fc2_supercells(
-            interface_mode, phono3py.phonon_supercell_matrix
+            interface_mode, ph3.phonon_supercell_matrix
         )
         write_supercells_with_displacements(
             interface_mode,
-            phono3py.phonon_supercell,
-            phono3py.phonon_supercells_with_displacements,
+            ph3.phonon_supercell,
+            ph3.phonon_supercells_with_displacements,
             optional_structure_info,
             zfill_width=5,
             additional_info=additional_info,
@@ -165,11 +174,11 @@ def create_phono3py_supercells(
         n_pure_trans = sum(
             [
                 (r == identity).all()
-                for r in phono3py.symmetry.symmetry_operations["rotations"]
+                for r in ph3.symmetry.symmetry_operations["rotations"]
             ]
         )
 
-        if len(phono3py.supercell) // len(phono3py.primitive) != n_pure_trans:
+        if len(ph3.supercell) // len(ph3.primitive) != n_pure_trans:
             print("*" * 72)
             print(
                 "Note: "
@@ -177,4 +186,4 @@ def create_phono3py_supercells(
             )
             print("*" * 72)
 
-    return phono3py
+    return ph3
