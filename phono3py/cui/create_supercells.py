@@ -46,6 +46,7 @@ from phono3py.interface.calculator import (
     get_additional_info_to_write_supercells,
     get_default_displacement_distance,
 )
+from phono3py.interface.fc_calculator import get_cutoff_pair_distance
 
 
 def create_phono3py_supercells(
@@ -90,7 +91,11 @@ def create_phono3py_supercells(
                 print("  %s" % v)
         print("Displacement distance: %s" % distance)
 
-    cutoff_pair_distance = settings.cutoff_pair_distance
+    cutoff_pair_distance = get_cutoff_pair_distance(
+        settings.fc_calculator,
+        settings.fc_calculator_options,
+        settings.cutoff_pair_distance,
+    )
     if (
         settings.random_displacements == "auto"
         and settings.symfc_memory_size is not None

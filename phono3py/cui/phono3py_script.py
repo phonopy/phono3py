@@ -67,7 +67,6 @@ from phonopy.structure.cells import isclose as cells_isclose
 from phono3py import Phono3py, Phono3pyIsotope, Phono3pyJointDos
 from phono3py.cui.create_force_constants import (
     create_phono3py_force_constants,
-    get_cutoff_pair_distance,
     get_fc_calculator_params,
     run_pypolymlp_to_compute_forces,
 )
@@ -76,7 +75,10 @@ from phono3py.cui.create_force_sets import (
     create_FORCES_FC2_from_FORCE_SETS,
     create_FORCES_FC3_and_FORCES_FC2,
 )
-from phono3py.cui.create_supercells import create_phono3py_supercells
+from phono3py.cui.create_supercells import (
+    create_phono3py_supercells,
+    get_cutoff_pair_distance,
+)
 from phono3py.cui.load import (
     compute_force_constants_from_datasets,
     load_dataset_and_phonon_dataset,
@@ -598,9 +600,16 @@ def _store_force_constants(ph3py: Phono3py, settings: Phono3pySettings, log_leve
 
     load_fc2_and_fc3(ph3py, log_level=log_level)
 
-    cutoff_pair_distance = get_cutoff_pair_distance(settings)
+    cutoff_pair_distance = get_cutoff_pair_distance(
+        settings.fc_calculator,
+        settings.fc_calculator_options,
+        settings.cutoff_pair_distance,
+    )
     (fc_calculator, fc_calculator_options) = get_fc_calculator_params(
-        settings, log_level=(not read_fc3) * 1
+        settings.fc_calculator,
+        settings.fc_calculator_options,
+        settings.cutoff_pair_distance,
+        log_level=(not read_fc3) * 1,
     )
     try:
         compute_force_constants_from_datasets(
@@ -1170,7 +1179,11 @@ def main(**argparse_control):
         prepare_dataset = (
             settings.create_displacements or settings.random_displacements is not None
         )
-        cutoff_pair_distance = get_cutoff_pair_distance(settings)
+        cutoff_pair_distance = get_cutoff_pair_distance(
+            settings.fc_calculator,
+            settings.fc_calculator_options,
+            settings.cutoff_pair_distance,
+        )
         run_pypolymlp_to_compute_forces(
             ph3py,
             mlp_params=settings.mlp_params,

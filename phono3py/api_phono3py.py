@@ -1342,6 +1342,8 @@ class Phono3py:
                 random_seed=random_seed,
                 max_distance=max_distance,
             )
+            if cutoff_pair_distance is not None:
+                self._dataset["cutoff_distance"] = cutoff_pair_distance
         else:
             direction_dataset = get_third_order_displacements(
                 self._supercell,

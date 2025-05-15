@@ -39,7 +39,8 @@ from __future__ import annotations
 from typing import Optional, Union
 
 import numpy as np
-from phonopy.interface.fc_calculator import FCSolver
+from phonopy.interface.fc_calculator import FCSolver, fc_calculator_names
+from phonopy.interface.symfc import parse_symfc_options
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive
 from phonopy.structure.symmetry import Symmetry
@@ -229,3 +230,88 @@ class FC3Solver(FCSolver):
     def _get_displacements_and_forces(self):
         """Return displacements and forces for fc3."""
         return get_displacements_and_forces_fc3(self._dataset)
+
+
+def get_cutoff_pair_distance(
+    fc_calculator: Optional[str],
+    fc_calculator_options: Optional[str],
+    cutoff_pair_distance: Optional[float],
+) -> Optional[float]:
+    """Return cutoff_pair_distance from settings."""
+    _, _fc_calculator_options = get_fc_calculator_params(
+        fc_calculator,
+        fc_calculator_options,
+        cutoff_pair_distance,
+    )
+    if cutoff_pair_distance is None:
+        cutoff = parse_symfc_options(
+            extract_fc2_fc3_calculators(_fc_calculator_options, 3), 3
+        ).get("cutoff")
+        if cutoff is None:
+            _cutoff_pair_distance = None
+        else:
+            _cutoff_pair_distance = cutoff.get(3)
+    else:
+        _cutoff_pair_distance = cutoff_pair_distance
+    return _cutoff_pair_distance
+
+
+def get_fc_calculator_params(
+    fc_calculator: Optional[str],
+    fc_calculator_options: Optional[str],
+    cutoff_pair_distance: Optional[float],
+    log_level: int = 0,
+) -> tuple[Optional[str], Optional[str]]:
+    """Compile fc_calculator and fc_calculator_options from input settings."""
+    _fc_calculator = None
+    fc_calculator_list = []
+    if fc_calculator is not None:
+        for fc_calculatr_str in fc_calculator.split("|"):
+            if fc_calculatr_str == "":  # No external calculator
+                fc_calculator_list.append(fc_calculatr_str.lower())
+            elif fc_calculatr_str.lower() in fc_calculator_names:
+                fc_calculator_list.append(fc_calculatr_str.lower())
+        if fc_calculator_list:
+            _fc_calculator = "|".join(fc_calculator_list)
+
+    _fc_calculator_options = fc_calculator_options
+    if cutoff_pair_distance:
+        if fc_calculator_list and fc_calculator_list[-1] in ("alm", "symfc"):
+            if fc_calculator_list[-1] == "alm":
+                cutoff_str = f"-1 {cutoff_pair_distance}"
+            if fc_calculator_list[-1] == "symfc":
+                cutoff_str = f"{cutoff_pair_distance}"
+            _fc_calculator_options = _set_cutoff_in_fc_calculator_options(
+                _fc_calculator_options,
+                cutoff_str,
+                log_level,
+            )
+
+    return _fc_calculator, _fc_calculator_options
+
+
+def _set_cutoff_in_fc_calculator_options(
+    fc_calculator_options: Optional[str],
+    cutoff_str: str,
+    log_level: int,
+):
+    str_appended = f"cutoff={cutoff_str}"
+    calc_opts = fc_calculator_options
+    if calc_opts is None:
+        calc_opts = "|"
+    if "|" in calc_opts:
+        calc_opts_fc2, calc_opts_fc3 = [v.strip() for v in calc_opts.split("|")][:2]
+    else:
+        calc_opts_fc2 = calc_opts
+        calc_opts_fc3 = calc_opts
+
+    if calc_opts_fc3 == "":
+        calc_opts_fc3 += f"{str_appended}"
+        if log_level:
+            print(f'Set "{str_appended}" to fc_calculator_options for fc3.')
+    elif "cutoff" not in calc_opts_fc3:
+        calc_opts_fc3 += f", {str_appended}"
+        if log_level:
+            print(f'Appended "{str_appended}" to fc_calculator_options for fc3.')
+
+    return f"{calc_opts_fc2}|{calc_opts_fc3}"
