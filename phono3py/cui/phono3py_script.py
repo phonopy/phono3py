@@ -75,10 +75,7 @@ from phono3py.cui.create_force_sets import (
     create_FORCES_FC2_from_FORCE_SETS,
     create_FORCES_FC3_and_FORCES_FC2,
 )
-from phono3py.cui.create_supercells import (
-    create_phono3py_supercells,
-    get_cutoff_pair_distance,
-)
+from phono3py.cui.create_supercells import create_phono3py_supercells
 from phono3py.cui.load import (
     compute_force_constants_from_datasets,
     load_dataset_and_phonon_dataset,
@@ -98,6 +95,7 @@ from phono3py.file_IO import (
     write_fc3_to_hdf5,
     write_phonon_to_hdf5,
 )
+from phono3py.interface.fc_calculator import get_cutoff_pair_distance
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon.grid import get_grid_point_from_address, get_ir_grid_points
 from phono3py.phonon3.dataset import forces_in_dataset
@@ -1179,18 +1177,17 @@ def main(**argparse_control):
         prepare_dataset = (
             settings.create_displacements or settings.random_displacements is not None
         )
-        cutoff_pair_distance = get_cutoff_pair_distance(
-            settings.fc_calculator,
-            settings.fc_calculator_options,
-            settings.cutoff_pair_distance,
-        )
         run_pypolymlp_to_compute_forces(
             ph3py,
             mlp_params=settings.mlp_params,
             displacement_distance=settings.displacement_distance,
             number_of_snapshots=settings.random_displacements,
             random_seed=settings.random_seed,
-            cutoff_pair_distance=cutoff_pair_distance,
+            fc_calculator=settings.fc_calculator,
+            fc_calculator_options=settings.fc_calculator_options,
+            cutoff_pair_distance=settings.cutoff_pair_distance,
+            random_displacements=settings.random_displacements,
+            symfc_memory_size=settings.symfc_memory_size,
             prepare_dataset=prepare_dataset,
             log_level=log_level,
         )

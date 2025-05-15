@@ -73,7 +73,7 @@ from phonopy.structure.symmetry import Symmetry
 
 from phono3py.conductivity.init_direct_solution import get_thermal_conductivity_LBTE
 from phono3py.conductivity.init_rta import get_thermal_conductivity_RTA
-from phono3py.interface.fc_calculator import get_fc3_solver
+from phono3py.interface.fc_calculator import FC3Solver
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon.grid import BZGrid
 from phono3py.phonon3.dataset import forces_in_dataset
@@ -1490,14 +1490,16 @@ class Phono3py:
             Options for external force constants calculator.
 
         """
-        fc_solver = get_fc3_solver(
+        fc_solver_name = fc_calculator if fc_calculator is not None else "traditional"
+        fc_solver = FC3Solver(
+            fc_solver_name,
             self._supercell,
-            self._primitive,
-            self._dataset,
-            fc_calculator=fc_calculator,
-            fc_calculator_options=fc_calculator_options,
-            is_compact_fc=is_compact_fc,
             symmetry=self._symmetry,
+            dataset=self._dataset,
+            is_compact_fc=is_compact_fc,
+            primitive=self._primitive,
+            orders=[2, 3],
+            options=fc_calculator_options,
             log_level=self._log_level,
         )
         fc2 = fc_solver.force_constants[2]

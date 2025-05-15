@@ -65,6 +65,7 @@ from phono3py.file_IO import (
     write_fc3_to_hdf5,
 )
 from phono3py.interface.fc_calculator import (
+    determine_cutoff_pair_distance,
     extract_fc2_fc3_calculators,
     get_fc_calculator_params,
 )
@@ -453,7 +454,11 @@ def run_pypolymlp_to_compute_forces(
     number_of_snapshots: Optional[int] = None,
     random_seed: Optional[int] = None,
     prepare_dataset: bool = False,
+    fc_calculator: Optional[str] = None,
+    fc_calculator_options: Optional[str] = None,
     cutoff_pair_distance: Optional[float] = None,
+    random_displacements: Optional[str] = None,
+    symfc_memory_size: Optional[float] = None,
     mlp_filename: Optional[str] = None,
     log_level: int = 0,
 ):
@@ -532,6 +537,18 @@ def run_pypolymlp_to_compute_forces(
                     "0"
                 ).rstrip(".")
             )
+
+        cutoff_pair_distance = determine_cutoff_pair_distance(
+            fc_calculator,
+            fc_calculator_options,
+            cutoff_pair_distance,
+            random_displacements,
+            symfc_memory_size,
+            ph3py.supercell,
+            ph3py.primitive,
+            ph3py.symmetry,
+            log_level,
+        )
         ph3py.generate_displacements(
             distance=_displacement_distance,
             cutoff_pair_distance=cutoff_pair_distance,

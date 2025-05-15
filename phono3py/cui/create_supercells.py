@@ -36,7 +36,6 @@
 
 import numpy as np
 from phonopy.interface.calculator import write_supercells_with_displacements
-from phonopy.interface.symfc import update_symfc_cutoff_by_memsize
 from phonopy.structure.cells import print_cell
 
 from phono3py import Phono3py
@@ -46,7 +45,7 @@ from phono3py.interface.calculator import (
     get_additional_info_to_write_supercells,
     get_default_displacement_distance,
 )
-from phono3py.interface.fc_calculator import get_cutoff_pair_distance
+from phono3py.interface.fc_calculator import determine_cutoff_pair_distance
 
 
 def create_phono3py_supercells(
@@ -91,21 +90,17 @@ def create_phono3py_supercells(
                 print("  %s" % v)
         print("Displacement distance: %s" % distance)
 
-    cutoff_pair_distance = get_cutoff_pair_distance(
+    cutoff_pair_distance = determine_cutoff_pair_distance(
         settings.fc_calculator,
         settings.fc_calculator_options,
         settings.cutoff_pair_distance,
+        settings.random_displacements,
+        settings.symfc_memory_size,
+        ph3.supercell,
+        ph3.primitive,
+        ph3.symmetry,
+        log_level,
     )
-    if (
-        settings.random_displacements == "auto"
-        and settings.symfc_memory_size is not None
-    ):
-        symfc_options = {"memsize": {3: settings.symfc_memory_size}}
-        update_symfc_cutoff_by_memsize(
-            symfc_options, ph3.supercell, ph3.primitive, ph3.symmetry, log_level > 0
-        )
-        if symfc_options["cutoff"] is not None:
-            cutoff_pair_distance = symfc_options["cutoff"][3]
     ph3.generate_displacements(
         distance=distance,
         cutoff_pair_distance=cutoff_pair_distance,
