@@ -95,7 +95,7 @@ from phono3py.file_IO import (
     write_fc3_to_hdf5,
     write_phonon_to_hdf5,
 )
-from phono3py.interface.fc_calculator import get_cutoff_pair_distance
+from phono3py.interface.fc_calculator import determine_cutoff_pair_distance
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon.grid import get_grid_point_from_address, get_ir_grid_points
 from phono3py.phonon3.dataset import forces_in_dataset
@@ -598,10 +598,10 @@ def _store_force_constants(ph3py: Phono3py, settings: Phono3pySettings, log_leve
 
     load_fc2_and_fc3(ph3py, log_level=log_level)
 
-    cutoff_pair_distance = get_cutoff_pair_distance(
-        settings.fc_calculator,
-        settings.fc_calculator_options,
-        settings.cutoff_pair_distance,
+    cutoff_pair_distance = determine_cutoff_pair_distance(
+        fc_calculator=settings.fc_calculator,
+        fc_calculator_options=settings.fc_calculator_options,
+        cutoff_pair_distance=settings.cutoff_pair_distance,
     )
     (fc_calculator, fc_calculator_options) = get_fc_calculator_params(
         settings.fc_calculator,

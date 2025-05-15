@@ -176,30 +176,6 @@ def update_cutoff_fc_calculator_options(
     return fc_calc_opts
 
 
-def get_cutoff_pair_distance(
-    fc_calculator: Optional[str],
-    fc_calculator_options: Optional[str],
-    cutoff_pair_distance: Optional[float],
-) -> Optional[float]:
-    """Return cutoff_pair_distance from settings."""
-    _, _fc_calculator_options = get_fc_calculator_params(
-        fc_calculator,
-        fc_calculator_options,
-        cutoff_pair_distance,
-    )
-    if cutoff_pair_distance is None:
-        cutoff = parse_symfc_options(
-            extract_fc2_fc3_calculators(_fc_calculator_options, 3), 3
-        ).get("cutoff")
-        if cutoff is None:
-            _cutoff_pair_distance = None
-        else:
-            _cutoff_pair_distance = cutoff.get(3)
-    else:
-        _cutoff_pair_distance = cutoff_pair_distance
-    return _cutoff_pair_distance
-
-
 def get_fc_calculator_params(
     fc_calculator: Optional[str],
     fc_calculator_options: Optional[str],
@@ -235,24 +211,30 @@ def get_fc_calculator_params(
 
 
 def determine_cutoff_pair_distance(
-    fc_calculator: Optional[str],
-    fc_calculator_options: Optional[str],
-    cutoff_pair_distance: Optional[float],
-    random_displacements: Optional[str],
-    symfc_memory_size: Optional[float],
-    supercell: PhonopyAtoms,
-    primitive: Primitive,
-    symmetry: Symmetry,
-    log_level: int,
+    fc_calculator: Optional[str] = None,
+    fc_calculator_options: Optional[str] = None,
+    cutoff_pair_distance: Optional[float] = None,
+    random_displacements: Optional[str] = None,
+    symfc_memory_size: Optional[float] = None,
+    supercell: Optional[PhonopyAtoms] = None,
+    primitive: Optional[Primitive] = None,
+    symmetry: Optional[Symmetry] = None,
+    log_level: int = 0,
 ) -> float:
     """Determine cutoff pair distance for displacements."""
-    _cutoff_pair_distance = get_cutoff_pair_distance(
+    _cutoff_pair_distance, _symfc_memory_size = _get_cutoff_pair_distance(
         fc_calculator,
         fc_calculator_options,
         cutoff_pair_distance,
+        symfc_memory_size,
     )
-    if random_displacements == "auto" and symfc_memory_size is not None:
-        symfc_options = {"memsize": {3: symfc_memory_size}}
+    if random_displacements == "auto" and _symfc_memory_size is not None:
+        if fc_calculator != "symfc":
+            raise RuntimeError(
+                "Estimation of cutoff_pair_distance by memory size is only "
+                "available for symfc calculator."
+            )
+        symfc_options = {"memsize": {3: _symfc_memory_size}}
         update_symfc_cutoff_by_memsize(
             symfc_options, supercell, primitive, symmetry, verbose=log_level > 0
         )
@@ -286,3 +268,32 @@ def _set_cutoff_in_fc_calculator_options(
             print(f'Appended "{str_appended}" to fc_calculator_options for fc3.')
 
     return f"{calc_opts_fc2}|{calc_opts_fc3}"
+
+
+def _get_cutoff_pair_distance(
+    fc_calculator: Optional[str],
+    fc_calculator_options: Optional[str],
+    cutoff_pair_distance: Optional[float],
+    symfc_memory_size: Optional[float] = None,
+) -> Optional[float]:
+    """Return cutoff_pair_distance from settings."""
+    _, _fc_calculator_options = get_fc_calculator_params(
+        fc_calculator,
+        fc_calculator_options,
+        cutoff_pair_distance,
+    )
+    symfc_options = parse_symfc_options(
+        extract_fc2_fc3_calculators(_fc_calculator_options, 3), 3
+    )
+
+    _cutoff_pair_distance = cutoff_pair_distance
+    cutoff = symfc_options.get("cutoff")
+    if cutoff is not None:
+        _cutoff_pair_distance = cutoff.get(3)
+
+    _symfc_memory_size = symfc_memory_size
+    memsize = symfc_options.get("memsize")
+    if memsize is not None:
+        _symfc_memory_size = memsize.get(3)
+
+    return _cutoff_pair_distance, _symfc_memory_size

@@ -91,15 +91,15 @@ def create_phono3py_supercells(
         print("Displacement distance: %s" % distance)
 
     cutoff_pair_distance = determine_cutoff_pair_distance(
-        settings.fc_calculator,
-        settings.fc_calculator_options,
-        settings.cutoff_pair_distance,
-        settings.random_displacements,
-        settings.symfc_memory_size,
-        ph3.supercell,
-        ph3.primitive,
-        ph3.symmetry,
-        log_level,
+        fc_calculator=settings.fc_calculator,
+        fc_calculator_options=settings.fc_calculator_options,
+        cutoff_pair_distance=settings.cutoff_pair_distance,
+        random_displacements=settings.random_displacements,
+        symfc_memory_size=settings.symfc_memory_size,
+        supercell=ph3.supercell,
+        primitive=ph3.primitive,
+        symmetry=ph3.symmetry,
+        log_level=log_level,
     )
     ph3.generate_displacements(
         distance=distance,
