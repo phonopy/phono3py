@@ -230,7 +230,7 @@ def test_phono3py_load_with_pypolymlp_nacl():
 
     # Stage2 (cutoff test)
     argparse_control = _get_phono3py_load_args(
-        cwd / ".." / "phono3py.yaml",
+        cwd_called / "phono3py.yaml",
         fc_calculator="symfc",
         fc_calculator_options="|cutoff=4.0",
         random_displacements="auto",
@@ -263,7 +263,7 @@ def test_phono3py_load_with_pypolymlp_nacl():
 
     # Stage3 (memsize test)
     argparse_control = _get_phono3py_load_args(
-        cwd / ".." / "phono3py.yaml",
+        cwd_called / "phono3py.yaml",
         fc_calculator="symfc",
         fc_calculator_options="|memsize=0.05",
         random_displacements="auto",
