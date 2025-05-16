@@ -39,126 +39,14 @@ from __future__ import annotations
 from typing import Optional, Union
 
 import numpy as np
-from phonopy.interface.fc_calculator import FCSolver
+from phonopy.interface.fc_calculator import FCSolver, fc_calculator_names
+from phonopy.interface.symfc import parse_symfc_options, update_symfc_cutoff_by_memsize
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive
 from phonopy.structure.symmetry import Symmetry
 
 from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
 from phono3py.phonon3.fc3 import get_fc3
-
-
-def get_fc3_solver(
-    supercell: PhonopyAtoms,
-    primitive: Primitive,
-    dataset: dict,
-    fc_calculator: Optional[str] = None,
-    fc_calculator_options: Optional[str] = None,
-    is_compact_fc: bool = False,
-    symmetry: Optional[Symmetry] = None,
-    log_level: int = 0,
-) -> FC3Solver:
-    """Return force constants solver for fc3.
-
-    Parameters
-    ----------
-    supercell : PhonopyAtoms
-        Supercell
-    primitive : Primitive
-        Primitive cell
-    dataset : dict, optional
-        Dataset that contains displacements, forces, and optionally
-        energies. Default is None.
-    fc_calculator : str, optional
-        Currently only 'alm' is supported. Default is None, meaning invoking
-        'alm'.
-    fc_calculator_options : str, optional
-        This is arbitrary string.
-    is_compact_fc : bool, optional
-        If True, force constants are returned in the compact form.
-    symmetry : Symmetry, optional
-        Symmetry of supercell. This is used for the traditional and symfc FC
-        solver. Default is None.
-    log_level : integer or bool, optional
-        Verbosity level. False or 0 means quiet. True or 1 means normal level
-        of log to stdout. 2 gives verbose mode.
-
-    Returns
-    -------
-    FC3Solver
-        Force constants solver for fc3.
-
-    """
-    fc_solver_name = fc_calculator if fc_calculator is not None else "traditional"
-    fc_solver = FC3Solver(
-        fc_solver_name,
-        supercell,
-        symmetry=symmetry,
-        dataset=dataset,
-        is_compact_fc=is_compact_fc,
-        primitive=primitive,
-        orders=[2, 3],
-        options=fc_calculator_options,
-        log_level=log_level,
-    )
-    return fc_solver
-
-
-def extract_fc2_fc3_calculators(
-    fc_calculator: Optional[Union[str, dict]],
-    order: int,
-) -> Optional[Union[str, dict]]:
-    """Extract fc_calculator and fc_calculator_options for fc2 and fc3.
-
-    fc_calculator : str
-        FC calculator. "|" separates fc2 and fc3. First and last
-        parts separated correspond to fc2 and fc3 calculators, respectively.
-    order : int = 2 or 3
-        2 and 3 indicate fc2 and fc3, respectively.
-
-    """
-    if isinstance(fc_calculator, dict) or fc_calculator is None:
-        return fc_calculator
-    elif isinstance(fc_calculator, str):
-        if "|" in fc_calculator:
-            _fc_calculator = fc_calculator.split("|")[order - 2]
-            if _fc_calculator == "":
-                return None
-            return _fc_calculator
-        else:
-            if fc_calculator.strip() == "":
-                return None
-            return fc_calculator
-    else:
-        raise RuntimeError("fc_calculator should be str, dict, or None.")
-
-
-def update_cutoff_fc_calculator_options(
-    fc_calc_opts: Optional[Union[str, dict]],
-    cutoff_pair_distance: Optional[float],
-) -> Optional[Union[str, dict]]:
-    """Update fc_calculator_options with cutoff distances.
-
-    Parameters
-    ----------
-    fc_calc_opts : str or dict
-        FC calculator options.
-    cutoff_pair_distance : float, optional
-        Cutoff distance for pair interaction.
-
-    """
-    if cutoff_pair_distance is not None:
-        if not isinstance(fc_calc_opts, (str, dict)) and fc_calc_opts is not None:
-            raise RuntimeError("fc_calculator_options should be str, dict, or None.")
-
-        if isinstance(fc_calc_opts, dict) and "cutoff" not in fc_calc_opts:
-            fc_calc_opts["cutoff"] = float(cutoff_pair_distance)
-        elif isinstance(fc_calc_opts, str) and "cutoff" not in fc_calc_opts:
-            fc_calc_opts = f"{fc_calc_opts}, cutoff = {cutoff_pair_distance}"
-        elif fc_calc_opts is None:
-            fc_calc_opts = f"cutoff = {cutoff_pair_distance}"
-
-    return fc_calc_opts
 
 
 class FDFC3Solver:
@@ -229,3 +117,183 @@ class FC3Solver(FCSolver):
     def _get_displacements_and_forces(self):
         """Return displacements and forces for fc3."""
         return get_displacements_and_forces_fc3(self._dataset)
+
+
+def extract_fc2_fc3_calculators(
+    fc_calculator: Optional[Union[str, dict]],
+    order: int,
+) -> Optional[Union[str, dict]]:
+    """Extract fc_calculator and fc_calculator_options for fc2 and fc3.
+
+    fc_calculator : str
+        FC calculator. "|" separates fc2 and fc3. First and last
+        parts separated correspond to fc2 and fc3 calculators, respectively.
+    order : int = 2 or 3
+        2 and 3 indicate fc2 and fc3, respectively.
+
+    """
+    if isinstance(fc_calculator, dict) or fc_calculator is None:
+        return fc_calculator
+    elif isinstance(fc_calculator, str):
+        if "|" in fc_calculator:
+            _fc_calculator = fc_calculator.split("|")[order - 2]
+            if _fc_calculator == "":
+                return None
+            return _fc_calculator
+        else:
+            if fc_calculator.strip() == "":
+                return None
+            return fc_calculator
+    else:
+        raise RuntimeError("fc_calculator should be str, dict, or None.")
+
+
+def update_cutoff_fc_calculator_options(
+    fc_calc_opts: Optional[Union[str, dict]],
+    cutoff_pair_distance: Optional[float],
+) -> Optional[Union[str, dict]]:
+    """Update fc_calculator_options with cutoff distances.
+
+    Parameters
+    ----------
+    fc_calc_opts : str or dict
+        FC calculator options.
+    cutoff_pair_distance : float, optional
+        Cutoff distance for pair interaction.
+
+    """
+    if cutoff_pair_distance is not None:
+        if not isinstance(fc_calc_opts, (str, dict)) and fc_calc_opts is not None:
+            raise RuntimeError("fc_calculator_options should be str, dict, or None.")
+
+        if isinstance(fc_calc_opts, dict) and "cutoff" not in fc_calc_opts:
+            fc_calc_opts["cutoff"] = float(cutoff_pair_distance)
+        elif isinstance(fc_calc_opts, str) and "cutoff" not in fc_calc_opts:
+            fc_calc_opts = f"{fc_calc_opts}, cutoff = {cutoff_pair_distance}"
+        elif fc_calc_opts is None:
+            fc_calc_opts = f"cutoff = {cutoff_pair_distance}"
+
+    return fc_calc_opts
+
+
+def get_fc_calculator_params(
+    fc_calculator: Optional[str],
+    fc_calculator_options: Optional[str],
+    cutoff_pair_distance: Optional[float],
+    log_level: int = 0,
+) -> tuple[Optional[str], Optional[str]]:
+    """Compile fc_calculator and fc_calculator_options from input settings."""
+    _fc_calculator = None
+    fc_calculator_list = []
+    if fc_calculator is not None:
+        for fc_calculatr_str in fc_calculator.split("|"):
+            if fc_calculatr_str == "":  # No external calculator
+                fc_calculator_list.append(fc_calculatr_str.lower())
+            elif fc_calculatr_str.lower() in fc_calculator_names:
+                fc_calculator_list.append(fc_calculatr_str.lower())
+        if fc_calculator_list:
+            _fc_calculator = "|".join(fc_calculator_list)
+
+    _fc_calculator_options = fc_calculator_options
+    if cutoff_pair_distance:
+        if fc_calculator_list and fc_calculator_list[-1] in ("alm", "symfc"):
+            if fc_calculator_list[-1] == "alm":
+                cutoff_str = f"-1 {cutoff_pair_distance}"
+            if fc_calculator_list[-1] == "symfc":
+                cutoff_str = f"{cutoff_pair_distance}"
+            _fc_calculator_options = _set_cutoff_in_fc_calculator_options(
+                _fc_calculator_options,
+                cutoff_str,
+                log_level,
+            )
+
+    return _fc_calculator, _fc_calculator_options
+
+
+def determine_cutoff_pair_distance(
+    fc_calculator: Optional[str] = None,
+    fc_calculator_options: Optional[str] = None,
+    cutoff_pair_distance: Optional[float] = None,
+    random_displacements: Optional[str] = None,
+    symfc_memory_size: Optional[float] = None,
+    supercell: Optional[PhonopyAtoms] = None,
+    primitive: Optional[Primitive] = None,
+    symmetry: Optional[Symmetry] = None,
+    log_level: int = 0,
+) -> float:
+    """Determine cutoff pair distance for displacements."""
+    _cutoff_pair_distance, _symfc_memory_size = _get_cutoff_pair_distance(
+        fc_calculator,
+        fc_calculator_options,
+        cutoff_pair_distance,
+        symfc_memory_size,
+    )
+    if random_displacements == "auto" and _symfc_memory_size is not None:
+        if fc_calculator != "symfc":
+            raise RuntimeError(
+                "Estimation of cutoff_pair_distance by memory size is only "
+                "available for symfc calculator."
+            )
+        symfc_options = {"memsize": {3: _symfc_memory_size}}
+        update_symfc_cutoff_by_memsize(
+            symfc_options, supercell, primitive, symmetry, verbose=log_level > 0
+        )
+        if symfc_options["cutoff"] is not None:
+            _cutoff_pair_distance = symfc_options["cutoff"][3]
+    return _cutoff_pair_distance
+
+
+def _set_cutoff_in_fc_calculator_options(
+    fc_calculator_options: Optional[str],
+    cutoff_str: str,
+    log_level: int,
+):
+    str_appended = f"cutoff={cutoff_str}"
+    calc_opts = fc_calculator_options
+    if calc_opts is None:
+        calc_opts = "|"
+    if "|" in calc_opts:
+        calc_opts_fc2, calc_opts_fc3 = [v.strip() for v in calc_opts.split("|")][:2]
+    else:
+        calc_opts_fc2 = calc_opts
+        calc_opts_fc3 = calc_opts
+
+    if calc_opts_fc3 == "":
+        calc_opts_fc3 += f"{str_appended}"
+        if log_level:
+            print(f'Set "{str_appended}" to fc_calculator_options for fc3.')
+    elif "cutoff" not in calc_opts_fc3:
+        calc_opts_fc3 += f", {str_appended}"
+        if log_level:
+            print(f'Appended "{str_appended}" to fc_calculator_options for fc3.')
+
+    return f"{calc_opts_fc2}|{calc_opts_fc3}"
+
+
+def _get_cutoff_pair_distance(
+    fc_calculator: Optional[str],
+    fc_calculator_options: Optional[str],
+    cutoff_pair_distance: Optional[float],
+    symfc_memory_size: Optional[float] = None,
+) -> Optional[float]:
+    """Return cutoff_pair_distance from settings."""
+    _, _fc_calculator_options = get_fc_calculator_params(
+        fc_calculator,
+        fc_calculator_options,
+        cutoff_pair_distance,
+    )
+    symfc_options = parse_symfc_options(
+        extract_fc2_fc3_calculators(_fc_calculator_options, 3), 3
+    )
+
+    _cutoff_pair_distance = cutoff_pair_distance
+    cutoff = symfc_options.get("cutoff")
+    if cutoff is not None:
+        _cutoff_pair_distance = cutoff.get(3)
+
+    _symfc_memory_size = symfc_memory_size
+    memsize = symfc_options.get("memsize")
+    if memsize is not None:
+        _symfc_memory_size = memsize.get(3)
+
+    return _cutoff_pair_distance, _symfc_memory_size

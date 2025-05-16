@@ -51,6 +51,7 @@ class Phono3pySettings(Settings):
         "create_forces_fc3_file": None,
         "cutoff_fc3_distance": None,
         "cutoff_pair_distance": None,
+        "emulate_v2": False,
         "grid_addresses": None,
         "grid_points": None,
         "grid_matrix": None,
@@ -94,8 +95,8 @@ class Phono3pySettings(Settings):
         "scattering_event_class": None,  # scattering event class 1 or 2
         "sigma_cutoff_width": None,
         "solve_collective_phonon": False,
-        "emulate_v2": False,
         "show_symfc_memory_usage": False,
+        "symfc_memory_size": None,
         "subtract_forces": None,
         "subtract_forces_fc2": None,
         "temperatures": None,
@@ -335,6 +336,10 @@ class Phono3pySettings(Settings):
     def set_subtract_forces_fc2(self, val):
         """Set subtract_forces_fc2."""
         self._v["subtract_forces_fc2"] = val
+
+    def set_symfc_memory_size(self, val):
+        """Set symfc_memory_size."""
+        self._v["symfc_memory_size"] = val
 
     def set_temperatures(self, val):
         """Set temperatures."""
@@ -612,9 +617,8 @@ class Phono3pyConfParser(ConfParser):
                 self._confs["scattering_event_class"] = scatt_class
 
         if "sigma_cutoff_width" in self._args:
-            sigma_cutoff = self._args.sigma_cutoff_width
-            if sigma_cutoff is not None:
-                self._confs["sigma_cutoff_width"] = sigma_cutoff
+            if self._args.sigma_cutoff_width is not None:
+                self._confs["sigma_cutoff_width"] = self._args.sigma_cutoff_width
 
         if "solve_collective_phonon" in self._args:
             if self._args.solve_collective_phonon:
@@ -631,6 +635,10 @@ class Phono3pyConfParser(ConfParser):
         if "subtract_forces_fc2" in self._args:
             if self._args.subtract_forces_fc2:
                 self._confs["subtract_forces_fc2"] = self._args.subtract_forces_fc2
+
+        if "symfc_memory_size" in self._args:
+            if self._args.symfc_memory_size is not None:
+                self._confs["symfc_memory_size"] = self._args.symfc_memory_size
 
         if "temperatures" in self._args:
             if self._args.temperatures is not None:
@@ -725,6 +733,7 @@ class Phono3pyConfParser(ConfParser):
                 "pinv_cutoff",
                 "pp_conversion_factor",
                 "sigma_cutoff_width",
+                "symfc_memory_size",
             ):
                 self.set_parameter(conf_key, float(confs[conf_key]))
 
@@ -1066,6 +1075,9 @@ class Phono3pyConfParser(ConfParser):
         # Subtract residual forces to create FORCES_FC2
         if "subtract_forces_fc2" in params:
             self._settings.set_subtract_forces_fc2(params["subtract_forces_fc2"])
+
+        if "symfc_memory_size" in params:
+            self._settings.set_symfc_memory_size(params["symfc_memory_size"])
 
         # Temperatures for scatterings
         if "temperatures" in params:
