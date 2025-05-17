@@ -29,7 +29,6 @@ def test_determine_cutoff_pair_distance_with_memsize(aln_cell: PhonopyAtoms) -> 
     cutoff = determine_cutoff_pair_distance(
         fc_calculator="symfc",
         fc_calculator_options="|memsize=0.1",
-        random_displacements="auto",
         supercell=ph3.supercell,
         primitive=ph3.primitive,
         symmetry=ph3.symmetry,
@@ -39,7 +38,6 @@ def test_determine_cutoff_pair_distance_with_memsize(aln_cell: PhonopyAtoms) -> 
 
     cutoff = determine_cutoff_pair_distance(
         fc_calculator="symfc",
-        random_displacements="auto",
         symfc_memory_size=0.2,
         supercell=ph3.supercell,
         primitive=ph3.primitive,
@@ -51,7 +49,6 @@ def test_determine_cutoff_pair_distance_with_memsize(aln_cell: PhonopyAtoms) -> 
     cutoff = determine_cutoff_pair_distance(
         fc_calculator="symfc",
         fc_calculator_options="|memsize=0.1",
-        random_displacements="auto",
         symfc_memory_size=0.2,
         supercell=ph3.supercell,
         primitive=ph3.primitive,
@@ -64,7 +61,6 @@ def test_determine_cutoff_pair_distance_with_memsize(aln_cell: PhonopyAtoms) -> 
         cutoff = determine_cutoff_pair_distance(
             fc_calculator="alm",
             fc_calculator_options="|memsize=0.1",
-            random_displacements="auto",
             symfc_memory_size=0.2,
             supercell=ph3.supercell,
             primitive=ph3.primitive,

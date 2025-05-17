@@ -214,8 +214,8 @@ def determine_cutoff_pair_distance(
     fc_calculator: Optional[str] = None,
     fc_calculator_options: Optional[str] = None,
     cutoff_pair_distance: Optional[float] = None,
-    random_displacements: Optional[str] = None,
     symfc_memory_size: Optional[float] = None,
+    random_displacements: Optional[Union[int, str]] = None,
     supercell: Optional[PhonopyAtoms] = None,
     primitive: Optional[Primitive] = None,
     symmetry: Optional[Symmetry] = None,
@@ -228,8 +228,12 @@ def determine_cutoff_pair_distance(
         cutoff_pair_distance,
         symfc_memory_size,
     )
-    if random_displacements == "auto" and _symfc_memory_size is not None:
-        if fc_calculator != "symfc":
+    if random_displacements is not None and random_displacements != "auto":
+        _symfc_memory_size = None
+    if _symfc_memory_size is not None:
+        if fc_calculator is None:
+            pass
+        elif fc_calculator != "symfc":
             raise RuntimeError(
                 "Estimation of cutoff_pair_distance by memory size is only "
                 "available for symfc calculator."

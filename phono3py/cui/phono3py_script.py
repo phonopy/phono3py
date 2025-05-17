@@ -598,15 +598,27 @@ def _store_force_constants(ph3py: Phono3py, settings: Phono3pySettings, log_leve
 
     load_fc2_and_fc3(ph3py, log_level=log_level)
 
-    cutoff_pair_distance = determine_cutoff_pair_distance(
-        fc_calculator=settings.fc_calculator,
-        fc_calculator_options=settings.fc_calculator_options,
-        cutoff_pair_distance=settings.cutoff_pair_distance,
-    )
+    cutoff_pair_distance = None
+    if settings.use_pypolymlp:
+        cutoff_pair_distance = ph3py.dataset.get("cutoff_distance")
+    if cutoff_pair_distance is None:
+        cutoff_pair_distance = determine_cutoff_pair_distance(
+            fc_calculator=settings.fc_calculator,
+            fc_calculator_options=settings.fc_calculator_options,
+            cutoff_pair_distance=settings.cutoff_pair_distance,
+            symfc_memory_size=settings.symfc_memory_size,
+            random_displacements=settings.random_displacements,
+            supercell=ph3py.supercell,
+            primitive=ph3py.primitive,
+            log_level=log_level,
+        )
+    if cutoff_pair_distance is None:
+        cutoff_pair_distance = ph3py.dataset.get("cutoff_distance")
+
     (fc_calculator, fc_calculator_options) = get_fc_calculator_params(
         settings.fc_calculator,
         settings.fc_calculator_options,
-        settings.cutoff_pair_distance,
+        cutoff_pair_distance,
         log_level=(not read_fc3) * 1,
     )
     try:
@@ -1186,7 +1198,6 @@ def main(**argparse_control):
             fc_calculator=settings.fc_calculator,
             fc_calculator_options=settings.fc_calculator_options,
             cutoff_pair_distance=settings.cutoff_pair_distance,
-            random_displacements=settings.random_displacements,
             symfc_memory_size=settings.symfc_memory_size,
             prepare_dataset=prepare_dataset,
             log_level=log_level,
