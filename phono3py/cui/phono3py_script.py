@@ -593,10 +593,10 @@ def _store_force_constants(ph3py: Phono3py, settings: Phono3pySettings, log_leve
     if log_level:
         print("-" * 29 + " Force constants " + "-" * 30)
 
+    load_fc2_and_fc3(ph3py, log_level=log_level)
+
     read_fc3 = ph3py.fc3 is not None
     read_fc2 = ph3py.fc2 is not None
-
-    load_fc2_and_fc3(ph3py, log_level=log_level)
 
     cutoff_pair_distance = None
     if settings.use_pypolymlp:
