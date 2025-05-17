@@ -612,7 +612,7 @@ def _store_force_constants(ph3py: Phono3py, settings: Phono3pySettings, log_leve
             primitive=ph3py.primitive,
             log_level=log_level,
         )
-    if cutoff_pair_distance is None:
+    if cutoff_pair_distance is None and ph3py.dataset is not None:
         cutoff_pair_distance = ph3py.dataset.get("cutoff_distance")
 
     (fc_calculator, fc_calculator_options) = get_fc_calculator_params(
