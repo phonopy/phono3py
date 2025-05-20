@@ -126,6 +126,29 @@ For shifted regular grid (usually unused in phono3py),
 qpoints = (addresses * 2 + PS) @ (QDinv.T / 2.0)
 ```
 
+The grid addresses are stored in `phonon-*.hdf5`. So for conventional
+Gamma-centered regular grid, those information can be used to recover the
+corresponding q-points. For example,
+
+```python
+In [1]: import h5py
+
+In [2]: f = h5py.File("phonon-m111111.hdf5")
+
+In [3]: import numpy as np
+
+In [8]: f['grid_address'][:] @ np.diag(1.0 / f['mesh'][:])
+Out[8]:
+array([[ 0.        ,  0.        ,  0.        ],
+       [ 0.09090909,  0.        ,  0.        ],
+       [ 0.18181818,  0.        ,  0.        ],
+       ...,
+       [-0.27272727, -0.09090909, -0.09090909],
+       [-0.18181818, -0.09090909, -0.09090909],
+       [-0.09090909, -0.09090909, -0.09090909]], shape=(1367, 3))
+```
+
+
 (grid_triplets)=
 ## Grid point triplets
 
