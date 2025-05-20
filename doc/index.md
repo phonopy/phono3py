@@ -38,7 +38,6 @@ examples
 Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE) <interfaces>
 command-options
 input-output-files
-hdf5_howto
 auxiliary-tools
 direct-solution
 wigner-solution
@@ -49,7 +48,8 @@ cutoff-pair
 external-tools
 phono3py-api
 phono3py-load
-tips
+hdf5_howto
+grid
 citation
 reference
 changelog

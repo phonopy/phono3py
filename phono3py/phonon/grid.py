@@ -132,6 +132,7 @@ class BZGrid:
     D_diag : ndarray
     P : ndarray
     Q : ndarray
+    PS : ndarray
     QDinv : ndarray
     grid_matrix : ndarray
     microzone_lattice : ndarray

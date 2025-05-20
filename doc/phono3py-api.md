@@ -148,7 +148,7 @@ shape of `(num_supercells, num_atoms_in_supercell, 3)`. In the above example,
 the array shape is `(1254, 72, 3)`.
 
 If the calculated force sets are stored in the
-{ref}`input-output_files_FORCES_FC3` file, the numpy array of `forces` is
+{ref}`iofile_FORCES_FC3` file, the numpy array of `forces` is
 obtained by
 
 ```python

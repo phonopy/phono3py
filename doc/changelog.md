@@ -357,8 +357,7 @@ loader.
   `FORCES_FC3` is assumed.
 - TURBOMOLE interface is provided by Antti Karttunen (`--turbomole`).
 - Compatibility of `fc2.hdf5` and `force_constants.hdf5` was improved for all
-  calculators to store physical unit information in the hdf5 file. See
-  {ref}`file_format_compatibility`.
+  calculators to store physical unit information in the hdf5 file.
 
 ## Mar-24-2019: Version 1.16.0
 
