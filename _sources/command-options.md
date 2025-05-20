@@ -197,7 +197,6 @@ created from `FORCES_FC2` and `phono3py_disp.yaml` instead of `FORCES_FC3` and
 ```
 
 (sp_option)=
-
 ### `--sp` or `--save-params`
 
 Instead of `FORCES_FC3`, `phono3py_params.yaml` is generated. This option must
@@ -329,7 +328,6 @@ information about primitive cell (`primitive_matrix` key) in
 ```
 
 (random_displacements_option)=
-
 ### `--rd` (`RANDOM_DISPLACEMENTS`), `--rd-fc2` (`RANDOM_DISPLACEMENTS_FC2`) and `--random-seed` (`RANDOM_SEED`)
 
 **`phono3py-load` doesn't have this option.**
@@ -596,7 +594,7 @@ expected.
 ### `--sigma` (`SIGMA`)
 
 $\sigma$ value of Gaussian function for smearing when calculating imaginary part
-of self energy. See the detail at {ref}`brillouinzone_sum`.
+of self energy.
 
 Multiple $\sigma$ values are also specified by space separated numerical values.
 This is used when we want to test several $\sigma$ values simultaneously.
@@ -806,48 +804,8 @@ $\Gamma_\lambda(\omega_\lambda) =
 \Gamma^\text{U}_\lambda(\omega_\lambda)$
 and this is used to calculate thermal conductivity in single-mode RTA. The
 separation, i.e., the choice of G-vector, is made based on the first Brillouin
-zone.
+zone. See {ref}`iofile_kappa_hdf5_gamma_NU`.
 
-The data are stored in `kappa-mxxx(-gx-sx-sdx).hdf5` file and accessed by
-`gamma_N` and `gamma_U` keys. The shape of the arrays is the same as that of
-`gamma` (see {ref}`kappa_hdf5_file_gamma`). An example (Si-PBEsol) is shown
-below:
-
-```bash
-% phono3py-load --mesh 11 11 11 --fc3 --fc2 --br --nu
-...
-% ipython
-
-In [1]: import h5py
-
-In [2]: f = h5py.File("kappa-m111111.hdf5", 'r')
-
-In [3]: list(f)
-Out[3]:
-['frequency',
- 'gamma',
- 'gamma_N',
- 'gamma_U',
- 'group_velocity',
- 'gv_by_gv',
- 'heat_capacity',
- 'kappa',
- 'kappa_unit_conversion',
- 'mesh',
- 'mode_kappa',
- 'qpoint',
- 'temperature',
- 'weight']
-
-In [4]: f['gamma'].shape
-Out[4]: (101, 56, 6)
-
-In [5]: f['gamma_N'].shape
-Out[5]: (101, 56, 6)
-
-In [6]: f['gamma_U'].shape
-Out[6]: (101, 56, 6)
-```
 
 ### `--scattering-event-class` (`SCATTERING_EVENT_CLASS`)
 
@@ -1202,68 +1160,9 @@ not found, `kappa-mxxx-gx-bx(-sx-sdx).hdf5` files for band indices are searched.
 ### `--write-gamma-detail` (`WRITE_GAMMA_DETAIL = .TRUE.`)
 
 Each q-point triplet contribution to imaginary part of self energy is written
-into `gamma_detail-mxxx-gx(-sx-sdx).hdf5` file. Be careful that this is large
-data.
+into `gamma_detail-mxxx-gx(-sx-sdx).hdf5` file. Be careful that this can be a
+large file. See {ref}`iofile_gamma_detail_hdf5`.
 
-In the output file in hdf5, following keys are used to extract the detailed
-information.
-
-```{table}
-| dataset                     | Array shape                                                                                                                            |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| gamma_detail for `--ise`    | (temperature, sampling frequency point, symmetry reduced set of triplets at a grid point, band1, band2, band3) in THz (without $2\pi$) |
-| gamma_detail for `--br`     | (temperature, symmetry reduced set of triplets at a grid point, band1, band2, band3) in THz (without $2\pi$)                           |
-| mesh                        | Numbers of sampling mesh along reciprocal axes.                                                                                        |
-| frequency_point for `--ise` | Sampling frequency points in THz (without $2\pi$), i.e., $\omega$ in $\Gamma_\lambda(\omega)$                                          |
-| temperature                 | (temperature,), Temperatures in K                                                                                                      |
-| triplet                     | (symmetry reduced set of triplets at a grid point, 3), Triplets are given by the grid point indices (see below).                       |
-| weight                      | (symmetry reduced set of triplets at a grid point,), Weight of each triplet to imaginary part of self energy                           |
-```
-
-Imaginary part of self energy (linewidth/2) is recovered by the following
-script:
-
-```python
-import h5py
-import numpy as np
-
-gd = h5py.File("gamma_detail-mxxx-gx.hdf5")
-temp_index = 30 # index of temperature
-temperature = gd['temperature'][temp_index]
-gamma_tp = gd['gamma_detail'][:].sum(axis=-1).sum(axis=-1)
-weight = gd['weight'][:]
-gamma = np.dot(weight, gamma_tp[temp_index])
-```
-
-For example, for `--br`, this `gamma` gives $\Gamma_\lambda(\omega_\lambda)$ of
-the band indices at the grid point indicated by $\lambda$ at the temperature of
-index 30. If any bands are degenerated, those `gamma` in
-`kappa-mxxx-gx(-sx-sdx).hdf5` or `gamma-mxxx-gx(-sx-sdx).hdf5` type file are
-averaged, but the `gamma` obtained here in this way are not symmetrized. Apart
-from this symmetrization, the values must be equivalent between them.
-
-To understand each contribution of triptle to imaginary part of self energy,
-reading `phonon-mxxx.hdf5` is useful (see {ref}`write_phonon_option`). For
-example, phonon triplets of three phonon scatterings are obtained by
-
-```python
-import h5py
-import numpy as np
-
-gd = h5py.File("gamma_detail-mxxx-gx.hdf5", 'r')
-ph = h5py.File("phonon-mxxx.hdf5", 'r')
-gp1 = gd['grid_point'][()]
-triplets = gd['triplet'][:] # Sets of (gp1, gp2, gp3) where gp1 is fixed
-mesh = gd['mesh'][:]
-grid_address = ph['grid_address'][:]
-q_triplets = grid_address[triplets] / mesh.astype('double')
-# Phonons of triplets[2]
-phonon_tp = [(ph['frequency'][i], ph['eigenvector'][i]) for i in triplets[2]]
-# Fractions of contributions of triplets at this grid point and temperature index 30
-gamma_sum_over_bands = np.dot(weight, gd['gamma_detail'][30].sum(axis=-1).sum(axis=-1).sum(axis=-1))
-contrib_tp = [gd['gamma_detail'][30, i].sum() / gamma_sum_over_bands for i in range(len(weight))]
-np.dot(weight, contrib_tp) # is one
-```
 
 (write_phonon_option)=
 
@@ -1271,45 +1170,12 @@ np.dot(weight, contrib_tp) # is one
 
 Phonon frequencies, eigenvectors, and grid point addresses are stored in
 `phonon-mxxx.hdf5` file. {ref}`--pa <pa_option>` and {ref}`--nac <nac_option>`
-may be required depending on calculation setting.
+may be required depending on calculation setting. See {ref}`iofile_phonon_hdf5`.
 
 ```bash
 % phono3py-load --mesh 11 11 11 --nac --write-phoonon
 ```
 
-Contents of `phonon-mxxx.hdf5` are watched by:
-
-```bash
-In [1]: import h5py
-
-In [2]: ph = h5py.File("phonon-m111111.hdf5", 'r')
-
-In [3]: list(ph)
-Out[3]: ['eigenvector', 'frequency', 'grid_address', 'mesh']
-
-In [4]: ph['mesh'][:]
-Out[4]: array([11, 11, 11], dtype=int32)
-
-In [5]: ph['grid_address'].shape
-Out[5]: (1367, 3)
-
-In [6]: ph['frequency'].shape
-Out[6]: (1367, 6)
-
-In [7]: ph['eigenvector'].shape
-Out[7]: (1367, 6, 6)
-```
-
-The first axis of `ph['grid_address']`, `ph['frequency']`, and
-`ph['eigenvector']` corresponds to the number of q-points where phonons are
-calculated. Here the number of phonons may not be equal to product of mesh
-numbers ($1367 \neq 11^3$). This is because all q-points on Brillouin zone
-boundary are included, i.e., even if multiple q-points are translationally
-equivalent, those phonons are stored separately though these phonons are
-physically equivalent within the equations employed in phono3py. Here Brillouin
-zone is defined by Wigner–Seitz cell of reciprocal primitive basis vectors. This
-is convenient to categorize phonon triplets into Umklapp and Normal scatterings
-based on the Brillouin zone.
 
 (read_phonon_option)=
 

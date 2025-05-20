@@ -45,7 +45,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'input-output-files';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="How to read the results stored in hdf5 files" href="hdf5_howto.html" />
+    <link rel="next" title="Auxiliary tools" href="auxiliary-tools.html" />
     <link rel="prev" title="Command options / Setting tags" href="command-options.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -163,7 +163,6 @@
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options / Setting tags</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Input / Output files</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">How to read the results stored in hdf5 files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="direct-solution.html">Direct solution of linearized phonon Boltzmann equation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="wigner-solution.html">Solution of the Wigner transport equation</a></li>
@@ -174,7 +173,8 @@
 <li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="phono3py-api.html">Phono3py API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="phono3py-load.html">phono3py-load command</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">Using phono3py hdf5 files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="grid.html">Grids in reciprocal space</a></li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
@@ -326,26 +326,38 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#intermediate-text-files">Intermediate text files</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phono3py-disp-yaml"><code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#forces-fc3"><code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#forces-fc2"><code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phono3py-disp-yaml"><code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phono3py-params-yaml"><code class="docutils literal notranslate"><span class="pre">phono3py_params.yaml</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#forces-fc3"><code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#forces-fc2"><code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fc3-hdf5"><code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fc2-hdf5"><code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#kappa-hdf5"><code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mesh"><code class="docutils literal notranslate"><span class="pre">mesh</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#frequency"><code class="docutils literal notranslate"><span class="pre">frequency</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gamma"><code class="docutils literal notranslate"><span class="pre">gamma</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gamma-isotope"><code class="docutils literal notranslate"><span class="pre">gamma_isotope</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#group-velocity"><code class="docutils literal notranslate"><span class="pre">group_velocity</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heat-capacity"><code class="docutils literal notranslate"><span class="pre">heat_capacity</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#kappa"><code class="docutils literal notranslate"><span class="pre">kappa</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mode-kappa"><code class="docutils literal notranslate"><span class="pre">mode-kappa</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gv-by-gv"><code class="docutils literal notranslate"><span class="pre">gv_by_gv</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#q-point"><code class="docutils literal notranslate"><span class="pre">q-point</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#temperature"><code class="docutils literal notranslate"><span class="pre">temperature</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#weight"><code class="docutils literal notranslate"><span class="pre">weight</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ave-pp"><code class="docutils literal notranslate"><span class="pre">ave_pp</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#boundary-mfp"><code class="docutils literal notranslate"><span class="pre">boundary_mfp</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#kappa-unit-conversion"><code class="docutils literal notranslate"><span class="pre">kappa_unit_conversion</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gamma-n-and-gamma-u"><code class="docutils literal notranslate"><span class="pre">gamma_N</span></code> and <code class="docutils literal notranslate"><span class="pre">gamma_U</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hdf5-files">HDF5 files</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#kappa-hdf5"><code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fc3-hdf5"><code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fc2-hdf5"><code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gamma-hdf5"><code class="docutils literal notranslate"><span class="pre">gamma-*.hdf5</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gamma-detail-hdf5"><code class="docutils literal notranslate"><span class="pre">gamma_detail-*.hdf5</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simple-text-file">Simple text file</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gammas-dat"><code class="docutils literal notranslate"><span class="pre">gammas-*.dat</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#jdos-dat"><code class="docutils literal notranslate"><span class="pre">jdos-*.dat</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#linewidth-dat"><code class="docutils literal notranslate"><span class="pre">linewidth-*.dat</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gamma-hdf5"><code class="docutils literal notranslate"><span class="pre">gamma-*.hdf5</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gamma-detail-hdf5"><code class="docutils literal notranslate"><span class="pre">gamma_detail-*.hdf5</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phonon-hdf5"><code class="docutils literal notranslate"><span class="pre">phonon-*.hdf5</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pp-hdf5"><code class="docutils literal notranslate"><span class="pre">pp-*.hdf5</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gammas-dat"><code class="docutils literal notranslate"><span class="pre">gammas-*.dat</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jdos-dat"><code class="docutils literal notranslate"><span class="pre">jdos-*.dat</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#linewidth-dat"><code class="docutils literal notranslate"><span class="pre">linewidth-*.dat</span></code></a></li>
 </ul>
             </nav>
         </div>
@@ -359,50 +371,25 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="input-output-files">
 <span id="id1"></span><h1>Input / Output files<a class="headerlink" href="#input-output-files" title="Link to this heading">#</a></h1>
-<nav class="contents local" id="contents">
-<ul class="simple">
-<li><p><a class="reference internal" href="#intermediate-text-files" id="id2">Intermediate text files</a></p>
-<ul>
-<li><p><a class="reference internal" href="#phono3py-disp-yaml" id="id3"><code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code></a></p></li>
-<li><p><a class="reference internal" href="#forces-fc3" id="id4"><code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a></p></li>
-<li><p><a class="reference internal" href="#forces-fc2" id="id5"><code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code></a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#hdf5-files" id="id6">HDF5 files</a></p>
-<ul>
-<li><p><a class="reference internal" href="#kappa-hdf5" id="id7"><code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code></a></p></li>
-<li><p><a class="reference internal" href="#fc3-hdf5" id="id8"><code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code></a></p></li>
-<li><p><a class="reference internal" href="#fc2-hdf5" id="id9"><code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code></a></p></li>
-<li><p><a class="reference internal" href="#gamma-hdf5" id="id10"><code class="docutils literal notranslate"><span class="pre">gamma-*.hdf5</span></code></a></p></li>
-<li><p><a class="reference internal" href="#gamma-detail-hdf5" id="id11"><code class="docutils literal notranslate"><span class="pre">gamma_detail-*.hdf5</span></code></a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#simple-text-file" id="id12">Simple text file</a></p>
-<ul>
-<li><p><a class="reference internal" href="#gammas-dat" id="id13"><code class="docutils literal notranslate"><span class="pre">gammas-*.dat</span></code></a></p></li>
-<li><p><a class="reference internal" href="#jdos-dat" id="id14"><code class="docutils literal notranslate"><span class="pre">jdos-*.dat</span></code></a></p></li>
-<li><p><a class="reference internal" href="#linewidth-dat" id="id15"><code class="docutils literal notranslate"><span class="pre">linewidth-*.dat</span></code></a></p></li>
-</ul>
-</li>
-</ul>
-</nav>
 <p>The calculation results are written into files. Mostly the data are stored in
 HDF5 format, therefore how to read the data from HDF5 files is also shown.</p>
-<section id="intermediate-text-files">
-<h2><a class="toc-backref" href="#id2" role="doc-backlink">Intermediate text files</a><a class="headerlink" href="#intermediate-text-files" title="Link to this heading">#</a></h2>
-<p>The following files are not compatible with phonopy. But phonopy’s <code class="docutils literal notranslate"><span class="pre">FORCE_SETS</span></code>
-file can be created using phono3py command options from the following files. See
-the detail at <a class="reference internal" href="tips.html#file-format-compatibility"><span class="std std-ref">File format compatibility with phonopy</span></a>.</p>
 <section id="phono3py-disp-yaml">
-<h3><a class="toc-backref" href="#id3" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code></a><a class="headerlink" href="#phono3py-disp-yaml" title="Link to this heading">#</a></h3>
-<p>This is created with <code class="docutils literal notranslate"><span class="pre">-d</span></code> option. See <a class="reference internal" href="command-options.html#create-displacements-option"><span class="std std-ref">-d (CREATE_DISPLACEMENTS = .TRUE.)</span></a>.</p>
-<p>This file contains displacement dataset and crystal structure information.</p>
+<h2><code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code><a class="headerlink" href="#phono3py-disp-yaml" title="Link to this heading">#</a></h2>
+<p>This is created with <a class="reference internal" href="command-options.html#create-displacements-option"><span class="std std-ref">-d</span></a> or
+<a class="reference internal" href="command-options.html#random-displacements-option"><span class="std std-ref">–rd</span></a> option.
+This file contains displacement dataset and crystal structure information.
+Parameters for non-analytical term correction can be also included.</p>
+</section>
+<section id="phono3py-params-yaml">
+<h2><code class="docutils literal notranslate"><span class="pre">phono3py_params.yaml</span></code><a class="headerlink" href="#phono3py-params-yaml" title="Link to this heading">#</a></h2>
+<p>This is created with the combination of <a class="reference internal" href="command-options.html#cf3-option"><span class="std std-ref">–cf3</span></a> and <a class="reference internal" href="command-options.html#sp-option"><span class="std std-ref">–sp</span></a> options. This file contains displacement-force dataset and crystal
+structure information. In addition, energies of supercells may be included in
+the dataset. Parameters for non-analytical term correction can be also included.</p>
 </section>
 <section id="forces-fc3">
-<span id="input-output-files-forces-fc3"></span><h3><a class="toc-backref" href="#id4" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a><a class="headerlink" href="#forces-fc3" title="Link to this heading">#</a></h3>
-<p>This is created with <code class="docutils literal notranslate"><span class="pre">--cf3</span></code> option. See <a class="reference internal" href="command-options.html#cf3-option"><span class="std std-ref">--cf3 (command option only)</span></a>.</p>
-<p>There are two formats of <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code>. The type-I format is like that shown
-below</p>
+<span id="iofile-forces-fc3"></span><h2><code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code><a class="headerlink" href="#forces-fc3" title="Link to this heading">#</a></h2>
+<p>This is created with <a class="reference internal" href="command-options.html#cf3-option"><span class="std std-ref">–cf3</span></a> option . There are two formats of
+<code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code>. The type-I format is like that shown below</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># File: 1</span>
 <span class="c1"># 1       0.0300000000000000   0.0000000000000000   0.0000000000000000</span>
   <span class="o">-</span><span class="mf">0.6458483000</span>    <span class="mf">0.0223064300</span>   <span class="o">-</span><span class="mf">0.0143299700</span>
@@ -449,20 +436,12 @@ numpy as follows:</p>
 of <code class="docutils literal notranslate"><span class="pre">FORCE_SETS</span></code>.</p>
 </section>
 <section id="forces-fc2">
-<h3><a class="toc-backref" href="#id5" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code></a><a class="headerlink" href="#forces-fc2" title="Link to this heading">#</a></h3>
-<p>This is created with <code class="docutils literal notranslate"><span class="pre">--cf2</span></code> option. See <a class="reference internal" href="command-options.html#cf2-option"><span class="std std-ref">--cf2 (command option only)</span></a> and
-<a class="reference internal" href="command-options.html#dim-fc2-option"><span class="std std-ref">--dim-fc2 (DIM_FC2)</span></a>.</p>
-<p>The file formats (type-I and type-II) are same as those of <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code>.</p>
-</section>
-</section>
-<section id="hdf5-files">
-<h2><a class="toc-backref" href="#id6" role="doc-backlink">HDF5 files</a><a class="headerlink" href="#hdf5-files" title="Link to this heading">#</a></h2>
-<section id="kappa-hdf5">
-<h3><a class="toc-backref" href="#id7" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code></a><a class="headerlink" href="#kappa-hdf5" title="Link to this heading">#</a></h3>
-<p>See the detail at <a class="reference internal" href="hdf5_howto.html#kappa-hdf5-file"><span class="std std-ref">Details of kappa-*.hdf5 file</span></a>.</p>
+<h2><code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code><a class="headerlink" href="#forces-fc2" title="Link to this heading">#</a></h2>
+<p>This is created with <a class="reference internal" href="command-options.html#dim-fc2-option"><span class="std std-ref">–cf2</span></a> option. The file formats
+(type-I and type-II) are same as those of <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code>.</p>
 </section>
 <section id="fc3-hdf5">
-<span id="fc3-hdf5-file"></span><h3><a class="toc-backref" href="#id8" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code></a><a class="headerlink" href="#fc3-hdf5" title="Link to this heading">#</a></h3>
+<span id="iofile-fc3-hdf5"></span><h2><code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code><a class="headerlink" href="#fc3-hdf5" title="Link to this heading">#</a></h2>
 <p>Third order force constants (in real space) are stored in
 <span class="math notranslate nohighlight">\(\mathrm{eV}/\text{Angstrom}^3\)</span>.</p>
 <p>In phono3py, this is stored in the numpy array <code class="docutils literal notranslate"><span class="pre">dtype='double'</span></code> and <code class="docutils literal notranslate"><span class="pre">order='C'</span></code>
@@ -508,7 +487,7 @@ and has a centring, e.g., the face centring,</p>
 <p>So what you have to set is <code class="docutils literal notranslate"><span class="pre">--pa=&quot;0</span> <span class="pre">1/4</span> <span class="pre">1/4</span> <span class="pre">1/4</span> <span class="pre">0</span> <span class="pre">1/4</span> <span class="pre">1/4</span> <span class="pre">1/4</span> <span class="pre">0&quot;</span></code>.</p>
 </section>
 <section id="fc2-hdf5">
-<span id="fc2-hdf5-file"></span><h3><a class="toc-backref" href="#id9" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code></a><a class="headerlink" href="#fc2-hdf5" title="Link to this heading">#</a></h3>
+<span id="iofile-fc2-hdf5"></span><h2><code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code><a class="headerlink" href="#fc2-hdf5" title="Link to this heading">#</a></h2>
 <p>Second order force constants are stored in <span class="math notranslate nohighlight">\(\mathrm{eV}/\text{Angstrom}^2\)</span>.</p>
 <p>In phono3py, this is stored in the numpy array <code class="docutils literal notranslate"><span class="pre">dtype='double'</span></code> and <code class="docutils literal notranslate"><span class="pre">order='C'</span></code>
 in the shape of:</p>
@@ -516,35 +495,413 @@ in the shape of:</p>
 </pre></div>
 </div>
 <p>against <span class="math notranslate nohighlight">\(\Phi_{\alpha\beta}(l\kappa, l'\kappa')\)</span>. More detail is similar to the
-case for <a class="reference internal" href="#fc3-hdf5-file"><span class="std std-ref">fc3.hdf5</span></a>.</p>
+case for <a class="reference internal" href="#iofile-fc3-hdf5"><span class="std std-ref">fc3.hdf5</span></a>.</p>
+</section>
+<section id="kappa-hdf5">
+<span id="iofile-kappa-hdf5"></span><h2><code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code><a class="headerlink" href="#kappa-hdf5" title="Link to this heading">#</a></h2>
+<p>Files name, e.g. <code class="docutils literal notranslate"><span class="pre">kappa-m323220.hdf5</span></code>, is determined by some
+specific options. <code class="docutils literal notranslate"><span class="pre">mxxx</span></code>, show the numbers of sampling
+mesh. <code class="docutils literal notranslate"><span class="pre">sxxx</span></code> and <code class="docutils literal notranslate"><span class="pre">gxxx</span></code> appear optionally. <code class="docutils literal notranslate"><span class="pre">sxxx</span></code> gives the
+smearing width in the smearing method for Brillouin zone integration
+for phonon lifetime, and <code class="docutils literal notranslate"><span class="pre">gxxx</span></code> denotes the grid number. Using the
+command option of <code class="docutils literal notranslate"><span class="pre">-o</span></code>, the file name can be modified slightly. For
+example <code class="docutils literal notranslate"><span class="pre">-o</span> <span class="pre">nac</span></code> gives <code class="docutils literal notranslate"><span class="pre">kappa-m323220.nac.hdf5</span></code> to
+memorize the option <code class="docutils literal notranslate"><span class="pre">--nac</span></code> was used.</p>
+<section id="mesh">
+<h3><code class="docutils literal notranslate"><span class="pre">mesh</span></code><a class="headerlink" href="#mesh" title="Link to this heading">#</a></h3>
+<p>(Versions 1.10.11 or later)</p>
+<p>The numbers of mesh points for reciprocal space sampling along
+reciprocal axes, <span class="math notranslate nohighlight">\(a^*, b^*, c^*\)</span>.</p>
+</section>
+<section id="frequency">
+<h3><code class="docutils literal notranslate"><span class="pre">frequency</span></code><a class="headerlink" href="#frequency" title="Link to this heading">#</a></h3>
+<p>Phonon frequencies. The physical unit is THz, where THz
+is in the ordinal frequency not the angular frequency.</p>
+<p>The array shape is (irreducible q-point, phonon band).</p>
+</section>
+<section id="gamma">
+<span id="iofile-kappa-hdf5-gamma"></span><h3><code class="docutils literal notranslate"><span class="pre">gamma</span></code><a class="headerlink" href="#gamma" title="Link to this heading">#</a></h3>
+<p>Imaginary part of self energy of phonon bubble diagram (phonon-phonon
+scattering). The physical unit is THz, where THz is in the ordinal frequency not
+the angular frequency.</p>
+<p>The array shape for all grid-points (irreducible q-points) is
+(temperature, irreducible q-point, phonon band).</p>
+<p>The array shape for a specific grid-point is
+(temperature, phonon band).</p>
+<p>Phonon lifetime (<span class="math notranslate nohighlight">\(\tau_\lambda=1/2\Gamma_\lambda(\omega_\lambda)\)</span>) may
+be estimated from <code class="docutils literal notranslate"><span class="pre">gamma</span></code>. <span class="math notranslate nohighlight">\(2\pi\)</span> has to be multiplied with
+<code class="docutils literal notranslate"><span class="pre">gamma</span></code> values in the hdf5 file to convert the unit of ordinal
+frequency to angular frequency. Zeros in <code class="docutils literal notranslate"><span class="pre">gamma</span></code> values mean that
+those elements were not calculated such as for three acoustic modes at
+<span class="math notranslate nohighlight">\(\Gamma\)</span> point. The below is the copy-and-paste from the
+previous section to show how to obtain phonon lifetime in pico
+second:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">8</span><span class="p">]:</span> <span class="n">g</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">][</span><span class="mi">30</span><span class="p">]</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">9</span><span class="p">]:</span> <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">10</span><span class="p">]:</span> <span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">g</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">11</span><span class="p">]:</span> <span class="n">lifetime</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">g</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">g</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="gamma-isotope">
+<h3><code class="docutils literal notranslate"><span class="pre">gamma_isotope</span></code><a class="headerlink" href="#gamma-isotope" title="Link to this heading">#</a></h3>
+<p>Isotope scattering of <span class="math notranslate nohighlight">\(1/2\tau^\mathrm{iso}_\lambda\)</span>.
+The physical unit is same as that of gamma.</p>
+<p>The array shape is same as that of frequency.</p>
+</section>
+<section id="group-velocity">
+<h3><code class="docutils literal notranslate"><span class="pre">group_velocity</span></code><a class="headerlink" href="#group-velocity" title="Link to this heading">#</a></h3>
+<p>Phonon group velocity, <span class="math notranslate nohighlight">\(\nabla_\mathbf{q}\omega_\lambda\)</span>. The
+physical unit is <span class="math notranslate nohighlight">\(\text{THz}\cdot\text{Angstrom}\)</span>, where THz
+is in the ordinal frequency not the angular frequency.</p>
+<p>The array shape is (irreducible q-point, phonon band, 3 = Cartesian coordinates).</p>
+</section>
+<section id="heat-capacity">
+<h3><code class="docutils literal notranslate"><span class="pre">heat_capacity</span></code><a class="headerlink" href="#heat-capacity" title="Link to this heading">#</a></h3>
+<p>Mode-heat-capacity defined by</p>
+<div class="math notranslate nohighlight">
+\[
+C_\lambda = k_\mathrm{B}
+\left(\frac{\hbar\omega_\lambda}{k_\mathrm{B} T} \right)^2
+\frac{\exp(\hbar\omega_\lambda/k_\mathrm{B}
+T)}{[\exp(\hbar\omega_\lambda/k_\mathrm{B} T)-1]^2}.
+\]</div>
+<p>The physical unit is eV/K.</p>
+<p>The array shape is (temperature, irreducible q-point, phonon band).</p>
+</section>
+<section id="kappa">
+<span id="iofile-kappa-hdf5-kappa"></span><h3><code class="docutils literal notranslate"><span class="pre">kappa</span></code><a class="headerlink" href="#kappa" title="Link to this heading">#</a></h3>
+<p>Thermal conductivity tensor. The physical unit is W/m-K.</p>
+<p>The array shape is (temperature, 6 = (xx, yy, zz, yz, xz, xy)).</p>
+</section>
+<section id="mode-kappa">
+<h3><code class="docutils literal notranslate"><span class="pre">mode-kappa</span></code><a class="headerlink" href="#mode-kappa" title="Link to this heading">#</a></h3>
+<p>Thermal conductivity tensors at k-stars (<span class="math notranslate nohighlight">\({}^*\mathbf{k}\)</span>):</p>
+<div class="math notranslate nohighlight">
+\[
+\sum_{\mathbf{q} \in {}^*\mathbf{k}} \kappa_{\mathbf{q}j}.
+\]</div>
+<p>The sum of this over <span class="math notranslate nohighlight">\({}^*\mathbf{k}\)</span> corresponding to
+irreducible q-points divided by number of grid points gives
+<span class="math notranslate nohighlight">\(\kappa\)</span> (<a class="reference internal" href="#iofile-kappa-hdf5-kappa"><span class="std std-ref">kappa</span></a>), e.g.,:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">kappa_xx_at_index_30</span> <span class="o">=</span> <span class="n">mode_kappa</span><span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">/</span> <span class="n">weight</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Be careful that until version 1.12.7, mode-kappa values were divided
+by number of grid points.</p>
+<p>The physical unit is W/m-K. Each tensor element is the sum of tensor
+elements on the members of <span class="math notranslate nohighlight">\({}^*\mathbf{k}\)</span>, i.e., symmetrically
+equivalent q-points by crystallographic point group and time reversal
+symmetry.</p>
+<p>The array shape is (temperature, irreducible q-point, phonon band, 6 =
+(xx, yy, zz, yz, xz, xy)).</p>
+</section>
+<section id="gv-by-gv">
+<h3><code class="docutils literal notranslate"><span class="pre">gv_by_gv</span></code><a class="headerlink" href="#gv-by-gv" title="Link to this heading">#</a></h3>
+<p>Outer products of group velocities for k-stars
+(<span class="math notranslate nohighlight">\({}^*\mathbf{k}\)</span>) for each irreducible q-point and phonon band
+(<span class="math notranslate nohighlight">\(j\)</span>):</p>
+<div class="math notranslate nohighlight">
+\[
+\sum_{\mathbf{q} \in {}^*\mathbf{k}} \mathbf{v}_{\mathbf{q}j} \otimes
+\mathbf{v}_{\mathbf{q}j}.
+\]</div>
+<p>The physical unit is
+<span class="math notranslate nohighlight">\(\text{THz}^2\cdot\text{Angstrom}^2\)</span>, where THz is in the
+ordinal frequency not the angular frequency.</p>
+<p>The array shape is (irreducible q-point, phonon band, 6 = (xx, yy, zz,
+yz, xz, xy)).</p>
+</section>
+<section id="q-point">
+<h3><code class="docutils literal notranslate"><span class="pre">q-point</span></code><a class="headerlink" href="#q-point" title="Link to this heading">#</a></h3>
+<p>Irreducible q-points in reduced coordinates.</p>
+<p>The array shape is (irreducible q-point, 3 = reduced
+coordinates in reciprocal space).</p>
+</section>
+<section id="temperature">
+<h3><code class="docutils literal notranslate"><span class="pre">temperature</span></code><a class="headerlink" href="#temperature" title="Link to this heading">#</a></h3>
+<p>Temperatures where thermal conductivities are calculated. The physical
+unit is K.</p>
+</section>
+<section id="weight">
+<h3><code class="docutils literal notranslate"><span class="pre">weight</span></code><a class="headerlink" href="#weight" title="Link to this heading">#</a></h3>
+<p>Weights corresponding to irreducible q-points. Sum of weights equals to
+the number of mesh grid points.</p>
+</section>
+<section id="ave-pp">
+<h3><code class="docutils literal notranslate"><span class="pre">ave_pp</span></code><a class="headerlink" href="#ave-pp" title="Link to this heading">#</a></h3>
+<p>Averaged phonon-phonon interaction <span class="math notranslate nohighlight">\(P_{\mathbf{q}j}\)</span> in <span class="math notranslate nohighlight">\(\text{eV}^2\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[
+P_{\mathbf{q}j} = \frac{1}{(3n_\mathrm{a})^2} \sum_{\lambda'\lambda''}
+|\Phi_{\lambda\lambda'\lambda''}|^2.
+\]</div>
+<p>This is not going to be calculated in the RTA thermal coductivity
+calculation mode by default. To calculate this, <code class="docutils literal notranslate"><span class="pre">--full-pp</span></code> option
+has to be specified (see <a class="reference internal" href="command-options.html#full-pp-option"><span class="std std-ref">--full-pp (FULL_PP = .TRUE.)</span></a>).</p>
+</section>
+<section id="boundary-mfp">
+<h3><code class="docutils literal notranslate"><span class="pre">boundary_mfp</span></code><a class="headerlink" href="#boundary-mfp" title="Link to this heading">#</a></h3>
+<p>A value specified by <a class="reference internal" href="command-options.html#boundary-mfp-option"><span class="std std-ref">--boundary-mfp, --bmfp (BOUNDARY_MFP)</span></a>. The physical unit is
+micrometer.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">--boundary-mfp</span></code> option is explicitly specified, its value is stored here.</p>
+</section>
+<section id="kappa-unit-conversion">
+<h3><code class="docutils literal notranslate"><span class="pre">kappa_unit_conversion</span></code><a class="headerlink" href="#kappa-unit-conversion" title="Link to this heading">#</a></h3>
+<p>This is used to convert the physical unit of lattice thermal
+conductivity made of <code class="docutils literal notranslate"><span class="pre">heat_capacity</span></code>, <code class="docutils literal notranslate"><span class="pre">group_velocity</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">gamma</span></code>, to W/m-K. In the single mode relaxation time (SMRT) method,
+a mode contribution to the lattice thermal conductivity is given by</p>
+<div class="math notranslate nohighlight">
+\[
+\kappa_\lambda = \frac{1}{V_0} C_\lambda \mathbf{v}_\lambda \otimes
+\mathbf{v}_\lambda \tau_\lambda^{\mathrm{SMRT}}.
+\]</div>
+<p>For example, <span class="math notranslate nohighlight">\(\kappa_{\lambda,{xx}}\)</span> is calculated by:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;kappa-m111111.hdf5&quot;</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="n">kappa_unit_conversion</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;kappa_unit_conversion&#39;</span><span class="p">][()]</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="n">weight</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;weight&#39;</span><span class="p">][:]</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">5</span><span class="p">]:</span> <span class="n">heat_capacity</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;heat_capacity&#39;</span><span class="p">][:]</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">6</span><span class="p">]:</span> <span class="n">gv_by_gv</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;gv_by_gv&#39;</span><span class="p">][:]</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">7</span><span class="p">]:</span> <span class="n">gamma</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">][:]</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">8</span><span class="p">]:</span> <span class="n">kappa_unit_conversion</span> <span class="o">*</span> <span class="n">heat_capacity</span><span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">gv_by_gv</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+
+<span class="n">Out</span><span class="p">[</span><span class="mi">8</span><span class="p">]:</span>
+<span class="n">array</span><span class="p">([</span>  <span class="mf">1.02050241e+03</span><span class="p">,</span>   <span class="mf">1.02050241e+03</span><span class="p">,</span>   <span class="mf">1.02050241e+03</span><span class="p">,</span>
+         <span class="mf">4.40486382e-15</span><span class="p">,</span>   <span class="mf">0.00000000e+00</span><span class="p">,</span>  <span class="o">-</span><span class="mf">4.40486382e-15</span><span class="p">])</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">9</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;mode_kappa&#39;</span><span class="p">][</span><span class="mi">30</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">9</span><span class="p">]:</span>
+<span class="n">array</span><span class="p">([</span>  <span class="mf">1.02050201e+03</span><span class="p">,</span>   <span class="mf">1.02050201e+03</span><span class="p">,</span>   <span class="mf">1.02050201e+03</span><span class="p">,</span>
+         <span class="mf">4.40486209e-15</span><span class="p">,</span>   <span class="mf">0.00000000e+00</span><span class="p">,</span>  <span class="o">-</span><span class="mf">4.40486209e-15</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+<section id="gamma-n-and-gamma-u">
+<span id="iofile-kappa-hdf5-gamma-nu"></span><h3><code class="docutils literal notranslate"><span class="pre">gamma_N</span></code> and <code class="docutils literal notranslate"><span class="pre">gamma_U</span></code><a class="headerlink" href="#gamma-n-and-gamma-u" title="Link to this heading">#</a></h3>
+<p>The data are stored in <code class="docutils literal notranslate"><span class="pre">kappa-mxxx(-gx-sx-sdx).hdf5</span></code> file and accessed by
+<code class="docutils literal notranslate"><span class="pre">gamma_N</span></code> and <code class="docutils literal notranslate"><span class="pre">gamma_U</span></code> keys. The shape of the arrays is the same as that of
+<code class="docutils literal notranslate"><span class="pre">gamma</span></code> (see <a class="reference internal" href="#iofile-kappa-hdf5-gamma"><span class="std std-ref">gamma</span></a>). An example (Si-PBEsol) is shown
+below:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--fc3<span class="w"> </span>--fc2<span class="w"> </span>--br<span class="w"> </span>--nu
+...
+%<span class="w"> </span>ipython
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;kappa-m111111.hdf5&quot;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="nb">list</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">3</span><span class="p">]:</span>
+<span class="p">[</span><span class="s1">&#39;frequency&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;gamma&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;gamma_N&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;gamma_U&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;group_velocity&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;gv_by_gv&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;heat_capacity&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;kappa&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;kappa_unit_conversion&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;mesh&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;mode_kappa&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;qpoint&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;temperature&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;weight&#39;</span><span class="p">]</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="p">(</span><span class="mi">101</span><span class="p">,</span> <span class="mi">56</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">5</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;gamma_N&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">5</span><span class="p">]:</span> <span class="p">(</span><span class="mi">101</span><span class="p">,</span> <span class="mi">56</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">6</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;gamma_U&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">6</span><span class="p">]:</span> <span class="p">(</span><span class="mi">101</span><span class="p">,</span> <span class="mi">56</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 </section>
 <section id="gamma-hdf5">
-<h3><a class="toc-backref" href="#id10" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">gamma-*.hdf5</span></code></a><a class="headerlink" href="#gamma-hdf5" title="Link to this heading">#</a></h3>
+<h2><code class="docutils literal notranslate"><span class="pre">gamma-*.hdf5</span></code><a class="headerlink" href="#gamma-hdf5" title="Link to this heading">#</a></h2>
 <p>Imaginary parts of self energies at harmonic phonon frequencies
 (<span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega_\lambda)\)</span> = half linewidths) are stored in THz. See
 <a class="reference internal" href="command-options.html#write-gamma-option"><span class="std std-ref">--write-gamma (WRITE_GAMMA = .TRUE.)</span></a>.</p>
 </section>
 <section id="gamma-detail-hdf5">
-<h3><a class="toc-backref" href="#id11" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">gamma_detail-*.hdf5</span></code></a><a class="headerlink" href="#gamma-detail-hdf5" title="Link to this heading">#</a></h3>
+<span id="iofile-gamma-detail-hdf5"></span><h2><code class="docutils literal notranslate"><span class="pre">gamma_detail-*.hdf5</span></code><a class="headerlink" href="#gamma-detail-hdf5" title="Link to this heading">#</a></h2>
 <p>Q-point triplet contributions to imaginary parts of self energies at phonon
 frequencies (half linewidths) are stored in THz. See
-<a class="reference internal" href="command-options.html#write-detailed-gamma-option"><span class="std std-ref">--write-gamma-detail (WRITE_GAMMA_DETAIL = .TRUE.)</span></a>.</p>
+<a class="reference internal" href="command-options.html#write-detailed-gamma-option"><span class="std std-ref">–write-gamma-detail</span></a> option.</p>
+<p>In the output file in hdf5, following keys are used to extract the detailed
+information.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>dataset</p></th>
+<th class="head"><p>Array shape</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>gamma_detail for <code class="docutils literal notranslate"><span class="pre">--ise</span></code></p></td>
+<td><p>(temperature, sampling frequency point, symmetry reduced set of triplets at given grid point, band1, band2, band3) in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>gamma_detail for <code class="docutils literal notranslate"><span class="pre">--br</span></code></p></td>
+<td><p>(temperature, symmetry reduced set of triplets at gvien grid point, band1, band2, band3) in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>)</p></td>
+</tr>
+<tr class="row-even"><td><p>mesh</p></td>
+<td><p>Numbers of sampling mesh along reciprocal axes.</p></td>
+</tr>
+<tr class="row-odd"><td><p>frequency_point for <code class="docutils literal notranslate"><span class="pre">--ise</span></code></p></td>
+<td><p>Sampling frequency points in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>), i.e., <span class="math notranslate nohighlight">\(\omega\)</span> in <span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega)\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>temperature</p></td>
+<td><p>(temperature,), Temperatures in K</p></td>
+</tr>
+<tr class="row-odd"><td><p>triplet</p></td>
+<td><p>(symmetry reduced set of triplets at given grid point, 3), Triplets are given by the grid point indices (see below).</p></td>
+</tr>
+<tr class="row-even"><td><p>weight</p></td>
+<td><p>(symmetry reduced set of triplets at given grid point,), Weight of each triplet to imaginary part of self energy</p></td>
+</tr>
+<tr class="row-odd"><td><p>triplet_all</p></td>
+<td><p>(triplets at given grid point, 3), symmetry non-reduced version of the triplet information.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>See <a class="reference internal" href="grid.html#grid-triplets"><span class="std std-ref">Grid point triplets</span></a> to recover the q-points of each triplet.</p>
+<p>Imaginary part of self energy (linewidth/2) is recovered by the following
+script:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">gd</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;gamma_detail-mxxx-gx.hdf5&quot;</span><span class="p">)</span>
+<span class="n">temp_index</span> <span class="o">=</span> <span class="mi">30</span> <span class="c1"># index of temperature</span>
+<span class="n">temperature</span> <span class="o">=</span> <span class="n">gd</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">][</span><span class="n">temp_index</span><span class="p">]</span>
+<span class="n">gamma_tp</span> <span class="o">=</span> <span class="n">gd</span><span class="p">[</span><span class="s1">&#39;gamma_detail&#39;</span><span class="p">][:]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">weight</span> <span class="o">=</span> <span class="n">gd</span><span class="p">[</span><span class="s1">&#39;weight&#39;</span><span class="p">][:]</span>
+<span class="n">gamma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="n">gamma_tp</span><span class="p">[</span><span class="n">temp_index</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>For example, for <code class="docutils literal notranslate"><span class="pre">--br</span></code>, this <code class="docutils literal notranslate"><span class="pre">gamma</span></code> gives <span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega_\lambda)\)</span> of
+the band indices at the grid point indicated by <span class="math notranslate nohighlight">\(\lambda\)</span> at the temperature of
+index 30. If any bands are degenerated, those <code class="docutils literal notranslate"><span class="pre">gamma</span></code> in
+<code class="docutils literal notranslate"><span class="pre">kappa-mxxx-gx(-sx-sdx).hdf5</span></code> or <code class="docutils literal notranslate"><span class="pre">gamma-mxxx-gx(-sx-sdx).hdf5</span></code> type file are
+averaged, but the <code class="docutils literal notranslate"><span class="pre">gamma</span></code> obtained here in this way are not symmetrized. Apart
+from this symmetrization, the values must be equivalent between them.</p>
+<p>To understand each contribution of triptle to imaginary part of self energy,
+reading <code class="docutils literal notranslate"><span class="pre">phonon-mxxx.hdf5</span></code> is useful (see <a class="reference internal" href="command-options.html#write-phonon-option"><span class="std std-ref">--write-phonon (WRITE_PHONON = .TRUE.)</span></a>). For
+example, phonon triplets of three phonon scatterings are obtained by</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">gd</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;gamma_detail-mxxx-gx.hdf5&quot;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+<span class="n">ph</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;phonon-mxxx.hdf5&quot;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+<span class="n">gp1</span> <span class="o">=</span> <span class="n">gd</span><span class="p">[</span><span class="s1">&#39;grid_point&#39;</span><span class="p">][()]</span>
+<span class="n">triplets</span> <span class="o">=</span> <span class="n">gd</span><span class="p">[</span><span class="s1">&#39;triplet&#39;</span><span class="p">][:]</span> <span class="c1"># Sets of (gp1, gp2, gp3) where gp1 is fixed</span>
+<span class="n">mesh</span> <span class="o">=</span> <span class="n">gd</span><span class="p">[</span><span class="s1">&#39;mesh&#39;</span><span class="p">][:]</span>
+<span class="n">grid_address</span> <span class="o">=</span> <span class="n">ph</span><span class="p">[</span><span class="s1">&#39;grid_address&#39;</span><span class="p">][:]</span>
+<span class="n">q_triplets</span> <span class="o">=</span> <span class="n">grid_address</span><span class="p">[</span><span class="n">triplets</span><span class="p">]</span> <span class="o">/</span> <span class="n">mesh</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;double&#39;</span><span class="p">)</span> <span class="c1"># For conventional regular grid</span>
+<span class="c1"># Phonons of triplets[2]</span>
+<span class="n">phonon_tp</span> <span class="o">=</span> <span class="p">[(</span><span class="n">ph</span><span class="p">[</span><span class="s1">&#39;frequency&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> <span class="n">ph</span><span class="p">[</span><span class="s1">&#39;eigenvector&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">triplets</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
+<span class="c1"># Fractions of contributions of triplets at this grid point and temperature index 30</span>
+<span class="n">gamma_sum_over_bands</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="n">gd</span><span class="p">[</span><span class="s1">&#39;gamma_detail&#39;</span><span class="p">][</span><span class="mi">30</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
+<span class="n">contrib_tp</span> <span class="o">=</span> <span class="p">[</span><span class="n">gd</span><span class="p">[</span><span class="s1">&#39;gamma_detail&#39;</span><span class="p">][</span><span class="mi">30</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="n">gamma_sum_over_bands</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">weight</span><span class="p">))]</span>
+<span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="n">contrib_tp</span><span class="p">)</span> <span class="c1"># is one</span>
+</pre></div>
+</div>
 </section>
+<section id="phonon-hdf5">
+<span id="iofile-phonon-hdf5"></span><h2><code class="docutils literal notranslate"><span class="pre">phonon-*.hdf5</span></code><a class="headerlink" href="#phonon-hdf5" title="Link to this heading">#</a></h2>
+<p>Contents of <code class="docutils literal notranslate"><span class="pre">phonon-mxxx.hdf5</span></code> are watched by:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;phonon-m111111.hdf5&quot;</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="nb">list</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">3</span><span class="p">]:</span>
+<span class="p">[</span><span class="s1">&#39;eigenvector&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;frequency&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;grid_address&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;ir_grid_points&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;ir_grid_weights&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;mesh&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;version&#39;</span><span class="p">]</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;mesh&#39;</span><span class="p">][:]</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="n">array</span><span class="p">([</span><span class="mi">11</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">11</span><span class="p">])</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">5</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;grid_address&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">5</span><span class="p">]:</span> <span class="p">(</span><span class="mi">1367</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">6</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;frequency&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">6</span><span class="p">]:</span> <span class="p">(</span><span class="mi">1367</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">7</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;eigenvector&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">7</span><span class="p">]:</span> <span class="p">(</span><span class="mi">1367</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">8</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;ir_grid_points&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">8</span><span class="p">]:</span> <span class="p">(</span><span class="mi">56</span><span class="p">,)</span>
+</pre></div>
+</div>
+<p>The first axis of <code class="docutils literal notranslate"><span class="pre">ph['grid_address']</span></code>, <code class="docutils literal notranslate"><span class="pre">ph['frequency']</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">ph['eigenvector']</span></code> corresponds to the number of q-points where phonons are
+calculated. Here the number of phonons may not be equal to product of mesh
+numbers (<span class="math notranslate nohighlight">\(1367 \neq 11^3\)</span>). This is because all q-points on Brillouin zone
+boundary are included, i.e., even if multiple q-points are translationally
+equivalent, those phonons are stored separately though these phonons are
+physically equivalent within the equations employed in phono3py. Here Brillouin
+zone is defined by Wigner–Seitz cell of reciprocal primitive basis vectors. This
+is convenient to categorize phonon triplets into Umklapp and Normal scatterings
+based on the Brillouin zone.</p>
 </section>
-<section id="simple-text-file">
-<h2><a class="toc-backref" href="#id12" role="doc-backlink">Simple text file</a><a class="headerlink" href="#simple-text-file" title="Link to this heading">#</a></h2>
+<section id="pp-hdf5">
+<h2><code class="docutils literal notranslate"><span class="pre">pp-*.hdf5</span></code><a class="headerlink" href="#pp-hdf5" title="Link to this heading">#</a></h2>
+<p>This file contains phonon-phonon interaction strength
+<span class="math notranslate nohighlight">\(\bigl|\Phi_{\lambda\lambda'\lambda''}\bigl|^2\)</span>. To use the data in this
+file, it is recommended to generate with <code class="docutils literal notranslate"><span class="pre">--full-pp</span></code> option because the data
+structure to access becomes simpler.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>phono3py.yaml<span class="w"> </span>--gp<span class="w"> </span><span class="m">5</span><span class="w"> </span>--br<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--write-pp<span class="w"> </span>--full-pp
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;pp-m111111-g5.hdf5&quot;</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="nb">list</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="p">[</span><span class="s1">&#39;pp&#39;</span><span class="p">,</span> <span class="s1">&#39;triplet&#39;</span><span class="p">,</span> <span class="s1">&#39;triplet_all&#39;</span><span class="p">,</span> <span class="s1">&#39;version&#39;</span><span class="p">,</span> <span class="s1">&#39;weight&#39;</span><span class="p">]</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;pp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="p">(</span><span class="mi">146</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Indices of the <code class="docutils literal notranslate"><span class="pre">pp</span></code> array are (symmetry reduced set of triplets at given grid
+point, band1, band2, band3), and the values are given in <span class="math notranslate nohighlight">\(\text{eV}^2\)</span>. See
+<a class="reference internal" href="grid.html#grid-triplets"><span class="std std-ref">Grid point triplets</span></a> to recover the q-points of each triplet.</p>
+<p>Except for <code class="docutils literal notranslate"><span class="pre">pp</span></code>, all the other information are equivalent to those found in
+<a class="reference internal" href="#iofile-gamma-detail-hdf5"><span class="std std-ref">gamma_detail-*.hdf5</span></a>.</p>
+</section>
 <section id="gammas-dat">
-<h3><a class="toc-backref" href="#id13" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">gammas-*.dat</span></code></a><a class="headerlink" href="#gammas-dat" title="Link to this heading">#</a></h3>
+<h2><code class="docutils literal notranslate"><span class="pre">gammas-*.dat</span></code><a class="headerlink" href="#gammas-dat" title="Link to this heading">#</a></h2>
 <p>Imaginary parts of self energies with respect to frequency
 <span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega)\)</span> are stored in THz. See <a class="reference internal" href="command-options.html#ise-option"><span class="std std-ref">--ise (IMAG_SELF_ENERGY = .TRUE.)</span></a>.</p>
 </section>
 <section id="jdos-dat">
-<h3><a class="toc-backref" href="#id14" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">jdos-*.dat</span></code></a><a class="headerlink" href="#jdos-dat" title="Link to this heading">#</a></h3>
+<h2><code class="docutils literal notranslate"><span class="pre">jdos-*.dat</span></code><a class="headerlink" href="#jdos-dat" title="Link to this heading">#</a></h2>
 <p>Joint densities of states are stored in Thz. See <a class="reference internal" href="command-options.html#jdos-option"><span class="std std-ref">Joint density of states (JDOS) and weighted-JDOS</span></a>.</p>
 </section>
 <section id="linewidth-dat">
-<h3><a class="toc-backref" href="#id15" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">linewidth-*.dat</span></code></a><a class="headerlink" href="#linewidth-dat" title="Link to this heading">#</a></h3>
-</section>
+<h2><code class="docutils literal notranslate"><span class="pre">linewidth-*.dat</span></code><a class="headerlink" href="#linewidth-dat" title="Link to this heading">#</a></h2>
 </section>
 </section>
 
@@ -569,11 +926,11 @@ frequencies (half linewidths) are stored in THz. See
       </div>
     </a>
     <a class="right-next"
-       href="hdf5_howto.html"
+       href="auxiliary-tools.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">How to read the results stored in hdf5 files</p>
+        <p class="prev-next-title">Auxiliary tools</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -593,26 +950,38 @@ frequencies (half linewidths) are stored in THz. See
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#intermediate-text-files">Intermediate text files</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phono3py-disp-yaml"><code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#forces-fc3"><code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#forces-fc2"><code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phono3py-disp-yaml"><code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phono3py-params-yaml"><code class="docutils literal notranslate"><span class="pre">phono3py_params.yaml</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#forces-fc3"><code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#forces-fc2"><code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fc3-hdf5"><code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fc2-hdf5"><code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#kappa-hdf5"><code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mesh"><code class="docutils literal notranslate"><span class="pre">mesh</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#frequency"><code class="docutils literal notranslate"><span class="pre">frequency</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gamma"><code class="docutils literal notranslate"><span class="pre">gamma</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gamma-isotope"><code class="docutils literal notranslate"><span class="pre">gamma_isotope</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#group-velocity"><code class="docutils literal notranslate"><span class="pre">group_velocity</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heat-capacity"><code class="docutils literal notranslate"><span class="pre">heat_capacity</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#kappa"><code class="docutils literal notranslate"><span class="pre">kappa</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mode-kappa"><code class="docutils literal notranslate"><span class="pre">mode-kappa</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gv-by-gv"><code class="docutils literal notranslate"><span class="pre">gv_by_gv</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#q-point"><code class="docutils literal notranslate"><span class="pre">q-point</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#temperature"><code class="docutils literal notranslate"><span class="pre">temperature</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#weight"><code class="docutils literal notranslate"><span class="pre">weight</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ave-pp"><code class="docutils literal notranslate"><span class="pre">ave_pp</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#boundary-mfp"><code class="docutils literal notranslate"><span class="pre">boundary_mfp</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#kappa-unit-conversion"><code class="docutils literal notranslate"><span class="pre">kappa_unit_conversion</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gamma-n-and-gamma-u"><code class="docutils literal notranslate"><span class="pre">gamma_N</span></code> and <code class="docutils literal notranslate"><span class="pre">gamma_U</span></code></a></li>
 </ul>
 </li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hdf5-files">HDF5 files</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#kappa-hdf5"><code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fc3-hdf5"><code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fc2-hdf5"><code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gamma-hdf5"><code class="docutils literal notranslate"><span class="pre">gamma-*.hdf5</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gamma-detail-hdf5"><code class="docutils literal notranslate"><span class="pre">gamma_detail-*.hdf5</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simple-text-file">Simple text file</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gammas-dat"><code class="docutils literal notranslate"><span class="pre">gammas-*.dat</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#jdos-dat"><code class="docutils literal notranslate"><span class="pre">jdos-*.dat</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#linewidth-dat"><code class="docutils literal notranslate"><span class="pre">linewidth-*.dat</span></code></a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gamma-hdf5"><code class="docutils literal notranslate"><span class="pre">gamma-*.hdf5</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gamma-detail-hdf5"><code class="docutils literal notranslate"><span class="pre">gamma_detail-*.hdf5</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phonon-hdf5"><code class="docutils literal notranslate"><span class="pre">phonon-*.hdf5</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pp-hdf5"><code class="docutils literal notranslate"><span class="pre">pp-*.hdf5</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gammas-dat"><code class="docutils literal notranslate"><span class="pre">gammas-*.dat</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jdos-dat"><code class="docutils literal notranslate"><span class="pre">jdos-*.dat</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#linewidth-dat"><code class="docutils literal notranslate"><span class="pre">linewidth-*.dat</span></code></a></li>
 </ul>
   </nav></div>
 

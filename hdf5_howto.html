@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>How to read the results stored in hdf5 files &#8212; Phono3py v.3.15.1</title>
+    <title>Using phono3py hdf5 files &#8212; Phono3py v.3.15.1</title>
   
   
   
@@ -40,13 +40,11 @@
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
-    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
-    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'hdf5_howto';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Auxiliary tools" href="auxiliary-tools.html" />
-    <link rel="prev" title="Input / Output files" href="input-output-files.html" />
+    <link rel="next" title="Grids in reciprocal space" href="grid.html" />
+    <link rel="prev" title="phono3py-load command" href="phono3py-load.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -163,7 +161,6 @@
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options / Setting tags</a></li>
 <li class="toctree-l1"><a class="reference internal" href="input-output-files.html">Input / Output files</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">How to read the results stored in hdf5 files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="direct-solution.html">Direct solution of linearized phonon Boltzmann equation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="wigner-solution.html">Solution of the Wigner transport equation</a></li>
@@ -174,7 +171,8 @@
 <li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="phono3py-api.html">Phono3py API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="phono3py-load.html">phono3py-load command</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Using phono3py hdf5 files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="grid.html">Grids in reciprocal space</a></li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
@@ -316,7 +314,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>How to read the results stored in hdf5 files</h1>
+    <h1>Using phono3py hdf5 files</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -326,26 +324,7 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-use-hdf5-python-library">How to use HDF5 python library</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#details-of-kappa-hdf5-file">Details of <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mesh">mesh</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#frequency">frequency</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gamma">gamma</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gamma-isotope">gamma_isotope</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#group-velocity">group_velocity</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heat-capacity">heat_capacity</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#kappa">kappa</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mode-kappa">mode-kappa</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gv-by-gv">gv_by_gv</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#q-point">q-point</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#temperature">temperature</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#weight">weight</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ave-pp">ave_pp</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#boundary-mfp">boundary_mfp</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#kappa-unit-conversion">kappa_unit_conversion</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-know-grid-point-index-number-corresponding-to-grid-address">How to know grid point index number corresponding to grid address</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#using-h5py-in-ipython">Using <code class="docutils literal notranslate"><span class="pre">h5py</span></code> in ipython</a></li>
 </ul>
             </nav>
         </div>
@@ -357,336 +336,89 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="how-to-read-the-results-stored-in-hdf5-files">
-<span id="hdf5-howto"></span><h1>How to read the results stored in hdf5 files<a class="headerlink" href="#how-to-read-the-results-stored-in-hdf5-files" title="Link to this heading">#</a></h1>
-<nav class="contents local" id="contents">
-<ul class="simple">
-<li><p><a class="reference internal" href="#how-to-use-hdf5-python-library" id="id1">How to use HDF5 python library</a></p></li>
-<li><p><a class="reference internal" href="#details-of-kappa-hdf5-file" id="id2">Details of <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file</a></p>
-<ul>
-<li><p><a class="reference internal" href="#mesh" id="id3">mesh</a></p></li>
-<li><p><a class="reference internal" href="#frequency" id="id4">frequency</a></p></li>
-<li><p><a class="reference internal" href="#gamma" id="id5">gamma</a></p></li>
-<li><p><a class="reference internal" href="#gamma-isotope" id="id6">gamma_isotope</a></p></li>
-<li><p><a class="reference internal" href="#group-velocity" id="id7">group_velocity</a></p></li>
-<li><p><a class="reference internal" href="#heat-capacity" id="id8">heat_capacity</a></p></li>
-<li><p><a class="reference internal" href="#kappa" id="id9">kappa</a></p></li>
-<li><p><a class="reference internal" href="#mode-kappa" id="id10">mode-kappa</a></p></li>
-<li><p><a class="reference internal" href="#gv-by-gv" id="id11">gv_by_gv</a></p></li>
-<li><p><a class="reference internal" href="#q-point" id="id12">q-point</a></p></li>
-<li><p><a class="reference internal" href="#temperature" id="id13">temperature</a></p></li>
-<li><p><a class="reference internal" href="#weight" id="id14">weight</a></p></li>
-<li><p><a class="reference internal" href="#ave-pp" id="id15">ave_pp</a></p></li>
-<li><p><a class="reference internal" href="#boundary-mfp" id="id16">boundary_mfp</a></p></li>
-<li><p><a class="reference internal" href="#kappa-unit-conversion" id="id17">kappa_unit_conversion</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#how-to-know-grid-point-index-number-corresponding-to-grid-address" id="id18">How to know grid point index number corresponding to grid address</a></p></li>
-</ul>
-</nav>
-<section id="how-to-use-hdf5-python-library">
-<h2><a class="toc-backref" href="#id1" role="doc-backlink">How to use HDF5 python library</a><a class="headerlink" href="#how-to-use-hdf5-python-library" title="Link to this heading">#</a></h2>
-<p>It is assumed that <code class="docutils literal notranslate"><span class="pre">python-h5py</span></code> is installed on the computer you
-interactively use. In the following, how to see the contents of
-<code class="docutils literal notranslate"><span class="pre">.hdf5</span></code> files in the interactive mode of Python. The basic usage of
-reading <code class="docutils literal notranslate"><span class="pre">.hdf5</span></code> files using <code class="docutils literal notranslate"><span class="pre">h5py</span></code> is found at <a class="reference external" href="http://docs.h5py.org/en/latest/high/dataset.html#reading-writing-data%3E">here</a>.
-Usually for running interactive python, <code class="docutils literal notranslate"><span class="pre">ipython</span></code> is recommended to
-use but not the plain python. In the following example, an MgO result
-of thermal conductivity calculation is loaded and thermal conductivity
-tensor at 300 K is watched.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>In<span class="w"> </span><span class="o">[</span><span class="m">1</span><span class="o">]</span>:<span class="w"> </span>import<span class="w"> </span>h5py
+  <section class="tex2jax_ignore mathjax_ignore" id="using-phono3py-hdf5-files">
+<span id="hdf5-howto"></span><h1>Using phono3py hdf5 files<a class="headerlink" href="#using-phono3py-hdf5-files" title="Link to this heading">#</a></h1>
+<section id="using-h5py-in-ipython">
+<h2>Using <code class="docutils literal notranslate"><span class="pre">h5py</span></code> in ipython<a class="headerlink" href="#using-h5py-in-ipython" title="Link to this heading">#</a></h2>
+<p>It is assumed that <code class="docutils literal notranslate"><span class="pre">python-h5py</span></code> is installed on the computer you interactively
+use. In the following, how to see the contents of <code class="docutils literal notranslate"><span class="pre">.hdf5</span></code> files in the
+interactive mode of Python. The basic usage of reading <code class="docutils literal notranslate"><span class="pre">.hdf5</span></code> files using
+<code class="docutils literal notranslate"><span class="pre">h5py</span></code> is found at
+<a class="reference external" href="http://docs.h5py.org/en/latest/high/dataset.html#reading-writing-data%3E">here</a>.
+In the following example, an MgO result of thermal conductivity calculation
+stored in <code class="docutils literal notranslate"><span class="pre">kappa-m111111.hdf5</span></code> (see <a class="reference internal" href="input-output-files.html#iofile-kappa-hdf5"><span class="std std-ref">kappa-*.hdf5</span></a>) is loaded and
+thermal conductivity tensor at 300 K is watched.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
 
-In<span class="w"> </span><span class="o">[</span><span class="m">2</span><span class="o">]</span>:<span class="w"> </span><span class="nv">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>h5py.File<span class="o">(</span><span class="s2">&quot;kappa-m111111.hdf5&quot;</span><span class="o">)</span>
+<span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;kappa-m111111.hdf5&quot;</span><span class="p">)</span>
 
-In<span class="w"> </span><span class="o">[</span><span class="m">3</span><span class="o">]</span>:<span class="w"> </span>list<span class="o">(</span>f<span class="o">)</span>
-Out<span class="o">[</span><span class="m">3</span><span class="o">]</span>:
-<span class="o">[</span><span class="s1">&#39;frequency&#39;</span>,
-<span class="w"> </span><span class="s1">&#39;gamma&#39;</span>,
-<span class="w"> </span><span class="s1">&#39;group_velocity&#39;</span>,
-<span class="w"> </span><span class="s1">&#39;gv_by_gv&#39;</span>,
-<span class="w"> </span><span class="s1">&#39;heat_capacity&#39;</span>,
-<span class="w"> </span><span class="s1">&#39;kappa&#39;</span>,
-<span class="w"> </span><span class="s1">&#39;kappa_unit_conversion&#39;</span>,
-<span class="w"> </span><span class="s1">&#39;mesh&#39;</span>,
-<span class="w"> </span><span class="s1">&#39;mode_kappa&#39;</span>,
-<span class="w"> </span><span class="s1">&#39;qpoint&#39;</span>,
-<span class="w"> </span><span class="s1">&#39;temperature&#39;</span>,
-<span class="w"> </span><span class="s1">&#39;weight&#39;</span><span class="o">]</span>
+<span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="nb">list</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">3</span><span class="p">]:</span>
+<span class="p">[</span><span class="s1">&#39;frequency&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;gamma&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;group_velocity&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;gv_by_gv&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;heat_capacity&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;kappa&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;kappa_unit_conversion&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;mesh&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;mode_kappa&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;qpoint&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;temperature&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;weight&#39;</span><span class="p">]</span>
 
-In<span class="w"> </span><span class="o">[</span><span class="m">4</span><span class="o">]</span>:<span class="w"> </span>f<span class="o">[</span><span class="s1">&#39;kappa&#39;</span><span class="o">]</span>.shape
-Out<span class="o">[</span><span class="m">4</span><span class="o">]</span>:<span class="w"> </span><span class="o">(</span><span class="m">101</span>,<span class="w"> </span><span class="m">6</span><span class="o">)</span>
+<span class="n">In</span> <span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;kappa&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="p">(</span><span class="mi">101</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
 
-In<span class="w"> </span><span class="o">[</span><span class="m">5</span><span class="o">]</span>:<span class="w"> </span>f<span class="o">[</span><span class="s1">&#39;kappa&#39;</span><span class="o">][</span>:<span class="o">]</span>
-Out<span class="o">[</span><span class="m">5</span><span class="o">]</span>:
-array<span class="o">([[</span><span class="w">  </span><span class="m">0</span>.00000000e+00,<span class="w">   </span><span class="m">0</span>.00000000e+00,<span class="w">   </span><span class="m">0</span>.00000000e+00,
-<span class="w">          </span><span class="m">0</span>.00000000e+00,<span class="w">   </span><span class="m">0</span>.00000000e+00,<span class="w">   </span><span class="m">0</span>.00000000e+00<span class="o">]</span>,
-<span class="w">       </span><span class="o">[</span><span class="w">  </span><span class="m">2</span>.11702476e+05,<span class="w">   </span><span class="m">2</span>.11702476e+05,<span class="w">   </span><span class="m">2</span>.11702476e+05,
-<span class="w">          </span><span class="m">6</span>.64531043e-13,<span class="w">   </span><span class="m">6</span>.92618921e-13,<span class="w">  </span>-1.34727352e-12<span class="o">]</span>,
-<span class="w">       </span><span class="o">[</span><span class="w">  </span><span class="m">3</span>.85304024e+04,<span class="w">   </span><span class="m">3</span>.85304024e+04,<span class="w">   </span><span class="m">3</span>.85304024e+04,
-<span class="w">          </span><span class="m">3</span>.52531412e-13,<span class="w">   </span><span class="m">3</span>.72706406e-13,<span class="w">  </span>-7.07290889e-13<span class="o">]</span>,
-<span class="w">       </span>...,
-<span class="w">       </span><span class="o">[</span><span class="w">  </span><span class="m">2</span>.95769356e+01,<span class="w">   </span><span class="m">2</span>.95769356e+01,<span class="w">   </span><span class="m">2</span>.95769356e+01,
-<span class="w">          </span><span class="m">3</span>.01803322e-16,<span class="w">   </span><span class="m">3</span>.21661793e-16,<span class="w">  </span>-6.05271364e-16<span class="o">]</span>,
-<span class="w">       </span><span class="o">[</span><span class="w">  </span><span class="m">2</span>.92709650e+01,<span class="w">   </span><span class="m">2</span>.92709650e+01,<span class="w">   </span><span class="m">2</span>.92709650e+01,
-<span class="w">          </span><span class="m">2</span>.98674274e-16,<span class="w">   </span><span class="m">3</span>.18330655e-16,<span class="w">  </span>-5.98999091e-16<span class="o">]</span>,
-<span class="w">       </span><span class="o">[</span><span class="w">  </span><span class="m">2</span>.89713297e+01,<span class="w">   </span><span class="m">2</span>.89713297e+01,<span class="w">   </span><span class="m">2</span>.89713297e+01,
-<span class="w">          </span><span class="m">2</span>.95610215e-16,<span class="w">   </span><span class="m">3</span>.15068595e-16,<span class="w">  </span>-5.92857003e-16<span class="o">]])</span>
+<span class="n">In</span> <span class="p">[</span><span class="mi">5</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;kappa&#39;</span><span class="p">][:]</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">5</span><span class="p">]:</span>
+<span class="n">array</span><span class="p">([[</span>  <span class="mf">0.00000000e+00</span><span class="p">,</span>   <span class="mf">0.00000000e+00</span><span class="p">,</span>   <span class="mf">0.00000000e+00</span><span class="p">,</span>
+          <span class="mf">0.00000000e+00</span><span class="p">,</span>   <span class="mf">0.00000000e+00</span><span class="p">,</span>   <span class="mf">0.00000000e+00</span><span class="p">],</span>
+       <span class="p">[</span>  <span class="mf">2.11702476e+05</span><span class="p">,</span>   <span class="mf">2.11702476e+05</span><span class="p">,</span>   <span class="mf">2.11702476e+05</span><span class="p">,</span>
+          <span class="mf">6.64531043e-13</span><span class="p">,</span>   <span class="mf">6.92618921e-13</span><span class="p">,</span>  <span class="o">-</span><span class="mf">1.34727352e-12</span><span class="p">],</span>
+       <span class="p">[</span>  <span class="mf">3.85304024e+04</span><span class="p">,</span>   <span class="mf">3.85304024e+04</span><span class="p">,</span>   <span class="mf">3.85304024e+04</span><span class="p">,</span>
+          <span class="mf">3.52531412e-13</span><span class="p">,</span>   <span class="mf">3.72706406e-13</span><span class="p">,</span>  <span class="o">-</span><span class="mf">7.07290889e-13</span><span class="p">],</span>
+       <span class="o">...</span><span class="p">,</span>
+       <span class="p">[</span>  <span class="mf">2.95769356e+01</span><span class="p">,</span>   <span class="mf">2.95769356e+01</span><span class="p">,</span>   <span class="mf">2.95769356e+01</span><span class="p">,</span>
+          <span class="mf">3.01803322e-16</span><span class="p">,</span>   <span class="mf">3.21661793e-16</span><span class="p">,</span>  <span class="o">-</span><span class="mf">6.05271364e-16</span><span class="p">],</span>
+       <span class="p">[</span>  <span class="mf">2.92709650e+01</span><span class="p">,</span>   <span class="mf">2.92709650e+01</span><span class="p">,</span>   <span class="mf">2.92709650e+01</span><span class="p">,</span>
+          <span class="mf">2.98674274e-16</span><span class="p">,</span>   <span class="mf">3.18330655e-16</span><span class="p">,</span>  <span class="o">-</span><span class="mf">5.98999091e-16</span><span class="p">],</span>
+       <span class="p">[</span>  <span class="mf">2.89713297e+01</span><span class="p">,</span>   <span class="mf">2.89713297e+01</span><span class="p">,</span>   <span class="mf">2.89713297e+01</span><span class="p">,</span>
+          <span class="mf">2.95610215e-16</span><span class="p">,</span>   <span class="mf">3.15068595e-16</span><span class="p">,</span>  <span class="o">-</span><span class="mf">5.92857003e-16</span><span class="p">]])</span>
 
-In<span class="w"> </span><span class="o">[</span><span class="m">6</span><span class="o">]</span>:<span class="w"> </span>f<span class="o">[</span><span class="s1">&#39;temperature&#39;</span><span class="o">][</span>:<span class="o">]</span>
-Out<span class="o">[</span><span class="m">6</span><span class="o">]</span>:
-array<span class="o">([</span><span class="w">    </span><span class="m">0</span>.,<span class="w">    </span><span class="m">10</span>.,<span class="w">    </span><span class="m">20</span>.,<span class="w">    </span><span class="m">30</span>.,<span class="w">    </span><span class="m">40</span>.,<span class="w">    </span><span class="m">50</span>.,<span class="w">    </span><span class="m">60</span>.,<span class="w">    </span><span class="m">70</span>.,
-<span class="w">          </span><span class="m">80</span>.,<span class="w">    </span><span class="m">90</span>.,<span class="w">   </span><span class="m">100</span>.,<span class="w">   </span><span class="m">110</span>.,<span class="w">   </span><span class="m">120</span>.,<span class="w">   </span><span class="m">130</span>.,<span class="w">   </span><span class="m">140</span>.,<span class="w">   </span><span class="m">150</span>.,
-<span class="w">         </span><span class="m">160</span>.,<span class="w">   </span><span class="m">170</span>.,<span class="w">   </span><span class="m">180</span>.,<span class="w">   </span><span class="m">190</span>.,<span class="w">   </span><span class="m">200</span>.,<span class="w">   </span><span class="m">210</span>.,<span class="w">   </span><span class="m">220</span>.,<span class="w">   </span><span class="m">230</span>.,
-<span class="w">         </span><span class="m">240</span>.,<span class="w">   </span><span class="m">250</span>.,<span class="w">   </span><span class="m">260</span>.,<span class="w">   </span><span class="m">270</span>.,<span class="w">   </span><span class="m">280</span>.,<span class="w">   </span><span class="m">290</span>.,<span class="w">   </span><span class="m">300</span>.,<span class="w">   </span><span class="m">310</span>.,
-<span class="w">         </span><span class="m">320</span>.,<span class="w">   </span><span class="m">330</span>.,<span class="w">   </span><span class="m">340</span>.,<span class="w">   </span><span class="m">350</span>.,<span class="w">   </span><span class="m">360</span>.,<span class="w">   </span><span class="m">370</span>.,<span class="w">   </span><span class="m">380</span>.,<span class="w">   </span><span class="m">390</span>.,
-<span class="w">         </span><span class="m">400</span>.,<span class="w">   </span><span class="m">410</span>.,<span class="w">   </span><span class="m">420</span>.,<span class="w">   </span><span class="m">430</span>.,<span class="w">   </span><span class="m">440</span>.,<span class="w">   </span><span class="m">450</span>.,<span class="w">   </span><span class="m">460</span>.,<span class="w">   </span><span class="m">470</span>.,
-<span class="w">         </span><span class="m">480</span>.,<span class="w">   </span><span class="m">490</span>.,<span class="w">   </span><span class="m">500</span>.,<span class="w">   </span><span class="m">510</span>.,<span class="w">   </span><span class="m">520</span>.,<span class="w">   </span><span class="m">530</span>.,<span class="w">   </span><span class="m">540</span>.,<span class="w">   </span><span class="m">550</span>.,
-<span class="w">         </span><span class="m">560</span>.,<span class="w">   </span><span class="m">570</span>.,<span class="w">   </span><span class="m">580</span>.,<span class="w">   </span><span class="m">590</span>.,<span class="w">   </span><span class="m">600</span>.,<span class="w">   </span><span class="m">610</span>.,<span class="w">   </span><span class="m">620</span>.,<span class="w">   </span><span class="m">630</span>.,
-<span class="w">         </span><span class="m">640</span>.,<span class="w">   </span><span class="m">650</span>.,<span class="w">   </span><span class="m">660</span>.,<span class="w">   </span><span class="m">670</span>.,<span class="w">   </span><span class="m">680</span>.,<span class="w">   </span><span class="m">690</span>.,<span class="w">   </span><span class="m">700</span>.,<span class="w">   </span><span class="m">710</span>.,
-<span class="w">         </span><span class="m">720</span>.,<span class="w">   </span><span class="m">730</span>.,<span class="w">   </span><span class="m">740</span>.,<span class="w">   </span><span class="m">750</span>.,<span class="w">   </span><span class="m">760</span>.,<span class="w">   </span><span class="m">770</span>.,<span class="w">   </span><span class="m">780</span>.,<span class="w">   </span><span class="m">790</span>.,
-<span class="w">         </span><span class="m">800</span>.,<span class="w">   </span><span class="m">810</span>.,<span class="w">   </span><span class="m">820</span>.,<span class="w">   </span><span class="m">830</span>.,<span class="w">   </span><span class="m">840</span>.,<span class="w">   </span><span class="m">850</span>.,<span class="w">   </span><span class="m">860</span>.,<span class="w">   </span><span class="m">870</span>.,
-<span class="w">         </span><span class="m">880</span>.,<span class="w">   </span><span class="m">890</span>.,<span class="w">   </span><span class="m">900</span>.,<span class="w">   </span><span class="m">910</span>.,<span class="w">   </span><span class="m">920</span>.,<span class="w">   </span><span class="m">930</span>.,<span class="w">   </span><span class="m">940</span>.,<span class="w">   </span><span class="m">950</span>.,
-<span class="w">         </span><span class="m">960</span>.,<span class="w">   </span><span class="m">970</span>.,<span class="w">   </span><span class="m">980</span>.,<span class="w">   </span><span class="m">990</span>.,<span class="w">  </span><span class="m">1000</span>.<span class="o">])</span>
+<span class="n">In</span> <span class="p">[</span><span class="mi">6</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;temperature&#39;</span><span class="p">][:]</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">6</span><span class="p">]:</span>
+<span class="n">array</span><span class="p">([</span>    <span class="mf">0.</span><span class="p">,</span>    <span class="mf">10.</span><span class="p">,</span>    <span class="mf">20.</span><span class="p">,</span>    <span class="mf">30.</span><span class="p">,</span>    <span class="mf">40.</span><span class="p">,</span>    <span class="mf">50.</span><span class="p">,</span>    <span class="mf">60.</span><span class="p">,</span>    <span class="mf">70.</span><span class="p">,</span>
+          <span class="mf">80.</span><span class="p">,</span>    <span class="mf">90.</span><span class="p">,</span>   <span class="mf">100.</span><span class="p">,</span>   <span class="mf">110.</span><span class="p">,</span>   <span class="mf">120.</span><span class="p">,</span>   <span class="mf">130.</span><span class="p">,</span>   <span class="mf">140.</span><span class="p">,</span>   <span class="mf">150.</span><span class="p">,</span>
+         <span class="mf">160.</span><span class="p">,</span>   <span class="mf">170.</span><span class="p">,</span>   <span class="mf">180.</span><span class="p">,</span>   <span class="mf">190.</span><span class="p">,</span>   <span class="mf">200.</span><span class="p">,</span>   <span class="mf">210.</span><span class="p">,</span>   <span class="mf">220.</span><span class="p">,</span>   <span class="mf">230.</span><span class="p">,</span>
+         <span class="mf">240.</span><span class="p">,</span>   <span class="mf">250.</span><span class="p">,</span>   <span class="mf">260.</span><span class="p">,</span>   <span class="mf">270.</span><span class="p">,</span>   <span class="mf">280.</span><span class="p">,</span>   <span class="mf">290.</span><span class="p">,</span>   <span class="mf">300.</span><span class="p">,</span>   <span class="mf">310.</span><span class="p">,</span>
+         <span class="mf">320.</span><span class="p">,</span>   <span class="mf">330.</span><span class="p">,</span>   <span class="mf">340.</span><span class="p">,</span>   <span class="mf">350.</span><span class="p">,</span>   <span class="mf">360.</span><span class="p">,</span>   <span class="mf">370.</span><span class="p">,</span>   <span class="mf">380.</span><span class="p">,</span>   <span class="mf">390.</span><span class="p">,</span>
+         <span class="mf">400.</span><span class="p">,</span>   <span class="mf">410.</span><span class="p">,</span>   <span class="mf">420.</span><span class="p">,</span>   <span class="mf">430.</span><span class="p">,</span>   <span class="mf">440.</span><span class="p">,</span>   <span class="mf">450.</span><span class="p">,</span>   <span class="mf">460.</span><span class="p">,</span>   <span class="mf">470.</span><span class="p">,</span>
+         <span class="mf">480.</span><span class="p">,</span>   <span class="mf">490.</span><span class="p">,</span>   <span class="mf">500.</span><span class="p">,</span>   <span class="mf">510.</span><span class="p">,</span>   <span class="mf">520.</span><span class="p">,</span>   <span class="mf">530.</span><span class="p">,</span>   <span class="mf">540.</span><span class="p">,</span>   <span class="mf">550.</span><span class="p">,</span>
+         <span class="mf">560.</span><span class="p">,</span>   <span class="mf">570.</span><span class="p">,</span>   <span class="mf">580.</span><span class="p">,</span>   <span class="mf">590.</span><span class="p">,</span>   <span class="mf">600.</span><span class="p">,</span>   <span class="mf">610.</span><span class="p">,</span>   <span class="mf">620.</span><span class="p">,</span>   <span class="mf">630.</span><span class="p">,</span>
+         <span class="mf">640.</span><span class="p">,</span>   <span class="mf">650.</span><span class="p">,</span>   <span class="mf">660.</span><span class="p">,</span>   <span class="mf">670.</span><span class="p">,</span>   <span class="mf">680.</span><span class="p">,</span>   <span class="mf">690.</span><span class="p">,</span>   <span class="mf">700.</span><span class="p">,</span>   <span class="mf">710.</span><span class="p">,</span>
+         <span class="mf">720.</span><span class="p">,</span>   <span class="mf">730.</span><span class="p">,</span>   <span class="mf">740.</span><span class="p">,</span>   <span class="mf">750.</span><span class="p">,</span>   <span class="mf">760.</span><span class="p">,</span>   <span class="mf">770.</span><span class="p">,</span>   <span class="mf">780.</span><span class="p">,</span>   <span class="mf">790.</span><span class="p">,</span>
+         <span class="mf">800.</span><span class="p">,</span>   <span class="mf">810.</span><span class="p">,</span>   <span class="mf">820.</span><span class="p">,</span>   <span class="mf">830.</span><span class="p">,</span>   <span class="mf">840.</span><span class="p">,</span>   <span class="mf">850.</span><span class="p">,</span>   <span class="mf">860.</span><span class="p">,</span>   <span class="mf">870.</span><span class="p">,</span>
+         <span class="mf">880.</span><span class="p">,</span>   <span class="mf">890.</span><span class="p">,</span>   <span class="mf">900.</span><span class="p">,</span>   <span class="mf">910.</span><span class="p">,</span>   <span class="mf">920.</span><span class="p">,</span>   <span class="mf">930.</span><span class="p">,</span>   <span class="mf">940.</span><span class="p">,</span>   <span class="mf">950.</span><span class="p">,</span>
+         <span class="mf">960.</span><span class="p">,</span>   <span class="mf">970.</span><span class="p">,</span>   <span class="mf">980.</span><span class="p">,</span>   <span class="mf">990.</span><span class="p">,</span>  <span class="mf">1000.</span><span class="p">])</span>
 
-In<span class="w"> </span><span class="o">[</span><span class="m">7</span><span class="o">]</span>:<span class="w"> </span>f<span class="o">[</span><span class="s1">&#39;kappa&#39;</span><span class="o">][</span><span class="m">30</span><span class="o">]</span>
-Out<span class="o">[</span><span class="m">7</span><span class="o">]</span>:
-array<span class="o">([</span><span class="w">  </span><span class="m">1</span>.09089896e+02,<span class="w">   </span><span class="m">1</span>.09089896e+02,<span class="w">   </span><span class="m">1</span>.09089896e+02,
-<span class="w">         </span><span class="m">1</span>.12480528e-15,<span class="w">   </span><span class="m">1</span>.19318349e-15,<span class="w">  </span>-2.25126057e-15<span class="o">])</span>
+<span class="n">In</span> <span class="p">[</span><span class="mi">7</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;kappa&#39;</span><span class="p">][</span><span class="mi">30</span><span class="p">]</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">7</span><span class="p">]:</span>
+<span class="n">array</span><span class="p">([</span>  <span class="mf">1.09089896e+02</span><span class="p">,</span>   <span class="mf">1.09089896e+02</span><span class="p">,</span>   <span class="mf">1.09089896e+02</span><span class="p">,</span>
+         <span class="mf">1.12480528e-15</span><span class="p">,</span>   <span class="mf">1.19318349e-15</span><span class="p">,</span>  <span class="o">-</span><span class="mf">2.25126057e-15</span><span class="p">])</span>
 
-In<span class="w"> </span><span class="o">[</span><span class="m">8</span><span class="o">]</span>:<span class="w"> </span>f<span class="o">[</span><span class="s1">&#39;mode_kappa&#39;</span><span class="o">][</span><span class="m">30</span>,<span class="w"> </span>:,<span class="w"> </span>:,<span class="w"> </span>:<span class="o">]</span>.sum<span class="o">(</span><span class="nv">axis</span><span class="o">=</span><span class="m">0</span><span class="o">)</span>.sum<span class="o">(</span><span class="nv">axis</span><span class="o">=</span><span class="m">0</span><span class="o">)</span><span class="w"> </span>/<span class="w"> </span>weight.sum<span class="o">()</span>
-Out<span class="o">[</span><span class="m">8</span><span class="o">]</span>:
-array<span class="o">([</span><span class="w">  </span><span class="m">1</span>.09089896e+02,<span class="w">   </span><span class="m">1</span>.09089896e+02,<span class="w">   </span><span class="m">1</span>.09089896e+02,
-<span class="w">         </span><span class="m">1</span>.12480528e-15,<span class="w">   </span><span class="m">1</span>.19318349e-15,<span class="w">  </span>-2.25126057e-15<span class="o">])</span>
+<span class="n">In</span> <span class="p">[</span><span class="mi">8</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;mode_kappa&#39;</span><span class="p">][</span><span class="mi">30</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">weight</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">8</span><span class="p">]:</span>
+<span class="n">array</span><span class="p">([</span>  <span class="mf">1.09089896e+02</span><span class="p">,</span>   <span class="mf">1.09089896e+02</span><span class="p">,</span>   <span class="mf">1.09089896e+02</span><span class="p">,</span>
+         <span class="mf">1.12480528e-15</span><span class="p">,</span>   <span class="mf">1.19318349e-15</span><span class="p">,</span>  <span class="o">-</span><span class="mf">2.25126057e-15</span><span class="p">])</span>
 
-In<span class="w"> </span><span class="o">[</span><span class="m">9</span><span class="o">]</span>:<span class="w"> </span><span class="nv">g</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>f<span class="o">[</span><span class="s1">&#39;gamma&#39;</span><span class="o">][</span><span class="m">30</span><span class="o">]</span>
+<span class="n">In</span> <span class="p">[</span><span class="mi">9</span><span class="p">]:</span> <span class="n">g</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">][</span><span class="mi">30</span><span class="p">]</span>
 
-In<span class="w"> </span><span class="o">[</span><span class="m">10</span><span class="o">]</span>:<span class="w"> </span>import<span class="w"> </span>numpy<span class="w"> </span>as<span class="w"> </span>np
+<span class="n">In</span> <span class="p">[</span><span class="mi">10</span><span class="p">]:</span> <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-In<span class="w"> </span><span class="o">[</span><span class="m">11</span><span class="o">]</span>:<span class="w"> </span><span class="nv">g</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>np.where<span class="o">(</span>g<span class="w"> </span>&gt;<span class="w"> </span><span class="m">0</span>,<span class="w"> </span>g,<span class="w"> </span>-1<span class="o">)</span>
+<span class="n">In</span> <span class="p">[</span><span class="mi">11</span><span class="p">]:</span> <span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">g</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
-In<span class="w"> </span><span class="o">[</span><span class="m">12</span><span class="o">]</span>:<span class="w"> </span><span class="nv">lifetime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>np.where<span class="o">(</span>g<span class="w"> </span>&gt;<span class="w"> </span><span class="m">0</span>,<span class="w"> </span><span class="m">1</span>.0<span class="w"> </span>/<span class="w"> </span><span class="o">(</span><span class="m">2</span><span class="w"> </span>*<span class="w"> </span><span class="m">2</span><span class="w"> </span>*<span class="w"> </span>np.pi<span class="w"> </span>*<span class="w"> </span>g<span class="o">)</span>,<span class="w"> </span><span class="m">0</span><span class="o">)</span>
-</pre></div>
-</div>
-</section>
-<section id="details-of-kappa-hdf5-file">
-<span id="kappa-hdf5-file"></span><h2><a class="toc-backref" href="#id2" role="doc-backlink">Details of <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file</a><a class="headerlink" href="#details-of-kappa-hdf5-file" title="Link to this heading">#</a></h2>
-<p>Files name, e.g. <code class="docutils literal notranslate"><span class="pre">kappa-m323220.hdf5</span></code>, is determined by some
-specific options. <code class="docutils literal notranslate"><span class="pre">mxxx</span></code>, show the numbers of sampling
-mesh. <code class="docutils literal notranslate"><span class="pre">sxxx</span></code> and <code class="docutils literal notranslate"><span class="pre">gxxx</span></code> appear optionally. <code class="docutils literal notranslate"><span class="pre">sxxx</span></code> gives the
-smearing width in the smearing method for Brillouin zone integration
-for phonon lifetime, and <code class="docutils literal notranslate"><span class="pre">gxxx</span></code> denotes the grid number. Using the
-command option of <code class="docutils literal notranslate"><span class="pre">-o</span></code>, the file name can be modified slightly. For
-example <code class="docutils literal notranslate"><span class="pre">-o</span> <span class="pre">nac</span></code> gives <code class="docutils literal notranslate"><span class="pre">kappa-m323220.nac.hdf5</span></code> to
-memorize the option <code class="docutils literal notranslate"><span class="pre">--nac</span></code> was used.</p>
-<p>Currently <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file (not for the specific grid points)
-contains the properties shown below.</p>
-<section id="mesh">
-<h3><a class="toc-backref" href="#id3" role="doc-backlink">mesh</a><a class="headerlink" href="#mesh" title="Link to this heading">#</a></h3>
-<p>(Versions 1.10.11 or later)</p>
-<p>The numbers of mesh points for reciprocal space sampling along
-reciprocal axes, <span class="math notranslate nohighlight">\(a^*, b^*, c^*\)</span>.</p>
-</section>
-<section id="frequency">
-<h3><a class="toc-backref" href="#id4" role="doc-backlink">frequency</a><a class="headerlink" href="#frequency" title="Link to this heading">#</a></h3>
-<p>Phonon frequencies. The physical unit is THz, where THz
-is in the ordinal frequency not the angular frequency.</p>
-<p>The array shape is (irreducible q-point, phonon band).</p>
-</section>
-<section id="gamma">
-<span id="kappa-hdf5-file-gamma"></span><h3><a class="toc-backref" href="#id5" role="doc-backlink">gamma</a><a class="headerlink" href="#gamma" title="Link to this heading">#</a></h3>
-<p>Imaginary part of self energy of phonon bubble diagram (phonon-phonon
-scattering). The physical unit is THz, where THz is in the ordinal frequency not
-the angular frequency.</p>
-<p>The array shape for all grid-points (irreducible q-points) is
-(temperature, irreducible q-point, phonon band).</p>
-<p>The array shape for a specific grid-point is
-(temperature, phonon band).</p>
-<p>Phonon lifetime (<span class="math notranslate nohighlight">\(\tau_\lambda=1/2\Gamma_\lambda(\omega_\lambda)\)</span>) may
-be estimated from <code class="docutils literal notranslate"><span class="pre">gamma</span></code>. <span class="math notranslate nohighlight">\(2\pi\)</span> has to be multiplied with
-<code class="docutils literal notranslate"><span class="pre">gamma</span></code> values in the hdf5 file to convert the unit of ordinal
-frequency to angular frequency. Zeros in <code class="docutils literal notranslate"><span class="pre">gamma</span></code> values mean that
-those elements were not calculated such as for three acoustic modes at
-<span class="math notranslate nohighlight">\(\Gamma\)</span> point. The below is the copy-and-paste from the
-previous section to show how to obtain phonon lifetime in pico
-second:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>In<span class="w"> </span><span class="o">[</span><span class="m">8</span><span class="o">]</span>:<span class="w"> </span><span class="nv">g</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>f<span class="o">[</span><span class="s1">&#39;gamma&#39;</span><span class="o">][</span><span class="m">30</span><span class="o">]</span>
-
-In<span class="w"> </span><span class="o">[</span><span class="m">9</span><span class="o">]</span>:<span class="w"> </span>import<span class="w"> </span>numpy<span class="w"> </span>as<span class="w"> </span>np
-
-In<span class="w"> </span><span class="o">[</span><span class="m">10</span><span class="o">]</span>:<span class="w"> </span><span class="nv">g</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>np.where<span class="o">(</span>g<span class="w"> </span>&gt;<span class="w"> </span><span class="m">0</span>,<span class="w"> </span>g,<span class="w"> </span>-1<span class="o">)</span>
-
-In<span class="w"> </span><span class="o">[</span><span class="m">11</span><span class="o">]</span>:<span class="w"> </span><span class="nv">lifetime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>np.where<span class="o">(</span>g<span class="w"> </span>&gt;<span class="w"> </span><span class="m">0</span>,<span class="w"> </span><span class="m">1</span>.0<span class="w"> </span>/<span class="w"> </span><span class="o">(</span><span class="m">2</span><span class="w"> </span>*<span class="w"> </span><span class="m">2</span><span class="w"> </span>*<span class="w"> </span>np.pi<span class="w"> </span>*<span class="w"> </span>g<span class="o">)</span>,<span class="w"> </span><span class="m">0</span><span class="o">)</span>
-</pre></div>
-</div>
-</section>
-<section id="gamma-isotope">
-<h3><a class="toc-backref" href="#id6" role="doc-backlink">gamma_isotope</a><a class="headerlink" href="#gamma-isotope" title="Link to this heading">#</a></h3>
-<p>Isotope scattering of <span class="math notranslate nohighlight">\(1/2\tau^\mathrm{iso}_\lambda\)</span>.
-The physical unit is same as that of gamma.</p>
-<p>The array shape is same as that of frequency.</p>
-</section>
-<section id="group-velocity">
-<h3><a class="toc-backref" href="#id7" role="doc-backlink">group_velocity</a><a class="headerlink" href="#group-velocity" title="Link to this heading">#</a></h3>
-<p>Phonon group velocity, <span class="math notranslate nohighlight">\(\nabla_\mathbf{q}\omega_\lambda\)</span>. The
-physical unit is <span class="math notranslate nohighlight">\(\text{THz}\cdot\text{Angstrom}\)</span>, where THz
-is in the ordinal frequency not the angular frequency.</p>
-<p>The array shape is (irreducible q-point, phonon band, 3 = Cartesian coordinates).</p>
-</section>
-<section id="heat-capacity">
-<h3><a class="toc-backref" href="#id8" role="doc-backlink">heat_capacity</a><a class="headerlink" href="#heat-capacity" title="Link to this heading">#</a></h3>
-<p>Mode-heat-capacity defined by</p>
-<div class="math notranslate nohighlight">
-\[
-C_\lambda = k_\mathrm{B}
-\left(\frac{\hbar\omega_\lambda}{k_\mathrm{B} T} \right)^2
-\frac{\exp(\hbar\omega_\lambda/k_\mathrm{B}
-T)}{[\exp(\hbar\omega_\lambda/k_\mathrm{B} T)-1]^2}.
-\]</div>
-<p>The physical unit is eV/K.</p>
-<p>The array shape is (temperature, irreducible q-point, phonon band).</p>
-</section>
-<section id="kappa">
-<span id="output-kappa"></span><h3><a class="toc-backref" href="#id9" role="doc-backlink">kappa</a><a class="headerlink" href="#kappa" title="Link to this heading">#</a></h3>
-<p>Thermal conductivity tensor. The physical unit is W/m-K.</p>
-<p>The array shape is (temperature, 6 = (xx, yy, zz, yz, xz, xy)).</p>
-</section>
-<section id="mode-kappa">
-<span id="output-mode-kappa"></span><h3><a class="toc-backref" href="#id10" role="doc-backlink">mode-kappa</a><a class="headerlink" href="#mode-kappa" title="Link to this heading">#</a></h3>
-<p>Thermal conductivity tensors at k-stars (<span class="math notranslate nohighlight">\({}^*\mathbf{k}\)</span>):</p>
-<div class="math notranslate nohighlight">
-\[
-\sum_{\mathbf{q} \in {}^*\mathbf{k}} \kappa_{\mathbf{q}j}.
-\]</div>
-<p>The sum of this over <span class="math notranslate nohighlight">\({}^*\mathbf{k}\)</span> corresponding to
-irreducible q-points divided by number of grid points gives
-<span class="math notranslate nohighlight">\(\kappa\)</span> (<a class="reference internal" href="#output-kappa"><span class="std std-ref">kappa</span></a>), e.g.,:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">kappa_xx_at_index_30</span> <span class="o">=</span> <span class="n">mode_kappa</span><span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">/</span> <span class="n">weight</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>Be careful that until version 1.12.7, mode-kappa values were divided
-by number of grid points.</p>
-<p>The physical unit is W/m-K. Each tensor element is the sum of tensor
-elements on the members of <span class="math notranslate nohighlight">\({}^*\mathbf{k}\)</span>, i.e., symmetrically
-equivalent q-points by crystallographic point group and time reversal
-symmetry.</p>
-<p>The array shape is (temperature, irreducible q-point, phonon band, 6 =
-(xx, yy, zz, yz, xz, xy)).</p>
-</section>
-<section id="gv-by-gv">
-<h3><a class="toc-backref" href="#id11" role="doc-backlink">gv_by_gv</a><a class="headerlink" href="#gv-by-gv" title="Link to this heading">#</a></h3>
-<p>Outer products of group velocities for k-stars
-(<span class="math notranslate nohighlight">\({}^*\mathbf{k}\)</span>) for each irreducible q-point and phonon band
-(<span class="math notranslate nohighlight">\(j\)</span>):</p>
-<div class="math notranslate nohighlight">
-\[
-\sum_{\mathbf{q} \in {}^*\mathbf{k}} \mathbf{v}_{\mathbf{q}j} \otimes
-\mathbf{v}_{\mathbf{q}j}.
-\]</div>
-<p>The physical unit is
-<span class="math notranslate nohighlight">\(\text{THz}^2\cdot\text{Angstrom}^2\)</span>, where THz is in the
-ordinal frequency not the angular frequency.</p>
-<p>The array shape is (irreducible q-point, phonon band, 6 = (xx, yy, zz,
-yz, xz, xy)).</p>
-</section>
-<section id="q-point">
-<h3><a class="toc-backref" href="#id12" role="doc-backlink">q-point</a><a class="headerlink" href="#q-point" title="Link to this heading">#</a></h3>
-<p>Irreducible q-points in reduced coordinates.</p>
-<p>The array shape is (irreducible q-point, 3 = reduced
-coordinates in reciprocal space).</p>
-</section>
-<section id="temperature">
-<h3><a class="toc-backref" href="#id13" role="doc-backlink">temperature</a><a class="headerlink" href="#temperature" title="Link to this heading">#</a></h3>
-<p>Temperatures where thermal conductivities are calculated. The physical
-unit is K.</p>
-</section>
-<section id="weight">
-<h3><a class="toc-backref" href="#id14" role="doc-backlink">weight</a><a class="headerlink" href="#weight" title="Link to this heading">#</a></h3>
-<p>Weights corresponding to irreducible q-points. Sum of weights equals to
-the number of mesh grid points.</p>
-</section>
-<section id="ave-pp">
-<h3><a class="toc-backref" href="#id15" role="doc-backlink">ave_pp</a><a class="headerlink" href="#ave-pp" title="Link to this heading">#</a></h3>
-<p>Averaged phonon-phonon interaction in <span class="math notranslate nohighlight">\(\text{eV}^2,
-\)</span>P_{\mathbf{q}j}$:</p>
-<div class="math notranslate nohighlight">
-\[
-P_{\mathbf{q}j} = \frac{1}{(3n_\mathrm{a})^2} \sum_{\lambda'\lambda''}
-|\Phi_{\lambda\lambda'\lambda''}|^2.
-\]</div>
-<p>This is not going to be calculated in the RTA thermal coductivity
-calculation mode by default. To calculate this, <code class="docutils literal notranslate"><span class="pre">--full-pp</span></code> option
-has to be specified (see <a class="reference internal" href="command-options.html#full-pp-option"><span class="std std-ref">--full-pp (FULL_PP = .TRUE.)</span></a>).</p>
-</section>
-<section id="boundary-mfp">
-<h3><a class="toc-backref" href="#id16" role="doc-backlink">boundary_mfp</a><a class="headerlink" href="#boundary-mfp" title="Link to this heading">#</a></h3>
-<p>A value specified by <a class="reference internal" href="command-options.html#boundary-mfp-option"><span class="std std-ref">--boundary-mfp, --bmfp (BOUNDARY_MFP)</span></a>. The physical unit is
-micrometer.</p>
-<p>When <code class="docutils literal notranslate"><span class="pre">--boundary-mfp</span></code> option is explicitly specified, its value is stored here.</p>
-</section>
-<section id="kappa-unit-conversion">
-<h3><a class="toc-backref" href="#id17" role="doc-backlink">kappa_unit_conversion</a><a class="headerlink" href="#kappa-unit-conversion" title="Link to this heading">#</a></h3>
-<p>This is used to convert the physical unit of lattice thermal
-conductivity made of <code class="docutils literal notranslate"><span class="pre">heat_capacity</span></code>, <code class="docutils literal notranslate"><span class="pre">group_velocity</span></code>, and
-<code class="docutils literal notranslate"><span class="pre">gamma</span></code>, to W/m-K. In the single mode relaxation time (SMRT) method,
-a mode contribution to the lattice thermal conductivity is given by</p>
-<div class="math notranslate nohighlight">
-\[
-\kappa_\lambda = \frac{1}{V_0} C_\lambda \mathbf{v}_\lambda \otimes
-\mathbf{v}_\lambda \tau_\lambda^{\mathrm{SMRT}}.
-\]</div>
-<p>For example, <span class="math notranslate nohighlight">\(\kappa_{\lambda,{xx}}\)</span> is calculated by:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>In<span class="w"> </span><span class="o">[</span><span class="m">1</span><span class="o">]</span>:<span class="w"> </span>import<span class="w"> </span>h5py
-
-In<span class="w"> </span><span class="o">[</span><span class="m">2</span><span class="o">]</span>:<span class="w"> </span><span class="nv">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>h5py.File<span class="o">(</span><span class="s2">&quot;kappa-m111111.hdf5&quot;</span><span class="o">)</span>
-
-In<span class="w"> </span><span class="o">[</span><span class="m">3</span><span class="o">]</span>:<span class="w"> </span><span class="nv">kappa_unit_conversion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>f<span class="o">[</span><span class="s1">&#39;kappa_unit_conversion&#39;</span><span class="o">][()]</span>
-
-In<span class="w"> </span><span class="o">[</span><span class="m">4</span><span class="o">]</span>:<span class="w"> </span><span class="nv">weight</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>f<span class="o">[</span><span class="s1">&#39;weight&#39;</span><span class="o">][</span>:<span class="o">]</span>
-
-In<span class="w"> </span><span class="o">[</span><span class="m">5</span><span class="o">]</span>:<span class="w"> </span><span class="nv">heat_capacity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>f<span class="o">[</span><span class="s1">&#39;heat_capacity&#39;</span><span class="o">][</span>:<span class="o">]</span>
-
-In<span class="w"> </span><span class="o">[</span><span class="m">6</span><span class="o">]</span>:<span class="w"> </span><span class="nv">gv_by_gv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>f<span class="o">[</span><span class="s1">&#39;gv_by_gv&#39;</span><span class="o">][</span>:<span class="o">]</span>
-
-In<span class="w"> </span><span class="o">[</span><span class="m">7</span><span class="o">]</span>:<span class="w"> </span><span class="nv">gamma</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>f<span class="o">[</span><span class="s1">&#39;gamma&#39;</span><span class="o">][</span>:<span class="o">]</span>
-
-In<span class="w"> </span><span class="o">[</span><span class="m">8</span><span class="o">]</span>:<span class="w"> </span>kappa_unit_conversion<span class="w"> </span>*<span class="w"> </span>heat_capacity<span class="o">[</span><span class="m">30</span>,<span class="w"> </span><span class="m">2</span>,<span class="w"> </span><span class="m">0</span><span class="o">]</span><span class="w"> </span>*<span class="w"> </span>gv_by_gv<span class="o">[</span><span class="m">2</span>,<span class="w"> </span><span class="m">0</span><span class="o">]</span><span class="w"> </span>/<span class="w"> </span><span class="o">(</span><span class="m">2</span><span class="w"> </span>*<span class="w"> </span>gamma<span class="o">[</span><span class="m">30</span>,<span class="w"> </span><span class="m">2</span>,<span class="w"> </span><span class="m">0</span><span class="o">])</span>
-
-Out<span class="o">[</span><span class="m">8</span><span class="o">]</span>:
-array<span class="o">([</span><span class="w">  </span><span class="m">1</span>.02050241e+03,<span class="w">   </span><span class="m">1</span>.02050241e+03,<span class="w">   </span><span class="m">1</span>.02050241e+03,
-<span class="w">         </span><span class="m">4</span>.40486382e-15,<span class="w">   </span><span class="m">0</span>.00000000e+00,<span class="w">  </span>-4.40486382e-15<span class="o">])</span>
-
-In<span class="w"> </span><span class="o">[</span><span class="m">9</span><span class="o">]</span>:<span class="w"> </span>f<span class="o">[</span><span class="s1">&#39;mode_kappa&#39;</span><span class="o">][</span><span class="m">30</span>,<span class="w"> </span><span class="m">2</span>,<span class="w"> </span><span class="m">0</span><span class="o">]</span>
-Out<span class="o">[</span><span class="m">9</span><span class="o">]</span>:
-array<span class="o">([</span><span class="w">  </span><span class="m">1</span>.02050201e+03,<span class="w">   </span><span class="m">1</span>.02050201e+03,<span class="w">   </span><span class="m">1</span>.02050201e+03,
-<span class="w">         </span><span class="m">4</span>.40486209e-15,<span class="w">   </span><span class="m">0</span>.00000000e+00,<span class="w">  </span>-4.40486209e-15<span class="o">])</span>
-</pre></div>
-</div>
-</section>
-</section>
-<section id="how-to-know-grid-point-index-number-corresponding-to-grid-address">
-<h2><a class="toc-backref" href="#id18" role="doc-backlink">How to know grid point index number corresponding to grid address</a><a class="headerlink" href="#how-to-know-grid-point-index-number-corresponding-to-grid-address" title="Link to this heading">#</a></h2>
-<p>Running with <code class="docutils literal notranslate"><span class="pre">--write-gamma</span></code>, hdf5 files are written out with file names
-such as <code class="docutils literal notranslate"><span class="pre">kappa-m202020-g4448.hdf5</span></code>. You may want to know the grid point
-index number with given grid address. This is done as follows:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>In<span class="w"> </span><span class="o">[</span><span class="m">1</span><span class="o">]</span>:<span class="w"> </span>import<span class="w"> </span>phono3py
-
-In<span class="w"> </span><span class="o">[</span><span class="m">2</span><span class="o">]</span>:<span class="w"> </span><span class="nv">ph3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>phono3py.load<span class="o">(</span><span class="s2">&quot;phono3py_disp.yaml&quot;</span><span class="o">)</span>
-
-In<span class="w"> </span><span class="o">[</span><span class="m">3</span><span class="o">]</span>:<span class="w"> </span>ph3.mesh_numbers<span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span><span class="m">20</span>,<span class="w"> </span><span class="m">20</span>,<span class="w"> </span><span class="m">20</span><span class="o">]</span>
-
-In<span class="w"> </span><span class="o">[</span><span class="m">4</span><span class="o">]</span>:<span class="w"> </span>ph3.grid.get_indices_from_addresses<span class="o">([</span><span class="m">0</span>,<span class="w"> </span><span class="m">10</span>,<span class="w"> </span><span class="m">10</span><span class="o">])</span>
-Out<span class="o">[</span><span class="m">4</span><span class="o">]</span>:<span class="w"> </span><span class="m">4448</span>
-</pre></div>
-</div>
-<p>This index number is different between phono3py version 1.x and 2.x.
-To get the number corresponding to the phono3py version 1.x,
-<code class="docutils literal notranslate"><span class="pre">store_dense_gp_map=False</span></code> should be specified in <code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code>,</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>In<span class="w"> </span><span class="o">[</span><span class="m">5</span><span class="o">]</span>:<span class="w"> </span><span class="nv">ph3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>phono3py.load<span class="o">(</span><span class="s2">&quot;phono3py_disp.yaml&quot;</span>,<span class="w"> </span><span class="nv">store_dense_gp_map</span><span class="o">=</span>False<span class="o">)</span>
-
-In<span class="w"> </span><span class="o">[</span><span class="m">6</span><span class="o">]</span>:<span class="w"> </span>ph3.mesh_numbers<span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">[</span><span class="m">20</span>,<span class="w"> </span><span class="m">20</span>,<span class="w"> </span><span class="m">20</span><span class="o">]</span>
-
-In<span class="w"> </span><span class="o">[</span><span class="m">7</span><span class="o">]</span>:<span class="w"> </span>ph3.grid.get_indices_from_addresses<span class="o">([</span><span class="m">0</span>,<span class="w"> </span><span class="m">10</span>,<span class="w"> </span><span class="m">10</span><span class="o">])</span>
-Out<span class="o">[</span><span class="m">7</span><span class="o">]</span>:<span class="w"> </span><span class="m">4200</span>
+<span class="n">In</span> <span class="p">[</span><span class="mi">12</span><span class="p">]:</span> <span class="n">lifetime</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">g</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">g</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -704,20 +436,20 @@ Out<span class="o">[</span><span class="m">7</span><span class="o">]</span>:<spa
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="input-output-files.html"
+       href="phono3py-load.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Input / Output files</p>
+        <p class="prev-next-title">phono3py-load command</p>
       </div>
     </a>
     <a class="right-next"
-       href="auxiliary-tools.html"
+       href="grid.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Auxiliary tools</p>
+        <p class="prev-next-title">Grids in reciprocal space</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -737,26 +469,7 @@ Out<span class="o">[</span><span class="m">7</span><span class="o">]</span>:<spa
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-use-hdf5-python-library">How to use HDF5 python library</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#details-of-kappa-hdf5-file">Details of <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mesh">mesh</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#frequency">frequency</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gamma">gamma</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gamma-isotope">gamma_isotope</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#group-velocity">group_velocity</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#heat-capacity">heat_capacity</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#kappa">kappa</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#mode-kappa">mode-kappa</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#gv-by-gv">gv_by_gv</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#q-point">q-point</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#temperature">temperature</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#weight">weight</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#ave-pp">ave_pp</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#boundary-mfp">boundary_mfp</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#kappa-unit-conversion">kappa_unit_conversion</a></li>
-</ul>
-</li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-know-grid-point-index-number-corresponding-to-grid-address">How to know grid point index number corresponding to grid address</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#using-h5py-in-ipython">Using <code class="docutils literal notranslate"><span class="pre">h5py</span></code> in ipython</a></li>
 </ul>
   </nav></div>
 

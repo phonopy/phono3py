@@ -1,0 +1,725 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Grids in reciprocal space &#8212; Phono3py v.3.15.1</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=eba8b062" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="_static/documentation_options.js?v=64da4d66"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'grid';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="How to cite phono3py" href="citation.html" />
+    <link rel="prev" title="Using phono3py hdf5 files" href="hdf5_howto.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Phono3py v.3.15.1</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qe.html">Quantum ESPRESSO (pw) &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="crystal.html">CRYSTAL &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbomole.html">TURBOMOLE &amp; phono3py calculation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options / Setting tags</a></li>
+<li class="toctree-l1"><a class="reference internal" href="input-output-files.html">Input / Output files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="direct-solution.html">Direct solution of linearized phonon Boltzmann equation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wigner-solution.html">Solution of the Wigner transport equation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="random-displacements.html">Force constants calculation with random displacements of atoms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pypolymlp.html">Force constants calculation using pypolymlp (machine learning potential)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Force constants calculation with cutoff pair-distance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-api.html">Phono3py API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-load.html">phono3py-load command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">Using phono3py hdf5 files</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Grids in reciprocal space</a></li>
+<li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/grid.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Grids in reciprocal space</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bzgrid-class-instance"><code class="docutils literal notranslate"><span class="pre">BZGrid</span></code> class instance</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#find-grid-point-index-corresponding-to-grid-point-address">Find grid point index corresponding to grid point address</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#q-points-in-fractional-coordinates-corresponding-to-grid-addresses">q-points in fractional coordinates corresponding to grid addresses</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#grid-point-triplets">Grid point triplets</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="grids-in-reciprocal-space">
+<span id="grid"></span><h1>Grids in reciprocal space<a class="headerlink" href="#grids-in-reciprocal-space" title="Link to this heading">#</a></h1>
+<p>The regular grid can be a conventional regular grid or a generalized regular
+grid. Here the conventional regular grid means that the grids are cut parallel
+to the reciprocal basis vectors. In most cases, the conventional regular grid is
+used. In special case, e.g., for crystals with body center tetragonal symmetry,
+the generalized regular grid can be useful. In phono3py, the generalized regular
+grid is defined to be cut parallel to the reciprocal basis vectors of the
+conventional unit cell.</p>
+<p>Two types of grid data structure are used in phono3py. Normal regular grid
+contains translationally unique grid points (regular grid). The other grid
+includes the points on Brillouin zone (BZ) boundary (BZ grid).</p>
+<section id="bzgrid-class-instance">
+<h2><code class="docutils literal notranslate"><span class="pre">BZGrid</span></code> class instance<a class="headerlink" href="#bzgrid-class-instance" title="Link to this heading">#</a></h2>
+<p>Grid point information in reciprocal space is stored in the <code class="docutils literal notranslate"><span class="pre">BZGrid</span></code> class. This
+class instance can be easily accessed in the following way.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span><span class="w"> </span><span class="nn">phono3py</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">ph3</span> <span class="o">=</span> <span class="n">phono3py</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;phono3py.yaml&quot;</span><span class="p">,</span> <span class="n">produce_fc</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">mesh_numbers</span> <span class="o">=</span> <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">11</span><span class="p">]</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">grid</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="o">&lt;</span><span class="n">phono3py</span><span class="o">.</span><span class="n">phonon</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">BZGrid</span> <span class="n">at</span> <span class="mh">0x1070f3b60</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>It is recommended to read docstring in <code class="docutils literal notranslate"><span class="pre">BZGrid</span></code> by</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">5</span><span class="p">]:</span> <span class="n">help</span><span class="p">(</span><span class="n">ph3</span><span class="o">.</span><span class="n">grid</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Some attributes of this class are presented below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">6</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">addresses</span><span class="o">.</span><span class="n">shape</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">6</span><span class="p">]:</span> <span class="p">(</span><span class="mi">1367</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">7</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">D_diag</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">7</span><span class="p">]:</span> <span class="n">array</span><span class="p">([</span><span class="mi">11</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">11</span><span class="p">])</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">8</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">P</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">8</span><span class="p">]:</span>
+<span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">9</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">Q</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">9</span><span class="p">]:</span>
+<span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">10</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">QDinv</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">10</span><span class="p">]:</span>
+<span class="n">array</span><span class="p">([[</span><span class="mf">0.09090909</span><span class="p">,</span> <span class="mf">0.</span>        <span class="p">,</span> <span class="mf">0.</span>        <span class="p">],</span>
+       <span class="p">[</span><span class="mf">0.</span>        <span class="p">,</span> <span class="mf">0.09090909</span><span class="p">,</span> <span class="mf">0.</span>        <span class="p">],</span>
+       <span class="p">[</span><span class="mf">0.</span>        <span class="p">,</span> <span class="mf">0.</span>        <span class="p">,</span> <span class="mf">0.09090909</span><span class="p">]])</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">11</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">PS</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">11</span><span class="p">]:</span> <span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>The integer array <code class="docutils literal notranslate"><span class="pre">addresses</span></code> contains grid point addresses. Every grid point
+address is represented by the unique series of three integers. These addresses
+are converted to the q-points in fractional coordinates as explained in the
+<a class="reference internal" href="#grid-address-to-q"><span class="std std-ref">section below</span></a>.</p>
+<p>Unless generalized regular grid is employed, the other attributes are not
+important. <code class="docutils literal notranslate"><span class="pre">D_diag</span></code> is equivalent to the three integer numbers of the specified
+conventional regular grid. <code class="docutils literal notranslate"><span class="pre">P</span></code> and <code class="docutils literal notranslate"><span class="pre">Q</span></code> are are the left and right unimodular
+matrix after Smith normal form: <span class="math notranslate nohighlight">\(\mathrm{D}=\mathrm{PAQ}\)</span>, respectively, where
+<span class="math notranslate nohighlight">\(\mathrm{A}\)</span> is the grid matrix. <code class="docutils literal notranslate"><span class="pre">D_diag</span></code> is the three diagonal elements of the
+matrix <span class="math notranslate nohighlight">\(\mathrm{D}\)</span>. The grid matrix is usually a diagonal matrix, then
+<span class="math notranslate nohighlight">\(\mathrm{P}\)</span> and <span class="math notranslate nohighlight">\(\mathrm{Q}\)</span> are chosen as identity matrix. <code class="docutils literal notranslate"><span class="pre">QDinv</span></code> is given
+by <span class="math notranslate nohighlight">\(\mathrm{Q}\mathrm{D}^{-1}\)</span>. <code class="docutils literal notranslate"><span class="pre">PS</span></code> represents half-grid-shifts (usually always
+<code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">0,</span> <span class="pre">0]</span></code> in phono3py).</p>
+</section>
+<section id="find-grid-point-index-corresponding-to-grid-point-address">
+<h2>Find grid point index corresponding to grid point address<a class="headerlink" href="#find-grid-point-index-corresponding-to-grid-point-address" title="Link to this heading">#</a></h2>
+<p>Grid point index corresponding to a grid point address is obtained using the
+instance method <code class="docutils literal notranslate"><span class="pre">BZGrid.get_indices_from_addresses</span></code> as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span><span class="w"> </span><span class="nn">phono3py</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">ph3</span> <span class="o">=</span> <span class="n">phono3py</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;phono3py_disp.yaml&quot;</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">mesh_numbers</span> <span class="o">=</span> <span class="p">[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">]</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">get_indices_from_addresses</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">])</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="mi">4448</span>
+</pre></div>
+</div>
+<p>This index number is different between phono3py version 1.x and 2.x.
+To get the number corresponding to the phono3py version 1.x,
+<code class="docutils literal notranslate"><span class="pre">store_dense_gp_map=False</span></code> should be specified in <code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code>,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">5</span><span class="p">]:</span> <span class="n">ph3</span> <span class="o">=</span> <span class="n">phono3py</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;phono3py_disp.yaml&quot;</span><span class="p">,</span> <span class="n">store_dense_gp_map</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">6</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">mesh_numbers</span> <span class="o">=</span> <span class="p">[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">]</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">7</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">get_indices_from_addresses</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">])</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">7</span><span class="p">]:</span> <span class="mi">4200</span>
+</pre></div>
+</div>
+</section>
+<section id="q-points-in-fractional-coordinates-corresponding-to-grid-addresses">
+<span id="grid-address-to-q"></span><h2>q-points in fractional coordinates corresponding to grid addresses<a class="headerlink" href="#q-points-in-fractional-coordinates-corresponding-to-grid-addresses" title="Link to this heading">#</a></h2>
+<p>For Gamma centered regular grid, q-points in fractional coordinates
+are obtained by</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">qpoints</span> <span class="o">=</span> <span class="n">addresses</span> <span class="o">@</span> <span class="n">QDinv</span><span class="o">.</span><span class="n">T</span>
+</pre></div>
+</div>
+<p>For shifted regular grid (usually unused in phono3py),</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">qpoints</span> <span class="o">=</span> <span class="p">(</span><span class="n">addresses</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">PS</span><span class="p">)</span> <span class="o">@</span> <span class="p">(</span><span class="n">QDinv</span><span class="o">.</span><span class="n">T</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The grid addresses are stored in <code class="docutils literal notranslate"><span class="pre">phonon-*.hdf5</span></code>. So for conventional
+Gamma-centered regular grid, those information can be used to recover the
+corresponding q-points. For example,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;phonon-m111111.hdf5&quot;</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">8</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;grid_address&#39;</span><span class="p">][:]</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;mesh&#39;</span><span class="p">][:])</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">8</span><span class="p">]:</span>
+<span class="n">array</span><span class="p">([[</span> <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+       <span class="p">[</span> <span class="mf">0.09090909</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+       <span class="p">[</span> <span class="mf">0.18181818</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+       <span class="o">...</span><span class="p">,</span>
+       <span class="p">[</span><span class="o">-</span><span class="mf">0.27272727</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.09090909</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.09090909</span><span class="p">],</span>
+       <span class="p">[</span><span class="o">-</span><span class="mf">0.18181818</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.09090909</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.09090909</span><span class="p">],</span>
+       <span class="p">[</span><span class="o">-</span><span class="mf">0.09090909</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.09090909</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.09090909</span><span class="p">]],</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1367</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="grid-point-triplets">
+<span id="grid-triplets"></span><h2>Grid point triplets<a class="headerlink" href="#grid-point-triplets" title="Link to this heading">#</a></h2>
+<p>Three grid point indices are used to represent a q-point triplet. For example
+the following command generates <code class="docutils literal notranslate"><span class="pre">gamma_detail-m111111-g5.hdf5</span></code>,</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>phono3py.yaml<span class="w"> </span>--gp<span class="w"> </span><span class="m">5</span><span class="w"> </span>--br<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--write-gamma-detail
+</pre></div>
+</div>
+<p>This file contains various information:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;gamma_detail-m111111-g5.hdf5&quot;</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="nb">list</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">3</span><span class="p">]:</span>
+<span class="p">[</span><span class="s1">&#39;gamma_detail&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;grid_point&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;mesh&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;temperature&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;triplet&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;triplet_all&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;version&#39;</span><span class="p">,</span>
+ <span class="s1">&#39;weight&#39;</span><span class="p">]</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;gamma_detail&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="p">(</span><span class="mi">101</span><span class="p">,</span> <span class="mi">146</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For the detailed analysis of contributions of triplets to imaginary part of
+self energy a phonon mode of the grid point, it is necessary to understand the
+data structure of <code class="docutils literal notranslate"><span class="pre">triplet</span></code> and <code class="docutils literal notranslate"><span class="pre">weight</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">5</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;triplet&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">5</span><span class="p">]:</span> <span class="p">(</span><span class="mi">146</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">6</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;weight&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">6</span><span class="p">]:</span> <span class="p">(</span><span class="mi">146</span><span class="p">,)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">7</span><span class="p">]:</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;triplet&#39;</span><span class="p">][:</span><span class="mi">10</span><span class="p">]</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">7</span><span class="p">]:</span>
+<span class="n">array</span><span class="p">([[</span>  <span class="mi">5</span><span class="p">,</span>   <span class="mi">0</span><span class="p">,</span>   <span class="mi">6</span><span class="p">],</span>
+       <span class="p">[</span>  <span class="mi">5</span><span class="p">,</span>   <span class="mi">1</span><span class="p">,</span>   <span class="mi">5</span><span class="p">],</span>
+       <span class="p">[</span>  <span class="mi">5</span><span class="p">,</span>   <span class="mi">2</span><span class="p">,</span>   <span class="mi">4</span><span class="p">],</span>
+       <span class="p">[</span>  <span class="mi">5</span><span class="p">,</span>   <span class="mi">3</span><span class="p">,</span>   <span class="mi">3</span><span class="p">],</span>
+       <span class="p">[</span>  <span class="mi">5</span><span class="p">,</span>   <span class="mi">7</span><span class="p">,</span>  <span class="mi">10</span><span class="p">],</span>
+       <span class="p">[</span>  <span class="mi">5</span><span class="p">,</span>   <span class="mi">8</span><span class="p">,</span>   <span class="mi">9</span><span class="p">],</span>
+       <span class="p">[</span>  <span class="mi">5</span><span class="p">,</span>  <span class="mi">11</span><span class="p">,</span> <span class="mi">118</span><span class="p">],</span>
+       <span class="p">[</span>  <span class="mi">5</span><span class="p">,</span>  <span class="mi">12</span><span class="p">,</span> <span class="mi">117</span><span class="p">],</span>
+       <span class="p">[</span>  <span class="mi">5</span><span class="p">,</span>  <span class="mi">13</span><span class="p">,</span> <span class="mi">116</span><span class="p">],</span>
+       <span class="p">[</span>  <span class="mi">5</span><span class="p">,</span>  <span class="mi">14</span><span class="p">,</span> <span class="mi">115</span><span class="p">]])</span>
+</pre></div>
+</div>
+<p>The second index of <code class="docutils literal notranslate"><span class="pre">gamma_detail</span></code> corresponds to the first index of <code class="docutils literal notranslate"><span class="pre">triplet</span></code>.
+Three integers of each triplet are the grid point indices, which means, the grid
+addresses and their q-points are recovered by</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">8</span><span class="p">]:</span> <span class="kn">import</span><span class="w"> </span><span class="nn">phono3py</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">9</span><span class="p">]:</span> <span class="n">ph3</span> <span class="o">=</span> <span class="n">phono3py</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;phono3py.yaml&quot;</span><span class="p">,</span> <span class="n">produce_fc</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">10</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">mesh_numbers</span> <span class="o">=</span> <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">11</span><span class="p">]</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">11</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">addresses</span><span class="p">[</span><span class="n">f</span><span class="p">[</span><span class="s1">&#39;triplet&#39;</span><span class="p">][:</span><span class="mi">10</span><span class="p">]]</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">11</span><span class="p">]:</span>
+<span class="n">array</span><span class="p">([[[</span> <span class="mi">5</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span> <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">]],</span>
+
+       <span class="p">[[</span> <span class="mi">5</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span> <span class="mi">1</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span> <span class="mi">5</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">]],</span>
+
+       <span class="p">[[</span> <span class="mi">5</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span> <span class="mi">2</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span> <span class="mi">4</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">]],</span>
+
+       <span class="p">[[</span> <span class="mi">5</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span> <span class="mi">3</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span> <span class="mi">3</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">]],</span>
+
+       <span class="p">[[</span> <span class="mi">5</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">]],</span>
+
+       <span class="p">[[</span> <span class="mi">5</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">]],</span>
+
+       <span class="p">[[</span> <span class="mi">5</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span> <span class="mi">0</span><span class="p">,</span>  <span class="mi">1</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>  <span class="mi">0</span><span class="p">]],</span>
+
+       <span class="p">[[</span> <span class="mi">5</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span> <span class="mi">1</span><span class="p">,</span>  <span class="mi">1</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span> <span class="mi">5</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>  <span class="mi">0</span><span class="p">]],</span>
+
+       <span class="p">[[</span> <span class="mi">5</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span> <span class="mi">2</span><span class="p">,</span>  <span class="mi">1</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span> <span class="mi">4</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>  <span class="mi">0</span><span class="p">]],</span>
+
+       <span class="p">[[</span> <span class="mi">5</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span> <span class="mi">3</span><span class="p">,</span>  <span class="mi">1</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+        <span class="p">[</span> <span class="mi">3</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>  <span class="mi">0</span><span class="p">]]])</span>
+
+<span class="n">n</span> <span class="p">[</span><span class="mi">14</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">addresses</span><span class="p">[</span><span class="n">f</span><span class="p">[</span><span class="s1">&#39;triplet&#39;</span><span class="p">][:</span><span class="mi">10</span><span class="p">]]</span> <span class="o">@</span> <span class="n">ph3</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">QDinv</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">14</span><span class="p">]:</span>
+<span class="n">array</span><span class="p">([[[</span> <span class="mf">0.45454545</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span> <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span><span class="o">-</span><span class="mf">0.45454545</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">]],</span>
+
+       <span class="p">[[</span> <span class="mf">0.45454545</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span> <span class="mf">0.09090909</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span> <span class="mf">0.45454545</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">]],</span>
+
+       <span class="p">[[</span> <span class="mf">0.45454545</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span> <span class="mf">0.18181818</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span> <span class="mf">0.36363636</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">]],</span>
+
+       <span class="p">[[</span> <span class="mf">0.45454545</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span> <span class="mf">0.27272727</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span> <span class="mf">0.27272727</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">]],</span>
+
+       <span class="p">[[</span> <span class="mf">0.45454545</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span><span class="o">-</span><span class="mf">0.36363636</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span><span class="o">-</span><span class="mf">0.09090909</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">]],</span>
+
+       <span class="p">[[</span> <span class="mf">0.45454545</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span><span class="o">-</span><span class="mf">0.27272727</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span><span class="o">-</span><span class="mf">0.18181818</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">]],</span>
+
+       <span class="p">[[</span> <span class="mf">0.45454545</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span> <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.09090909</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span><span class="o">-</span><span class="mf">0.45454545</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.09090909</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">]],</span>
+
+       <span class="p">[[</span> <span class="mf">0.45454545</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span> <span class="mf">0.09090909</span><span class="p">,</span>  <span class="mf">0.09090909</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span> <span class="mf">0.45454545</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.09090909</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">]],</span>
+
+       <span class="p">[[</span> <span class="mf">0.45454545</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span> <span class="mf">0.18181818</span><span class="p">,</span>  <span class="mf">0.09090909</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span> <span class="mf">0.36363636</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.09090909</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">]],</span>
+
+       <span class="p">[[</span> <span class="mf">0.45454545</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span> <span class="mf">0.27272727</span><span class="p">,</span>  <span class="mf">0.09090909</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">],</span>
+        <span class="p">[</span> <span class="mf">0.27272727</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.09090909</span><span class="p">,</span>  <span class="mf">0.</span>        <span class="p">]]])</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="hdf5_howto.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Using phono3py hdf5 files</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="citation.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">How to cite phono3py</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bzgrid-class-instance"><code class="docutils literal notranslate"><span class="pre">BZGrid</span></code> class instance</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#find-grid-point-index-corresponding-to-grid-point-address">Find grid point index corresponding to grid point address</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#q-points-in-fractional-coordinates-corresponding-to-grid-addresses">q-points in fractional coordinates corresponding to grid addresses</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#grid-point-triplets">Grid point triplets</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Author name not set
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2015, Atsushi Togo.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

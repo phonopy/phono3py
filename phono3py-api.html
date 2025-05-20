@@ -163,7 +163,6 @@
 </details></li>
 <li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options / Setting tags</a></li>
 <li class="toctree-l1"><a class="reference internal" href="input-output-files.html">Input / Output files</a></li>
-<li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">How to read the results stored in hdf5 files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="direct-solution.html">Direct solution of linearized phonon Boltzmann equation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="wigner-solution.html">Solution of the Wigner transport equation</a></li>
@@ -174,7 +173,8 @@
 <li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Phono3py API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="phono3py-load.html">phono3py-load command</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">Using phono3py hdf5 files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="grid.html">Grids in reciprocal space</a></li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
@@ -500,7 +500,7 @@ through <code class="docutils literal notranslate"><span class="pre">Phono3py.fo
 shape of <code class="docutils literal notranslate"><span class="pre">(num_supercells,</span> <span class="pre">num_atoms_in_supercell,</span> <span class="pre">3)</span></code>. In the above example,
 the array shape is <code class="docutils literal notranslate"><span class="pre">(1254,</span> <span class="pre">72,</span> <span class="pre">3)</span></code>.</p>
 <p>If the calculated force sets are stored in the
-<a class="reference internal" href="input-output-files.html#input-output-files-forces-fc3"><span class="std std-ref">FORCES_FC3</span></a> file, the numpy array of <code class="docutils literal notranslate"><span class="pre">forces</span></code> is
+<a class="reference internal" href="input-output-files.html#iofile-forces-fc3"><span class="std std-ref">FORCES_FC3</span></a> file, the numpy array of <code class="docutils literal notranslate"><span class="pre">forces</span></code> is
 obtained by</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">forces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s2">&quot;FORCES_FC3&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_atoms_in_supercell</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">forces</span><span class="p">)</span> <span class="o">==</span> <span class="n">num_supercells</span>
