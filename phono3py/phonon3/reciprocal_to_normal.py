@@ -34,6 +34,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from typing import Optional
+
 import numpy as np
 
 
@@ -47,7 +49,12 @@ class ReciprocalToNormal:
     """
 
     def __init__(
-        self, primitive, frequencies, eigenvectors, band_indices, cutoff_frequency=0
+        self,
+        primitive,
+        frequencies,
+        eigenvectors,
+        band_indices,
+        cutoff_frequency: float = 0,
     ):
         """Init method."""
         self._primitive = primitive
@@ -71,7 +78,7 @@ class ReciprocalToNormal:
         )
         self._reciprocal_to_normal(grid_triplet)
 
-    def get_reciprocal_to_normal(self):
+    def get_reciprocal_to_normal(self) -> Optional[np.ndarray]:
         """Return fc3 in phonon coordinates."""
         return self._fc3_normal
 

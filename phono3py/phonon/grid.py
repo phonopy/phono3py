@@ -40,11 +40,11 @@ import warnings
 from collections.abc import Sequence
 
 try:
-    from spglib import SpglibDataset
+    from spglib import SpglibDataset  # type: ignore
 except ImportError:
     from types import SimpleNamespace as SpglibDataset
 
-
+from types import SimpleNamespace
 from typing import Optional, Union
 
 import numpy as np
@@ -145,7 +145,7 @@ class BZGrid:
         mesh: Union[int, float, Sequence, np.ndarray],
         reciprocal_lattice=None,
         lattice=None,
-        symmetry_dataset: Optional[Union[SpglibDataset]] = None,
+        symmetry_dataset: Optional[SpglibDataset] = None,
         transformation_matrix: Optional[Union[Sequence, np.ndarray]] = None,
         is_shift: Optional[Union[list, np.ndarray]] = None,
         is_time_reversal: bool = True,
@@ -203,17 +203,18 @@ class BZGrid:
             self._is_shift = [v * 1 for v in is_shift]
         self._is_time_reversal = is_time_reversal
         self._store_dense_gp_map = store_dense_gp_map
-        self._addresses = None
-        self._gp_map = None
+        self._addresses: np.ndarray
+        self._gp_map: np.ndarray
         self._grid_matrix = None
         self._D_diag = np.ones(3, dtype="int64")
         self._Q = np.eye(3, dtype="int64", order="C")
         self._P = np.eye(3, dtype="int64", order="C")
-        self._QDinv = None
-        self._microzone_lattice = None
-        self._rotations = None
-        self._reciprocal_operations = None
-        self._gp_Gamma = None
+        self._QDinv: np.ndarray
+        self._microzone_lattice: np.ndarray
+        self._rotations: np.ndarray
+        self._reciprocal_operations: np.ndarray
+        self._rotations_cartesian: np.ndarray
+        self._gp_Gamma: int
 
         if reciprocal_lattice is not None:
             self._reciprocal_lattice = np.array(
@@ -282,7 +283,7 @@ class BZGrid:
             return np.array(np.dot(self.P, self._is_shift), dtype="int64")
 
     @property
-    def grid_matrix(self):
+    def grid_matrix(self) -> Optional[np.ndarray]:
         """Grid generating matrix to be represented by SNF.
 
         Grid generating matrix used for SNF.
@@ -293,7 +294,7 @@ class BZGrid:
         return self._grid_matrix
 
     @property
-    def addresses(self):
+    def addresses(self) -> np.ndarray:
         """BZ-grid addresses.
 
         Integer grid address of the points in Brillouin zone including
@@ -316,7 +317,7 @@ class BZGrid:
         return self._gp_map
 
     @property
-    def gp_Gamma(self):
+    def gp_Gamma(self) -> int:
         """Return grid point index of Gamma-point."""
         return self._gp_Gamma
 
@@ -346,7 +347,7 @@ class BZGrid:
         return self._grg2bzg
 
     @property
-    def microzone_lattice(self):
+    def microzone_lattice(self) -> np.ndarray:
         """Basis vectors of microzone.
 
         Basis vectors of microzone of GR-grid in column vectors.
@@ -365,7 +366,7 @@ class BZGrid:
         return self._store_dense_gp_map
 
     @property
-    def rotations(self):
+    def rotations(self) -> np.ndarray:
         """Return rotation matrices for grid points.
 
         Rotation matrices for GR-grid addresses (g) defined as g'=Rg. This can
@@ -377,12 +378,12 @@ class BZGrid:
         return self._rotations
 
     @property
-    def rotations_cartesian(self):
+    def rotations_cartesian(self) -> np.ndarray:
         """Return rotations in Cartesian coordinates."""
         return self._rotations_cartesian
 
     @property
-    def reciprocal_operations(self):
+    def reciprocal_operations(self) -> np.ndarray:
         """Return reciprocal rotations.
 
         Reciprocal space rotation matrices in fractional coordinates defined as
@@ -393,7 +394,7 @@ class BZGrid:
         return self._reciprocal_operations
 
     @property
-    def symmetry_dataset(self) -> SpglibDataset:
+    def symmetry_dataset(self) -> Optional[SpglibDataset]:
         """Return Symmetry.dataset."""
         return self._symmetry_dataset
 
@@ -540,7 +541,7 @@ class GridMatrix:
         mesh: Union[int, float, Sequence, np.ndarray],
         lattice: Union[Sequence, np.ndarray],
         symmetry_dataset: Optional[SpglibDataset] = None,
-        transformation_matrix: Optional[Union[list, np.ndarray]] = None,
+        transformation_matrix: Optional[Union[Sequence, np.ndarray]] = None,
         use_grg: bool = True,
         force_SNF: bool = False,
         SNF_coordinates: str = "reciprocal",
@@ -592,7 +593,7 @@ class GridMatrix:
         )
 
     @property
-    def grid_matrix(self):
+    def grid_matrix(self) -> Optional[np.ndarray]:
         """Grid generating matrix to be represented by SNF.
 
         Grid generating matrix used for SNF.
@@ -603,7 +604,7 @@ class GridMatrix:
         return self._grid_matrix
 
     @property
-    def D_diag(self):
+    def D_diag(self) -> np.ndarray:
         """Diagonal elements of diagonal matrix after SNF: D=PAQ.
 
         This corresponds to the mesh numbers in transformed reciprocal
@@ -638,7 +639,7 @@ class GridMatrix:
         mesh: Union[int, float, Sequence, np.ndarray],
         use_grg: bool = False,
         symmetry_dataset: Optional[SpglibDataset] = None,
-        transformation_matrix: Optional[Union[list, np.ndarray]] = None,
+        transformation_matrix: Optional[Union[Sequence, np.ndarray]] = None,
         force_SNF=False,
         coordinates="reciprocal",
     ) -> None:
@@ -666,9 +667,8 @@ class GridMatrix:
             have similar lengths.
 
         """
-        num_values = len(np.ravel(mesh))
-        if num_values == 1:
-            length = float(mesh)
+        try:
+            length = float(mesh)  # type: ignore
             if use_grg:
                 found_grg = self._run_grg(
                     symmetry_dataset,
@@ -686,17 +686,20 @@ class GridMatrix:
                         length, self._lattice, rotations=symmetry_dataset.rotations
                     )
                 self._D_diag = np.array(mesh_numbers, dtype="int64")
-        if num_values == 9:
-            self._run_grg(
-                symmetry_dataset,
-                transformation_matrix,
-                None,
-                mesh,
-                force_SNF,
-                coordinates,
-            )
-        if num_values == 3:
-            self._D_diag = np.array(mesh, dtype="int64")
+
+        except (ValueError, TypeError):
+            num_values = len(np.ravel(mesh))
+            if num_values == 9:
+                self._run_grg(
+                    symmetry_dataset,
+                    transformation_matrix,
+                    None,
+                    mesh,
+                    force_SNF,
+                    coordinates,
+                )
+            if num_values == 3:
+                self._D_diag = np.array(mesh, dtype="int64")
 
     def _run_grg(
         self,
@@ -731,7 +734,7 @@ class GridMatrix:
         )
         return False
 
-    def _get_mock_symmetry_dataset(self, transformation_matrix) -> dict:
+    def _get_mock_symmetry_dataset(self, transformation_matrix) -> SimpleNamespace:
         """Return mock symmetry_dataset containing transformation matrix.
 
         Assuming self._lattice as standardized cell, and inverse of
@@ -754,8 +757,6 @@ class GridMatrix:
             )
             raise RuntimeError(msg)
 
-        from types import SimpleNamespace
-
         sym_dataset = SimpleNamespace(
             **{
                 "rotations": np.eye(3, dtype="intc", order="C").reshape(1, 3, 3),
@@ -769,7 +770,7 @@ class GridMatrix:
 
     def _set_GRG_mesh(
         self,
-        sym_dataset: SpglibDataset,
+        sym_dataset: Union[SpglibDataset, SimpleNamespace],
         length: Optional[float] = None,
         grid_matrix=None,
         force_SNF=False,
@@ -803,7 +804,10 @@ class GridMatrix:
             self._grid_matrix = _grid_matrix
 
     def _get_grid_matrix(
-        self, sym_dataset: dict, length: float, coordinates: str = "reciprocal"
+        self,
+        sym_dataset: Union[SpglibDataset, SimpleNamespace],
+        length: float,
+        coordinates: str = "reciprocal",
     ):
         """Return grid matrix.
 
@@ -1042,12 +1046,12 @@ def _get_grid_points_by_bz_rotations_py(bz_gp, bz_grid: BZGrid, rotations):
                 )
                 + num_grgp
             ).tolist()
-            gps.insert(0, gp)
+            gps.insert(0, gp)  # type: ignore
             indices = np.where((bz_grid.addresses[gps] == adrs).all(axis=1))[0]
             if len(indices) == 0:
                 msg = "with_surface did not work properly."
                 raise RuntimeError(msg)
-            bzgps[i] = gps[indices[0]]
+            bzgps[i] = gps[indices[0]]  # type: ignore
 
     return bzgps
 
@@ -1155,6 +1159,7 @@ def _relocate_BZ_grid_address(
     # Mpr^-1 = Lr^-1 Lp
     reclat_T = np.array(np.transpose(reciprocal_lattice), dtype="double", order="C")
     reduced_basis = get_reduced_bases(reclat_T)
+    assert reduced_basis is not None, "Reduced basis is not found."
     tmat_inv = np.dot(np.linalg.inv(reduced_basis.T), reclat_T.T)
     tmat_inv_int = np.rint(tmat_inv).astype("int64")
     assert (np.abs(tmat_inv - tmat_inv_int) < 1e-5).all()
