@@ -860,6 +860,22 @@ class GridMatrix:
         return grid_matrix
 
 
+def get_qpoints_from_bz_grid_points(
+    gps: Union[int, np.ndarray], bz_grid: BZGrid
+) -> np.ndarray:
+    """Return q-point(s) in reduced coordinates of grid point(s).
+
+    Parameters
+    ----------
+    i_gps : int or ndarray
+        BZ-grid index (int) or indices (ndarray).
+    bz_grid : BZGrid
+        BZ-grid instance.
+
+    """
+    return bz_grid.addresses[gps] @ bz_grid.QDinv.T
+
+
 def get_grid_point_from_address_py(addresses, D_diag):
     """Return GR-grid point index from addresses.
 

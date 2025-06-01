@@ -38,7 +38,6 @@ import warnings
 
 import numpy as np
 
-from phono3py.conductivity.base import ConductivityMixIn
 from phono3py.conductivity.direct_solution_base import (
     ConductivityLBTEBase,
     diagonalize_collision_matrix,
@@ -46,7 +45,7 @@ from phono3py.conductivity.direct_solution_base import (
 from phono3py.phonon3.interaction import Interaction
 
 
-class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
+class ConductivityLBTE(ConductivityLBTEBase):
     """Lattice thermal conductivity calculation by direct solution."""
 
     def __init__(
@@ -77,7 +76,7 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
         self._kappa_RTA = None
         self._mode_kappa = None
         self._mode_kappa_RTA = None
-        self._gv_sum2 = None
+        self._gv_by_gv = None
 
         super().__init__(
             interaction,
@@ -101,6 +100,16 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
             log_level=log_level,
             lang=lang,
         )
+
+    @property
+    def kappa(self):
+        """Return kappa."""
+        return self._kappa
+
+    @property
+    def mode_kappa(self):
+        """Return mode_kappa."""
+        return self._mode_kappa
 
     @property
     def kappa_RTA(self):
@@ -150,7 +159,7 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
         self._kappa_RTA = np.zeros(
             (len(self._sigmas), num_temp, 6), dtype="double", order="C"
         )
-        self._gv_sum2 = np.zeros(
+        self._gv_by_gv = np.zeros(
             (num_grid_points, num_band0, 6), dtype="double", order="C"
         )
         self._mode_kappa = np.zeros(

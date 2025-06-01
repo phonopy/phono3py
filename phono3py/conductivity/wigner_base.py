@@ -40,12 +40,14 @@ import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.physical_units import get_physical_units
 
-from phono3py.conductivity.base import HeatCapacityMixIn
-from phono3py.phonon.grid import get_grid_points_by_rotations
+from phono3py.phonon.grid import (
+    get_grid_points_by_rotations,
+    get_qpoints_from_bz_grid_points,
+)
 from phono3py.phonon.velocity_operator import VelocityOperator
 
 
-class ConductivityWignerMixIn(HeatCapacityMixIn):
+class ConductivityWignerMixIn:
     """Thermal conductivity mix-in for velocity operator.
 
     This mix-in is included in `ConductivityWignerRTA` and `ConductivityWignerLBTE`.
@@ -106,7 +108,9 @@ class ConductivityWignerMixIn(HeatCapacityMixIn):
     def _set_gv_operator(self, i_irgp, i_data):
         """Set velocity operator."""
         irgp = self._grid_points[i_irgp]
-        self._velocity_obj.run([self._get_qpoint_from_gp_index(irgp)])
+        self._velocity_obj.run(
+            [get_qpoints_from_bz_grid_points(irgp, self._pp.bz_grid)]
+        )
         gv_operator = self._velocity_obj.velocity_operators[0, :, :, :]
         self._gv_operator[i_data] = gv_operator[self._pp.band_indices, :, :]
         #
@@ -141,14 +145,14 @@ class ConductivityWignerMixIn(HeatCapacityMixIn):
 
         # Sum all vxv at k*
         for j, vxv in enumerate(([0, 0], [1, 1], [2, 2], [1, 2], [0, 2], [0, 1])):
-            # self._gv_sum2[i_data, :, j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
+            # self._gv_by_gv[i_data, :, j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
             # here it is storing the 6 independent components of the v^i x v^j tensor
             # i_data is the q-point index
             # j indexes the 6 independent component of the symmetric tensor  v^i x v^j
             self._gv_operator_sum2[i_data, :, :, j] = gv_by_gv_operator_tensor[
                 :, :, vxv[0], vxv[1]
             ]
-            # self._gv_sum2[i_data, :, j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
+            # self._gv_by_gv[i_data, :, j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
 
     def _get_gv_by_gv_operator(self, i_irgp, i_data):
         if self._is_kappa_star:

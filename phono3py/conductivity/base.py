@@ -34,10 +34,11 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import textwrap
-import warnings
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 from phonopy.phonon.group_velocity import GroupVelocity
@@ -45,7 +46,11 @@ from phonopy.phonon.thermal_properties import mode_cv
 from phonopy.physical_units import get_physical_units
 
 from phono3py.other.isotope import Isotope
-from phono3py.phonon.grid import get_grid_points_by_rotations, get_ir_grid_points
+from phono3py.phonon.grid import (
+    get_grid_points_by_rotations,
+    get_ir_grid_points,
+    get_qpoints_from_bz_grid_points,
+)
 from phono3py.phonon3.collision_matrix import CollisionMatrix
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy
 from phono3py.phonon3.interaction import Interaction
@@ -63,12 +68,116 @@ def get_unit_to_WmK() -> float:
     return unit_to_WmK
 
 
-class HeatCapacityMixIn:
-    """Heat capacity mix-in.
+def get_multiplicity_at_q(
+    gp: int,
+    pp: Interaction,
+    point_operations: np.ndarray,
+) -> int:
+    """Return multiplicity (order of site-symmetry) of q-point."""
+    q = get_qpoints_from_bz_grid_points(gp, pp.bz_grid)
+    reclat = np.linalg.inv(pp.primitive.cell)
+    multi = 0
+    for q_rot in [np.dot(r, q) for r in point_operations]:
+        diff = q - q_rot
+        diff -= np.rint(diff)
+        dist = np.linalg.norm(np.dot(reclat, diff))
+        if dist < pp.primitive_symmetry.tolerance:
+            multi += 1
+    return multi
 
-    Used by other mix-in.
+
+def get_kstar_order(
+    grid_weight: int, multi: int, point_operations: np.ndarray, verbose: bool = False
+) -> int:
+    """Return order (number of arms) of kstar.
+
+    multi : int
+        Multiplicity of grid point.
 
     """
+    order_kstar = len(point_operations) // multi
+    if order_kstar != grid_weight:
+        if verbose:
+            text = (
+                "Number of elements in k* is unequal "
+                "to number of equivalent grid-points. "
+                "This means that the mesh sampling grids break "
+                "symmetry. Please check carefully "
+                "the convergence over grid point densities."
+            )
+            msg = textwrap.fill(
+                text, initial_indent=" ", subsequent_indent=" ", width=70
+            )
+            print("*" * 30 + "Warning" + "*" * 30)
+            print(msg)
+            print("*" * 67)
+
+    return order_kstar
+
+
+class ConductivityComponents:
+    """Thermal conductivity components.
+
+    Used by ConductivityRTA and ConductivityLBTE.
+
+    """
+
+    def __init__(
+        self,
+        pp: Interaction,
+        grid_points: np.ndarray,
+        grid_weights: np.ndarray,
+        point_operations: np.ndarray,
+        rotations_cartesian: np.ndarray,
+        temperatures: Optional[np.ndarray] = None,
+        average_gv_over_kstar: bool = False,
+        is_kappa_star: bool = True,
+        gv_delta_q: Optional[float] = None,
+        log_level: int = 0,
+    ):
+        """Init method."""
+        self._pp = pp
+        self._grid_points = grid_points
+        self._grid_weights = grid_weights
+        self._point_operations = point_operations
+        self._rotations_cartesian = rotations_cartesian
+        self._temperatures = temperatures
+        self._average_gv_over_kstar = average_gv_over_kstar
+        self._is_kappa_star = is_kappa_star
+        self._gv_delta_q = gv_delta_q
+        self._log_level = log_level
+
+        self._gv: np.ndarray
+        self._gv_by_gv: np.ndarray
+        self._cv: np.ndarray
+
+        if self._pp.dynamical_matrix is None:
+            raise RuntimeError("Interaction.init_dynamical_matrix() has to be called.")
+        self._velocity_obj = GroupVelocity(
+            self._pp.dynamical_matrix,
+            q_length=self._gv_delta_q,
+            symmetry=self._pp.primitive_symmetry,
+            frequency_factor_to_THz=self._pp.frequency_factor_to_THz,
+        )
+
+        self._num_sampling_grid_points = 0
+
+        if self._temperatures is not None:
+            self._allocate_values()
+
+    @property
+    def group_velocities(self):
+        """Return group velocities at grid points.
+
+        Grid points are those at mode kappa are calculated.
+
+        """
+        return self._gv
+
+    @property
+    def gv_by_gv(self):
+        """Return gv_by_gv at grid points where mode kappa are calculated."""
+        return self._gv_by_gv
 
     @property
     def mode_heat_capacities(self):
@@ -79,21 +188,32 @@ class HeatCapacityMixIn:
         """
         return self._cv
 
-    def get_mode_heat_capacities(self):
-        """Return mode heat capacity at constant volume at grid points.
+    @property
+    def temperatures(self):
+        """Setter and getter of temperatures."""
+        return self._temperatures
 
-        Grid points are those at mode kappa are calculated.
+    @temperatures.setter
+    def temperatures(self, temperatures):
+        self._temperatures = np.array(temperatures, dtype="double")
+        self._allocate_values()
+
+    @property
+    def number_of_sampling_grid_points(self):
+        """Return number of grid points.
+
+        This is calculated by the sum of numbers of arms of k-start in
+        `Conductivity._set_gv_by_gv`.
 
         """
-        warnings.warn(
-            "Use attribute, Conductivity.mode_heat_capacities "
-            "instead of Conductivity.get_mode_heat_capacities().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.mode_heat_capacities
+        return self._num_sampling_grid_points
 
-    def _set_cv(self, i_gp, i_data):
+    def set_velocities(self, i_gp, i_data):
+        """Set group velocities at grid point and at data location."""
+        self._gv[i_data] = self._get_gv(i_gp)
+        self._set_gv_by_gv(i_gp, i_data)
+
+    def set_cv(self, i_gp, i_data):
         """Set mode heat capacity.
 
         The array has to be allocated somewhere out of the mix-in.
@@ -103,9 +223,21 @@ class HeatCapacityMixIn:
         )
 
         """
+        if not self._pp.phonon_all_done:
+            raise RuntimeError(
+                "Phonon calculation has not been done yet. "
+                "Run phono3py.run_phonon_solver() before this method."
+            )
+        if self._temperatures is None:
+            raise RuntimeError(
+                "Temperatures have not been set yet. "
+                "Set temperatures before this method."
+            )
+
+        frequencies, _, _ = self._pp.get_phonons()
         grid_point = self._grid_points[i_gp]
         freqs = (
-            self._frequencies[grid_point][self._pp.band_indices]
+            frequencies[grid_point][self._pp.band_indices]  # type: ignore
             * get_physical_units().THzToEv
         )
         cutoff = self._pp.cutoff_frequency * get_physical_units().THzToEv
@@ -118,97 +250,10 @@ class HeatCapacityMixIn:
                 condition = f < 100 * self._temperatures * get_physical_units().KB
                 cv[:, i] = np.where(
                     condition,
-                    mode_cv(np.where(condition, self._temperatures, 10000), f),
+                    mode_cv(np.where(condition, self._temperatures, 10000), f),  # type: ignore
                     0,
                 )
         self._cv[:, i_data, :] = cv
-
-
-class ConductivityMixIn(HeatCapacityMixIn):
-    """Thermal conductivity mix-in.
-
-    Used by ConductivityRTA and ConductivityLBTE.
-
-    """
-
-    @property
-    def kappa(self):
-        """Return kappa."""
-        return self._kappa
-
-    def get_kappa(self):
-        """Return kappa."""
-        warnings.warn(
-            "Use attribute, Conductivity.kappa instead of Conductivity.get_kappa().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.kappa
-
-    @property
-    def mode_kappa(self):
-        """Return mode_kappa."""
-        return self._mode_kappa
-
-    def get_mode_kappa(self):
-        """Return mode_kappa."""
-        warnings.warn(
-            "Use attribute, Conductivity.mode_kappa "
-            "instead of Conductivity.get_mode_kappa().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.mode_kappa
-
-    @property
-    def group_velocities(self):
-        """Return group velocities at grid points.
-
-        Grid points are those at mode kappa are calculated.
-
-        """
-        return self._gv
-
-    def get_group_velocities(self):
-        """Return group velocities at grid points.
-
-        Grid points are those at mode kappa are calculated.
-
-        """
-        warnings.warn(
-            "Use attribute, Conductivity.group_velocities "
-            "instead of Conductivity.get_group_velocities().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.group_velocities
-
-    @property
-    def gv_by_gv(self):
-        """Return gv_by_gv at grid points where mode kappa are calculated."""
-        return self._gv_sum2
-
-    def get_gv_by_gv(self):
-        """Return gv_by_gv at grid points where mode kappa are calculated."""
-        warnings.warn(
-            "Use attribute, Conductivity.gv_by_gv "
-            "instead of Conductivity.get_gv_by_gv().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.gv_by_gv
-
-    def _init_velocity(self, gv_delta_q):
-        self._velocity_obj = GroupVelocity(
-            self._pp.dynamical_matrix,
-            q_length=gv_delta_q,
-            symmetry=self._pp.primitive_symmetry,
-            frequency_factor_to_THz=self._pp.frequency_factor_to_THz,
-        )
-
-    def _set_velocities(self, i_gp, i_data):
-        self._gv[i_data] = self._get_gv(i_gp)
-        self._set_gv_by_gv(i_gp, i_data)
 
     def _get_gv(self, i_gp):
         """Get group velocity."""
@@ -222,8 +267,11 @@ class ConductivityMixIn(HeatCapacityMixIn):
 
             unique_gps = np.unique(gps_rotated)
             gvs = {}
-            for bz_gp in unique_gps.tolist():  # To convert to int type.
-                self._velocity_obj.run([self._get_qpoint_from_gp_index(bz_gp)])
+            for bz_gp in unique_gps:
+                self._velocity_obj.run(
+                    [get_qpoints_from_bz_grid_points(bz_gp, self._pp.bz_grid)]
+                )
+                assert self._velocity_obj.group_velocities is not None
                 gvs[bz_gp] = self._velocity_obj.group_velocities[
                     0, self._pp.band_indices, :
                 ]
@@ -232,7 +280,10 @@ class ConductivityMixIn(HeatCapacityMixIn):
                 gv += np.dot(gvs[bz_gp], r)  # = dot(r_inv, gv)
             return gv / len(self._point_operations)
         else:
-            self._velocity_obj.run([self._get_qpoint_from_gp_index(irgp)])
+            self._velocity_obj.run(
+                [get_qpoints_from_bz_grid_points(irgp, self._pp.bz_grid)]
+            )
+            assert self._velocity_obj.group_velocities is not None
             return self._velocity_obj.group_velocities[0, self._pp.band_indices, :]
 
     def _set_gv_by_gv(self, i_gp, i_data):
@@ -246,17 +297,49 @@ class ConductivityMixIn(HeatCapacityMixIn):
 
         # Sum all vxv at k*
         for j, vxv in enumerate(([0, 0], [1, 1], [2, 2], [1, 2], [0, 2], [0, 1])):
-            self._gv_sum2[i_data, :, j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
+            self._gv_by_gv[i_data, :, j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
 
     def _get_gv_by_gv(self, i_gp, i_data):
-        multi = self._get_multiplicity_at_q(i_gp)
+        if self._is_kappa_star:
+            multi = get_multiplicity_at_q(
+                self._grid_points[i_gp],  # type: ignore
+                self._pp,
+                self._point_operations,
+            )
+        else:
+            multi = 1
         gv = self._gv[i_data]
         gv_by_gv = np.zeros((len(gv), 3, 3), dtype="double")
         for r in self._rotations_cartesian:
             gvs_rot = np.dot(gv, r.T)
             gv_by_gv += [np.outer(r_gv, r_gv) for r_gv in gvs_rot]
         gv_by_gv /= multi
-        return gv_by_gv, self._get_kstar_order(i_gp, multi)
+        kstar_order = get_kstar_order(
+            self._grid_weights[i_gp],  # type: ignore
+            multi,
+            self._point_operations,
+            verbose=self._log_level > 0,
+        )
+        return gv_by_gv, kstar_order
+
+    def _allocate_values(self):
+        if self._temperatures is None:
+            raise RuntimeError(
+                "Temperatures have not been set yet. "
+                "Set temperatures before this method."
+            )
+
+        num_band0 = len(self._pp.band_indices)
+        num_grid_points = len(self._grid_points)
+        num_temp = len(self._temperatures)
+
+        self._cv = np.zeros(
+            (num_temp, num_grid_points, num_band0), order="C", dtype="double"
+        )
+        self._gv = np.zeros((num_grid_points, num_band0, 3), order="C", dtype="double")
+        self._gv_by_gv = np.zeros(
+            (num_grid_points, num_band0, 6), order="C", dtype="double"
+        )
 
 
 class ConductivityBase(ABC):
@@ -273,17 +356,17 @@ class ConductivityBase(ABC):
     def __init__(
         self,
         interaction: Interaction,
-        grid_points=None,
-        temperatures: Optional[Union[List, np.ndarray]] = None,
-        sigmas: Optional[Union[List, np.ndarray]] = None,
+        grid_points: Optional[np.ndarray] = None,
+        temperatures: Optional[Union[list, np.ndarray]] = None,
+        sigmas: Optional[Union[list, np.ndarray]] = None,
         sigma_cutoff: Optional[float] = None,
         is_isotope=False,
-        mass_variances: Optional[Union[List, np.ndarray]] = None,
+        mass_variances: Optional[Union[list, np.ndarray]] = None,
         boundary_mfp: Optional[float] = None,
-        is_kappa_star=True,
-        gv_delta_q=None,
-        is_full_pp=False,
-        log_level=0,
+        is_kappa_star: bool = True,
+        gv_delta_q: Optional[float] = None,
+        is_full_pp: bool = False,
+        log_level: int = 0,
     ):
         """Init method.
 
@@ -347,17 +430,14 @@ class ConductivityBase(ABC):
             self._ir_grid_points,
             self._grid_weights,
         ) = self._get_grid_info(grid_points)
-        self._grid_point_count: int = 0
-        self._num_sampling_grid_points: int = 0
+        self._grid_point_count = 0
 
-        self._sigmas: List
         if sigmas is None:
             self._sigmas = []
         else:
             self._sigmas = list(sigmas)
         self._sigma_cutoff = sigma_cutoff
         self._collision: Union[ImagSelfEnergy, CollisionMatrix]
-        self._temperatures: Optional[np.ndarray]
         if temperatures is None:
             self._temperatures = None
         else:
@@ -389,16 +469,11 @@ class ConductivityBase(ABC):
         self._gamma: np.ndarray
         self._gamma_iso: Optional[np.ndarray] = None
 
-        volume = self._pp.primitive.volume
-        self._conversion_factor = get_unit_to_WmK() / volume
-
+        self._conversion_factor = get_unit_to_WmK() / self._pp.primitive.volume
         self._averaged_pp_interaction = None
+        self._gv_delta_q = gv_delta_q
 
-        # `self._velocity_obj` is the instance of an inherited class of
-        # `GroupVelocity`. `self._init_velocity()` is the method setup the instance,
-        # which must be implemented in the inherited class of `ConductivityBase`.
-        self._velocity_obj: GroupVelocity
-        self._init_velocity(gv_delta_q)
+        self._conductivity_components: ConductivityComponents
 
     def __iter__(self):
         """Calculate mode kappa at each grid point."""
@@ -423,16 +498,6 @@ class ConductivityBase(ABC):
         """Return mesh numbers of GR-grid."""
         return self._pp.mesh_numbers
 
-    def get_mesh_numbers(self):
-        """Return mesh numbers of GR-grid."""
-        warnings.warn(
-            "Use attribute, Conductivity.mesh_numbers "
-            "instead of Conductivity.get_mesh_numbers().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.mesh_numbers
-
     @property
     def bz_grid(self):
         """Return GR-grid."""
@@ -447,38 +512,14 @@ class ConductivityBase(ABC):
         """
         return self._frequencies[self._grid_points]
 
-    def get_frequencies(self):
-        """Return frequencies at grid points.
-
-        Grid points are those at mode kappa are calculated.
-
-        """
-        warnings.warn(
-            "Use attribute, Conductivity.frequencies "
-            "instead of Conductivity.get_frequencies().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.frequencies
-
     @property
     def qpoints(self):
         """Return q-points where mode kappa are calculated."""
         return np.array(
-            self._get_qpoint_from_gp_index(self._grid_points),
+            get_qpoints_from_bz_grid_points(self._grid_points, self._pp.bz_grid),
             dtype="double",
             order="C",
         )
-
-    def get_qpoints(self):
-        """Return q-points where mode kappa are calculated."""
-        warnings.warn(
-            "Use attribute, Conductivity.qpoints "
-            "instead of Conductivity.get_qpoints().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.qpoints
 
     @property
     def grid_points(self):
@@ -489,34 +530,10 @@ class ConductivityBase(ABC):
         """
         return self._grid_points
 
-    def get_grid_points(self):
-        """Return grid point indices where mode kappa are calculated.
-
-        Grid point indices are given in BZ-grid.
-
-        """
-        warnings.warn(
-            "Use attribute, Conductivity.grid_points "
-            "instead of Conductivity.get_grid_points().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.grid_points
-
     @property
     def grid_weights(self):
         """Return grid point weights where mode kappa are calculated."""
         return self._grid_weights
-
-    def get_grid_weights(self):
-        """Return grid point weights where mode kappa are calculated."""
-        warnings.warn(
-            "Use attribute, Conductivity.grid_weights "
-            "instead of Conductivity.get_grid_weights().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.grid_weights
 
     @property
     def temperatures(self):
@@ -528,26 +545,6 @@ class ConductivityBase(ABC):
         self._temperatures = np.array(temperatures, dtype="double")
         self._allocate_values()
 
-    def get_temperatures(self):
-        """Return temperatures."""
-        warnings.warn(
-            "Use attribute, Conductivity.temperatures "
-            "instead of Conductivity.get_temperatures().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.temperatures
-
-    def set_temperatures(self, temperatures):
-        """Set temperatures."""
-        warnings.warn(
-            "Use attribute, Conductivity.temperatures "
-            "instead of Conductivity.set_temperatures().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        self.temperatures = temperatures
-
     @property
     def gamma(self):
         """Setter and getter of gamma."""
@@ -557,24 +554,6 @@ class ConductivityBase(ABC):
     def gamma(self, gamma):
         self._gamma = gamma
         self._read_gamma = True
-
-    def get_gamma(self):
-        """Return gamma."""
-        warnings.warn(
-            "Use attribute, Conductivity.gamma instead of Conductivity.get_gamma().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.gamma
-
-    def set_gamma(self, gamma):
-        """Set gamma."""
-        warnings.warn(
-            "Use attribute, Conductivity.gamma instead of Conductivity.set_gamma().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        self.gamma = gamma
 
     @property
     def gamma_isotope(self):
@@ -586,100 +565,42 @@ class ConductivityBase(ABC):
         self._gamma_iso = gamma_iso
         self._read_gamma_iso = True
 
-    def get_gamma_isotope(self):
-        """Return gamma from isotope."""
-        warnings.warn(
-            "Use attribute, Conductivity.gamma_isotope "
-            "instead of Conductivity.get_gamma_isotope().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.gamma_isotope
-
-    def set_gamma_isotope(self, gamma_iso):
-        """Set gamma from isotope."""
-        warnings.warn(
-            "Use attribute, Conductivity.gamma_isotope "
-            "instead of Conductivity.set_gamma_isotope().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        self.gamma_isotope = gamma_iso
-
     @property
     def sigmas(self):
         """Return sigmas."""
         return self._sigmas
-
-    def get_sigmas(self):
-        """Return sigmas."""
-        warnings.warn(
-            "Use attribute, Conductivity.sigmas instead of Conductivity.get_sigmas().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.sigmas
 
     @property
     def sigma_cutoff_width(self):
         """Return smearing width cutoff."""
         return self._sigma_cutoff
 
-    def get_sigma_cutoff_width(self):
-        """Return smearing width cutoff."""
-        warnings.warn(
-            "Use attribute, Conductivity.sigma_cutoff_width "
-            "instead of Conductivity.get_sigma_cutoff_width().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.sigma_cutoff_width
-
     @property
     def grid_point_count(self):
         """Return iterator count of self."""
         return self._grid_point_count
-
-    def get_grid_point_count(self):
-        """Return iterator count of self."""
-        warnings.warn(
-            "Use attribute, Conductivity.grid_point_count "
-            "instead of Conductivity.get_grid_point_count().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.grid_point_count
 
     @property
     def averaged_pp_interaction(self):
         """Return averaged pp strength."""
         return self._averaged_pp_interaction
 
-    def get_averaged_pp_interaction(self):
-        """Return averaged pp interaction strength."""
-        warnings.warn(
-            "Use attribute, Conductivity.averaged_pp_interaction "
-            "instead of Conductivity.get_averaged_pp_interaction().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.averaged_pp_interaction
-
     @property
     def boundary_mfp(self) -> float:
         """Return boundary MFP."""
         return self._boundary_mfp
 
-    def get_number_of_sampling_grid_points(self):
+    @property
+    def number_of_sampling_grid_points(self):
         """Return number of grid points.
 
         This is calculated by the sum of numbers of arms of k-start in
         `Conductivity._set_gv_by_gv`.
 
         """
-        return self._num_sampling_grid_points
+        return self._conductivity_components.number_of_sampling_grid_points
 
-    def _get_point_operations(self) -> Tuple[np.ndarray, np.ndarray]:
+    def _get_point_operations(self) -> tuple[np.ndarray, np.ndarray]:
         """Return reciprocal point group operations.
 
         Returns
@@ -705,7 +626,7 @@ class ConductivityBase(ABC):
 
         return point_operations, rotations_cartesian
 
-    def _get_grid_info(self, grid_points) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def _get_grid_info(self, grid_points) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Return grid point information in BZGrid.
 
         Returns
@@ -764,15 +685,6 @@ class ConductivityBase(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def _init_velocity(self, gv_delta_q):
-        """Initialize velocity class instance.
-
-        Should be implemented in Conductivity*MixIn.
-
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
     def _set_cv(self, i_gp, i_data):
         """Set heat capacity at grid point and at data location.
 
@@ -801,60 +713,6 @@ class ConductivityBase(ABC):
             )
 
         return ir_grid_points, grid_weights
-
-    def _get_qpoint_from_gp_index(self, i_gps):
-        """Return q-point(s) in reduced coordinates of grid point(s).
-
-        Parameters
-        ----------
-        i_gps : int or ndarray
-            BZ-grid index (int) or indices (ndarray).
-
-        """
-        return np.dot(self._pp.bz_grid.addresses[i_gps], self._pp.bz_grid.QDinv.T)
-
-    def _get_multiplicity_at_q(self, i_gp):
-        """Return multiplicity (order of site-symmetry) of q-point."""
-        if self._is_kappa_star:
-            q = self._get_qpoint_from_gp_index(self._grid_points[i_gp])
-            reclat = np.linalg.inv(self._pp.primitive.cell)
-            multi = 0
-            for q_rot in [np.dot(r, q) for r in self._point_operations]:
-                diff = q - q_rot
-                diff -= np.rint(diff)
-                dist = np.linalg.norm(np.dot(reclat, diff))
-                if dist < self._pp.primitive_symmetry.tolerance:
-                    multi += 1
-        else:
-            multi = 1
-        return multi
-
-    def _get_kstar_order(self, i_gp, multi):
-        """Return order (number of arms) of kstar.
-
-        multi : int
-            Multiplicity of q-point of `i_gp`, which can be obtained by
-            `self._get_multiplicity_at_q(i_gp)`.
-
-        """
-        order_kstar = len(self._point_operations) // multi
-        if order_kstar != self._grid_weights[i_gp]:
-            if self._log_level:
-                text = (
-                    "Number of elements in k* is unequal "
-                    "to number of equivalent grid-points. "
-                    "This means that the mesh sampling grids break "
-                    "symmetry. Please check carefully "
-                    "the convergence over grid point densities."
-                )
-                msg = textwrap.fill(
-                    text, initial_indent=" ", subsequent_indent=" ", width=70
-                )
-                print("*" * 30 + "Warning" + "*" * 30)
-                print(msg)
-                print("*" * 67)
-
-        return order_kstar
 
     def _get_gamma_isotope_at_sigmas(self, i):
         gamma_iso = []
@@ -927,7 +785,7 @@ class ConductivityBase(ABC):
                 "======================= Grid point %d (%d/%d) "
                 "=======================" % (bzgp, i_gp + 1, len(self._grid_points))
             )
-            qpoint = self._get_qpoint_from_gp_index(bzgp)
+            qpoint = get_qpoints_from_bz_grid_points(bzgp, self._pp.bz_grid)
             print("q-point: (%5.2f %5.2f %5.2f)" % tuple(qpoint))
             if self._boundary_mfp is not None:
                 if self._boundary_mfp > 1000:

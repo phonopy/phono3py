@@ -35,7 +35,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from __future__ import annotations
 
-import warnings
 from collections.abc import Sequence
 from typing import Literal, Optional, Union
 
@@ -159,6 +158,7 @@ class Interaction:
         self._g_zero = None
 
         self._phonon_done = None
+        self._phonon_all_done = False
         self._done_nac_at_gamma = False  # Phonon at Gamma is calculated with NAC.
         self._frequencies = None
         self._eigenvectors = None
@@ -184,7 +184,7 @@ class Interaction:
         self, lang: Literal["C", "Python"] = "C", g_zero: Optional[np.ndarray] = None
     ):
         """Run ph-ph interaction calculation."""
-        if (self._phonon_done == 0).any():
+        if self._phonon_all_done:
             self.run_phonon_solver()
 
         if self._triplets_at_q is None:
@@ -221,16 +221,6 @@ class Interaction:
         """
         return self._interaction_strength
 
-    def get_interaction_strength(self):
-        """Return ph-ph interaction strength."""
-        warnings.warn(
-            "Use attribute, Interaction.interaction_strength "
-            "instead of Interaction.get_interaction_strength().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.interaction_strength
-
     @property
     def mesh_numbers(self) -> np.ndarray:
         """Return mesh numbers.
@@ -243,16 +233,6 @@ class Interaction:
         """
         return self._bz_grid.D_diag
 
-    def get_mesh_numbers(self):
-        """Return mesh numbers."""
-        warnings.warn(
-            "Use attribute, Interaction.mesh_numbers "
-            "instead of Interaction.get_mesh_numbers().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.mesh_numbers
-
     @property
     def is_mesh_symmetry(self) -> bool:
         """Whether symmetry of grid is utilized or not."""
@@ -263,49 +243,32 @@ class Interaction:
         """Return fc3."""
         return self._fc3
 
-    def get_fc3(self):
-        """Return fc3."""
-        warnings.warn(
-            "Use attribute, Interaction.fc3 instead of Interaction.get_fc3().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.fc3
-
     @property
     def dynamical_matrix(self) -> Optional[DynamicalMatrix]:
         """Return DynamicalMatrix class instance."""
         return self._dm
-
-    def get_dynamical_matrix(self):
-        """Return DynamicalMatrix class instance."""
-        warnings.warn(
-            "Use attribute, Interaction.dynamical_matrix "
-            "instead of Interaction.get_dynamical_matrix().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.dynamical_matrix
 
     @property
     def primitive(self) -> Primitive:
         """Return Primitive class instance."""
         return self._primitive
 
-    def get_primitive(self):
-        """Return Primitive class instance."""
-        warnings.warn(
-            "Use attribute, Interaction.primitive "
-            "instead of Interaction.get_primitive().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.primitive
-
     @property
     def primitive_symmetry(self) -> Symmetry:
         """Return Symmetry class instance of primitive cell."""
         return self._primitive_symmetry
+
+    @property
+    def phonon_all_done(self) -> bool:
+        """Return whether phonon calculation is done at all grid points.
+
+        True value is set in run_phonon_solver(). Even when False, it is
+        possible that all phonons are already calculated, but it is safer to
+        think some of phonons are not calculated yet. To be sure, check
+        (self._phonon_done == 0).any().
+
+        """
+        return self._phonon_all_done
 
     def get_triplets_at_q(
         self,
@@ -347,16 +310,6 @@ class Interaction:
         """
         return self._band_indices
 
-    def get_band_indices(self):
-        """Return band indices."""
-        warnings.warn(
-            "Use attribute, Interaction.band_indices "
-            "instead of Interaction.get_band_indices().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.band_indices
-
     @property
     def nac_params(self) -> Optional[dict]:
         """Return NAC params."""
@@ -383,26 +336,6 @@ class Interaction:
         else:
             self._nac_q_direction = np.array(nac_q_direction, copy=True, dtype="double")
 
-    def get_nac_q_direction(self):
-        """Return q-direction used for NAC at q->0."""
-        warnings.warn(
-            "Use attribute, Interaction.nac_q_direction "
-            "instead of Interaction.get_nac_q_direction().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.nac_q_direction
-
-    def set_nac_q_direction(self, nac_q_direction=None):
-        """Set NAC q-point direction valid at q->0."""
-        warnings.warn(
-            "Use attribute, Interaction.nac_q_direction "
-            "instead of Interaction.set_nac_q_direction().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        self.nac_q_direction = nac_q_direction
-
     @property
     def zero_value_positions(self) -> Optional[np.ndarray]:
         """Return zero ph-ph interaction elements information.
@@ -413,16 +346,6 @@ class Interaction:
 
         """
         return self._g_zero
-
-    def get_zero_value_positions(self):
-        """Return zero ph-ph interaction elements information."""
-        warnings.warn(
-            "Use attribute, Interaction.zero_value_positions "
-            "instead of Interaction.get_zero_value_positions().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.zero_value_positions
 
     def get_phonons(
         self,
@@ -451,45 +374,15 @@ class Interaction:
         """Return phonon frequency conversion factor to THz."""
         return self._frequency_factor_to_THz
 
-    def get_frequency_factor_to_THz(self):
-        """Return phonon frequency conversion factor to THz."""
-        warnings.warn(
-            "Use attribute, Interaction.frequency_factor_to_THz "
-            "instead of Interaction.get_frequency_factor_to_THz().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.frequency_factor_to_THz
-
     @property
     def lapack_zheev_uplo(self) -> Literal["L", "U"]:
         """Return U or L for lapack zheev solver."""
         return self._lapack_zheev_uplo
 
-    def get_lapack_zheev_uplo(self):
-        """Return U or L for lapack zheev solver."""
-        warnings.warn(
-            "Use attribute, Interaction.lapack_zheev_uplo "
-            "instead of Interaction.get_lapack_zheev_uplo().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.lapack_zheev_uplo
-
     @property
     def cutoff_frequency(self) -> float:
         """Return cutoff phonon frequency to judge imaginary phonon."""
         return self._cutoff_frequency
-
-    def get_cutoff_frequency(self):
-        """Return cutoff phonon frequency to judge imaginary phonon."""
-        warnings.warn(
-            "Use attribute, Interaction.cutoff_frequency "
-            "instead of Interaction.get_cutoff_frequency().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.cutoff_frequency
 
     @property
     def openmp_per_triplets(self) -> Optional[bool]:
@@ -544,16 +437,6 @@ class Interaction:
         v_sum = np.dot(w, v.sum(axis=2).sum(axis=2))
         return v_sum / np.prod(v.shape[2:])
 
-    def get_averaged_interaction(self):
-        """Return sum over phonon triplets of interaction strength."""
-        warnings.warn(
-            "Use attribute, Interaction.averaged_interaction "
-            "instead of Interaction.get_averaged_interaction().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.averaged_interaction
-
     def get_primitive_and_supercell_correspondence(
         self,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -565,30 +448,10 @@ class Interaction:
         """Return unit conversion factor."""
         return self._unit_conversion
 
-    def get_unit_conversion_factor(self):
-        """Return unit conversion factor."""
-        warnings.warn(
-            "Use attribute, Interaction.unit_conversion_factor "
-            "instead of Interaction.get_unit_conversion_factor().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.unit_conversion_factor
-
     @property
     def constant_averaged_interaction(self) -> Optional[float]:
         """Return constant averaged interaction."""
         return self._constant_averaged_interaction
-
-    def get_constant_averaged_interaction(self):
-        """Return constant averaged interaction."""
-        warnings.warn(
-            "Use attribute, Interaction.constant_averaged_interaction "
-            "instead of Interaction.get_constant_averaged_interaction().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.constant_averaged_interaction
 
     def set_interaction_strength(self, pp_strength, g_zero=None):
         """Set interaction strength."""
@@ -743,6 +606,7 @@ class Interaction:
                 self._run_phonon_solver_c(
                     np.arange(len(self._bz_grid.addresses), dtype="int64")
                 )
+            self._phonon_all_done = True
         else:
             self._run_phonon_solver_c(grid_points)
 
@@ -1095,6 +959,7 @@ class Interaction:
         num_band = len(self._primitive) * 3
         num_grid = len(self._bz_grid.addresses)
         self._phonon_done = np.zeros(num_grid, dtype="byte")
+        self._phonon_all_done = False
         self._frequencies = np.zeros((num_grid, num_band), dtype="double", order="C")
         complex_dtype = "c%d" % (np.dtype("double").itemsize * 2)
         self._eigenvectors = np.zeros(
