@@ -812,8 +812,8 @@ class Interaction:
         # perms.shape = (len(spg_ops), len(primitive)), dtype='intc'
         perms = compute_all_sg_permutations(
             self._primitive.scaled_positions,
-            self._bz_grid.symmetry_dataset.rotations,
-            self._bz_grid.symmetry_dataset.translations,
+            self._bz_grid.symmetry_dataset.rotations,  # type: ignore
+            self._bz_grid.symmetry_dataset.translations,  # type: ignore
             np.array(self._primitive.cell.T, dtype="double", order="C"),
             symprec=self._symprec,
         )
@@ -1045,6 +1045,8 @@ class Interaction:
     def _run_py(self):
         assert self._interaction_strength is not None
         assert self._triplets_at_q is not None
+        assert self._frequencies is not None
+        assert self._eigenvectors is not None
 
         r2r = RealToReciprocal(
             self._fc3, self._primitive, self.mesh_numbers, symprec=self._symprec

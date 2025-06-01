@@ -34,9 +34,11 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from typing import Optional
+from collections.abc import Sequence
+from typing import Optional, Union
 
 import numpy as np
+from phonopy.structure.atoms import PhonopyAtoms
 
 
 class ReciprocalToNormal:
@@ -50,10 +52,10 @@ class ReciprocalToNormal:
 
     def __init__(
         self,
-        primitive,
-        frequencies,
-        eigenvectors,
-        band_indices,
+        primitive: PhonopyAtoms,
+        frequencies: np.ndarray,
+        eigenvectors: np.ndarray,
+        band_indices: Union[Sequence[int], np.ndarray],
         cutoff_frequency: float = 0,
     ):
         """Init method."""
@@ -63,10 +65,8 @@ class ReciprocalToNormal:
         self._band_indices = band_indices
         self._cutoff_frequency = cutoff_frequency
 
-        self._masses = self._primitive.masses
-
-        self._fc3_normal = None
-        self._fc3_reciprocal = None
+        self._fc3_normal: np.ndarray
+        self._fc3_reciprocal: np.ndarray
 
     def run(self, fc3_reciprocal, grid_triplet):
         """Calculate fc3 in phonon coordinates."""
@@ -109,7 +109,7 @@ class ReciprocalToNormal:
                     * e3[k * 3 + n, b3]
                     * self._fc3_reciprocal[i, j, k, ll, m, n]
                 )
-            mass_sqrt = np.sqrt(np.prod(self._masses[[i, j, k]]))
+            mass_sqrt = np.sqrt(np.prod(self._primitive.masses[[i, j, k]]))
             sum_fc3 += sum_fc3_cart / mass_sqrt
 
         return sum_fc3
