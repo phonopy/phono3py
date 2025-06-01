@@ -112,8 +112,7 @@ class Interaction:
         self._bz_grid = bz_grid
         self._primitive_symmetry = primitive_symmetry
 
-        self._band_indices = None
-        self._set_band_indices(band_indices)
+        self._band_indices = self._get_band_indices(band_indices)
         self._constant_averaged_interaction = constant_averaged_interaction
         if frequency_factor_to_THz is None:
             self._frequency_factor_to_THz = get_physical_units().DefaultToTHz
@@ -127,7 +126,7 @@ class Interaction:
         # Unit to eV^2
         if unit_conversion is None:
             num_grid = np.prod(self.mesh_numbers)
-            self._unit_conversion = (
+            self._unit_conversion = float(
                 (get_physical_units().Hbar * get_physical_units().EV) ** 3
                 / 36
                 / 8
@@ -147,7 +146,7 @@ class Interaction:
         self._is_mesh_symmetry = is_mesh_symmetry
         self._symmetrize_fc3q = symmetrize_fc3q
         self._make_r0_average = make_r0_average
-        self._lapack_zheev_uplo = lapack_zheev_uplo
+        self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
         self._openmp_per_triplets = openmp_per_triplets
 
         self._symprec = self._primitive_symmetry.tolerance
@@ -188,6 +187,9 @@ class Interaction:
         if (self._phonon_done == 0).any():
             self.run_phonon_solver()
 
+        if self._triplets_at_q is None:
+            raise RuntimeError("Set grid point first by set_grid_point().")
+
         num_band = len(self._primitive) * 3
         num_triplets = len(self._triplets_at_q)
 
@@ -207,7 +209,7 @@ class Interaction:
             )
 
     @property
-    def interaction_strength(self) -> np.ndarray:
+    def interaction_strength(self) -> Optional[np.ndarray]:
         """Return ph-ph interaction strength.
 
         Returns
@@ -307,7 +309,12 @@ class Interaction:
 
     def get_triplets_at_q(
         self,
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[
+        Optional[np.ndarray],
+        Optional[np.ndarray],
+        Optional[np.ndarray],
+        Optional[np.ndarray],
+    ]:
         """Return grid point triplets information.
 
         triplets_at_q is in BZ-grid.
@@ -351,7 +358,7 @@ class Interaction:
         return self.band_indices
 
     @property
-    def nac_params(self) -> dict:
+    def nac_params(self) -> Optional[dict]:
         """Return NAC params."""
         return self._nac_params
 
@@ -417,7 +424,9 @@ class Interaction:
         )
         return self.zero_value_positions
 
-    def get_phonons(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def get_phonons(
+        self,
+    ) -> tuple[Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray]]:
         """Return phonons on grid.
 
         Returns
@@ -445,7 +454,7 @@ class Interaction:
     def get_frequency_factor_to_THz(self):
         """Return phonon frequency conversion factor to THz."""
         warnings.warn(
-            "Use attribute, Interaction.frequency_factor_to_THz ",
+            "Use attribute, Interaction.frequency_factor_to_THz "
             "instead of Interaction.get_frequency_factor_to_THz().",
             DeprecationWarning,
             stacklevel=2,
@@ -483,7 +492,7 @@ class Interaction:
         return self.cutoff_frequency
 
     @property
-    def openmp_per_triplets(self) -> bool:
+    def openmp_per_triplets(self) -> Optional[bool]:
         """Return whether OpenMP distribution over triplets or bands."""
         return self._openmp_per_triplets
 
@@ -523,6 +532,12 @@ class Interaction:
         See Eq.(21) of PRB 91, 094306 (2015)
 
         """
+        if self._interaction_strength is None or self._weights_at_q is None:
+            raise RuntimeError(
+                "Interaction strength and weights at q are not set. "
+                "Run Interaction.run() first."
+            )
+
         # v[triplet, band0, band, band]
         v = self._interaction_strength
         w = self._weights_at_q
@@ -561,7 +576,7 @@ class Interaction:
         return self.unit_conversion_factor
 
     @property
-    def constant_averaged_interaction(self) -> float:
+    def constant_averaged_interaction(self) -> Optional[float]:
         """Return constant averaged interaction."""
         return self._constant_averaged_interaction
 
@@ -704,6 +719,14 @@ class Interaction:
                 "Input grid addresses are inconsistent. Setting phonons failed."
             )
         else:
+            if (
+                self._phonon_done is None
+                or self._frequencies is None
+                or self._eigenvectors is None
+            ):
+                raise RuntimeError(
+                    "Phonons are not initialized. Call init_dynamical_matrix() first."
+                )
             self._phonon_done[:] = 1
             self._frequencies[:] = frequencies
             self._eigenvectors[:] = eigenvectors
@@ -737,6 +760,15 @@ class Interaction:
             otherwise without NAC. Default is False.
 
         """
+        if (
+            self._phonon_done is None
+            or self._frequencies is None
+            or self._eigenvectors is None
+        ):
+            raise RuntimeError(
+                "Phonons are not initialized. Call init_dynamical_matrix() first."
+            )
+
         if not is_nac and self._frequencies_at_gamma is not None:
             gp_Gamma = self._bz_grid.gp_Gamma
             self._frequencies[gp_Gamma] = self._frequencies_at_gamma
@@ -765,6 +797,11 @@ class Interaction:
             self._phonon_done
 
         """
+        if self._phonon_done is None:
+            raise RuntimeError(
+                "Phonons are not initialized. Call init_dynamical_matrix() first."
+            )
+
         self._phonon_done[:] = 0
         ir_grid_points, _, _ = get_ir_grid_points(self._bz_grid)
         ir_bz_grid_points = self._bz_grid.grg2bzg[ir_grid_points]
@@ -775,8 +812,8 @@ class Interaction:
         # perms.shape = (len(spg_ops), len(primitive)), dtype='intc'
         perms = compute_all_sg_permutations(
             self._primitive.scaled_positions,
-            self._bz_grid.symmetry_dataset.rotations,
-            self._bz_grid.symmetry_dataset.translations,
+            self._bz_grid.symmetry_dataset.rotations,  # type: ignore
+            self._bz_grid.symmetry_dataset.translations,  # type: ignore
             np.array(self._primitive.cell.T, dtype="double", order="C"),
             symprec=self._symprec,
         )
@@ -824,13 +861,13 @@ class Interaction:
 
         """
         d2r_map = []
-        for r in self._bz_grid.symmetry_dataset.rotations:
+        for r in self._bz_grid.symmetry_dataset.rotations:  # type: ignore
             for i, rec_r in enumerate(self._bz_grid.reciprocal_operations):
                 if (rec_r.T == r).all():
                     d2r_map.append(i)
                     break
 
-        assert len(d2r_map) == len(self._bz_grid.symmetry_dataset.rotations)
+        assert len(d2r_map) == len(self._bz_grid.symmetry_dataset.rotations)  # type: ignore
 
         return d2r_map
 
@@ -840,8 +877,12 @@ class Interaction:
         e_j'(Rq) = R e_j(q) exp(-iRq.\tau)
 
         """
+        assert self._phonon_done is not None
+        assert self._frequencies is not None
+        assert self._eigenvectors is not None
+
         Rq = np.dot(self._bz_grid.QDinv, self._bz_grid.addresses[bzgp])
-        tau = self._bz_grid.symmetry_dataset.translations[t_i]
+        tau = self._bz_grid.symmetry_dataset.translations[t_i]  # type: ignore
         phase_factor = np.exp(-2j * np.pi * np.dot(Rq, tau))
         self._phonon_done[bzgp] = 1
         self._frequencies[bzgp, :] = self._frequencies[orig_gp, :]
@@ -863,6 +904,10 @@ class Interaction:
             in this method.
 
         """
+        assert self._phonon_done is not None
+        assert self._frequencies is not None
+        assert self._eigenvectors is not None
+
         r_inv = -np.eye(3, dtype="int64")
         bz_grid_points_solved = []
         for bzgp, done in enumerate(self._phonon_done):
@@ -925,20 +970,25 @@ class Interaction:
                 fc3 * self._frequency_scale_factor**2, dtype="double", order="C"
             )
 
-    def _set_band_indices(self, band_indices):
+    def _get_band_indices(self, band_indices) -> np.ndarray:
         num_band = len(self._primitive) * 3
         if band_indices is None:
-            self._band_indices = np.arange(num_band, dtype="int64")
+            return np.arange(num_band, dtype="int64")
         else:
-            self._band_indices = np.array(band_indices, dtype="int64")
+            return np.array(band_indices, dtype="int64")
 
     def _run_c(self, g_zero):
         import phono3py._phono3py as phono3c
 
+        assert self._interaction_strength is not None
+        assert self._triplets_at_q is not None
+
         num_band = len(self._primitive) * 3
         if g_zero is None or self._symmetrize_fc3q:
             _g_zero = np.zeros(
-                self._interaction_strength.shape, dtype="byte", order="C"
+                self._interaction_strength.shape,
+                dtype="byte",
+                order="C",
             )
         else:
             _g_zero = g_zero
@@ -993,6 +1043,11 @@ class Interaction:
         )
 
     def _run_py(self):
+        assert self._interaction_strength is not None
+        assert self._triplets_at_q is not None
+        assert self._frequencies is not None
+        assert self._eigenvectors is not None
+
         r2r = RealToReciprocal(
             self._fc3, self._primitive, self.mesh_numbers, symprec=self._symprec
         )
@@ -1011,8 +1066,10 @@ class Interaction:
             for gp in grid_triplet:
                 self._run_phonon_solver_py(gp)
             r2n.run(fc3_reciprocal, grid_triplet)
+            fc3_normal = r2n.get_reciprocal_to_normal()
+            assert fc3_normal is not None
             self._interaction_strength[i] = (
-                np.abs(r2n.get_reciprocal_to_normal()) ** 2 * self._unit_conversion
+                np.abs(fc3_normal) ** 2 * self._unit_conversion
             )
 
     def _run_phonon_solver_py(self, grid_point):
