@@ -114,6 +114,7 @@ class ConductivityLBTE(ConductivityLBTEBase):
             average_gv_over_kstar=self._average_gv_over_kstar,
             is_kappa_star=self._is_kappa_star,
             gv_delta_q=self._gv_delta_q,
+            is_reducible_collision_matrix=self._is_reducible_collision_matrix,
             log_level=self._log_level,
         )
 

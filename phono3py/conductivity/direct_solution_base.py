@@ -591,12 +591,20 @@ class ConductivityLBTEBase(ConductivityBase):
             sys.stdout.flush()
 
     def _expand_local_values(self, ir_gr_grid_points, rot_grid_points):
-        """Fill elements of local properties at grid points."""
+        """Fill elements of local properties at grid points.
+
+        Note
+        ----
+        Internal state of self._conductivity_components is updated.
+
+        """
+        cv = self._conductivity_components.mode_heat_capacities
+        gv = self._conductivity_components.group_velocities
         for ir_gp in ir_gr_grid_points:
-            cv_irgp = self._cv[:, ir_gp, :].copy()
-            self._cv[:, ir_gp, :] = 0
-            gv_irgp = self._gv[ir_gp].copy()
-            self._gv[ir_gp] = 0
+            cv_irgp = cv[:, ir_gp, :].copy()
+            cv[:, ir_gp, :] = 0
+            gv_irgp = gv[ir_gp].copy()
+            gv[ir_gp] = 0
             gamma_irgp = self._gamma[:, :, ir_gp, :].copy()
             self._gamma[:, :, ir_gp, :] = 0
             multi = (rot_grid_points[:, ir_gp] == ir_gp).sum()
@@ -608,8 +616,8 @@ class ConductivityLBTEBase(ConductivityBase):
                 self._gamma[:, :, gp_r, :] += gamma_irgp / multi
                 if self._is_isotope:
                     self._gamma_iso[:, gp_r, :] += gamma_iso_irgp / multi
-                self._cv[:, gp_r, :] += cv_irgp / multi
-                self._gv[gp_r] += np.dot(gv_irgp, r.T) / multi
+                cv[:, gp_r, :] += cv_irgp / multi
+                gv[gp_r] += np.dot(gv_irgp, r.T) / multi
 
     def _get_weights(self):
         """Return weights used for collision matrix and |X> and |f>.
@@ -979,7 +987,7 @@ class ConductivityLBTEBase(ConductivityBase):
         `kappa` and `mode_kappa` are overwritten.
 
         """
-        N = self._num_sampling_grid_points
+        N = self._conductivity_components.number_of_sampling_grid_points
         num_band = len(self._pp.primitive) * 3
         X = self._get_X(i_temp, weights)
         Y = np.zeros_like(X)

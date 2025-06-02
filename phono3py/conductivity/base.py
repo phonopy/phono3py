@@ -133,6 +133,7 @@ class ConductivityComponents:
         average_gv_over_kstar: bool = False,
         is_kappa_star: bool = True,
         gv_delta_q: Optional[float] = None,
+        is_reducible_collision_matrix: bool = False,
         log_level: int = 0,
     ):
         """Init method."""
@@ -145,6 +146,7 @@ class ConductivityComponents:
         self._average_gv_over_kstar = average_gv_over_kstar
         self._is_kappa_star = is_kappa_star
         self._gv_delta_q = gv_delta_q
+        self._is_reducible_collision_matrix = is_reducible_collision_matrix
         self._log_level = log_level
 
         self._gv: np.ndarray
@@ -330,7 +332,10 @@ class ConductivityComponents:
             )
 
         num_band0 = len(self._pp.band_indices)
-        num_grid_points = len(self._grid_points)
+        if self._is_reducible_collision_matrix:
+            num_grid_points = np.prod(self._pp.mesh_numbers)
+        else:
+            num_grid_points = len(self._grid_points)
         num_temp = len(self._temperatures)
 
         self._cv = np.zeros(
