@@ -249,10 +249,10 @@ class Phono3py:
             )
         else:
             self._phonon_supercell_matrix = None
-        self._supercell = None
-        self._primitive = None
-        self._phonon_supercell = None
-        self._phonon_primitive = None
+        self._supercell: Supercell
+        self._primitive: Primitive
+        self._phonon_supercell: Supercell
+        self._phonon_primitive: Primitive
         self._build_supercell()
         self._build_primitive_cell()
         self._build_phonon_supercell()
@@ -267,9 +267,9 @@ class Phono3py:
         self._bz_grid = None
 
         # Set supercell, primitive, and phonon supercell symmetries
-        self._symmetry = None
-        self._primitive_symmetry = None
-        self._phonon_supercell_symmetry = None
+        self._symmetry: Symmetry
+        self._primitive_symmetry: Symmetry
+        self._phonon_supercell_symmetry: Symmetry
         self._search_symmetry()
         self._search_primitive_symmetry()
         self._search_phonon_supercell_symmetry()
@@ -298,6 +298,7 @@ class Phono3py:
         # Force constants
         self._fc2 = None
         self._fc3 = None
+        self._fc3_nonzero_elems = None  # available only symfc
 
         # MLP
         self._mlp = None
@@ -1518,8 +1519,21 @@ class Phono3py:
                     if self._fc2 is None:
                         symmetrize_force_constants(fc2)
 
-        # Set fc2 and fc3
         self._fc3 = fc3
+        self._fc3_nonzero_elems = None
+        if fc_calculator == "symfc":
+            fc_cutoff = fc_solver.fc_solver.basis_set[3].fc_cutoff
+            if fc_cutoff is not None:
+                fc3_nonzero_elems = fc_cutoff.nonzero_atomic_indices_fc3()
+                N = len(self._supercell)
+                assert len(fc3_nonzero_elems) == N**3
+                fc3_nonzero_elems = fc3_nonzero_elems.reshape((N, N, N))
+                if is_compact_fc:
+                    self._fc3_nonzero_elems = np.array(
+                        fc3_nonzero_elems[self._primitive.p2s_map, :, :], dtype="byte"
+                    )
+                else:
+                    self._fc3_nonzero_elems = np.array(fc3_nonzero_elems, dtype="byte")
 
         # fc2 as obtained above will not be set when "|" in fc-calculator setting.
         if fc_calculator is not None and "|" in fc_calculator:
@@ -2355,7 +2369,9 @@ class Phono3py:
     # private methods #
     ###################
     def _search_symmetry(self):
-        self._symmetry = Symmetry(self._supercell, self._symprec, self._is_symmetry)
+        self._symmetry = Symmetry(
+            self._supercell, symprec=self._symprec, is_symmetry=self._is_symmetry
+        )
 
     def _search_primitive_symmetry(self):
         self._primitive_symmetry = Symmetry(
@@ -2363,7 +2379,7 @@ class Phono3py:
         )
         if len(self._symmetry.pointgroup_operations) != len(
             self._primitive_symmetry.pointgroup_operations
-        ):  # noqa E129
+        ):
             print(
                 "Warning: point group symmetries of supercell and primitive"
                 "cell are different."
@@ -2374,12 +2390,14 @@ class Phono3py:
             self._phonon_supercell_symmetry = self._symmetry
         else:
             self._phonon_supercell_symmetry = Symmetry(
-                self._phonon_supercell, self._symprec, self._is_symmetry
+                self._phonon_supercell,
+                symprec=self._symprec,
+                is_symmetry=self._is_symmetry,
             )
 
     def _build_supercell(self):
         self._supercell = get_supercell(
-            self._unitcell, self._supercell_matrix, self._symprec
+            self._unitcell, self._supercell_matrix, symprec=self._symprec
         )
 
     def _build_primitive_cell(self):
@@ -2411,7 +2429,7 @@ class Phono3py:
             self._phonon_supercell = self._supercell
         else:
             self._phonon_supercell = get_supercell(
-                self._unitcell, self._phonon_supercell_matrix, self._symprec
+                self._unitcell, self._phonon_supercell_matrix, symprec=self._symprec
             )
 
     def _build_phonon_primitive_cell(self):
@@ -2504,7 +2522,9 @@ class Phono3py:
 
         self._supercells_with_displacements = supercells
 
-    def _get_primitive_cell(self, supercell, supercell_matrix, primitive_matrix):
+    def _get_primitive_cell(
+        self, supercell, supercell_matrix, primitive_matrix
+    ) -> Primitive:
         inv_supercell_matrix = np.linalg.inv(supercell_matrix)
         if primitive_matrix is None:
             t_mat = inv_supercell_matrix

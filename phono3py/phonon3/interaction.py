@@ -36,7 +36,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Literal, Optional, Union
+from typing import Literal, Optional
 
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
@@ -93,18 +93,18 @@ class Interaction:
         primitive: Primitive,
         bz_grid: BZGrid,
         primitive_symmetry: Symmetry,
-        fc3: Optional[np.ndarray] = None,
-        band_indices: Optional[Union[np.ndarray, Sequence]] = None,
-        constant_averaged_interaction: Optional[float] = None,
-        frequency_factor_to_THz: Optional[float] = None,
-        frequency_scale_factor: Optional[float] = None,
-        unit_conversion: Optional[float] = None,
+        fc3: np.ndarray | None = None,
+        band_indices: np.ndarray | Sequence | None = None,
+        constant_averaged_interaction: float | None = None,
+        frequency_factor_to_THz: float | None = None,
+        frequency_scale_factor: float | None = None,
+        unit_conversion: float | None = None,
         is_mesh_symmetry: bool = True,
         symmetrize_fc3q: bool = False,
         make_r0_average: bool = False,
-        cutoff_frequency: Optional[float] = None,
+        cutoff_frequency: float | None = None,
         lapack_zheev_uplo: Literal["L", "U"] = "L",
-        openmp_per_triplets: Optional[bool] = None,
+        openmp_per_triplets: bool | None = None,
     ):
         """Init method."""
         self._primitive = primitive
@@ -209,7 +209,7 @@ class Interaction:
             )
 
     @property
-    def interaction_strength(self) -> Optional[np.ndarray]:
+    def interaction_strength(self) -> np.ndarray | None:
         """Return ph-ph interaction strength.
 
         Returns
@@ -244,7 +244,7 @@ class Interaction:
         return self._fc3
 
     @property
-    def dynamical_matrix(self) -> Optional[DynamicalMatrix]:
+    def dynamical_matrix(self) -> DynamicalMatrix | None:
         """Return DynamicalMatrix class instance."""
         return self._dm
 
@@ -273,10 +273,10 @@ class Interaction:
     def get_triplets_at_q(
         self,
     ) -> tuple[
-        Optional[np.ndarray],
-        Optional[np.ndarray],
-        Optional[np.ndarray],
-        Optional[np.ndarray],
+        np.ndarray | None,
+        np.ndarray | None,
+        np.ndarray | None,
+        np.ndarray | None,
     ]:
         """Return grid point triplets information.
 
@@ -311,12 +311,12 @@ class Interaction:
         return self._band_indices
 
     @property
-    def nac_params(self) -> Optional[dict]:
+    def nac_params(self) -> dict | None:
         """Return NAC params."""
         return self._nac_params
 
     @property
-    def nac_q_direction(self) -> Optional[np.ndarray]:
+    def nac_q_direction(self) -> np.ndarray | None:
         """Return q-direction used for NAC at q->0.
 
         Direction of q-vector watching from Gamma point used for
@@ -337,7 +337,7 @@ class Interaction:
             self._nac_q_direction = np.array(nac_q_direction, copy=True, dtype="double")
 
     @property
-    def zero_value_positions(self) -> Optional[np.ndarray]:
+    def zero_value_positions(self) -> np.ndarray | None:
         """Return zero ph-ph interaction elements information.
 
         Returns
@@ -349,7 +349,7 @@ class Interaction:
 
     def get_phonons(
         self,
-    ) -> tuple[Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray]]:
+    ) -> tuple[np.ndarray | None, np.ndarray | None, np.ndarray | None]:
         """Return phonons on grid.
 
         Returns
@@ -385,7 +385,7 @@ class Interaction:
         return self._cutoff_frequency
 
     @property
-    def openmp_per_triplets(self) -> Optional[bool]:
+    def openmp_per_triplets(self) -> bool | None:
         """Return whether OpenMP distribution over triplets or bands."""
         return self._openmp_per_triplets
 
