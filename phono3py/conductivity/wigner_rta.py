@@ -34,6 +34,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import numpy as np
 from phonopy.physical_units import get_physical_units
 
@@ -57,24 +59,24 @@ class ConductivityWignerRTA(ConductivityRTABase):
     def __init__(
         self,
         interaction: Interaction,
-        grid_points=None,
-        temperatures=None,
-        sigmas=None,
-        sigma_cutoff=None,
-        is_isotope=False,
-        mass_variances=None,
-        boundary_mfp=None,  # in micrometer
-        use_ave_pp=False,
-        is_kappa_star=True,
-        gv_delta_q=None,
-        is_full_pp=False,
-        read_pp=False,
-        store_pp=False,
-        pp_filename=None,
-        is_N_U=False,
-        is_gamma_detail=False,
-        is_frequency_shift_by_bubble=False,
-        log_level=0,
+        grid_points: np.ndarray | None = None,
+        temperatures: list | np.ndarray | None = None,
+        sigmas: list | np.ndarray | None = None,
+        sigma_cutoff: float | None = None,
+        is_isotope: bool = False,
+        mass_variances: list | np.ndarray | None = None,
+        boundary_mfp: float | None = None,  # in micrometer
+        use_ave_pp: bool = False,
+        is_kappa_star: bool = True,
+        gv_delta_q: float | None = None,
+        is_full_pp: bool = False,
+        read_pp: bool = False,
+        store_pp: bool = False,
+        pp_filename: float | None = None,
+        is_N_U: bool = False,
+        is_gamma_detail: bool = False,
+        is_frequency_shift_by_bubble: bool = False,
+        log_level: int = 0,
     ):
         """Init method."""
         self._cv = None
@@ -230,7 +232,7 @@ class ConductivityWignerRTA(ConductivityRTABase):
                             elif s1 == s2:
                                 self._num_ignored_phonon_modes[j, k] += 1
 
-        N = self._conductivity_components.number_of_sampling_grid_points
+        N = self.number_of_sampling_grid_points
         self._kappa_P_RTA = self._mode_kappa_P_RTA.sum(axis=2).sum(axis=2) / N
         #
         self._kappa_C = self._mode_kappa_C.sum(axis=2).sum(axis=2).sum(axis=2) / N

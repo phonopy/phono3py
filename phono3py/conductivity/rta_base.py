@@ -38,7 +38,6 @@ from __future__ import annotations
 
 import warnings
 from abc import abstractmethod
-from typing import Optional, Union
 
 import numpy as np
 from phonopy.physical_units import get_physical_units
@@ -64,20 +63,20 @@ class ConductivityRTABase(ConductivityBase):
     def __init__(
         self,
         interaction: Interaction,
-        grid_points: Optional[np.ndarray] = None,
-        temperatures: Optional[Union[list, np.ndarray]] = None,
-        sigmas: Optional[Union[list, np.ndarray]] = None,
-        sigma_cutoff: Optional[float] = None,
+        grid_points: np.ndarray | None = None,
+        temperatures: list | np.ndarray | None = None,
+        sigmas: list | np.ndarray | None = None,
+        sigma_cutoff: float | None = None,
         is_isotope: bool = False,
-        mass_variances: Optional[Union[list, np.ndarray]] = None,
-        boundary_mfp: Optional[float] = None,  # in micrometer
+        mass_variances: list | np.ndarray | None = None,
+        boundary_mfp: float | None = None,  # in micrometer
         use_ave_pp: bool = False,
         is_kappa_star: bool = True,
-        gv_delta_q: Optional[float] = None,
+        gv_delta_q: float | None = None,
         is_full_pp: bool = False,
         read_pp: bool = False,
         store_pp: bool = False,
-        pp_filename: Optional[float] = None,
+        pp_filename: float | None = None,
         is_N_U: bool = False,
         is_gamma_detail: bool = False,
         is_frequency_shift_by_bubble: bool = False,

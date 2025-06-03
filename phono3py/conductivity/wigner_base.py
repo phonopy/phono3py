@@ -114,15 +114,6 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
             self._allocate_values()
 
     @property
-    def group_velocities(self):
-        """Return group velocities at grid points.
-
-        Grid points are those at mode kappa are calculated.
-
-        """
-        return self._gv
-
-    @property
     def velocity_operator(self):
         """Return velocity operator at grid points.
 
@@ -135,24 +126,6 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
     def gv_by_gv_operator(self):
         """Return gv_by_gv operator at grid points where mode kappa are calculated."""
         return self._gv_operator_sum2
-
-    @property
-    def mode_heat_capacities(self):
-        """Return mode heat capacity at constant volume at grid points.
-
-        Grid points are those at mode kappa are calculated.
-
-        """
-        return self._cv
-
-    @property
-    def number_of_sampling_grid_points(self):
-        """Return number of grid points.
-
-        This is calculated by the sum of numbers of arms of k-start.
-
-        """
-        return self._num_sampling_grid_points
 
     def set_velocities(self, i_gp, i_data):
         """Set velocities at a grid point."""

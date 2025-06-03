@@ -155,7 +155,7 @@ def get_heat_capacities(
     return cv
 
 
-class ConductivityComponentsBase:
+class ConductivityComponentsBase(ABC):
     """Base class of ConductivityComponents."""
 
     def __init__(
@@ -225,6 +225,11 @@ class ConductivityComponentsBase:
 
         cv = get_heat_capacities(self._grid_points[i_gp], self._pp, self._temperatures)
         self._cv[:, i_data, :] = cv
+
+    @abstractmethod
+    def set_velocities(self, i_gp, i_data):
+        """Set velocities at grid point and at data location."""
+        raise NotImplementedError()
 
     def _allocate_values(self):
         if self._temperatures is None:
@@ -399,15 +404,15 @@ class ConductivityBase(ABC):
     def __init__(
         self,
         interaction: Interaction,
-        grid_points: Optional[np.ndarray] = None,
-        temperatures: Optional[list | np.ndarray] = None,
-        sigmas: Optional[list | np.ndarray] = None,
-        sigma_cutoff: Optional[float] = None,
+        grid_points: np.ndarray | None = None,
+        temperatures: list | np.ndarray | None = None,
+        sigmas: list | np.ndarray | None = None,
+        sigma_cutoff: float | None = None,
         is_isotope=False,
-        mass_variances: Optional[list | np.ndarray] = None,
-        boundary_mfp: Optional[float] = None,
+        mass_variances: list | np.ndarray | None = None,
+        boundary_mfp: float | None = None,
         is_kappa_star: bool = True,
-        gv_delta_q: Optional[float] = None,
+        gv_delta_q: float | None = None,
         is_full_pp: bool = False,
         log_level: int = 0,
     ):
@@ -535,6 +540,24 @@ class ConductivityBase(ABC):
             self._run_at_grid_point()
             self._grid_point_count += 1
             return self._grid_point_count - 1
+
+    @property
+    def mode_heat_capacities(self):
+        """Return mode heat capacity at constant volume at grid points.
+
+        Grid points are those at mode kappa are calculated.
+
+        """
+        return self._conductivity_components.mode_heat_capacities
+
+    @property
+    def group_velocities(self):
+        """Return group velocities at grid points.
+
+        Grid points are those at mode kappa are calculated.
+
+        """
+        return self._conductivity_components.group_velocities
 
     @property
     def mesh_numbers(self):

@@ -209,7 +209,7 @@ class ConductivityLBTEBase(ConductivityBase):
         kappa and mode_kappa are overwritten.
 
         """
-        N = self._conductivity_components.number_of_sampling_grid_points
+        N = self.number_of_sampling_grid_points
         if self._solve_collective_phonon:
             self._set_mode_kappa_Chaput(mode_kappa, i_sigma, i_temp, weights)
         else:
@@ -239,7 +239,7 @@ class ConductivityLBTEBase(ConductivityBase):
         kappa and mode_kappa are overwritten.
 
         """
-        N = self._conductivity_components.number_of_sampling_grid_points
+        N = self.number_of_sampling_grid_points
         X = self._get_X(i_temp, weights)
         num_mesh_points = np.prod(self._pp.mesh_numbers)
         Y = self._get_Y(i_sigma, i_temp, weights, X)
@@ -937,7 +937,7 @@ class ConductivityLBTEBase(ConductivityBase):
         This RTA is supposed to be the same as conductivity_RTA.
 
         """
-        N = self._conductivity_components.number_of_sampling_grid_points
+        N = self.number_of_sampling_grid_points
         num_band = len(self._pp.primitive) * 3
         X = self._get_X(i_temp, weights)
         Y = np.zeros_like(X)
@@ -987,7 +987,7 @@ class ConductivityLBTEBase(ConductivityBase):
         `kappa` and `mode_kappa` are overwritten.
 
         """
-        N = self._conductivity_components.number_of_sampling_grid_points
+        N = self.number_of_sampling_grid_points
         num_band = len(self._pp.primitive) * 3
         X = self._get_X(i_temp, weights)
         Y = np.zeros_like(X)

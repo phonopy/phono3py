@@ -119,6 +119,11 @@ class ConductivityRTA(ConductivityRTABase):
         """Return mode_kappa."""
         return self._mode_kappa
 
+    @property
+    def gv_by_gv(self):
+        """Return gv_by_gv at grid points where mode kappa are calculated."""
+        return self._conductivity_components.gv_by_gv
+
     def _set_cv(self, i_gp, i_data):
         """Set cv for conductivity components."""
         self._conductivity_components.set_heat_capacities(i_gp, i_data)
@@ -181,7 +186,7 @@ class ConductivityRTA(ConductivityRTABase):
                             print("=" * 61)
                         np.seterr(**old_settings)
 
-        N = self._conductivity_components.number_of_sampling_grid_points
+        N = self.number_of_sampling_grid_points
         self._kappa = self._mode_kappa.sum(axis=2).sum(axis=2) / N
 
     def _allocate_values(self):
