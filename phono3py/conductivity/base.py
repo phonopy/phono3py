@@ -38,9 +38,10 @@ from __future__ import annotations
 
 import textwrap
 from abc import ABC, abstractmethod
-from typing import Optional, Union
+from typing import Optional
 
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.phonon.thermal_properties import mode_cv
 from phonopy.physical_units import get_physical_units
@@ -115,24 +116,58 @@ def get_kstar_order(
     return order_kstar
 
 
-class ConductivityComponents:
-    """Thermal conductivity components.
+def get_heat_capacities(
+    grid_point: int,
+    pp: Interaction,
+    temperatures: NDArray[np.float64],
+):
+    """Return mode heat capacity.
 
-    Used by ConductivityRTA and ConductivityLBTE.
+    cv returned should be given to self._cv by
+
+        self._cv[:, i_data, :] = cv
 
     """
+    if not pp.phonon_all_done:
+        raise RuntimeError(
+            "Phonon calculation has not been done yet. "
+            "Run phono3py.run_phonon_solver() before this method."
+        )
+
+    frequencies, _, _ = pp.get_phonons()
+    freqs = (
+        frequencies[grid_point][pp.band_indices]  # type: ignore
+        * get_physical_units().THzToEv
+    )
+    cutoff = pp.cutoff_frequency * get_physical_units().THzToEv
+    cv = np.zeros((len(temperatures), len(freqs)), dtype="double")
+    # x=freq/T has to be small enough to avoid overflow of exp(x).
+    # x < 100 is the hard-corded criterion.
+    # Otherwise just set 0.
+    for i, f in enumerate(freqs):
+        if f > cutoff:
+            condition = f < 100 * temperatures * get_physical_units().KB
+            cv[:, i] = np.where(
+                condition,
+                mode_cv(np.where(condition, temperatures, 10000), f),  # type: ignore
+                0,
+            )
+    return cv
+
+
+class ConductivityComponentsBase:
+    """Base class of ConductivityComponents."""
 
     def __init__(
         self,
         pp: Interaction,
-        grid_points: np.ndarray,
-        grid_weights: np.ndarray,
-        point_operations: np.ndarray,
-        rotations_cartesian: np.ndarray,
-        temperatures: Optional[np.ndarray] = None,
+        grid_points: NDArray[np.int64],
+        grid_weights: NDArray[np.int64],
+        point_operations: NDArray[np.int64],
+        rotations_cartesian: NDArray[np.int64],
+        temperatures: Optional[NDArray[np.float64]] = None,
         average_gv_over_kstar: bool = False,
         is_kappa_star: bool = True,
-        gv_delta_q: Optional[float] = None,
         is_reducible_collision_matrix: bool = False,
         log_level: int = 0,
     ):
@@ -145,41 +180,13 @@ class ConductivityComponents:
         self._temperatures = temperatures
         self._average_gv_over_kstar = average_gv_over_kstar
         self._is_kappa_star = is_kappa_star
-        self._gv_delta_q = gv_delta_q
         self._is_reducible_collision_matrix = is_reducible_collision_matrix
         self._log_level = log_level
 
         self._gv: np.ndarray
-        self._gv_by_gv: np.ndarray
         self._cv: np.ndarray
 
-        if self._pp.dynamical_matrix is None:
-            raise RuntimeError("Interaction.init_dynamical_matrix() has to be called.")
-        self._velocity_obj = GroupVelocity(
-            self._pp.dynamical_matrix,
-            q_length=self._gv_delta_q,
-            symmetry=self._pp.primitive_symmetry,
-            frequency_factor_to_THz=self._pp.frequency_factor_to_THz,
-        )
-
         self._num_sampling_grid_points = 0
-
-        if self._temperatures is not None:
-            self._allocate_values()
-
-    @property
-    def group_velocities(self):
-        """Return group velocities at grid points.
-
-        Grid points are those at mode kappa are calculated.
-
-        """
-        return self._gv
-
-    @property
-    def gv_by_gv(self):
-        """Return gv_by_gv at grid points where mode kappa are calculated."""
-        return self._gv_by_gv
 
     @property
     def mode_heat_capacities(self):
@@ -191,71 +198,112 @@ class ConductivityComponents:
         return self._cv
 
     @property
-    def temperatures(self):
-        """Setter and getter of temperatures."""
-        return self._temperatures
+    def group_velocities(self):
+        """Return group velocities at grid points.
 
-    @temperatures.setter
-    def temperatures(self, temperatures):
-        self._temperatures = np.array(temperatures, dtype="double")
-        self._allocate_values()
+        Grid points are those at mode kappa are calculated.
+
+        """
+        return self._gv
 
     @property
     def number_of_sampling_grid_points(self):
         """Return number of grid points.
 
-        This is calculated by the sum of numbers of arms of k-start in
-        `Conductivity._set_gv_by_gv`.
+        This is calculated by the sum of numbers of arms of k-start.
 
         """
         return self._num_sampling_grid_points
 
-    def set_velocities(self, i_gp, i_data):
-        """Set group velocities at grid point and at data location."""
-        self._gv[i_data] = self._get_gv(i_gp)
-        self._set_gv_by_gv(i_gp, i_data)
-
-    def set_cv(self, i_gp, i_data):
-        """Set mode heat capacity.
-
-        The array has to be allocated somewhere out of the mix-in.
-
-        self._cv = np.zeros(
-            (num_temp, num_grid_points, num_band0), order="C", dtype="double"
-        )
-
-        """
-        if not self._pp.phonon_all_done:
-            raise RuntimeError(
-                "Phonon calculation has not been done yet. "
-                "Run phono3py.run_phonon_solver() before this method."
-            )
+    def set_heat_capacities(self, i_gp, i_data):
+        """Set heat capacity at grid point and at data location."""
         if self._temperatures is None:
             raise RuntimeError(
                 "Temperatures have not been set yet. "
                 "Set temperatures before this method."
             )
 
-        frequencies, _, _ = self._pp.get_phonons()
-        grid_point = self._grid_points[i_gp]
-        freqs = (
-            frequencies[grid_point][self._pp.band_indices]  # type: ignore
-            * get_physical_units().THzToEv
-        )
-        cutoff = self._pp.cutoff_frequency * get_physical_units().THzToEv
-        cv = np.zeros((len(self._temperatures), len(freqs)), dtype="double")
-        # x=freq/T has to be small enough to avoid overflow of exp(x).
-        # x < 100 is the hard-corded criterion.
-        # Otherwise just set 0.
-        for i, f in enumerate(freqs):
-            if f > cutoff:
-                condition = f < 100 * self._temperatures * get_physical_units().KB
-                cv[:, i] = np.where(
-                    condition,
-                    mode_cv(np.where(condition, self._temperatures, 10000), f),  # type: ignore
-                    0,
-                )
+        cv = get_heat_capacities(self._grid_points[i_gp], self._pp, self._temperatures)
         self._cv[:, i_data, :] = cv
+
+    def _allocate_values(self):
+        if self._temperatures is None:
+            raise RuntimeError(
+                "Temperatures have not been set yet. "
+                "Set temperatures before this method."
+            )
+
+        num_band0 = len(self._pp.band_indices)
+        if self._is_reducible_collision_matrix:
+            num_grid_points = np.prod(self._pp.mesh_numbers)
+        else:
+            num_grid_points = len(self._grid_points)
+        num_temp = len(self._temperatures)
+
+        self._cv = np.zeros(
+            (num_temp, num_grid_points, num_band0), order="C", dtype="double"
+        )
+        self._gv = np.zeros((num_grid_points, num_band0, 3), order="C", dtype="double")
+
+
+class ConductivityComponents(ConductivityComponentsBase):
+    """Thermal conductivity components.
+
+    Used by ConductivityRTA and ConductivityLBTE.
+
+    """
+
+    def __init__(
+        self,
+        pp: Interaction,
+        grid_points: NDArray[np.int64],
+        grid_weights: NDArray[np.int64],
+        point_operations: NDArray[np.int64],
+        rotations_cartesian: NDArray[np.int64],
+        temperatures: Optional[NDArray[np.float64]] = None,
+        average_gv_over_kstar: bool = False,
+        is_kappa_star: bool = True,
+        gv_delta_q: Optional[float] = None,
+        is_reducible_collision_matrix: bool = False,
+        log_level: int = 0,
+    ):
+        """Init method."""
+        super().__init__(
+            pp,
+            grid_points,
+            grid_weights,
+            point_operations,
+            rotations_cartesian,
+            temperatures=temperatures,
+            average_gv_over_kstar=average_gv_over_kstar,
+            is_kappa_star=is_kappa_star,
+            is_reducible_collision_matrix=is_reducible_collision_matrix,
+            log_level=log_level,
+        )
+
+        self._gv_by_gv: np.ndarray
+
+        if self._pp.dynamical_matrix is None:
+            raise RuntimeError("Interaction.init_dynamical_matrix() has to be called.")
+        self._velocity_obj = GroupVelocity(
+            self._pp.dynamical_matrix,
+            q_length=gv_delta_q,
+            symmetry=self._pp.primitive_symmetry,
+            frequency_factor_to_THz=self._pp.frequency_factor_to_THz,
+        )
+
+        if self._temperatures is not None:
+            self._allocate_values()
+
+    @property
+    def gv_by_gv(self):
+        """Return gv_by_gv at grid points where mode kappa are calculated."""
+        return self._gv_by_gv
+
+    def set_velocities(self, i_gp, i_data):
+        """Set group velocities at grid point and at data location."""
+        self._gv[i_data] = self._get_gv(i_gp)
+        self._set_gv_by_gv(i_gp, i_data)
 
     def _get_gv(self, i_gp):
         """Get group velocity."""
@@ -325,23 +373,13 @@ class ConductivityComponents:
         return gv_by_gv, kstar_order
 
     def _allocate_values(self):
-        if self._temperatures is None:
-            raise RuntimeError(
-                "Temperatures have not been set yet. "
-                "Set temperatures before this method."
-            )
+        super()._allocate_values()
 
         num_band0 = len(self._pp.band_indices)
         if self._is_reducible_collision_matrix:
             num_grid_points = np.prod(self._pp.mesh_numbers)
         else:
             num_grid_points = len(self._grid_points)
-        num_temp = len(self._temperatures)
-
-        self._cv = np.zeros(
-            (num_temp, num_grid_points, num_band0), order="C", dtype="double"
-        )
-        self._gv = np.zeros((num_grid_points, num_band0, 3), order="C", dtype="double")
         self._gv_by_gv = np.zeros(
             (num_grid_points, num_band0, 6), order="C", dtype="double"
         )
@@ -362,11 +400,11 @@ class ConductivityBase(ABC):
         self,
         interaction: Interaction,
         grid_points: Optional[np.ndarray] = None,
-        temperatures: Optional[Union[list, np.ndarray]] = None,
-        sigmas: Optional[Union[list, np.ndarray]] = None,
+        temperatures: Optional[list | np.ndarray] = None,
+        sigmas: Optional[list | np.ndarray] = None,
         sigma_cutoff: Optional[float] = None,
         is_isotope=False,
-        mass_variances: Optional[Union[list, np.ndarray]] = None,
+        mass_variances: Optional[list | np.ndarray] = None,
         boundary_mfp: Optional[float] = None,
         is_kappa_star: bool = True,
         gv_delta_q: Optional[float] = None,
@@ -442,7 +480,7 @@ class ConductivityBase(ABC):
         else:
             self._sigmas = list(sigmas)
         self._sigma_cutoff = sigma_cutoff
-        self._collision: Union[ImagSelfEnergy, CollisionMatrix]
+        self._collision: ImagSelfEnergy | CollisionMatrix
         if temperatures is None:
             self._temperatures = None
         else:
@@ -455,7 +493,7 @@ class ConductivityBase(ABC):
             self._eigenvectors,
             self._phonon_done,
         ) = self._pp.get_phonons()
-        if (self._phonon_done == 0).any():
+        if not self._pp.phonon_all_done:
             self._pp.run_phonon_solver()
 
         self._is_isotope = is_isotope
@@ -478,7 +516,7 @@ class ConductivityBase(ABC):
         self._averaged_pp_interaction = None
         self._gv_delta_q = gv_delta_q
 
-        self._conductivity_components: ConductivityComponents
+        self._conductivity_components: ConductivityComponentsBase
 
     def __iter__(self):
         """Calculate mode kappa at each grid point."""
@@ -515,6 +553,7 @@ class ConductivityBase(ABC):
         Grid points are those at mode kappa are calculated.
 
         """
+        assert self._frequencies is not None
         return self._frequencies[self._grid_points]
 
     @property
@@ -591,7 +630,7 @@ class ConductivityBase(ABC):
         return self._averaged_pp_interaction
 
     @property
-    def boundary_mfp(self) -> float:
+    def boundary_mfp(self) -> Optional[float]:
         """Return boundary MFP."""
         return self._boundary_mfp
 
@@ -664,38 +703,22 @@ class ConductivityBase(ABC):
 
     @abstractmethod
     def _run_at_grid_point(self):
-        """Run at conductivity calculation at specified grid point.
-
-        Should be implemented in Conductivity* class.
-
-        """
+        """Run at conductivity calculation at specified grid point."""
         raise NotImplementedError()
 
     @abstractmethod
     def _allocate_values(self):
-        """Allocate necessary data arrays.
-
-        Should be implemented in Conductivity* class.
-
-        """
+        """Allocate necessary data arrays."""
         raise NotImplementedError()
 
     @abstractmethod
     def _set_velocities(self, i_gp, i_data):
-        """Set velocities at grid point and at data location.
-
-        Should be implemented in Conductivity*MixIn.
-
-        """
+        """Set velocities at grid point and at data location."""
         raise NotImplementedError()
 
     @abstractmethod
     def _set_cv(self, i_gp, i_data):
-        """Set heat capacity at grid point and at data location.
-
-        Should be implemented in Conductivity*MixIn.
-
-        """
+        """Set heat capacity at grid point and at data location."""
         raise NotImplementedError()
 
     def _get_ir_grid_points(self, grid_points):

@@ -140,7 +140,7 @@ class ConductivityLBTE(ConductivityLBTEBase):
 
     def _set_cv(self, i_gp, i_data):
         """Set cv for conductivity components."""
-        self._conductivity_components.set_cv(i_gp, i_data)
+        self._conductivity_components.set_heat_capacities(i_gp, i_data)
 
     def _set_velocities(self, i_gp, i_data):
         """Set velocities for conductivity components."""

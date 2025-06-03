@@ -42,13 +42,12 @@ from phono3py.conductivity.direct_solution import (
     diagonalize_collision_matrix,
 )
 from phono3py.conductivity.wigner_base import (
-    ConductivityWignerMixIn,
     get_conversion_factor_WTE,
 )
 from phono3py.phonon3.interaction import Interaction
 
 
-class ConductivityWignerLBTE(ConductivityWignerMixIn, ConductivityLBTEBase):
+class ConductivityWignerLBTE(ConductivityLBTEBase):
     """Class of Wigner lattice thermal conductivity under direct-solution.
 
     Authors
@@ -117,6 +116,31 @@ class ConductivityWignerLBTE(ConductivityWignerMixIn, ConductivityLBTEBase):
         self._conversion_factor_WTE = get_conversion_factor_WTE(
             self._pp.primitive.volume
         )
+
+    @property
+    def kappa_TOT_RTA(self):
+        """Return kappa."""
+        return self._kappa_TOT_RTA
+
+    @property
+    def kappa_P_RTA(self):
+        """Return kappa."""
+        return self._kappa_P_RTA
+
+    @property
+    def kappa_C(self):
+        """Return kappa."""
+        return self._kappa_C
+
+    @property
+    def mode_kappa_P_RTA(self):
+        """Return mode_kappa."""
+        return self._mode_kappa_P_RTA
+
+    @property
+    def mode_kappa_C(self):
+        """Return mode_kappa."""
+        return self._mode_kappa_C
 
     @property
     def kappa_TOT_exact(self):
