@@ -37,6 +37,8 @@
 import numpy as np
 from phonopy.physical_units import get_physical_units
 
+from phono3py.conductivity.base import get_kstar_order, get_multiplicity_at_q
+from phono3py.phonon.grid import get_qpoints_from_bz_grid_points
 from phono3py.phonon.group_velocity_matrix import GroupVelocityMatrix
 from phono3py.phonon.heat_capacity_matrix import mode_cv_matrix
 
@@ -102,7 +104,9 @@ class ConductivityKuboMixIn:
 
         """
         irgp = self._grid_points[i_gp]
-        self._velocity_obj.run([self._get_qpoint_from_gp_index(irgp)])
+        self._velocity_obj.run(
+            [get_qpoints_from_bz_grid_points(irgp, self._pp.bz_grid)]
+        )
         gvm = np.zeros(self._gv_mat.shape[1:], dtype=self._complex_dtype, order="C")
         gv = np.zeros(self._gv.shape[1:], dtype="double", order="C")
         for i in range(3):
@@ -136,8 +140,15 @@ class ConductivityKuboMixIn:
             Number of kstar arms.
 
         """
-        multi = self._get_multiplicity_at_q(i_gp)
-        q = self._get_qpoint_from_gp_index(self._grid_points[i_gp])
+        if self._is_kappa_star:
+            multi = get_multiplicity_at_q(
+                self._grid_points[i_gp],
+                self._pp,
+                self._point_operations,
+            )
+        else:
+            multi = 1
+        q = get_qpoints_from_bz_grid_points(self._grid_points[i_gp], self._pp.bz_grid)
         qpoints = [np.dot(r, q) for r in self._point_operations]
         self._velocity_obj.run(qpoints)
 
@@ -151,5 +162,10 @@ class ConductivityKuboMixIn:
                 gvm_by_gvm = np.multiply(gvm[a], gvm[b].T)
                 gvm_sum2[:, :, i_pair] += gvm_by_gvm[self._pp.band_indices, :]
         gvm_sum2 /= multi
-
-        return gvm_sum2, self._get_kstar_order(i_gp, multi)
+        kstar_order = get_kstar_order(
+            self._grid_weights[i_gp],
+            multi,
+            self._point_operations,
+            verbose=self._log_level > 0,
+        )
+        return gvm_sum2, kstar_order

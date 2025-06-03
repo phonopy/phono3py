@@ -34,43 +34,45 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
+from typing import Optional, Union
+
 import numpy as np
 
-from phono3py.conductivity.base import ConductivityMixIn
+from phono3py.conductivity.base import ConductivityComponents
 from phono3py.conductivity.rta_base import ConductivityRTABase
 from phono3py.phonon3.interaction import Interaction
 
 
-class ConductivityRTA(ConductivityMixIn, ConductivityRTABase):
+class ConductivityRTA(ConductivityRTABase):
     """Lattice thermal conductivity calculation with RTA."""
 
     def __init__(
         self,
         interaction: Interaction,
-        grid_points=None,
-        temperatures=None,
-        sigmas=None,
-        sigma_cutoff=None,
-        is_isotope=False,
-        mass_variances=None,
-        boundary_mfp=None,  # in micrometer
-        use_ave_pp=False,
-        is_kappa_star=True,
-        gv_delta_q=None,
-        is_full_pp=False,
-        read_pp=False,
-        store_pp=False,
-        pp_filename=None,
-        is_N_U=False,
-        is_gamma_detail=False,
-        is_frequency_shift_by_bubble=False,
-        log_level=0,
+        grid_points: Optional[np.ndarray] = None,
+        temperatures: Optional[Union[list, np.ndarray]] = None,
+        sigmas: Optional[Union[list, np.ndarray]] = None,
+        sigma_cutoff: Optional[float] = None,
+        is_isotope: bool = False,
+        mass_variances: Optional[Union[list, np.ndarray]] = None,
+        boundary_mfp: Optional[float] = None,  # in micrometer
+        use_ave_pp: bool = False,
+        is_kappa_star: bool = True,
+        gv_delta_q: Optional[float] = None,
+        is_full_pp: bool = False,
+        read_pp: bool = False,
+        store_pp: bool = False,
+        pp_filename: Optional[float] = None,
+        is_N_U: bool = False,
+        is_gamma_detail: bool = False,
+        is_frequency_shift_by_bubble: bool = False,
+        log_level: int = 0,
     ):
         """Init method."""
-        self._cv = None
         self._kappa = None
         self._mode_kappa = None
-        self._gv_sum2 = None
 
         super().__init__(
             interaction,
@@ -94,13 +96,62 @@ class ConductivityRTA(ConductivityMixIn, ConductivityRTABase):
             log_level=log_level,
         )
 
+        self._conductivity_components = ConductivityComponents(
+            self._pp,
+            self._grid_points,
+            self._grid_weights,
+            self._point_operations,
+            self._rotations_cartesian,
+            temperatures=self._temperatures,
+            average_gv_over_kstar=self._average_gv_over_kstar,
+            is_kappa_star=self._is_kappa_star,
+            gv_delta_q=self._gv_delta_q,
+            log_level=self._log_level,
+        )
+
+    @property
+    def kappa(self):
+        """Return kappa."""
+        return self._kappa
+
+    @property
+    def mode_kappa(self):
+        """Return mode_kappa."""
+        return self._mode_kappa
+
+    @property
+    def gv_by_gv(self):
+        """Return gv_by_gv at grid points where mode kappa are calculated."""
+        return self._conductivity_components.gv_by_gv
+
+    def _set_cv(self, i_gp, i_data):
+        """Set cv for conductivity components."""
+        self._conductivity_components.set_heat_capacities(i_gp, i_data)
+
+    def _set_velocities(self, i_gp, i_data):
+        """Set velocities for conductivity components."""
+        self._conductivity_components.set_velocities(i_gp, i_data)
+
     def set_kappa_at_sigmas(self):
         """Calculate kappa from ph-ph interaction results."""
+        if not self._pp.phonon_all_done:
+            raise RuntimeError(
+                "Phonon calculation has not been done yet. "
+                "Run phono3py.run_phonon_solver() before this method."
+            )
+        if self._temperatures is None:
+            raise RuntimeError(
+                "Temperatures have not been set yet. "
+                "Set temperatures before this method."
+            )
+
         num_band = len(self._pp.primitive) * 3
+        mode_heat_capacities = self._conductivity_components.mode_heat_capacities
+        gv_by_gv = self._conductivity_components.gv_by_gv
         for i, _ in enumerate(self._grid_points):
-            cv = self._cv[:, i, :]
+            cv = mode_heat_capacities[:, i, :]
             gp = self._grid_points[i]
-            frequencies = self._frequencies[gp]
+            frequencies = self._frequencies[gp]  # type: ignore
 
             # Kappa
             for j in range(len(self._sigmas)):
@@ -108,13 +159,13 @@ class ConductivityRTA(ConductivityMixIn, ConductivityRTABase):
                     g_sum = self._get_main_diagonal(i, j, k)
                     for ll in range(num_band):
                         if frequencies[ll] < self._pp.cutoff_frequency:
-                            self._num_ignored_phonon_modes[j, k] += 1
+                            self._num_ignored_phonon_modes[j, k] += 1  # type: ignore
                             continue
 
                         old_settings = np.seterr(all="raise")
                         try:
-                            self._mode_kappa[j, k, i, ll] = (
-                                self._gv_sum2[i, ll]
+                            self._mode_kappa[j, k, i, ll] = (  # type: ignore
+                                gv_by_gv[i, ll]
                                 * cv[k, ll]
                                 / (g_sum[ll] * 2)
                                 * self._conversion_factor
@@ -135,23 +186,21 @@ class ConductivityRTA(ConductivityMixIn, ConductivityRTABase):
                             print("=" * 61)
                         np.seterr(**old_settings)
 
-        N = self._num_sampling_grid_points
+        N = self.number_of_sampling_grid_points
         self._kappa = self._mode_kappa.sum(axis=2).sum(axis=2) / N
 
     def _allocate_values(self):
+        if self._temperatures is None:
+            raise RuntimeError(
+                "Temperatures have not been set yet. "
+                "Set temperatures before this method."
+            )
+
         super()._allocate_values()
 
-        num_band0 = len(self._pp.band_indices)
         num_band = len(self._pp.primitive) * 3
         num_grid_points = len(self._grid_points)
         num_temp = len(self._temperatures)
-
-        self._cv = np.zeros(
-            (num_temp, num_grid_points, num_band0), order="C", dtype="double"
-        )
-        self._gv_sum2 = np.zeros(
-            (num_grid_points, num_band0, 6), order="C", dtype="double"
-        )
 
         # kappa* and mode_kappa* are accessed when all bands exist, i.e.,
         # num_band0==num_band.

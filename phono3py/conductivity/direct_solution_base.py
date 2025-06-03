@@ -34,11 +34,12 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import sys
 import time
-import warnings
 from abc import abstractmethod
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
@@ -62,25 +63,25 @@ class ConductivityLBTEBase(ConductivityBase):
     def __init__(
         self,
         interaction: Interaction,
-        grid_points=None,
-        temperatures=None,
-        sigmas=None,
-        sigma_cutoff=None,
-        is_isotope=False,
-        mass_variances=None,
-        boundary_mfp=None,  # in micrometer
-        solve_collective_phonon=False,
-        is_reducible_collision_matrix=False,
-        is_kappa_star=True,
-        gv_delta_q=None,  # finite difference for group velocity
-        is_full_pp=False,
-        read_pp=False,
-        pp_filename=None,
-        pinv_cutoff=1.0e-8,
-        pinv_solver=0,
-        pinv_method=0,
-        log_level=0,
-        lang="C",
+        grid_points: Optional[np.ndarray] = None,
+        temperatures: Optional[Union[list, np.ndarray]] = None,
+        sigmas: Optional[Union[list, np.ndarray]] = None,
+        sigma_cutoff: Optional[float] = None,
+        is_isotope: bool = False,
+        mass_variances: Optional[Union[list, np.ndarray]] = None,
+        boundary_mfp: Optional[float] = None,  # in micrometer
+        solve_collective_phonon: bool = False,
+        is_reducible_collision_matrix: bool = False,
+        is_kappa_star: bool = True,
+        gv_delta_q: Optional[float] = None,
+        is_full_pp: bool = False,
+        read_pp: bool = False,
+        pp_filename: Optional[float] = None,
+        pinv_cutoff: float = 1.0e-8,
+        pinv_solver: int = 0,
+        pinv_method: int = 0,
+        log_level: int = 0,
+        lang: str = "C",
     ):
         """Init method."""
         super().__init__(
@@ -93,11 +94,10 @@ class ConductivityLBTEBase(ConductivityBase):
             mass_variances=mass_variances,
             boundary_mfp=boundary_mfp,
             is_kappa_star=is_kappa_star,
+            gv_delta_q=gv_delta_q,
             is_full_pp=is_full_pp,
             log_level=log_level,
         )
-
-        self._init_velocity(gv_delta_q)
 
         self._lang = lang
         self._collision_eigenvalues = None
@@ -150,40 +150,10 @@ class ConductivityLBTEBase(ConductivityBase):
     def collision_matrix(self, collision_matrix):
         self._collision_matrix = collision_matrix
 
-    def get_collision_matrix(self):
-        """Return collision matrix."""
-        warnings.warn(
-            "Use attribute, Conductivity_LBTE.collision_matrix "
-            "instead of Conductivity_LBTE.get_collision_matrix().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.collision_matrix
-
-    def set_collision_matrix(self, collision_matrix):
-        """Set collision matrix."""
-        warnings.warn(
-            "Use attribute, Conductivity_LBTE.collision_matrix "
-            "instead of Conductivity_LBTE.set_collision_matrix().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        self.collision_matrix = collision_matrix
-
     @property
     def collision_eigenvalues(self):
         """Return eigenvalues of collision matrix."""
         return self._collision_eigenvalues
-
-    def get_collision_eigenvalues(self):
-        """Return eigenvalues of collision matrix."""
-        warnings.warn(
-            "Use attribute, Conductivity_LBTE.collision_eigenvalues "
-            "instead of Conductivity_LBTE.get_collision_eigenvalues().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.collision_eigenvalues
 
     def get_frequencies_all(self):
         """Return phonon frequencies on GR-grid."""
@@ -239,7 +209,7 @@ class ConductivityLBTEBase(ConductivityBase):
         kappa and mode_kappa are overwritten.
 
         """
-        N = self._num_sampling_grid_points
+        N = self.number_of_sampling_grid_points
         if self._solve_collective_phonon:
             self._set_mode_kappa_Chaput(mode_kappa, i_sigma, i_temp, weights)
         else:
@@ -269,7 +239,7 @@ class ConductivityLBTEBase(ConductivityBase):
         kappa and mode_kappa are overwritten.
 
         """
-        N = self._num_sampling_grid_points
+        N = self.number_of_sampling_grid_points
         X = self._get_X(i_temp, weights)
         num_mesh_points = np.prod(self._pp.mesh_numbers)
         Y = self._get_Y(i_sigma, i_temp, weights, X)
@@ -314,10 +284,6 @@ class ConductivityLBTEBase(ConductivityBase):
         """Allocate grid point local arrays."""
         num_band0 = len(self._pp.band_indices)
         num_temp = len(self._temperatures)
-        self._gv = np.zeros((num_grid_points, num_band0, 3), dtype="double", order="C")
-        self._cv = np.zeros(
-            (num_temp, num_grid_points, num_band0), dtype="double", order="C"
-        )
         self._gamma = np.zeros(
             (len(self._sigmas), num_temp, num_grid_points, num_band0),
             dtype="double",
@@ -625,12 +591,20 @@ class ConductivityLBTEBase(ConductivityBase):
             sys.stdout.flush()
 
     def _expand_local_values(self, ir_gr_grid_points, rot_grid_points):
-        """Fill elements of local properties at grid points."""
+        """Fill elements of local properties at grid points.
+
+        Note
+        ----
+        Internal state of self._conductivity_components is updated.
+
+        """
+        cv = self._conductivity_components.mode_heat_capacities
+        gv = self._conductivity_components.group_velocities
         for ir_gp in ir_gr_grid_points:
-            cv_irgp = self._cv[:, ir_gp, :].copy()
-            self._cv[:, ir_gp, :] = 0
-            gv_irgp = self._gv[ir_gp].copy()
-            self._gv[ir_gp] = 0
+            cv_irgp = cv[:, ir_gp, :].copy()
+            cv[:, ir_gp, :] = 0
+            gv_irgp = gv[ir_gp].copy()
+            gv[ir_gp] = 0
             gamma_irgp = self._gamma[:, :, ir_gp, :].copy()
             self._gamma[:, :, ir_gp, :] = 0
             multi = (rot_grid_points[:, ir_gp] == ir_gp).sum()
@@ -642,8 +616,8 @@ class ConductivityLBTEBase(ConductivityBase):
                 self._gamma[:, :, gp_r, :] += gamma_irgp / multi
                 if self._is_isotope:
                     self._gamma_iso[:, gp_r, :] += gamma_iso_irgp / multi
-                self._cv[:, gp_r, :] += cv_irgp / multi
-                self._gv[gp_r] += np.dot(gv_irgp, r.T) / multi
+                cv[:, gp_r, :] += cv_irgp / multi
+                gv[gp_r] += np.dot(gv_irgp, r.T) / multi
 
     def _get_weights(self):
         """Return weights used for collision matrix and |X> and |f>.
@@ -782,7 +756,7 @@ class ConductivityLBTEBase(ConductivityBase):
     def _get_X(self, i_temp, weights):
         """Calculate X in Chaput's paper."""
         num_band = len(self._pp.primitive) * 3
-        X = self._gv.copy()
+        X = self._conductivity_components.group_velocities.copy()
         if self._is_reducible_collision_matrix:
             freqs = self._frequencies[self._pp.bz_grid.grg2bzg]
         else:
@@ -963,7 +937,7 @@ class ConductivityLBTEBase(ConductivityBase):
         This RTA is supposed to be the same as conductivity_RTA.
 
         """
-        N = self._num_sampling_grid_points
+        N = self.number_of_sampling_grid_points
         num_band = len(self._pp.primitive) * 3
         X = self._get_X(i_temp, weights)
         Y = np.zeros_like(X)
@@ -1013,7 +987,7 @@ class ConductivityLBTEBase(ConductivityBase):
         `kappa` and `mode_kappa` are overwritten.
 
         """
-        N = self._num_sampling_grid_points
+        N = self.number_of_sampling_grid_points
         num_band = len(self._pp.primitive) * 3
         X = self._get_X(i_temp, weights)
         Y = np.zeros_like(X)
@@ -1156,7 +1130,7 @@ class ConductivityLBTEBase(ConductivityBase):
         # shape = (num_grid_points, num_band, 3),
         for i, f_gp in enumerate(self._f_vectors):
             for j, f in enumerate(f_gp):
-                cv = self._cv[i_temp, i, j]
+                cv = self._conductivity_components.mode_heat_capacities[i_temp, i, j]
                 if cv < 1e-10:
                     continue
                 self._mfp[i_sigma, i_temp, i, j] = (
@@ -1167,19 +1141,21 @@ class ConductivityLBTEBase(ConductivityBase):
         gp = self._grid_points[i]
         frequencies = self._frequencies[gp]
         if self._is_reducible_collision_matrix:
-            gv = self._gv[self._pp.bz_grid.bzg2grg[gp]]
+            gv = self._conductivity_components.group_velocities[
+                self._pp.bz_grid.bzg2grg[gp]
+            ]
         else:
-            gv = self._gv[i]
+            gv = self._conductivity_components.group_velocities[i]
         if self._is_full_pp:
             ave_pp = self._averaged_pp_interaction[i]
             text = "Frequency     group velocity (x, y, z)     |gv|       Pqj"
         else:
             text = "Frequency     group velocity (x, y, z)     |gv|"
 
-        if self._velocity_obj.q_length is None:
+        if self._gv_delta_q is None:
             pass
         else:
-            text += "  (dq=%3.1e)" % self._velocity_obj.q_length
+            text += "  (dq=%3.1e)" % self._gv_delta_q
         print(text)
         if self._is_full_pp:
             for f, v, pp in zip(frequencies, gv, ave_pp):

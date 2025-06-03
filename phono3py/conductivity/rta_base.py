@@ -34,6 +34,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import warnings
 from abc import abstractmethod
 
@@ -43,7 +45,10 @@ from phonopy.physical_units import get_physical_units
 from phono3py.conductivity.base import ConductivityBase
 from phono3py.file_IO import read_pp_from_hdf5
 from phono3py.other.tetrahedron_method import get_tetrahedra_relative_grid_address
-from phono3py.phonon.grid import get_grid_points_by_rotations
+from phono3py.phonon.grid import (
+    get_grid_points_by_rotations,
+    get_qpoints_from_bz_grid_points,
+)
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy, average_by_degeneracy
 from phono3py.phonon3.interaction import Interaction
 
@@ -58,24 +63,24 @@ class ConductivityRTABase(ConductivityBase):
     def __init__(
         self,
         interaction: Interaction,
-        grid_points=None,
-        temperatures=None,
-        sigmas=None,
-        sigma_cutoff=None,
-        is_isotope=False,
-        mass_variances=None,
-        boundary_mfp=None,  # in micrometer
-        use_ave_pp=False,
-        is_kappa_star=True,
-        gv_delta_q=None,
-        is_full_pp=False,
-        read_pp=False,
-        store_pp=False,
-        pp_filename=None,
-        is_N_U=False,
-        is_gamma_detail=False,
-        is_frequency_shift_by_bubble=False,
-        log_level=0,
+        grid_points: np.ndarray | None = None,
+        temperatures: list | np.ndarray | None = None,
+        sigmas: list | np.ndarray | None = None,
+        sigma_cutoff: float | None = None,
+        is_isotope: bool = False,
+        mass_variances: list | np.ndarray | None = None,
+        boundary_mfp: float | None = None,  # in micrometer
+        use_ave_pp: bool = False,
+        is_kappa_star: bool = True,
+        gv_delta_q: float | None = None,
+        is_full_pp: bool = False,
+        read_pp: bool = False,
+        store_pp: bool = False,
+        pp_filename: float | None = None,
+        is_N_U: bool = False,
+        is_gamma_detail: bool = False,
+        is_frequency_shift_by_bubble: bool = False,
+        log_level: int = 0,
     ):
         """Init method."""
         self._is_N_U = is_N_U
@@ -153,6 +158,12 @@ class ConductivityRTABase(ConductivityBase):
         raise NotImplementedError()
 
     def _allocate_values(self):
+        if self._temperatures is None:
+            raise RuntimeError(
+                "Temperatures have not been set yet. "
+                "Set temperatures before this method."
+            )
+
         num_band0 = len(self._pp.band_indices)
         num_grid_points = len(self._grid_points)
         num_temp = len(self._temperatures)
@@ -166,7 +177,6 @@ class ConductivityRTABase(ConductivityBase):
                 self._gamma_N = np.zeros_like(self._gamma)
                 self._gamma_U = np.zeros_like(self._gamma)
 
-        self._gv = np.zeros((num_grid_points, num_band0, 3), order="C", dtype="double")
         if self._is_isotope:
             self._gamma_iso = np.zeros(
                 (len(self._sigmas), num_grid_points, num_band0),
@@ -449,10 +459,10 @@ class ConductivityRTABase(ConductivityBase):
                     )
 
     def _show_log(self, i_gp):
-        q = self._get_qpoint_from_gp_index(i_gp)
+        q = get_qpoints_from_bz_grid_points(i_gp, self._pp.bz_grid)
         gp = self._grid_points[i_gp]
         frequencies = self._frequencies[gp][self._pp.band_indices]
-        gv = self._gv[i_gp]
+        gv = self._conductivity_components.group_velocities[i_gp]
 
         if self._averaged_pp_interaction is not None:
             ave_pp = self._averaged_pp_interaction[i_gp]
@@ -512,8 +522,8 @@ class ConductivityRTABase(ConductivityBase):
             text = "Frequency     group velocity (x, y, z)     |gv|       Pqj"
         else:
             text = "Frequency     group velocity (x, y, z)     |gv|"
-        if self._velocity_obj.q_length is None:
+        if self._gv_delta_q is None:
             pass
         else:
-            text += "  (dq=%3.1e)" % self._velocity_obj.q_length
+            text += "  (dq=%3.1e)" % self._gv_delta_q
         print(text)

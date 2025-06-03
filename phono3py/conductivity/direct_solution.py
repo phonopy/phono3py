@@ -34,11 +34,13 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import warnings
+from __future__ import annotations
+
+from typing import Optional, Union
 
 import numpy as np
 
-from phono3py.conductivity.base import ConductivityMixIn
+from phono3py.conductivity.base import ConductivityComponents
 from phono3py.conductivity.direct_solution_base import (
     ConductivityLBTEBase,
     diagonalize_collision_matrix,
@@ -46,38 +48,38 @@ from phono3py.conductivity.direct_solution_base import (
 from phono3py.phonon3.interaction import Interaction
 
 
-class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
+class ConductivityLBTE(ConductivityLBTEBase):
     """Lattice thermal conductivity calculation by direct solution."""
 
     def __init__(
         self,
         interaction: Interaction,
-        grid_points=None,
-        temperatures=None,
-        sigmas=None,
-        sigma_cutoff=None,
-        is_isotope=False,
-        mass_variances=None,
-        boundary_mfp=None,
-        solve_collective_phonon=False,
-        is_reducible_collision_matrix=False,
-        is_kappa_star=True,
-        gv_delta_q=None,
-        is_full_pp=False,
-        read_pp=False,
-        pp_filename=None,
-        pinv_cutoff=1.0e-8,
-        pinv_solver=0,
-        pinv_method=0,
-        log_level=0,
-        lang="C",
+        grid_points: Optional[np.ndarray] = None,
+        temperatures: Optional[Union[list, np.ndarray]] = None,
+        sigmas: Optional[Union[list, np.ndarray]] = None,
+        sigma_cutoff: Optional[float] = None,
+        is_isotope: bool = False,
+        mass_variances: Optional[Union[list, np.ndarray]] = None,
+        boundary_mfp: Optional[float] = None,  # in micrometer
+        solve_collective_phonon: bool = False,
+        is_reducible_collision_matrix: bool = False,
+        is_kappa_star: bool = True,
+        gv_delta_q: Optional[float] = None,
+        is_full_pp: bool = False,
+        read_pp: bool = False,
+        pp_filename: Optional[float] = None,
+        pinv_cutoff: float = 1.0e-8,
+        pinv_solver: int = 0,
+        pinv_method: int = 0,
+        log_level: int = 0,
+        lang: str = "C",
     ):
         """Init method."""
         self._kappa = None
         self._kappa_RTA = None
         self._mode_kappa = None
         self._mode_kappa_RTA = None
-        self._gv_sum2 = None
+        self._gv_by_gv = None
 
         super().__init__(
             interaction,
@@ -102,35 +104,47 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
             lang=lang,
         )
 
+        self._conductivity_components = ConductivityComponents(
+            self._pp,
+            self._grid_points,
+            self._grid_weights,
+            self._point_operations,
+            self._rotations_cartesian,
+            temperatures=self._temperatures,
+            average_gv_over_kstar=self._average_gv_over_kstar,
+            is_kappa_star=self._is_kappa_star,
+            gv_delta_q=self._gv_delta_q,
+            is_reducible_collision_matrix=self._is_reducible_collision_matrix,
+            log_level=self._log_level,
+        )
+
+    @property
+    def kappa(self):
+        """Return kappa."""
+        return self._kappa
+
+    @property
+    def mode_kappa(self):
+        """Return mode_kappa."""
+        return self._mode_kappa
+
     @property
     def kappa_RTA(self):
         """Return RTA lattice thermal conductivity."""
         return self._kappa_RTA
-
-    def get_kappa_RTA(self):
-        """Return RTA lattice thermal conductivity."""
-        warnings.warn(
-            "Use attribute, Conductivity_LBTE.kappa_RTA "
-            "instead of Conductivity_LBTE.get_kappa_RTA().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.kappa_RTA
 
     @property
     def mode_kappa_RTA(self):
         """Return RTA mode lattice thermal conductivities."""
         return self._mode_kappa_RTA
 
-    def get_mode_kappa_RTA(self):
-        """Return RTA mode lattice thermal conductivities."""
-        warnings.warn(
-            "Use attribute, Conductivity_LBTE.mode_kappa_RTA "
-            "instead of Conductivity_LBTE.get_mode_kappa_RTA().",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.mode_kappa_RTA
+    def _set_cv(self, i_gp, i_data):
+        """Set cv for conductivity components."""
+        self._conductivity_components.set_heat_capacities(i_gp, i_data)
+
+    def _set_velocities(self, i_gp, i_data):
+        """Set velocities for conductivity components."""
+        self._conductivity_components.set_velocities(i_gp, i_data)
 
     def _allocate_local_values(self, num_grid_points):
         """Allocate grid point local arrays.
@@ -140,6 +154,12 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
         grid points to be iterated over.
 
         """
+        if self._temperatures is None:
+            raise RuntimeError(
+                "Temperatures have not been set yet. "
+                "Set temperatures before this method."
+            )
+
         num_band0 = len(self._pp.band_indices)
         num_temp = len(self._temperatures)
         super()._allocate_local_values(num_grid_points)
@@ -150,7 +170,7 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
         self._kappa_RTA = np.zeros(
             (len(self._sigmas), num_temp, 6), dtype="double", order="C"
         )
-        self._gv_sum2 = np.zeros(
+        self._gv_by_gv = np.zeros(
             (num_grid_points, num_band0, 6), dtype="double", order="C"
         )
         self._mode_kappa = np.zeros(
