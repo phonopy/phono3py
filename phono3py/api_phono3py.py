@@ -38,9 +38,10 @@ from __future__ import annotations
 import copy
 import warnings
 from collections.abc import Sequence
-from typing import Literal, Optional, Union
+from typing import Literal, Optional, Union, cast
 
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.harmonic.displacement import (
     directions_to_displacement_dataset,
     get_least_displacements,
@@ -58,6 +59,7 @@ from phonopy.interface.mlp import PhonopyMLP
 from phonopy.interface.pypolymlp import (
     PypolymlpParams,
 )
+from phonopy.interface.symfc import SymfcFCSolver
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import (
@@ -298,7 +300,7 @@ class Phono3py:
         # Force constants
         self._fc2 = None
         self._fc3 = None
-        self._fc3_nonzero_elems = None  # available only symfc
+        self._fc3_nonzero_indices = None  # available only symfc
 
         # MLP
         self._mlp = None
@@ -333,7 +335,7 @@ class Phono3py:
         return self._calculator
 
     @property
-    def fc3(self) -> Optional[np.ndarray]:
+    def fc3(self) -> NDArray | None:
         """Setter and getter of third order force constants (fc3).
 
         ndarray
@@ -350,7 +352,18 @@ class Phono3py:
         self._fc3 = fc3
 
     @property
-    def fc2(self) -> Optional[np.ndarray]:
+    def fc3_nonzero_indices(self) -> NDArray | None:
+        """Return non-zero indices of fc3.
+
+        ndarray
+            Non-zero indices of fc3. This is available only when
+            SymfcFCSolver is used.
+
+        """
+        return self._fc3_nonzero_indices
+
+    @property
+    def fc2(self) -> NDArray | None:
         """Setter and getter of second order force constants (fc2).
 
         ndarray
@@ -367,7 +380,7 @@ class Phono3py:
         self._fc2 = fc2
 
     @property
-    def force_constants(self) -> Optional[np.ndarray]:
+    def force_constants(self) -> NDArray | None:
         """Return fc2. This is same as the getter attribute `fc2`."""
         return self.fc2
 
@@ -538,7 +551,7 @@ class Phono3py:
         return self._phonon_supercell_symmetry
 
     @property
-    def supercell_matrix(self) -> np.ndarray:
+    def supercell_matrix(self) -> NDArray:
         """Return transformation matrix to supercell cell from unit cell.
 
         ndarray
@@ -549,7 +562,7 @@ class Phono3py:
         return self._supercell_matrix
 
     @property
-    def phonon_supercell_matrix(self) -> Optional[np.ndarray]:
+    def phonon_supercell_matrix(self) -> NDArray | None:
         """Return transformation matrix to phonon supercell from unit cell.
 
         ndarray
@@ -560,7 +573,7 @@ class Phono3py:
         return self._phonon_supercell_matrix
 
     @property
-    def primitive_matrix(self) -> np.ndarray:
+    def primitive_matrix(self) -> NDArray:
         """Return transformation matrix to primitive cell from unit cell.
 
         ndarray
@@ -731,10 +744,10 @@ class Phono3py:
         self._mlp = mlp
 
     @property
-    def band_indices(self) -> list[np.ndarray]:
+    def band_indices(self) -> list[NDArray]:
         """Setter and getter of band indices.
 
-        list[np.ndarray]
+        list[NDArray]
             List of band indices specified to select specific bands
             to computer ph-ph interaction related properties.
 
@@ -754,7 +767,7 @@ class Phono3py:
         self._band_indices_flatten = np.hstack(self._band_indices).astype("int64")
 
     @property
-    def masses(self) -> np.ndarray:
+    def masses(self) -> NDArray:
         """Setter and getter of atomic masses of primitive cell."""
         return self._primitive.masses
 
@@ -815,7 +828,7 @@ class Phono3py:
             return self._bz_grid.D_diag
 
     @mesh_numbers.setter
-    def mesh_numbers(self, mesh_numbers: Union[int, float, Sequence, np.ndarray]):
+    def mesh_numbers(self, mesh_numbers: Union[int, float, Sequence, NDArray]):
         self._set_mesh_numbers(mesh_numbers)
 
     @property
@@ -1319,8 +1332,6 @@ class Phono3py:
             number_of_snapshots == "auto" or number_of_snapshots > 0
         ):
             if number_of_snapshots == "auto":
-                from phonopy.interface.symfc import SymfcFCSolver
-
                 if cutoff_pair_distance is None:
                     options = None
                 else:
@@ -1431,8 +1442,6 @@ class Phono3py:
             number_of_snapshots == "auto" or number_of_snapshots > 0
         ):
             if number_of_snapshots == "auto":
-                from phonopy.interface.symfc import SymfcFCSolver
-
                 _number_of_snapshots = (
                     SymfcFCSolver(
                         self._supercell, symmetry=self._symmetry
@@ -1520,20 +1529,21 @@ class Phono3py:
                         symmetrize_force_constants(fc2)
 
         self._fc3 = fc3
-        self._fc3_nonzero_elems = None
+        self._fc3_nonzero_indices = None
         if fc_calculator == "symfc":
-            fc_cutoff = fc_solver.fc_solver.basis_set[3].fc_cutoff
-            if fc_cutoff is not None:
-                fc3_nonzero_elems = fc_cutoff.nonzero_atomic_indices_fc3()
-                N = len(self._supercell)
-                assert len(fc3_nonzero_elems) == N**3
-                fc3_nonzero_elems = fc3_nonzero_elems.reshape((N, N, N))
+            symfc_solver = cast(SymfcFCSolver, fc_solver.fc_solver)
+            fc3_nonzero_elems = symfc_solver.get_nonzero_atomic_indices_fc3()
+            if fc3_nonzero_elems is not None:
                 if is_compact_fc:
-                    self._fc3_nonzero_elems = np.array(
-                        fc3_nonzero_elems[self._primitive.p2s_map, :, :], dtype="byte"
+                    self._fc3_nonzero_indices = np.array(
+                        fc3_nonzero_elems[self._primitive.p2s_map],
+                        dtype="byte",
+                        order="C",
                     )
                 else:
-                    self._fc3_nonzero_elems = np.array(fc3_nonzero_elems, dtype="byte")
+                    self._fc3_nonzero_indices = np.array(
+                        fc3_nonzero_elems, dtype="byte", order="C"
+                    )
 
         # fc2 as obtained above will not be set when "|" in fc-calculator setting.
         if fc_calculator is not None and "|" in fc_calculator:
@@ -2542,7 +2552,7 @@ class Phono3py:
 
     def _set_mesh_numbers(
         self,
-        mesh: Union[int, float, Sequence, np.ndarray],
+        mesh: Union[int, float, Sequence, NDArray],
     ):
         # initialization related to mesh
         self._interaction = None
@@ -2588,7 +2598,7 @@ class Phono3py:
 
     def _get_forces_energies(
         self, target: Literal["forces", "supercell_energies"]
-    ) -> Optional[np.ndarray]:
+    ) -> NDArray | None:
         """Return fc3 forces and supercell energies.
 
         Return None if tagert data is not found rather than raising exception.
@@ -2653,7 +2663,7 @@ class Phono3py:
 
     def _get_phonon_forces_energies(
         self, target: Literal["forces", "supercell_energies"]
-    ) -> Optional[np.ndarray]:
+    ) -> NDArray | None:
         """Return fc2 forces and supercell energies.
 
         Return None if tagert data is not found rather than raising exception.
