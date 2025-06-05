@@ -58,15 +58,32 @@ def test_phono3py_load():
     """Test phono3py-load script."""
     # Check sys.exit(0)
     argparse_control = _get_phono3py_load_args(
-        cwd / ".." / "phono3py_params_Si-111-222.yaml"
+        cwd / ".." / "phono3py_params_Si-111-222.yaml",
+    )
+    with pytest.raises(SystemExit) as excinfo:
+        main(**argparse_control)
+    assert excinfo.value.code == 0
+
+    argparse_control = _get_phono3py_load_args(
+        cwd_called / "phono3py.yaml",
+        is_bterta=True,
+        temperatures=[
+            "300",
+        ],
+        mesh_numbers=["5", "5", "5"],
     )
     with pytest.raises(SystemExit) as excinfo:
         main(**argparse_control)
     assert excinfo.value.code == 0
 
     # Clean files created by phono3py-load script.
-    for created_filename in ("phono3py.yaml", "fc2.hdf5", "fc3.hdf5"):
-        file_path = pathlib.Path(cwd_called / created_filename)
+    for created_filename in (
+        "phono3py.yaml",
+        "fc2.hdf5",
+        "fc3.hdf5",
+        "kappa-m555.hdf5",
+    ):
+        file_path = cwd_called / created_filename
         if file_path.exists():
             file_path.unlink()
 

@@ -353,14 +353,17 @@ class Phono3py:
 
     @property
     def fc3_nonzero_indices(self) -> NDArray | None:
-        """Return non-zero indices of fc3.
+        """Setter and getter of non-zero indices of fc3.
 
-        ndarray
-            Non-zero indices of fc3. This is available only when
-            SymfcFCSolver is used.
+        ndarray, optional
+            Non-zero indices of fc3.
 
         """
         return self._fc3_nonzero_indices
+
+    @fc3_nonzero_indices.setter
+    def fc3_nonzero_indices(self, fc3_nonzero_indices):
+        self._fc3_nonzero_indices = fc3_nonzero_indices
 
     @property
     def fc2(self) -> NDArray | None:
