@@ -35,6 +35,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from __future__ import annotations
 
+import os
 import pathlib
 import warnings
 from collections.abc import Sequence
@@ -341,7 +342,9 @@ def write_fc3_to_hdf5(
             w.create_dataset("p2s_map", data=p2s_map)
 
 
-def read_fc3_from_hdf5(filename="fc3.hdf5", p2s_map=None):
+def read_fc3_from_hdf5(
+    filename: str | os.PathLike = "fc3.hdf5", p2s_map: NDArray | None = None
+) -> NDArray | dict:
     """Read fc3 from fc3.hdf5.
 
     fc3 can be in full or compact format. They are distinguished by
@@ -353,20 +356,44 @@ def read_fc3_from_hdf5(filename="fc3.hdf5", p2s_map=None):
 
     """
     with h5py.File(filename, "r") as f:
-        fc3 = f["fc3"][:]
+        if "fc3" not in f:
+            raise KeyError(
+                f"{filename} does not have 'fc3' dataset. "
+                "This file is not a valid fc3.hdf5."
+            )
+        fc3: NDArray = f["fc3"][:]  # type: ignore
+        if fc3.dtype == np.dtype("double") and fc3.flags.c_contiguous:
+            pass
+        else:
+            raise TypeError(
+                f"{filename} has to be read by h5py as numpy ndarray of "
+                "dtype='double' and c_contiguous."
+            )
+
         if "p2s_map" in f:
             p2s_map_in_file = f["p2s_map"][:]
             check_force_constants_indices(
                 fc3.shape[:2], p2s_map_in_file, p2s_map, filename
             )
-        if fc3.dtype == np.dtype("double") and fc3.flags.c_contiguous:
+
+        fc3_nonzero_indices = None  # type: ignore
+        if "fc3_nonzero_indices" in f:
+            fc3_nonzero_indices: NDArray = f["fc3_nonzero_indices"][:]  # type: ignore
+            if (
+                fc3_nonzero_indices.dtype == np.dtype("byte")
+                and fc3_nonzero_indices.flags.c_contiguous
+            ):
+                pass
+            else:
+                raise TypeError(
+                    f"{filename} has to be read by h5py as numpy ndarray of "
+                    "dtype='byte' and c_contiguous."
+                )
+
+        if fc3_nonzero_indices is None:
             return fc3
         else:
-            msg = (
-                "%s has to be read by h5py as numpy ndarray of "
-                "dtype='double' and c_contiguous." % filename
-            )
-            raise TypeError(msg)
+            return {"fc3": fc3, "fc3_nonzero_indices": fc3_nonzero_indices}
 
 
 def write_fc2_to_hdf5(
@@ -429,7 +456,7 @@ def read_fc2_from_hdf5(filename="fc2.hdf5", p2s_map=None):
 
 def write_datasets_to_hdf5(
     dataset: dict,
-    phonon_dataset: dict = None,
+    phonon_dataset: dict | None = None,
     filename: str = "datasets.hdf5",
     compression: str = "gzip",
 ):
