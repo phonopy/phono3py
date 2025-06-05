@@ -679,6 +679,7 @@ def _store_force_constants(ph3py: Phono3py, settings: Phono3pySettings, log_leve
     if not read_fc3:
         write_fc3_to_hdf5(
             ph3py.fc3,
+            fc3_nonzero_indices=ph3py.fc3_nonzero_indices,
             p2s_map=ph3py.primitive.p2s_map,
             compression=settings.hdf5_compression,
         )

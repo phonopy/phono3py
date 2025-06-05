@@ -142,6 +142,7 @@ def create_phono3py_force_constants(
                     fc_calculator_options, 3
                 ),
             )
+        assert phono3py.fc3 is not None, "fc3 is not set."
 
         cutoff_distance = settings.cutoff_fc3_distance
         if cutoff_distance is not None and cutoff_distance > 0:
@@ -157,9 +158,10 @@ def create_phono3py_force_constants(
             else:
                 filename = "fc3." + output_filename + ".hdf5"
             if log_level:
-                print('Writing fc3 to "%s".' % filename)
+                print(f'Writing fc3 to "{filename}".')
             write_fc3_to_hdf5(
                 phono3py.fc3,
+                fc3_nonzero_indices=phono3py.fc3_nonzero_indices,
                 filename=filename,
                 p2s_map=phono3py.primitive.p2s_map,
                 compression=settings.hdf5_compression,

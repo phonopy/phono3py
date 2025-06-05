@@ -42,6 +42,7 @@ from typing import Optional, TextIO, Union
 
 import h5py
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.cui.load_helper import read_force_constants_from_hdf5
 
 # This import is deactivated for a while.
@@ -300,29 +301,42 @@ def _write_FORCES_FC3_typeI(
             count += 1
 
 
-def write_fc3_to_hdf5(fc3, filename="fc3.hdf5", p2s_map=None, compression="gzip"):
+def write_fc3_to_hdf5(
+    fc3: NDArray,
+    fc3_nonzero_indices: NDArray | None = None,
+    filename: str = "fc3.hdf5",
+    p2s_map: NDArray | None = None,
+    compression: str = "gzip",
+):
     """Write fc3 in fc3.hdf5.
 
     Parameters
     ----------
-    force_constants : ndarray
-        Force constants
-        shape=(n_satom, n_satom, n_satom, 3, 3, 3) or
-        (n_patom, n_satom, n_satom,3,3,3), dtype=double
+    fc3 : ndarray
+        Force constants shape=(n_satom, n_satom, n_satom, 3, 3, 3) or (n_patom,
+        n_satom, n_satom,3,3,3), dtype=double
+    fc3_nonzero_indices : ndarray, optional
+        Non-zero indices of fc3. shape=(n_satom, n_satom, n_satom) or (n_patom,
+        n_satom, n_satom), dtype="byte". If this is given, fc3 is in compact
+        format. Otherwise, it is in full format.
     filename : str
         Filename to be used.
     p2s_map : ndarray, optional
-        Primitive atom indices in supercell index system
-        shape=(n_patom,), dtype=intc
+        Primitive atom indices in supercell index system shape=(n_patom,),
+        dtype=intc
     compression : str or int, optional
-        h5py's lossless compression filters (e.g., "gzip", "lzf"). None gives
-        no compression. See the detail at docstring of
-        h5py.Group.create_dataset. Default is "gzip".
+        h5py's lossless compression filters (e.g., "gzip", "lzf"). None gives no
+        compression. See the detail at docstring of h5py.Group.create_dataset.
+        Default is "gzip".
 
     """
     with h5py.File(filename, "w") as w:
         w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("fc3", data=fc3, compression=compression)
+        if fc3_nonzero_indices is not None:
+            w.create_dataset(
+                "fc3_nonzero_indices", data=fc3_nonzero_indices, compression=compression
+            )
         if p2s_map is not None:
             w.create_dataset("p2s_map", data=p2s_map)
 

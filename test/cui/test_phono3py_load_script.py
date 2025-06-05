@@ -71,8 +71,13 @@ def test_phono3py_load():
             file_path.unlink()
 
 
-@pytest.mark.parametrize("fc_calculator,exit_code", [(None, 0), ("symfc", 0)])
-def test_phono3py_load_with_typeII_dataset(fc_calculator, exit_code):
+@pytest.mark.parametrize(
+    "fc_calculator,fc_calculator_options",
+    [(None, None), ("symfc", None), ("symfc", "|cutoff=4.0")],
+)
+def test_phono3py_load_with_typeII_dataset(
+    fc_calculator: str | None, fc_calculator_options: str | None
+):
     """Test phono3py-load script with typeII dataset.
 
     When None, fallback to symfc.
@@ -80,16 +85,24 @@ def test_phono3py_load_with_typeII_dataset(fc_calculator, exit_code):
     """
     pytest.importorskip("symfc")
     argparse_control = _get_phono3py_load_args(
-        cwd / ".." / "phono3py_params-Si111-rd.yaml.xz", fc_calculator=fc_calculator
+        cwd / ".." / "phono3py_params-Si111-rd.yaml.xz",
+        fc_calculator=fc_calculator,
+        fc_calculator_options=fc_calculator_options,
     )
     with pytest.raises(SystemExit) as excinfo:
         main(**argparse_control)
-    assert excinfo.value.code == exit_code
+    assert excinfo.value.code == 0
 
     # Clean files created by phono3py-load script.
     for created_filename in ("phono3py.yaml", "fc2.hdf5", "fc3.hdf5"):
         file_path = pathlib.Path(cwd_called / created_filename)
         if file_path.exists():
+            if created_filename == "fc3.hdf5":
+                with h5py.File(file_path, "r") as f:
+                    if fc_calculator_options is None:
+                        assert "fc3_nonzero_indices" not in f
+                    else:
+                        assert "fc3_nonzero_indices" in f
             file_path.unlink()
 
 

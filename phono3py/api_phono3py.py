@@ -338,7 +338,7 @@ class Phono3py:
     def fc3(self) -> NDArray | None:
         """Setter and getter of third order force constants (fc3).
 
-        ndarray
+        ndarray, optional
             fc3 shape is either (supercell, supercell, supercell, 3, 3, 3) or
             (primitive, supercell, supercell, 3, 3, 3),
             where 'supercell' and 'primitive' indicate number of atoms in
