@@ -35,7 +35,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 from __future__ import annotations
 
-import os
+import pathlib
 import warnings
 from collections.abc import Sequence
 from typing import Optional, TextIO, Union
@@ -1104,7 +1104,7 @@ def read_gamma_from_hdf5(
         filename=filename,
     )
     full_filename = "kappa" + suffix + ".hdf5"
-    if not os.path.exists(full_filename):
+    if not pathlib.Path(full_filename).exists():
         return None, full_filename
 
     read_data = {}
@@ -1131,8 +1131,8 @@ def read_collision_from_hdf5(
     filename=None,
     only_temperatures=False,
     verbose=True,
-):
-    """Read colliction matrix.
+) -> tuple:
+    """Read collision matrix.
 
     indices : array_like of int
         Indices of temperatures.
@@ -1151,10 +1151,8 @@ def read_collision_from_hdf5(
         filename=filename,
     )
     full_filename = "collision" + suffix + ".hdf5"
-    if not os.path.exists(full_filename):
-        if verbose:
-            print("%s not found." % full_filename)
-        return None
+    if not pathlib.Path(full_filename).exists():
+        raise FileNotFoundError(f"{full_filename} not found.")
 
     if only_temperatures:
         with h5py.File(full_filename, "r") as f:
@@ -1304,7 +1302,7 @@ def read_pp_from_hdf5(
     filename=None,
     verbose=True,
     check_consistency=False,
-):
+) -> tuple:
     """Read ph-ph interaction strength from its hdf5 file."""
     suffix = _get_filename_suffix(
         mesh,
@@ -1314,10 +1312,8 @@ def read_pp_from_hdf5(
         filename=filename,
     )
     full_filename = "pp" + suffix + ".hdf5"
-    if not os.path.exists(full_filename):
-        if verbose:
-            print("%s not found." % full_filename)
-        return None
+    if not pathlib.Path(full_filename).exists():
+        raise FileNotFoundError(f"{full_filename} not found.")
 
     with h5py.File(full_filename, "r") as f:
         if "nonzero_pp" in f:
@@ -1360,7 +1356,7 @@ def read_pp_from_hdf5(
 
         return pp, g_zero
 
-    return None
+    raise RuntimeError(f"pp data not found in {full_filename}.")
 
 
 def write_gamma_detail_to_hdf5(
@@ -1493,14 +1489,12 @@ def write_phonon_to_hdf5(
     return None
 
 
-def read_phonon_from_hdf5(mesh, filename=None, verbose=True):
+def read_phonon_from_hdf5(mesh, filename=None, verbose=True) -> tuple:
     """Read phonon from its hdf5 file."""
     suffix = _get_filename_suffix(mesh, filename=filename)
     full_filename = "phonon" + suffix + ".hdf5"
-    if not os.path.exists(full_filename):
-        if verbose:
-            print("%s not found." % full_filename)
-        return None
+    if not pathlib.Path(full_filename).exists():
+        raise FileNotFoundError(f"{full_filename} not found.")
 
     with h5py.File(full_filename, "r") as f:
         frequencies = np.array(f["frequency"][:], dtype="double", order="C")
@@ -1517,8 +1511,6 @@ def read_phonon_from_hdf5(mesh, filename=None, verbose=True):
             print('Phonons were read from "%s".' % full_filename, flush=True)
 
         return frequencies, eigenvectors, grid_address
-
-    return None
 
 
 def write_ir_grid_points(bz_grid, grid_points, grid_weights, primitive_lattice):
