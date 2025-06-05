@@ -85,7 +85,6 @@ class ConductivityRTA(ConductivityRTABase):
             boundary_mfp=boundary_mfp,
             use_ave_pp=use_ave_pp,
             is_kappa_star=is_kappa_star,
-            gv_delta_q=gv_delta_q,
             is_full_pp=is_full_pp,
             read_pp=read_pp,
             store_pp=store_pp,
@@ -105,7 +104,7 @@ class ConductivityRTA(ConductivityRTABase):
             temperatures=self._temperatures,
             average_gv_over_kstar=self._average_gv_over_kstar,
             is_kappa_star=self._is_kappa_star,
-            gv_delta_q=self._gv_delta_q,
+            gv_delta_q=gv_delta_q,
             log_level=self._log_level,
         )
 

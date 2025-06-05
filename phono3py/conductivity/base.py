@@ -168,10 +168,20 @@ class ConductivityComponentsBase(ABC):
         temperatures: Optional[NDArray[np.float64]] = None,
         average_gv_over_kstar: bool = False,
         is_kappa_star: bool = True,
+        gv_delta_q: float | None = None,
         is_reducible_collision_matrix: bool = False,
         log_level: int = 0,
     ):
-        """Init method."""
+        """Init method.
+
+        Parameters
+        ----------
+        gv_delta_q : float, optional, default is None,  # for group velocity
+            With non-analytical correction, group velocity is calculated
+            by central finite difference method. This value gives the distance
+            in both directions in 1/Angstrom. The default value will be 1e-5.
+
+        """
         self._pp = pp
         self._grid_points = grid_points
         self._grid_weights = grid_weights
@@ -179,6 +189,7 @@ class ConductivityComponentsBase(ABC):
         self._rotations_cartesian = rotations_cartesian
         self._temperatures = temperatures
         self._average_gv_over_kstar = average_gv_over_kstar
+        self._gv_delta_q = gv_delta_q
         self._is_kappa_star = is_kappa_star
         self._is_reducible_collision_matrix = is_reducible_collision_matrix
         self._log_level = log_level
@@ -205,6 +216,11 @@ class ConductivityComponentsBase(ABC):
 
         """
         return self._gv
+
+    @property
+    def gv_delta_q(self):
+        """Return delta q for group velocity."""
+        return self._gv_delta_q
 
     @property
     def number_of_sampling_grid_points(self):
@@ -282,6 +298,7 @@ class ConductivityComponents(ConductivityComponentsBase):
             temperatures=temperatures,
             average_gv_over_kstar=average_gv_over_kstar,
             is_kappa_star=is_kappa_star,
+            gv_delta_q=gv_delta_q,
             is_reducible_collision_matrix=is_reducible_collision_matrix,
             log_level=log_level,
         )
@@ -395,8 +412,6 @@ class ConductivityBase(ABC):
 
     All Conductivity* classes have to inherit this base class.
 
-    self._gv has to be allocated in the inherited classes.
-
     """
 
     _average_gv_over_kstar = False
@@ -412,7 +427,6 @@ class ConductivityBase(ABC):
         mass_variances: list | np.ndarray | None = None,
         boundary_mfp: float | None = None,
         is_kappa_star: bool = True,
-        gv_delta_q: float | None = None,
         is_full_pp: bool = False,
         log_level: int = 0,
     ):
@@ -450,10 +464,6 @@ class ConductivityBase(ABC):
             iterating over specific grid points. With `is_kappa_star=True`
             and `grid_points=None`, ir-grid points are used for the iteration.
             Default is True.
-        gv_delta_q : float, optional, default is None,  # for group velocity
-            With non-analytical correction, group velocity is calculated
-            by central finite difference method. This value gives the distance
-            in both directions in 1/Angstrom. The default value will be 1e-5.
         is_full_pp : bool, optional, default is False
             With True, full elements of phonon-phonon interaction strength
             are computed. However with tetrahedron method, part of them are
@@ -513,13 +523,11 @@ class ConductivityBase(ABC):
         self._read_gamma_iso = False
 
         # Allocated in self._allocate_values.
-        self._gv: np.ndarray
         self._gamma: np.ndarray
         self._gamma_iso: Optional[np.ndarray] = None
 
         self._conversion_factor = get_unit_to_WmK() / self._pp.primitive.volume
         self._averaged_pp_interaction = None
-        self._gv_delta_q = gv_delta_q
 
         self._conductivity_components: ConductivityComponentsBase
 
@@ -815,7 +823,7 @@ class ConductivityBase(ABC):
         num_band = len(self._pp.primitive) * 3
         g_boundary = np.zeros(num_band, dtype="double")
         try:
-            gv = self._gv
+            gv = self._conductivity_components.group_velocities
         except AttributeError:
             print("(_get_boundary_scattering) _gv has to be implemented.")
             return g_boundary

@@ -392,12 +392,10 @@ def load_fc2_and_fc3(
 ):
     """Set force constants."""
     if fc3_filename is not None or pathlib.Path("fc3.hdf5").exists():
-        fc3 = _load_fc3(ph3py, fc3_filename=fc3_filename, log_level=log_level)
-        ph3py.fc3 = fc3
+        _load_fc3(ph3py, fc3_filename=fc3_filename, log_level=log_level)
 
     if fc2_filename is not None or pathlib.Path("fc2.hdf5").exists():
-        fc2 = _load_fc2(ph3py, fc2_filename=fc2_filename, log_level=log_level)
-        ph3py.fc2 = fc2
+        _load_fc2(ph3py, fc2_filename=fc2_filename, log_level=log_level)
 
 
 def load_dataset_and_phonon_dataset(
@@ -495,7 +493,7 @@ def _load_fc3(
     ph3py: Phono3py,
     fc3_filename: Optional[os.PathLike] = None,
     log_level: int = 0,
-) -> np.ndarray:
+):
     p2s_map = ph3py.primitive.p2s_map
     if fc3_filename is None:
         _fc3_filename = "fc3.hdf5"
@@ -505,7 +503,7 @@ def _load_fc3(
     _check_fc3_shape(ph3py, fc3, filename=_fc3_filename)
     if log_level:
         print(f'fc3 was read from "{_fc3_filename}".')
-    return fc3
+    ph3py.fc3 = fc3
 
 
 def _select_and_load_dataset(
@@ -564,7 +562,7 @@ def _select_and_load_dataset(
 
 def _load_fc2(
     ph3py: Phono3py, fc2_filename: Optional[os.PathLike] = None, log_level: int = 0
-) -> np.ndarray:
+):
     phonon_p2s_map = ph3py.phonon_primitive.p2s_map
     if fc2_filename is None:
         _fc2_filename = "fc2.hdf5"
@@ -574,7 +572,7 @@ def _load_fc2(
     _check_fc2_shape(ph3py, fc2, filename=_fc2_filename)
     if log_level:
         print(f'fc2 was read from "{_fc2_filename}".')
-    return fc2
+    ph3py.fc2 = fc2
 
 
 def _select_and_load_phonon_dataset(

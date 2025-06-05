@@ -100,7 +100,6 @@ class ConductivityWignerRTA(ConductivityRTABase):
             boundary_mfp=boundary_mfp,
             use_ave_pp=use_ave_pp,
             is_kappa_star=is_kappa_star,
-            gv_delta_q=gv_delta_q,
             is_full_pp=is_full_pp,
             read_pp=read_pp,
             store_pp=store_pp,
@@ -122,7 +121,7 @@ class ConductivityWignerRTA(ConductivityRTABase):
             self._rotations_cartesian,
             temperatures=self._temperatures,
             is_kappa_star=self._is_kappa_star,
-            gv_delta_q=self._gv_delta_q,
+            gv_delta_q=gv_delta_q,
             log_level=self._log_level,
         )
 

@@ -104,7 +104,6 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
             solve_collective_phonon=solve_collective_phonon,
             is_reducible_collision_matrix=is_reducible_collision_matrix,
             is_kappa_star=is_kappa_star,
-            gv_delta_q=gv_delta_q,
             is_full_pp=is_full_pp,
             read_pp=read_pp,
             pp_filename=pp_filename,
@@ -127,7 +126,7 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
             self._rotations_cartesian,
             temperatures=self._temperatures,
             is_kappa_star=self._is_kappa_star,
-            gv_delta_q=self._gv_delta_q,
+            gv_delta_q=gv_delta_q,
             is_reducible_collision_matrix=self._is_reducible_collision_matrix,
             log_level=self._log_level,
         )

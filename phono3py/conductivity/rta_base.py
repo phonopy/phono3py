@@ -72,7 +72,6 @@ class ConductivityRTABase(ConductivityBase):
         boundary_mfp: float | None = None,  # in micrometer
         use_ave_pp: bool = False,
         is_kappa_star: bool = True,
-        gv_delta_q: float | None = None,
         is_full_pp: bool = False,
         read_pp: bool = False,
         store_pp: bool = False,
@@ -104,7 +103,6 @@ class ConductivityRTABase(ConductivityBase):
             mass_variances=mass_variances,
             boundary_mfp=boundary_mfp,
             is_kappa_star=is_kappa_star,
-            gv_delta_q=gv_delta_q,
             is_full_pp=is_full_pp,
             log_level=log_level,
         )
@@ -522,8 +520,8 @@ class ConductivityRTABase(ConductivityBase):
             text = "Frequency     group velocity (x, y, z)     |gv|       Pqj"
         else:
             text = "Frequency     group velocity (x, y, z)     |gv|"
-        if self._gv_delta_q is None:
+        if self._conductivity_components.gv_delta_q is None:
             pass
         else:
-            text += "  (dq=%3.1e)" % self._gv_delta_q
+            text += "  (dq=%3.1e)" % self._conductivity_components.gv_delta_q
         print(text)
