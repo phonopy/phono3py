@@ -72,11 +72,18 @@ def test_phono3py_load():
 
 
 @pytest.mark.parametrize(
-    "fc_calculator,fc_calculator_options",
-    [(None, None), ("symfc", None), ("symfc", "|cutoff=4.0")],
+    "load_phono3py_yaml,fc_calculator,fc_calculator_options",
+    [
+        (True, None, None),
+        (True, "symfc", None),
+        (True, "symfc", "|cutoff=4.0"),
+        (False, "symfc", "|cutoff=4.0"),
+    ],
 )
 def test_phono3py_load_with_typeII_dataset(
-    fc_calculator: str | None, fc_calculator_options: str | None
+    fc_calculator: str | None,
+    fc_calculator_options: str | None,
+    load_phono3py_yaml: bool,
 ):
     """Test phono3py-load script with typeII dataset.
 
@@ -86,6 +93,7 @@ def test_phono3py_load_with_typeII_dataset(
     pytest.importorskip("symfc")
     argparse_control = _get_phono3py_load_args(
         cwd / ".." / "phono3py_params-Si111-rd.yaml.xz",
+        load_phono3py_yaml=load_phono3py_yaml,
         fc_calculator=fc_calculator,
         fc_calculator_options=fc_calculator_options,
     )
