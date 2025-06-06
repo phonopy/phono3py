@@ -277,7 +277,7 @@ static void real_to_reciprocal_elements(
     const int64_t pi0, const int64_t pi1, const int64_t pi2,
     const int64_t leg_index) {
     int64_t i, j, k, l;
-    int64_t num_satom, adrs_shift;
+    int64_t num_satom, adrs_shift_atoms, adrs_shift_fc3;
     lapack_complex_double phase_factor;
     double fc3_rec_real[27], fc3_rec_imag[27];
 
@@ -309,8 +309,11 @@ static void real_to_reciprocal_elements(
                     continue;
                 }
             }
-            adrs_shift =
-                i * 27 * num_satom * num_satom + j * 27 * num_satom + k * 27;
+            adrs_shift_atoms = i * num_satom * num_satom + j * num_satom + k;
+            if (!atom_triplets->nonzero_indices[adrs_shift_atoms]) {
+                continue;
+            }
+            adrs_shift_fc3 = adrs_shift_atoms * 27;
             phase_factor =
                 phonoc_complex_prod(phase_factor1[j], phase_factor2[k]);
 
@@ -320,19 +323,19 @@ static void real_to_reciprocal_elements(
                 for (l = 0; l < 27; l++) {
                     fc3_rec_real[l] +=
                         lapack_complex_double_real(phase_factor) *
-                        fc3[adrs_shift + l] * 3;
+                        fc3[adrs_shift_fc3 + l] * 3;
                     fc3_rec_imag[l] +=
                         lapack_complex_double_imag(phase_factor) *
-                        fc3[adrs_shift + l] * 3;
+                        fc3[adrs_shift_fc3 + l] * 3;
                 }
             } else {
                 for (l = 0; l < 27; l++) {
                     fc3_rec_real[l] +=
                         lapack_complex_double_real(phase_factor) *
-                        fc3[adrs_shift + l];
+                        fc3[adrs_shift_fc3 + l];
                     fc3_rec_imag[l] +=
                         lapack_complex_double_imag(phase_factor) *
-                        fc3[adrs_shift + l];
+                        fc3[adrs_shift_fc3 + l];
                 }
             }
         }

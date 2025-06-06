@@ -276,6 +276,18 @@ def test_kappa_RTA_nacl(nacl_pbe: Phono3py):
     np.testing.assert_allclose(ref_kappa_RTA, kappa, atol=0.5)
 
 
+def test_kappa_RTA_mgo(
+    mgo_222rd_444rd_symfc: Phono3py, mgo_222rd_444rd_symfc_compact_fc: Phono3py
+):
+    """Test RTA by MgO cutoff 4."""
+    for ph3 in (mgo_222rd_444rd_symfc, mgo_222rd_444rd_symfc_compact_fc):
+        ref_kappa_RTA = [63.75, 63.75, 63.75, 0, 0, 0]
+        kappa = _get_kappa(ph3, [11, 11, 11]).ravel()
+        np.testing.assert_allclose(ref_kappa_RTA, kappa, atol=0.5)
+        kappa = _get_kappa(ph3, [11, 11, 11], is_full_pp=True).ravel()
+        np.testing.assert_allclose(ref_kappa_RTA, kappa, atol=0.5)
+
+
 def test_kappa_RTA_nacl_with_sigma(nacl_pbe: Phono3py):
     """Test RTA with smearing method by NaCl."""
     if nacl_pbe._make_r0_average:

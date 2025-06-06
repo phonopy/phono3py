@@ -36,9 +36,10 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Literal, Optional
+from typing import Literal
 
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.cells import Primitive, compute_all_sg_permutations
@@ -93,8 +94,9 @@ class Interaction:
         primitive: Primitive,
         bz_grid: BZGrid,
         primitive_symmetry: Symmetry,
-        fc3: np.ndarray | None = None,
-        band_indices: np.ndarray | Sequence | None = None,
+        fc3: NDArray | None = None,
+        fc3_nonzero_indices: NDArray | None = None,
+        band_indices: NDArray | Sequence | None = None,
         constant_averaged_interaction: float | None = None,
         frequency_factor_to_THz: float | None = None,
         frequency_scale_factor: float | None = None,
@@ -120,7 +122,7 @@ class Interaction:
         self._frequency_scale_factor = frequency_scale_factor
 
         if fc3 is not None:
-            self._set_fc3(fc3)
+            self._set_fc3(fc3, fc3_nonzero_indices=fc3_nonzero_indices)
 
         # Unit to eV^2
         if unit_conversion is None:
@@ -180,9 +182,7 @@ class Interaction:
         )
         self._get_all_shortest()
 
-    def run(
-        self, lang: Literal["C", "Python"] = "C", g_zero: Optional[np.ndarray] = None
-    ):
+    def run(self, lang: Literal["C", "Python"] = "C", g_zero: NDArray | None = None):
         """Run ph-ph interaction calculation."""
         if self._phonon_all_done:
             self.run_phonon_solver()
@@ -209,7 +209,7 @@ class Interaction:
             )
 
     @property
-    def interaction_strength(self) -> np.ndarray | None:
+    def interaction_strength(self) -> NDArray | None:
         """Return ph-ph interaction strength.
 
         Returns
@@ -222,7 +222,7 @@ class Interaction:
         return self._interaction_strength
 
     @property
-    def mesh_numbers(self) -> np.ndarray:
+    def mesh_numbers(self) -> NDArray:
         """Return mesh numbers.
 
         Returns
@@ -239,9 +239,14 @@ class Interaction:
         return self._is_mesh_symmetry
 
     @property
-    def fc3(self) -> np.ndarray:
+    def fc3(self) -> NDArray:
         """Return fc3."""
         return self._fc3
+
+    @property
+    def fc3_nonzero_indices(self) -> NDArray:
+        """Return fc3_nonzero_indices."""
+        return self._fc3_nonzero_indices
 
     @property
     def dynamical_matrix(self) -> DynamicalMatrix | None:
@@ -273,10 +278,10 @@ class Interaction:
     def get_triplets_at_q(
         self,
     ) -> tuple[
-        np.ndarray | None,
-        np.ndarray | None,
-        np.ndarray | None,
-        np.ndarray | None,
+        NDArray | None,
+        NDArray | None,
+        NDArray | None,
+        NDArray | None,
     ]:
         """Return grid point triplets information.
 
@@ -299,7 +304,7 @@ class Interaction:
         return self._bz_grid
 
     @property
-    def band_indices(self) -> np.ndarray:
+    def band_indices(self) -> NDArray:
         """Return band indices.
 
         Returns
@@ -316,7 +321,7 @@ class Interaction:
         return self._nac_params
 
     @property
-    def nac_q_direction(self) -> np.ndarray | None:
+    def nac_q_direction(self) -> NDArray | None:
         """Return q-direction used for NAC at q->0.
 
         Direction of q-vector watching from Gamma point used for
@@ -337,7 +342,7 @@ class Interaction:
             self._nac_q_direction = np.array(nac_q_direction, copy=True, dtype="double")
 
     @property
-    def zero_value_positions(self) -> np.ndarray | None:
+    def zero_value_positions(self) -> NDArray | None:
         """Return zero ph-ph interaction elements information.
 
         Returns
@@ -349,7 +354,7 @@ class Interaction:
 
     def get_phonons(
         self,
-    ) -> tuple[np.ndarray | None, np.ndarray | None, np.ndarray | None]:
+    ) -> tuple[NDArray | None, NDArray | None, NDArray | None]:
         """Return phonons on grid.
 
         Returns
@@ -407,7 +412,7 @@ class Interaction:
         return self._make_r0_average
 
     @property
-    def all_shortest(self) -> np.ndarray:
+    def all_shortest(self) -> NDArray:
         """Return boolean of make_r0_average.
 
         This flag is used to activate averaging of fc3 transformation
@@ -419,7 +424,7 @@ class Interaction:
         return self._all_shortest
 
     @property
-    def averaged_interaction(self) -> np.ndarray:
+    def averaged_interaction(self) -> NDArray:
         """Return sum over phonon triplets of interaction strength.
 
         See Eq.(21) of PRB 91, 094306 (2015)
@@ -439,7 +444,7 @@ class Interaction:
 
     def get_primitive_and_supercell_correspondence(
         self,
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[NDArray, NDArray, NDArray, NDArray, NDArray]:
         """Return atomic pair information."""
         return (self._svecs, self._multi, self._p2s, self._s2p, self._masses)
 
@@ -449,7 +454,7 @@ class Interaction:
         return self._unit_conversion
 
     @property
-    def constant_averaged_interaction(self) -> Optional[float]:
+    def constant_averaged_interaction(self) -> float | None:
         """Return constant averaged interaction."""
         return self._constant_averaged_interaction
 
@@ -817,7 +822,7 @@ class Interaction:
         self._interaction_strength = None
         self._g_zero = None
 
-    def _set_fc3(self, fc3):
+    def _set_fc3(self, fc3: NDArray, fc3_nonzero_indices: NDArray | None = None):
         if (
             isinstance(fc3, np.ndarray)
             and fc3.dtype == np.dtype("double")
@@ -834,7 +839,24 @@ class Interaction:
                 fc3 * self._frequency_scale_factor**2, dtype="double", order="C"
             )
 
-    def _get_band_indices(self, band_indices) -> np.ndarray:
+        if fc3_nonzero_indices is None:
+            self._fc3_nonzero_indices = np.ones(
+                self._fc3.shape[:3], dtype="byte", order="C"
+            )
+        elif (
+            isinstance(fc3_nonzero_indices, np.ndarray)
+            and fc3_nonzero_indices.dtype == np.dtype("byte")
+            and fc3_nonzero_indices.flags.aligned
+            and fc3_nonzero_indices.flags.owndata
+            and fc3_nonzero_indices.flags.c_contiguous
+        ):
+            self._fc3_nonzero_indices = fc3_nonzero_indices
+        else:
+            self._fc3_nonzero_indices = np.array(
+                fc3_nonzero_indices, dtype="byte", order="C"
+            )
+
+    def _get_band_indices(self, band_indices) -> NDArray:
         num_band = len(self._primitive) * 3
         if band_indices is None:
             return np.arange(num_band, dtype="int64")
@@ -877,6 +899,7 @@ class Interaction:
             self._bz_grid.D_diag,
             self._bz_grid.Q,
             self._fc3,
+            self._fc3_nonzero_indices,
             self._svecs,
             self._multi,
             self._masses,

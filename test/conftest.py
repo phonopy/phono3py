@@ -567,6 +567,48 @@ def mgo_222rd_444rd() -> Phono3py:
 
 
 @pytest.fixture(scope="session")
+def mgo_222rd_444rd_symfc() -> Phono3py:
+    """Return Phono3py instance of MgO-2x2x2-4x4x4 RD-RD.
+
+    * with symmetry
+    * full fc
+    * use symfc if available on test side
+
+    """
+    pytest.importorskip("symfc")
+
+    yaml_filename = cwd / "phono3py_params_MgO-222rd-444rd.yaml.xz"
+    return phono3py.load(
+        yaml_filename,
+        is_compact_fc=False,
+        fc_calculator="symfc",
+        fc_calculator_options="|cutoff = 4",
+        log_level=1,
+    )
+
+
+@pytest.fixture(scope="session")
+def mgo_222rd_444rd_symfc_compact_fc() -> Phono3py:
+    """Return Phono3py instance of MgO-2x2x2-4x4x4 RD-RD.
+
+    * with symmetry
+    * full fc
+    * use symfc if available on test side
+
+    """
+    pytest.importorskip("symfc")
+
+    yaml_filename = cwd / "phono3py_params_MgO-222rd-444rd.yaml.xz"
+    return phono3py.load(
+        yaml_filename,
+        is_compact_fc=True,
+        fc_calculator="symfc",
+        fc_calculator_options="|cutoff = 4",
+        log_level=1,
+    )
+
+
+@pytest.fixture(scope="session")
 def ph_nacl() -> Phonopy:
     """Return Phonopy class instance of NaCl 2x2x2."""
     yaml_filename = cwd / "phonopy_disp_NaCl.yaml"

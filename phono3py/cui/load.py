@@ -509,7 +509,7 @@ def _load_fc3(
         assert "fc3_nonzero_indices" in fc3
         ph3py.fc3_nonzero_indices = fc3["fc3_nonzero_indices"]
         if log_level:
-            print(f'fc3 and nonzero indices were read from "{_fc3_filename}".')
+            print(f'fc3 and fc3 nonzero indices were read from "{_fc3_filename}".')
     else:
         _check_fc3_shape(ph3py, fc3, filename=_fc3_filename)
         ph3py.fc3 = fc3

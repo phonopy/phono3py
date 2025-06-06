@@ -301,6 +301,7 @@ def test_get_all_shortest(aln_lda: Phono3py):
     """Test Interaction._get_all_shortest."""
     ph3 = aln_lda
     ph3.mesh_numbers = 30
+    assert ph3.grid is not None
     itr = Interaction(
         ph3.primitive,
         ph3.grid,
@@ -339,6 +340,7 @@ def _get_irt(
     make_r0_average: bool = False,
 ):
     ph3.mesh_numbers = mesh
+    assert ph3.grid is not None
     itr = Interaction(
         ph3.primitive,
         ph3.grid,

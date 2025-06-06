@@ -50,18 +50,17 @@ static Darray *convert_to_darray(nb::ndarray<> npyary) {
 //     printf("Data shift:%lu [%lu, %lu]\n", adrs_shift, i_sigma, i_temp);
 // }
 
-void py_get_interaction(nb::ndarray<> py_fc3_normal_squared,
-                        nb::ndarray<> py_g_zero, nb::ndarray<> py_frequencies,
-                        nb::ndarray<> py_eigenvectors,
-                        nb::ndarray<> py_triplets,
-                        nb::ndarray<> py_bz_grid_addresses,
-                        nb::ndarray<> py_D_diag, nb::ndarray<> py_Q,
-                        nb::ndarray<> py_fc3, nb::ndarray<> py_svecs,
-                        nb::ndarray<> py_multi, nb::ndarray<> py_masses,
-                        nb::ndarray<> py_p2s_map, nb::ndarray<> py_s2p_map,
-                        nb::ndarray<> py_band_indices, int64_t symmetrize_fc3_q,
-                        int64_t make_r0_average, nb::ndarray<> py_all_shortest,
-                        double cutoff_frequency, int64_t openmp_per_triplets) {
+void py_get_interaction(
+    nb::ndarray<> py_fc3_normal_squared, nb::ndarray<> py_g_zero,
+    nb::ndarray<> py_frequencies, nb::ndarray<> py_eigenvectors,
+    nb::ndarray<> py_triplets, nb::ndarray<> py_bz_grid_addresses,
+    nb::ndarray<> py_D_diag, nb::ndarray<> py_Q, nb::ndarray<> py_fc3,
+    nb::ndarray<> py_fc3_nonzero_indices, nb::ndarray<> py_svecs,
+    nb::ndarray<> py_multi, nb::ndarray<> py_masses, nb::ndarray<> py_p2s_map,
+    nb::ndarray<> py_s2p_map, nb::ndarray<> py_band_indices,
+    int64_t symmetrize_fc3_q, int64_t make_r0_average,
+    nb::ndarray<> py_all_shortest, double cutoff_frequency,
+    int64_t openmp_per_triplets) {
     Darray *fc3_normal_squared;
     Darray *freqs;
     _lapack_complex_double *eigvecs;
@@ -72,6 +71,7 @@ void py_get_interaction(nb::ndarray<> py_fc3_normal_squared,
     int64_t *D_diag;
     int64_t (*Q)[3];
     double *fc3;
+    char *fc3_nonzero_indices;
     double (*svecs)[3];
     int64_t (*multi)[2];
     double *masses;
@@ -100,6 +100,7 @@ void py_get_interaction(nb::ndarray<> py_fc3_normal_squared,
     } else {
         is_compact_fc3 = 1;
     }
+    fc3_nonzero_indices = (char *)py_fc3_nonzero_indices.data();
     svecs = (double (*)[3])py_svecs.data();
     for (i = 0; i < 2; i++) {
         multi_dims[i] = py_multi.shape(i);
@@ -113,9 +114,10 @@ void py_get_interaction(nb::ndarray<> py_fc3_normal_squared,
 
     ph3py_get_interaction(fc3_normal_squared, g_zero, freqs, eigvecs, triplets,
                           num_triplets, bz_grid_addresses, D_diag, Q, fc3,
-                          is_compact_fc3, svecs, multi_dims, multi, masses, p2s,
-                          s2p, band_indices, symmetrize_fc3_q, make_r0_average,
-                          all_shortest, cutoff_frequency, openmp_per_triplets);
+                          fc3_nonzero_indices, is_compact_fc3, svecs,
+                          multi_dims, multi, masses, p2s, s2p, band_indices,
+                          symmetrize_fc3_q, make_r0_average, all_shortest,
+                          cutoff_frequency, openmp_per_triplets);
 
     free(fc3_normal_squared);
     fc3_normal_squared = NULL;
@@ -129,8 +131,9 @@ void py_get_pp_collision(
     nb::ndarray<> py_triplets, nb::ndarray<> py_triplet_weights,
     nb::ndarray<> py_bz_grid_addresses, nb::ndarray<> py_bz_map,
     int64_t bz_grid_type, nb::ndarray<> py_D_diag, nb::ndarray<> py_Q,
-    nb::ndarray<> py_fc3, nb::ndarray<> py_svecs, nb::ndarray<> py_multi,
-    nb::ndarray<> py_masses, nb::ndarray<> py_p2s_map, nb::ndarray<> py_s2p_map,
+    nb::ndarray<> py_fc3, nb::ndarray<> py_fc3_nonzero_indices,
+    nb::ndarray<> py_svecs, nb::ndarray<> py_multi, nb::ndarray<> py_masses,
+    nb::ndarray<> py_p2s_map, nb::ndarray<> py_s2p_map,
     nb::ndarray<> py_band_indices, nb::ndarray<> py_temperatures_THz,
     int64_t is_NU, int64_t symmetrize_fc3_q, int64_t make_r0_average,
     nb::ndarray<> py_all_shortest, double cutoff_frequency,
@@ -147,6 +150,7 @@ void py_get_pp_collision(
     int64_t *D_diag;
     int64_t (*Q)[3];
     double *fc3;
+    char *fc3_nonzero_indices;
     double (*svecs)[3];
     int64_t (*multi)[2];
     double *masses;
@@ -176,6 +180,7 @@ void py_get_pp_collision(
     } else {
         is_compact_fc3 = 1;
     }
+    fc3_nonzero_indices = (char *)py_fc3_nonzero_indices.data();
     svecs = (double (*)[3])py_svecs.data();
     for (i = 0; i < 2; i++) {
         multi_dims[i] = py_multi.shape(i);
@@ -191,9 +196,10 @@ void py_get_pp_collision(
     ph3py_get_pp_collision(
         gamma, relative_grid_address, frequencies, eigenvectors, triplets,
         num_triplets, triplet_weights, bz_grid_addresses, bz_map, bz_grid_type,
-        D_diag, Q, fc3, is_compact_fc3, svecs, multi_dims, multi, masses, p2s,
-        s2p, band_indices, temperatures_THz, is_NU, symmetrize_fc3_q,
-        make_r0_average, all_shortest, cutoff_frequency, openmp_per_triplets);
+        D_diag, Q, fc3, fc3_nonzero_indices, is_compact_fc3, svecs, multi_dims,
+        multi, masses, p2s, s2p, band_indices, temperatures_THz, is_NU,
+        symmetrize_fc3_q, make_r0_average, all_shortest, cutoff_frequency,
+        openmp_per_triplets);
 
     free(band_indices);
     band_indices = NULL;
@@ -206,7 +212,8 @@ void py_get_pp_collision_with_sigma(
     nb::ndarray<> py_frequencies, nb::ndarray<> py_eigenvectors,
     nb::ndarray<> py_triplets, nb::ndarray<> py_triplet_weights,
     nb::ndarray<> py_bz_grid_addresses, nb::ndarray<> py_D_diag,
-    nb::ndarray<> py_Q, nb::ndarray<> py_fc3, nb::ndarray<> py_svecs,
+    nb::ndarray<> py_Q, nb::ndarray<> py_fc3,
+    nb::ndarray<> py_fc3_nonzero_indices, nb::ndarray<> py_svecs,
     nb::ndarray<> py_multi, nb::ndarray<> py_masses, nb::ndarray<> py_p2s_map,
     nb::ndarray<> py_s2p_map, nb::ndarray<> py_band_indices,
     nb::ndarray<> py_temperatures_THz, int64_t is_NU, int64_t symmetrize_fc3_q,
@@ -222,6 +229,7 @@ void py_get_pp_collision_with_sigma(
     int64_t *D_diag;
     int64_t (*Q)[3];
     double *fc3;
+    char *fc3_nonzero_indices;
     double (*svecs)[3];
     int64_t (*multi)[2];
     double *masses;
@@ -249,6 +257,7 @@ void py_get_pp_collision_with_sigma(
     } else {
         is_compact_fc3 = 1;
     }
+    fc3_nonzero_indices = (char *)py_fc3_nonzero_indices.data();
     svecs = (double (*)[3])py_svecs.data();
     for (i = 0; i < 2; i++) {
         multi_dims[i] = py_multi.shape(i);
@@ -264,8 +273,8 @@ void py_get_pp_collision_with_sigma(
     ph3py_get_pp_collision_with_sigma(
         gamma, sigma, sigma_cutoff, frequencies, eigenvectors, triplets,
         num_triplets, triplet_weights, bz_grid_addresses, D_diag, Q, fc3,
-        is_compact_fc3, svecs, multi_dims, multi, masses, p2s, s2p,
-        band_indices, temperatures_THz, is_NU, symmetrize_fc3_q,
+        fc3_nonzero_indices, is_compact_fc3, svecs, multi_dims, multi, masses,
+        p2s, s2p, band_indices, temperatures_THz, is_NU, symmetrize_fc3_q,
         make_r0_average, all_shortest, cutoff_frequency, openmp_per_triplets);
 
     free(band_indices);

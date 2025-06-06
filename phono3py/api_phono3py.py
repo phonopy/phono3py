@@ -1138,7 +1138,7 @@ class Phono3py:
             `None` will choose one of them automatically.
 
         """
-        if self.mesh_numbers is None:
+        if self._bz_grid is None:
             msg = "Phono3py.mesh_numbers of instance has to be set."
             raise RuntimeError(msg)
 
@@ -1151,6 +1151,7 @@ class Phono3py:
             self._bz_grid,
             self._primitive_symmetry,
             fc3=self._fc3,
+            fc3_nonzero_indices=self._fc3_nonzero_indices,
             band_indices=self._band_indices_flatten,
             constant_averaged_interaction=constant_averaged_interaction,
             frequency_factor_to_THz=self._frequency_factor_to_THz,
