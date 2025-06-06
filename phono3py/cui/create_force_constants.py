@@ -164,6 +164,7 @@ def create_phono3py_force_constants(
                 fc3_nonzero_indices=phono3py.fc3_nonzero_indices,
                 filename=filename,
                 p2s_map=phono3py.primitive.p2s_map,
+                fc3_cutoff=phono3py.fc3_cutoff,
                 compression=settings.hdf5_compression,
             )
 

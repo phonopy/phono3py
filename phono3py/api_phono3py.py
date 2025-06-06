@@ -301,6 +301,7 @@ class Phono3py:
         self._fc2 = None
         self._fc3 = None
         self._fc3_nonzero_indices = None  # available only symfc
+        self._fc3_cutoff = None  # available only symfc
 
         # MLP
         self._mlp = None
@@ -364,6 +365,11 @@ class Phono3py:
     @fc3_nonzero_indices.setter
     def fc3_nonzero_indices(self, fc3_nonzero_indices):
         self._fc3_nonzero_indices = fc3_nonzero_indices
+
+    @property
+    def fc3_cutoff(self) -> float | None:
+        """Return cutoff value of fc3."""
+        return self._fc3_cutoff
 
     @property
     def fc2(self) -> NDArray | None:
@@ -1537,6 +1543,9 @@ class Phono3py:
         if fc_calculator == "symfc":
             symfc_solver = cast(SymfcFCSolver, fc_solver.fc_solver)
             fc3_nonzero_elems = symfc_solver.get_nonzero_atomic_indices_fc3()
+            options = symfc_solver.options
+            if options is not None and "cutoff" in options:
+                self._fc3_cutoff = options["cutoff"].get(3, None)
             if fc3_nonzero_elems is not None:
                 if is_compact_fc:
                     self._fc3_nonzero_indices = np.array(

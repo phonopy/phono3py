@@ -307,6 +307,7 @@ def write_fc3_to_hdf5(
     fc3_nonzero_indices: NDArray | None = None,
     filename: str = "fc3.hdf5",
     p2s_map: NDArray | None = None,
+    fc3_cutoff: float | None = None,
     compression: str = "gzip",
 ):
     """Write fc3 in fc3.hdf5.
@@ -325,6 +326,8 @@ def write_fc3_to_hdf5(
     p2s_map : ndarray, optional
         Primitive atom indices in supercell index system shape=(n_patom,),
         dtype=intc
+    fc3_cutoff : float, optional
+        Cutoff distance for fc3.
     compression : str or int, optional
         h5py's lossless compression filters (e.g., "gzip", "lzf"). None gives no
         compression. See the detail at docstring of h5py.Group.create_dataset.
@@ -338,6 +341,8 @@ def write_fc3_to_hdf5(
             w.create_dataset(
                 "fc3_nonzero_indices", data=fc3_nonzero_indices, compression=compression
             )
+            if fc3_cutoff is not None:
+                w.create_dataset("fc3_cutoff", data=fc3_cutoff)
         if p2s_map is not None:
             w.create_dataset("p2s_map", data=p2s_map)
 
