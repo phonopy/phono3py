@@ -128,6 +128,8 @@ def test_phono3py_load_with_typeII_dataset(
                         assert "fc3_nonzero_indices" not in f
                     else:
                         assert "fc3_nonzero_indices" in f
+                        assert "fc3_cutoff" in f
+                        assert f["fc3_cutoff"][()] == pytest.approx(4.0)
             file_path.unlink()
 
 

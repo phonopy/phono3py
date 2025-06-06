@@ -681,6 +681,7 @@ def _store_force_constants(ph3py: Phono3py, settings: Phono3pySettings, log_leve
             ph3py.fc3,
             fc3_nonzero_indices=ph3py.fc3_nonzero_indices,
             p2s_map=ph3py.primitive.p2s_map,
+            fc3_cutoff=ph3py.fc3_cutoff,
             compression=settings.hdf5_compression,
         )
         if log_level:
