@@ -328,7 +328,6 @@ class ConductivityRTABase(ConductivityBase):
             s2p,
             masses,
         ) = self._pp.get_primitive_and_supercell_correspondence()
-        fc3 = self._pp.fc3
         triplets_at_q, weights_at_q, _, _ = self._pp.get_triplets_at_q()
 
         if None in self._sigmas:
@@ -384,7 +383,8 @@ class ConductivityRTABase(ConductivityBase):
                     self._pp.bz_grid.store_dense_gp_map * 1 + 1,
                     self._pp.bz_grid.D_diag,
                     self._pp.bz_grid.Q,
-                    fc3,
+                    self._pp.fc3,
+                    self._pp.fc3_nonzero_indices,
                     svecs,
                     multi,
                     masses,
@@ -415,7 +415,8 @@ class ConductivityRTABase(ConductivityBase):
                     self._pp.bz_grid.addresses,
                     self._pp.bz_grid.D_diag,
                     self._pp.bz_grid.Q,
-                    fc3,
+                    self._pp.fc3,
+                    self._pp.fc3_nonzero_indices,
                     svecs,
                     multi,
                     masses,
