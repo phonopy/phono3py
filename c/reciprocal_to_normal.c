@@ -285,7 +285,8 @@ static double get_fc3_sum_blas_like(const lapack_complex_double *e0,
                                            num_band * num_band);
 
     for (i = 0; i < num_band; i++) {
-        memcpy(e_12 + i * num_band, e2, 16 * num_band);
+        memcpy(e_12 + i * num_band, e2,
+               sizeof(lapack_complex_double) * num_band);
         for (j = 0; j < num_band; j++) {
             e_12[i * num_band + j] =
                 phonoc_complex_prod(e1[i], e_12[i * num_band + j]);

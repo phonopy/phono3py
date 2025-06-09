@@ -75,7 +75,7 @@ static lapack_complex_double get_pre_phase_factor(
 static lapack_complex_double sum_lapack_complex_double(lapack_complex_double a,
                                                        lapack_complex_double b);
 
-/* fc3_reciprocal[num_patom, num_patom, num_patom, 3, 3, 3] */
+/* fc3_reciprocal[num_patom, 3, num_patom, 3, num_patom, 3] */
 void r2r_real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
                             const double q_vecs[3][3], const double *fc3,
                             const int64_t is_compact_fc3,
