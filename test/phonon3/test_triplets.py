@@ -911,7 +911,7 @@ def test_get_BZ_triplets_at_q(aln_cell: PhonopyAtoms, params):
                 [1, 36, 60],
                 [1, 38, 59],
                 [1, 41, 56],
-            ],
+            ],  # 0
             [
                 [1, 0, 4],
                 [1, 1, 3],
@@ -937,7 +937,7 @@ def test_get_BZ_triplets_at_q(aln_cell: PhonopyAtoms, params):
                 [1, 36, 60],
                 [1, 38, 59],
                 [1, 41, 56],
-            ],
+            ],  # 1
             [
                 [1, 0, 4],
                 [1, 1, 3],
@@ -969,7 +969,7 @@ def test_get_BZ_triplets_at_q(aln_cell: PhonopyAtoms, params):
                 [1, 39, 57],
                 [1, 41, 56],
                 [1, 42, 55],
-            ],
+            ],  # 2
             [
                 [1, 0, 4],
                 [1, 1, 3],
@@ -1016,7 +1016,7 @@ def test_get_BZ_triplets_at_q(aln_cell: PhonopyAtoms, params):
                 [1, 70, 26],
                 [1, 72, 25],
                 [1, 73, 24],
-            ],
+            ],  # 3
             [
                 [1, 0, 4],
                 [1, 1, 3],
@@ -1150,11 +1150,11 @@ def test_get_BZ_triplets_at_q(aln_cell: PhonopyAtoms, params):
                 [8, 2, 87],
                 [8, 3, 86],
                 [9, 4, 92],
-                [8, 5, 84],
-                [8, 6, 82],
-                [8, 8, 81],
-                [8, 10, 80],
-                [8, 11, 85],
+                [9, 5, 84],
+                [8, 7, 82],
+                [8, 9, 81],
+                [9, 10, 80],
+                [9, 11, 85],
                 [8, 12, 78],
                 [8, 13, 76],
                 [8, 14, 75],
@@ -1164,23 +1164,23 @@ def test_get_BZ_triplets_at_q(aln_cell: PhonopyAtoms, params):
                 [9, 22, 67],
                 [8, 24, 65],
                 [8, 27, 62],
-                [8, 29, 66],
+                [9, 30, 66],
                 [8, 31, 58],
                 [8, 32, 57],
                 [8, 40, 50],
                 [8, 48, 48],
-            ],
+            ],  # 0
             [
                 [8, 0, 89],
                 [8, 1, 88],
                 [8, 2, 87],
                 [8, 3, 86],
                 [9, 4, 92],
-                [8, 5, 84],
-                [8, 6, 82],
-                [8, 8, 81],
-                [8, 10, 80],
-                [8, 11, 85],
+                [9, 5, 84],
+                [8, 7, 82],
+                [8, 9, 81],
+                [9, 10, 80],
+                [9, 11, 85],
                 [8, 12, 78],
                 [8, 13, 76],
                 [8, 14, 75],
@@ -1190,23 +1190,23 @@ def test_get_BZ_triplets_at_q(aln_cell: PhonopyAtoms, params):
                 [9, 22, 67],
                 [8, 24, 65],
                 [8, 27, 62],
-                [8, 29, 66],
+                [9, 30, 66],
                 [8, 31, 58],
                 [8, 32, 57],
                 [8, 40, 50],
                 [8, 48, 48],
-            ],
+            ],  # 1
             [
                 [8, 0, 89],
                 [8, 1, 88],
                 [8, 2, 87],
                 [8, 3, 86],
                 [9, 4, 92],
-                [8, 5, 84],
-                [8, 6, 82],
-                [8, 8, 81],
-                [8, 10, 80],
-                [8, 11, 85],
+                [9, 5, 84],
+                [8, 7, 82],
+                [8, 9, 81],
+                [9, 10, 80],
+                [9, 11, 85],
                 [8, 12, 78],
                 [8, 13, 76],
                 [8, 14, 75],
@@ -1219,7 +1219,7 @@ def test_get_BZ_triplets_at_q(aln_cell: PhonopyAtoms, params):
                 [8, 24, 65],
                 [8, 25, 64],
                 [8, 27, 62],
-                [8, 29, 66],
+                [9, 30, 66],
                 [8, 31, 58],
                 [8, 32, 57],
                 [8, 33, 56],
@@ -1227,7 +1227,7 @@ def test_get_BZ_triplets_at_q(aln_cell: PhonopyAtoms, params):
                 [8, 40, 50],
                 [9, 41, 49],
                 [9, 42, 54],
-                [8, 43, 46],
+                [8, 43, 47],
                 [8, 44, 45],
                 [8, 48, 48],
                 [8, 50, 40],
@@ -1240,20 +1240,20 @@ def test_get_BZ_triplets_at_q(aln_cell: PhonopyAtoms, params):
                 [8, 71, 19],
                 [9, 72, 18],
                 [8, 79, 17],
-                [8, 81, 8],
+                [8, 81, 9],
                 [8, 89, 0],
-            ],
+            ],  # 2
             [
                 [8, 0, 89],
                 [8, 1, 88],
                 [8, 2, 87],
                 [8, 3, 86],
                 [9, 4, 92],
-                [8, 5, 84],
-                [8, 6, 82],
-                [8, 8, 81],
-                [8, 10, 80],
-                [8, 11, 85],
+                [9, 5, 84],
+                [8, 7, 82],
+                [8, 9, 81],
+                [9, 10, 80],
+                [9, 11, 85],
                 [8, 12, 78],
                 [8, 13, 76],
                 [8, 14, 75],
@@ -1266,7 +1266,7 @@ def test_get_BZ_triplets_at_q(aln_cell: PhonopyAtoms, params):
                 [8, 24, 65],
                 [8, 25, 64],
                 [8, 27, 62],
-                [8, 29, 66],
+                [9, 30, 66],
                 [8, 31, 58],
                 [8, 32, 57],
                 [8, 33, 56],
@@ -1274,7 +1274,7 @@ def test_get_BZ_triplets_at_q(aln_cell: PhonopyAtoms, params):
                 [8, 40, 50],
                 [9, 41, 49],
                 [9, 42, 54],
-                [8, 43, 46],
+                [8, 43, 47],
                 [8, 44, 45],
                 [8, 48, 48],
                 [8, 50, 40],
@@ -1287,9 +1287,9 @@ def test_get_BZ_triplets_at_q(aln_cell: PhonopyAtoms, params):
                 [8, 71, 19],
                 [9, 72, 18],
                 [8, 79, 17],
-                [8, 81, 8],
+                [8, 81, 9],
                 [8, 89, 0],
-            ],
+            ],  # 3
             [
                 [7, 0, 28],
                 [8, 1, 27],
@@ -1794,22 +1794,23 @@ def test_get_BZ_triplets_at_q(aln_cell: PhonopyAtoms, params):
         ir_weights_with_zeros = np.zeros(45, dtype=int)
         ir_weights_with_zeros[: len(ir_weights)] = ir_weights
 
-        np.testing.assert_equal(ref_triplets[i][params[3]], ir_triplets)
-        np.testing.assert_equal(ref_ir_weights[i][params[3]], ir_weights)
-        if i == 1 and params[0]:
-            # print("{")
-            # for j, tp in enumerate(triplets_with_zeros):
-            #     print("%d, %d, %d, " % tuple(tp), end="")
-            #     if (j + 1) % 5 == 0:
-            #         print("&")
-            print(", ".join(["%d" % x for x in ir_weights_with_zeros]))
-            # print("},")
-            # print(len(ir_triplets))
-        # print("[")
         # print("[")
         # for tp in ir_triplets:
         #     print("[%d, %d, %d]," % tuple(tp))
         # print("],")
+
+        np.testing.assert_equal(ref_triplets[i][params[3]], ir_triplets)
+        np.testing.assert_equal(ref_ir_weights[i][params[3]], ir_weights)
+        # if i == 1 and params[0]:
+        #     print("{")
+        #     for j, tp in enumerate(triplets_with_zeros):
+        #         print("%d, %d, %d, " % tuple(tp), end="")
+        #         if (j + 1) % 5 == 0:
+        #             print("&")
+        #     print(", ".join(["%d" % x for x in ir_weights_with_zeros]))
+        #     print("},")
+        #     print(len(ir_triplets))
+        # print("[")
         # print("]")
         # print("[")
         # print(",".join(["%d" % x for x in ir_weights]))

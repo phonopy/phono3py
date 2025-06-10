@@ -39,6 +39,8 @@ from __future__ import annotations
 import warnings
 from collections.abc import Sequence
 
+from numpy.typing import ArrayLike, NDArray
+
 try:
     from spglib import SpglibDataset  # type: ignore
 except ImportError:
@@ -355,6 +357,16 @@ class BZGrid:
 
         """
         return self._microzone_lattice
+
+    @property
+    def reciprocal_lattice(self) -> np.ndarray:
+        """Reciprocal basis vectors of primitive cell.
+
+        Reciprocal basis vectors of primitive cell in column vectors.
+        shape=(3, 3), dtype='double', order='C'.
+
+        """
+        return self._reciprocal_lattice
 
     @property
     def store_dense_gp_map(self):
@@ -1172,28 +1184,54 @@ def _relocate_BZ_grid_address(
     else:
         bz_map = np.zeros(np.prod(D_diag) * 9 + 1, dtype="int64")
 
-    # Mpr^-1 = Lr^-1 Lp
-    reclat_T = np.array(np.transpose(reciprocal_lattice), dtype="double", order="C")
-    reduced_basis = get_reduced_bases(reclat_T)
-    assert reduced_basis is not None, "Reduced basis is not found."
-    tmat_inv = np.dot(np.linalg.inv(reduced_basis.T), reclat_T.T)
-    tmat_inv_int = np.rint(tmat_inv).astype("int64")
-    assert (np.abs(tmat_inv - tmat_inv_int) < 1e-5).all()
-
+    reduced_basis, tmat_inv_int = get_reduced_bases_and_tmat_inv(reciprocal_lattice)
     num_gp = recgrid.bz_grid_addresses(
         bz_grid_addresses,
         bz_map,
         bzg2grg,
         np.array(D_diag, dtype="int64"),
-        np.array(np.dot(tmat_inv_int, Q), dtype="int64", order="C"),
+        np.array(tmat_inv_int @ Q, dtype="int64", order="C"),
         _PS,
-        np.array(reduced_basis.T, dtype="double", order="C"),
+        reduced_basis,
         store_dense_gp_map * 1 + 1,
     )
 
     bz_grid_addresses = np.array(bz_grid_addresses[:num_gp], dtype="int64", order="C")
     bzg2grg = np.array(bzg2grg[:num_gp], dtype="int64")
     return bz_grid_addresses, bz_map, bzg2grg
+
+
+def get_reduced_bases_and_tmat_inv(
+    reciprocal_lattice: ArrayLike,
+) -> tuple[NDArray, NDArray]:
+    """Return reduced bases and inverse transformation matrix.
+
+    Parameters
+    ----------
+    reciprocal_lattice : ArrayLike
+        Reciprocal lattice vectors in column vectors.
+        shape=(3, 3), dtype='double'
+
+    Returns
+    -------
+    reduced_basis : ndarray
+        Reduced basis vectors in column vectors.
+        shape=(3, 3), dtype='double', order='C'
+    tmat_inv_int : ndarray
+        Inverse transformation matrix in integer.
+        This is used to transform reciprocal lattice vectors to
+        conventional lattice vectors.
+        shape=(3, 3), dtype='int64'
+
+    """
+    # Mpr^-1 = Lr^-1 Lp
+    reclat_T = np.array(np.transpose(reciprocal_lattice), dtype="double", order="C")
+    reduced_basis = get_reduced_bases(reclat_T)
+    assert reduced_basis is not None, "Reduced basis is not found."
+    tmat_inv = np.linalg.inv(reduced_basis.T) @ reclat_T.T
+    tmat_inv_int = np.rint(tmat_inv).astype("int64")
+    assert (np.abs(tmat_inv - tmat_inv_int) < 1e-5).all()
+    return np.array(reduced_basis.T, dtype="double", order="C"), tmat_inv_int
 
 
 def _get_ir_grid_map(

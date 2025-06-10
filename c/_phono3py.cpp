@@ -804,13 +804,11 @@ int64_t py_tpl_get_triplets_reciprocal_mesh_at_q(
     return num_ir;
 }
 
-int64_t py_tpl_get_BZ_triplets_at_q(nb::ndarray<> py_triplets,
-                                    int64_t grid_point,
-                                    nb::ndarray<> py_bz_grid_address,
-                                    nb::ndarray<> py_bz_map,
-                                    nb::ndarray<> py_map_triplets,
-                                    nb::ndarray<> py_D_diag, nb::ndarray<> py_Q,
-                                    int64_t bz_grid_type) {
+int64_t py_tpl_get_BZ_triplets_at_q(
+    nb::ndarray<> py_triplets, int64_t grid_point,
+    nb::ndarray<> py_bz_grid_address, nb::ndarray<> py_bz_map,
+    nb::ndarray<> py_map_triplets, nb::ndarray<> py_D_diag, nb::ndarray<> py_Q,
+    nb::ndarray<> py_reciprocal_lattice, int64_t bz_grid_type) {
     int64_t (*triplets)[3];
     int64_t (*bz_grid_address)[3];
     int64_t *bz_map;
@@ -818,6 +816,7 @@ int64_t py_tpl_get_BZ_triplets_at_q(nb::ndarray<> py_triplets,
     int64_t num_map_triplets;
     int64_t *D_diag;
     int64_t (*Q)[3];
+    double (*reciprocal_lattice)[3];
     int64_t num_ir;
 
     triplets = (int64_t (*)[3])py_triplets.data();
@@ -827,10 +826,11 @@ int64_t py_tpl_get_BZ_triplets_at_q(nb::ndarray<> py_triplets,
     num_map_triplets = (int64_t)py_map_triplets.shape(0);
     D_diag = (int64_t *)py_D_diag.data();
     Q = (int64_t (*)[3])py_Q.data();
+    reciprocal_lattice = (double (*)[3])py_reciprocal_lattice.data();
 
-    num_ir = ph3py_get_BZ_triplets_at_q(triplets, grid_point, bz_grid_address,
-                                        bz_map, map_triplets, num_map_triplets,
-                                        D_diag, Q, bz_grid_type);
+    num_ir = ph3py_get_BZ_triplets_at_q(
+        triplets, grid_point, bz_grid_address, bz_map, map_triplets,
+        num_map_triplets, D_diag, Q, reciprocal_lattice, bz_grid_type);
 
     return num_ir;
 }

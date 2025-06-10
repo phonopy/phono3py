@@ -173,7 +173,8 @@ int64_t ph3py_get_BZ_triplets_at_q(
     int64_t (*triplets)[3], const int64_t grid_point,
     const int64_t (*bz_grid_addresses)[3], const int64_t *bz_map,
     const int64_t *map_triplets, const int64_t num_map_triplets,
-    const int64_t D_diag[3], const int64_t Q[3][3], const int64_t bz_grid_type);
+    const int64_t D_diag[3], const int64_t Q[3][3],
+    const double reciprocal_lattice[3][3], const int64_t bz_grid_type);
 int64_t ph3py_get_integration_weight(
     double *iw, char *iw_zero, const double *frequency_points,
     const int64_t num_band0, const int64_t relative_grid_address[24][4][3],
