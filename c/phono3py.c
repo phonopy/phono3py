@@ -411,7 +411,7 @@ int64_t ph3py_get_BZ_triplets_at_q(
     const int64_t (*bz_grid_addresses)[3], const int64_t *bz_map,
     const int64_t *map_triplets, const int64_t num_map_triplets,
     const int64_t D_diag[3], const int64_t Q[3][3],
-    const int64_t bz_grid_type) {
+    const double reciprocal_lattice[3][3], const int64_t bz_grid_type) {
     RecgridConstBZGrid *bzgrid;
     int64_t i, j, num_ir;
 
@@ -429,6 +429,7 @@ int64_t ph3py_get_BZ_triplets_at_q(
         bzgrid->PS[i] = 0;
         for (j = 0; j < 3; j++) {
             bzgrid->Q[i][j] = Q[i][j];
+            bzgrid->reclat[i][j] = reciprocal_lattice[i][j];
         }
     }
     bzgrid->size = num_map_triplets;

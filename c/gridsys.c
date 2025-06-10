@@ -138,7 +138,7 @@ int64_t gridsys_get_bz_grid_addresses(
     if (!niggli_reduce(niggli_lattice, GRIDSYS_NIGGLI_TOLERANCE)) {
         return 0;
     }
-    if (!lagmat_inverse_matrix_d3(inv_Lr, (double(*)[3])niggli_lattice,
+    if (!lagmat_inverse_matrix_d3(inv_Lr, (double (*)[3])niggli_lattice,
                                   GRIDSYS_NIGGLI_TOLERANCE)) {
         return 0;
     }
@@ -156,7 +156,7 @@ int64_t gridsys_get_bz_grid_addresses(
     bzgrid->bzg2grg = bzg2grg;
     bzgrid->type = bz_grid_type;
     lagmat_multiply_matrix_l3(bzgrid->Q, inv_Mpr_int, Q);
-    lagmat_copy_matrix_d3(bzgrid->reclat, (double(*)[3])niggli_lattice);
+    lagmat_copy_matrix_d3(bzgrid->reclat, (double (*)[3])niggli_lattice);
     for (i = 0; i < 3; i++) {
         bzgrid->D_diag[i] = D_diag[i];
         bzgrid->PS[i] = PS[i];
@@ -220,7 +220,7 @@ int64_t gridsys_get_bz_triplets_at_q(
     const int64_t (*bz_grid_addresses)[3], const int64_t *bz_map,
     const int64_t *map_triplets, const int64_t num_map_triplets,
     const int64_t D_diag[3], const int64_t Q[3][3],
-    const int64_t bz_grid_type) {
+    const double reciprocal_lattice[3][3], const int64_t bz_grid_type) {
     RecgridConstBZGrid *bzgrid;
     int64_t i, j, num_ir;
 
@@ -237,6 +237,7 @@ int64_t gridsys_get_bz_triplets_at_q(
         bzgrid->D_diag[i] = D_diag[i];
         bzgrid->PS[i] = 0;
         for (j = 0; j < 3; j++) {
+            bzgrid->reclat[i][j] = reciprocal_lattice[i][j];
             bzgrid->Q[i][j] = Q[i][j];
         }
     }
