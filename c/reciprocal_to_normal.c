@@ -262,6 +262,9 @@ static double get_fc3_sum(const lapack_complex_double *e1,
 
     fc3_e0_e1 = (lapack_complex_double *)malloc(sizeof(lapack_complex_double) *
                                                 num_band);
+    for (i = 0; i < num_band; i++) {
+        fc3_e0_e1[i] = lapack_make_complex_double(0, 0);
+    }
 
     for (i = 0; i < num_band; i++) {
         for (j = 0; j < num_band; j++) {
