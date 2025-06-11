@@ -366,6 +366,10 @@ class ConductivityRTABase(ConductivityBase):
             else:
                 openmp_per_triplets = self._pp.openmp_per_triplets
 
+            if self._log_level > 0:
+                if not openmp_per_triplets:
+                    print("Multithreading over bands")
+
             if sigma is None:
                 phono3c.pp_collision(
                     collisions,

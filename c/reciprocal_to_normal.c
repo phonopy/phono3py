@@ -188,9 +188,9 @@ static void reciprocal_to_normal_squared_no_threading(
                 for (j = 0; j < num_band * num_band; j++) {
                     fc3_e0[j] = zero;
                 }
-                for (j = 0; j < num_band; j++) {
-                    for (k = 0; k < num_band; k++) {
-                        for (ll = 0; ll < num_band; ll++) {
+                for (j = 0; j < num_band; j++) {             // e0
+                    for (k = 0; k < num_band; k++) {         // e1
+                        for (ll = 0; ll < num_band; ll++) {  // e2
                             fc3_elem = phonoc_complex_prod(
                                 fc3_reciprocal[j * num_band * num_band +
                                                k * num_band + ll],
@@ -262,6 +262,9 @@ static double get_fc3_sum(const lapack_complex_double *e1,
 
     fc3_e0_e1 = (lapack_complex_double *)malloc(sizeof(lapack_complex_double) *
                                                 num_band);
+    for (i = 0; i < num_band; i++) {
+        fc3_e0_e1[i] = lapack_make_complex_double(0, 0);
+    }
 
     for (i = 0; i < num_band; i++) {
         for (j = 0; j < num_band; j++) {
