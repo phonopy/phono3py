@@ -171,7 +171,7 @@ static void reciprocal_to_normal_squared_no_threading(
     const lapack_complex_double *e0, const lapack_complex_double *e1,
     const lapack_complex_double *e2, const int64_t *band_indices,
     const int64_t num_band, const double cutoff_frequency) {
-    int64_t i, j, k, ll, bi_prev, num_atom, use_multithreaded_blas;
+    int64_t i, j, k, ll, bi_prev;
     lapack_complex_double *fc3_e0, fc3_elem, zero;
 
     zero = lapack_make_complex_double(0, 0);
