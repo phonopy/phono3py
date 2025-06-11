@@ -185,8 +185,9 @@ static void reciprocal_to_normal_squared_no_threading(
             freqs2[g_pos[i][2]] > cutoff_frequency) {
             if (bi_prev != g_pos[i][0]) {
                 bi_prev = g_pos[i][0];
-                memset(fc3_e0, zero,
-                       sizeof(lapack_complex_double) * num_band * num_band);
+                for (j = 0; j < num_band * num_band; j++) {
+                    fc3_e0[j] = zero;
+                }
                 for (j = 0; j < num_band; j++) {
                     for (k = 0; k < num_band; k++) {
                         for (ll = 0; ll < num_band; ll++) {
