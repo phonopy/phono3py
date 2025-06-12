@@ -53,12 +53,13 @@ int64_t ph3py_get_interaction(
     const _lapack_complex_double *eigenvectors, const int64_t (*triplets)[3],
     const int64_t num_triplets, const int64_t (*bz_grid_addresses)[3],
     const int64_t D_diag[3], const int64_t Q[3][3], const double *fc3,
-    const int64_t is_compact_fc3, const double (*svecs)[3],
-    const int64_t multi_dims[2], const int64_t (*multi)[2],
-    const double *masses, const int64_t *p2s_map, const int64_t *s2p_map,
-    const int64_t *band_indices, const int64_t symmetrize_fc3_q,
-    const int64_t make_r0_average, const char *all_shortest,
-    const double cutoff_frequency, const int64_t openmp_per_triplets);
+    const char *fc3_nonzero_indices, const int64_t is_compact_fc3,
+    const double (*svecs)[3], const int64_t multi_dims[2],
+    const int64_t (*multi)[2], const double *masses, const int64_t *p2s_map,
+    const int64_t *s2p_map, const int64_t *band_indices,
+    const int64_t symmetrize_fc3_q, const int64_t make_r0_average,
+    const char *all_shortest, const double cutoff_frequency,
+    const int64_t openmp_per_triplets);
 int64_t ph3py_get_pp_collision(
     double *imag_self_energy,
     const int64_t relative_grid_address[24][4][3], /* thm */
@@ -68,7 +69,8 @@ int64_t ph3py_get_pp_collision(
     const int64_t (*bz_grid_addresses)[3], /* thm */
     const int64_t *bz_map,                 /* thm */
     const int64_t bz_grid_type, const int64_t D_diag[3], const int64_t Q[3][3],
-    const double *fc3, const int64_t is_compact_fc3, const double (*svecs)[3],
+    const double *fc3, const char *fc3_nonzero_indices,
+    const int64_t is_compact_fc3, const double (*svecs)[3],
     const int64_t multi_dims[2], const int64_t (*multi)[2],
     const double *masses, const int64_t *p2s_map, const int64_t *s2p_map,
     const Larray *band_indices, const Darray *temperatures_THz,
@@ -81,13 +83,14 @@ int64_t ph3py_get_pp_collision_with_sigma(
     const int64_t (*triplets)[3], const int64_t num_triplets,
     const int64_t *triplet_weights, const int64_t (*bz_grid_addresses)[3],
     const int64_t D_diag[3], const int64_t Q[3][3], const double *fc3,
-    const int64_t is_compact_fc3, const double (*svecs)[3],
-    const int64_t multi_dims[2], const int64_t (*multi)[2],
-    const double *masses, const int64_t *p2s_map, const int64_t *s2p_map,
-    const Larray *band_indices, const Darray *temperatures_THz,
-    const int64_t is_NU, const int64_t symmetrize_fc3_q,
-    const int64_t make_r0_average, const char *all_shortest,
-    const double cutoff_frequency, const int64_t openmp_per_triplets);
+    const char *fc3_nonzero_indices, const int64_t is_compact_fc3,
+    const double (*svecs)[3], const int64_t multi_dims[2],
+    const int64_t (*multi)[2], const double *masses, const int64_t *p2s_map,
+    const int64_t *s2p_map, const Larray *band_indices,
+    const Darray *temperatures_THz, const int64_t is_NU,
+    const int64_t symmetrize_fc3_q, const int64_t make_r0_average,
+    const char *all_shortest, const double cutoff_frequency,
+    const int64_t openmp_per_triplets);
 void ph3py_get_imag_self_energy_at_bands_with_g(
     double *imag_self_energy, const Darray *fc3_normal_squared,
     const double *frequencies, const int64_t (*triplets)[3],
@@ -170,7 +173,8 @@ int64_t ph3py_get_BZ_triplets_at_q(
     int64_t (*triplets)[3], const int64_t grid_point,
     const int64_t (*bz_grid_addresses)[3], const int64_t *bz_map,
     const int64_t *map_triplets, const int64_t num_map_triplets,
-    const int64_t D_diag[3], const int64_t Q[3][3], const int64_t bz_grid_type);
+    const int64_t D_diag[3], const int64_t Q[3][3],
+    const double reciprocal_lattice[3][3], const int64_t bz_grid_type);
 int64_t ph3py_get_integration_weight(
     double *iw, char *iw_zero, const double *frequency_points,
     const int64_t num_band0, const int64_t relative_grid_address[24][4][3],

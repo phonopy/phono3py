@@ -262,7 +262,7 @@ static void get_BZ_triplets_at_q_type1(int64_t (*triplets)[3],
     int64_t bzgp[3], G[3];
     int64_t bz_adrs0[3], bz_adrs1[3], bz_adrs2[3];
     const int64_t *gp_map;
-    const int64_t(*bz_adrs)[3];
+    const int64_t (*bz_adrs)[3];
     double d2, min_d2, tolerance;
     double LQD_inv[3][3];
 
@@ -348,13 +348,14 @@ static void get_BZ_triplets_at_q_type2(int64_t (*triplets)[3],
     int64_t bzgp[3], G[3];
     int64_t bz_adrs0[3], bz_adrs1[3], bz_adrs2[3];
     const int64_t *gp_map;
-    const int64_t(*bz_adrs)[3];
+    const int64_t (*bz_adrs)[3];
     double d2, min_d2, tolerance;
     double LQD_inv[3][3];
 
     gp_map = bzgrid->gp_map;
     bz_adrs = bzgrid->addresses;
     get_LQD_inv(LQD_inv, bzgrid);
+
     /* This tolerance is used to be consistent to BZ reduction in bzgrid. */
     tolerance = recgrid_get_tolerance_for_BZ_reduction((RecgridBZGrid *)bzgrid);
 
@@ -425,8 +426,13 @@ static void get_LQD_inv(double LQD_inv[3][3],
     /* LQD^-1 */
     for (i = 0; i < 3; i++) {
         for (j = 0; j < 3; j++) {
+            LQD_inv[i][j] = 0;
+        }
+    }
+    for (i = 0; i < 3; i++) {
+        for (j = 0; j < 3; j++) {
             for (k = 0; k < 3; k++) {
-                LQD_inv[i][k] =
+                LQD_inv[i][k] +=
                     bzgrid->reclat[i][j] * bzgrid->Q[j][k] / bzgrid->D_diag[k];
             }
         }

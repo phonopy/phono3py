@@ -323,6 +323,49 @@ def si_pbesol_111_222_alm_cutoff(request) -> Phono3py:
 
 
 @pytest.fixture(scope="session")
+def si_pbesol_111_222_symfc_cutoff() -> Phono3py:
+    """Return Phono3py instance of Si 1x1x1.
+
+    * with symmetry
+    * full fc
+    * use symfc if available on test side
+    * cutoff=3
+
+    """
+    pytest.importorskip("symfc")
+
+    yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
+    return phono3py.load(
+        yaml_filename,
+        fc_calculator="symfc",
+        fc_calculator_options="cutoff = 3",
+        log_level=1,
+    )
+
+
+@pytest.fixture(scope="session")
+def si_pbesol_111_222_symfc_cutoff_compact_fc() -> Phono3py:
+    """Return Phono3py instance of Si 1x1x1.
+
+    * with symmetry
+    * compact fc
+    * use symfc if available on test side
+    * cutoff=3
+
+    """
+    pytest.importorskip("symfc")
+
+    yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
+    return phono3py.load(
+        yaml_filename,
+        fc_calculator="symfc",
+        fc_calculator_options="cutoff = 3",
+        is_compact_fc=True,
+        log_level=1,
+    )
+
+
+@pytest.fixture(scope="session")
 def si_pbesol_111_222_alm_cutoff_fc2(request) -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
@@ -521,6 +564,48 @@ def mgo_222rd_444rd() -> Phono3py:
     """
     yaml_filename = cwd / "phono3py_params_MgO-222rd-444rd.yaml.xz"
     return phono3py.load(yaml_filename, produce_fc=False, log_level=1)
+
+
+@pytest.fixture(scope="session")
+def mgo_222rd_444rd_symfc() -> Phono3py:
+    """Return Phono3py instance of MgO-2x2x2-4x4x4 RD-RD.
+
+    * with symmetry
+    * full fc
+    * use symfc if available on test side
+
+    """
+    pytest.importorskip("symfc")
+
+    yaml_filename = cwd / "phono3py_params_MgO-222rd-444rd.yaml.xz"
+    return phono3py.load(
+        yaml_filename,
+        is_compact_fc=False,
+        fc_calculator="symfc",
+        fc_calculator_options="|cutoff = 4",
+        log_level=1,
+    )
+
+
+@pytest.fixture(scope="session")
+def mgo_222rd_444rd_symfc_compact_fc() -> Phono3py:
+    """Return Phono3py instance of MgO-2x2x2-4x4x4 RD-RD.
+
+    * with symmetry
+    * full fc
+    * use symfc if available on test side
+
+    """
+    pytest.importorskip("symfc")
+
+    yaml_filename = cwd / "phono3py_params_MgO-222rd-444rd.yaml.xz"
+    return phono3py.load(
+        yaml_filename,
+        is_compact_fc=True,
+        fc_calculator="symfc",
+        fc_calculator_options="|cutoff = 4",
+        log_level=1,
+    )
 
 
 @pytest.fixture(scope="session")

@@ -218,8 +218,38 @@ def test_phonon_smat_fd_symfc(si_pbesol_111_222_fd_symfc: Phono3py):
 def test_phonon_smat_alm_cutoff(si_pbesol_111_222_alm_cutoff: Phono3py):
     """Test phonon smat and alm with Si PBEsol 1x1x1-2x2x2 cutoff."""
     ph = si_pbesol_111_222_alm_cutoff
+    assert ph.fc3 is not None
+    assert ph.fc2 is not None
     np.testing.assert_allclose(ph.fc3[0, 1, 7], 0, atol=1e-6, rtol=0)
     np.testing.assert_allclose(ph.fc2[0, 33], 0, atol=1e-6, rtol=0)
+
+
+def test_phonon_smat_symfc_cutoff(si_pbesol_111_222_symfc_cutoff: Phono3py):
+    """Test phonon smat and symfc with Si PBEsol 1x1x1-2x2x2 cutoff."""
+    ph = si_pbesol_111_222_symfc_cutoff
+    assert ph.fc3 is not None
+    assert ph.fc2 is not None
+    assert ph.fc3_nonzero_indices is not None
+    np.testing.assert_allclose(ph.fc3[0, 1, 7], 0, atol=1e-6, rtol=0)
+    np.testing.assert_allclose(ph.fc2[0, 33], 0, atol=1e-6, rtol=0)
+    assert ph.fc3.shape == (8, 8, 8, 3, 3, 3)
+    assert ph.fc3_nonzero_indices.shape == (8, 8, 8)
+    assert ph.fc3_nonzero_indices.sum() == 104
+
+
+def test_phonon_smat_symfc_cutoff_compact_fc(
+    si_pbesol_111_222_symfc_cutoff_compact_fc: Phono3py,
+):
+    """Test phonon smat and symfc with Si PBEsol 1x1x1-2x2x2 cutoff."""
+    ph = si_pbesol_111_222_symfc_cutoff_compact_fc
+    assert ph.fc3 is not None
+    assert ph.fc2 is not None
+    assert ph.fc3_nonzero_indices is not None
+    np.testing.assert_allclose(ph.fc3[0, 1, 7], 0, atol=1e-6, rtol=0)
+    np.testing.assert_allclose(ph.fc2[0, 33], 0, atol=1e-6, rtol=0)
+    assert ph.fc3.shape == (2, 8, 8, 3, 3, 3)
+    assert ph.fc3_nonzero_indices.shape == (2, 8, 8)
+    assert ph.fc3_nonzero_indices.sum() == 26
 
 
 def test_phonon_smat_alm_cutoff_fc2(si_pbesol_111_222_alm_cutoff_fc2: Phono3py):
