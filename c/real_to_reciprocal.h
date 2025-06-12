@@ -48,6 +48,7 @@ typedef struct {
     const int64_t *s2p_map;
     int64_t make_r0_average;
     const char *all_shortest;
+    const char *nonzero_indices;  // for compact fc3
 } AtomTriplets;
 
 void r2r_real_to_reciprocal(lapack_complex_double *fc3_reciprocal,

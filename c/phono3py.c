@@ -63,12 +63,13 @@ int64_t ph3py_get_interaction(
     const _lapack_complex_double *eigenvectors, const int64_t (*triplets)[3],
     const int64_t num_triplets, const int64_t (*bz_grid_addresses)[3],
     const int64_t D_diag[3], const int64_t Q[3][3], const double *fc3,
-    const int64_t is_compact_fc3, const double (*svecs)[3],
-    const int64_t multi_dims[2], const int64_t (*multiplicity)[2],
-    const double *masses, const int64_t *p2s_map, const int64_t *s2p_map,
-    const int64_t *band_indices, const int64_t symmetrize_fc3_q,
-    const int64_t make_r0_average, const char *all_shortest,
-    const double cutoff_frequency, const int64_t openmp_per_triplets) {
+    const char *fc3_nonzero_indices, const int64_t is_compact_fc3,
+    const double (*svecs)[3], const int64_t multi_dims[2],
+    const int64_t (*multiplicity)[2], const double *masses,
+    const int64_t *p2s_map, const int64_t *s2p_map, const int64_t *band_indices,
+    const int64_t symmetrize_fc3_q, const int64_t make_r0_average,
+    const char *all_shortest, const double cutoff_frequency,
+    const int64_t openmp_per_triplets) {
     RecgridConstBZGrid *bzgrid;
     AtomTriplets *atom_triplets;
     int64_t i, j;
@@ -102,6 +103,7 @@ int64_t ph3py_get_interaction(
     atom_triplets->s2p_map = s2p_map;
     atom_triplets->make_r0_average = make_r0_average;
     atom_triplets->all_shortest = all_shortest;
+    atom_triplets->nonzero_indices = fc3_nonzero_indices;
 
     itr_get_interaction(fc3_normal_squared, g_zero, frequencies,
                         (lapack_complex_double *)eigenvectors, triplets,
@@ -127,7 +129,8 @@ int64_t ph3py_get_pp_collision(
     const int64_t (*bz_grid_addresses)[3], /* thm */
     const int64_t *bz_map,                 /* thm */
     const int64_t bz_grid_type, const int64_t D_diag[3], const int64_t Q[3][3],
-    const double *fc3, const int64_t is_compact_fc3, const double (*svecs)[3],
+    const double *fc3, const char *fc3_nonzero_indices,
+    const int64_t is_compact_fc3, const double (*svecs)[3],
     const int64_t multi_dims[2], const int64_t (*multiplicity)[2],
     const double *masses, const int64_t *p2s_map, const int64_t *s2p_map,
     const Larray *band_indices, const Darray *temperatures_THz,
@@ -169,6 +172,7 @@ int64_t ph3py_get_pp_collision(
     atom_triplets->s2p_map = s2p_map;
     atom_triplets->make_r0_average = make_r0_average;
     atom_triplets->all_shortest = all_shortest;
+    atom_triplets->nonzero_indices = fc3_nonzero_indices;
 
     ppc_get_pp_collision(imag_self_energy, relative_grid_address, frequencies,
                          (lapack_complex_double *)eigenvectors, triplets,
@@ -192,13 +196,14 @@ int64_t ph3py_get_pp_collision_with_sigma(
     const int64_t (*triplets)[3], const int64_t num_triplets,
     const int64_t *triplet_weights, const int64_t (*bz_grid_addresses)[3],
     const int64_t D_diag[3], const int64_t Q[3][3], const double *fc3,
-    const int64_t is_compact_fc3, const double (*svecs)[3],
-    const int64_t multi_dims[2], const int64_t (*multiplicity)[2],
-    const double *masses, const int64_t *p2s_map, const int64_t *s2p_map,
-    const Larray *band_indices, const Darray *temperatures_THz,
-    const int64_t is_NU, const int64_t symmetrize_fc3_q,
-    const int64_t make_r0_average, const char *all_shortest,
-    const double cutoff_frequency, const int64_t openmp_per_triplets) {
+    const char *fc3_nonzero_indices, const int64_t is_compact_fc3,
+    const double (*svecs)[3], const int64_t multi_dims[2],
+    const int64_t (*multiplicity)[2], const double *masses,
+    const int64_t *p2s_map, const int64_t *s2p_map, const Larray *band_indices,
+    const Darray *temperatures_THz, const int64_t is_NU,
+    const int64_t symmetrize_fc3_q, const int64_t make_r0_average,
+    const char *all_shortest, const double cutoff_frequency,
+    const int64_t openmp_per_triplets) {
     RecgridConstBZGrid *bzgrid;
     AtomTriplets *atom_triplets;
     int64_t i, j;
@@ -232,6 +237,7 @@ int64_t ph3py_get_pp_collision_with_sigma(
     atom_triplets->s2p_map = s2p_map;
     atom_triplets->make_r0_average = make_r0_average;
     atom_triplets->all_shortest = all_shortest;
+    atom_triplets->nonzero_indices = fc3_nonzero_indices;
 
     ppc_get_pp_collision_with_sigma(
         imag_self_energy, sigma, sigma_cutoff, frequencies,
@@ -405,7 +411,7 @@ int64_t ph3py_get_BZ_triplets_at_q(
     const int64_t (*bz_grid_addresses)[3], const int64_t *bz_map,
     const int64_t *map_triplets, const int64_t num_map_triplets,
     const int64_t D_diag[3], const int64_t Q[3][3],
-    const int64_t bz_grid_type) {
+    const double reciprocal_lattice[3][3], const int64_t bz_grid_type) {
     RecgridConstBZGrid *bzgrid;
     int64_t i, j, num_ir;
 
@@ -423,6 +429,7 @@ int64_t ph3py_get_BZ_triplets_at_q(
         bzgrid->PS[i] = 0;
         for (j = 0; j < 3; j++) {
             bzgrid->Q[i][j] = Q[i][j];
+            bzgrid->reclat[i][j] = reciprocal_lattice[i][j];
         }
     }
     bzgrid->size = num_map_triplets;

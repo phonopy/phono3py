@@ -42,13 +42,13 @@ from phono3py.conductivity.direct_solution import (
     diagonalize_collision_matrix,
 )
 from phono3py.conductivity.wigner_base import (
-    ConductivityWignerMixIn,
+    ConductivityWignerComponents,
     get_conversion_factor_WTE,
 )
 from phono3py.phonon3.interaction import Interaction
 
 
-class ConductivityWignerLBTE(ConductivityWignerMixIn, ConductivityLBTEBase):
+class ConductivityWignerLBTE(ConductivityLBTEBase):
     """Class of Wigner lattice thermal conductivity under direct-solution.
 
     Authors
@@ -104,7 +104,6 @@ class ConductivityWignerLBTE(ConductivityWignerMixIn, ConductivityLBTEBase):
             solve_collective_phonon=solve_collective_phonon,
             is_reducible_collision_matrix=is_reducible_collision_matrix,
             is_kappa_star=is_kappa_star,
-            gv_delta_q=gv_delta_q,
             is_full_pp=is_full_pp,
             read_pp=read_pp,
             pp_filename=pp_filename,
@@ -114,9 +113,48 @@ class ConductivityWignerLBTE(ConductivityWignerMixIn, ConductivityLBTEBase):
             log_level=log_level,
             lang=lang,
         )
+
         self._conversion_factor_WTE = get_conversion_factor_WTE(
             self._pp.primitive.volume
         )
+
+        self._conductivity_components = ConductivityWignerComponents(
+            self._pp,
+            self._grid_points,
+            self._grid_weights,
+            self._point_operations,
+            self._rotations_cartesian,
+            temperatures=self._temperatures,
+            is_kappa_star=self._is_kappa_star,
+            gv_delta_q=gv_delta_q,
+            is_reducible_collision_matrix=self._is_reducible_collision_matrix,
+            log_level=self._log_level,
+        )
+
+    @property
+    def kappa_TOT_RTA(self):
+        """Return kappa."""
+        return self._kappa_TOT_RTA
+
+    @property
+    def kappa_P_RTA(self):
+        """Return kappa."""
+        return self._kappa_P_RTA
+
+    @property
+    def kappa_C(self):
+        """Return kappa."""
+        return self._kappa_C
+
+    @property
+    def mode_kappa_P_RTA(self):
+        """Return mode_kappa."""
+        return self._mode_kappa_P_RTA
+
+    @property
+    def mode_kappa_C(self):
+        """Return mode_kappa."""
+        return self._mode_kappa_C
 
     @property
     def kappa_TOT_exact(self):
@@ -132,6 +170,14 @@ class ConductivityWignerLBTE(ConductivityWignerMixIn, ConductivityLBTEBase):
     def mode_kappa_P_exact(self):
         """Return mode_kappa."""
         return self._mode_kappa_P_exact
+
+    def _set_cv(self, i_gp, i_data):
+        """Set cv for conductivity components."""
+        self._conductivity_components.set_heat_capacities(i_gp, i_data)
+
+    def _set_velocities(self, i_gp, i_data):
+        """Set velocities for conductivity components."""
+        self._conductivity_components.set_velocities(i_gp, i_data)
 
     def _allocate_local_values(self, num_grid_points):
         """Allocate grid point local arrays."""
@@ -163,12 +209,6 @@ class ConductivityWignerLBTE(ConductivityWignerMixIn, ConductivityLBTEBase):
         )
 
         complex_dtype = "c%d" % (np.dtype("double").itemsize * 2)
-        self._gv_operator = np.zeros(
-            (num_grid_points, num_band0, nat3, 3), order="C", dtype=complex_dtype
-        )
-        self._gv_operator_sum2 = np.zeros(
-            (num_grid_points, num_band0, nat3, 6), order="C", dtype=complex_dtype
-        )
         # one more index because we have off-diagonal terms (second index not
         # parallelized)
         self._mode_kappa_C = np.zeros(
@@ -279,7 +319,7 @@ class ConductivityWignerLBTE(ConductivityWignerMixIn, ConductivityLBTEBase):
 
     def _set_kappa_C_ir_colmat(self, i_sigma, i_temp):
         """Calculate coherence term of the thermal conductivity."""
-        N = self._num_sampling_grid_points
+        N = self.number_of_sampling_grid_points
         num_band = len(self._pp.primitive) * 3
         # num_ir_grid_points = len(self._ir_grid_points)
         THzToEv = get_physical_units().THzToEv
@@ -287,7 +327,7 @@ class ConductivityWignerLBTE(ConductivityWignerMixIn, ConductivityLBTEBase):
             # linewidths at qpoint i, sigma i_sigma, and temperature i_temp
             g = self._get_main_diagonal(i, i_sigma, i_temp) * 2.0  # linewidth (FWHM)
             frequencies = self._frequencies[gp]
-            cv = self._cv[i_temp, i, :]
+            cv = self._conductivity_components.mode_heat_capacities[i_temp, i, :]
             for s1 in range(num_band):
                 for s2 in range(num_band):
                     hbar_omega_eV_s1 = (
@@ -317,7 +357,7 @@ class ConductivityWignerLBTE(ConductivityWignerMixIn, ConductivityLBTEBase):
                             * (cv[s1] / hbar_omega_eV_s1 + cv[s2] / hbar_omega_eV_s2)
                         )
                         self._mode_kappa_C[i_sigma, i_temp, i, s1, s2] = (
-                            (self._gv_operator_sum2[i, s1, s2])
+                            (self._conductivity_components.gv_by_gv_operator[i, s1, s2])
                             * prefactor
                             * lorentzian_divided_by_hbar
                             * self._conversion_factor_WTE

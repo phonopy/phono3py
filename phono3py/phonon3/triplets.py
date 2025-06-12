@@ -42,7 +42,11 @@ from phonopy.structure.tetrahedron_method import TetrahedronMethod
 
 from phono3py.other.tetrahedron_method import get_tetrahedra_relative_grid_address
 from phono3py.phonon.func import gaussian
-from phono3py.phonon.grid import BZGrid, get_grid_point_from_address_py
+from phono3py.phonon.grid import (
+    BZGrid,
+    get_grid_point_from_address_py,
+    get_reduced_bases_and_tmat_inv,
+)
 
 if TYPE_CHECKING:
     from phono3py.phonon3.interaction import Interaction
@@ -327,14 +331,18 @@ def _get_BZ_triplets_at_q(bz_grid_index, bz_grid: BZGrid, map_triplets):
         weights[g] += 1
     ir_weights = np.extract(weights > 0, weights)
     triplets = -np.ones((len(ir_weights), 3), dtype="int64", order="C")
+    reduced_basis, tmat_inv_int = get_reduced_bases_and_tmat_inv(
+        bz_grid.reciprocal_lattice
+    )
     num_ir_ret = phono3c.BZ_triplets_at_q(
         triplets,
         bz_grid_index,
         bz_grid.addresses,
         bz_grid.gp_map,
         map_triplets,
-        np.array(bz_grid.D_diag, dtype="int64"),
-        bz_grid.Q,
+        bz_grid.D_diag,
+        np.array(tmat_inv_int @ bz_grid.Q, dtype="int64", order="C"),
+        reduced_basis,
         bz_grid.store_dense_gp_map * 1 + 1,
     )
 

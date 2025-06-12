@@ -42,6 +42,7 @@ from typing import Optional, Union
 
 import numpy as np
 import phonopy.cui.load_helper as load_helper
+from numpy.typing import NDArray
 from phonopy.harmonic.force_constants import show_drift_force_constants
 from phonopy.interface.calculator import get_calculator_physical_units
 from phonopy.physical_units import get_physical_units
@@ -392,12 +393,10 @@ def load_fc2_and_fc3(
 ):
     """Set force constants."""
     if fc3_filename is not None or pathlib.Path("fc3.hdf5").exists():
-        fc3 = _load_fc3(ph3py, fc3_filename=fc3_filename, log_level=log_level)
-        ph3py.fc3 = fc3
+        _load_fc3(ph3py, fc3_filename=fc3_filename, log_level=log_level)
 
     if fc2_filename is not None or pathlib.Path("fc2.hdf5").exists():
-        fc2 = _load_fc2(ph3py, fc2_filename=fc2_filename, log_level=log_level)
-        ph3py.fc2 = fc2
+        _load_fc2(ph3py, fc2_filename=fc2_filename, log_level=log_level)
 
 
 def load_dataset_and_phonon_dataset(
@@ -493,30 +492,40 @@ def compute_force_constants_from_datasets(
 
 def _load_fc3(
     ph3py: Phono3py,
-    fc3_filename: Optional[os.PathLike] = None,
+    fc3_filename: str | os.PathLike | None = None,
     log_level: int = 0,
-) -> np.ndarray:
+):
     p2s_map = ph3py.primitive.p2s_map
     if fc3_filename is None:
         _fc3_filename = "fc3.hdf5"
     else:
         _fc3_filename = fc3_filename
     fc3 = read_fc3_from_hdf5(filename=_fc3_filename, p2s_map=p2s_map)
-    _check_fc3_shape(ph3py, fc3, filename=_fc3_filename)
-    if log_level:
-        print(f'fc3 was read from "{_fc3_filename}".')
-    return fc3
+    if isinstance(fc3, dict):
+        # fc3 is read from a file with type-1 format.
+        assert "fc3" in fc3
+        _check_fc3_shape(ph3py, fc3["fc3"], filename=_fc3_filename)
+        ph3py.fc3 = fc3["fc3"]
+        assert "fc3_nonzero_indices" in fc3
+        ph3py.fc3_nonzero_indices = fc3["fc3_nonzero_indices"]
+        if log_level:
+            print(f'fc3 and fc3 nonzero indices were read from "{_fc3_filename}".')
+    else:
+        _check_fc3_shape(ph3py, fc3, filename=_fc3_filename)
+        ph3py.fc3 = fc3
+        if log_level:
+            print(f'fc3 was read from "{_fc3_filename}".')
 
 
 def _select_and_load_dataset(
     ph3py: Phono3py,
-    ph3py_yaml: Optional[Phono3pyYaml] = None,
-    forces_fc3_filename: Optional[Union[os.PathLike, Sequence]] = None,
-    phono3py_yaml_filename: Optional[os.PathLike] = None,
-    cutoff_pair_distance: Optional[float] = None,
-    calculator: Optional[str] = None,
+    ph3py_yaml: Phono3pyYaml | None = None,
+    forces_fc3_filename: os.PathLike | Sequence | None = None,
+    phono3py_yaml_filename: os.PathLike | None = None,
+    cutoff_pair_distance: float | None = None,
+    calculator: str | None = None,
     log_level: int = 0,
-) -> Optional[dict]:
+) -> dict | None:
     dataset = None
     if (
         ph3py_yaml is not None
@@ -563,8 +572,8 @@ def _select_and_load_dataset(
 
 
 def _load_fc2(
-    ph3py: Phono3py, fc2_filename: Optional[os.PathLike] = None, log_level: int = 0
-) -> np.ndarray:
+    ph3py: Phono3py, fc2_filename: os.PathLike | None = None, log_level: int = 0
+):
     phonon_p2s_map = ph3py.phonon_primitive.p2s_map
     if fc2_filename is None:
         _fc2_filename = "fc2.hdf5"
@@ -574,7 +583,7 @@ def _load_fc2(
     _check_fc2_shape(ph3py, fc2, filename=_fc2_filename)
     if log_level:
         print(f'fc2 was read from "{_fc2_filename}".')
-    return fc2
+    ph3py.fc2 = fc2
 
 
 def _select_and_load_phonon_dataset(
@@ -669,7 +678,7 @@ def _get_dataset_for_fc2(
     return dataset
 
 
-def _check_fc2_shape(ph3py: Phono3py, fc2, filename="fc2.hdf5"):
+def _check_fc2_shape(ph3py: Phono3py, fc2, filename: str | os.PathLike = "fc2.hdf5"):
     if ph3py.phonon_supercell_matrix is None:
         smat = ph3py.supercell_matrix
     else:
@@ -677,7 +686,9 @@ def _check_fc2_shape(ph3py: Phono3py, fc2, filename="fc2.hdf5"):
     _check_fc_shape(ph3py, fc2, smat, filename)
 
 
-def _check_fc3_shape(ph3py: Phono3py, fc3, filename="fc3.hdf5"):
+def _check_fc3_shape(
+    ph3py: Phono3py, fc3: NDArray, filename: str | os.PathLike = "fc3.hdf5"
+):
     smat = ph3py.supercell_matrix
     _check_fc_shape(ph3py, fc3, smat, filename)
 

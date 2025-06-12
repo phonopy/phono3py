@@ -193,20 +193,11 @@ double recgrid_get_tolerance_for_BZ_reduction(const RecgridBZGrid *bzgrid) {
     int64_t i, j;
     double tolerance;
     double length[3];
-    double reclatQ[3][3];
-
-    for (i = 0; i < 3; i++) {
-        for (j = 0; j < 3; j++) {
-            reclatQ[i][j] = bzgrid->reclat[i][0] * bzgrid->Q[0][j] +
-                            bzgrid->reclat[i][1] * bzgrid->Q[1][j] +
-                            bzgrid->reclat[i][2] * bzgrid->Q[2][j];
-        }
-    }
 
     for (i = 0; i < 3; i++) {
         length[i] = 0;
         for (j = 0; j < 3; j++) {
-            length[i] += reclatQ[j][i] * reclatQ[j][i];
+            length[i] += bzgrid->reclat[j][i] * bzgrid->reclat[j][i];
         }
         length[i] /= bzgrid->D_diag[i] * bzgrid->D_diag[i];
     }
@@ -233,8 +224,8 @@ RecgridMats *recgrid_alloc_RotMats(const int64_t size) {
 
     rotmats->size = size;
     if (size > 0) {
-        if ((rotmats->mat = (int64_t(*)[3][3])malloc(sizeof(int64_t[3][3]) *
-                                                     size)) == NULL) {
+        if ((rotmats->mat = (int64_t (*)[3][3])malloc(sizeof(int64_t[3][3]) *
+                                                      size)) == NULL) {
             warning_print("Memory could not be allocated ");
             warning_print("(RecgridMats, line %d, %s).\n", __LINE__, __FILE__);
             free(rotmats);
