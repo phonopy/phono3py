@@ -452,16 +452,17 @@ def _read_dataset_fc3(
 
 def run_pypolymlp_to_compute_forces(
     ph3py: Phono3py,
-    mlp_params: Union[str, dict, PypolymlpParams],
-    displacement_distance: Optional[float] = None,
-    number_of_snapshots: Optional[int] = None,
-    random_seed: Optional[int] = None,
+    mlp_params: str | dict | PypolymlpParams | None = None,
+    displacement_distance: float | None = None,
+    number_of_snapshots: int | None = None,
+    number_estimation_factor: int | None = None,
+    random_seed: int | None = None,
     prepare_dataset: bool = False,
-    fc_calculator: Optional[str] = None,
-    fc_calculator_options: Optional[str] = None,
-    cutoff_pair_distance: Optional[float] = None,
-    symfc_memory_size: Optional[float] = None,
-    mlp_filename: Optional[str] = None,
+    fc_calculator: str | None = None,
+    fc_calculator_options: str | None = None,
+    cutoff_pair_distance: float | None = None,
+    symfc_memory_size: float | None = None,
+    mlp_filename: str | None = None,
     log_level: int = 0,
 ):
     """Run pypolymlp to compute forces."""
@@ -557,6 +558,7 @@ def run_pypolymlp_to_compute_forces(
             is_plusminus=True,
             number_of_snapshots=number_of_snapshots,
             random_seed=random_seed,
+            number_estimation_factor=number_estimation_factor,
         )
 
         if log_level:

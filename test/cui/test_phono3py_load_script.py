@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import os
 import pathlib
+import tempfile
 from collections.abc import Sequence
 from dataclasses import dataclass, fields
-from typing import Optional, Union
 
 import h5py
 import numpy as np
@@ -16,32 +16,32 @@ import phono3py
 from phono3py.cui.phono3py_script import main
 
 cwd = pathlib.Path(__file__).parent
-cwd_called = pathlib.Path.cwd()
 
 
 @dataclass
 class MockArgs:
     """Mock args of ArgumentParser."""
 
-    cell_filename: Optional[str] = None
-    conf_filename: Optional[os.PathLike] = None
-    fc_calculator: Optional[str] = None
-    fc_calculator_options: Optional[str] = None
+    cell_filename: str | None = None
+    conf_filename: os.PathLike | None = None
+    fc_calculator: str | None = None
+    fc_calculator_options: str | None = None
     fc_symmetry: bool = True
-    filename: Optional[Sequence[os.PathLike]] = None
+    filename: Sequence[os.PathLike] | None = None
     force_sets_mode: bool = False
     force_sets_to_forces_fc2_mode: bool = False
     input_filename = None
     input_output_filename = None
-    log_level: Optional[int] = None
-    is_bterta: Optional[bool] = None
-    mesh_numbers: Optional[Sequence] = None
-    mlp_params: Optional[str] = None
+    log_level: int | None = None
+    is_bterta: bool | None = None
+    mesh_numbers: Sequence | None = None
+    mlp_params: str | None = None
+    rd_number_estimation_factor: float | None = None
     output_filename = None
-    output_yaml_filename: Optional[os.PathLike] = None
-    random_displacements: Optional[Union[int, str]] = None
+    output_yaml_filename: os.PathLike | None = None
+    random_displacements: int | str | None = None
     show_num_triplets: bool = False
-    temperatures: Optional[Sequence] = None
+    temperatures: Sequence | None = None
     use_pypolymlp: bool = False
     write_grid_points: bool = False
 
@@ -56,36 +56,44 @@ class MockArgs:
 
 def test_phono3py_load():
     """Test phono3py-load script."""
-    # Check sys.exit(0)
-    argparse_control = _get_phono3py_load_args(
-        cwd / ".." / "phono3py_params_Si-111-222.yaml",
-    )
-    with pytest.raises(SystemExit) as excinfo:
-        main(**argparse_control)
-    assert excinfo.value.code == 0
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
 
-    argparse_control = _get_phono3py_load_args(
-        cwd_called / "phono3py.yaml",
-        is_bterta=True,
-        temperatures=[
-            "300",
-        ],
-        mesh_numbers=["5", "5", "5"],
-    )
-    with pytest.raises(SystemExit) as excinfo:
-        main(**argparse_control)
-    assert excinfo.value.code == 0
+        try:
+            # Check sys.exit(0)
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_Si-111-222.yaml",
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
 
-    # Clean files created by phono3py-load script.
-    for created_filename in (
-        "phono3py.yaml",
-        "fc2.hdf5",
-        "fc3.hdf5",
-        "kappa-m555.hdf5",
-    ):
-        file_path = cwd_called / created_filename
-        if file_path.exists():
-            file_path.unlink()
+            argparse_control = _get_phono3py_load_args(
+                "phono3py.yaml",
+                is_bterta=True,
+                temperatures=[
+                    "300",
+                ],
+                mesh_numbers=["5", "5", "5"],
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            # Clean files created by phono3py-load script.
+            for created_filename in (
+                "phono3py.yaml",
+                "fc2.hdf5",
+                "fc3.hdf5",
+                "kappa-m555.hdf5",
+            ):
+                file_path = pathlib.Path(created_filename)
+                if file_path.exists():
+                    file_path.unlink()
+
+        finally:
+            os.chdir(original_cwd)
 
 
 @pytest.mark.parametrize(
@@ -108,59 +116,76 @@ def test_phono3py_load_with_typeII_dataset(
 
     """
     pytest.importorskip("symfc")
-    argparse_control = _get_phono3py_load_args(
-        cwd / ".." / "phono3py_params-Si111-rd.yaml.xz",
-        load_phono3py_yaml=load_phono3py_yaml,
-        fc_calculator=fc_calculator,
-        fc_calculator_options=fc_calculator_options,
-    )
-    with pytest.raises(SystemExit) as excinfo:
-        main(**argparse_control)
-    assert excinfo.value.code == 0
 
-    # Clean files created by phono3py-load script.
-    for created_filename in ("phono3py.yaml", "fc2.hdf5", "fc3.hdf5"):
-        file_path = pathlib.Path(cwd_called / created_filename)
-        if file_path.exists():
-            if created_filename == "fc3.hdf5":
-                with h5py.File(file_path, "r") as f:
-                    if fc_calculator_options is None:
-                        assert "fc3_nonzero_indices" not in f
-                    else:
-                        assert "fc3_nonzero_indices" in f
-                        assert "fc3_cutoff" in f
-                        assert f["fc3_cutoff"][()] == pytest.approx(4.0)
-            file_path.unlink()
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params-Si111-rd.yaml.xz",
+                load_phono3py_yaml=load_phono3py_yaml,
+                fc_calculator=fc_calculator,
+                fc_calculator_options=fc_calculator_options,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            # Clean files created by phono3py-load script.
+            for created_filename in ("phono3py.yaml", "fc2.hdf5", "fc3.hdf5"):
+                file_path = pathlib.Path(created_filename)
+                if file_path.exists():
+                    if created_filename == "fc3.hdf5":
+                        with h5py.File(file_path, "r") as f:
+                            if fc_calculator_options is None:
+                                assert "fc3_nonzero_indices" not in f
+                            else:
+                                assert "fc3_nonzero_indices" in f
+                                assert "fc3_cutoff" in f
+                                assert f["fc3_cutoff"][()] == pytest.approx(4.0)
+                    file_path.unlink()
+
+        finally:
+            os.chdir(original_cwd)
 
 
 @pytest.mark.parametrize("load_phono3py_yaml", [True, False])
 def test_phono3py_with_QE_calculator(load_phono3py_yaml):
     """Test phono3py-load script with QE calculator."""
-    argparse_control = _get_phono3py_load_args(
-        cwd / "phono3py_params-qe-Si222.yaml.xz",
-        load_phono3py_yaml=load_phono3py_yaml,
-        is_bterta=True,
-        temperatures=[
-            "300",
-        ],
-        mesh_numbers=["11", "11", "11"],
-    )
-    with pytest.raises(SystemExit):
-        main(**argparse_control)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
 
-    with h5py.File(cwd_called / "kappa-m111111.hdf5", "r") as f:
-        np.testing.assert_almost_equal(f["kappa"][0, 0], 118.93, decimal=1)
+        try:
+            argparse_control = _get_phono3py_load_args(
+                cwd / "phono3py_params-qe-Si222.yaml.xz",
+                load_phono3py_yaml=load_phono3py_yaml,
+                is_bterta=True,
+                temperatures=[
+                    "300",
+                ],
+                mesh_numbers=["11", "11", "11"],
+            )
+            with pytest.raises(SystemExit):
+                main(**argparse_control)
 
-    # Clean files created by phono3py/phono3py-load script.
-    for created_filename in (
-        "phono3py.yaml",
-        "fc2.hdf5",
-        "fc3.hdf5",
-        "kappa-m111111.hdf5",
-    ):
-        file_path = pathlib.Path(cwd_called / created_filename)
-        if file_path.exists():
-            file_path.unlink()
+            with h5py.File("kappa-m111111.hdf5", "r") as f:
+                np.testing.assert_almost_equal(f["kappa"][0, 0], 118.93, decimal=1)
+
+            # Clean files created by phono3py/phono3py-load script.
+            for created_filename in (
+                "phono3py.yaml",
+                "fc2.hdf5",
+                "fc3.hdf5",
+                "kappa-m111111.hdf5",
+            ):
+                file_path = pathlib.Path(created_filename)
+                if file_path.exists():
+                    file_path.unlink()
+
+        finally:
+            os.chdir(original_cwd)
 
 
 def test_phono3py_load_with_pypolymlp_si():
@@ -173,56 +198,64 @@ def test_phono3py_load_with_pypolymlp_si():
     pytest.importorskip("pypolymlp", minversion="0.9.2")
     pytest.importorskip("symfc")
 
-    # Create fc2.hdf5
-    argparse_control = _get_phono3py_load_args(
-        cwd / ".." / "phono3py_params_Si-111-222-rd.yaml.xz",
-        fc_calculator="symfc",
-    )
-    with pytest.raises(SystemExit) as excinfo:
-        main(**argparse_control)
-    assert excinfo.value.code == 0
-    for created_filename in ("phono3py.yaml", "fc2.hdf5", "fc3.hdf5"):
-        file_path = pathlib.Path(cwd_called / created_filename)
-        assert file_path.exists()
-    pathlib.Path(cwd_called / "fc3.hdf5").unlink()
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
 
-    # Create MLP (polymlp.yaml)
-    argparse_control = _get_phono3py_load_args(
-        cwd / ".." / "phono3py_params_Si-111-222-rd.yaml.xz",
-        use_pypolymlp=True,
-    )
-    with pytest.raises(SystemExit) as excinfo:
-        main(**argparse_control)
-    assert excinfo.value.code == 0
-    for created_filename in ("phono3py.yaml", "polymlp.yaml"):
-        file_path = pathlib.Path(cwd_called / created_filename)
-        assert file_path.exists()
+        try:
+            # Create fc2.hdf5
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_Si-111-222-rd.yaml.xz",
+                fc_calculator="symfc",
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+            for created_filename in ("phono3py.yaml", "fc2.hdf5", "fc3.hdf5"):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+            pathlib.Path("fc3.hdf5").unlink()
 
-    # Create phono3py_mlp_eval_dataset.yaml
-    argparse_control = _get_phono3py_load_args(
-        cwd_called / "phono3py.yaml",
-        fc_calculator="symfc",
-        random_displacements="auto",
-        use_pypolymlp=True,
-    )
+            # Create MLP (polymlp.yaml)
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_Si-111-222-rd.yaml.xz",
+                use_pypolymlp=True,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+            for created_filename in ("phono3py.yaml", "polymlp.yaml"):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
 
-    with pytest.raises(SystemExit) as excinfo:
-        main(**argparse_control)
-    assert excinfo.value.code == 0
+            # Create phono3py_mlp_eval_dataset.yaml
+            argparse_control = _get_phono3py_load_args(
+                "phono3py.yaml",
+                fc_calculator="symfc",
+                random_displacements="auto",
+                use_pypolymlp=True,
+            )
 
-    ph3 = phono3py.load(cwd_called / "phono3py_mlp_eval_dataset.yaml")
-    assert len(ph3.displacements) == 4
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
 
-    for created_filename in (
-        "phono3py.yaml",
-        "fc2.hdf5",
-        "fc3.hdf5",
-        "polymlp.yaml",
-        "phono3py_mlp_eval_dataset.yaml",
-    ):
-        file_path = pathlib.Path(cwd_called / created_filename)
-        assert file_path.exists()
-        file_path.unlink()
+            ph3 = phono3py.load("phono3py_mlp_eval_dataset.yaml")
+            assert len(ph3.displacements) == 8
+
+            for created_filename in (
+                "phono3py.yaml",
+                "fc2.hdf5",
+                "fc3.hdf5",
+                "polymlp.yaml",
+                "phono3py_mlp_eval_dataset.yaml",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+        finally:
+            os.chdir(original_cwd)
 
 
 def test_phono3py_load_with_pypolymlp_nacl():
@@ -235,109 +268,152 @@ def test_phono3py_load_with_pypolymlp_nacl():
     pytest.importorskip("pypolymlp", minversion="0.9.2")
     pytest.importorskip("symfc")
 
-    # Stage1 (preparation)
-    argparse_control = _get_phono3py_load_args(
-        cwd / ".." / "phono3py_params_MgO-222rd-444rd.yaml.xz",
-        mlp_params="cutoff=4.0,gtinv_maxl=4 4,max_p=1,gtinv_order=2",
-        fc_calculator="symfc",
-        random_displacements="auto",
-        use_pypolymlp=True,
-    )
-    with pytest.raises(SystemExit) as excinfo:
-        main(**argparse_control)
-    assert excinfo.value.code == 0
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
 
-    ph3 = phono3py.load(cwd_called / "phono3py_mlp_eval_dataset.yaml")
-    assert len(ph3.displacements) == 16
+        try:
+            # Stage1 (preparation)
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_MgO-222rd-444rd.yaml.xz",
+                mlp_params="cutoff=4.0,gtinv_maxl=4 4,max_p=1,gtinv_order=2",
+                fc_calculator="symfc",
+                random_displacements="auto",
+                use_pypolymlp=True,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
 
-    for created_filename in (
-        "phono3py.yaml",
-        "fc2.hdf5",
-        "fc3.hdf5",
-        "polymlp.yaml",
-        "phono3py_mlp_eval_dataset.yaml",
-    ):
-        file_path = pathlib.Path(cwd_called / created_filename)
-        assert file_path.exists()
+            ph3 = phono3py.load("phono3py_mlp_eval_dataset.yaml")
+            assert len(ph3.displacements) == 32
 
-    for created_filename in (
-        "fc3.hdf5",
-        "phono3py_mlp_eval_dataset.yaml",
-    ):
-        file_path = pathlib.Path(cwd_called / created_filename)
-        assert file_path.exists()
-        file_path.unlink()
+            for created_filename in (
+                "phono3py.yaml",
+                "fc2.hdf5",
+                "fc3.hdf5",
+                "polymlp.yaml",
+                "phono3py_mlp_eval_dataset.yaml",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
 
-    # Stage2 (cutoff test)
-    argparse_control = _get_phono3py_load_args(
-        cwd_called / "phono3py.yaml",
-        fc_calculator="symfc",
-        fc_calculator_options="|cutoff=4.0",
-        random_displacements="auto",
-        use_pypolymlp=True,
-    )
-    with pytest.raises(SystemExit) as excinfo:
-        main(**argparse_control)
-    assert excinfo.value.code == 0
+            for created_filename in (
+                "fc3.hdf5",
+                "phono3py_mlp_eval_dataset.yaml",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
 
-    ph3 = phono3py.load(cwd_called / "phono3py_mlp_eval_dataset.yaml")
-    assert len(ph3.displacements) == 4
+            # Stage2 (cutoff test)
+            argparse_control = _get_phono3py_load_args(
+                "phono3py.yaml",
+                fc_calculator="symfc",
+                fc_calculator_options="|cutoff=4.0",
+                random_displacements="auto",
+                use_pypolymlp=True,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
 
-    for created_filename in (
-        "phono3py.yaml",
-        "fc2.hdf5",
-        "fc3.hdf5",
-        "polymlp.yaml",
-        "phono3py_mlp_eval_dataset.yaml",
-    ):
-        file_path = pathlib.Path(cwd_called / created_filename)
-        assert file_path.exists()
+            ph3 = phono3py.load("phono3py_mlp_eval_dataset.yaml")
+            assert len(ph3.displacements) == 8
 
-    for created_filename in (
-        "fc3.hdf5",
-        "phono3py_mlp_eval_dataset.yaml",
-    ):
-        file_path = pathlib.Path(cwd_called / created_filename)
-        assert file_path.exists()
-        file_path.unlink()
+            for created_filename in (
+                "phono3py.yaml",
+                "fc2.hdf5",
+                "fc3.hdf5",
+                "polymlp.yaml",
+                "phono3py_mlp_eval_dataset.yaml",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
 
-    # Stage3 (memsize test)
-    argparse_control = _get_phono3py_load_args(
-        cwd_called / "phono3py.yaml",
-        fc_calculator="symfc",
-        fc_calculator_options="|memsize=0.05",
-        random_displacements="auto",
-        use_pypolymlp=True,
-    )
-    with pytest.raises(SystemExit) as excinfo:
-        main(**argparse_control)
-    assert excinfo.value.code == 0
+            for created_filename in (
+                "fc3.hdf5",
+                "phono3py_mlp_eval_dataset.yaml",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
 
-    ph3 = phono3py.load(cwd_called / "phono3py_mlp_eval_dataset.yaml")
-    assert len(ph3.displacements) == 8
+            # Stage3 (memsize test)
+            argparse_control = _get_phono3py_load_args(
+                "phono3py.yaml",
+                fc_calculator="symfc",
+                fc_calculator_options="|memsize=0.05",
+                random_displacements="auto",
+                use_pypolymlp=True,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
 
-    for created_filename in (
-        "phono3py.yaml",
-        "fc2.hdf5",
-        "fc3.hdf5",
-        "polymlp.yaml",
-        "phono3py_mlp_eval_dataset.yaml",
-    ):
-        file_path = pathlib.Path(cwd_called / created_filename)
-        assert file_path.exists()
-        file_path.unlink()
+            ph3 = phono3py.load("phono3py_mlp_eval_dataset.yaml")
+            assert len(ph3.displacements) == 16
+
+            for created_filename in (
+                "phono3py.yaml",
+                "fc2.hdf5",
+                "fc3.hdf5",
+                "polymlp.yaml",
+                "phono3py_mlp_eval_dataset.yaml",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+
+            for created_filename in (
+                "fc3.hdf5",
+                "phono3py_mlp_eval_dataset.yaml",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            # Stage4 (number_estimation_factor)
+            argparse_control = _get_phono3py_load_args(
+                "phono3py.yaml",
+                fc_calculator="symfc",
+                fc_calculator_options="|cutoff=4.0",
+                random_displacements="auto",
+                rd_number_estimation_factor=2.0,
+                use_pypolymlp=True,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            ph3 = phono3py.load("phono3py_mlp_eval_dataset.yaml")
+            assert len(ph3.displacements) == 4
+
+            for created_filename in (
+                "phono3py.yaml",
+                "fc2.hdf5",
+                "fc3.hdf5",
+                "polymlp.yaml",
+                "phono3py_mlp_eval_dataset.yaml",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+        finally:
+            os.chdir(original_cwd)
 
 
 def _get_phono3py_load_args(
-    phono3py_yaml_filepath: Union[str, pathlib.Path],
-    fc_calculator: Optional[str] = None,
-    fc_calculator_options: Optional[str] = None,
+    phono3py_yaml_filepath: str | pathlib.Path,
+    fc_calculator: str | None = None,
+    fc_calculator_options: str | None = None,
     load_phono3py_yaml: bool = True,
     is_bterta: bool = False,
-    mesh_numbers: Optional[Sequence] = None,
-    mlp_params: Optional[str] = None,
-    random_displacements: Optional[Union[int, str]] = None,
-    temperatures: Optional[Sequence] = None,
+    mesh_numbers: Sequence | None = None,
+    mlp_params: str | None = None,
+    rd_number_estimation_factor: float | None = None,
+    random_displacements: int | str | None = None,
+    temperatures: Sequence | None = None,
     use_pypolymlp: bool = False,
 ):
     # Mock of ArgumentParser.args.
@@ -350,6 +426,7 @@ def _get_phono3py_load_args(
             log_level=1,
             mesh_numbers=mesh_numbers,
             mlp_params=mlp_params,
+            rd_number_estimation_factor=rd_number_estimation_factor,
             random_displacements=random_displacements,
             temperatures=temperatures,
             use_pypolymlp=use_pypolymlp,
@@ -364,6 +441,7 @@ def _get_phono3py_load_args(
             is_bterta=is_bterta,
             mesh_numbers=mesh_numbers,
             mlp_params=mlp_params,
+            rd_number_estimation_factor=rd_number_estimation_factor,
             random_displacements=random_displacements,
             temperatures=temperatures,
             use_pypolymlp=use_pypolymlp,

@@ -108,6 +108,7 @@ def create_phono3py_supercells(
         is_diagonal=settings.is_diagonal_displacement,
         number_of_snapshots=settings.random_displacements,
         random_seed=settings.random_seed,
+        number_estimation_factor=settings.rd_number_estimation_factor,
     )
 
     if (
