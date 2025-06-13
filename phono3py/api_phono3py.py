@@ -1253,13 +1253,14 @@ class Phono3py:
 
     def generate_displacements(
         self,
-        distance: Optional[float] = None,
-        cutoff_pair_distance: Optional[float] = None,
-        is_plusminus: Union[bool, str] = "auto",
+        distance: float | None = None,
+        cutoff_pair_distance: float | None = None,
+        is_plusminus: bool | str = "auto",
         is_diagonal: bool = True,
-        number_of_snapshots: Optional[Union[int, Literal["auto"]]] = None,
-        random_seed: Optional[int] = None,
-        max_distance: Optional[float] = None,
+        number_of_snapshots: int | Literal["auto"] | None = None,
+        random_seed: int | None = None,
+        max_distance: float | None = None,
+        number_estimation_factor: float | None = None,
     ):
         """Generate displacement dataset in supercell for fc3.
 
@@ -1307,7 +1308,7 @@ class Phono3py:
             pair of displacements is considered to calculate fc3 or not. Default
             is None, which means cutoff is not used.
         is_plusminus : True, False, or 'auto', optional
-            With True, atomis are displaced in both positive and negative
+            With True, atoms are displaced in both positive and negative
             directions. With False, only one direction. With 'auto', mostly
             equivalent to is_plusminus=True, but only one direction is chosen
             when the displacements in both directions are symmetrically
@@ -1328,9 +1329,15 @@ class Phono3py:
         random_seed : int or None, optional
             Random seed for random displacements generation. Default is None.
         max_distance : float or None, optional
-            In random direction and distance displacements generation, this
-            value is specified. In random direction and random distance
-            displacements generation, this value is used as `max_distance`.
+            When specified, displacements are generated with random direction
+            and random distance. This value serves as the maximum distance,
+            while the `distance` parameter sets the minimum distance. The
+            displacement distance is randomly sampled from a uniform
+            distribution between these two bounds.
+        number_estimation_factor : float, optional
+            This factor multiplies the number of snapshots estimated by symfc
+            when `number_of_snapshots` is set to "auto". Default is None, which
+            sets this factor to 8 when `max_distance` is specified, otherwise 4.
 
         """
         if distance is None:
@@ -1346,14 +1353,19 @@ class Phono3py:
                     options = None
                 else:
                     options = {"cutoff": {3: cutoff_pair_distance}}
-                _number_of_snapshots = (
-                    SymfcFCSolver(
-                        self._supercell,
-                        symmetry=self._symmetry,
-                        options=options,
-                    ).estimate_numbers_of_supercells(orders=[3])[3]
-                    * 2
-                )
+                _number_of_snapshots = SymfcFCSolver(
+                    self._supercell,
+                    symmetry=self._symmetry,
+                    options=options,
+                ).estimate_numbers_of_supercells(orders=[3])[3]
+                if number_estimation_factor is None:
+                    if max_distance is None:
+                        _number_of_snapshots *= 4
+                    else:
+                        _number_of_snapshots *= 8
+                else:
+                    _number_of_snapshots *= number_estimation_factor
+                    _number_of_snapshots = int(_number_of_snapshots)
             else:
                 _number_of_snapshots = number_of_snapshots
             self._dataset = self._generate_random_displacements(
@@ -2733,8 +2745,8 @@ class Phono3py:
         number_of_atoms: int,
         distance: float = 0.03,
         is_plusminus: bool = False,
-        random_seed: Optional[int] = None,
-        max_distance: Optional[float] = None,
+        random_seed: int | None = None,
+        max_distance: float | None = None,
     ):
         if random_seed is not None and random_seed >= 0 and random_seed < 2**32:
             _random_seed = random_seed

@@ -1196,6 +1196,7 @@ def main(**argparse_control):
             mlp_params=settings.mlp_params,
             displacement_distance=settings.displacement_distance,
             number_of_snapshots=settings.random_displacements,
+            number_estimation_factor=settings.rd_number_estimation_factor,
             random_seed=settings.random_seed,
             fc_calculator=settings.fc_calculator,
             fc_calculator_options=settings.fc_calculator_options,
