@@ -207,21 +207,19 @@ static void get_fc3_e0(lapack_complex_double *fc3_e0,
                        const lapack_complex_double *fc3_reciprocal,
                        const lapack_complex_double *e0,
                        const int64_t band_index_0, const int64_t num_band) {
-    int64_t j, k, ll;
+    int64_t j, k;
     lapack_complex_double fc3_elem;
 
     for (j = 0; j < num_band; j++) {
-        for (k = 0; k < num_band; k++) {
-            for (ll = 0; ll < num_band; ll++) {
-                fc3_elem = phonoc_complex_prod(
-                    fc3_reciprocal[j * num_band * num_band + k * num_band + ll],
-                    e0[band_index_0 * num_band + j]);
-                fc3_e0[k * num_band + ll] = lapack_make_complex_double(
-                    lapack_complex_double_real(fc3_e0[k * num_band + ll]) +
-                        lapack_complex_double_real(fc3_elem),
-                    lapack_complex_double_imag(fc3_e0[k * num_band + ll]) +
-                        lapack_complex_double_imag(fc3_elem));
-            }
+        for (k = 0; k < num_band * num_band; k++) {
+            fc3_elem =
+                phonoc_complex_prod(fc3_reciprocal[j * num_band * num_band + k],
+                                    e0[band_index_0 * num_band + j]);
+            fc3_e0[k] = lapack_make_complex_double(
+                lapack_complex_double_real(fc3_e0[k]) +
+                    lapack_complex_double_real(fc3_elem),
+                lapack_complex_double_imag(fc3_e0[k]) +
+                    lapack_complex_double_imag(fc3_elem));
         }
     }
 }
