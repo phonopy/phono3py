@@ -46,7 +46,8 @@ void reciprocal_to_normal_squared(
     const lapack_complex_double *eigvecs0,
     const lapack_complex_double *eigvecs1,
     const lapack_complex_double *eigvecs2, const double *masses,
-    const int64_t *band_indices, const int64_t num_band,
-    const double cutoff_frequency, const int64_t openmp_per_triplets);
+    const int64_t *band_indices, const int64_t num_band0,
+    const int64_t num_band, const double cutoff_frequency,
+    const int64_t openmp_per_triplets);
 
 #endif
