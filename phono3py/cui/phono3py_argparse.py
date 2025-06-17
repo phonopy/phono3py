@@ -39,7 +39,7 @@ import sys
 from phonopy.cui.phonopy_argparse import fix_deprecated_option_names
 
 
-def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
+def get_parser(load_phono3py_yaml: bool = False):
     """Return ArgumentParser instance."""
     deprecated = fix_deprecated_option_names(sys.argv)
     import argparse
@@ -305,7 +305,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             "string with the style of key = values"
         ),
     )
-    if not fc_symmetry:
+    if not load_phono3py_yaml:
         parser.add_argument(
             "--fc-symmetry",
             "--sym-fc",
@@ -487,7 +487,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         default=None,
         help="Mass variance parameters for isotope scattering",
     )
-    if not is_nac:
+    if not load_phono3py_yaml:
         parser.add_argument(
             "--nac",
             dest="is_nac",
@@ -501,7 +501,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         default=None,
         help="Non-analytical term correction method: Gonze (default) or Wang",
     )
-    if fc_symmetry:
+    if load_phono3py_yaml:
         parser.add_argument(
             "--no-fc-symmetry",
             "--no-sym-fc",
@@ -532,7 +532,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         default=False,
         help="No symmetrization of triplets is made.",
     )
-    if is_nac:
+    if load_phono3py_yaml:
         parser.add_argument(
             "--nonac",
             dest="is_nac",
