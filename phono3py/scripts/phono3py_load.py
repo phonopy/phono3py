@@ -37,5 +37,5 @@ from phono3py.cui.phono3py_script import main
 
 def run():
     """Run phono3py-load script."""
-    argparse_control = {"fc_symmetry": True, "is_nac": True, "load_phono3py_yaml": True}
+    argparse_control = {"load_phono3py_yaml": True}
     main(**argparse_control)
