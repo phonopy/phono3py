@@ -37,13 +37,16 @@
 from __future__ import annotations
 
 import argparse
+import dataclasses
+import os
 import pathlib
 import sys
 import warnings
-from typing import Optional
+from typing import Optional, cast
 
 import numpy as np
 from numpy.typing import NDArray
+from phonopy.api_phonopy import Phonopy
 from phonopy.cui.collect_cell_info import collect_cell_info
 from phonopy.cui.phonopy_argparse import show_deprecated_option_warnings
 from phonopy.cui.phonopy_script import (
@@ -56,7 +59,8 @@ from phonopy.cui.phonopy_script import (
     set_magnetic_moments,
     store_nac_params,
 )
-from phonopy.exception import ForceCalculatorRequiredError
+from phonopy.cui.settings import PhonopySettings
+from phonopy.exception import CellNotFoundError, ForceCalculatorRequiredError
 from phonopy.file_IO import is_file_phonopy_yaml
 from phonopy.harmonic.force_constants import show_drift_force_constants
 from phonopy.interface.calculator import get_calculator_physical_units
@@ -76,7 +80,10 @@ from phono3py.cui.create_force_sets import (
     create_FORCES_FC2_from_FORCE_SETS,
     create_FORCES_FC3_and_FORCES_FC2,
 )
-from phono3py.cui.create_supercells import create_phono3py_supercells
+from phono3py.cui.create_supercells import (
+    Phono3pyCellInfoResult,
+    create_phono3py_supercells,
+)
 from phono3py.cui.load import (
     compute_force_constants_from_datasets,
     load_dataset_and_phonon_dataset,
@@ -334,31 +341,36 @@ def get_input_output_filenames_from_args(args: argparse.Namespace):
     return input_filename, output_filename
 
 
-def get_cell_info(
-    settings: Phono3pySettings, cell_filename: str, log_level: int
-) -> dict:
+def _get_cell_info(
+    settings: Phono3pySettings, cell_filename: str | os.PathLike | None, log_level: int
+) -> Phono3pyCellInfoResult:
     """Return calculator interface and crystal structure information."""
-    cell_info = collect_cell_info(
-        supercell_matrix=settings.supercell_matrix,
-        primitive_matrix=settings.primitive_matrix,
-        interface_mode=settings.calculator,
-        cell_filename=cell_filename,
-        chemical_symbols=settings.chemical_symbols,
-        phonopy_yaml_cls=Phono3pyYaml,
-    )
-    if "error_message" in cell_info:
-        print_error_message(cell_info["error_message"])
-        if log_level > 0:
+    try:
+        cell_info = collect_cell_info(
+            supercell_matrix=settings.supercell_matrix,
+            primitive_matrix=settings.primitive_matrix,
+            interface_mode=settings.calculator,
+            cell_filename=cell_filename,
+            chemical_symbols=settings.chemical_symbols,
+            phonopy_yaml_cls=Phono3pyYaml,
+        )
+    except CellNotFoundError as e:
+        print_error_message(str(e))
+        if log_level:
             print_error()
         sys.exit(1)
 
-    set_magnetic_moments(cell_info, settings, log_level)
+    cell_info = Phono3pyCellInfoResult(
+        **dataclasses.asdict(cell_info),
+        phonon_supercell_matrix=settings.phonon_supercell_matrix,
+    )
 
-    cell_info["phonon_supercell_matrix"] = settings.phonon_supercell_matrix
-    ph3py_yaml: Phono3pyYaml = cell_info["phonopy_yaml"]
-    if cell_info["phonon_supercell_matrix"] is None and ph3py_yaml:
+    set_magnetic_moments(cell_info.unitcell, settings.magnetic_moments, log_level)
+
+    ph3py_yaml = cast(Phono3pyYaml, cell_info.phonopy_yaml)
+    if cell_info.phonon_supercell_matrix is None and ph3py_yaml:
         ph_smat = ph3py_yaml.phonon_supercell_matrix
-        cell_info["phonon_supercell_matrix"] = ph_smat
+        cell_info.phonon_supercell_matrix = ph_smat
 
     return cell_info
 
@@ -437,40 +449,41 @@ def get_default_values(settings: Phono3pySettings):
     return params
 
 
-def check_supercell_in_yaml(
-    cell_info: dict, ph3: Phono3py, distance_to_A: float | None, log_level: int
+def _check_supercell_in_yaml(
+    cell_info: Phono3pyCellInfoResult,
+    ph3: Phono3py,
+    distance_to_A: float | None,
+    log_level: int,
 ):
     """Check consistency between generated cells and cells in yaml."""
-    if cell_info["phonopy_yaml"] is not None:
+    if cell_info.phonopy_yaml is not None:
         if distance_to_A is None:
             d2A = 1.0
         else:
             d2A = distance_to_A
-        if (
-            cell_info["phonopy_yaml"].supercell is not None
-            and ph3.supercell is not None
-        ):  # noqa E129
-            yaml_cell = cell_info["phonopy_yaml"].supercell.copy()
+        phono3py_yaml = cast(Phono3pyYaml, cell_info.phonopy_yaml)
+        if phono3py_yaml.supercell is not None and ph3.supercell is not None:  # noqa E129
+            yaml_cell = phono3py_yaml.supercell.copy()
             yaml_cell.cell = yaml_cell.cell * d2A
             if not cells_isclose(yaml_cell, ph3.supercell):
                 if log_level:
                     print(
                         "Generated supercell is inconsistent with "
-                        'that in "%s".' % cell_info["optional_structure_info"][0]
+                        f'that in "{cell_info.optional_structure_info[0]}".'
                     )
                     print_error()
                 sys.exit(1)
         if (
-            cell_info["phonopy_yaml"].phonon_supercell is not None
+            phono3py_yaml.phonon_supercell is not None
             and ph3.phonon_supercell is not None
         ):  # noqa E129
-            yaml_cell = cell_info["phonopy_yaml"].phonon_supercell.copy()
+            yaml_cell = phono3py_yaml.phonon_supercell.copy()
             yaml_cell.cell = yaml_cell.cell * d2A
             if not cells_isclose(yaml_cell, ph3.phonon_supercell):
                 if log_level:
                     print(
                         "Generated phonon supercell is inconsistent with "
-                        'that in "%s".' % cell_info["optional_structure_info"][0]
+                        f'that in "{cell_info.optional_structure_info[0]}".'
                     )
                     print_error()
                 sys.exit(1)
@@ -478,7 +491,7 @@ def check_supercell_in_yaml(
 
 def init_phono3py(
     settings: Phono3pySettings,
-    cell_info: dict,
+    cell_info: Phono3pyCellInfoResult,
     interface_mode: str | None,
     symprec: float,
     log_level: int,
@@ -488,7 +501,7 @@ def init_phono3py(
     distance_to_A = physical_units["distance_to_A"]
 
     # Change unit of lattice parameters to angstrom
-    unitcell = cell_info["unitcell"].copy()
+    unitcell = cell_info.unitcell.copy()
     if distance_to_A is not None:
         lattice = unitcell.cell
         lattice *= distance_to_A
@@ -503,9 +516,9 @@ def init_phono3py(
 
     phono3py = Phono3py(
         unitcell,
-        cell_info["supercell_matrix"],
-        primitive_matrix=cell_info["primitive_matrix"],
-        phonon_supercell_matrix=cell_info["phonon_supercell_matrix"],
+        cell_info.supercell_matrix,
+        primitive_matrix=cell_info.primitive_matrix,
+        phonon_supercell_matrix=cell_info.phonon_supercell_matrix,
         cutoff_frequency=updated_settings["cutoff_frequency"],
         frequency_factor_to_THz=updated_settings["frequency_factor_to_THz"],
         is_symmetry=settings.is_symmetry,
@@ -520,7 +533,7 @@ def init_phono3py(
     phono3py.sigmas = updated_settings["sigmas"]
     phono3py.sigma_cutoff = settings.sigma_cutoff_width
 
-    check_supercell_in_yaml(cell_info, phono3py, distance_to_A, log_level)
+    _check_supercell_in_yaml(cell_info, phono3py, distance_to_A, log_level)
 
     return phono3py, updated_settings
 
@@ -546,7 +559,7 @@ def grid_addresses_to_grid_points(grid_addresses: NDArray, bz_grid: BZGrid):
 
 def create_supercells_with_displacements(
     settings: Phono3pySettings,
-    cell_info: dict,
+    cell_info: Phono3pyCellInfoResult,
     confs_dict: dict,
     unitcell_filename: str,
     interface_mode: Optional[str],
@@ -570,9 +583,9 @@ def create_supercells_with_displacements(
 
         if pathlib.Path("BORN").exists():
             store_nac_params(
-                phono3py,
-                settings,
-                cell_info["phonopy_yaml"],
+                cast(Phonopy, phono3py),
+                cast(PhonopySettings, settings),
+                cell_info.phonopy_yaml,
                 unitcell_filename,
                 log_level,
                 nac_factor=get_physical_units().Hartree * get_physical_units().Bohr,
@@ -1019,10 +1032,10 @@ def main(**argparse_control):
     else:
         symprec = settings.symmetry_tolerance
 
-    cell_info = get_cell_info(settings, cell_filename, log_level)
-    unitcell_filename = cell_info["optional_structure_info"][0]
-    interface_mode = cell_info["interface_mode"]
-    # ph3py_yaml = cell_info['phonopy_yaml']
+    cell_info = _get_cell_info(settings, cell_filename, log_level)
+    unitcell_filename = cell_info.optional_structure_info[0]
+    interface_mode = cell_info.interface_mode
+    # ph3py_yaml = cell_info.phonopy_yaml
 
     if run_mode is None:
         run_mode = get_run_mode(settings)
@@ -1176,9 +1189,9 @@ def main(**argparse_control):
     ##################################
     if settings.is_nac:
         store_nac_params(
-            ph3py,
-            settings,
-            cell_info["phonopy_yaml"],
+            cast(Phonopy, ph3py),
+            cast(PhonopySettings, settings),
+            cell_info.phonopy_yaml,
             unitcell_filename,
             log_level,
             nac_factor=get_physical_units().Hartree * get_physical_units().Bohr,
@@ -1193,7 +1206,7 @@ def main(**argparse_control):
         assert ph3py.phonon_dataset is None
         load_dataset_and_phonon_dataset(
             ph3py,
-            ph3py_yaml=cell_info["phonopy_yaml"],
+            ph3py_yaml=cast(Phono3pyYaml, cell_info.phonopy_yaml),
             phono3py_yaml_filename=unitcell_filename,
             cutoff_pair_distance=settings.cutoff_pair_distance,
             calculator=interface_mode,
@@ -1258,7 +1271,7 @@ def main(**argparse_control):
             create_phono3py_force_constants(
                 ph3py,
                 settings,
-                ph3py_yaml=cell_info["phonopy_yaml"],
+                ph3py_yaml=cast(Phono3pyYaml, cell_info.phonopy_yaml),
                 phono3py_yaml_filename=unitcell_filename,
                 calculator=interface_mode,
                 input_filename=input_filename,

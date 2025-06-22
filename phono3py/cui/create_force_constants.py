@@ -37,6 +37,7 @@
 from __future__ import annotations
 
 import copy
+import os
 import pathlib
 import sys
 from dataclasses import asdict
@@ -54,6 +55,7 @@ from phonopy.interface.calculator import get_calculator_physical_units
 from phonopy.interface.pypolymlp import PypolymlpParams, parse_mlp_params
 
 from phono3py import Phono3py
+from phono3py.cui.settings import Phono3pySettings
 from phono3py.cui.show_log import show_phono3py_force_constants_settings
 from phono3py.file_IO import (
     get_length_of_first_line,
@@ -80,13 +82,13 @@ from phono3py.phonon3.fc3 import (
 
 def create_phono3py_force_constants(
     phono3py: Phono3py,
-    settings,
-    ph3py_yaml: Optional[Phono3pyYaml] = None,
-    phono3py_yaml_filename: Optional[str] = None,
-    calculator: Optional[str] = None,
-    input_filename: Optional[str] = None,
-    output_filename: Optional[str] = None,
-    log_level=1,
+    settings: Phono3pySettings,
+    ph3py_yaml: Phono3pyYaml | None = None,
+    phono3py_yaml_filename: str | os.PathLike | None = None,
+    calculator: str | None = None,
+    input_filename: str | os.PathLike | None = None,
+    output_filename: str | os.PathLike | None = None,
+    log_level: int = 1,
 ):
     """Read or calculate force constants.
 

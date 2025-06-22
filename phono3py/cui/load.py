@@ -387,8 +387,8 @@ def load(
 
 def load_fc2_and_fc3(
     ph3py: Phono3py,
-    fc3_filename: Optional[os.PathLike] = None,
-    fc2_filename: Optional[os.PathLike] = None,
+    fc3_filename: str | os.PathLike | None = None,
+    fc2_filename: str | os.PathLike | None = None,
     log_level: int = 0,
 ):
     """Set force constants."""
@@ -401,12 +401,12 @@ def load_fc2_and_fc3(
 
 def load_dataset_and_phonon_dataset(
     ph3py: Phono3py,
-    ph3py_yaml: Optional[Phono3pyYaml] = None,
-    forces_fc3_filename: Optional[Union[os.PathLike, Sequence]] = None,
-    forces_fc2_filename: Optional[Union[os.PathLike, Sequence]] = None,
-    phono3py_yaml_filename: Optional[os.PathLike] = None,
-    cutoff_pair_distance: Optional[float] = None,
-    calculator: Optional[str] = None,
+    ph3py_yaml: Phono3pyYaml | None = None,
+    forces_fc3_filename: str | os.PathLike | Sequence | None = None,
+    forces_fc2_filename: str | os.PathLike | Sequence | None = None,
+    phono3py_yaml_filename: str | os.PathLike | None = None,
+    cutoff_pair_distance: float | None = None,
+    calculator: str | None = None,
     log_level: int = 0,
 ):
     """Set displacements, forces, and create force constants."""
@@ -520,8 +520,8 @@ def _load_fc3(
 def _select_and_load_dataset(
     ph3py: Phono3py,
     ph3py_yaml: Phono3pyYaml | None = None,
-    forces_fc3_filename: os.PathLike | Sequence | None = None,
-    phono3py_yaml_filename: os.PathLike | None = None,
+    forces_fc3_filename: str | os.PathLike | Sequence | None = None,
+    phono3py_yaml_filename: str | os.PathLike | None = None,
     cutoff_pair_distance: float | None = None,
     calculator: str | None = None,
     log_level: int = 0,
@@ -572,7 +572,7 @@ def _select_and_load_dataset(
 
 
 def _load_fc2(
-    ph3py: Phono3py, fc2_filename: os.PathLike | None = None, log_level: int = 0
+    ph3py: Phono3py, fc2_filename: str | os.PathLike | None = None, log_level: int = 0
 ):
     phonon_p2s_map = ph3py.phonon_primitive.p2s_map
     if fc2_filename is None:
