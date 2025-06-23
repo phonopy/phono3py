@@ -298,7 +298,7 @@ class Phono3pyYamlDumper(PhonopyYamlDumperBase):
         "dielectric_constant": True,
     }
 
-    def __init__(self, data: Phono3pyYamlData, dumper_settings=None):
+    def __init__(self, data: Phono3pyYamlData, dumper_settings: dict | None = None):
         """Init method."""
         self._data = data
         self._init_dumper_settings(dumper_settings)
@@ -405,7 +405,11 @@ class Phono3pyYaml(PhonopyYaml):
     command_name = "phono3py"
 
     def __init__(
-        self, configuration=None, calculator=None, physical_units=None, settings=None
+        self,
+        configuration: dict | None = None,
+        calculator: str | None = None,
+        physical_units: dict | None = None,
+        settings: dict | None = None,
     ):
         """Init method."""
         self._data = Phono3pyYamlData(

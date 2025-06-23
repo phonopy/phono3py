@@ -42,6 +42,7 @@ import os
 import pathlib
 import sys
 import warnings
+from collections.abc import Sequence
 from typing import Optional, cast
 
 import numpy as np
@@ -82,8 +83,9 @@ from phono3py.cui.create_supercells import (
 )
 from phono3py.cui.load import (
     compute_force_constants_from_datasets,
-    load_dataset_and_phonon_dataset,
     load_fc2_and_fc3,
+    select_and_load_dataset,
+    select_and_load_phonon_dataset,
 )
 from phono3py.cui.phono3py_argparse import get_parser
 from phono3py.cui.settings import Phono3pyConfParser, Phono3pySettings
@@ -946,6 +948,44 @@ def _init_phph_interaction(
             sys.exit(1)
 
 
+def _load_dataset_and_phonon_dataset(
+    ph3py: Phono3py,
+    ph3py_yaml: Phono3pyYaml | None = None,
+    forces_fc3_filename: str | os.PathLike | Sequence | None = None,
+    forces_fc2_filename: str | os.PathLike | Sequence | None = None,
+    phono3py_yaml_filename: str | os.PathLike | None = None,
+    cutoff_pair_distance: float | None = None,
+    calculator: str | None = None,
+    log_level: int = 0,
+):
+    """Set displacements, forces, and create force constants."""
+    if ph3py.fc3 is None or (
+        ph3py.fc2 is None and ph3py.phonon_supercell_matrix is None
+    ):
+        dataset = select_and_load_dataset(
+            ph3py,
+            ph3py_yaml=ph3py_yaml,
+            forces_fc3_filename=forces_fc3_filename,
+            phono3py_yaml_filename=phono3py_yaml_filename,
+            cutoff_pair_distance=cutoff_pair_distance,
+            calculator=calculator,
+            log_level=log_level,
+        )
+        if dataset is not None:
+            ph3py.dataset = dataset
+
+    if ph3py.fc2 is None and ph3py.phonon_supercell_matrix is not None:
+        phonon_dataset = select_and_load_phonon_dataset(
+            ph3py,
+            ph3py_yaml=ph3py_yaml,
+            forces_fc2_filename=forces_fc2_filename,
+            calculator=calculator,
+            log_level=log_level,
+        )
+        if phonon_dataset is not None:
+            ph3py.phonon_dataset = phonon_dataset
+
+
 def main(**argparse_control):
     """Phono3py main part of command line interface."""
     # import warnings
@@ -1192,7 +1232,7 @@ def main(**argparse_control):
     ############
     # Datasets #
     ############
-    load_dataset_and_phonon_dataset(
+    _load_dataset_and_phonon_dataset(
         ph3py,
         ph3py_yaml=cast(Phono3pyYaml, cell_info.phonopy_yaml),
         phono3py_yaml_filename=unitcell_filename,

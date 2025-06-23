@@ -2241,7 +2241,7 @@ class Phono3py:
             )
 
     def save(
-        self, filename: str = "phono3py_params.yaml", settings: Optional[dict] = None
+        self, filename: str = "phono3py_params.yaml", settings: dict | None = None
     ):
         """Save parameters in Phono3py instants into file.
 
@@ -2268,7 +2268,7 @@ class Phono3py:
 
     def develop_mlp(
         self,
-        params: Optional[Union[PypolymlpParams, dict, str]] = None,
+        params: PypolymlpParams | dict | str | None = None,
         test_size: float = 0.1,
     ):
         """Develop machine learning potential.
