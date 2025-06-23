@@ -389,13 +389,15 @@ def load_fc2_and_fc3(
     ph3py: Phono3py,
     fc3_filename: str | os.PathLike | None = None,
     fc2_filename: str | os.PathLike | None = None,
+    read_fc3: bool = True,
+    read_fc2: bool = True,
     log_level: int = 0,
 ):
     """Set force constants."""
-    if fc3_filename is not None or pathlib.Path("fc3.hdf5").exists():
+    if read_fc3 and (fc3_filename is not None or pathlib.Path("fc3.hdf5").exists()):
         _load_fc3(ph3py, fc3_filename=fc3_filename, log_level=log_level)
 
-    if fc2_filename is not None or pathlib.Path("fc2.hdf5").exists():
+    if read_fc2 and (fc2_filename is not None or pathlib.Path("fc2.hdf5").exists()):
         _load_fc2(ph3py, fc2_filename=fc2_filename, log_level=log_level)
 
 
@@ -410,34 +412,40 @@ def load_dataset_and_phonon_dataset(
     log_level: int = 0,
 ):
     """Set displacements, forces, and create force constants."""
-    dataset = _select_and_load_dataset(
-        ph3py,
-        ph3py_yaml=ph3py_yaml,
-        forces_fc3_filename=forces_fc3_filename,
-        phono3py_yaml_filename=phono3py_yaml_filename,
-        cutoff_pair_distance=cutoff_pair_distance,
-        calculator=calculator,
-        log_level=log_level,
-    )
-    if dataset is not None:
-        ph3py.dataset = dataset
+    if (
+        ph3py.fc3 is None
+        and ph3py.fc2 is None
+        and ph3py.phonon_supercell_matrix is None
+    ):
+        dataset = _select_and_load_dataset(
+            ph3py,
+            ph3py_yaml=ph3py_yaml,
+            forces_fc3_filename=forces_fc3_filename,
+            phono3py_yaml_filename=phono3py_yaml_filename,
+            cutoff_pair_distance=cutoff_pair_distance,
+            calculator=calculator,
+            log_level=log_level,
+        )
+        if dataset is not None:
+            ph3py.dataset = dataset
 
-    phonon_dataset = _select_and_load_phonon_dataset(
-        ph3py,
-        ph3py_yaml=ph3py_yaml,
-        forces_fc2_filename=forces_fc2_filename,
-        calculator=calculator,
-        log_level=log_level,
-    )
-    if phonon_dataset is not None:
-        ph3py.phonon_dataset = phonon_dataset
+    if ph3py.fc2 is None:
+        phonon_dataset = _select_and_load_phonon_dataset(
+            ph3py,
+            ph3py_yaml=ph3py_yaml,
+            forces_fc2_filename=forces_fc2_filename,
+            calculator=calculator,
+            log_level=log_level,
+        )
+        if phonon_dataset is not None:
+            ph3py.phonon_dataset = phonon_dataset
 
 
 def compute_force_constants_from_datasets(
     ph3py: Phono3py,
-    fc_calculator: Optional[str] = None,
-    fc_calculator_options: Optional[Union[dict, str]] = None,
-    cutoff_pair_distance: Optional[float] = None,
+    fc_calculator: str | None = None,
+    fc_calculator_options: dict | str | None = None,
+    cutoff_pair_distance: float | None = None,
     symmetrize_fc: bool = True,
     is_compact_fc: bool = True,
     log_level: int = 0,
@@ -526,7 +534,7 @@ def _select_and_load_dataset(
     calculator: str | None = None,
     log_level: int = 0,
 ) -> dict | None:
-    dataset = None
+    # displacements and forces are in phono3py-yaml-like file
     if (
         ph3py_yaml is not None
         and ph3py_yaml.dataset is not None
@@ -541,7 +549,10 @@ def _select_and_load_dataset(
             calculator,
             log_level,
         )
-    elif forces_fc3_filename is not None or pathlib.Path("FORCES_FC3").exists():
+        return dataset
+
+    # displacements and forces are in FORCES_FC3-like file
+    if forces_fc3_filename is not None or pathlib.Path("FORCES_FC3").exists():
         if forces_fc3_filename is None:
             force_filename = "FORCES_FC3"
         else:
@@ -555,7 +566,10 @@ def _select_and_load_dataset(
             calculator,
             log_level,
         )
-    elif ph3py_yaml is not None and ph3py_yaml.dataset is not None:
+        return dataset
+
+    # dataset is in phono3py-yaml-like file
+    if ph3py_yaml is not None and ph3py_yaml.dataset is not None:
         # not forces_in_dataset(ph3py_yaml.dataset)
         # but want to read displacement dataset.
         dataset = _get_dataset_for_fc3(
@@ -567,8 +581,9 @@ def _select_and_load_dataset(
             calculator,
             log_level,
         )
+        return dataset
 
-    return dataset
+    return None
 
 
 def _load_fc2(
@@ -639,7 +654,7 @@ def _select_and_load_phonon_dataset(
 
 def _get_dataset_for_fc3(
     ph3py: Phono3py,
-    ph3py_yaml: Optional[Phono3pyYaml],
+    ph3py_yaml: Phono3pyYaml | None,
     force_filename,
     phono3py_yaml_filename,
     cutoff_pair_distance,

@@ -70,7 +70,7 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--ave-pp",
         dest="use_ave_pp",
         action="store_true",
-        default=False,
+        default=None,
         help="Use averaged ph-ph interaction",
     )
     parser.add_argument(
@@ -113,7 +113,7 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--bterta",
         dest="is_bterta",
         action="store_true",
-        default=False,
+        default=None,
         help="Calculate thermal conductivity in BTE-RTA",
     )
     if not load_phono3py_yaml:
@@ -155,7 +155,7 @@ def get_parser(load_phono3py_yaml: bool = False):
         metavar="FILE",
         dest="subtract_forces",
         default=None,
-        help="Subtract recidual forces from supercell forces",
+        help="Subtract residual forces from supercell forces",
     )
     parser.add_argument(
         "--cfz-fc2",
@@ -163,15 +163,15 @@ def get_parser(load_phono3py_yaml: bool = False):
         metavar="FILE",
         dest="subtract_forces_fc2",
         default=None,
-        help="Subtract recidual forces from supercell forces for fc2",
+        help="Subtract residual forces from supercell forces for fc2",
     )
     parser.add_argument(
         "--cfc",
         "--compact-fc",
         dest="is_compact_fc",
         action="store_true",
-        default=False,
-        help="Use compact force cosntants",
+        default=None,
+        help="Use compact force constants",
     )
     parser.add_argument(
         "--cfs",
@@ -241,7 +241,7 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--disp",
         dest="is_displacement",
         action="store_true",
-        default=False,
+        default=None,
         help="As first stage, get least displacements",
     )
     if not load_phono3py_yaml:
@@ -263,7 +263,7 @@ def get_parser(load_phono3py_yaml: bool = False):
     #     "--emulate-v2",
     #     dest="emulate_v2",
     #     action="store_true",
-    #     default=False,
+    #     default=None,
     #     help="Emulate v2.x behavior.",
     # )
     parser.add_argument(
@@ -510,19 +510,34 @@ def get_parser(load_phono3py_yaml: bool = False):
             default=None,
             help="Do not symmetrize force constants",
         )
+        parser.add_argument(
+            "--no-read-fc2",
+            dest="read_fc2",
+            action="store_false",
+            default=None,
+            help="Read second order force constants",
+        )
+        parser.add_argument(
+            "--no-read-fc3",
+            dest="read_fc3",
+            action="store_false",
+            default=None,
+            help="Read third order force constants",
+        )
+
     parser.add_argument(
         "--nodiag",
         dest="is_nodiag",
         action="store_true",
-        default=False,
+        default=None,
         help="Set displacements parallel to axes",
     )
     parser.add_argument(
         "--noks",
         "--no-kappa-stars",
-        dest="no_kappa_stars",
-        action="store_true",
-        default=False,
+        dest="kappa_star",
+        action="store_false",
+        default=None,
         help="Deactivate summation of partial kappa at q-stars",
     )
     parser.add_argument(
@@ -544,14 +559,14 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--nosym",
         dest="is_nosym",
         action="store_true",
-        default=False,
+        default=None,
         help="Symmetry is not imposed.",
     )
     parser.add_argument(
         "--nu",
         dest="is_N_U",
         action="store_true",
-        default=False,
+        default=None,
         help="Split Gamma into Normal and Umklapp processes",
     )
     parser.add_argument(
@@ -616,14 +631,14 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--pm",
         dest="is_plusminus_displacements",
         action="store_true",
-        default=False,
+        default=None,
         help="Set plus minus displacements",
     )
     parser.add_argument(
         "--pm-fc2",
         dest="is_plusminus_displacements_fc2",
         action="store_true",
-        default=False,
+        default=None,
         help="Set plus minus displacements for extra fc2",
     )
     parser.add_argument(
@@ -637,7 +652,7 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--pypolymlp",
         dest="use_pypolymlp",
         action="store_true",
-        default=False,
+        default=None,
         help="Use pypolymlp and symfc for generating force constants",
     )
     parser.add_argument(
@@ -659,7 +674,7 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--quiet",
         dest="quiet",
         action="store_true",
-        default=False,
+        default=None,
         help="Print out smallest information",
     )
     parser.add_argument(
@@ -700,35 +715,35 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--read-gamma",
         dest="read_gamma",
         action="store_true",
-        default=False,
+        default=None,
         help="Read Gammas from files",
     )
     parser.add_argument(
         "--read-phonon",
         dest="read_phonon",
         action="store_true",
-        default=False,
+        default=None,
         help="Read phonons from files",
     )
     parser.add_argument(
         "--read-pp",
         dest="read_pp",
         action="store_true",
-        default=False,
+        default=None,
         help="Read phonon-phonon interaction strength",
     )
     parser.add_argument(
         "--reducible-colmat",
         dest="is_reducible_collision_matrix",
         action="store_true",
-        default=False,
+        default=None,
         help="Solve reducible collision matrix",
     )
     parser.add_argument(
         "--rse",
         dest="is_real_self_energy",
         action="store_true",
-        default=False,
+        default=None,
         help="Calculate real part of self energy",
     )
     parser.add_argument(
@@ -789,7 +804,7 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--spf",
         dest="is_spectral_function",
         action="store_true",
-        default=False,
+        default=None,
         help="Calculate spectral function",
     )
     parser.add_argument(
@@ -797,7 +812,7 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--show-num-triplets",
         dest="show_num_triplets",
         action="store_true",
-        default=False,
+        default=None,
         help=(
             "Show reduced number of triplets to be calculated at specified grid points"
         ),
@@ -807,21 +822,21 @@ def get_parser(load_phono3py_yaml: bool = False):
             "--sym-fc2",
             dest="is_symmetrize_fc2",
             action="store_true",
-            default=False,
+            default=None,
             help="Symmetrize fc2 by index exchange",
         )
         parser.add_argument(
             "--sym-fc3r",
             dest="is_symmetrize_fc3_r",
             action="store_true",
-            default=False,
+            default=None,
             help="Symmetrize fc3 in real space by index exchange",
         )
     parser.add_argument(
         "--sym-fc3q",
         dest="is_symmetrize_fc3_q",
         action="store_true",
-        default=False,
+        default=None,
         help="Symmetrize fc3 in reciprocal space by index exchange",
     )
     parser.add_argument(
@@ -829,7 +844,7 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--tetrahedron-method",
         dest="is_tetrahedron_method",
         action="store_true",
-        default=False,
+        default=None,
         help="Use tetrahedron method.",
     )
     parser.add_argument(
@@ -866,14 +881,14 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--verbose",
         dest="verbose",
         action="store_true",
-        default=False,
+        default=None,
         help="Detailed run-time information is displayed",
     )
     parser.add_argument(
         "--v2",
         dest="is_fc3_r0_average",
         action="store_false",
-        default=True,
+        default=None,
         help="Take average in fc3-r2q transformation around three atoms",
     )
     parser.add_argument(
@@ -881,7 +896,7 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--write-grid-points",
         dest="write_grid_points",
         action="store_true",
-        default=False,
+        default=None,
         help=(
             "Write grid address of irreducible grid points for specified "
             "mesh numbers to ir_grid_address.yaml"
@@ -891,21 +906,21 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--wigner",
         dest="is_wigner_kappa",
         action="store_true",
-        default=False,
+        default=None,
         help="Choose Wigner lattice thermal conductivity.",
     )
     parser.add_argument(
         "--write-collision",
         dest="write_collision",
         action="store_true",
-        default=False,
+        default=None,
         help="Write collision matrix and Gammas to files",
     )
     parser.add_argument(
         "--write-gamma",
         dest="write_gamma",
         action="store_true",
-        default=False,
+        default=None,
         help="Write imag-part of self energy to files",
     )
     parser.add_argument(
@@ -913,28 +928,28 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--write_detailed_gamma",
         dest="write_gamma_detail",
         action="store_true",
-        default=False,
+        default=None,
         help="Write out detailed imag-part of self energy",
     )
     parser.add_argument(
         "--write-phonon",
         dest="write_phonon",
         action="store_true",
-        default=False,
+        default=None,
         help="Write all phonons on grid points to files",
     )
     parser.add_argument(
         "--write-pp",
         dest="write_pp",
         action="store_true",
-        default=False,
+        default=None,
         help="Write phonon-phonon interaction strength",
     )
     parser.add_argument(
         "--write-lbte-solution",
         dest="write_LBTE_solution",
         action="store_true",
-        default=False,
+        default=None,
         help="Write direct solution of LBTE to hdf5 files",
     )
     if load_phono3py_yaml:
