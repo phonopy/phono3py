@@ -71,7 +71,6 @@ from phonopy.structure.cells import isclose as cells_isclose
 
 from phono3py import Phono3py, Phono3pyIsotope, Phono3pyJointDos
 from phono3py.cui.create_force_constants import (
-    create_phono3py_force_constants,
     get_fc_calculator_params,
     run_pypolymlp_to_compute_forces,
 )
@@ -557,13 +556,12 @@ def grid_addresses_to_grid_points(grid_addresses: NDArray, bz_grid: BZGrid):
     return bz_grid.grg2bzg[grid_points]
 
 
-def create_supercells_with_displacements(
+def _create_supercells_with_displacements(
     settings: Phono3pySettings,
     cell_info: Phono3pyCellInfoResult,
     confs_dict: dict,
     unitcell_filename: str,
     interface_mode: Optional[str],
-    load_phono3py_yaml: bool,
     symprec: float,
     log_level: int,
 ):
@@ -589,7 +587,6 @@ def create_supercells_with_displacements(
                 unitcell_filename,
                 log_level,
                 nac_factor=get_physical_units().Hartree * get_physical_units().Bohr,
-                load_phonopy_yaml=load_phono3py_yaml,
             )
 
         if log_level:
@@ -1044,13 +1041,12 @@ def main(**argparse_control):
     # Create supercells with displacements and then exit #
     ######################################################
     if not settings.use_pypolymlp:
-        create_supercells_with_displacements(
+        _create_supercells_with_displacements(
             settings,
             cell_info,
             confs_dict,
             unitcell_filename,
             interface_mode,
-            load_phono3py_yaml,
             symprec,
             log_level,
         )
@@ -1195,23 +1191,21 @@ def main(**argparse_control):
             unitcell_filename,
             log_level,
             nac_factor=get_physical_units().Hartree * get_physical_units().Bohr,
-            load_phonopy_yaml=load_phono3py_yaml,
         )
 
     ############
     # Datasets #
     ############
-    if load_phono3py_yaml:
-        assert ph3py.dataset is None
-        assert ph3py.phonon_dataset is None
-        load_dataset_and_phonon_dataset(
-            ph3py,
-            ph3py_yaml=cast(Phono3pyYaml, cell_info.phonopy_yaml),
-            phono3py_yaml_filename=unitcell_filename,
-            cutoff_pair_distance=settings.cutoff_pair_distance,
-            calculator=interface_mode,
-            log_level=log_level,
-        )
+    assert ph3py.dataset is None
+    assert ph3py.phonon_dataset is None
+    load_dataset_and_phonon_dataset(
+        ph3py,
+        ph3py_yaml=cast(Phono3pyYaml, cell_info.phonopy_yaml),
+        phono3py_yaml_filename=unitcell_filename,
+        cutoff_pair_distance=settings.cutoff_pair_distance,
+        calculator=interface_mode,
+        log_level=log_level,
+    )
 
     ###################
     # polynomial MLPs #
@@ -1262,24 +1256,9 @@ def main(**argparse_control):
     ###################
     # Force constants #
     ###################
-    if load_phono3py_yaml:
-        assert ph3py.fc2 is None
-        assert ph3py.fc3 is None
-        _store_force_constants(ph3py, settings, log_level)
-    else:
-        try:
-            create_phono3py_force_constants(
-                ph3py,
-                settings,
-                ph3py_yaml=cast(Phono3pyYaml, cell_info.phonopy_yaml),
-                phono3py_yaml_filename=unitcell_filename,
-                calculator=interface_mode,
-                input_filename=input_filename,
-                output_filename=output_filename,
-                log_level=log_level,
-            )
-        except ForceCalculatorRequiredError:
-            _show_fc_calculator_not_found(log_level)
+    assert ph3py.fc2 is None
+    assert ph3py.fc3 is None
+    _store_force_constants(ph3py, settings, log_level)
 
     ############################################
     # Phonon Gruneisen parameter and then exit #
