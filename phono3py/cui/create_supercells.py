@@ -34,11 +34,18 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
+import dataclasses
+
 import numpy as np
+from numpy.typing import ArrayLike
+from phonopy.cui.collect_cell_info import CellInfoResult
 from phonopy.interface.calculator import write_supercells_with_displacements
 from phonopy.structure.cells import print_cell
 
 from phono3py import Phono3py
+from phono3py.cui.settings import Phono3pySettings
 from phono3py.cui.show_log import print_supercell_matrix
 from phono3py.interface.calculator import (
     get_additional_info_to_write_fc2_supercells,
@@ -48,12 +55,23 @@ from phono3py.interface.calculator import (
 from phono3py.interface.fc_calculator import determine_cutoff_pair_distance
 
 
+@dataclasses.dataclass
+class Phono3pyCellInfoResult(CellInfoResult):
+    """Phono3py cell info result.
+
+    This is a subclass of CellInfoResult to add phonon supercell matrix.
+
+    """
+
+    phonon_supercell_matrix: ArrayLike | None = None
+
+
 def create_phono3py_supercells(
-    cell_info,
-    settings,
-    symprec,
-    interface_mode="vasp",
-    log_level=1,
+    cell_info: Phono3pyCellInfoResult,
+    settings: Phono3pySettings,
+    symprec: float,
+    interface_mode: str | None = "vasp",
+    log_level: int = 1,
 ):
     """Create displacements and supercells.
 
@@ -61,17 +79,17 @@ def create_phono3py_supercells(
     The default unit is Angstrom.
 
     """
-    optional_structure_info = cell_info["optional_structure_info"]
+    optional_structure_info = cell_info.optional_structure_info
 
     if settings.displacement_distance is None:
         distance = get_default_displacement_distance(interface_mode)
     else:
         distance = settings.displacement_distance
     ph3 = Phono3py(
-        cell_info["unitcell"],
-        cell_info["supercell_matrix"],
-        primitive_matrix=cell_info["primitive_matrix"],
-        phonon_supercell_matrix=cell_info["phonon_supercell_matrix"],
+        cell_info.unitcell,
+        cell_info.supercell_matrix,
+        primitive_matrix=cell_info.primitive_matrix,
+        phonon_supercell_matrix=cell_info.phonon_supercell_matrix,
         is_symmetry=settings.is_symmetry,
         symprec=symprec,
         calculator=interface_mode,

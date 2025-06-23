@@ -37,15 +37,15 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
+from numpy.typing import ArrayLike, NDArray
 from phonopy.interface.phonopy_yaml import (
     PhonopyYaml,
     PhonopyYamlDumperBase,
     PhonopyYamlLoaderBase,
     load_yaml,
-    phonopy_yaml_property_factory,
 )
 
 if TYPE_CHECKING:
@@ -60,26 +60,26 @@ from phonopy.structure.symmetry import Symmetry
 class Phono3pyYamlData:
     """PhonopyYaml data structure."""
 
-    configuration: Optional[dict] = None
-    calculator: Optional[str] = None
-    physical_units: Optional[dict] = None
-    unitcell: Optional[PhonopyAtoms] = None
-    primitive: Optional[Primitive] = None
-    supercell: Optional[Supercell] = None
-    dataset: Optional[dict] = None
-    supercell_matrix: Optional[np.ndarray] = None
-    primitive_matrix: Optional[np.ndarray] = None
-    nac_params: Optional[dict] = None
-    force_constants: Optional[np.ndarray] = None
-    symmetry: Optional[Symmetry] = None  # symmetry of supercell
-    frequency_unit_conversion_factor: Optional[float] = None
-    version: Optional[str] = None
+    configuration: dict | None = None
+    calculator: str | None = None
+    physical_units: dict | None = None
+    unitcell: PhonopyAtoms | None = None
+    primitive: Primitive | PhonopyAtoms | None = None
+    supercell: Supercell | PhonopyAtoms | None = None
+    dataset: dict | None = None
+    supercell_matrix: NDArray | None = None
+    primitive_matrix: NDArray | None = None
+    nac_params: dict | None = None
+    force_constants: NDArray | None = None
+    symmetry: Symmetry | None = None  # symmetry of supercell
+    frequency_unit_conversion_factor: float | None = None
+    version: str | None = None
     command_name: str = "phono3py"
 
-    phonon_supercell_matrix: Optional[np.ndarray] = None
-    phonon_dataset: Optional[dict] = None
-    phonon_supercell: Optional[Supercell] = None
-    phonon_primitive: Optional[Primitive] = None
+    phonon_supercell_matrix: NDArray | None = None
+    phonon_dataset: dict | None = None
+    phonon_supercell: Supercell | PhonopyAtoms | None = None
+    phonon_primitive: Primitive | PhonopyAtoms | None = None
 
 
 class Phono3pyYamlLoader(PhonopyYamlLoaderBase):
@@ -156,10 +156,12 @@ class Phono3pyYamlLoader(PhonopyYamlLoaderBase):
             and "phonon_displacements" not in self._yaml
             and "displacements" in self._yaml
         ):  # old type1
-            self._data.phonon_dataset = self._get_dataset(self._data.phonon_supercell)
+            self._data.phonon_dataset = self._get_dataset(
+                cast(PhonopyAtoms, self._data.phonon_supercell)
+            )
         else:
             self._data.phonon_dataset = self._get_dataset(
-                self._data.phonon_supercell, key_prefix="phonon_"
+                cast(PhonopyAtoms, self._data.phonon_supercell), key_prefix="phonon_"
             )
 
     def _parse_fc3_dataset(self):
@@ -181,7 +183,7 @@ class Phono3pyYamlLoader(PhonopyYamlLoaderBase):
             elif isinstance(disp, list):  # type2
                 if "displacement" in disp[0]:
                     dataset = self._parse_force_sets_type2()
-        if "displacement_pair_info" in self._yaml:
+        if "displacement_pair_info" in self._yaml and dataset is not None:
             info_yaml = self._yaml["displacement_pair_info"]
             if "cutoff_pair_distance" in info_yaml:
                 dataset["cutoff_distance"] = info_yaml["cutoff_pair_distance"]
@@ -402,28 +404,6 @@ class Phono3pyYaml(PhonopyYaml):
     default_filenames = ("phono3py_disp.yaml", "phono3py.yaml")
     command_name = "phono3py"
 
-    configuration = phonopy_yaml_property_factory("configuration")
-    calculator = phonopy_yaml_property_factory("calculator")
-    physical_units = phonopy_yaml_property_factory("physical_units")
-    unitcell = phonopy_yaml_property_factory("unitcell")
-    primitive = phonopy_yaml_property_factory("primitive")
-    supercell = phonopy_yaml_property_factory("supercell")
-    dataset = phonopy_yaml_property_factory("dataset")
-    supercell_matrix = phonopy_yaml_property_factory("supercell_matrix")
-    primitive_matrix = phonopy_yaml_property_factory("primitive_matrix")
-    nac_params = phonopy_yaml_property_factory("nac_params")
-    force_constants = phonopy_yaml_property_factory("force_constants")
-    symmetry = phonopy_yaml_property_factory("symmetry")
-    frequency_unit_conversion_factor = phonopy_yaml_property_factory(
-        "frequency_unit_conversion_factor"
-    )
-    version = phonopy_yaml_property_factory("version")
-
-    phonon_supercell_matrix = phonopy_yaml_property_factory("phonon_supercell_matrix")
-    phonon_dataset = phonopy_yaml_property_factory("phonon_dataset")
-    phonon_supercell = phonopy_yaml_property_factory("phonon_supercell")
-    phonon_primitive = phonopy_yaml_property_factory("phonon_primitive")
-
     def __init__(
         self, configuration=None, calculator=None, physical_units=None, settings=None
     ):
@@ -434,6 +414,193 @@ class Phono3pyYaml(PhonopyYaml):
             physical_units=physical_units,
         )
         self._dumper_settings = settings
+
+    @property
+    def configuration(self) -> dict | None:
+        """Return configuration of phonopy calculation."""
+        return self._data.configuration
+
+    @configuration.setter
+    def configuration(self, value: dict):
+        """Set configuration of phonopy calculation."""
+        self._data.configuration = value
+
+    @property
+    def calculator(self) -> str | None:
+        """Return calculator of phonopy calculation."""
+        return self._data.calculator
+
+    @calculator.setter
+    def calculator(self, value: str):
+        """Set calculator of phonopy calculation."""
+        self._data.calculator = value
+
+    @property
+    def physical_units(self) -> dict | None:
+        """Return physical units of phonopy calculation."""
+        return self._data.physical_units
+
+    @physical_units.setter
+    def physical_units(self, value: dict):
+        """Set physical units of phonopy calculation."""
+        self._data.physical_units = value
+
+    @property
+    def unitcell(self) -> PhonopyAtoms | None:
+        """Return unit cell of phonopy calculation."""
+        return self._data.unitcell
+
+    @unitcell.setter
+    def unitcell(self, value: PhonopyAtoms):
+        """Set unit cell of phonopy calculation."""
+        self._data.unitcell = value
+
+    @property
+    def primitive(self) -> PhonopyAtoms | None:
+        """Return primitive cell of phonopy calculation."""
+        return self._data.primitive
+
+    @primitive.setter
+    def primitive(self, value: PhonopyAtoms):
+        """Set primitive cell of phonopy calculation."""
+        self._data.primitive = value
+
+    @property
+    def supercell(self) -> PhonopyAtoms | None:
+        """Return supercell of phonopy calculation."""
+        return self._data.supercell
+
+    @supercell.setter
+    def supercell(self, value: PhonopyAtoms):
+        """Set supercell of phonopy calculation."""
+        self._data.supercell = value
+
+    @property
+    def dataset(self) -> dict | None:
+        """Return dataset of phonopy calculation."""
+        return self._data.dataset
+
+    @dataset.setter
+    def dataset(self, value: dict):
+        """Set dataset of phonopy calculation."""
+        self._data.dataset = value
+
+    @property
+    def supercell_matrix(self) -> NDArray | None:
+        """Return supercell matrix of phonopy calculation."""
+        return self._data.supercell_matrix
+
+    @supercell_matrix.setter
+    def supercell_matrix(self, value: ArrayLike):
+        """Set supercell matrix of phonopy calculation."""
+        self._data.supercell_matrix = np.array(value, dtype="intc", order="C")
+
+    @property
+    def primitive_matrix(self) -> NDArray | None:
+        """Return primitive matrix of phonopy calculation."""
+        return self._data.primitive_matrix
+
+    @primitive_matrix.setter
+    def primitive_matrix(self, value: ArrayLike):
+        """Set primitive matrix of phonopy calculation."""
+        self._data.primitive_matrix = np.array(value, dtype="double", order="C")
+
+    @property
+    def nac_params(self) -> dict | None:
+        """Return non-analytical term correction parameters."""
+        return self._data.nac_params
+
+    @nac_params.setter
+    def nac_params(self, value: dict):
+        """Set non-analytical term correction parameters."""
+        if value is not None:
+            if "born" in value:
+                value["born"] = np.array(value["born"], dtype="double", order="C")
+            if "dielectric" in value:
+                value["dielectric"] = np.array(
+                    value["dielectric"], dtype="double", order="C"
+                )
+        self._data.nac_params = value
+
+    @property
+    def force_constants(self) -> NDArray | None:
+        """Return force constants of phonopy calculation."""
+        return self._data.force_constants
+
+    @force_constants.setter
+    def force_constants(self, value: ArrayLike):
+        """Set force constants of phonopy calculation."""
+        self._data.force_constants = np.array(value, dtype="double", order="C")
+
+    @property
+    def symmetry(self) -> Symmetry | None:
+        """Return symmetry of phonopy calculation."""
+        return self._data.symmetry
+
+    @symmetry.setter
+    def symmetry(self, value: Symmetry):
+        """Set symmetry of phonopy calculation."""
+        self._data.symmetry = value
+
+    @property
+    def frequency_unit_conversion_factor(self) -> float | None:
+        """Return frequency unit conversion factor."""
+        return self._data.frequency_unit_conversion_factor
+
+    @frequency_unit_conversion_factor.setter
+    def frequency_unit_conversion_factor(self, value: float):
+        """Set frequency unit conversion factor."""
+        self._data.frequency_unit_conversion_factor = value
+
+    @property
+    def version(self) -> str | None:
+        """Return version of phonopy calculation."""
+        return self._data.version
+
+    @version.setter
+    def version(self, value: str):
+        """Set version of phonopy calculation."""
+        self._data.version = value
+
+    @property
+    def phonon_primitive(self) -> PhonopyAtoms | None:
+        """Return phonon primitive cell of phonopy calculation."""
+        return self._data.phonon_primitive
+
+    @phonon_primitive.setter
+    def phonon_primitive(self, value: PhonopyAtoms):
+        """Set phonon primitive cell of phonopy calculation."""
+        self._data.phonon_primitive = value
+
+    @property
+    def phonon_supercell(self) -> PhonopyAtoms | None:
+        """Return phonon supercell of phonopy calculation."""
+        return self._data.phonon_supercell
+
+    @phonon_supercell.setter
+    def phonon_supercell(self, value: PhonopyAtoms):
+        """Set phonon supercell of phonopy calculation."""
+        self._data.phonon_supercell = value
+
+    @property
+    def phonon_dataset(self) -> dict | None:
+        """Return phonon dataset of phonopy calculation."""
+        return self._data.phonon_dataset
+
+    @phonon_dataset.setter
+    def phonon_dataset(self, value: dict):
+        """Set phonon dataset of phonopy calculation."""
+        self._data.phonon_dataset = value
+
+    @property
+    def phonon_supercell_matrix(self) -> NDArray | None:
+        """Return phonon supercell matrix of phonopy calculation."""
+        return self._data.phonon_supercell_matrix
+
+    @phonon_supercell_matrix.setter
+    def phonon_supercell_matrix(self, value: ArrayLike):
+        """Set supercell matrix of phonopy calculation."""
+        self._data.phonon_supercell_matrix = np.array(value, dtype="intc", order="C")
 
     def __str__(self):
         """Return string text of yaml output."""
