@@ -86,8 +86,12 @@ class Phono3pySettings(Settings):
         self.max_freepath = None
         self.num_points_in_batch = None
         self.read_collision = None
-        self.read_fc2 = False
-        self.read_fc3 = False
+        if load_phono3py_yaml:
+            self.read_fc2 = True
+            self.read_fc3 = True
+        else:
+            self.read_fc2 = False
+            self.read_fc3 = False
         self.read_gamma = False
         self.read_phonon = False
         self.read_pp = False
@@ -199,86 +203,128 @@ class Phono3pyConfParser(ConfParser):
         if "ion_clamped" in args:
             if args.ion_clamped:
                 self._confs["ion_clamped"] = ".true."
+            elif args.ion_clamped is False:
+                self._confs["ion_clamped"] = ".false."
 
         if "is_bterta" in args:
             if args.is_bterta:
                 self._confs["bterta"] = ".true."
+            elif args.is_bterta is False:
+                self._confs["bterta"] = ".false."
 
         if "is_compact_fc" in args:
             if args.is_compact_fc:
                 self._confs["compact_fc"] = ".true."
+            elif args.is_compact_fc is False:
+                self._confs["compact_fc"] = ".false."
 
         if "emulate_v2" in args:
             if args.emulate_v2:
                 self._confs["emulate_v2"] = ".true."
+            elif args.emulate_v2 is False:
+                self._confs["emulate_v2"] = ".false."
 
         if "is_gruneisen" in args:
             if args.is_gruneisen:
                 self._confs["gruneisen"] = ".true."
+            elif args.is_gruneisen is False:
+                self._confs["gruneisen"] = ".false."
 
         if "is_fc3_r0_average" in args:
             if args.is_fc3_r0_average:
                 self._confs["fc3_r0_average"] = ".true."
+            elif args.is_fc3_r0_average is False:
+                self._confs["fc3_r0_average"] = ".false."
 
         if "is_full_pp" in args:
             if args.is_full_pp:
                 self._confs["full_pp"] = ".true."
+            elif args.is_full_pp is False:
+                self._confs["full_pp"] = ".false."
 
         if "is_imag_self_energy" in args:
             if args.is_imag_self_energy:
                 self._confs["imag_self_energy"] = ".true."
+            elif args.is_imag_self_energy is False:
+                self._confs["imag_self_energy"] = ".false."
 
         if "is_isotope" in args:
             if args.is_isotope:
                 self._confs["isotope"] = ".true."
+            elif args.is_isotope is False:
+                self._confs["isotope"] = ".false."
 
         if "is_joint_dos" in args:
             if args.is_joint_dos:
                 self._confs["joint_dos"] = ".true."
+            elif args.is_joint_dos is False:
+                self._confs["joint_dos"] = ".false."
 
-        if "no_kappa_stars" in args:
-            if args.no_kappa_stars:
+        if "no_kappa_star" in args:
+            if args.kappa_star:
+                self._confs["kappa_star"] = ".true."
+            elif args.kappa_star is False:
                 self._confs["kappa_star"] = ".false."
 
         if "is_lbte" in args:
             if args.is_lbte:
                 self._confs["lbte"] = ".true."
+            elif args.is_lbte is False:
+                self._confs["lbte"] = ".false."
 
         if "is_N_U" in args:
             if args.is_N_U:
                 self._confs["N_U"] = ".true."
+            elif args.is_N_U is False:
+                self._confs["N_U"] = ".false."
 
         if "is_plusminus_displacements_fc2" in args:
             if args.is_plusminus_displacements_fc2:
                 self._confs["pm_fc2"] = ".true."
+            elif args.is_plusminus_displacements_fc2 is False:
+                self._confs["pm_fc2"] = ".false."
 
         if "is_real_self_energy" in args:
             if args.is_real_self_energy:
                 self._confs["real_self_energy"] = ".true."
+            elif args.is_real_self_energy is False:
+                self._confs["real_self_energy"] = ".false."
 
         if "is_reducible_collision_matrix" in args:
             if args.is_reducible_collision_matrix:
                 self._confs["reducible_collision_matrix"] = ".true."
+            elif args.is_reducible_collision_matrix is False:
+                self._confs["reducible_collision_matrix"] = ".false."
 
         if "is_spectral_function" in args:
             if args.is_spectral_function:
                 self._confs["spectral_function"] = ".true."
+            elif args.is_spectral_function is False:
+                self._confs["spectral_function"] = ".false."
 
         if "is_symmetrize_fc2" in args:
             if args.is_symmetrize_fc2:
                 self._confs["symmetrize_fc2"] = ".true."
+            elif args.is_symmetrize_fc2 is False:
+                self._confs["symmetrize_fc2"] = ".false."
 
         if "is_symmetrize_fc3_q" in args:
             if args.is_symmetrize_fc3_q:
                 self._confs["symmetrize_fc3_q"] = ".true."
+            elif args.is_symmetrize_fc3_q is False:
+                self._confs["symmetrize_fc3_q"] = ".false."
 
         if "is_symmetrize_fc3_r" in args:
             if args.is_symmetrize_fc3_r:
                 self._confs["symmetrize_fc3_r"] = ".true."
+            elif args.is_symmetrize_fc3_r is False:
+                self._confs["symmetrize_fc3_r"] = ".false."
 
         if "is_tetrahedron_method" in args:
             if args.is_tetrahedron_method:
                 self._confs["tetrahedron"] = ".true."
+            elif args.is_tetrahedron_method is False:
+                self._confs["tetrahedron"] = ".false."
 
         if "is_wigner_kappa" in args:
             if args.is_wigner_kappa:
@@ -335,22 +381,32 @@ class Phono3pyConfParser(ConfParser):
         if "read_fc2" in args:
             if args.read_fc2:
                 self._confs["read_fc2"] = ".true."
+            elif args.read_fc2 is False:
+                self._confs["read_fc2"] = ".false."
 
         if "read_fc3" in args:
             if args.read_fc3:
                 self._confs["read_fc3"] = ".true."
+            elif args.read_fc3 is False:
+                self._confs["read_fc3"] = ".false."
 
         if "read_gamma" in args:
             if args.read_gamma:
                 self._confs["read_gamma"] = ".true."
+            elif args.read_gamma is False:
+                self._confs["read_gamma"] = ".false."
 
         if "read_phonon" in args:
             if args.read_phonon:
                 self._confs["read_phonon"] = ".true."
+            elif args.read_phonon is False:
+                self._confs["read_phonon"] = ".false."
 
         if "read_pp" in args:
             if args.read_pp:
                 self._confs["read_pp"] = ".true."
+            elif args.read_pp is False:
+                self._confs["read_pp"] = ".false."
 
         if "read_collision" in args:
             if args.read_collision is not None:
@@ -368,10 +424,14 @@ class Phono3pyConfParser(ConfParser):
         if "solve_collective_phonon" in args:
             if args.solve_collective_phonon:
                 self._confs["collective_phonon"] = ".true."
+            elif args.solve_collective_phonon is False:
+                self._confs["collective_phonon"] = ".false."
 
         if "show_symfc_memory_usage" in args:
             if args.show_symfc_memory_usage:
                 self._confs["show_symfc_memory_usage"] = ".true."
+            elif args.show_symfc_memory_usage is False:
+                self._confs["show_symfc_memory_usage"] = ".false."
 
         if "subtract_forces" in args:
             if args.subtract_forces:
@@ -392,34 +452,50 @@ class Phono3pyConfParser(ConfParser):
         if "use_ave_pp" in args:
             if args.use_ave_pp:
                 self._confs["use_ave_pp"] = ".true."
+            elif args.use_ave_pp is False:
+                self._confs["use_ave_pp"] = ".false."
 
         if "use_grg" in args:
             if args.use_grg:
                 self._confs["use_grg"] = ".true."
+            elif args.use_grg is False:
+                self._confs["use_grg"] = ".false."
 
         if "write_gamma_detail" in args:
             if args.write_gamma_detail:
                 self._confs["write_gamma_detail"] = ".true."
+            elif args.write_gamma_detail is False:
+                self._confs["write_gamma_detail"] = ".false."
 
         if "write_gamma" in args:
             if args.write_gamma:
                 self._confs["write_gamma"] = ".true."
+            elif args.write_gamma is False:
+                self._confs["write_gamma"] = ".false."
 
         if "write_collision" in args:
             if args.write_collision:
                 self._confs["write_collision"] = ".true."
+            elif args.write_collision is False:
+                self._confs["write_collision"] = ".false."
 
         if "write_phonon" in args:
             if args.write_phonon:
                 self._confs["write_phonon"] = ".true."
+            elif args.write_phonon is False:
+                self._confs["write_phonon"] = ".false."
 
         if "write_pp" in args:
             if args.write_pp:
                 self._confs["write_pp"] = ".true."
+            elif args.write_pp is False:
+                self._confs["write_pp"] = ".false."
 
         if "write_LBTE_solution" in args:
             if args.write_LBTE_solution:
                 self._confs["write_LBTE_solution"] = ".true."
+            elif args.write_LBTE_solution is False:
+                self._confs["write_LBTE_solution"] = ".false."
 
     def _parse_conf(self):
         super()._parse_conf()
