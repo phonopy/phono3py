@@ -37,7 +37,6 @@
 from __future__ import annotations
 
 import argparse
-import dataclasses
 import os
 import pathlib
 import sys
@@ -48,7 +47,6 @@ from typing import Optional, cast
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.api_phonopy import Phonopy
-from phonopy.cui.collect_cell_info import collect_cell_info
 from phonopy.cui.phonopy_argparse import show_deprecated_option_warnings
 from phonopy.cui.phonopy_script import (
     file_exists,
@@ -57,7 +55,6 @@ from phonopy.cui.phonopy_script import (
     print_error_message,
     print_time,
     print_version,
-    set_magnetic_moments,
     store_nac_params,
 )
 from phonopy.cui.settings import PhonopySettings
@@ -80,6 +77,7 @@ from phono3py.cui.create_force_sets import (
 from phono3py.cui.create_supercells import (
     Phono3pyCellInfoResult,
     create_phono3py_supercells,
+    get_cell_info,
 )
 from phono3py.cui.load import (
     compute_force_constants_from_datasets,
@@ -342,40 +340,6 @@ def _get_input_output_filenames_from_args(args: argparse.Namespace):
     return input_filename, output_filename
 
 
-def _get_cell_info(
-    settings: Phono3pySettings, cell_filename: str | os.PathLike | None, log_level: int
-) -> Phono3pyCellInfoResult:
-    """Return calculator interface and crystal structure information."""
-    try:
-        cell_info = collect_cell_info(
-            supercell_matrix=settings.supercell_matrix,
-            primitive_matrix=settings.primitive_matrix,
-            interface_mode=settings.calculator,
-            cell_filename=cell_filename,
-            chemical_symbols=settings.chemical_symbols,
-            phonopy_yaml_cls=Phono3pyYaml,
-        )
-    except CellNotFoundError as e:
-        print_error_message(str(e))
-        if log_level:
-            print_error()
-        sys.exit(1)
-
-    cell_info = Phono3pyCellInfoResult(
-        **dataclasses.asdict(cell_info),
-        phonon_supercell_matrix=settings.phonon_supercell_matrix,
-    )
-
-    set_magnetic_moments(cell_info.unitcell, settings.magnetic_moments, log_level)
-
-    ph3py_yaml = cast(Phono3pyYaml, cell_info.phonopy_yaml)
-    if cell_info.phonon_supercell_matrix is None and ph3py_yaml:
-        ph_smat = ph3py_yaml.phonon_supercell_matrix
-        cell_info.phonon_supercell_matrix = ph_smat
-
-    return cell_info
-
-
 def _get_default_values(settings: Phono3pySettings):
     """Set default values."""
     # Brillouin zone integration: Tetrahedron (default) or smearing method
@@ -457,12 +421,12 @@ def _check_supercell_in_yaml(
     log_level: int,
 ):
     """Check consistency between generated cells and cells in yaml."""
-    if cell_info.phonopy_yaml is not None:
+    if cell_info.phono3py_yaml is not None:
         if distance_to_A is None:
             d2A = 1.0
         else:
             d2A = distance_to_A
-        phono3py_yaml = cast(Phono3pyYaml, cell_info.phonopy_yaml)
+        phono3py_yaml = cell_info.phono3py_yaml
         if phono3py_yaml.supercell is not None and ph3.supercell is not None:  # noqa E129
             yaml_cell = phono3py_yaml.supercell.copy()
             yaml_cell.cell = yaml_cell.cell * d2A
@@ -585,7 +549,7 @@ def _create_supercells_with_displacements(
             store_nac_params(
                 cast(Phonopy, phono3py),
                 cast(PhonopySettings, settings),
-                cell_info.phonopy_yaml,
+                cell_info.phono3py_yaml,
                 unitcell_filename,
                 log_level,
                 nac_factor=get_physical_units().Hartree * get_physical_units().Bohr,
@@ -610,7 +574,10 @@ def _create_supercells_with_displacements(
 
 
 def _produce_force_constants(
-    ph3py: Phono3py, settings: Phono3pySettings, log_level: int
+    ph3py: Phono3py,
+    settings: Phono3pySettings,
+    log_level: int,
+    load_phono3py_yaml: bool,
 ):
     """Calculate, read, and write force constants."""
     if log_level:
@@ -620,7 +587,7 @@ def _produce_force_constants(
     read_fc2 = ph3py.fc2 is not None
 
     cutoff_pair_distance = None
-    if settings.use_pypolymlp:
+    if settings.use_pypolymlp and ph3py.dataset is not None:
         cutoff_pair_distance = ph3py.dataset.get("cutoff_distance")
     if cutoff_pair_distance is None:
         cutoff_pair_distance = determine_cutoff_pair_distance(
@@ -651,10 +618,17 @@ def _produce_force_constants(
             symmetrize_fc=settings.fc_symmetry,
             is_compact_fc=settings.is_compact_fc,
             log_level=log_level,
+            load_phono3py_yaml=load_phono3py_yaml,
         )
-    except ForceCalculatorRequiredError:
-        if log_level:
-            print("Symfc will be used to handle general (or random) displacements.")
+    except ForceCalculatorRequiredError as e:
+        if load_phono3py_yaml:
+            if log_level:
+                print("Symfc will be used to handle general (or random) displacements.")
+        else:
+            print_error_message(str(e))
+            if log_level:
+                print_error()
+            sys.exit(1)
 
         compute_force_constants_from_datasets(
             ph3py,
@@ -671,8 +645,6 @@ def _produce_force_constants(
             print("fc3 could not be obtained.")
             if not forces_in_dataset(ph3py.dataset):
                 print("Forces were not found.")
-        else:
-            show_drift_fc3(ph3py.fc3, primitive=ph3py.primitive)
         if ph3py.fc2 is None:
             print("fc2 could not be obtained.")
             if ph3py.phonon_supercell_matrix is None:
@@ -681,14 +653,20 @@ def _produce_force_constants(
             else:
                 if not forces_in_dataset(ph3py.phonon_dataset):
                     print("Forces for dim-fc2 were not found.")
-        else:
-            show_drift_force_constants(
-                ph3py.fc2, primitive=ph3py.phonon_primitive, name="fc2"
-            )
 
     if ph3py.fc3 is None or ph3py.fc2 is None:
         print_error()
         sys.exit(1)
+
+    if log_level:
+        if load_phono3py_yaml:
+            print("Max drift after symmetrization by symfc projector: ")
+        else:
+            print("Max drift after symmetrization by translation: ")
+        show_drift_fc3(ph3py.fc3, primitive=ph3py.primitive)
+        show_drift_force_constants(
+            ph3py.fc2, primitive=ph3py.phonon_primitive, name="fc2"
+        )
 
     cutoff_distance = settings.cutoff_fc3_distance
     if cutoff_distance is not None and cutoff_distance > 0:
@@ -1055,10 +1033,21 @@ def main(**argparse_control):
     else:
         symprec = settings.symmetry_tolerance
 
-    cell_info = _get_cell_info(settings, cell_filename, log_level)
+    try:
+        cell_info = get_cell_info(
+            settings,
+            cell_filename,
+            log_level=log_level,
+            load_phonopy_yaml=load_phono3py_yaml,
+        )
+    except CellNotFoundError as e:
+        print_error_message(str(e))
+        if log_level:
+            print_error()
+        sys.exit(1)
+
     unitcell_filename = cell_info.optional_structure_info[0]
     interface_mode = cell_info.interface_mode
-    # ph3py_yaml = cell_info.phonopy_yaml
 
     if run_mode is None:
         run_mode = _get_run_mode(settings)
@@ -1213,7 +1202,7 @@ def main(**argparse_control):
         store_nac_params(
             cast(Phonopy, ph3py),
             cast(PhonopySettings, settings),
-            cell_info.phonopy_yaml,
+            cell_info.phono3py_yaml,
             unitcell_filename,
             log_level,
             nac_factor=get_physical_units().Hartree * get_physical_units().Bohr,
@@ -1234,7 +1223,7 @@ def main(**argparse_control):
     ############
     _load_dataset_and_phonon_dataset(
         ph3py,
-        ph3py_yaml=cast(Phono3pyYaml, cell_info.phonopy_yaml),
+        ph3py_yaml=cell_info.phono3py_yaml,
         phono3py_yaml_filename=unitcell_filename,
         cutoff_pair_distance=settings.cutoff_pair_distance,
         calculator=interface_mode,
@@ -1290,7 +1279,7 @@ def main(**argparse_control):
     ###########################
     # Produce force constants #
     ###########################
-    _produce_force_constants(ph3py, settings, log_level)
+    _produce_force_constants(ph3py, settings, log_level, load_phono3py_yaml)
 
     ############################################
     # Phonon Gruneisen parameter and then exit #
