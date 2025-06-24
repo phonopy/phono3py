@@ -38,6 +38,7 @@ from __future__ import annotations
 import os
 import pathlib
 from collections.abc import Sequence
+from typing import Literal
 
 import numpy as np
 import phonopy.cui.load_helper as load_helper
@@ -411,12 +412,13 @@ def load_fc2_and_fc3(
 
 def compute_force_constants_from_datasets(
     ph3py: Phono3py,
-    fc_calculator: str | None = None,
-    fc_calculator_options: dict | str | None = None,
+    fc_calculator: Literal["traditional", "symfc", "alm"] | None = None,
+    fc_calculator_options: str | None = None,
     cutoff_pair_distance: float | None = None,
     symmetrize_fc: bool = True,
     is_compact_fc: bool = True,
     log_level: int = 0,
+    load_phono3py_yaml: bool = False,
 ):
     """Compute force constants from datasets.
 
@@ -444,6 +446,7 @@ def compute_force_constants_from_datasets(
             is_compact_fc=is_compact_fc,
             fc_calculator=fc3_calculator,
             fc_calculator_options=fc3_calc_opts,
+            use_symfc_projector=load_phono3py_yaml,
         )
 
         if log_level and symmetrize_fc and fc_calculator is None:
@@ -461,6 +464,7 @@ def compute_force_constants_from_datasets(
                 is_compact_fc=is_compact_fc,
                 fc_calculator=fc2_calculator,
                 fc_calculator_options=fc2_calc_opts,
+                use_symfc_projector=load_phono3py_yaml,
             )
             if log_level and symmetrize_fc and fc_calculator is None:
                 print("fc2 was symmetrized.")

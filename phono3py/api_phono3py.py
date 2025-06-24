@@ -59,7 +59,7 @@ from phonopy.interface.mlp import PhonopyMLP
 from phonopy.interface.pypolymlp import (
     PypolymlpParams,
 )
-from phonopy.interface.symfc import SymfcFCSolver
+from phonopy.interface.symfc import SymfcFCSolver, symmetrize_by_projector
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import (
@@ -744,16 +744,21 @@ class Phono3py:
         self._phonon_mlp_dataset = mlp_dataset
 
     @property
-    def mlp(self) -> Optional[PhonopyMLP]:
+    def mlp(self) -> PhonopyMLP | None:
         """Setter and getter of PhonopyMLP dataclass."""
         return self._mlp
 
     @mlp.setter
-    def mlp(self, mlp) -> Optional[PhonopyMLP]:
+    def mlp(self, mlp: PhonopyMLP):
         self._mlp = mlp
 
     @property
-    def band_indices(self) -> list[NDArray]:
+    def phonon_mlp(self):
+        """Return MLP instance for fc2."""
+        return self._phonon_mlp
+
+    @property
+    def band_indices(self) -> list[NDArray] | None:
         """Setter and getter of band indices.
 
         list[NDArray]
@@ -811,7 +816,7 @@ class Phono3py:
         return self._supercells_with_displacements
 
     @property
-    def phonon_supercells_with_displacements(self):
+    def phonon_supercells_with_displacements(self) -> list[PhonopyAtoms] | None:
         """Return supercells with displacements for fc2.
 
         list of PhonopyAtoms
@@ -1083,16 +1088,6 @@ class Phono3py:
 
         """
         return self._bz_grid
-
-    @property
-    def mlp(self):
-        """Return MLP instance."""
-        return self._mlp
-
-    @property
-    def phonon_mlp(self):
-        """Return MLP instance for fc2."""
-        return self._phonon_mlp
 
     def init_phph_interaction(
         self,
@@ -1496,8 +1491,9 @@ class Phono3py:
         self,
         symmetrize_fc3r: bool = False,
         is_compact_fc: bool = False,
-        fc_calculator: Optional[Union[str, dict]] = None,
-        fc_calculator_options: Optional[Union[str, dict]] = None,
+        fc_calculator: Literal["traditional", "symfc", "alm"] | None = None,
+        fc_calculator_options: str | None = None,
+        use_symfc_projector: bool = False,
     ):
         """Calculate fc3 from displacements and forces.
 
@@ -1518,8 +1514,11 @@ class Phono3py:
             cells. Default is False.
         fc_calculator : str, optional
             Force constants calculator given by str.
-        fc_calculator_options : dict or str, optional
+        fc_calculator_options : str, optional
             Options for external force constants calculator.
+        use_symfc_projector : bool, optional
+            If True, the force constants are symmetrized by symfc projector
+            instead of traditional approach.
 
         """
         fc_solver_name = fc_calculator if fc_calculator is not None else "traditional"
@@ -1537,8 +1536,30 @@ class Phono3py:
         fc2 = fc_solver.force_constants[2]
         fc3 = fc_solver.force_constants[3]
 
-        if fc_calculator is None or fc_calculator == "traditional":
-            if symmetrize_fc3r:
+        if symmetrize_fc3r and (
+            fc_calculator is None or fc_calculator == "traditional"
+        ):
+            if use_symfc_projector:
+                if self._log_level:
+                    print("Symmetrizing fc3 by symfc projector.", flush=True)
+                fc3 = symmetrize_by_projector(
+                    self._supercell,
+                    fc3,
+                    3,
+                    primitive=self._primitive,
+                    log_level=self._log_level,
+                )
+                if self._fc2 is None:
+                    if self._log_level:
+                        print("Symmetrizing fc2 by symfc projector.", flush=True)
+                    fc2 = symmetrize_by_projector(
+                        self._supercell,
+                        fc2,
+                        2,
+                        primitive=self._primitive,
+                        log_level=self._log_level,
+                    )
+            else:
                 if is_compact_fc:
                     set_translational_invariance_compact_fc3(fc3, self._primitive)
                     set_permutation_symmetry_compact_fc3(fc3, self._primitive)
@@ -1585,10 +1606,11 @@ class Phono3py:
 
     def produce_fc2(
         self,
-        symmetrize_fc2=False,
-        is_compact_fc=False,
-        fc_calculator=None,
-        fc_calculator_options=None,
+        symmetrize_fc2: bool = False,
+        is_compact_fc: bool = False,
+        fc_calculator: Literal["traditional", "symfc", "alm"] | None = None,
+        fc_calculator_options: str | None = None,
+        use_symfc_projector: bool = False,
     ):
         """Calculate fc2 from displacements and forces.
 
@@ -1609,8 +1631,11 @@ class Phono3py:
             cells. Default is False.
         fc_calculator : str or None
             Force constants calculator given by str.
-        fc_calculator_options : dict
+        fc_calculator_options : str or None
             Options for external force constants calculator.
+        use_symfc_projector : bool, optional
+            If True, the force constants are symmetrized by symfc projector
+            instead of traditional approach.
 
         """
         if self._phonon_dataset is None:
@@ -1618,6 +1643,8 @@ class Phono3py:
         else:
             disp_dataset = self._phonon_dataset
 
+        if disp_dataset is None:
+            raise RuntimeError("Displacement dataset is not set.")
         if not forces_in_dataset(disp_dataset):
             raise RuntimeError("Forces are not set in the dataset.")
 
@@ -1632,8 +1659,16 @@ class Phono3py:
             log_level=self._log_level,
         )
 
-        if fc_calculator is None or fc_calculator == "traditional":
-            if symmetrize_fc2:
+        if symmetrize_fc2 and (fc_calculator is None or fc_calculator == "traditional"):
+            if use_symfc_projector:
+                self._fc2 = symmetrize_by_projector(
+                    self._phonon_supercell,
+                    self._fc2,
+                    2,
+                    primitive=self._primitive,
+                    log_level=self._log_level,
+                )
+            else:
                 if is_compact_fc:
                     symmetrize_compact_force_constants(
                         self._fc2, self._phonon_primitive
@@ -2485,7 +2520,7 @@ class Phono3py:
 
     def _build_phonon_supercells_with_displacements(
         self, supercell: PhonopyAtoms, dataset
-    ):
+    ) -> list[PhonopyAtoms]:
         supercells = []
         positions = supercell.positions
         magmoms = supercell.magnetic_moments

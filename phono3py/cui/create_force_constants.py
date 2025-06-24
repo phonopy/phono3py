@@ -104,6 +104,9 @@ def parse_forces(
             if dataset:
                 filename_read_from = force_filename
 
+    if dataset is None:
+        raise RuntimeError("Dataset is not found.")
+
     # Units of displacements and forces are converted. If forces don't
     # exist, the conversion will not be performed for forces.
     if calculator is not None:
@@ -112,8 +115,6 @@ def parse_forces(
             distance_to_A=physical_units["distance_to_A"],
             force_to_eVperA=physical_units["force_to_eVperA"],
         )
-    if dataset is None:
-        raise RuntimeError("Dataset is not found.")
 
     if "natom" in dataset and dataset["natom"] != natom:
         raise RuntimeError(
