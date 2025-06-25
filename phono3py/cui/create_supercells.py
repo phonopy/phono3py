@@ -44,7 +44,7 @@ import numpy as np
 from numpy.typing import ArrayLike
 from phonopy.cui.collect_cell_info import CellInfoResult
 from phonopy.cui.collect_cell_info import get_cell_info as phonopy_get_cell_info
-from phonopy.cui.settings import PhonopySettings
+from phonopy.cui.settings import Settings
 from phonopy.interface.calculator import write_supercells_with_displacements
 from phonopy.structure.cells import print_cell
 
@@ -80,7 +80,7 @@ def get_cell_info(
 ) -> Phono3pyCellInfoResult:
     """Return calculator interface and crystal structure information."""
     cell_info = phonopy_get_cell_info(
-        cast(PhonopySettings, settings),
+        cast(Settings, settings),
         cell_filename,
         log_level=log_level,
         load_phonopy_yaml=load_phonopy_yaml,

@@ -120,9 +120,9 @@ class FC3Solver(FCSolver):
 
 
 def extract_fc2_fc3_calculators(
-    fc_calculator: str | None,
+    fc_calculator: Literal["traditional", "symfc", "alm"] | str | None,
     order: int,
-) -> str | None:
+) -> Literal["traditional", "symfc", "alm"] | str | None:
     """Extract fc_calculator and fc_calculator_options for fc2 and fc3.
 
     fc_calculator : str
@@ -177,7 +177,7 @@ def get_fc_calculator_params(
     fc_calculator_options: str | None,
     cutoff_pair_distance: float | None,
     log_level: int = 0,
-) -> tuple[Literal["traditional", "symfc", "alm"] | None, str | None]:
+) -> tuple[str | None, str | None]:
     """Compile fc_calculator and fc_calculator_options from input settings."""
     _fc_calculator = None
     fc_calculator_list = []

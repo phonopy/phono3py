@@ -381,7 +381,6 @@ def load(
             fc_calculator_options=fc_calculator_options,
             symmetrize_fc=symmetrize_fc,
             is_compact_fc=is_compact_fc,
-            log_level=log_level,
         )
 
     if log_level and ph3py.fc3 is not None:
@@ -412,12 +411,11 @@ def load_fc2_and_fc3(
 
 def compute_force_constants_from_datasets(
     ph3py: Phono3py,
-    fc_calculator: Literal["traditional", "symfc", "alm"] | None = None,
+    fc_calculator: Literal["traditional", "symfc", "alm"] | str | None = None,
     fc_calculator_options: str | None = None,
     cutoff_pair_distance: float | None = None,
     symmetrize_fc: bool = True,
     is_compact_fc: bool = True,
-    log_level: int = 0,
     load_phono3py_yaml: bool = False,
 ):
     """Compute force constants from datasets.
@@ -449,9 +447,6 @@ def compute_force_constants_from_datasets(
             use_symfc_projector=load_phono3py_yaml,
         )
 
-        if log_level and symmetrize_fc and fc_calculator is None:
-            print("fc3 was symmetrized.")
-
     if not exist_fc2:
         if (
             ph3py.phonon_supercell_matrix is None and forces_in_dataset(ph3py.dataset)
@@ -466,8 +461,6 @@ def compute_force_constants_from_datasets(
                 fc_calculator_options=fc2_calc_opts,
                 use_symfc_projector=load_phono3py_yaml,
             )
-            if log_level and symmetrize_fc and fc_calculator is None:
-                print("fc2 was symmetrized.")
 
 
 def _load_fc3(

@@ -1536,10 +1536,8 @@ class Phono3py:
         fc2 = fc_solver.force_constants[2]
         fc3 = fc_solver.force_constants[3]
 
-        if symmetrize_fc3r and (
-            fc_calculator is None or fc_calculator == "traditional"
-        ):
-            if use_symfc_projector:
+        if symmetrize_fc3r:
+            if use_symfc_projector and fc_calculator is None:
                 if self._log_level:
                     print("Symmetrizing fc3 by symfc projector.", flush=True)
                 fc3 = symmetrize_by_projector(
@@ -1548,6 +1546,7 @@ class Phono3py:
                     3,
                     primitive=self._primitive,
                     log_level=self._log_level,
+                    show_credit=True,
                 )
                 if self._fc2 is None:
                     if self._log_level:
@@ -1559,16 +1558,22 @@ class Phono3py:
                         primitive=self._primitive,
                         log_level=self._log_level,
                     )
-            else:
+            elif fc_calculator is None or fc_calculator == "traditional":
+                if self._log_level:
+                    print("Symmetrizing fc3 by traditional approach.", flush=True)
                 if is_compact_fc:
                     set_translational_invariance_compact_fc3(fc3, self._primitive)
                     set_permutation_symmetry_compact_fc3(fc3, self._primitive)
-                    if self._fc2 is None:
-                        symmetrize_compact_force_constants(fc2, self._primitive)
                 else:
                     set_translational_invariance_fc3(fc3)
                     set_permutation_symmetry_fc3(fc3)
-                    if self._fc2 is None:
+
+                if self._fc2 is None:
+                    if self._log_level:
+                        print("Symmetrizing fc2 by traditional approach.", flush=True)
+                    if is_compact_fc:
+                        symmetrize_compact_force_constants(fc2, self._primitive)
+                    else:
                         symmetrize_force_constants(fc2)
 
         self._fc3 = fc3

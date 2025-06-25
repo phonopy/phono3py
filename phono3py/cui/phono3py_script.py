@@ -617,7 +617,6 @@ def _produce_force_constants(
             cutoff_pair_distance=cutoff_pair_distance,
             symmetrize_fc=settings.fc_symmetry,
             is_compact_fc=settings.is_compact_fc,
-            log_level=log_level,
             load_phono3py_yaml=load_phono3py_yaml,
         )
     except ForceCalculatorRequiredError as e:
@@ -637,7 +636,6 @@ def _produce_force_constants(
             cutoff_pair_distance=cutoff_pair_distance,
             symmetrize_fc=settings.fc_symmetry,
             is_compact_fc=settings.is_compact_fc,
-            log_level=log_level,
         )
 
     if log_level:
@@ -659,10 +657,6 @@ def _produce_force_constants(
         sys.exit(1)
 
     if log_level:
-        if load_phono3py_yaml:
-            print("Max drift after symmetrization by symfc projector: ")
-        else:
-            print("Max drift after symmetrization by translation: ")
         show_drift_fc3(ph3py.fc3, primitive=ph3py.primitive)
         show_drift_force_constants(
             ph3py.fc2, primitive=ph3py.phonon_primitive, name="fc2"
@@ -1235,9 +1229,10 @@ def main(**argparse_control):
     ###################
     if settings.use_pypolymlp:
         assert ph3py.mlp_dataset is None
-        if ph3py.dataset is not None:
+        if ph3py.dataset is not None:  # If None, load mlp from polymlp.yaml.
             ph3py.mlp_dataset = ph3py.dataset
             ph3py.dataset = None
+
         prepare_dataset = (
             settings.create_displacements or settings.random_displacements is not None
         )
