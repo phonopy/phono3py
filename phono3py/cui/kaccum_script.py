@@ -224,18 +224,18 @@ def _get_parser():
     return args
 
 
-def _read_files(args: argparse.Namespace) -> tuple[h5py.File, PhonopyAtoms]:
+def _read_files(args: argparse.Namespace) -> tuple[h5py.File, PhonopyAtoms | None]:
     primitive = None
     cell_info = collect_cell_info(
         supercell_matrix=np.eye(3, dtype=int),
         phonopy_yaml_cls=Phono3pyYaml,
     )
-    cell_filename = cell_info["optional_structure_info"][0]
+    cell_filename = cell_info.optional_structure_info[0]
     print(f'# Crystal structure was read from "{cell_filename}".')
-    cell = cell_info["unitcell"]
-    phpy_yaml = cell_info.get("phonopy_yaml", None)
+    cell = cell_info.unitcell
+    phpy_yaml = cell_info.phonopy_yaml
     if phpy_yaml is not None:
-        primitive = cell_info["phonopy_yaml"].primitive
+        primitive = phpy_yaml.primitive
         if primitive is None:
             primitive = cell
     f_kappa = h5py.File(args.filenames[0], "r")

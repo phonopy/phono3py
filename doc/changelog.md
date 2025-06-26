@@ -2,6 +2,15 @@
 
 # Change Log
 
+## Jun-26-2025: Version 3.17.0
+
+- Major refactoring of command-user interface. Most of routines behind the
+  `phono3py` and `phono3py-load` commands were unified.
+- For `phono3py-load`, symfc-projector is used to symmetrize force constants
+  calculated by finite difference approach as the default behavior. The previous
+  behavior of the symmetrization can be recovered by `--fc-calculator
+  traditional` option.
+
 ## Jun-12-2025: Version 3.16.0
 
 - Release to follow the change of phonopy
