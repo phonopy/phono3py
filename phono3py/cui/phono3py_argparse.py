@@ -289,13 +289,6 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             help="Read third order force constants",
         )
     parser.add_argument(
-        "--v2",
-        dest="is_fc3_r0_average",
-        action="store_false",
-        default=True,
-        help="Take average in fc3-r2q transformation around three atoms",
-    )
-    parser.add_argument(
         "--fc-calc",
         "--fc-calculator",
         dest="fc_calculator",
@@ -779,6 +772,13 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             help="Show symfc memory usage with respect to cutoff distance",
         )
     parser.add_argument(
+        "--symfc-memsize",
+        dest="symfc_memory_size",
+        type=float,
+        default=None,
+        help="Memory size to estimate cutoff pair distance (GB)",
+    )
+    parser.add_argument(
         "--spf",
         dest="is_spectral_function",
         action="store_true",
@@ -861,6 +861,13 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         action="store_true",
         default=False,
         help="Detailed run-time information is displayed",
+    )
+    parser.add_argument(
+        "--v2",
+        dest="is_fc3_r0_average",
+        action="store_false",
+        default=True,
+        help="Take average in fc3-r2q transformation around three atoms",
     )
     parser.add_argument(
         "--wgp",

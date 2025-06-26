@@ -51,12 +51,9 @@ from phonopy.harmonic.force_constants import (
     symmetrize_force_constants,
 )
 from phonopy.interface.calculator import get_calculator_physical_units
-from phonopy.interface.fc_calculator import fc_calculator_names
 from phonopy.interface.pypolymlp import PypolymlpParams, parse_mlp_params
-from phonopy.interface.symfc import parse_symfc_options
 
 from phono3py import Phono3py
-from phono3py.cui.settings import Phono3pySettings
 from phono3py.cui.show_log import show_phono3py_force_constants_settings
 from phono3py.file_IO import (
     get_length_of_first_line,
@@ -67,7 +64,11 @@ from phono3py.file_IO import (
     write_fc2_to_hdf5,
     write_fc3_to_hdf5,
 )
-from phono3py.interface.fc_calculator import extract_fc2_fc3_calculators
+from phono3py.interface.fc_calculator import (
+    determine_cutoff_pair_distance,
+    extract_fc2_fc3_calculators,
+    get_fc_calculator_params,
+)
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon3.dataset import forces_in_dataset
 from phono3py.phonon3.fc3 import (
@@ -75,22 +76,6 @@ from phono3py.phonon3.fc3 import (
     set_translational_invariance_fc3,
     show_drift_fc3,
 )
-
-
-def get_cutoff_pair_distance(settings: Phono3pySettings) -> Optional[float]:
-    """Return cutoff_pair_distance from settings."""
-    _, fc_calculator_options = get_fc_calculator_params(settings)
-    if settings.cutoff_pair_distance is None:
-        cutoff = parse_symfc_options(
-            extract_fc2_fc3_calculators(fc_calculator_options, 3)
-        ).get("cutoff")
-        if cutoff is None:
-            cutoff_pair_distance = None
-        else:
-            cutoff_pair_distance = cutoff.get(3)
-    else:
-        cutoff_pair_distance = settings.cutoff_pair_distance
-    return cutoff_pair_distance
 
 
 def create_phono3py_force_constants(
@@ -131,7 +116,10 @@ def create_phono3py_force_constants(
         pass
     else:
         (fc_calculator, fc_calculator_options) = get_fc_calculator_params(
-            settings, log_level=(not settings.read_fc3) * 1
+            settings.fc_calculator,
+            settings.fc_calculator_options,
+            settings.cutoff_pair_distance,
+            log_level=(not settings.read_fc3) * 1,
         )
         if settings.read_fc3:
             _read_phono3py_fc3(phono3py, symmetrize_fc3r, input_filename, log_level)
@@ -154,6 +142,7 @@ def create_phono3py_force_constants(
                     fc_calculator_options, 3
                 ),
             )
+        assert phono3py.fc3 is not None, "fc3 is not set."
 
         cutoff_distance = settings.cutoff_fc3_distance
         if cutoff_distance is not None and cutoff_distance > 0:
@@ -169,11 +158,13 @@ def create_phono3py_force_constants(
             else:
                 filename = "fc3." + output_filename + ".hdf5"
             if log_level:
-                print('Writing fc3 to "%s".' % filename)
+                print(f'Writing fc3 to "{filename}".')
             write_fc3_to_hdf5(
                 phono3py.fc3,
+                fc3_nonzero_indices=phono3py.fc3_nonzero_indices,
                 filename=filename,
                 p2s_map=phono3py.primitive.p2s_map,
+                fc3_cutoff=phono3py.fc3_cutoff,
                 compression=settings.hdf5_compression,
             )
 
@@ -305,64 +296,6 @@ def parse_forces(
                 print("Cutoff-pair-distance: %f" % cutoff_pair_distance)
 
     return dataset
-
-
-def get_fc_calculator_params(
-    settings: Phono3pySettings, log_level: int = 0
-) -> tuple[Optional[str], Optional[str]]:
-    """Return fc_calculator and fc_calculator_params from settings."""
-    fc_calculator = None
-    fc_calculator_list = []
-    if settings.fc_calculator is not None:
-        for fc_calculatr_str in settings.fc_calculator.split("|"):
-            if fc_calculatr_str == "":  # No external calculator
-                fc_calculator_list.append(fc_calculatr_str.lower())
-            elif fc_calculatr_str.lower() in fc_calculator_names:
-                fc_calculator_list.append(fc_calculatr_str.lower())
-        if fc_calculator_list:
-            fc_calculator = "|".join(fc_calculator_list)
-
-    fc_calculator_options = settings.fc_calculator_options
-    if settings.cutoff_pair_distance:
-        if fc_calculator_list and fc_calculator_list[-1] in ("alm", "symfc"):
-            if fc_calculator_list[-1] == "alm":
-                cutoff_str = f"-1 {settings.cutoff_pair_distance}"
-            if fc_calculator_list[-1] == "symfc":
-                cutoff_str = f"{settings.cutoff_pair_distance}"
-            fc_calculator_options = _set_cutoff_in_fc_calculator_options(
-                fc_calculator_options,
-                cutoff_str,
-                log_level,
-            )
-
-    return fc_calculator, fc_calculator_options
-
-
-def _set_cutoff_in_fc_calculator_options(
-    fc_calculator_options: Optional[str],
-    cutoff_str: str,
-    log_level: int,
-):
-    str_appended = f"cutoff={cutoff_str}"
-    calc_opts = fc_calculator_options
-    if calc_opts is None:
-        calc_opts = "|"
-    if "|" in calc_opts:
-        calc_opts_fc2, calc_opts_fc3 = [v.strip() for v in calc_opts.split("|")][:2]
-    else:
-        calc_opts_fc2 = calc_opts
-        calc_opts_fc3 = calc_opts
-
-    if calc_opts_fc3 == "":
-        calc_opts_fc3 += f"{str_appended}"
-        if log_level:
-            print(f'Set "{str_appended}" to fc_calculator_options for fc3.')
-    elif "cutoff" not in calc_opts_fc3:
-        calc_opts_fc3 += f", {str_appended}"
-        if log_level:
-            print(f'Appended "{str_appended}" to fc_calculator_options for fc3.')
-
-    return f"{calc_opts_fc2}|{calc_opts_fc3}"
 
 
 def _read_phono3py_fc3(phono3py: Phono3py, symmetrize_fc3r, input_filename, log_level):
@@ -524,13 +457,19 @@ def run_pypolymlp_to_compute_forces(
     number_of_snapshots: Optional[int] = None,
     random_seed: Optional[int] = None,
     prepare_dataset: bool = False,
+    fc_calculator: Optional[str] = None,
+    fc_calculator_options: Optional[str] = None,
     cutoff_pair_distance: Optional[float] = None,
+    symfc_memory_size: Optional[float] = None,
     mlp_filename: Optional[str] = None,
     log_level: int = 0,
 ):
     """Run pypolymlp to compute forces."""
     if log_level:
+        import pypolymlp
+
         print("-" * 29 + " pypolymlp start " + "-" * 30)
+        print("Pypolymlp version", pypolymlp.__version__)
         print("Pypolymlp is a generator of polynomial machine learning potentials.")
         print("Please cite the paper: A. Seko, J. Appl. Phys. 133, 011101 (2023).")
         print("Pypolymlp is developed at https://github.com/sekocha/pypolymlp.")
@@ -540,7 +479,6 @@ def run_pypolymlp_to_compute_forces(
         _mlp_filename_list = list(pathlib.Path().glob(f"{mlp_filename}*"))
         if _mlp_filename_list:
             _mlp_filename = _mlp_filename_list[0]
-            print(_mlp_filename)
             if _mlp_filename.suffix not in [
                 ".yaml",
                 ".pmlp",
@@ -601,6 +539,18 @@ def run_pypolymlp_to_compute_forces(
                     "0"
                 ).rstrip(".")
             )
+
+        cutoff_pair_distance = determine_cutoff_pair_distance(
+            fc_calculator=fc_calculator,
+            fc_calculator_options=fc_calculator_options,
+            cutoff_pair_distance=cutoff_pair_distance,
+            symfc_memory_size=symfc_memory_size,
+            random_displacements=number_of_snapshots,
+            supercell=ph3py.supercell,
+            primitive=ph3py.primitive,
+            symmetry=ph3py.symmetry,
+            log_level=log_level,
+        )
         ph3py.generate_displacements(
             distance=_displacement_distance,
             cutoff_pair_distance=cutoff_pair_distance,
@@ -633,7 +583,10 @@ def run_pypolymlp_to_compute_phonon_forces(
     """Run pypolymlp to compute phonon forces."""
     if ph3py.phonon_mlp_dataset is not None:
         if log_level:
+            import pypolymlp
+
             print("-" * 29 + " pypolymlp start " + "-" * 30)
+            print(f"Pypolymlp version {pypolymlp.__version__}")
             print("Pypolymlp is a generator of polynomial machine learning potentials.")
             print("Please cite the paper: A. Seko, J. Appl. Phys. 133, 011101 (2023).")
             print("Pypolymlp is developed at https://github.com/sekocha/pypolymlp.")

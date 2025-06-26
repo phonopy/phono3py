@@ -182,7 +182,7 @@ class ShowCalcProgress:
         kappa = br.kappa
         num_ignored_phonon_modes = br.number_of_ignored_phonon_modes
         num_band = br.frequencies.shape[1]
-        num_phonon_modes = br.get_number_of_sampling_grid_points() * num_band
+        num_phonon_modes = br.number_of_sampling_grid_points * num_band
         for i, sigma in enumerate(sigmas):
             text = "----------- Thermal conductivity (W/m-k) "
             if sigma:
@@ -223,7 +223,7 @@ class ShowCalcProgress:
         kappa_C = br.kappa_C
         num_ignored_phonon_modes = br.number_of_ignored_phonon_modes
         num_band = br.frequencies.shape[1]
-        num_phonon_modes = br.get_number_of_sampling_grid_points() * num_band
+        num_phonon_modes = br.number_of_sampling_grid_points * num_band
         for i, sigma in enumerate(sigmas):
             text = "----------- Thermal conductivity (W/m-k) "
             if sigma:

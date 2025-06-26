@@ -272,7 +272,8 @@ int64_t gridsys_get_bz_triplets_at_q(
     int64_t (*ir_triplets)[3], const int64_t bz_grid_index,
     const int64_t (*bz_grid_addresses)[3], const int64_t *bz_map,
     const int64_t *map_triplets, const int64_t num_map_triplets,
-    const int64_t D_diag[3], const int64_t Q[3][3], const int64_t bz_grid_type);
+    const int64_t D_diag[3], const int64_t Q[3][3],
+    const double reciprocal_lattice[3][3], const int64_t bz_grid_type);
 
 /**
  * @brief Return integration weight of linear tetrahedron method

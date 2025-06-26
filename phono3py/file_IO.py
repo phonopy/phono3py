@@ -36,12 +36,14 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import warnings
 from collections.abc import Sequence
 from typing import Optional, TextIO, Union
 
 import h5py
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.cui.load_helper import read_force_constants_from_hdf5
 
 # This import is deactivated for a while.
@@ -300,34 +302,54 @@ def _write_FORCES_FC3_typeI(
             count += 1
 
 
-def write_fc3_to_hdf5(fc3, filename="fc3.hdf5", p2s_map=None, compression="gzip"):
+def write_fc3_to_hdf5(
+    fc3: NDArray,
+    fc3_nonzero_indices: NDArray | None = None,
+    filename: str = "fc3.hdf5",
+    p2s_map: NDArray | None = None,
+    fc3_cutoff: float | None = None,
+    compression: str = "gzip",
+):
     """Write fc3 in fc3.hdf5.
 
     Parameters
     ----------
-    force_constants : ndarray
-        Force constants
-        shape=(n_satom, n_satom, n_satom, 3, 3, 3) or
-        (n_patom, n_satom, n_satom,3,3,3), dtype=double
+    fc3 : ndarray
+        Force constants shape=(n_satom, n_satom, n_satom, 3, 3, 3) or (n_patom,
+        n_satom, n_satom,3,3,3), dtype=double
+    fc3_nonzero_indices : ndarray, optional
+        Non-zero indices of fc3. shape=(n_satom, n_satom, n_satom) or (n_patom,
+        n_satom, n_satom), dtype="byte". If this is given, fc3 is in compact
+        format. Otherwise, it is in full format.
     filename : str
         Filename to be used.
     p2s_map : ndarray, optional
-        Primitive atom indices in supercell index system
-        shape=(n_patom,), dtype=intc
+        Primitive atom indices in supercell index system shape=(n_patom,),
+        dtype=intc
+    fc3_cutoff : float, optional
+        Cutoff distance for fc3.
     compression : str or int, optional
-        h5py's lossless compression filters (e.g., "gzip", "lzf"). None gives
-        no compression. See the detail at docstring of
-        h5py.Group.create_dataset. Default is "gzip".
+        h5py's lossless compression filters (e.g., "gzip", "lzf"). None gives no
+        compression. See the detail at docstring of h5py.Group.create_dataset.
+        Default is "gzip".
 
     """
     with h5py.File(filename, "w") as w:
         w.create_dataset("version", data=np.bytes_(__version__))
         w.create_dataset("fc3", data=fc3, compression=compression)
+        if fc3_nonzero_indices is not None:
+            w.create_dataset(
+                "fc3_nonzero_indices", data=fc3_nonzero_indices, compression=compression
+            )
+            if fc3_cutoff is not None:
+                w.create_dataset("fc3_cutoff", data=fc3_cutoff)
         if p2s_map is not None:
             w.create_dataset("p2s_map", data=p2s_map)
 
 
-def read_fc3_from_hdf5(filename="fc3.hdf5", p2s_map=None):
+def read_fc3_from_hdf5(
+    filename: str | os.PathLike = "fc3.hdf5", p2s_map: NDArray | None = None
+) -> NDArray | dict:
     """Read fc3 from fc3.hdf5.
 
     fc3 can be in full or compact format. They are distinguished by
@@ -339,20 +361,44 @@ def read_fc3_from_hdf5(filename="fc3.hdf5", p2s_map=None):
 
     """
     with h5py.File(filename, "r") as f:
-        fc3 = f["fc3"][:]
+        if "fc3" not in f:
+            raise KeyError(
+                f"{filename} does not have 'fc3' dataset. "
+                "This file is not a valid fc3.hdf5."
+            )
+        fc3: NDArray = f["fc3"][:]  # type: ignore
+        if fc3.dtype == np.dtype("double") and fc3.flags.c_contiguous:
+            pass
+        else:
+            raise TypeError(
+                f"{filename} has to be read by h5py as numpy ndarray of "
+                "dtype='double' and c_contiguous."
+            )
+
         if "p2s_map" in f:
             p2s_map_in_file = f["p2s_map"][:]
             check_force_constants_indices(
                 fc3.shape[:2], p2s_map_in_file, p2s_map, filename
             )
-        if fc3.dtype == np.dtype("double") and fc3.flags.c_contiguous:
+
+        fc3_nonzero_indices = None  # type: ignore
+        if "fc3_nonzero_indices" in f:
+            fc3_nonzero_indices: NDArray = f["fc3_nonzero_indices"][:]  # type: ignore
+            if (
+                fc3_nonzero_indices.dtype == np.dtype("byte")
+                and fc3_nonzero_indices.flags.c_contiguous
+            ):
+                pass
+            else:
+                raise TypeError(
+                    f"{filename} has to be read by h5py as numpy ndarray of "
+                    "dtype='byte' and c_contiguous."
+                )
+
+        if fc3_nonzero_indices is None:
             return fc3
         else:
-            msg = (
-                "%s has to be read by h5py as numpy ndarray of "
-                "dtype='double' and c_contiguous." % filename
-            )
-            raise TypeError(msg)
+            return {"fc3": fc3, "fc3_nonzero_indices": fc3_nonzero_indices}
 
 
 def write_fc2_to_hdf5(
@@ -415,7 +461,7 @@ def read_fc2_from_hdf5(filename="fc2.hdf5", p2s_map=None):
 
 def write_datasets_to_hdf5(
     dataset: dict,
-    phonon_dataset: dict = None,
+    phonon_dataset: dict | None = None,
     filename: str = "datasets.hdf5",
     compression: str = "gzip",
 ):
@@ -1090,7 +1136,7 @@ def read_gamma_from_hdf5(
         filename=filename,
     )
     full_filename = "kappa" + suffix + ".hdf5"
-    if not os.path.exists(full_filename):
+    if not pathlib.Path(full_filename).exists():
         return None, full_filename
 
     read_data = {}
@@ -1117,8 +1163,8 @@ def read_collision_from_hdf5(
     filename=None,
     only_temperatures=False,
     verbose=True,
-):
-    """Read colliction matrix.
+) -> tuple:
+    """Read collision matrix.
 
     indices : array_like of int
         Indices of temperatures.
@@ -1137,10 +1183,8 @@ def read_collision_from_hdf5(
         filename=filename,
     )
     full_filename = "collision" + suffix + ".hdf5"
-    if not os.path.exists(full_filename):
-        if verbose:
-            print("%s not found." % full_filename)
-        return None
+    if not pathlib.Path(full_filename).exists():
+        raise FileNotFoundError(f"{full_filename} not found.")
 
     if only_temperatures:
         with h5py.File(full_filename, "r") as f:
@@ -1290,7 +1334,7 @@ def read_pp_from_hdf5(
     filename=None,
     verbose=True,
     check_consistency=False,
-):
+) -> tuple:
     """Read ph-ph interaction strength from its hdf5 file."""
     suffix = _get_filename_suffix(
         mesh,
@@ -1300,10 +1344,8 @@ def read_pp_from_hdf5(
         filename=filename,
     )
     full_filename = "pp" + suffix + ".hdf5"
-    if not os.path.exists(full_filename):
-        if verbose:
-            print("%s not found." % full_filename)
-        return None
+    if not pathlib.Path(full_filename).exists():
+        raise FileNotFoundError(f"{full_filename} not found.")
 
     with h5py.File(full_filename, "r") as f:
         if "nonzero_pp" in f:
@@ -1346,7 +1388,7 @@ def read_pp_from_hdf5(
 
         return pp, g_zero
 
-    return None
+    raise RuntimeError(f"pp data not found in {full_filename}.")
 
 
 def write_gamma_detail_to_hdf5(
@@ -1479,14 +1521,12 @@ def write_phonon_to_hdf5(
     return None
 
 
-def read_phonon_from_hdf5(mesh, filename=None, verbose=True):
+def read_phonon_from_hdf5(mesh, filename=None, verbose=True) -> tuple:
     """Read phonon from its hdf5 file."""
     suffix = _get_filename_suffix(mesh, filename=filename)
     full_filename = "phonon" + suffix + ".hdf5"
-    if not os.path.exists(full_filename):
-        if verbose:
-            print("%s not found." % full_filename)
-        return None
+    if not pathlib.Path(full_filename).exists():
+        raise FileNotFoundError(f"{full_filename} not found.")
 
     with h5py.File(full_filename, "r") as f:
         frequencies = np.array(f["frequency"][:], dtype="double", order="C")
@@ -1503,8 +1543,6 @@ def read_phonon_from_hdf5(mesh, filename=None, verbose=True):
             print('Phonons were read from "%s".' % full_filename, flush=True)
 
         return frequencies, eigenvectors, grid_address
-
-    return None
 
 
 def write_ir_grid_points(bz_grid, grid_points, grid_weights, primitive_lattice):

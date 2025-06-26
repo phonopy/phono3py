@@ -59,6 +59,7 @@ from phonopy.exception import ForceCalculatorRequiredError
 from phonopy.file_IO import is_file_phonopy_yaml
 from phonopy.harmonic.force_constants import show_drift_force_constants
 from phonopy.interface.calculator import get_calculator_physical_units
+from phonopy.interface.symfc import estimate_symfc_cutoff_from_memsize
 from phonopy.phonon.band_structure import get_band_qpoints
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.cells import isclose as cells_isclose
@@ -66,7 +67,6 @@ from phonopy.structure.cells import isclose as cells_isclose
 from phono3py import Phono3py, Phono3pyIsotope, Phono3pyJointDos
 from phono3py.cui.create_force_constants import (
     create_phono3py_force_constants,
-    get_cutoff_pair_distance,
     get_fc_calculator_params,
     run_pypolymlp_to_compute_forces,
 )
@@ -95,7 +95,7 @@ from phono3py.file_IO import (
     write_fc3_to_hdf5,
     write_phonon_to_hdf5,
 )
-from phono3py.interface.fc_calculator import estimate_symfc_memory_usage
+from phono3py.interface.fc_calculator import determine_cutoff_pair_distance
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon.grid import get_grid_point_from_address, get_ir_grid_points
 from phono3py.phonon3.dataset import forces_in_dataset
@@ -593,14 +593,33 @@ def _store_force_constants(ph3py: Phono3py, settings: Phono3pySettings, log_leve
     if log_level:
         print("-" * 29 + " Force constants " + "-" * 30)
 
+    load_fc2_and_fc3(ph3py, log_level=log_level)
+
     read_fc3 = ph3py.fc3 is not None
     read_fc2 = ph3py.fc2 is not None
 
-    load_fc2_and_fc3(ph3py, log_level=log_level)
+    cutoff_pair_distance = None
+    if settings.use_pypolymlp:
+        cutoff_pair_distance = ph3py.dataset.get("cutoff_distance")
+    if cutoff_pair_distance is None:
+        cutoff_pair_distance = determine_cutoff_pair_distance(
+            fc_calculator=settings.fc_calculator,
+            fc_calculator_options=settings.fc_calculator_options,
+            cutoff_pair_distance=settings.cutoff_pair_distance,
+            symfc_memory_size=settings.symfc_memory_size,
+            random_displacements=settings.random_displacements,
+            supercell=ph3py.supercell,
+            primitive=ph3py.primitive,
+            log_level=log_level,
+        )
+    if cutoff_pair_distance is None and ph3py.dataset is not None:
+        cutoff_pair_distance = ph3py.dataset.get("cutoff_distance")
 
-    cutoff_pair_distance = get_cutoff_pair_distance(settings)
     (fc_calculator, fc_calculator_options) = get_fc_calculator_params(
-        settings, log_level=(not read_fc3) * 1
+        settings.fc_calculator,
+        settings.fc_calculator_options,
+        cutoff_pair_distance,
+        log_level=(not read_fc3) * 1,
     )
     try:
         compute_force_constants_from_datasets(
@@ -660,7 +679,9 @@ def _store_force_constants(ph3py: Phono3py, settings: Phono3pySettings, log_leve
     if not read_fc3:
         write_fc3_to_hdf5(
             ph3py.fc3,
+            fc3_nonzero_indices=ph3py.fc3_nonzero_indices,
             p2s_map=ph3py.primitive.p2s_map,
+            fc3_cutoff=ph3py.fc3_cutoff,
             compression=settings.hdf5_compression,
         )
         if log_level:
@@ -668,7 +689,7 @@ def _store_force_constants(ph3py: Phono3py, settings: Phono3pySettings, log_leve
     if not read_fc2:
         write_fc2_to_hdf5(
             ph3py.fc2,
-            p2s_map=ph3py.primitive.p2s_map,
+            p2s_map=ph3py.phonon_primitive.p2s_map,
             physical_unit="eV/angstrom^2",
             compression=settings.hdf5_compression,
         )
@@ -1048,20 +1069,11 @@ def main(**argparse_control):
     ###############################
     if settings.show_symfc_memory_usage and load_phono3py_yaml:
         print("Quick estimation of memory size required for solving fc3 by symfc")
-        vecs, _ = ph3py.primitive.get_smallest_vectors()
-        dists = np.unique(
-            np.round(np.linalg.norm(vecs @ ph3py.primitive.cell, axis=-1), decimals=1)
-        )
         print("cutoff   memsize")
         print("------   -------")
-        for cutoff in dists[1:] + 0.1:
-            memsize, memsize2 = estimate_symfc_memory_usage(
-                ph3py.supercell, ph3py.symmetry, cutoff
-            )
-            print(
-                f"{cutoff:5.1f}  {memsize + memsize2:6.2f} GB "
-                f"({memsize:.2f}+{memsize2:.2f})"
-            )
+        estimate_symfc_cutoff_from_memsize(
+            ph3py.supercell, ph3py.primitive, ph3py.symmetry, 3, verbose=True
+        )
 
         if log_level:
             print_end_phono3py()
@@ -1179,14 +1191,16 @@ def main(**argparse_control):
         prepare_dataset = (
             settings.create_displacements or settings.random_displacements is not None
         )
-        cutoff_pair_distance = get_cutoff_pair_distance(settings)
         run_pypolymlp_to_compute_forces(
             ph3py,
             mlp_params=settings.mlp_params,
             displacement_distance=settings.displacement_distance,
             number_of_snapshots=settings.random_displacements,
             random_seed=settings.random_seed,
-            cutoff_pair_distance=cutoff_pair_distance,
+            fc_calculator=settings.fc_calculator,
+            fc_calculator_options=settings.fc_calculator_options,
+            cutoff_pair_distance=settings.cutoff_pair_distance,
+            symfc_memory_size=settings.symfc_memory_size,
             prepare_dataset=prepare_dataset,
             log_level=log_level,
         )
