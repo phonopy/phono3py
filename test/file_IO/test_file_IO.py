@@ -1,6 +1,8 @@
 """Tests of Phono3py API."""
 
+import os
 import pathlib
+import tempfile
 from collections.abc import Sequence
 from typing import Optional
 
@@ -11,7 +13,6 @@ from phono3py import Phono3py
 from phono3py.file_IO import _get_filename_suffix
 
 cwd = pathlib.Path(__file__).parent
-cwd_called = pathlib.Path.cwd()
 
 
 def test_kappa_filename():
@@ -60,16 +61,25 @@ def test_kappa_hdf5_with_boundary_mpf(si_pbesol: Phono3py):
     ]
 
     boundary_mfp = 10000.0
-    kappa_filename = _set_kappa(
-        si_pbesol, [4, 4, 4], write_kappa=True, boundary_mfp=boundary_mfp
-    )
-    file_path = pathlib.Path(cwd_called / kappa_filename)
-    with h5py.File(file_path, "r") as f:
-        np.testing.assert_almost_equal(f["boundary_mfp"][()], boundary_mfp)
-        assert set(list(f)) == set(key_ref)
 
-    if file_path.exists():
-        file_path.unlink()
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            kappa_filename = _set_kappa(
+                si_pbesol, [4, 4, 4], write_kappa=True, boundary_mfp=boundary_mfp
+            )
+            file_path = pathlib.Path(kappa_filename)
+            with h5py.File(file_path, "r") as f:
+                np.testing.assert_almost_equal(f["boundary_mfp"][()], boundary_mfp)
+                assert set(list(f)) == set(key_ref)
+
+            if file_path.exists():
+                file_path.unlink()
+
+        finally:
+            os.chdir(original_cwd)
 
 
 def _set_kappa(

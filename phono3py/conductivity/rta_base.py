@@ -204,7 +204,7 @@ class ConductivityRTABase(ConductivityBase):
             self._collision.set_grid_point(grid_point)
             num_triplets = len(self._pp.get_triplets_at_q()[0])
             if self._log_level:
-                print("Number of triplets: %d" % num_triplets)
+                print("Number of triplets: %d" % num_triplets, flush=True)
 
             if (
                 self._is_full_pp
@@ -288,7 +288,7 @@ class ConductivityRTABase(ConductivityBase):
             if self._is_gamma_detail:
                 num_temp = len(self._temperatures)
                 self._gamma_detail_at_q = np.empty(
-                    ((num_temp,) + self._pp.get_interaction_strength().shape),
+                    ((num_temp,) + self._pp.interaction_strength.shape),
                     dtype="double",
                     order="C",
                 )

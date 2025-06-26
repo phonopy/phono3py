@@ -97,6 +97,7 @@ def test_random_disps_agno2(
         number_of_snapshots=number_of_snapshots,
         distance=distance,
         is_plusminus=is_plusminus,
+        number_estimation_factor=2,
     )
 
     ph3.generate_fc2_displacements(

@@ -452,7 +452,7 @@ def write_fc2_to_hdf5(
     )
 
 
-def read_fc2_from_hdf5(filename="fc2.hdf5", p2s_map=None):
+def read_fc2_from_hdf5(filename: str | os.PathLike = "fc2.hdf5", p2s_map=None):
     """Read fc2 from fc2.hdf5."""
     return read_force_constants_from_hdf5(
         filename=filename, p2s_map=p2s_map, calculator="vasp"

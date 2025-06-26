@@ -34,11 +34,20 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
+import dataclasses
+import os
+
 import numpy as np
+from numpy.typing import ArrayLike
+from phonopy.cui.collect_cell_info import CellInfoResult
+from phonopy.cui.collect_cell_info import get_cell_info as phonopy_get_cell_info
 from phonopy.interface.calculator import write_supercells_with_displacements
 from phonopy.structure.cells import print_cell
 
 from phono3py import Phono3py
+from phono3py.cui.settings import Phono3pySettings
 from phono3py.cui.show_log import print_supercell_matrix
 from phono3py.interface.calculator import (
     get_additional_info_to_write_fc2_supercells,
@@ -46,14 +55,56 @@ from phono3py.interface.calculator import (
     get_default_displacement_distance,
 )
 from phono3py.interface.fc_calculator import determine_cutoff_pair_distance
+from phono3py.interface.phono3py_yaml import Phono3pyYaml
+
+
+@dataclasses.dataclass
+class Phono3pyCellInfoResult(CellInfoResult):
+    """Phono3py cell info result.
+
+    This is a subclass of CellInfoResult to add phonon supercell matrix.
+
+    """
+
+    phono3py_yaml: Phono3pyYaml | None = None
+    phonon_supercell_matrix: ArrayLike | None = None
+
+
+def get_cell_info(
+    settings: Phono3pySettings,
+    cell_filename: str | os.PathLike | None,
+    log_level: int,
+    load_phonopy_yaml: bool = True,
+) -> Phono3pyCellInfoResult:
+    """Return calculator interface and crystal structure information."""
+    cell_info = phonopy_get_cell_info(
+        settings,
+        cell_filename,
+        log_level=log_level,
+        load_phonopy_yaml=load_phonopy_yaml,
+        phonopy_yaml_cls=Phono3pyYaml,
+    )
+
+    cell_info_dict = dataclasses.asdict(cell_info)
+    cell_info_dict["phono3py_yaml"] = cell_info_dict.pop("phonopy_yaml")
+    cell_info = Phono3pyCellInfoResult(
+        **cell_info_dict,
+        phonon_supercell_matrix=settings.phonon_supercell_matrix,
+    )
+
+    ph3py_yaml = cell_info.phono3py_yaml
+    if cell_info.phonon_supercell_matrix is None and ph3py_yaml:
+        cell_info.phonon_supercell_matrix = ph3py_yaml.phonon_supercell_matrix
+
+    return cell_info
 
 
 def create_phono3py_supercells(
-    cell_info,
-    settings,
-    symprec,
-    interface_mode="vasp",
-    log_level=1,
+    cell_info: Phono3pyCellInfoResult,
+    settings: Phono3pySettings,
+    symprec: float,
+    interface_mode: str | None = "vasp",
+    log_level: int = 1,
 ):
     """Create displacements and supercells.
 
@@ -61,17 +112,17 @@ def create_phono3py_supercells(
     The default unit is Angstrom.
 
     """
-    optional_structure_info = cell_info["optional_structure_info"]
+    optional_structure_info = cell_info.optional_structure_info
 
     if settings.displacement_distance is None:
         distance = get_default_displacement_distance(interface_mode)
     else:
         distance = settings.displacement_distance
     ph3 = Phono3py(
-        cell_info["unitcell"],
-        cell_info["supercell_matrix"],
-        primitive_matrix=cell_info["primitive_matrix"],
-        phonon_supercell_matrix=cell_info["phonon_supercell_matrix"],
+        cell_info.unitcell,
+        cell_info.supercell_matrix,
+        primitive_matrix=cell_info.primitive_matrix,
+        phonon_supercell_matrix=cell_info.phonon_supercell_matrix,
         is_symmetry=settings.is_symmetry,
         symprec=symprec,
         calculator=interface_mode,
@@ -108,6 +159,7 @@ def create_phono3py_supercells(
         is_diagonal=settings.is_diagonal_displacement,
         number_of_snapshots=settings.random_displacements,
         random_seed=settings.random_seed,
+        number_estimation_factor=settings.rd_number_estimation_factor,
     )
 
     if (
@@ -152,7 +204,10 @@ def create_phono3py_supercells(
             print(f"Cutoff distance for displacements: {cutoff_pair_distance}")
             print(f"Number of displacement supercell files created: {num_disp_files}")
 
-    if ph3.phonon_supercell_matrix is not None:
+    if (
+        ph3.phonon_supercell_matrix is not None
+        and ph3.phonon_supercells_with_displacements is not None
+    ):
         num_disps = len(ph3.phonon_supercells_with_displacements)
         additional_info = get_additional_info_to_write_fc2_supercells(
             interface_mode, ph3.phonon_supercell_matrix
