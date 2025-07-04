@@ -22,23 +22,25 @@ cwd = pathlib.Path(__file__).parent
 class MockArgs:
     """Mock args of ArgumentParser."""
 
-    cell_filename: str | None = None
-    conf_filename: os.PathLike | None = None
+    cell_filename: str | os.PathLike | None = None
+    conf_filename: str | os.PathLike | None = None
     fc_calculator: str | None = None
     fc_calculator_options: str | None = None
     fc_symmetry: bool = True
-    filename: Sequence[os.PathLike] | None = None
+    filename: Sequence[str | os.PathLike] | None = None
     force_sets_mode: bool = False
     force_sets_to_forces_fc2_mode: bool = False
     input_filename = None
     input_output_filename = None
     log_level: int | None = None
     is_bterta: bool | None = None
+    is_lbte: bool | None = None
+    is_wigner_kappa: bool | None = None
     mesh_numbers: Sequence | None = None
     mlp_params: str | None = None
     rd_number_estimation_factor: float | None = None
     output_filename = None
-    output_yaml_filename: os.PathLike | None = None
+    output_yaml_filename: str | os.PathLike | None = None
     random_displacements: int | str | None = None
     show_num_triplets: bool = False
     temperatures: Sequence | None = None
@@ -89,8 +91,144 @@ def test_phono3py_load():
                 "kappa-m555.hdf5",
             ):
                 file_path = pathlib.Path(created_filename)
-                if file_path.exists():
-                    file_path.unlink()
+                assert file_path.exists()
+                file_path.unlink()
+
+        finally:
+            os.chdir(original_cwd)
+
+
+def test_phono3py_load_lbte():
+    """Test phono3py-load script running direct solution."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            # Check sys.exit(0)
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_Si-111-222.yaml",
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            argparse_control = _get_phono3py_load_args(
+                "phono3py.yaml",
+                is_lbte=True,
+                temperatures=[
+                    "300",
+                ],
+                mesh_numbers=["5", "5", "5"],
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            # Clean files created by phono3py-load script.
+            for created_filename in (
+                "phono3py.yaml",
+                "fc2.hdf5",
+                "fc3.hdf5",
+                "kappa-m555.hdf5",
+                "coleigs-m555.hdf5",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+        finally:
+            os.chdir(original_cwd)
+
+
+def test_phono3py_load_wigner_rta():
+    """Test phono3py-load script running wigner rta."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            # Check sys.exit(0)
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_Si-111-222.yaml",
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            argparse_control = _get_phono3py_load_args(
+                "phono3py.yaml",
+                is_bterta=True,
+                is_wigner_kappa=True,
+                temperatures=[
+                    "300",
+                ],
+                mesh_numbers=["5", "5", "5"],
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            # for filename in pathlib.Path.cwd().iterdir():
+            #     print(filename)
+
+            # Clean files created by phono3py-load script.
+            for created_filename in (
+                "phono3py.yaml",
+                "fc2.hdf5",
+                "fc3.hdf5",
+                "kappa-m555.hdf5",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+        finally:
+            os.chdir(original_cwd)
+
+
+def test_phono3py_load_wigner_lbte():
+    """Test phono3py-load script running wigner rta."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            # Check sys.exit(0)
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_Si-111-222.yaml",
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            argparse_control = _get_phono3py_load_args(
+                "phono3py.yaml",
+                is_lbte=True,
+                is_wigner_kappa=True,
+                temperatures=[
+                    "300",
+                ],
+                mesh_numbers=["5", "5", "5"],
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            # for filename in pathlib.Path.cwd().iterdir():
+            #     print(filename)
+
+            # Clean files created by phono3py-load script.
+            for created_filename in (
+                "phono3py.yaml",
+                "fc2.hdf5",
+                "fc3.hdf5",
+                "kappa-m555.hdf5",
+                "coleigs-m555.hdf5",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
 
         finally:
             os.chdir(original_cwd)
@@ -181,8 +319,8 @@ def test_phono3py_with_QE_calculator(load_phono3py_yaml):
                 "kappa-m111111.hdf5",
             ):
                 file_path = pathlib.Path(created_filename)
-                if file_path.exists():
-                    file_path.unlink()
+                assert file_path.exists()
+                file_path.unlink()
 
         finally:
             os.chdir(original_cwd)
@@ -404,11 +542,13 @@ def test_phono3py_load_with_pypolymlp_nacl():
 
 
 def _get_phono3py_load_args(
-    phono3py_yaml_filepath: str | pathlib.Path,
+    phono3py_yaml_filepath: str | os.PathLike | None,
     fc_calculator: str | None = None,
     fc_calculator_options: str | None = None,
     load_phono3py_yaml: bool = True,
     is_bterta: bool = False,
+    is_lbte: bool = False,
+    is_wigner_kappa: bool = False,
     mesh_numbers: Sequence | None = None,
     mlp_params: str | None = None,
     rd_number_estimation_factor: float | None = None,
@@ -418,11 +558,14 @@ def _get_phono3py_load_args(
 ):
     # Mock of ArgumentParser.args.
     if load_phono3py_yaml:
+        assert phono3py_yaml_filepath is not None
         mockargs = MockArgs(
             filename=[phono3py_yaml_filepath],
             fc_calculator=fc_calculator,
             fc_calculator_options=fc_calculator_options,
             is_bterta=is_bterta,
+            is_lbte=is_lbte,
+            is_wigner_kappa=is_wigner_kappa,
             log_level=1,
             mesh_numbers=mesh_numbers,
             mlp_params=mlp_params,
@@ -439,6 +582,8 @@ def _get_phono3py_load_args(
             log_level=1,
             cell_filename=phono3py_yaml_filepath,
             is_bterta=is_bterta,
+            is_lbte=is_lbte,
+            is_wigner_kappa=is_wigner_kappa,
             mesh_numbers=mesh_numbers,
             mlp_params=mlp_params,
             rd_number_estimation_factor=rd_number_estimation_factor,
