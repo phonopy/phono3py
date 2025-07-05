@@ -1195,7 +1195,7 @@ def main(**argparse_control):
     if settings.is_nac:
         store_nac_params(
             cast(Phonopy, ph3py),
-            cast(PhonopySettings, settings),
+            settings,
             cell_info.phono3py_yaml,
             unitcell_filename,
             log_level,
