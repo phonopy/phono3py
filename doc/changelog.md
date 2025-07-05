@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Jul-5-2025: Version 3.17.1
+
+- Fix direct-solution crashing when executed via command line
+
 ## Jun-26-2025: Version 3.17.0
 
 - Major refactoring of command-user interface. Most of routines behind the
