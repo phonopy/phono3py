@@ -79,7 +79,6 @@ class ConductivityLBTE(ConductivityLBTEBase):
         self._kappa_RTA = None
         self._mode_kappa = None
         self._mode_kappa_RTA = None
-        self._gv_by_gv = None
 
         super().__init__(
             interaction,
@@ -103,7 +102,7 @@ class ConductivityLBTE(ConductivityLBTEBase):
             lang=lang,
         )
 
-        self._conductivity_components = ConductivityComponents(
+        self._conductivity_components: ConductivityComponents = ConductivityComponents(
             self._pp,
             self._grid_points,
             self._grid_weights,
@@ -137,6 +136,11 @@ class ConductivityLBTE(ConductivityLBTEBase):
         """Return RTA mode lattice thermal conductivities."""
         return self._mode_kappa_RTA
 
+    @property
+    def gv_by_gv(self):
+        """Return gv_by_gv at grid points where mode kappa are calculated."""
+        return self._conductivity_components.gv_by_gv
+
     def _set_cv(self, i_gp, i_data):
         """Set cv for conductivity components."""
         self._conductivity_components.set_heat_capacities(i_gp, i_data)
@@ -168,9 +172,6 @@ class ConductivityLBTE(ConductivityLBTEBase):
         )
         self._kappa_RTA = np.zeros(
             (len(self._sigmas), num_temp, 6), dtype="double", order="C"
-        )
-        self._gv_by_gv = np.zeros(
-            (num_grid_points, num_band0, 6), dtype="double", order="C"
         )
         self._mode_kappa = np.zeros(
             (len(self._sigmas), num_temp, num_grid_points, num_band0, 6), dtype="double"

@@ -303,7 +303,7 @@ class ConductivityComponents(ConductivityComponentsBase):
             log_level=log_level,
         )
 
-        self._gv_by_gv: np.ndarray
+        self._gv_by_gv: NDArray
 
         if self._pp.dynamical_matrix is None:
             raise RuntimeError("Interaction.init_dynamical_matrix() has to be called.")
@@ -318,7 +318,7 @@ class ConductivityComponents(ConductivityComponentsBase):
             self._allocate_values()
 
     @property
-    def gv_by_gv(self):
+    def gv_by_gv(self) -> NDArray:
         """Return gv_by_gv at grid points where mode kappa are calculated."""
         return self._gv_by_gv
 
