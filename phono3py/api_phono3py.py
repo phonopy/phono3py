@@ -1545,9 +1545,12 @@ class Phono3py:
 
         if fc_calculator == "traditional" or fc_calculator is None:
             if symmetrize_fc3r:
-                self.symmetrize_fc3(
-                    use_symfc_projector=use_symfc_projector and fc_calculator is None
-                )
+                if use_symfc_projector and fc_calculator is None:
+                    self.symmetrize_fc3(
+                        use_symfc_projector=True, symfc_options=fc_calculator_options
+                    )
+                else:
+                    self.symmetrize_fc3()
         elif fc_calculator == "symfc":
             symfc_solver = cast(SymfcFCSolver, fc_solver.fc_solver)
             fc3_nonzero_elems = symfc_solver.get_nonzero_atomic_indices_fc3()
@@ -1570,13 +1573,17 @@ class Phono3py:
             self._fc2 = fc2
             if fc_calculator == "traditional" or fc_calculator is None:
                 if symmetrize_fc3r:
-                    self.symmetrize_fc2(
-                        use_symfc_projector=use_symfc_projector
-                        and fc_calculator is None
-                    )
+                    if use_symfc_projector and fc_calculator is None:
+                        self.symmetrize_fc2(
+                            use_symfc_projector=True,
+                            symfc_options=fc_calculator_options,
+                        )
+                    else:
+                        self.symmetrize_fc2()
 
     def symmetrize_fc3(
         self,
+        level: int = 1,
         use_symfc_projector: bool = False,
         symfc_options: str | None = None,
     ):
@@ -1584,6 +1591,9 @@ class Phono3py:
 
         Parameters
         ----------
+        level : int, optional
+            Number of times translational and permutation symmetries are applied
+            for traditional symmetrization. Default is 1.
         use_symfc_projector : bool, optional
             If True, the force constants are symmetrized by symfc projector
             instead of traditional approach.
@@ -1614,12 +1624,13 @@ class Phono3py:
         else:
             if self._log_level:
                 print("Symmetrizing fc3 by traditional approach.", flush=True)
-            if self._fc3.shape[0] == self._fc3.shape[1]:
-                set_translational_invariance_fc3(self._fc3)
-                set_permutation_symmetry_fc3(self._fc3)
-            else:
-                set_translational_invariance_compact_fc3(self._fc3, self._primitive)
-                set_permutation_symmetry_compact_fc3(self._fc3, self._primitive)
+            for _ in range(level):
+                if self._fc3.shape[0] == self._fc3.shape[1]:
+                    set_translational_invariance_fc3(self._fc3)
+                    set_permutation_symmetry_fc3(self._fc3)
+                else:
+                    set_translational_invariance_compact_fc3(self._fc3, self._primitive)
+                    set_permutation_symmetry_compact_fc3(self._fc3, self._primitive)
 
     def produce_fc2(
         self,
@@ -1686,6 +1697,7 @@ class Phono3py:
 
     def symmetrize_fc2(
         self,
+        level: int = 1,
         use_symfc_projector: bool = False,
         symfc_options: str | None = None,
     ):
@@ -1693,6 +1705,9 @@ class Phono3py:
 
         Parameters
         ----------
+        level : int, optional
+            Number of times translational and permutation symmetries are applied
+            for traditional symmetrization. Default is 1.
         use_symfc_projector : bool, optional
             If True, the force constants are symmetrized by symfc projector
             instead of traditional approach.
@@ -1733,10 +1748,11 @@ class Phono3py:
         else:
             if self._log_level:
                 print("Symmetrizing fc2 by traditional approach.", flush=True)
-            if self._fc2.shape[0] == self._fc2.shape[1]:
-                symmetrize_force_constants(self._fc2)
-            else:
-                symmetrize_compact_force_constants(self._fc2, primitive)
+            for _ in range(level):
+                if self._fc2.shape[0] == self._fc2.shape[1]:
+                    symmetrize_force_constants(self._fc2)
+                else:
+                    symmetrize_compact_force_constants(self._fc2, primitive)
 
     def cutoff_fc3_by_zero(self, cutoff_distance, fc3=None):
         """Set zero to fc3 elements out of cutoff distance.

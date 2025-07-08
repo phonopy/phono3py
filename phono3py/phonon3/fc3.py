@@ -34,10 +34,13 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import logging
 import sys
 
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.harmonic.force_constants import (
     distribute_force_constants,
     get_nsym_list_and_s2pp,
@@ -573,30 +576,50 @@ def cutoff_fc3_by_zero(fc3, supercell, cutoff_distance, p2s_map=None, symprec=1e
                     break
 
 
-def show_drift_fc3(fc3, primitive=None, name="fc3"):
-    """Show drift of fc3."""
+def show_drift_fc3(
+    fc3: NDArray, primitive: Primitive | None = None, name: str = "fc3", digit: int = 8
+):
+    """Show max drift of fc3."""
+    maxval1, maxval2, maxval3, xyz1, xyz2, xyz3 = get_drift_fc3(
+        fc3, primitive=primitive
+    )
+    text = f"Max drift of {name}: "
+    text += f"{maxval1:.{digit}f} ({'xyz'[xyz1[0]]}{'xyz'[xyz1[1]]}{'xyz'[xyz1[2]]}) "
+    text += f"{maxval2:.{digit}f} ({'xyz'[xyz2[0]]}{'xyz'[xyz2[1]]}{'xyz'[xyz2[2]]}) "
+    text += f"{maxval3:.{digit}f} ({'xyz'[xyz3[0]]}{'xyz'[xyz3[1]]}{'xyz'[xyz3[2]]})"
+    print(text)
+
+
+def get_drift_fc3(
+    fc3: NDArray, primitive: Primitive | None = None
+) -> tuple[float, float, float, list[int], list[int], list[int]]:
+    """Return max drift of fc3."""
     if fc3.shape[0] == fc3.shape[1]:
         num_atom = fc3.shape[0]
         maxval1 = 0
         maxval2 = 0
         maxval3 = 0
-        klm1 = [0, 0, 0]
-        klm2 = [0, 0, 0]
-        klm3 = [0, 0, 0]
+        xyz1 = [0, 0, 0]
+        xyz2 = [0, 0, 0]
+        xyz3 = [0, 0, 0]
         for i, j, k, ll, m in list(np.ndindex((num_atom, num_atom, 3, 3, 3))):
             val1 = fc3[:, i, j, k, ll, m].sum()
             val2 = fc3[i, :, j, k, ll, m].sum()
             val3 = fc3[i, j, :, k, ll, m].sum()
             if abs(val1) > abs(maxval1):
                 maxval1 = val1
-                klm1 = [k, ll, m]
+                xyz1 = [k, ll, m]
             if abs(val2) > abs(maxval2):
                 maxval2 = val2
-                klm2 = [k, ll, m]
+                xyz2 = [k, ll, m]
             if abs(val3) > abs(maxval3):
                 maxval3 = val3
-                klm3 = [k, ll, m]
+                xyz3 = [k, ll, m]
     else:
+        if primitive is None:
+            raise RuntimeError(
+                "Primitive cell is required to get drift of compact fc3."
+            )
         try:
             import phono3py._phono3py as phono3c
 
@@ -614,9 +637,9 @@ def show_drift_fc3(fc3, primitive=None, name="fc3"):
             maxval1 = 0
             maxval2 = 0
             maxval3 = 0
-            klm1 = [0, 0, 0]
-            klm2 = [0, 0, 0]
-            klm3 = [0, 0, 0]
+            xyz1 = [0, 0, 0]
+            xyz2 = [0, 0, 0]
+            xyz3 = [0, 0, 0]
             phono3c.transpose_compact_fc3(
                 fc3, permutations, s2pp_map, p2s_map, nsym_list, 0
             )  # dim[0] <--> dim[1]
@@ -624,7 +647,7 @@ def show_drift_fc3(fc3, primitive=None, name="fc3"):
                 val1 = fc3[i, :, j, k, ll, m].sum()
                 if abs(val1) > abs(maxval1):
                     maxval1 = val1
-                    klm1 = [k, ll, m]
+                    xyz1 = [k, ll, m]
             phono3c.transpose_compact_fc3(
                 fc3, permutations, s2pp_map, p2s_map, nsym_list, 0
             )  # dim[0] <--> dim[1]
@@ -633,10 +656,10 @@ def show_drift_fc3(fc3, primitive=None, name="fc3"):
                 val3 = fc3[i, j, :, k, ll, m].sum()
                 if abs(val2) > abs(maxval2):
                     maxval2 = val2
-                    klm2 = [k, ll, m]
+                    xyz2 = [k, ll, m]
                 if abs(val3) > abs(maxval3):
                     maxval3 = val3
-                    klm3 = [k, ll, m]
+                    xyz3 = [k, ll, m]
         except ImportError as exc:
             text = (
                 "Import error at phono3c.tranpose_compact_fc3. "
@@ -644,11 +667,7 @@ def show_drift_fc3(fc3, primitive=None, name="fc3"):
             )
             raise RuntimeError(text) from exc
 
-    text = "Max drift of %s: " % name
-    text += "%f (%s%s%s) " % (maxval1, "xyz"[klm1[0]], "xyz"[klm1[1]], "xyz"[klm1[2]])
-    text += "%f (%s%s%s) " % (maxval2, "xyz"[klm2[0]], "xyz"[klm2[1]], "xyz"[klm2[2]])
-    text += "%f (%s%s%s)" % (maxval3, "xyz"[klm3[0]], "xyz"[klm3[1]], "xyz"[klm3[2]])
-    print(text)
+    return maxval1, maxval2, maxval3, xyz1, xyz2, xyz3
 
 
 def _set_permutation_symmetry_fc3_elem_with_cutoff(fc3, fc3_done, a, b, c):
