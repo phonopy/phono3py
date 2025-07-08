@@ -59,7 +59,11 @@ from phonopy.interface.mlp import PhonopyMLP
 from phonopy.interface.pypolymlp import (
     PypolymlpParams,
 )
-from phonopy.interface.symfc import SymfcFCSolver, symmetrize_by_projector
+from phonopy.interface.symfc import (
+    SymfcFCSolver,
+    parse_symfc_options,
+    symmetrize_by_projector,
+)
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import (
@@ -1571,19 +1575,39 @@ class Phono3py:
                         and fc_calculator is None
                     )
 
-    def symmetrize_fc3(self, use_symfc_projector: bool = False):
-        """Symmetrize fc3 by symfc projector or traditional approach."""
+    def symmetrize_fc3(
+        self,
+        use_symfc_projector: bool = False,
+        symfc_options: str | None = None,
+    ):
+        """Symmetrize fc3 by symfc projector or traditional approach.
+
+        Parameters
+        ----------
+        use_symfc_projector : bool, optional
+            If True, the force constants are symmetrized by symfc projector
+            instead of traditional approach.
+        symfc_options : str or None, optional
+            Options for symfc projector. "use_mkl=true" calls sparse_dot_mkl
+            (required to install it).
+
+        """
         if self._fc3 is None:
             raise RuntimeError("fc3 is not set. Call produce_fc3 first.")
 
         if use_symfc_projector:
             if self._log_level:
                 print("Symmetrizing fc3 by symfc projector.", flush=True)
+            if symfc_options is None:
+                options = None
+            else:
+                options = parse_symfc_options(symfc_options, 3)
             self._fc3 = symmetrize_by_projector(
                 self._supercell,
                 self._fc3,
                 3,
                 primitive=self._primitive,
+                options=options,
                 log_level=self._log_level,
                 show_credit=True,
             )
@@ -1660,8 +1684,23 @@ class Phono3py:
                 use_symfc_projector=use_symfc_projector and fc_calculator is None
             )
 
-    def symmetrize_fc2(self, use_symfc_projector: bool = False):
-        """Symmetrize fc2 by symfc projector or traditional approach."""
+    def symmetrize_fc2(
+        self,
+        use_symfc_projector: bool = False,
+        symfc_options: str | None = None,
+    ):
+        """Symmetrize fc2 by symfc projector or traditional approach.
+
+        Parameters
+        ----------
+        use_symfc_projector : bool, optional
+            If True, the force constants are symmetrized by symfc projector
+            instead of traditional approach.
+        symfc_options : str or None, optional
+            Options for symfc projector. "use_mkl=true" calls sparse_dot_mkl
+            (required to install it).
+
+        """
         if self._fc2 is None:
             raise RuntimeError(
                 "fc2 is not set. Call produce_fc3 or produce_fc2 (phonon_fc2) first."
@@ -1678,11 +1717,16 @@ class Phono3py:
         if use_symfc_projector:
             if self._log_level:
                 print("Symmetrizing fc2 by symfc projector.", flush=True)
+            if symfc_options is None:
+                options = None
+            else:
+                options = parse_symfc_options(symfc_options, 2)
             self._fc2 = symmetrize_by_projector(
                 supercell,
                 self._fc2,
                 2,
                 primitive=primitive,
+                options=options,
                 log_level=self._log_level,
                 show_credit=True,
             )
