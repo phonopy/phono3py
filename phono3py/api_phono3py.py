@@ -59,7 +59,11 @@ from phonopy.interface.mlp import PhonopyMLP
 from phonopy.interface.pypolymlp import (
     PypolymlpParams,
 )
-from phonopy.interface.symfc import SymfcFCSolver, symmetrize_by_projector
+from phonopy.interface.symfc import (
+    SymfcFCSolver,
+    parse_symfc_options,
+    symmetrize_by_projector,
+)
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import (
@@ -1541,9 +1545,12 @@ class Phono3py:
 
         if fc_calculator == "traditional" or fc_calculator is None:
             if symmetrize_fc3r:
-                self.symmetrize_fc3(
-                    use_symfc_projector=use_symfc_projector and fc_calculator is None
-                )
+                if use_symfc_projector and fc_calculator is None:
+                    self.symmetrize_fc3(
+                        use_symfc_projector=True, symfc_options=fc_calculator_options
+                    )
+                else:
+                    self.symmetrize_fc3()
         elif fc_calculator == "symfc":
             symfc_solver = cast(SymfcFCSolver, fc_solver.fc_solver)
             fc3_nonzero_elems = symfc_solver.get_nonzero_atomic_indices_fc3()
@@ -1566,36 +1573,64 @@ class Phono3py:
             self._fc2 = fc2
             if fc_calculator == "traditional" or fc_calculator is None:
                 if symmetrize_fc3r:
-                    self.symmetrize_fc2(
-                        use_symfc_projector=use_symfc_projector
-                        and fc_calculator is None
-                    )
+                    if use_symfc_projector and fc_calculator is None:
+                        self.symmetrize_fc2(
+                            use_symfc_projector=True,
+                            symfc_options=fc_calculator_options,
+                        )
+                    else:
+                        self.symmetrize_fc2()
 
-    def symmetrize_fc3(self, use_symfc_projector: bool = False):
-        """Symmetrize fc3 by symfc projector or traditional approach."""
+    def symmetrize_fc3(
+        self,
+        level: int = 1,
+        use_symfc_projector: bool = False,
+        symfc_options: str | None = None,
+    ):
+        """Symmetrize fc3 by symfc projector or traditional approach.
+
+        Parameters
+        ----------
+        level : int, optional
+            Number of times translational and permutation symmetries are applied
+            for traditional symmetrization. Default is 1.
+        use_symfc_projector : bool, optional
+            If True, the force constants are symmetrized by symfc projector
+            instead of traditional approach.
+        symfc_options : str or None, optional
+            Options for symfc projector. "use_mkl=true" calls sparse_dot_mkl
+            (required to install it).
+
+        """
         if self._fc3 is None:
             raise RuntimeError("fc3 is not set. Call produce_fc3 first.")
 
         if use_symfc_projector:
             if self._log_level:
                 print("Symmetrizing fc3 by symfc projector.", flush=True)
+            if symfc_options is None:
+                options = None
+            else:
+                options = parse_symfc_options(symfc_options, 3)
             self._fc3 = symmetrize_by_projector(
                 self._supercell,
                 self._fc3,
                 3,
                 primitive=self._primitive,
+                options=options,
                 log_level=self._log_level,
                 show_credit=True,
             )
         else:
             if self._log_level:
                 print("Symmetrizing fc3 by traditional approach.", flush=True)
-            if self._fc3.shape[0] == self._fc3.shape[1]:
-                set_translational_invariance_fc3(self._fc3)
-                set_permutation_symmetry_fc3(self._fc3)
-            else:
-                set_translational_invariance_compact_fc3(self._fc3, self._primitive)
-                set_permutation_symmetry_compact_fc3(self._fc3, self._primitive)
+            for _ in range(level):
+                if self._fc3.shape[0] == self._fc3.shape[1]:
+                    set_translational_invariance_fc3(self._fc3)
+                    set_permutation_symmetry_fc3(self._fc3)
+                else:
+                    set_translational_invariance_compact_fc3(self._fc3, self._primitive)
+                    set_permutation_symmetry_compact_fc3(self._fc3, self._primitive)
 
     def produce_fc2(
         self,
@@ -1660,8 +1695,27 @@ class Phono3py:
                 use_symfc_projector=use_symfc_projector and fc_calculator is None
             )
 
-    def symmetrize_fc2(self, use_symfc_projector: bool = False):
-        """Symmetrize fc2 by symfc projector or traditional approach."""
+    def symmetrize_fc2(
+        self,
+        level: int = 1,
+        use_symfc_projector: bool = False,
+        symfc_options: str | None = None,
+    ):
+        """Symmetrize fc2 by symfc projector or traditional approach.
+
+        Parameters
+        ----------
+        level : int, optional
+            Number of times translational and permutation symmetries are applied
+            for traditional symmetrization. Default is 1.
+        use_symfc_projector : bool, optional
+            If True, the force constants are symmetrized by symfc projector
+            instead of traditional approach.
+        symfc_options : str or None, optional
+            Options for symfc projector. "use_mkl=true" calls sparse_dot_mkl
+            (required to install it).
+
+        """
         if self._fc2 is None:
             raise RuntimeError(
                 "fc2 is not set. Call produce_fc3 or produce_fc2 (phonon_fc2) first."
@@ -1678,21 +1732,27 @@ class Phono3py:
         if use_symfc_projector:
             if self._log_level:
                 print("Symmetrizing fc2 by symfc projector.", flush=True)
+            if symfc_options is None:
+                options = None
+            else:
+                options = parse_symfc_options(symfc_options, 2)
             self._fc2 = symmetrize_by_projector(
                 supercell,
                 self._fc2,
                 2,
                 primitive=primitive,
+                options=options,
                 log_level=self._log_level,
                 show_credit=True,
             )
         else:
             if self._log_level:
                 print("Symmetrizing fc2 by traditional approach.", flush=True)
-            if self._fc2.shape[0] == self._fc2.shape[1]:
-                symmetrize_force_constants(self._fc2)
-            else:
-                symmetrize_compact_force_constants(self._fc2, primitive)
+            for _ in range(level):
+                if self._fc2.shape[0] == self._fc2.shape[1]:
+                    symmetrize_force_constants(self._fc2)
+                else:
+                    symmetrize_compact_force_constants(self._fc2, primitive)
 
     def cutoff_fc3_by_zero(self, cutoff_distance, fc3=None):
         """Set zero to fc3 elements out of cutoff distance.

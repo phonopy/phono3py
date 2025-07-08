@@ -6,9 +6,11 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from phonopy.harmonic.force_constants import get_drift_force_constants
 from phonopy.interface.pypolymlp import PypolymlpParams
 
 from phono3py import Phono3py
+from phono3py.phonon3.fc3 import get_drift_fc3
 
 cwd = Path(__file__).parent
 
@@ -207,3 +209,63 @@ def test_use_pypolymlp_mgo(mgo_222rd_444rd: Phono3py):
     assert (
         pytest.approx(63.0018546, abs=1e-1) == ph3.thermal_conductivity.kappa[0, 0, 0]
     )
+
+
+@pytest.mark.parametrize("is_compact_fc", [True, False])
+def test_symmetrize_fc_traditional(si_pbesol: Phono3py, is_compact_fc: bool):
+    """Test symmetrize_fc3 and symmetrize_fc2 with traditional approach."""
+    ph3 = Phono3py(
+        si_pbesol.unitcell,
+        supercell_matrix=si_pbesol.supercell_matrix,
+        primitive_matrix=si_pbesol.primitive_matrix,
+        log_level=2,
+    )
+    ph3.dataset = si_pbesol.dataset
+    ph3.produce_fc3(is_compact_fc=is_compact_fc)
+    assert ph3.fc3 is not None
+    assert ph3.fc2 is not None
+
+    v1, v2, v3, _, _, _ = get_drift_fc3(ph3.fc3, primitive=ph3.primitive)
+    np.testing.assert_allclose(
+        np.abs([v1, v2, v3]), [1.755065e-01, 1.749287e-01, 3.333333e-05], atol=1e-6
+    )
+    ph3.symmetrize_fc3(level=3)
+    v1_sym, v2_sym, v3_sym, _, _, _ = get_drift_fc3(ph3.fc3, primitive=ph3.primitive)
+    if is_compact_fc:
+        np.testing.assert_allclose(
+            np.abs([v1_sym, v2_sym, v3_sym]), 1.217081e-05, atol=1e-6
+        )
+    else:
+        np.testing.assert_allclose(
+            np.abs([v1_sym, v2_sym, v3_sym]), 1.421085e-14, atol=1e-6
+        )
+
+    v1_sym, v2_sym, _, _ = get_drift_force_constants(ph3.fc2, primitive=ph3.primitive)
+    if is_compact_fc:
+        np.testing.assert_allclose(np.abs([v1_sym, v2_sym]), 1.0e-06, atol=1e-6)
+    else:
+        np.testing.assert_allclose(np.abs([v1_sym, v2_sym]), 1.0e-06, atol=1e-6)
+
+
+@pytest.mark.parametrize("is_compact_fc", [True, False])
+def test_symmetrize_fc_symfc(si_pbesol: Phono3py, is_compact_fc: bool):
+    """Test symmetrize_fc3 and symmetrize_fc2 with symfc."""
+    pytest.importorskip("symfc")
+
+    ph3 = Phono3py(
+        si_pbesol.unitcell,
+        supercell_matrix=si_pbesol.supercell_matrix,
+        primitive_matrix=si_pbesol.primitive_matrix,
+        log_level=2,
+    )
+    ph3.dataset = si_pbesol.dataset
+    ph3.produce_fc3(is_compact_fc=is_compact_fc)
+    assert ph3.fc3 is not None
+    assert ph3.fc2 is not None
+
+    ph3.symmetrize_fc3(use_symfc_projector=True)
+    v1_sym, v2_sym, v3_sym, _, _, _ = get_drift_fc3(ph3.fc3, primitive=ph3.primitive)
+    np.testing.assert_allclose([v1_sym, v2_sym, v3_sym], 0, atol=1e-6)
+    ph3.symmetrize_fc2(use_symfc_projector=True)
+    v1_sym, v2_sym, _, _ = get_drift_force_constants(ph3.fc2, primitive=ph3.primitive)
+    np.testing.assert_allclose([v1_sym, v2_sym], 0, atol=1e-6)
