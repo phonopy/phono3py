@@ -34,7 +34,14 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import numpy as np
+from phonopy.harmonic.dynamical_matrix import (
+    DynamicalMatrix,
+    DynamicalMatrixGL,
+    DynamicalMatrixNAC,
+)
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.cells import sparse_to_dense_svecs
 
@@ -81,8 +88,8 @@ def run_phonon_solver_c(
         'U' or 'L' for lapack zheev solver. Default is 'L'.
 
     """
-    import phono3py._phono3py as phono3c
-    import phono3py._phononcalc as phononcalc
+    import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
+    import phono3py._phononcalc as phononcalc  # type: ignore[import-untyped]
 
     if frequency_conversion_factor is None:
         _frequency_conversion_factor = get_physical_units().DefaultToTHz
@@ -100,7 +107,7 @@ def run_phonon_solver_c(
         dielectric,
     ) = _extract_params(dm)
 
-    if dm.is_nac() and dm.nac_method == "gonze":
+    if isinstance(dm, DynamicalMatrixGL):
         gonze_nac_dataset = dm.Gonze_nac_dataset
         if gonze_nac_dataset[0] is None:
             dm.make_Gonze_nac_dataset()
@@ -112,6 +119,7 @@ def run_phonon_solver_c(
             G_list,  # List of G points where d-d interactions are integrated.
             Lambda,
         ) = gonze_nac_dataset  # Convergence parameter
+        assert Lambda is not None
         fc = gonze_fc
         use_GL_NAC = True
     else:
@@ -120,7 +128,7 @@ def run_phonon_solver_c(
         dd_q0 = np.zeros(2)  # dummy variable
         G_list = np.zeros(3)  # dummy variable
         Lambda = 0  # dummy variable
-        if not dm.is_nac():
+        if not isinstance(dm, DynamicalMatrixNAC):
             born = np.zeros((3, 3))  # dummy variable
             dielectric = np.zeros(3)  # dummy variable
         fc = dm.force_constants
@@ -168,7 +176,7 @@ def run_phonon_solver_c(
         dd_q0,
         G_list,
         float(Lambda),
-        dm.is_nac() * 1,
+        isinstance(dm, DynamicalMatrixNAC) * 1,
         is_nac_q_zero * 1,
         use_GL_NAC * 1,
         lapack_zheev_uplo,
@@ -207,14 +215,14 @@ def run_phonon_solver_py(
         dynamical_matrix.run(q)
         dm = dynamical_matrix.dynamical_matrix
         eigvals, eigvecs = np.linalg.eigh(dm, UPLO=lapack_zheev_uplo)
-        eigvals = eigvals.real
+        eigvals = eigvals.real  # type: ignore[no-untyped-call]
         frequencies[gp] = (
             np.sqrt(np.abs(eigvals)) * np.sign(eigvals) * frequency_conversion_factor
         )
         eigenvectors[gp] = eigvecs
 
 
-def _extract_params(dm):
+def _extract_params(dm: DynamicalMatrix | DynamicalMatrixNAC):
     svecs, multi = dm.primitive.get_smallest_vectors()
     if dm.primitive.store_dense_svecs:
         _svecs = svecs
@@ -225,7 +233,7 @@ def _extract_params(dm):
     masses = np.array(dm.primitive.masses, dtype="double")
     rec_lattice = np.array(np.linalg.inv(dm.primitive.cell), dtype="double", order="C")
     positions = np.array(dm.primitive.positions, dtype="double", order="C")
-    if dm.is_nac():
+    if isinstance(dm, DynamicalMatrixNAC):
         born = dm.born
         nac_factor = dm.nac_factor
         dielectric = dm.dielectric_constant

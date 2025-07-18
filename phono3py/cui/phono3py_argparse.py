@@ -34,6 +34,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import sys
 
 from phonopy.cui.phonopy_argparse import fix_deprecated_option_names

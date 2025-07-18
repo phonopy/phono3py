@@ -34,7 +34,10 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import numpy as np
+from phonopy.harmonic.dynamical_matrix import DynamicalMatrix
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.cells import Primitive, Supercell
 from phonopy.structure.symmetry import Symmetry
@@ -116,7 +119,7 @@ class Phono3pyJointDos:
             self.initialize(mesh)
 
     @property
-    def grid(self):
+    def grid(self) -> BZGrid | None:
         """Return BZGrid class instance."""
         return self._bz_grid
 
@@ -293,7 +296,7 @@ class Phono3pyJointDos:
                             print('JDOS is written into "%s".' % filename)
 
     @property
-    def dynamical_matrix(self):
+    def dynamical_matrix(self) -> DynamicalMatrix:
         """Return DynamicalMatrix class instance."""
         return self._jdos.dynamical_matrix
 

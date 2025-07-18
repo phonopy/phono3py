@@ -42,10 +42,10 @@ import pathlib
 import sys
 import warnings
 from collections.abc import Sequence
-from typing import Optional, cast
+from typing import cast
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import ArrayLike, NDArray
 from phonopy.api_phonopy import Phonopy
 from phonopy.cui.phonopy_argparse import show_deprecated_option_warnings
 from phonopy.cui.phonopy_script import (
@@ -60,6 +60,7 @@ from phonopy.cui.phonopy_script import (
 from phonopy.cui.settings import PhonopySettings
 from phonopy.exception import CellNotFoundError, ForceCalculatorRequiredError
 from phonopy.file_IO import is_file_phonopy_yaml
+from phonopy.harmonic.dynamical_matrix import DynamicalMatrixGL
 from phonopy.harmonic.force_constants import show_drift_force_constants
 from phonopy.interface.calculator import get_calculator_physical_units
 from phonopy.interface.symfc import estimate_symfc_cutoff_from_memsize
@@ -235,7 +236,7 @@ def _start_phono3py(**argparse_control) -> tuple[argparse.Namespace, int]:
     # Title
     if log_level:
         print_phono3py()
-        import phono3py._phono3py as phono3c
+        import phono3py._phono3py as phono3c  # type: ignore[import]
 
         max_threads = phono3c.omp_max_threads()
         if max_threads > 0:
@@ -503,7 +504,9 @@ def _init_phono3py(
     return phono3py, updated_settings
 
 
-def _settings_to_grid_points(settings: Phono3pySettings, bz_grid: BZGrid):
+def _settings_to_grid_points(
+    settings: Phono3pySettings, bz_grid: BZGrid
+) -> ArrayLike | None:
     """Read or set grid point indices."""
     if settings.grid_addresses is not None:
         grid_points = _grid_addresses_to_grid_points(settings.grid_addresses, bz_grid)
@@ -514,7 +517,7 @@ def _settings_to_grid_points(settings: Phono3pySettings, bz_grid: BZGrid):
     return grid_points
 
 
-def _grid_addresses_to_grid_points(grid_addresses: NDArray, bz_grid: BZGrid):
+def _grid_addresses_to_grid_points(grid_addresses: NDArray, bz_grid: BZGrid) -> NDArray:
     """Return grid point indices from grid addresses."""
     grid_points = [
         get_grid_point_from_address(ga, bz_grid.D_diag) for ga in grid_addresses
@@ -527,7 +530,7 @@ def _create_supercells_with_displacements(
     cell_info: Phono3pyCellInfoResult,
     confs_dict: dict,
     unitcell_filename: str,
-    interface_mode: Optional[str],
+    interface_mode: str | None,
     symprec: float,
     log_level: int,
 ):
@@ -690,7 +693,10 @@ def _produce_force_constants(
 
 
 def _run_gruneisen_then_exit(
-    phono3py: Phono3py, settings: Phono3pySettings, output_filename: str, log_level: int
+    phono3py: Phono3py,
+    settings: Phono3pySettings,
+    output_filename: str | os.PathLike | None,
+    log_level: int,
 ):
     """Run mode Grueneisen parameter calculation from fc3."""
     if (
@@ -703,6 +709,8 @@ def _run_gruneisen_then_exit(
             print_error()
         sys.exit(1)
 
+    assert phono3py.fc2 is not None
+    assert phono3py.fc3 is not None
     if len(phono3py.fc2) != len(phono3py.fc3):
         print("Supercells used for fc2 and fc3 have to be same.")
         if log_level:
@@ -775,9 +783,10 @@ def _run_jdos_then_exit(
 
     if log_level > 0:
         dm = joint_dos.dynamical_matrix
-        if dm.is_nac() and dm.nac_method == "gonze":
-            dm.show_Gonze_nac_message()
+        if isinstance(dm, DynamicalMatrixGL):
+            dm.show_nac_message()
 
+    assert joint_dos.grid is not None
     grid_points = _settings_to_grid_points(settings, joint_dos.grid)
     joint_dos.run(grid_points, write_jdos=True)
 
@@ -819,8 +828,8 @@ def _run_isotope_then_exit(
     )
     if log_level > 0:
         dm = iso.dynamical_matrix
-        if dm.is_nac() and dm.nac_method == "gonze":
-            dm.show_Gonze_nac_message()
+        if isinstance(dm, DynamicalMatrixGL):
+            dm.show_nac_message()
 
     grid_points = _settings_to_grid_points(settings, iso.grid)
     iso.run(grid_points)
@@ -841,7 +850,8 @@ def _init_phph_interaction(
     """Initialize ph-ph interaction and phonons on grid."""
     if log_level:
         print("Generating grid system ... ", end="", flush=True)
-    phono3py.mesh_numbers = settings.mesh_numbers
+    assert phono3py.grid is not None
+    assert phono3py.mesh_numbers is not None
     bz_grid = phono3py.grid
     if log_level:
         if bz_grid.grid_matrix is None:
@@ -872,7 +882,7 @@ def _init_phph_interaction(
         if log_level:
             print("-" * 27 + " Phonon calculations " + "-" * 28)
             dm = phono3py.dynamical_matrix
-            if dm.is_nac() and dm.nac_method == "gonze":
+            if isinstance(dm, DynamicalMatrixGL):
                 dm.show_nac_message()
             print("Running harmonic phonon calculations...")
             sys.stdout.flush()
@@ -1131,6 +1141,7 @@ def main(**argparse_control):
         "show_triplets_info",
     )
     run_modes_with_gp = ("imag_self_energy", "real_self_energy", "jdos", "isotope")
+
     if settings.mesh_numbers is None and run_mode in run_modes_with_mesh:
         print("")
         print("Mesh numbers have to be specified.")
@@ -1151,11 +1162,19 @@ def main(**argparse_control):
             print_error()
         sys.exit(1)
 
+    ####################
+    # Set mesh numbers #
+    ####################
+    if run_mode in run_modes_with_mesh:
+        assert settings.mesh_numbers is not None
+        if run_mode not in ("jdos", "isotope"):
+            ph3py.mesh_numbers = settings.mesh_numbers
+
     #########################################################
     # Write ir-grid points and grid addresses and then exit #
     #########################################################
     if run_mode == "write_grid_info":
-        ph3py.mesh_numbers = settings.mesh_numbers
+        assert ph3py.grid is not None
         write_grid_points(
             ph3py.primitive,
             ph3py.grid,
@@ -1175,7 +1194,7 @@ def main(**argparse_control):
     # Show reduced number of triplets at grid points and then exit #
     ################################################################
     if run_mode == "show_triplets_info":
-        ph3py.mesh_numbers = settings.mesh_numbers
+        assert ph3py.grid is not None
         grid_points = _settings_to_grid_points(settings, ph3py.grid)
         show_num_triplets(
             ph3py.primitive,
@@ -1338,6 +1357,7 @@ def main(**argparse_control):
     # Run imaginary part of self energy of bubble diagram #
     #######################################################
     if run_mode == "imag_self_energy":
+        assert ph3py.grid is not None
         ph3py.run_imag_self_energy(
             _settings_to_grid_points(settings, ph3py.grid),
             updated_settings["temperature_points"],
@@ -1354,6 +1374,7 @@ def main(**argparse_control):
     # Run frequency shift calculation of bubble diagram #
     #####################################################
     elif run_mode == "real_self_energy":
+        assert ph3py.grid is not None
         ph3py.run_real_self_energy(
             _settings_to_grid_points(settings, ph3py.grid),
             updated_settings["temperature_points"],
@@ -1368,6 +1389,7 @@ def main(**argparse_control):
     # Run spectral function calculation of bubble diagram #
     #######################################################
     elif run_mode == "spectral_function":
+        assert ph3py.grid is not None
         ph3py.run_spectral_function(
             _settings_to_grid_points(settings, ph3py.grid),
             updated_settings["temperature_points"],
@@ -1383,6 +1405,7 @@ def main(**argparse_control):
     # Run lattice thermal conductivity #
     ####################################
     elif run_mode == "conductivity-RTA" or run_mode == "conductivity-LBTE":
+        assert ph3py.grid is not None
         grid_points = _settings_to_grid_points(settings, ph3py.grid)
         ph3py.run_thermal_conductivity(
             is_LBTE=settings.is_lbte,

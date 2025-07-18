@@ -37,7 +37,11 @@
 import sys
 
 import numpy as np
-from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
+from phonopy.harmonic.dynamical_matrix import (
+    DynamicalMatrixGL,
+    DynamicalMatrixNAC,
+    get_dynamical_matrix,
+)
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive
@@ -96,8 +100,8 @@ def run_gruneisen_parameters(
 
     if log_level > 0:
         dm = gruneisen.dynamical_matrix
-        if dm.is_nac() and dm.nac_method == "gonze":
-            dm.show_Gonze_nac_message()
+        if isinstance(dm, DynamicalMatrixGL):
+            dm.show_nac_message()
 
     if mesh is not None:
         gruneisen.set_sampling_mesh(mesh, rotations=rotations, is_gamma_center=True)
@@ -310,7 +314,7 @@ class Gruneisen:
         gruneisen_parameters = []
         frequencies = []
         for i, q in enumerate(qpoints):
-            if self._dm.is_nac():
+            if isinstance(self._dm, DynamicalMatrixNAC):
                 if (np.abs(q) < 1e-5).all():  # If q is almost at Gamma
                     if self._run_mode == "band":
                         # Direction estimated from neighboring point

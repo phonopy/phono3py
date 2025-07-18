@@ -54,6 +54,7 @@ from phonopy.file_IO import (
     write_FORCE_SETS,
 )
 
+from phono3py.phonon.grid import BZGrid
 from phono3py.version import __version__
 
 
@@ -483,9 +484,9 @@ def write_grid_address_to_hdf5(
     grid_address,
     mesh,
     grid_mapping_table,
-    bz_grid=None,
-    compression: Union[str, int] = "gzip",
-    filename=None,
+    bz_grid: BZGrid | None = None,
+    compression: str | int = "gzip",
+    filename: str | os.PathLike | None = None,
 ):
     """Write grid addresses to grid_address.hdf5."""
     suffix = _get_filename_suffix(mesh, filename=filename)
@@ -1155,7 +1156,7 @@ def read_gamma_from_hdf5(
 
 def read_collision_from_hdf5(
     mesh,
-    indices=None,
+    indices: str | Sequence = "all",
     grid_point=None,
     band_index=None,
     sigma=None,
