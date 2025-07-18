@@ -144,12 +144,12 @@ class BZGrid:
 
     def __init__(
         self,
-        mesh: Union[int, float, Sequence, np.ndarray],
-        reciprocal_lattice=None,
-        lattice=None,
-        symmetry_dataset: Optional[SpglibDataset] = None,
-        transformation_matrix: Optional[Union[Sequence, np.ndarray]] = None,
-        is_shift: Optional[Union[list, np.ndarray]] = None,
+        mesh: float | ArrayLike,
+        reciprocal_lattice: ArrayLike | None = None,
+        lattice: ArrayLike | None = None,
+        symmetry_dataset: SpglibDataset | None = None,
+        transformation_matrix: ArrayLike | None = None,
+        is_shift: ArrayLike | None = None,
         is_time_reversal: bool = True,
         use_grg: bool = False,
         force_SNF: bool = False,

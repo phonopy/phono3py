@@ -1155,7 +1155,7 @@ def read_gamma_from_hdf5(
 
 def read_collision_from_hdf5(
     mesh,
-    indices=None,
+    indices: str | Sequence = "all",
     grid_point=None,
     band_index=None,
     sigma=None,

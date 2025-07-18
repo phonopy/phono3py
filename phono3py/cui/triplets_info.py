@@ -38,6 +38,7 @@ from collections.abc import Sequence
 from typing import Optional, Union
 
 import numpy as np
+from numpy.typing import ArrayLike
 from phonopy.structure.atoms import PhonopyAtoms
 
 from phono3py.file_IO import write_grid_address_to_hdf5, write_ir_grid_points
@@ -109,8 +110,8 @@ def write_grid_points(
 def show_num_triplets(
     primitive: PhonopyAtoms,
     bz_grid: BZGrid,
-    band_indices: Optional[Union[Sequence, np.ndarray]] = None,
-    grid_points: Optional[Union[Sequence, np.ndarray]] = None,
+    band_indices: ArrayLike | None = None,
+    grid_points: ArrayLike | None = None,
     is_kappa_star: bool = True,
 ):
     """Show numbers of triplets at grid points."""

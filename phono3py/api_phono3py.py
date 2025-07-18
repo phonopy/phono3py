@@ -38,10 +38,10 @@ from __future__ import annotations
 import copy
 import warnings
 from collections.abc import Sequence
-from typing import Literal, Optional, Union, cast
+from typing import Literal, cast
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import ArrayLike, NDArray
 from phonopy.harmonic.displacement import (
     directions_to_displacement_dataset,
     get_least_displacements,
@@ -151,19 +151,19 @@ class Phono3py:
     def __init__(
         self,
         unitcell: PhonopyAtoms,
-        supercell_matrix=None,
-        primitive_matrix=None,
-        phonon_supercell_matrix=None,
-        cutoff_frequency=1e-4,
-        frequency_factor_to_THz=None,
-        is_symmetry=True,
-        is_mesh_symmetry=True,
-        use_grg=False,
-        SNF_coordinates="reciprocal",
+        supercell_matrix: ArrayLike | None = None,
+        primitive_matrix: ArrayLike | None = None,
+        phonon_supercell_matrix: ArrayLike | None = None,
+        cutoff_frequency: float = 1e-4,
+        frequency_factor_to_THz: float | None = None,
+        is_symmetry: bool = True,
+        is_mesh_symmetry: bool = True,
+        use_grg: bool = False,
+        SNF_coordinates: str = "reciprocal",
         make_r0_average: bool = True,
-        symprec=1e-5,
-        calculator: Optional[str] = None,
-        log_level=0,
+        symprec: float = 1e-5,
+        calculator: str | None = None,
+        log_level: int = 0,
     ):
         """Init method.
 
@@ -236,7 +236,7 @@ class Phono3py:
         self._make_r0_average = make_r0_average
 
         self._cutoff_frequency = cutoff_frequency
-        self._calculator: Optional[str] = calculator
+        self._calculator = calculator
         self._log_level = log_level
 
         # Create supercell and primitive cell
@@ -264,9 +264,7 @@ class Phono3py:
         self._build_phonon_supercell()
         self._build_phonon_primitive_cell()
 
-        self._sigmas = [
-            None,
-        ]
+        self._sigmas = [None]
         self._sigma_cutoff = None
 
         # Grid
@@ -330,7 +328,7 @@ class Phono3py:
         return __version__
 
     @property
-    def calculator(self) -> Optional[str]:
+    def calculator(self) -> str | None:
         """Return calculator interface name.
 
         str
@@ -428,7 +426,7 @@ class Phono3py:
                     self._sigmas.append(None)
 
     @property
-    def sigma_cutoff(self) -> Optional[float]:
+    def sigma_cutoff(self) -> float | None:
         """Setter and getter of Smearing cutoff width.
 
         This is given as a multiple of the standard deviation.
@@ -445,7 +443,7 @@ class Phono3py:
         self._sigma_cutoff = sigma_cutoff
 
     @property
-    def nac_params(self) -> Optional[dict]:
+    def nac_params(self) -> dict | None:
         """Setter and getter of parameters for non-analytical term correction.
 
         dict
@@ -469,7 +467,7 @@ class Phono3py:
             self._init_dynamical_matrix()
 
     @property
-    def dynamical_matrix(self) -> Optional[DynamicalMatrix]:
+    def dynamical_matrix(self) -> DynamicalMatrix | None:
         """Return DynamicalMatrix instance.
 
         This is not dynamical matrices but the instance of DynamicalMatrix
@@ -609,7 +607,7 @@ class Phono3py:
         return self._frequency_factor_to_THz
 
     @property
-    def dataset(self) -> Optional[dict]:
+    def dataset(self) -> dict | None:
         """Setter and getter of displacement-force dataset.
 
         dict
@@ -671,7 +669,7 @@ class Phono3py:
         self._phonon_supercells_with_displacements = None
 
     @property
-    def phonon_dataset(self) -> Optional[dict]:
+    def phonon_dataset(self) -> dict | None:
         """Setter and getter of displacement-force dataset for fc2.
 
         dict
@@ -716,7 +714,7 @@ class Phono3py:
         self._phonon_supercells_with_displacements = None
 
     @property
-    def mlp_dataset(self) -> Optional[dict]:
+    def mlp_dataset(self) -> dict | None:
         """Return displacement-force dataset.
 
         The supercell matrix is equal to that of usual displacement-force
@@ -732,7 +730,7 @@ class Phono3py:
         self._mlp_dataset = mlp_dataset
 
     @property
-    def phonon_mlp_dataset(self) -> Optional[dict]:
+    def phonon_mlp_dataset(self) -> dict | None:
         """Return phonon displacement-force dataset.
 
         The phonon supercell matrix is equal to that of usual displacement-force
@@ -846,7 +844,7 @@ class Phono3py:
             return self._bz_grid.D_diag
 
     @mesh_numbers.setter
-    def mesh_numbers(self, mesh_numbers: Union[int, float, Sequence, NDArray]):
+    def mesh_numbers(self, mesh_numbers: float | ArrayLike):
         self._set_mesh_numbers(mesh_numbers)
 
     @property
@@ -1399,12 +1397,12 @@ class Phono3py:
 
     def generate_fc2_displacements(
         self,
-        distance: Optional[float] = None,
+        distance: float | None = None,
         is_plusminus: str = "auto",
         is_diagonal: bool = False,
-        number_of_snapshots: Optional[Union[int, Literal["auto"]]] = None,
-        random_seed: Optional[int] = None,
-        max_distance: Optional[float] = None,
+        number_of_snapshots: int | Literal["auto"] | None = None,
+        random_seed: int | None = None,
+        max_distance: float | None = None,
     ):
         """Generate displacement dataset in phonon supercell for fc2.
 
@@ -2099,16 +2097,16 @@ class Phono3py:
     def run_thermal_conductivity(
         self,
         is_LBTE: bool = False,
-        temperatures: Optional[Sequence] = None,
+        temperatures: Sequence | None = None,
         is_isotope: bool = False,
-        mass_variances: Optional[Sequence] = None,
-        grid_points: Optional[Sequence[int]] = None,
-        boundary_mfp: Optional[float] = None,  # in micrometer
+        mass_variances: Sequence | None = None,
+        grid_points: ArrayLike | None = None,
+        boundary_mfp: float | None = None,  # in micrometer
         solve_collective_phonon: bool = False,
         use_ave_pp: bool = False,
         is_reducible_collision_matrix: bool = False,
         is_kappa_star: bool = True,
-        gv_delta_q: Optional[float] = None,  # for group velocity
+        gv_delta_q: float | None = None,  # for group velocity
         is_full_pp: bool = False,
         pinv_cutoff: float = 1.0e-8,  # for pseudo-inversion of collision matrix
         pinv_method: int = 0,  # for pseudo-inversion of collision matrix
@@ -2116,18 +2114,18 @@ class Phono3py:
         write_gamma: bool = False,
         read_gamma: bool = False,
         is_N_U: bool = False,
-        conductivity_type: Optional[str] = None,
+        conductivity_type: str | None = None,
         write_kappa: bool = False,
         write_gamma_detail: bool = False,
         write_collision: bool = False,
-        read_collision: bool = False,
+        read_collision: str | Sequence | None = None,
         write_pp: bool = False,
         read_pp: bool = False,
         write_LBTE_solution: bool = False,
         compression: str = "gzip",
-        input_filename: Optional[str] = None,
-        output_filename: Optional[str] = None,
-        log_level: Optional[int] = None,
+        input_filename: str | None = None,
+        output_filename: str | None = None,
+        log_level: int | None = None,
     ):
         """Run thermal conductivity calculation.
 
@@ -2234,9 +2232,9 @@ class Phono3py:
             is written into a file. With multiple `sigmas` specified,
             respective files are created. Be careful that this file can be
             huge.
-        read_collision : bool, optional, default is False
-            Direct solution only (`is_LBTE=True`). With True, collision matrix
-            is read from a file.
+        read_collision : str | Sequence, optional, default is None.
+            Direct solution only (`is_LBTE=True`). With specified, collision
+            matrix is read from a file.
         write_pp : bool, optional, default is False
             With True, phonon-phonon interaction strength is written into
             files at each grid point. This option assumes single value is in
@@ -2408,14 +2406,14 @@ class Phono3py:
             test_size=test_size,
         )
 
-    def save_mlp(self, filename: Optional[str] = None):
+    def save_mlp(self, filename: str | None = None):
         """Save machine learning potential."""
         if self._mlp is None:
             raise RuntimeError("MLP is not developed yet.")
 
         self._mlp.save(filename=filename)
 
-    def load_mlp(self, filename: Optional[str] = None):
+    def load_mlp(self, filename: str | None = None):
         """Load machine learning potential."""
         self._mlp = PhonopyMLP(log_level=self._log_level)
         self._mlp.load(filename=filename)
@@ -2445,7 +2443,7 @@ class Phono3py:
 
     def develop_phonon_mlp(
         self,
-        params: Optional[Union[PypolymlpParams, dict, str]] = None,
+        params: PypolymlpParams | dict | str | None = None,
         test_size: float = 0.1,
     ):
         """Develop MLP for fc2.
@@ -2472,14 +2470,14 @@ class Phono3py:
             test_size=test_size,
         )
 
-    def save_phonon_mlp(self, filename: Optional[str] = None):
+    def save_phonon_mlp(self, filename: str | None = None):
         """Save machine learning potential."""
         if self._mlp is None:
             raise RuntimeError("MLP is not developed yet.")
 
         self._phonon_mlp.save(filename=filename)
 
-    def load_phonon_mlp(self, filename: Optional[str] = None):
+    def load_phonon_mlp(self, filename: str | None = None):
         """Load machine learning potential."""
         self._phonon_mlp = PhonopyMLP(log_level=self._log_level)
         self._phonon_mlp.load(filename=filename)
@@ -2690,7 +2688,7 @@ class Phono3py:
 
     def _set_mesh_numbers(
         self,
-        mesh: Union[int, float, Sequence, NDArray],
+        mesh: float | ArrayLike,
     ):
         # initialization related to mesh
         self._interaction = None
