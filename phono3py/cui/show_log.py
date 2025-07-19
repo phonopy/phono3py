@@ -34,9 +34,10 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import sys
 from collections.abc import Sequence
-from typing import Optional, Union
 
 import numpy as np
 from phonopy.structure.cells import print_cell
@@ -90,8 +91,8 @@ def show_general_settings(
 
 
 def print_supercell_matrix(
-    supercell_matrix: Union[Sequence, np.ndarray],
-    phonon_supercell_matrix: Optional[Union[Sequence, np.ndarray]] = None,
+    supercell_matrix: Sequence | np.ndarray,
+    phonon_supercell_matrix: Sequence | np.ndarray | None = None,
 ):
     """Print supercell matrix."""
     if (np.diag(np.diag(supercell_matrix)) - supercell_matrix).any():
