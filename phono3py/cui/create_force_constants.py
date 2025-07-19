@@ -183,18 +183,9 @@ def _read_FORCES_FC3_or_FC2(
     return dataset
 
 
-def run_pypolymlp_to_compute_forces(
+def develop_pypolymlp(
     ph3py: Phono3py,
     mlp_params: str | dict | PypolymlpParams | None = None,
-    displacement_distance: float | None = None,
-    number_of_snapshots: int | Literal["auto"] | None = None,
-    number_estimation_factor: int | None = None,
-    random_seed: int | None = None,
-    prepare_dataset: bool = False,
-    fc_calculator: str | None = None,
-    fc_calculator_options: str | None = None,
-    cutoff_pair_distance: float | None = None,
-    symfc_memory_size: float | None = None,
     mlp_filename: str | os.PathLike | None = None,
     log_level: int = 0,
 ):
@@ -253,58 +244,71 @@ def run_pypolymlp_to_compute_forces(
     if log_level:
         print("-" * 30 + " pypolymlp end " + "-" * 31, flush=True)
 
-    if prepare_dataset:
-        if displacement_distance is None:
-            _displacement_distance = 0.01
+
+def generate_displacements_and_evaluate_pypolymlp(
+    ph3py: Phono3py,
+    displacement_distance: float | None = None,
+    number_of_snapshots: int | Literal["auto"] | None = None,
+    number_estimation_factor: int | None = None,
+    random_seed: int | None = None,
+    fc_calculator: str | None = None,
+    fc_calculator_options: str | None = None,
+    cutoff_pair_distance: float | None = None,
+    symfc_memory_size: float | None = None,
+    log_level: int = 0,
+):
+    """Generate displacements and evaluate forces by pypolymlp."""
+    if displacement_distance is None:
+        _displacement_distance = 0.01
+    else:
+        _displacement_distance = displacement_distance
+
+    if log_level:
+        if number_of_snapshots:
+            print("Generate random displacements")
+            print(
+                "  Twice of number of snapshots will be generated "
+                "for plus-minus displacements."
+            )
         else:
-            _displacement_distance = displacement_distance
-
-        if log_level:
-            if number_of_snapshots:
-                print("Generate random displacements")
-                print(
-                    "  Twice of number of snapshots will be generated "
-                    "for plus-minus displacements."
-                )
-            else:
-                print("Generate displacements")
-            print(
-                f"  Displacement distance: {_displacement_distance:.5f}".rstrip(
-                    "0"
-                ).rstrip(".")
+            print("Generate displacements")
+        print(
+            f"  Displacement distance: {_displacement_distance:.5f}".rstrip("0").rstrip(
+                "."
             )
-
-        cutoff_pair_distance = determine_cutoff_pair_distance(
-            fc_calculator=fc_calculator,
-            fc_calculator_options=fc_calculator_options,
-            cutoff_pair_distance=cutoff_pair_distance,
-            symfc_memory_size=symfc_memory_size,
-            random_displacements=number_of_snapshots,
-            supercell=ph3py.supercell,
-            primitive=ph3py.primitive,
-            symmetry=ph3py.symmetry,
-            log_level=log_level,
-        )
-        ph3py.generate_displacements(
-            distance=_displacement_distance,
-            cutoff_pair_distance=cutoff_pair_distance,
-            is_plusminus=True,
-            number_of_snapshots=number_of_snapshots,
-            random_seed=random_seed,
-            number_estimation_factor=number_estimation_factor,
         )
 
-        if log_level:
-            print(
-                f"Evaluate forces in {ph3py.displacements.shape[0]} supercells "
-                "by pypolymlp",
-                flush=True,
-            )
+    cutoff_pair_distance = determine_cutoff_pair_distance(
+        fc_calculator=fc_calculator,
+        fc_calculator_options=fc_calculator_options,
+        cutoff_pair_distance=cutoff_pair_distance,
+        symfc_memory_size=symfc_memory_size,
+        random_displacements=number_of_snapshots,
+        supercell=ph3py.supercell,
+        primitive=ph3py.primitive,
+        symmetry=ph3py.symmetry,
+        log_level=log_level,
+    )
+    ph3py.generate_displacements(
+        distance=_displacement_distance,
+        cutoff_pair_distance=cutoff_pair_distance,
+        is_plusminus=True,
+        number_of_snapshots=number_of_snapshots,
+        random_seed=random_seed,
+        number_estimation_factor=number_estimation_factor,
+    )
 
-        if ph3py.supercells_with_displacements is None:
-            raise RuntimeError("Displacements are not set. Run generate_displacements.")
+    if log_level:
+        print(
+            f"Evaluate forces in {ph3py.displacements.shape[0]} supercells "
+            "by pypolymlp",
+            flush=True,
+        )
 
-        ph3py.evaluate_mlp()
+    if ph3py.supercells_with_displacements is None:
+        raise RuntimeError("Displacements are not set. Run generate_displacements.")
+
+    ph3py.evaluate_mlp()
 
 
 def run_pypolymlp_to_compute_phonon_forces(

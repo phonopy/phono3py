@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Jul-xx-2025: Version 3.17.2
+
+- Changed `Phono3py.run_imag_self_energy()` to return `ImagSelfEnergyValues`.
+
 ## Jul-5-2025: Version 3.17.1
 
 - Fix direct-solution crashing when executed via command line

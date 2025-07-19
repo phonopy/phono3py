@@ -36,6 +36,8 @@
 from __future__ import annotations
 
 import copy
+import dataclasses
+import os
 import warnings
 from collections.abc import Sequence
 from typing import Literal, cast
@@ -107,6 +109,16 @@ from phono3py.phonon3.spectral_function import run_spectral_function
 from phono3py.version import __version__
 
 
+@dataclasses.dataclass
+class ImagSelfEnergyValues:
+    """Parameters for imaginary self-energy calculation."""
+
+    frequency_points: NDArray | None
+    gammas: NDArray
+    scattering_event_class: int | None = None
+    detailed_gammas: Sequence | None = None
+
+
 class Phono3py:
     """Phono3py main class.
 
@@ -152,7 +164,7 @@ class Phono3py:
         self,
         unitcell: PhonopyAtoms,
         supercell_matrix: ArrayLike | None = None,
-        primitive_matrix: ArrayLike | None = None,
+        primitive_matrix: str | ArrayLike | None = None,
         phonon_supercell_matrix: ArrayLike | None = None,
         cutoff_frequency: float = 1e-4,
         frequency_factor_to_THz: float | None = None,
@@ -244,8 +256,7 @@ class Phono3py:
         self._supercell_matrix = np.array(
             shape_supercell_matrix(supercell_matrix), dtype="int64", order="C"
         )
-        pmat = self._determine_primitive_matrix(primitive_matrix)
-        self._primitive_matrix = pmat
+        self._primitive_matrix = self._determine_primitive_matrix(primitive_matrix)
         self._nac_params = None
         if phonon_supercell_matrix is not None:
             self._phonon_supercell_matrix = np.array(
@@ -279,18 +290,17 @@ class Phono3py:
         self._search_phonon_supercell_symmetry()
 
         # Displacements and supercells
-        self._supercells_with_displacements = None
-        self._dataset = None
-        self._phonon_dataset = None
-        self._phonon_supercells_with_displacements = None
+        self._dataset: dict | None = None
+        self._phonon_dataset: dict | None = None
+        self._supercells_with_displacements: list | None = None
+        self._phonon_supercells_with_displacements: list | None = None
 
         # Thermal conductivity
         # conductivity_RTA or conductivity_LBTE class instance
         self._thermal_conductivity = None
 
         # Imaginary part of self energy at frequency points
-        self._gammas = None
-        self._scattering_event_class = None
+        self._ise_params = None
 
         # Frequency shift (real part of bubble diagram)
         self._real_self_energy = None
@@ -307,9 +317,9 @@ class Phono3py:
 
         # MLP
         self._mlp = None
-        self._mlp_dataset = None
+        self._mlp_dataset: dict | None = None
         self._phonon_mlp = None
-        self._phonon_mlp_dataset = None
+        self._phonon_mlp_dataset: dict | None = None
 
         # Setup interaction
         self._interaction = None
@@ -584,10 +594,10 @@ class Phono3py:
         return self._phonon_supercell_matrix
 
     @property
-    def primitive_matrix(self) -> NDArray:
+    def primitive_matrix(self) -> NDArray | None:
         """Return transformation matrix to primitive cell from unit cell.
 
-        ndarray
+        ndarray or None
             Primitive matrix with respect to unit cell.
             shape=(3, 3), dtype='double', order='C'
 
@@ -805,7 +815,7 @@ class Phono3py:
         self._phonon_supercell.masses = s_masses
 
     @property
-    def supercells_with_displacements(self) -> list[PhonopyAtoms]:
+    def supercells_with_displacements(self) -> list[PhonopyAtoms | None]:
         """Return supercells with displacements.
 
         list of PhonopyAtoms
@@ -815,6 +825,7 @@ class Phono3py:
         """
         if self._supercells_with_displacements is None:
             self._build_supercells_with_displacements()
+        assert self._supercells_with_displacements is not None
         return self._supercells_with_displacements
 
     @property
@@ -884,7 +895,7 @@ class Phono3py:
         """
         dataset = self._dataset
 
-        if self._dataset is None:
+        if dataset is None:
             raise RuntimeError("displacement dataset is not set.")
 
         if "first_atoms" in dataset:
@@ -1079,7 +1090,9 @@ class Phono3py:
     @property
     def detailed_gammas(self):
         """Return detailed gamma."""
-        return self._detailed_gammas
+        if self._ise_params is None:
+            raise RuntimeError("Imaginary self energy parameters are not set.")
+        return self._ise_params.detailed_gammas
 
     @property
     def grid(self):
@@ -1093,12 +1106,12 @@ class Phono3py:
 
     def init_phph_interaction(
         self,
-        nac_q_direction=None,
-        constant_averaged_interaction=None,
-        frequency_scale_factor=None,
+        nac_q_direction: ArrayLike | None = None,
+        constant_averaged_interaction: float | None = None,
+        frequency_scale_factor: float | None = None,
         symmetrize_fc3q: bool = False,
-        lapack_zheev_uplo="L",
-        openmp_per_triplets=None,
+        lapack_zheev_uplo: Literal["L", "U"] = "L",
+        openmp_per_triplets: bool | None = None,
     ):
         """Initialize ph-ph interaction calculation.
 
@@ -1252,7 +1265,7 @@ class Phono3py:
         self,
         distance: float | None = None,
         cutoff_pair_distance: float | None = None,
-        is_plusminus: bool | str = "auto",
+        is_plusminus: bool | Literal["auto"] = "auto",
         is_diagonal: bool = True,
         number_of_snapshots: int | Literal["auto"] | None = None,
         random_seed: int | None = None,
@@ -1398,7 +1411,7 @@ class Phono3py:
     def generate_fc2_displacements(
         self,
         distance: float | None = None,
-        is_plusminus: str = "auto",
+        is_plusminus: bool | Literal["auto"] = "auto",
         is_diagonal: bool = False,
         number_of_snapshots: int | Literal["auto"] | None = None,
         random_seed: int | None = None,
@@ -1811,7 +1824,7 @@ class Phono3py:
         write_gamma_detail=False,
         keep_gamma_detail=False,
         output_filename=None,
-    ):
+    ) -> ImagSelfEnergyValues:
         """Calculate imaginary part of self-energy of bubble diagram (Gamma).
 
         Pi = Delta - i Gamma.
@@ -1876,7 +1889,6 @@ class Phono3py:
         else:
             self._temperatures = temperatures
         self._grid_points = grid_points
-        self._scattering_event_class = scattering_event_class
         vals = get_imag_self_energy(
             self._interaction,
             grid_points,
@@ -1894,25 +1906,34 @@ class Phono3py:
             log_level=self._log_level,
         )
         if keep_gamma_detail:
-            (self._frequency_points, self._gammas, self._detailed_gammas) = vals
+            self._ise_params = ImagSelfEnergyValues(
+                frequency_points=vals[0],
+                gammas=vals[1],
+                scattering_event_class=scattering_event_class,
+                detailed_gammas=vals[2],
+            )
         else:
-            self._frequency_points, self._gammas = vals
+            self._ise_params = ImagSelfEnergyValues(
+                frequency_points=vals[0], gammas=vals[1]
+            )
 
         if write_txt:
             self._write_imag_self_energy(output_filename=output_filename)
 
-        return vals
+        return self._ise_params
 
     def _write_imag_self_energy(self, output_filename=None):
+        if self._ise_params is None:
+            raise RuntimeError("Imaginary self-energy is not calculated.")
         write_imag_self_energy(
-            self._gammas,
+            self._ise_params.gammas,
             self.mesh_numbers,
             self._grid_points,
             self._band_indices,
-            self._frequency_points,
+            self._ise_params.frequency_points,
             self._temperatures,
             self._sigmas,
-            scattering_event_class=self._scattering_event_class,
+            scattering_event_class=self._ise_params.scattering_event_class,
             output_filename=output_filename,
             is_mesh_symmetry=self._is_mesh_symmetry,
             log_level=self._log_level,
@@ -2352,7 +2373,9 @@ class Phono3py:
             )
 
     def save(
-        self, filename: str = "phono3py_params.yaml", settings: dict | None = None
+        self,
+        filename: str | os.PathLike = "phono3py_params.yaml",
+        settings: dict | None = None,
     ):
         """Save parameters in Phono3py instants into file.
 
@@ -2470,9 +2493,9 @@ class Phono3py:
             test_size=test_size,
         )
 
-    def save_phonon_mlp(self, filename: str | None = None):
+    def save_phonon_mlp(self, filename: str | os.PathLike | None = None):
         """Save machine learning potential."""
-        if self._mlp is None:
+        if self._phonon_mlp is None:
             raise RuntimeError("MLP is not developed yet.")
 
         self._phonon_mlp.save(filename=filename)
@@ -2495,8 +2518,10 @@ class Phono3py:
         constants.
 
         """
-        if self._mlp is None and self._phonon_mlp is None:
+        if self._mlp is None:
             raise RuntimeError("MLP is not developed yet.")
+        if self._phonon_mlp is None:
+            raise RuntimeError("Phonon MLP is not developed yet.")
 
         if self.phonon_supercells_with_displacements is None:
             raise RuntimeError(
@@ -2633,15 +2658,22 @@ class Phono3py:
         return supercells
 
     def _build_supercells_with_displacements(self):
+        assert self._dataset is not None
+
         magmoms = self._supercell.magnetic_moments
         masses = self._supercell.masses
         numbers = self._supercell.numbers
         lattice = self._supercell.cell
 
-        supercells = self._build_phonon_supercells_with_displacements(
-            self._supercell, self._dataset
+        # One displacement supercells
+        supercells = cast(
+            list[PhonopyAtoms | None],
+            self._build_phonon_supercells_with_displacements(
+                self._supercell, self._dataset
+            ),
         )
 
+        # Two displacement supercells
         if "first_atoms" in self._dataset:
             for disp1 in self._dataset["first_atoms"]:
                 disp_cart1 = disp1["displacement"]
@@ -2679,7 +2711,9 @@ class Phono3py:
 
         return get_primitive(supercell, t_mat, self._symprec, store_dense_svecs=True)
 
-    def _determine_primitive_matrix(self, primitive_matrix):
+    def _determine_primitive_matrix(
+        self, primitive_matrix: str | ArrayLike | None
+    ) -> NDArray | None:
         pmat = get_primitive_matrix(primitive_matrix, symprec=self._symprec)
         if isinstance(pmat, str) and pmat == "auto":
             return guess_primitive_matrix(self._unitcell, symprec=self._symprec)
@@ -2719,7 +2753,8 @@ class Phono3py:
             nac_params=self._nac_params,
         )
         freqs, _, _ = self.get_phonon_data()
-        gp_Gamma = self._bz_grid.gp_Gamma
+        gp_Gamma = self._interaction.bz_grid.gp_Gamma
+        assert freqs is not None
         if np.sum(freqs[gp_Gamma] < self._cutoff_frequency) < 3:
             for i, f in enumerate(freqs[gp_Gamma, :3]):
                 if not (f < self._cutoff_frequency):
@@ -2775,6 +2810,9 @@ class Phono3py:
     def _set_forces_energies(
         self, values, target: Literal["forces", "supercell_energies"]
     ):
+        if self._dataset is None:
+            raise RuntimeError("Dataset is not available.")
+
         if "first_atoms" in self._dataset:  # type-1
             count = 0
             for disp1 in self._dataset["first_atoms"]:
@@ -2858,13 +2896,11 @@ class Phono3py:
         is_plusminus: bool = False,
         random_seed: int | None = None,
         max_distance: float | None = None,
-    ):
+    ) -> dict:
         if random_seed is not None and random_seed >= 0 and random_seed < 2**32:
             _random_seed = random_seed
-            dataset = {"random_seed": _random_seed}
         else:
             _random_seed = None
-            dataset = {}
         d = get_random_displacements_dataset(
             number_of_snapshots,
             number_of_atoms,
@@ -2873,7 +2909,10 @@ class Phono3py:
             is_plusminus=is_plusminus,
             max_distance=max_distance,
         )
-        dataset["displacements"] = d
+        if _random_seed is None:
+            dataset = {"displacements": d}
+        else:
+            dataset = {"random_seed": _random_seed, "displacements": d}
         return dataset
 
     def _check_mlp_dataset(self, mlp_dataset: dict):

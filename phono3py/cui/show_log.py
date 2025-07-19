@@ -46,13 +46,11 @@ from phono3py.cui.settings import Phono3pySettings
 
 
 def show_general_settings(
-    settings,
-    run_mode,
-    phono3py,
-    cell_filename,
-    input_filename,
-    output_filename,
-    interface_mode,
+    settings: Phono3pySettings,
+    run_mode: str,
+    phono3py: Phono3py,
+    cell_filename: str,
+    interface_mode: str | None,
 ):
     """Show general setting information."""
     is_primitive_axes_auto = (
@@ -65,11 +63,10 @@ def show_general_settings(
 
     print("-" * 29 + " General settings " + "-" * 29)
     if run_mode:
-        print(f"Run mode: {run_mode}")
-    if output_filename:
-        print(f"Output filename is modified by {output_filename}.")
-    if input_filename:
-        print(f"Input filename is modified by {input_filename}.")
+        if settings.use_pypolymlp:
+            print(f"Run mode: pypolymlp & {run_mode}")
+        else:
+            print(f"Run mode: {run_mode}")
     if settings.hdf5_compression:
         print(f"HDF5 data compression filter: {settings.hdf5_compression}")
     if interface_mode:

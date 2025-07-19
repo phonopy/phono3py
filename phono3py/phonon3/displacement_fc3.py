@@ -34,6 +34,10 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
+from typing import Literal
+
 import numpy as np
 from phonopy.harmonic.displacement import (
     directions_axis,
@@ -131,7 +135,10 @@ def direction_to_displacement(
 
 
 def get_third_order_displacements(
-    cell: PhonopyAtoms, symmetry: Symmetry, is_plusminus="auto", is_diagonal=False
+    cell: PhonopyAtoms,
+    symmetry: Symmetry,
+    is_plusminus: bool | Literal["auto"] = "auto",
+    is_diagonal: bool = False,
 ):
     """Create displacement dataset.
 

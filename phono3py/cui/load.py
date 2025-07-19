@@ -51,8 +51,8 @@ from phonopy.structure.cells import determinant
 
 from phono3py import Phono3py
 from phono3py.cui.create_force_constants import (
+    develop_pypolymlp,
     parse_forces,
-    run_pypolymlp_to_compute_forces,
 )
 from phono3py.file_IO import read_fc2_from_hdf5, read_fc3_from_hdf5
 from phono3py.interface.fc_calculator import (
@@ -371,9 +371,7 @@ def load(
 
     if produce_fc:
         if ph3py.fc3 is None and use_pypolymlp:
-            run_pypolymlp_to_compute_forces(
-                ph3py, mlp_params=mlp_params, log_level=log_level
-            )
+            develop_pypolymlp(ph3py, mlp_params=mlp_params, log_level=log_level)
 
         compute_force_constants_from_datasets(
             ph3py,
