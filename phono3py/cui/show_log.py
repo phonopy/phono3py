@@ -82,12 +82,11 @@ def show_general_settings(
 
     print_supercell_matrix(supercell_matrix, phonon_supercell_matrix)
 
-    if is_primitive_axes_auto:
-        print("Primitive matrix (Auto):")
-        for v in primitive_matrix:
-            print(f"  {v}")
-    elif primitive_matrix is not None:
-        print("Primitive matrix:")
+    if primitive_matrix is not None:
+        if is_primitive_axes_auto:
+            print("Primitive matrix (Auto):")
+        else:
+            print("Primitive matrix:")
         for v in primitive_matrix:
             print(f"  {v}")
 
