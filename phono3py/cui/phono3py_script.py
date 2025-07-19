@@ -651,7 +651,8 @@ def _produce_force_constants(
     except ForceCalculatorRequiredError as e:
         if load_phono3py_yaml:
             if log_level:
-                print("Symfc will be used to handle general (or random) displacements.")
+                print(str(e))
+                print("Try symfc to handle general (or random) displacements.")
         else:
             print_error_message(str(e))
             if log_level:
@@ -1262,13 +1263,22 @@ def main(**argparse_control):
     # polynomial MLPs #
     ###################
     if settings.use_pypolymlp:
-        _run_pypolymlp(
-            ph3py,
-            settings,
-            confs_dict,
-            output_yaml_filename=output_yaml_filename,
-            log_level=log_level,
-        )
+        if ph3py.fc3 is None or (
+            ph3py.fc2 is None and ph3py.phonon_supercell_matrix is None
+        ):
+            _run_pypolymlp(
+                ph3py,
+                settings,
+                confs_dict,
+                output_yaml_filename=output_yaml_filename,
+                log_level=log_level,
+            )
+        else:
+            if log_level:
+                print(
+                    "Pypolymlp was not developed or used because fc2 and fc3 "
+                    "are available."
+                )
 
     ###########################
     # Produce force constants #

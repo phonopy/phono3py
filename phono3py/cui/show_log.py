@@ -63,11 +63,13 @@ def show_general_settings(
     phonon_supercell_matrix = phono3py.phonon_supercell_matrix
 
     print("-" * 29 + " General settings " + "-" * 29)
-    if run_mode:
-        if settings.use_pypolymlp:
-            print(f"Run mode: pypolymlp & {run_mode}")
+    if settings.use_pypolymlp:
+        if settings.create_displacements or settings.random_displacements is not None:
+            print(f"Run mode: pypolymlp + {run_mode}")
         else:
-            print(f"Run mode: {run_mode}")
+            print("Run mode: pypolymlp")
+    else:
+        print(f"Run mode: {run_mode}")
     if settings.hdf5_compression:
         print(f"HDF5 data compression filter: {settings.hdf5_compression}")
     if interface_mode:

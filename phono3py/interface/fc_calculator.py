@@ -116,14 +116,15 @@ class FC3Solver(FCSolver):
 
     def _get_displacements_and_forces(self):
         """Return displacements and forces for fc3."""
+        assert self._dataset is not None
         return get_displacements_and_forces_fc3(self._dataset)
 
 
 def extract_fc2_fc3_calculators(
     fc_calculator: Literal["traditional", "symfc", "alm"] | str | None,
     order: int,
-) -> Literal["traditional", "symfc", "alm"] | str | None:
-    """Extract fc_calculator and fc_calculator_options for fc2 and fc3.
+) -> Literal["traditional", "symfc", "alm"] | None:
+    """Extract fc_calculator for fc2 and fc3.
 
     fc_calculator : str
         FC calculator. "|" separates fc2 and fc3. First and last
@@ -133,20 +134,51 @@ def extract_fc2_fc3_calculators(
 
     """
     if fc_calculator is None:
-        return fc_calculator
-    elif isinstance(fc_calculator, str):
-        if "|" in fc_calculator:
-            _fc_calculator = fc_calculator.split("|")[order - 2]
-            if _fc_calculator == "":
-                return None
-        else:
-            if fc_calculator.strip() == "":
-                return None
-            else:
-                _fc_calculator = fc_calculator
-        return _fc_calculator
+        return None
     else:
-        raise RuntimeError("fc_calculator should be str or None.")
+        _fc_calculator = _split_fc_calculator_str(fc_calculator, order)
+        if _fc_calculator is None:
+            return None
+        fc_calculator_lower = _fc_calculator.lower()
+        if fc_calculator_lower not in ("traditional", "symfc", "alm"):
+            raise ValueError(
+                f"Unknown fc_calculator: {_fc_calculator}. "
+                "Available calculators are 'traditional', 'symfc', and 'alm'."
+            )
+        return fc_calculator_lower
+
+
+def extract_fc2_fc3_calculators_options(
+    fc_calculator_opts: str | None,
+    order: int,
+) -> str | None:
+    """Extract fc_calculator_options for fc2 and fc3.
+
+    fc_calculator_opts : str
+        FC calculator options. "|" separates fc2 and fc3. First and last
+        parts separated correspond to fc2 and fc3 calculators, respectively.
+    order : int = 2 or 3
+        2 and 3 indicate fc2 and fc3, respectively.
+
+    """
+    if fc_calculator_opts is None:
+        return None
+    else:
+        _fc_calculator_opts = _split_fc_calculator_str(fc_calculator_opts, order)
+        return _fc_calculator_opts
+
+
+def _split_fc_calculator_str(fc_calculator: str, order: int) -> str | None:
+    if "|" in fc_calculator:
+        _fc_calculator = fc_calculator.split("|")[order - 2]
+        if _fc_calculator == "":
+            return None
+    else:
+        if fc_calculator.strip() == "":
+            return None
+        else:
+            _fc_calculator = fc_calculator
+    return _fc_calculator
 
 
 def update_cutoff_fc_calculator_options(
@@ -235,6 +267,11 @@ def determine_cutoff_pair_distance(
                 "available for symfc calculator."
             )
         symfc_options = {"memsize": {3: _symfc_memory_size}}
+        if supercell is None or primitive is None or symmetry is None:
+            raise RuntimeError(
+                "supercell, primitive, and symmetry are required to estimate "
+                "cutoff_pair_distance by memory size."
+            )
         update_symfc_cutoff_by_memsize(
             symfc_options, supercell, primitive, symmetry, verbose=log_level > 0
         )
@@ -283,7 +320,7 @@ def _get_cutoff_pair_distance(
         cutoff_pair_distance,
     )
     symfc_options = parse_symfc_options(
-        extract_fc2_fc3_calculators(_fc_calculator_options, 3), 3
+        extract_fc2_fc3_calculators_options(_fc_calculator_options, 3), 3
     )
 
     _cutoff_pair_distance = cutoff_pair_distance
