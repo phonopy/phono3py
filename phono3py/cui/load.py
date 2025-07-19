@@ -51,12 +51,13 @@ from phonopy.structure.cells import determinant
 
 from phono3py import Phono3py
 from phono3py.cui.create_force_constants import (
+    develop_pypolymlp,
     parse_forces,
-    run_pypolymlp_to_compute_forces,
 )
 from phono3py.file_IO import read_fc2_from_hdf5, read_fc3_from_hdf5
 from phono3py.interface.fc_calculator import (
     extract_fc2_fc3_calculators,
+    extract_fc2_fc3_calculators_options,
     update_cutoff_fc_calculator_options,
 )
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
@@ -292,6 +293,7 @@ def load(
     elif phono3py_yaml is not None:
         ph3py_yaml = Phono3pyYaml()
         ph3py_yaml.read(phono3py_yaml)
+        assert ph3py_yaml.unitcell is not None
         cell = ph3py_yaml.unitcell.copy()
         _calculator = ph3py_yaml.calculator
         smat = ph3py_yaml.supercell_matrix
@@ -366,14 +368,13 @@ def load(
     )
 
     if use_pypolymlp and ph3py.fc3 is None and forces_in_dataset(ph3py.dataset):
+        assert ph3py.dataset is not None
         ph3py.mlp_dataset = ph3py.dataset
         ph3py.dataset = None
 
     if produce_fc:
         if ph3py.fc3 is None and use_pypolymlp:
-            run_pypolymlp_to_compute_forces(
-                ph3py, mlp_params=mlp_params, log_level=log_level
-            )
+            develop_pypolymlp(ph3py, mlp_params=mlp_params, log_level=log_level)
 
         compute_force_constants_from_datasets(
             ph3py,
@@ -432,11 +433,11 @@ def compute_force_constants_from_datasets(
     """
     fc3_calculator = extract_fc2_fc3_calculators(fc_calculator, 3)
     fc2_calculator = extract_fc2_fc3_calculators(fc_calculator, 2)
-    fc3_calc_opts = extract_fc2_fc3_calculators(fc_calculator_options, 3)
+    fc3_calc_opts = extract_fc2_fc3_calculators_options(fc_calculator_options, 3)
     fc3_calc_opts = update_cutoff_fc_calculator_options(
         fc3_calc_opts, cutoff_pair_distance
     )
-    fc2_calc_opts = extract_fc2_fc3_calculators(fc_calculator_options, 2)
+    fc2_calc_opts = extract_fc2_fc3_calculators_options(fc_calculator_options, 2)
     exist_fc2 = ph3py.fc2 is not None
     if ph3py.fc3 is None and forces_in_dataset(ph3py.dataset):
         ph3py.produce_fc3(

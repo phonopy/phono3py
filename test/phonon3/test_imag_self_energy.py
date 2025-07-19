@@ -25,7 +25,7 @@ def test_imag_self_energy_at_bands(si_pbesol: Phono3py):
             [0.00382813, 0.0049497, 0.02727924, 0.01382784, 0.04133946, 0.02980282],
         ]
     for i, grgp in enumerate((1, 103)):
-        _, gammas = si_pbesol.run_imag_self_energy(
+        ise_params = si_pbesol.run_imag_self_energy(
             [
                 si_pbesol.grid.grg2bzg[grgp],
             ],
@@ -35,7 +35,9 @@ def test_imag_self_energy_at_bands(si_pbesol: Phono3py):
             frequency_points_at_bands=True,
         )
         # print(gammas.ravel())
-        np.testing.assert_allclose(gammas.ravel(), gammas_ref[i], rtol=0, atol=1e-2)
+        np.testing.assert_allclose(
+            ise_params.gammas.ravel(), gammas_ref[i], rtol=0, atol=1e-2
+        )
 
 
 def test_imag_self_energy_at_bands_detailed(si_pbesol: Phono3py):
@@ -47,7 +49,7 @@ def test_imag_self_energy_at_bands_detailed(si_pbesol: Phono3py):
     """
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
-    _, gammas, detailed_gammas = si_pbesol.run_imag_self_energy(
+    ise_params = si_pbesol.run_imag_self_energy(
         si_pbesol.grid.grg2bzg[[1, 103]],
         [
             300,
@@ -145,10 +147,14 @@ def test_imag_self_energy_at_bands_detailed(si_pbesol: Phono3py):
     ]
     weights_103 = [2] * 364 + [1]
 
-    gammas_1_ref = gammas[:, :, 0].ravel()
-    gammas_103_ref = gammas[:, :, 1].ravel()
-    gammas_1 = np.dot(weights_1, detailed_gammas[0][0, 0].sum(axis=-1).sum(axis=-1))
-    gammas_103 = np.dot(weights_103, detailed_gammas[1][0, 0].sum(axis=-1).sum(axis=-1))
+    gammas_1_ref = ise_params.gammas[:, :, 0].ravel()
+    gammas_103_ref = ise_params.gammas[:, :, 1].ravel()
+    gammas_1 = np.dot(
+        weights_1, ise_params.detailed_gammas[0][0, 0].sum(axis=-1).sum(axis=-1)
+    )
+    gammas_103 = np.dot(
+        weights_103, ise_params.detailed_gammas[1][0, 0].sum(axis=-1).sum(axis=-1)
+    )
     np.testing.assert_allclose(
         gammas_1[:2].sum(), gammas_1_ref[:2].sum(), rtol=0, atol=1e-2
     )
@@ -477,7 +483,7 @@ def test_imag_self_energy_npoints(si_pbesol: Phono3py, with_given_freq_points: b
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
     if with_given_freq_points:
-        fpoints, gammas = si_pbesol.run_imag_self_energy(
+        ise_params = si_pbesol.run_imag_self_energy(
             si_pbesol.grid.grg2bzg[[1, 103]],
             [
                 300,
@@ -485,7 +491,7 @@ def test_imag_self_energy_npoints(si_pbesol: Phono3py, with_given_freq_points: b
             frequency_points=ref_freq_points,
         )
     else:
-        fpoints, gammas = si_pbesol.run_imag_self_energy(
+        ise_params = si_pbesol.run_imag_self_energy(
             si_pbesol.grid.grg2bzg[[1, 103]],
             [
                 300,
@@ -497,8 +503,12 @@ def test_imag_self_energy_npoints(si_pbesol: Phono3py, with_given_freq_points: b
     # for line in gammas.reshape(-1, 10):
     #     print("[", ",".join([f"{val:.8f}" for val in line]), "],")
 
-    np.testing.assert_allclose(ref_gammas, gammas.reshape(-1, 10), rtol=0, atol=1e-2)
-    np.testing.assert_allclose(ref_freq_points, fpoints.ravel(), rtol=0, atol=1e-5)
+    np.testing.assert_allclose(
+        ref_gammas, ise_params.gammas.reshape(-1, 10), rtol=0, atol=1e-2
+    )
+    np.testing.assert_allclose(
+        ref_freq_points, ise_params.frequency_points.ravel(), rtol=0, atol=1e-5
+    )
 
 
 def test_imag_self_energy_npoints_with_sigma(si_pbesol: Phono3py):
@@ -820,7 +830,7 @@ def test_imag_self_energy_npoints_with_sigma(si_pbesol: Phono3py):
     ]
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
-    fpoints, gammas = si_pbesol.run_imag_self_energy(
+    ise_params = si_pbesol.run_imag_self_energy(
         si_pbesol.grid.grg2bzg[[1, 103]],
         [
             300,
@@ -832,8 +842,12 @@ def test_imag_self_energy_npoints_with_sigma(si_pbesol: Phono3py):
     # for line in gammas.reshape(-1, 10):
     #     print("[", ",".join([f"{val:.8f}" for val in line]), "],")
 
-    np.testing.assert_allclose(ref_gammas, gammas.reshape(-1, 10), rtol=0, atol=1e-2)
-    np.testing.assert_allclose(ref_freq_points, fpoints.ravel(), rtol=0, atol=1e-5)
+    np.testing.assert_allclose(
+        ref_gammas, ise_params.gammas.reshape(-1, 10), rtol=0, atol=1e-2
+    )
+    np.testing.assert_allclose(
+        ref_freq_points, ise_params.frequency_points.ravel(), rtol=0, atol=1e-5
+    )
     si_pbesol.sigmas = None
 
 
@@ -884,7 +898,7 @@ def test_imag_self_energy_detailed(si_pbesol: Phono3py):
     ]
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
-    _, _, detailed_gammas = si_pbesol.run_imag_self_energy(
+    ise_params = si_pbesol.run_imag_self_energy(
         si_pbesol.grid.grg2bzg[
             [
                 1,
@@ -898,13 +912,16 @@ def test_imag_self_energy_detailed(si_pbesol: Phono3py):
     )
     print(
         ",".join(
-            [f"{val:.8f}" for val in detailed_gammas[0][0, 0].sum(axis=(1, 2, 3, 4))]
+            [
+                f"{val:.8f}"
+                for val in ise_params.detailed_gammas[0][0, 0].sum(axis=(1, 2, 3, 4))
+            ]
         )
     )
 
     np.testing.assert_allclose(
         ref_detailed_gamma,
-        detailed_gammas[0][0, 0].sum(axis=(1, 2, 3, 4)),
+        ise_params.detailed_gammas[0][0, 0].sum(axis=(1, 2, 3, 4)),
         rtol=0,
         atol=1e-2,
     )
@@ -1428,7 +1445,7 @@ def test_imag_self_energy_scat_classes(si_pbesol: Phono3py, scattering_class: in
 
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
-    _, gammas = si_pbesol.run_imag_self_energy(
+    ise_params = si_pbesol.run_imag_self_energy(
         si_pbesol.grid.grg2bzg[[1, 103]],
         [
             300,
@@ -1441,7 +1458,7 @@ def test_imag_self_energy_scat_classes(si_pbesol: Phono3py, scattering_class: in
 
     np.testing.assert_allclose(
         gammas_classes[scattering_class - 1],
-        gammas.ravel(),
+        ise_params.gammas.ravel(),
         rtol=0,
         atol=1e-2,
     )
@@ -1714,7 +1731,7 @@ def test_imag_self_energy_nacl_npoints(nacl_pbe: Phono3py):
 
     nacl_pbe.mesh_numbers = [9, 9, 9]
     nacl_pbe.init_phph_interaction()
-    fpoints, gammas = nacl_pbe.run_imag_self_energy(
+    ise_params = nacl_pbe.run_imag_self_energy(
         nacl_pbe.grid.grg2bzg[[1, 103]],
         [
             300,
@@ -1724,8 +1741,12 @@ def test_imag_self_energy_nacl_npoints(nacl_pbe: Phono3py):
 
     # print(",".join([f"{val:.8f}" for val in gammas.ravel()]))
 
-    np.testing.assert_allclose(ref_gammas_nacl, gammas.ravel(), rtol=0, atol=2e-2)
-    np.testing.assert_allclose(ref_freq_points_nacl, fpoints.ravel(), rtol=0, atol=1e-5)
+    np.testing.assert_allclose(
+        ref_gammas_nacl, ise_params.gammas.ravel(), rtol=0, atol=2e-2
+    )
+    np.testing.assert_allclose(
+        ref_freq_points_nacl, ise_params.frequency_points.ravel(), rtol=0, atol=1e-5
+    )
 
 
 def test_imag_self_energy_nacl_nac_npoints(nacl_pbe: Phono3py):
@@ -1876,13 +1897,15 @@ def test_imag_self_energy_nacl_nac_npoints(nacl_pbe: Phono3py):
 
     nacl_pbe.mesh_numbers = [9, 9, 9]
     nacl_pbe.init_phph_interaction(nac_q_direction=[1, 0, 0])
-    fpoints, gammas = nacl_pbe.run_imag_self_energy(
+    ise_params = nacl_pbe.run_imag_self_energy(
         [nacl_pbe.grid.gp_Gamma], [300], num_frequency_points=10
     )
 
     # print(",".join([f"{val:.8f}" for val in gammas.ravel()]))
 
     np.testing.assert_allclose(
-        ref_freq_points_nacl_nac, fpoints.ravel(), rtol=0, atol=1e-5
+        ref_freq_points_nacl_nac, ise_params.frequency_points.ravel(), rtol=0, atol=1e-5
     )
-    np.testing.assert_allclose(ref_gammas_nacl_nac, gammas.ravel(), rtol=0, atol=2e-2)
+    np.testing.assert_allclose(
+        ref_gammas_nacl_nac, ise_params.gammas.ravel(), rtol=0, atol=2e-2
+    )

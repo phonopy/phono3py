@@ -758,8 +758,8 @@ where the averaged phonon-phonon interaction that is read from
 `kappa-mxxx(-sx-sdx).hdf5` file is used if it exists in the file. Therefore the
 averaged phonon-phonon interaction has to be stored before using this option
 (see {ref}`--full-pp <full_pp_option>`). The calculation result **overwrites**
-`kappa-mxxx(-sx-sdx).hdf5` file. Therefore to use this option together with `-o`
-option is strongly recommended.
+`kappa-mxxx(-sx-sdx).hdf5` file. Therefore the original
+`kappa-mxxx(-sx-sdx).hdf5` file should be backed up.
 
 First, run full conductivity calculation,
 
@@ -1223,10 +1223,6 @@ compression filter. To avoid compression, `--hdf5-compression=None` has to be
 set. Other filters (`lzf` or integer values of 0 to 9) may be used, see h5py
 documentation
 (<http://docs.h5py.org/en/stable/high/dataset.html#filter-pipeline>).
-
-### `-o`, `-i`, `--io`
-
-These options are deprecated.
 
 <!-- (output_filename_option)=
 ### `-o` (command option only)
