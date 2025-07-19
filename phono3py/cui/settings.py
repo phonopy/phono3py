@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import argparse
 import os
+from typing import Literal
 
 import numpy as np
 from phonopy.cui.settings import ConfParser, Settings, fracval
@@ -81,7 +82,7 @@ class Phono3pySettings(Settings):
         self.is_symmetrize_fc3_q = False
         self.is_symmetrize_fc3_r = False
         self.is_tetrahedron_method = False
-        self.lapack_zheev_uplo = "L"
+        self.lapack_zheev_uplo: Literal["L", "U"] = "L"
         self.mass_variances = None
         self.max_freepath = None
         self.num_points_in_batch = None
