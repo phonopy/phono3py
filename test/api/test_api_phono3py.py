@@ -229,7 +229,7 @@ def test_symmetrize_fc_traditional(si_pbesol: Phono3py, is_compact_fc: bool):
     np.testing.assert_allclose(
         np.abs([v1, v2, v3]), [1.755065e-01, 1.749287e-01, 3.333333e-05], atol=1e-6
     )
-    ph3.symmetrize_fc3(level=3)
+    ph3.symmetrize_fc3(options="level=3")
     v1_sym, v2_sym, v3_sym, _, _, _ = get_drift_fc3(ph3.fc3, primitive=ph3.primitive)
     if is_compact_fc:
         np.testing.assert_allclose(

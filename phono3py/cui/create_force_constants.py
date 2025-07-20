@@ -77,7 +77,7 @@ def parse_forces(
     without writing calculator name in it.
 
     """
-    filename_read_from: str | None = None
+    filename_read_from = None
     dataset = None
 
     if phono3py.phonon_supercell is None or fc_type == "fc3":
@@ -170,7 +170,9 @@ def _read_FORCES_FC3_or_FC2(
                 print(f'{n_disp} snapshots were found in "{filename}".')
             return _dataset
 
-    # Type-1
+    # Try reading type-1 dataset
+    if dataset is None:
+        raise RuntimeError("Type-1 displacement dataset is not given.")
     if fc_type == "fc3":
         parse_FORCES_FC3(dataset, filename)
     else:

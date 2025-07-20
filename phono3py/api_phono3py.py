@@ -847,7 +847,7 @@ class Phono3py:
         return self._phonon_supercells_with_displacements
 
     @property
-    def mesh_numbers(self):
+    def mesh_numbers(self) -> NDArray | None:
         """Setter and getter of sampling mesh numbers in reciprocal space."""
         if self._bz_grid is None:
             return None
@@ -1558,10 +1558,10 @@ class Phono3py:
             if symmetrize_fc3r:
                 if use_symfc_projector and fc_calculator is None:
                     self.symmetrize_fc3(
-                        use_symfc_projector=True, symfc_options=fc_calculator_options
+                        use_symfc_projector=True, options=fc_calculator_options
                     )
                 else:
-                    self.symmetrize_fc3()
+                    self.symmetrize_fc3(options=fc_calculator_options)
         elif fc_calculator == "symfc":
             symfc_solver = cast(SymfcFCSolver, fc_solver.fc_solver)
             fc3_nonzero_elems = symfc_solver.get_nonzero_atomic_indices_fc3()
@@ -1587,30 +1587,29 @@ class Phono3py:
                     if use_symfc_projector and fc_calculator is None:
                         self.symmetrize_fc2(
                             use_symfc_projector=True,
-                            symfc_options=fc_calculator_options,
+                            options=fc_calculator_options,
                         )
                     else:
-                        self.symmetrize_fc2()
+                        self.symmetrize_fc2(options=fc_calculator_options)
 
     def symmetrize_fc3(
         self,
-        level: int = 1,
         use_symfc_projector: bool = False,
-        symfc_options: str | None = None,
+        options: str | None = None,
     ):
         """Symmetrize fc3 by symfc projector or traditional approach.
 
         Parameters
         ----------
-        level : int, optional
-            Number of times translational and permutation symmetries are applied
-            for traditional symmetrization. Default is 1.
         use_symfc_projector : bool, optional
             If True, the force constants are symmetrized by symfc projector
             instead of traditional approach.
-        symfc_options : str or None, optional
-            Options for symfc projector. "use_mkl=true" calls sparse_dot_mkl
-            (required to install it).
+        options : str or None, optional
+            For symfc projector:
+                "use_mkl=true" calls sparse_dot_mkl (required to install it).
+            For traditional symmetrization:
+                "level=N" applies translational and permutation symmetries
+                alternately N times in succession. Default is 3.
 
         """
         if self._fc3 is None:
@@ -1619,22 +1618,33 @@ class Phono3py:
         if use_symfc_projector:
             if self._log_level:
                 print("Symmetrizing fc3 by symfc projector.", flush=True)
-            if symfc_options is None:
-                options = None
+            if options is None:
+                _options = None
             else:
-                options = parse_symfc_options(symfc_options, 3)
+                _options = parse_symfc_options(options, 3)
             self._fc3 = symmetrize_by_projector(
                 self._supercell,
                 self._fc3,
                 3,
                 primitive=self._primitive,
-                options=options,
+                options=_options,
                 log_level=self._log_level,
                 show_credit=True,
             )
         else:
+            level = 3
+            if options is not None:
+                for option in options.split(","):
+                    if "level" in option.lower():
+                        try:
+                            level = int(option.split("=")[1].split()[0])
+                        except ValueError:
+                            pass
+                        break
             if self._log_level:
-                print("Symmetrizing fc3 by traditional approach.", flush=True)
+                print(
+                    f"Symmetrizing fc3 by traditional approach (N={level}).", flush=True
+                )
             for _ in range(level):
                 if self._fc3.shape[0] == self._fc3.shape[1]:
                     set_translational_invariance_fc3(self._fc3)
@@ -1703,28 +1713,28 @@ class Phono3py:
 
         if symmetrize_fc2 and (fc_calculator is None or fc_calculator == "traditional"):
             self.symmetrize_fc2(
-                use_symfc_projector=use_symfc_projector and fc_calculator is None
+                use_symfc_projector=use_symfc_projector and fc_calculator is None,
+                options=fc_calculator_options,
             )
 
     def symmetrize_fc2(
         self,
-        level: int = 1,
         use_symfc_projector: bool = False,
-        symfc_options: str | None = None,
+        options: str | None = None,
     ):
         """Symmetrize fc2 by symfc projector or traditional approach.
 
         Parameters
         ----------
-        level : int, optional
-            Number of times translational and permutation symmetries are applied
-            for traditional symmetrization. Default is 1.
         use_symfc_projector : bool, optional
             If True, the force constants are symmetrized by symfc projector
             instead of traditional approach.
-        symfc_options : str or None, optional
-            Options for symfc projector. "use_mkl=true" calls sparse_dot_mkl
-            (required to install it).
+        options : str or None, optional
+            For symfc projector:
+                "use_mkl=true" calls sparse_dot_mkl (required to install it).
+            For traditional symmetrization:
+                "level=N" applies translational and permutation symmetries
+                alternately N times in succession. Default is 3.
 
         """
         if self._fc2 is None:
@@ -1743,22 +1753,33 @@ class Phono3py:
         if use_symfc_projector:
             if self._log_level:
                 print("Symmetrizing fc2 by symfc projector.", flush=True)
-            if symfc_options is None:
-                options = None
+            if options is None:
+                _options = None
             else:
-                options = parse_symfc_options(symfc_options, 2)
+                _options = parse_symfc_options(options, 2)
             self._fc2 = symmetrize_by_projector(
                 supercell,
                 self._fc2,
                 2,
                 primitive=primitive,
-                options=options,
+                options=_options,
                 log_level=self._log_level,
                 show_credit=True,
             )
         else:
+            level = 3
+            if options is not None:
+                for option in options.split(","):
+                    if "level" in option.lower():
+                        try:
+                            level = int(option.split("=")[1].split()[0])
+                        except ValueError:
+                            pass
+                        break
             if self._log_level:
-                print("Symmetrizing fc2 by traditional approach.", flush=True)
+                print(
+                    f"Symmetrizing fc2 by traditional approach (N={level}).", flush=True
+                )
             for _ in range(level):
                 if self._fc2.shape[0] == self._fc2.shape[1]:
                     symmetrize_force_constants(self._fc2)
