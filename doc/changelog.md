@@ -5,6 +5,8 @@
 ## Jul-xx-2025: Version 3.17.2
 
 - Changed `Phono3py.run_imag_self_energy()` to return `ImagSelfEnergyValues`.
+- Traditional force constants symmetrizer now applies translational and
+  permutation symmetries alternately 3 times in succession (previously once).
 
 ## Jul-5-2025: Version 3.17.1
 

@@ -1644,7 +1644,11 @@ def parse_disp_fc3_yaml(filename="disp_fc3.yaml", return_cell=False):
         return new_dataset
 
 
-def parse_FORCES_FC2(disp_dataset, filename="FORCES_FC2", unit_conversion_factor=None):
+def parse_FORCES_FC2(
+    disp_dataset: dict,
+    filename: str | os.PathLike = "FORCES_FC2",
+    unit_conversion_factor: float | None = None,
+):
     """Parse type1 FORCES_FC2 file and store forces in disp_dataset."""
     num_atom = disp_dataset["natom"]
     num_disp = len(disp_dataset["first_atoms"])
@@ -1665,7 +1669,10 @@ def parse_FORCES_FC2(disp_dataset, filename="FORCES_FC2", unit_conversion_factor
 
 
 def parse_FORCES_FC3(
-    disp_dataset, filename="FORCES_FC3", use_loadtxt=False, unit_conversion_factor=None
+    disp_dataset: dict,
+    filename: str | os.PathLike = "FORCES_FC3",
+    use_loadtxt: bool = False,
+    unit_conversion_factor: float | None = None,
 ):
     """Parse type1 FORCES_FC3 and store forces in disp_dataset."""
     num_atom = disp_dataset["natom"]

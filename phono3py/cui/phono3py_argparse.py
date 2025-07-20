@@ -728,6 +728,13 @@ def get_parser(load_phono3py_yaml: bool = False):
         help="Solve reducible collision matrix",
     )
     parser.add_argument(
+        "--relax-atomic-positions",
+        dest="relax_atomic_positions",
+        action="store_true",
+        default=None,
+        help="Relax atomic positions using polynomial MLPs",
+    )
+    parser.add_argument(
         "--rse",
         dest="is_real_self_energy",
         action="store_true",
