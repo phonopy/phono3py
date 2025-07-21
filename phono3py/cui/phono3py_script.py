@@ -617,7 +617,8 @@ def _run_pypolymlp(
                 ph3py.mlp.mlp,
                 verbose=log_level > 1,
             )
-        except PypolymlpRelaxationError as e:
+        except (PypolymlpRelaxationError, ValueError) as e:
+            # ValueError can come from pypolymlp directly.
             print_error_message(str(e))
             if log_level:
                 print_error()
