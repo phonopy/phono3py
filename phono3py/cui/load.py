@@ -438,7 +438,6 @@ def compute_force_constants_from_datasets(
         fc3_calc_opts, cutoff_pair_distance
     )
     fc2_calc_opts = extract_fc2_fc3_calculators_options(fc_calculator_options, 2)
-    exist_fc2 = ph3py.fc2 is not None
     if ph3py.fc3 is None and forces_in_dataset(ph3py.dataset):
         ph3py.produce_fc3(
             symmetrize_fc3r=symmetrize_fc,
@@ -448,7 +447,7 @@ def compute_force_constants_from_datasets(
             use_symfc_projector=load_phono3py_yaml,
         )
 
-    if not exist_fc2:
+    if ph3py.fc2 is None or fc3_calculator != fc2_calculator:
         if (
             ph3py.phonon_supercell_matrix is None and forces_in_dataset(ph3py.dataset)
         ) or (
