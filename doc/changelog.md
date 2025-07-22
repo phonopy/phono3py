@@ -2,7 +2,7 @@
 
 # Change Log
 
-## Jul-xx-2025: Version 3.17.2
+## Jul-22-2025: Version 3.18.0
 
 - Changed `Phono3py.run_imag_self_energy()` to return `ImagSelfEnergyValues`.
 - Traditional force constants symmetrizer now applies translational and
