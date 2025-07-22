@@ -2457,7 +2457,7 @@ class Phono3py:
 
         self._mlp.save(filename=filename)
 
-    def load_mlp(self, filename: str | None = None):
+    def load_mlp(self, filename: str | os.PathLike | None = None):
         """Load machine learning potential."""
         self._mlp = PhonopyMLP(log_level=self._log_level)
         self._mlp.load(filename=filename)

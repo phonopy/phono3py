@@ -216,8 +216,8 @@ def develop_pypolymlp(
             ]:
                 continue
             if log_level:
-                print(f'Load MLPs from "{mlp_filename}".')
-            ph3py.load_mlp(mlp_filename)
+                print(f'Load MLPs from "{_mlp_filename}".')
+            ph3py.load_mlp(_mlp_filename)
             mlp_loaded = True
             if log_level and mlp_filename == "phono3py.pmlp":
                 print(f'Loading MLPs from "{_mlp_filename}" is obsolete.')
