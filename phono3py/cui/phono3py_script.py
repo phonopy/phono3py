@@ -40,12 +40,11 @@ import argparse
 import os
 import pathlib
 import sys
-import warnings
 from collections.abc import Sequence
-from typing import Optional, cast
+from typing import cast
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import ArrayLike, NDArray
 from phonopy.api_phonopy import Phonopy
 from phonopy.cui.phonopy_argparse import show_deprecated_option_warnings
 from phonopy.cui.phonopy_script import (
@@ -58,17 +57,27 @@ from phonopy.cui.phonopy_script import (
     store_nac_params,
 )
 from phonopy.cui.settings import PhonopySettings
-from phonopy.exception import CellNotFoundError, ForceCalculatorRequiredError
+from phonopy.exception import (
+    CellNotFoundError,
+    ForceCalculatorRequiredError,
+    PypolymlpRelaxationError,
+)
 from phonopy.file_IO import is_file_phonopy_yaml
+from phonopy.harmonic.dynamical_matrix import DynamicalMatrixGL
 from phonopy.harmonic.force_constants import show_drift_force_constants
 from phonopy.interface.calculator import get_calculator_physical_units
+from phonopy.interface.pypolymlp import get_change_in_positions, relax_atomic_positions
 from phonopy.interface.symfc import estimate_symfc_cutoff_from_memsize
 from phonopy.phonon.band_structure import get_band_qpoints
 from phonopy.physical_units import get_physical_units
+from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import isclose as cells_isclose
 
 from phono3py import Phono3py, Phono3pyIsotope, Phono3pyJointDos
-from phono3py.cui.create_force_constants import run_pypolymlp_to_compute_forces
+from phono3py.cui.create_force_constants import (
+    develop_pypolymlp,
+    generate_displacements_and_evaluate_pypolymlp,
+)
 from phono3py.cui.create_force_sets import (
     create_FORCE_SETS_from_FORCES_FCx,
     create_FORCES_FC2_from_FORCE_SETS,
@@ -192,7 +201,6 @@ def _finalize_phono3py(
 
 def _get_run_mode(settings: Phono3pySettings):
     """Extract run mode from settings."""
-    run_mode = None
     if settings.is_gruneisen:
         run_mode = "gruneisen"
     elif settings.is_joint_dos:
@@ -215,6 +223,8 @@ def _get_run_mode(settings: Phono3pySettings):
         run_mode = "displacements"
     elif settings.write_phonon:
         run_mode = "phonon"
+    else:
+        run_mode = "force constants"
     return run_mode
 
 
@@ -235,7 +245,7 @@ def _start_phono3py(**argparse_control) -> tuple[argparse.Namespace, int]:
     # Title
     if log_level:
         print_phono3py()
-        import phono3py._phono3py as phono3c
+        import phono3py._phono3py as phono3c  # type: ignore[import]
 
         max_threads = phono3c.omp_max_threads()
         if max_threads > 0:
@@ -311,33 +321,6 @@ def _read_phono3py_settings(
     settings = phono3py_conf_parser.settings
 
     return settings, confs_dict, cell_filename
-
-
-def _get_input_output_filenames_from_args(args: argparse.Namespace):
-    """Return strings inserted to input and output filenames."""
-    if args.input_filename is not None:
-        warnings.warn(
-            "-i option is deprecated and will be removed soon.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-    input_filename = args.input_filename
-    if args.output_filename is not None:
-        warnings.warn(
-            "-o option is deprecated and will be removed soon.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-    output_filename = args.output_filename
-    if args.input_output_filename is not None:
-        warnings.warn(
-            "--io option is deprecated and will be removed soon.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        input_filename = args.input_output_filename
-        output_filename = args.input_output_filename
-    return input_filename, output_filename
 
 
 def _get_default_values(settings: Phono3pySettings):
@@ -454,7 +437,7 @@ def _check_supercell_in_yaml(
                 sys.exit(1)
 
 
-def _init_phono3py(
+def _init_phono3py_with_cell_info(
     settings: Phono3pySettings,
     cell_info: Phono3pyCellInfoResult,
     interface_mode: str | None,
@@ -462,28 +445,54 @@ def _init_phono3py(
     log_level: int,
 ) -> tuple[Phono3py, dict]:
     """Initialize phono3py and update settings by default values."""
-    physical_units = get_calculator_physical_units(interface_mode)
-    distance_to_A = physical_units["distance_to_A"]
-
-    # Change unit of lattice parameters to angstrom
-    unitcell = cell_info.unitcell.copy()
-    if distance_to_A is not None:
-        lattice = unitcell.cell
-        lattice *= distance_to_A
-        unitcell.cell = lattice
-
     # updated_settings keys
     # ('sigmas', 'temperature_points', 'temperatures',
     #  'frequency_factor_to_THz', 'num_frequency_points',
     #  'frequency_step', 'frequency_scale_factor',
     #  'cutoff_frequency')
+    phono3py, updated_settings, distance_to_A = _init_phono3py(
+        settings,
+        cell_info.unitcell.copy(),
+        supercell_matrix=cell_info.supercell_matrix,
+        primitive_matrix=cell_info.primitive_matrix,
+        phonon_supercell_matrix=cell_info.phonon_supercell_matrix,
+        interface_mode=interface_mode,
+        symprec=symprec,
+        log_level=log_level,
+    )
+    _check_supercell_in_yaml(cell_info, phono3py, distance_to_A, log_level)
+
+    return phono3py, updated_settings
+
+
+def _init_phono3py(
+    settings: Phono3pySettings,
+    unitcell: PhonopyAtoms,
+    supercell_matrix: ArrayLike | None = None,
+    primitive_matrix: ArrayLike | None = None,
+    phonon_supercell_matrix: ArrayLike | None = None,
+    interface_mode: str | None = None,
+    symprec: float = 1e-5,
+    log_level: int = 0,
+) -> tuple[Phono3py, dict, float | None]:
+    """Initialize phono3py and update settings by default values."""
+    if interface_mode is not None:
+        physical_units = get_calculator_physical_units(interface_mode)
+        distance_to_A = physical_units["distance_to_A"]
+        assert distance_to_A is not None
+        lattice = unitcell.cell
+        lattice *= distance_to_A
+        unitcell.cell = lattice
+    else:
+        distance_to_A = None
+
     updated_settings = _get_default_values(settings)
 
     phono3py = Phono3py(
         unitcell,
-        cell_info.supercell_matrix,
-        primitive_matrix=cell_info.primitive_matrix,
-        phonon_supercell_matrix=cell_info.phonon_supercell_matrix,
+        supercell_matrix,
+        primitive_matrix=primitive_matrix,
+        phonon_supercell_matrix=phonon_supercell_matrix,
         cutoff_frequency=updated_settings["cutoff_frequency"],
         frequency_factor_to_THz=updated_settings["frequency_factor_to_THz"],
         is_symmetry=settings.is_symmetry,
@@ -498,12 +507,12 @@ def _init_phono3py(
     phono3py.sigmas = updated_settings["sigmas"]
     phono3py.sigma_cutoff = settings.sigma_cutoff_width
 
-    _check_supercell_in_yaml(cell_info, phono3py, distance_to_A, log_level)
-
-    return phono3py, updated_settings
+    return phono3py, updated_settings, distance_to_A
 
 
-def _settings_to_grid_points(settings: Phono3pySettings, bz_grid: BZGrid):
+def _settings_to_grid_points(
+    settings: Phono3pySettings, bz_grid: BZGrid
+) -> ArrayLike | None:
     """Read or set grid point indices."""
     if settings.grid_addresses is not None:
         grid_points = _grid_addresses_to_grid_points(settings.grid_addresses, bz_grid)
@@ -514,7 +523,7 @@ def _settings_to_grid_points(settings: Phono3pySettings, bz_grid: BZGrid):
     return grid_points
 
 
-def _grid_addresses_to_grid_points(grid_addresses: NDArray, bz_grid: BZGrid):
+def _grid_addresses_to_grid_points(grid_addresses: NDArray, bz_grid: BZGrid) -> NDArray:
     """Return grid point indices from grid addresses."""
     grid_points = [
         get_grid_point_from_address(ga, bz_grid.D_diag) for ga in grid_addresses
@@ -527,9 +536,10 @@ def _create_supercells_with_displacements(
     cell_info: Phono3pyCellInfoResult,
     confs_dict: dict,
     unitcell_filename: str,
-    interface_mode: Optional[str],
-    symprec: float,
-    log_level: int,
+    interface_mode: str | None,
+    symprec: float = 1e-5,
+    output_yaml_filename: str | None = None,
+    log_level: int = 0,
 ):
     """Create supercells and write displacements."""
     if (
@@ -537,7 +547,7 @@ def _create_supercells_with_displacements(
         or settings.random_displacements is not None
         or settings.random_displacements_fc2 is not None
     ):
-        phono3py = create_phono3py_supercells(
+        ph3py = create_phono3py_supercells(
             cell_info,
             settings,
             symprec,
@@ -547,7 +557,7 @@ def _create_supercells_with_displacements(
 
         if pathlib.Path("BORN").exists():
             store_nac_params(
-                cast(Phonopy, phono3py),
+                cast(Phonopy, ph3py),
                 cast(PhonopySettings, settings),
                 cell_info.phono3py_yaml,
                 unitcell_filename,
@@ -556,21 +566,121 @@ def _create_supercells_with_displacements(
             )
 
         if log_level:
-            if phono3py.supercell.magnetic_moments is None:
-                print("Spacegroup: %s" % phono3py.symmetry.get_international_table())
+            if ph3py.supercell.magnetic_moments is None:
+                print("Spacegroup: %s" % ph3py.symmetry.get_international_table())
             else:
                 print(
                     "Number of symmetry operations in supercell: %d"
-                    % len(phono3py.symmetry.symmetry_operations["rotations"])
+                    % len(ph3py.symmetry.symmetry_operations["rotations"])
                 )
 
+        ph3py.save("phono3py_disp.yaml")
+        if log_level > 0:
+            print('Displacement dataset was written in "phono3py_disp.yaml".')
+
         _finalize_phono3py(
-            phono3py,
+            ph3py,
             confs_dict,
             log_level,
-            write_displacements=True,
-            filename="phono3py_disp.yaml",
+            filename=output_yaml_filename,
         )
+
+
+def _run_pypolymlp(
+    ph3py: Phono3py,
+    settings: Phono3pySettings,
+    confs_dict: dict,
+    output_yaml_filename: str | None = None,
+    mlp_eval_filename: str = "phono3py_mlp_eval_dataset.yaml",
+    log_level: int = 0,
+) -> Phono3py:
+    assert ph3py.mlp_dataset is None
+    if ph3py.dataset is not None:  # If None, load mlp from polymlp.yaml.
+        ph3py.mlp_dataset = ph3py.dataset
+        ph3py.dataset = None
+
+    develop_pypolymlp(
+        ph3py,
+        mlp_params=settings.mlp_params,
+        log_level=log_level,
+    )
+
+    _ph3py = ph3py
+    if settings.relax_atomic_positions:
+        if log_level:
+            print("Relaxing atomic positions using polynomial MLPs...")
+
+        try:
+            assert ph3py.mlp is not None
+            relaxed_unitcell = relax_atomic_positions(
+                ph3py.unitcell,
+                ph3py.mlp.mlp,
+                verbose=log_level > 1,
+            )
+        except (PypolymlpRelaxationError, ValueError) as e:
+            # ValueError can come from pypolymlp directly.
+            print_error_message(str(e))
+            if log_level:
+                print_error()
+            sys.exit(1)
+
+        if log_level:
+            if relaxed_unitcell is None:
+                print("No relaxation was performed due to symmetry constraints.")
+            else:
+                get_change_in_positions(
+                    relaxed_unitcell, ph3py.unitcell, verbose=log_level > 0
+                )
+            print("-" * 76)
+
+        if relaxed_unitcell is not None:
+            if log_level:
+                print(
+                    "Relaxed crystal structures will be stored in "
+                    f'"{output_yaml_filename}".'
+                )
+            _ph3py, _, _ = _init_phono3py(
+                settings,
+                relaxed_unitcell.copy(),
+                supercell_matrix=ph3py.supercell_matrix,
+                primitive_matrix=ph3py.primitive_matrix,
+                phonon_supercell_matrix=ph3py.phonon_supercell_matrix,
+                symprec=ph3py.symmetry.tolerance,
+                log_level=log_level,
+            )
+            if ph3py.mesh_numbers is not None:
+                assert settings.mesh_numbers is not None
+                _ph3py.mesh_numbers = settings.mesh_numbers
+            _ph3py.nac_params = ph3py.nac_params
+            _ph3py.mlp = ph3py.mlp
+
+    if settings.create_displacements or settings.random_displacements is not None:
+        generate_displacements_and_evaluate_pypolymlp(
+            _ph3py,
+            displacement_distance=settings.displacement_distance,
+            number_of_snapshots=settings.random_displacements,
+            number_estimation_factor=settings.rd_number_estimation_factor,
+            random_seed=settings.random_seed,
+            fc_calculator=settings.fc_calculator,
+            fc_calculator_options=settings.fc_calculator_options,
+            cutoff_pair_distance=settings.cutoff_pair_distance,
+            symfc_memory_size=settings.symfc_memory_size,
+            log_level=log_level,
+        )
+        if log_level:
+            print(f'Dataset generated using MLPs was written in "{mlp_eval_filename}".')
+        _ph3py.save(mlp_eval_filename)
+    else:
+        if log_level:
+            print(
+                "Generate displacements (--rd or -d) for proceeding to phonon "
+                "calculations."
+            )
+        _finalize_phono3py(
+            _ph3py, confs_dict, log_level=log_level, filename=output_yaml_filename
+        )
+
+    return _ph3py
 
 
 def _produce_force_constants(
@@ -622,7 +732,8 @@ def _produce_force_constants(
     except ForceCalculatorRequiredError as e:
         if load_phono3py_yaml:
             if log_level:
-                print("Symfc will be used to handle general (or random) displacements.")
+                print(str(e))
+                print("Try symfc to handle general (or random) displacements.")
         else:
             print_error_message(str(e))
             if log_level:
@@ -690,7 +801,9 @@ def _produce_force_constants(
 
 
 def _run_gruneisen_then_exit(
-    phono3py: Phono3py, settings: Phono3pySettings, output_filename: str, log_level: int
+    phono3py: Phono3py,
+    settings: Phono3pySettings,
+    log_level: int,
 ):
     """Run mode Grueneisen parameter calculation from fc3."""
     if (
@@ -703,6 +816,8 @@ def _run_gruneisen_then_exit(
             print_error()
         sys.exit(1)
 
+    assert phono3py.fc2 is not None
+    assert phono3py.fc3 is not None
     if len(phono3py.fc2) != len(phono3py.fc3):
         print("Supercells used for fc2 and fc3 have to be same.")
         if log_level:
@@ -734,7 +849,6 @@ def _run_gruneisen_then_exit(
         ion_clamped=settings.ion_clamped,
         factor=get_physical_units().DefaultToTHz,
         symprec=phono3py.symmetry.tolerance,
-        output_filename=output_filename,
         log_level=log_level,
     )
 
@@ -747,7 +861,6 @@ def _run_jdos_then_exit(
     phono3py: Phono3py,
     settings: Phono3pySettings,
     updated_settings: dict,
-    output_filename: str | None,
     log_level: int,
 ):
     """Run joint-DOS calculation."""
@@ -769,15 +882,15 @@ def _run_jdos_then_exit(
         use_grg=settings.use_grg,
         is_mesh_symmetry=settings.is_mesh_symmetry,
         symprec=phono3py.symmetry.tolerance,
-        output_filename=output_filename,
         log_level=log_level,
     )
 
     if log_level > 0:
         dm = joint_dos.dynamical_matrix
-        if dm.is_nac() and dm.nac_method == "gonze":
-            dm.show_Gonze_nac_message()
+        if isinstance(dm, DynamicalMatrixGL):
+            dm.show_nac_message()
 
+    assert joint_dos.grid is not None
     grid_points = _settings_to_grid_points(settings, joint_dos.grid)
     joint_dos.run(grid_points, write_jdos=True)
 
@@ -819,8 +932,8 @@ def _run_isotope_then_exit(
     )
     if log_level > 0:
         dm = iso.dynamical_matrix
-        if dm.is_nac() and dm.nac_method == "gonze":
-            dm.show_Gonze_nac_message()
+        if isinstance(dm, DynamicalMatrixGL):
+            dm.show_nac_message()
 
     grid_points = _settings_to_grid_points(settings, iso.grid)
     iso.run(grid_points)
@@ -834,14 +947,13 @@ def _init_phph_interaction(
     phono3py: Phono3py,
     settings: Phono3pySettings,
     updated_settings: dict,
-    input_filename: str | None,
-    output_filename: str | None,
     log_level: int,
 ):
     """Initialize ph-ph interaction and phonons on grid."""
     if log_level:
         print("Generating grid system ... ", end="", flush=True)
-    phono3py.mesh_numbers = settings.mesh_numbers
+    assert phono3py.grid is not None
+    assert phono3py.mesh_numbers is not None
     bz_grid = phono3py.grid
     if log_level:
         if bz_grid.grid_matrix is None:
@@ -872,7 +984,7 @@ def _init_phph_interaction(
         if log_level:
             print("-" * 27 + " Phonon calculations " + "-" * 28)
             dm = phono3py.dynamical_matrix
-            if dm.is_nac() and dm.nac_method == "gonze":
+            if isinstance(dm, DynamicalMatrixGL):
                 dm.show_nac_message()
             print("Running harmonic phonon calculations...")
             sys.stdout.flush()
@@ -891,7 +1003,6 @@ def _init_phph_interaction(
             ir_grid_points=ir_grid_points,
             ir_grid_weights=ir_grid_weights,
             compression=settings.hdf5_compression,
-            filename=output_filename,
         )
         if filename:
             if log_level:
@@ -903,9 +1014,7 @@ def _init_phph_interaction(
             sys.exit(1)
 
     if settings.read_phonon:
-        phonons = read_phonon_from_hdf5(
-            phono3py.mesh_numbers, filename=input_filename, verbose=(log_level > 0)
-        )
+        phonons = read_phonon_from_hdf5(phono3py.mesh_numbers, verbose=(log_level > 0))
         if phonons is None:
             print("Reading phonons failed.")
             if log_level:
@@ -971,12 +1080,10 @@ def main(**argparse_control):
     else:
         args, log_level = _start_phono3py(**argparse_control)
 
+    output_yaml_filename: str | None
     if load_phono3py_yaml:
-        input_filename = None
-        output_filename = None
         output_yaml_filename = args.output_yaml_filename
     else:
-        (input_filename, output_filename) = _get_input_output_filenames_from_args(args)
         output_yaml_filename = None
 
     settings, confs_dict, cell_filename = _read_phono3py_settings(
@@ -990,7 +1097,7 @@ def main(**argparse_control):
         sys.exit(0)
     if args.force_sets_mode:
         create_FORCE_SETS_from_FORCES_FCx(
-            settings.phonon_supercell_matrix, input_filename, cell_filename, log_level
+            settings.phonon_supercell_matrix, cell_filename, log_level
         )
         if log_level:
             print_end_phono3py()
@@ -1045,6 +1152,7 @@ def main(**argparse_control):
 
     if run_mode is None:
         run_mode = _get_run_mode(settings)
+    assert run_mode is not None
 
     ######################################################
     # Create supercells with displacements and then exit #
@@ -1056,8 +1164,9 @@ def main(**argparse_control):
             confs_dict,
             unitcell_filename,
             interface_mode,
-            symprec,
-            log_level,
+            symprec=symprec,
+            output_yaml_filename=output_yaml_filename,
+            log_level=log_level,
         )
 
     #######################
@@ -1068,7 +1177,7 @@ def main(**argparse_control):
     #  'frequency_factor_to_THz', 'num_frequency_points',
     #  'frequency_step', 'frequency_scale_factor',
     #  'cutoff_frequency')
-    ph3py, updated_settings = _init_phono3py(
+    ph3py, updated_settings = _init_phono3py_with_cell_info(
         settings, cell_info, interface_mode, symprec, log_level
     )
 
@@ -1081,8 +1190,6 @@ def main(**argparse_control):
             run_mode,
             ph3py,
             unitcell_filename,
-            input_filename,
-            output_filename,
             interface_mode,
         )
 
@@ -1131,6 +1238,7 @@ def main(**argparse_control):
         "show_triplets_info",
     )
     run_modes_with_gp = ("imag_self_energy", "real_self_energy", "jdos", "isotope")
+
     if settings.mesh_numbers is None and run_mode in run_modes_with_mesh:
         print("")
         print("Mesh numbers have to be specified.")
@@ -1151,11 +1259,20 @@ def main(**argparse_control):
             print_error()
         sys.exit(1)
 
+    ####################
+    # Set mesh numbers #
+    ####################
+    if run_mode in run_modes_with_mesh:
+        assert settings.mesh_numbers is not None
+        # jdos and isotope modes need to set mesh numbers differently.
+        if run_mode not in ("jdos", "isotope"):
+            ph3py.mesh_numbers = settings.mesh_numbers
+
     #########################################################
     # Write ir-grid points and grid addresses and then exit #
     #########################################################
     if run_mode == "write_grid_info":
-        ph3py.mesh_numbers = settings.mesh_numbers
+        assert ph3py.grid is not None
         write_grid_points(
             ph3py.primitive,
             ph3py.grid,
@@ -1175,7 +1292,7 @@ def main(**argparse_control):
     # Show reduced number of triplets at grid points and then exit #
     ################################################################
     if run_mode == "show_triplets_info":
-        ph3py.mesh_numbers = settings.mesh_numbers
+        assert ph3py.grid is not None
         grid_points = _settings_to_grid_points(settings, ph3py.grid)
         show_num_triplets(
             ph3py.primitive,
@@ -1228,48 +1345,23 @@ def main(**argparse_control):
     # polynomial MLPs #
     ###################
     if settings.use_pypolymlp:
-        assert ph3py.mlp_dataset is None
-        if ph3py.dataset is not None:  # If None, load mlp from polymlp.yaml.
-            ph3py.mlp_dataset = ph3py.dataset
-            ph3py.dataset = None
-
-        prepare_dataset = (
-            settings.create_displacements or settings.random_displacements is not None
-        )
-        run_pypolymlp_to_compute_forces(
-            ph3py,
-            mlp_params=settings.mlp_params,
-            displacement_distance=settings.displacement_distance,
-            number_of_snapshots=settings.random_displacements,
-            number_estimation_factor=settings.rd_number_estimation_factor,
-            random_seed=settings.random_seed,
-            fc_calculator=settings.fc_calculator,
-            fc_calculator_options=settings.fc_calculator_options,
-            cutoff_pair_distance=settings.cutoff_pair_distance,
-            symfc_memory_size=settings.symfc_memory_size,
-            prepare_dataset=prepare_dataset,
-            log_level=log_level,
-        )
-
-        if ph3py.dataset is not None:
-            mlp_eval_filename = "phono3py_mlp_eval_dataset.yaml"
-            if log_level:
-                print(
-                    "Dataset generated using MLPs was written in "
-                    f'"{mlp_eval_filename}".'
-                )
-            ph3py.save(mlp_eval_filename)
-
-        # pypolymlp dataset is stored in "polymlp.yaml" and stop here.
-        if not prepare_dataset:
-            if log_level:
-                print(
-                    "Generate displacements (--rd or -d) for proceeding to phonon "
-                    "calculations."
-                )
-            _finalize_phono3py(
-                ph3py, confs_dict, log_level, filename=output_yaml_filename
+        if ph3py.fc3 is None or (
+            ph3py.fc2 is None and ph3py.phonon_supercell_matrix is None
+        ):
+            # Note that ph3py is replaced when relax_atomic_positions is True.
+            ph3py = _run_pypolymlp(
+                ph3py,
+                settings,
+                confs_dict,
+                output_yaml_filename=output_yaml_filename,
+                log_level=log_level,
             )
+        else:
+            if log_level:
+                print(
+                    "Pypolymlp was not developed or used because fc2 and fc3 "
+                    "are available."
+                )
 
     ###########################
     # Produce force constants #
@@ -1280,21 +1372,19 @@ def main(**argparse_control):
     # Phonon Gruneisen parameter and then exit #
     ############################################
     if settings.is_gruneisen:
-        _run_gruneisen_then_exit(ph3py, settings, output_filename, log_level)
+        _run_gruneisen_then_exit(ph3py, settings, log_level)
 
     #################
     # Show settings #
     #################
-    if log_level and run_mode is not None:
+    if log_level:
         show_phono3py_settings(ph3py, settings, updated_settings, log_level)
 
     ###########################
     # Joint DOS and then exit #
     ###########################
     if run_mode == "jdos":
-        _run_jdos_then_exit(
-            ph3py, settings, updated_settings, output_filename, log_level
-        )
+        _run_jdos_then_exit(ph3py, settings, updated_settings, log_level)
 
     ################################################
     # Mass variances for phonon-isotope scattering #
@@ -1324,13 +1414,11 @@ def main(**argparse_control):
     ########################################
     # Initialize phonon-phonon interaction #
     ########################################
-    if run_mode is not None:
+    if run_mode in run_modes_with_mesh:
         _init_phph_interaction(
             ph3py,
             settings,
             updated_settings,
-            input_filename,
-            output_filename,
             log_level,
         )
 
@@ -1338,6 +1426,7 @@ def main(**argparse_control):
     # Run imaginary part of self energy of bubble diagram #
     #######################################################
     if run_mode == "imag_self_energy":
+        assert ph3py.grid is not None
         ph3py.run_imag_self_energy(
             _settings_to_grid_points(settings, ph3py.grid),
             updated_settings["temperature_points"],
@@ -1347,13 +1436,13 @@ def main(**argparse_control):
             scattering_event_class=settings.scattering_event_class,
             write_txt=True,
             write_gamma_detail=settings.write_gamma_detail,
-            output_filename=output_filename,
         )
 
     #####################################################
     # Run frequency shift calculation of bubble diagram #
     #####################################################
     elif run_mode == "real_self_energy":
+        assert ph3py.grid is not None
         ph3py.run_real_self_energy(
             _settings_to_grid_points(settings, ph3py.grid),
             updated_settings["temperature_points"],
@@ -1361,13 +1450,13 @@ def main(**argparse_control):
             num_frequency_points=updated_settings["num_frequency_points"],
             write_txt=True,
             write_hdf5=True,
-            output_filename=output_filename,
         )
 
     #######################################################
     # Run spectral function calculation of bubble diagram #
     #######################################################
     elif run_mode == "spectral_function":
+        assert ph3py.grid is not None
         ph3py.run_spectral_function(
             _settings_to_grid_points(settings, ph3py.grid),
             updated_settings["temperature_points"],
@@ -1376,13 +1465,13 @@ def main(**argparse_control):
             num_points_in_batch=updated_settings["num_points_in_batch"],
             write_txt=True,
             write_hdf5=True,
-            output_filename=output_filename,
         )
 
     ####################################
     # Run lattice thermal conductivity #
     ####################################
     elif run_mode == "conductivity-RTA" or run_mode == "conductivity-LBTE":
+        assert ph3py.grid is not None
         grid_points = _settings_to_grid_points(settings, ph3py.grid)
         ph3py.run_thermal_conductivity(
             is_LBTE=settings.is_lbte,
@@ -1412,8 +1501,6 @@ def main(**argparse_control):
             read_pp=settings.read_pp,
             write_LBTE_solution=settings.write_LBTE_solution,
             compression=settings.hdf5_compression,
-            input_filename=input_filename,
-            output_filename=output_filename,
         )
     else:
         if log_level:

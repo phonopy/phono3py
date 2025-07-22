@@ -229,6 +229,7 @@ def _read_files(args: argparse.Namespace) -> tuple[h5py.File, PhonopyAtoms | Non
     cell_info = collect_cell_info(
         supercell_matrix=np.eye(3, dtype=int),
         phonopy_yaml_cls=Phono3pyYaml,
+        load_phonopy_yaml=True,
     )
     cell_filename = cell_info.optional_structure_info[0]
     print(f'# Crystal structure was read from "{cell_filename}".')

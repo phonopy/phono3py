@@ -34,9 +34,10 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import sys
 from collections.abc import Sequence
-from typing import Optional, Union
 
 import numpy as np
 from phonopy.structure.cells import print_cell
@@ -46,13 +47,11 @@ from phono3py.cui.settings import Phono3pySettings
 
 
 def show_general_settings(
-    settings,
-    run_mode,
-    phono3py,
-    cell_filename,
-    input_filename,
-    output_filename,
-    interface_mode,
+    settings: Phono3pySettings,
+    run_mode: str,
+    phono3py: Phono3py,
+    cell_filename: str,
+    interface_mode: str | None,
 ):
     """Show general setting information."""
     is_primitive_axes_auto = (
@@ -64,12 +63,13 @@ def show_general_settings(
     phonon_supercell_matrix = phono3py.phonon_supercell_matrix
 
     print("-" * 29 + " General settings " + "-" * 29)
-    if run_mode:
+    if settings.use_pypolymlp:
+        if settings.create_displacements or settings.random_displacements is not None:
+            print(f"Run mode: pypolymlp + {run_mode}")
+        else:
+            print("Run mode: pypolymlp")
+    else:
         print(f"Run mode: {run_mode}")
-    if output_filename:
-        print(f"Output filename is modified by {output_filename}.")
-    if input_filename:
-        print(f"Input filename is modified by {input_filename}.")
     if settings.hdf5_compression:
         print(f"HDF5 data compression filter: {settings.hdf5_compression}")
     if interface_mode:
@@ -82,19 +82,18 @@ def show_general_settings(
 
     print_supercell_matrix(supercell_matrix, phonon_supercell_matrix)
 
-    if is_primitive_axes_auto:
-        print("Primitive matrix (Auto):")
-        for v in primitive_matrix:
-            print(f"  {v}")
-    elif primitive_matrix is not None:
-        print("Primitive matrix:")
+    if primitive_matrix is not None:
+        if is_primitive_axes_auto:
+            print("Primitive matrix (Auto):")
+        else:
+            print("Primitive matrix:")
         for v in primitive_matrix:
             print(f"  {v}")
 
 
 def print_supercell_matrix(
-    supercell_matrix: Union[Sequence, np.ndarray],
-    phonon_supercell_matrix: Optional[Union[Sequence, np.ndarray]] = None,
+    supercell_matrix: Sequence | np.ndarray,
+    phonon_supercell_matrix: Sequence | np.ndarray | None = None,
 ):
     """Print supercell matrix."""
     if (np.diag(np.diag(supercell_matrix)) - supercell_matrix).any():

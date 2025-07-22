@@ -41,7 +41,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import ArrayLike, NDArray
 from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.phonon.thermal_properties import mode_cv
 from phonopy.physical_units import get_physical_units
@@ -419,12 +419,12 @@ class ConductivityBase(ABC):
     def __init__(
         self,
         interaction: Interaction,
-        grid_points: np.ndarray | None = None,
-        temperatures: list | np.ndarray | None = None,
-        sigmas: list | np.ndarray | None = None,
+        grid_points: ArrayLike | None = None,
+        temperatures: ArrayLike | None = None,
+        sigmas: ArrayLike | None = None,
         sigma_cutoff: float | None = None,
         is_isotope=False,
-        mass_variances: list | np.ndarray | None = None,
+        mass_variances: ArrayLike | None = None,
         boundary_mfp: float | None = None,
         is_kappa_star: bool = True,
         is_full_pp: bool = False,

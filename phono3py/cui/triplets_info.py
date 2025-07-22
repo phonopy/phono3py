@@ -34,10 +34,12 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from collections.abc import Sequence
-from typing import Optional, Union
+from __future__ import annotations
+
+import os
 
 import numpy as np
+from numpy.typing import ArrayLike
 from phonopy.structure.atoms import PhonopyAtoms
 
 from phono3py.file_IO import write_grid_address_to_hdf5, write_ir_grid_points
@@ -48,13 +50,13 @@ from phono3py.phonon3.triplets import get_triplets_at_q
 def write_grid_points(
     primitive: PhonopyAtoms,
     bz_grid: BZGrid,
-    band_indices: Optional[Union[Sequence, np.ndarray]] = None,
-    sigmas: Optional[Union[Sequence, np.ndarray]] = None,
-    temperatures: Optional[Union[Sequence, np.ndarray]] = None,
+    band_indices: ArrayLike | None = None,
+    sigmas: ArrayLike | None = None,
+    temperatures: ArrayLike | None = None,
     is_kappa_star: bool = True,
     is_lbte: bool = False,
-    compression: Union[str, int] = "gzip",
-    filename: bool = None,
+    compression: str | int = "gzip",
+    filename: str | os.PathLike | None = None,
 ):
     """Write grid points into files."""
     ir_grid_points, ir_grid_weights = _get_ir_grid_points(
@@ -109,8 +111,8 @@ def write_grid_points(
 def show_num_triplets(
     primitive: PhonopyAtoms,
     bz_grid: BZGrid,
-    band_indices: Optional[Union[Sequence, np.ndarray]] = None,
-    grid_points: Optional[Union[Sequence, np.ndarray]] = None,
+    band_indices: ArrayLike | None = None,
+    grid_points: ArrayLike | None = None,
     is_kappa_star: bool = True,
 ):
     """Show numbers of triplets at grid points."""

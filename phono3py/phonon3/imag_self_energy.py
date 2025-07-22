@@ -34,11 +34,14 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import sys
 import warnings
-from typing import List, Optional
+from collections.abc import Sequence
 
 import numpy as np
+from numpy.typing import ArrayLike, NDArray
 from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.physical_units import get_physical_units
 
@@ -576,20 +579,20 @@ class ImagSelfEnergy:
 
 def get_imag_self_energy(
     interaction: Interaction,
-    grid_points,
-    temperatures,
-    sigmas=None,
-    frequency_points=None,
-    frequency_step=None,
-    num_frequency_points=None,
-    frequency_points_at_bands=False,
-    num_points_in_batch=None,
-    scattering_event_class=None,  # class 1 or 2
-    write_gamma_detail=False,
-    return_gamma_detail=False,
-    output_filename=None,
-    log_level=0,
-):
+    grid_points: ArrayLike,
+    temperatures: ArrayLike,
+    sigmas: Sequence[float | None] | None = None,
+    frequency_points: ArrayLike | None = None,
+    frequency_step: float | None = None,
+    num_frequency_points: int | None = None,
+    frequency_points_at_bands: bool = False,
+    num_points_in_batch: int | None = None,
+    scattering_event_class: int | None = None,  # class 1 or 2
+    write_gamma_detail: bool = False,
+    return_gamma_detail: bool = False,
+    output_filename: str | None = None,
+    log_level: int = 0,
+) -> tuple[NDArray | None, NDArray, Sequence]:
     """Imaginary-part of self-energy at frequency points.
 
     Band indices to be calculated at are found in Interaction instance.
@@ -599,12 +602,12 @@ def get_imag_self_energy(
     interaction : Interaction
         Ph-ph interaction.
     grid_points : array_like
-        Grid-point indices where imag-self-energeis are caclculated.
+        Grid-point indices where imag-self-energies are calculated.
         dtype=int, shape=(grid_points,)
     temperatures : array_like
         Temperatures where imag-self-energies are calculated.
         dtype=float, shape=(temperatures,)
-    sigmas : array_like, optional
+    sigmas : Sequence, optional
         A set of sigmas. simgas=[None, ] means to use tetrahedron method,
         otherwise smearing method with real positive value of sigma.
         For example, sigmas=[None, 0.01, 0.03] is possible. Default is None,
@@ -671,9 +674,7 @@ def get_imag_self_energy(
 
     """
     if sigmas is None:
-        _sigmas = [
-            None,
-        ]
+        _sigmas = [None]
     else:
         _sigmas = sigmas
 
@@ -718,7 +719,7 @@ def get_imag_self_energy(
             order="C",
         )
 
-    detailed_gamma: List[Optional[np.ndarray]] = []
+    detailed_gamma = []
 
     ise = ImagSelfEnergy(
         interaction, with_detail=(write_gamma_detail or return_gamma_detail)
@@ -771,10 +772,7 @@ def get_imag_self_energy(
             log_level,
         )
 
-    if return_gamma_detail:
-        return _frequency_points, gamma, detailed_gamma
-    else:
-        return _frequency_points, gamma
+    return _frequency_points, gamma, detailed_gamma
 
 
 def _get_imag_self_energy_at_gp(
