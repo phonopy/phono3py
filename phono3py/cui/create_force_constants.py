@@ -212,7 +212,7 @@ def develop_pypolymlp(
                 ".xz",
                 ".gz",
                 ".bz2",
-                "lzma",
+                ".lzma",
             ]:
                 continue
             if log_level:
