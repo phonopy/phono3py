@@ -34,8 +34,14 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
+import os
 import sys
-from typing import Optional, Union
+from collections.abc import Sequence
+from typing import Union
+
+from numpy.typing import ArrayLike
 
 from phono3py.conductivity.base import get_unit_to_WmK
 from phono3py.conductivity.direct_solution import ConductivityLBTE
@@ -59,32 +65,32 @@ cond_LBTE_type = Union[ConductivityLBTE, ConductivityWignerLBTE]
 
 def get_thermal_conductivity_LBTE(
     interaction: Interaction,
-    temperatures=None,
-    sigmas=None,
-    sigma_cutoff=None,
-    is_isotope=False,
-    mass_variances=None,
-    grid_points=None,
-    boundary_mfp=None,  # in micrometer
-    solve_collective_phonon=False,
-    is_reducible_collision_matrix=False,
-    is_kappa_star=True,
-    gv_delta_q=None,
-    is_full_pp=False,
-    conductivity_type=None,
-    pinv_cutoff=1.0e-8,
-    pinv_solver=0,  # default: dsyev in lapacke
-    pinv_method=0,  # default: abs(eig) < cutoff
-    write_collision=False,
-    read_collision=False,
-    write_kappa=False,
-    write_pp=False,
-    read_pp=False,
-    write_LBTE_solution=False,
-    compression="gzip",
-    input_filename=None,
-    output_filename=None,
-    log_level=0,
+    temperatures: Sequence | None = None,
+    sigmas: Sequence | None = None,
+    sigma_cutoff: float | None = None,
+    is_isotope: bool = False,
+    mass_variances: Sequence | None = None,
+    grid_points: ArrayLike | None = None,
+    boundary_mfp: float | None = None,  # in micrometer
+    solve_collective_phonon: bool = False,
+    is_reducible_collision_matrix: bool = False,
+    is_kappa_star: bool = True,
+    gv_delta_q: float | None = None,
+    is_full_pp: bool = False,
+    conductivity_type: str | None = None,
+    pinv_cutoff: float = 1.0e-8,
+    pinv_solver: int = 0,  # default: dsyev in lapacke
+    pinv_method: int = 0,  # default: abs(eig) < cutoff
+    write_collision: bool = False,
+    read_collision: str | Sequence | None = None,
+    write_kappa: bool = False,
+    write_pp: bool = False,
+    read_pp: bool = False,
+    write_LBTE_solution: bool = False,
+    compression: str = "gzip",
+    input_filename: str | os.PathLike | None = None,
+    output_filename: str | os.PathLike | None = None,
+    log_level: int = 0,
 ):
     """Calculate lattice thermal conductivity by direct solution."""
     if temperatures is None:
@@ -292,9 +298,9 @@ class ConductivityLBTEWriter:
         volume: float,
         is_reducible_collision_matrix: bool = False,
         write_LBTE_solution: bool = False,
-        pinv_solver: Optional[int] = None,
+        pinv_solver: int | None = None,
         compression: str = "gzip",
-        filename: Optional[str] = None,
+        filename: str | os.PathLike | None = None,
         log_level: int = 0,
     ):
         """Write kappa related properties into a hdf5 file."""
@@ -473,7 +479,7 @@ class ConductivityLBTEWriter:
 
 def _set_collision_from_file(
     lbte: ConductivityLBTEBase,
-    indices="all",
+    indices: str | Sequence | None = "all",
     is_reducible_collision_matrix=False,
     filename=None,
     log_level=0,

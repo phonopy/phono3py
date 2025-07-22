@@ -34,6 +34,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import sys
 
 from phonopy.cui.phonopy_argparse import fix_deprecated_option_names
@@ -56,7 +58,7 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--alm",
         dest="use_alm",
         action="store_true",
-        default=False,
+        default=None,
         help=("Use ALM for generating 2nd and 3rd force constants in one fitting"),
     )
     parser.add_argument(
@@ -178,7 +180,7 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--create-force-sets",
         dest="force_sets_mode",
         action="store_true",
-        default=False,
+        default=None,
         help="Create phonopy FORCE_SETS from FORCES_FC2",
     )
     parser.add_argument(
@@ -186,7 +188,7 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--collective-phonon",
         dest="solve_collective_phonon",
         action="store_true",
-        default=False,
+        default=None,
         help="Solve collective phonons",
     )
     if load_phono3py_yaml:
@@ -278,14 +280,14 @@ def get_parser(load_phono3py_yaml: bool = False):
             "--fc2",
             dest="read_fc2",
             action="store_true",
-            default=False,
+            default=None,
             help="Read second order force constants",
         )
         parser.add_argument(
             "--fc3",
             dest="read_fc3",
             action="store_true",
-            default=False,
+            default=None,
             help="Read third order force constants",
         )
     parser.add_argument(
@@ -336,7 +338,7 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--fs2f2",
         "--force-sets-to-forces-fc2",
         dest="force_sets_to_forces_fc2_mode",
-        default=False,
+        default=None,
         action="store_true",
         help="Create FORCES_FC2 from FORCE_SETS",
     )
@@ -344,7 +346,7 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--full-pp",
         dest="is_full_pp",
         action="store_true",
-        default=False,
+        default=None,
         help=(
             "Calculate full ph-ph interaction for RTA conductivity."
             "This may be activated when full elements of ph-ph interaction "
@@ -381,14 +383,14 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--generalized-regular-grid",
         dest="use_grg",
         action="store_true",
-        default=False,
+        default=None,
         help="Use generalized regular grid.",
     )
     parser.add_argument(
         "--gruneisen",
         dest="is_gruneisen",
         action="store_true",
-        default=False,
+        default=None,
         help="Calculate phonon Gruneisen parameter",
     )
     parser.add_argument(
@@ -404,21 +406,11 @@ def get_parser(load_phono3py_yaml: bool = False):
         default=None,
         help="hdf5 compression filter (default: gzip)",
     )
-    if not load_phono3py_yaml:
-        parser.add_argument(
-            "-i", dest="input_filename", default=None, help="Input filename extension"
-        )
-        parser.add_argument(
-            "--io",
-            dest="input_output_filename",
-            default=None,
-            help="Input and output filename extension",
-        )
     parser.add_argument(
         "--ion-clamped",
         dest="ion_clamped",
         action="store_true",
-        default=False,
+        default=None,
         help=(
             "Atoms are clamped under applied strain in Gruneisen parameter calculation"
         ),
@@ -427,35 +419,35 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--ise",
         dest="is_imag_self_energy",
         action="store_true",
-        default=False,
+        default=None,
         help="Calculate imaginary part of self energy",
     )
     parser.add_argument(
         "--isotope",
         dest="is_isotope",
         action="store_true",
-        default=False,
+        default=None,
         help="Isotope scattering lifetime",
     )
     parser.add_argument(
         "--jdos",
         dest="is_joint_dos",
         action="store_true",
-        default=False,
+        default=None,
         help="Calculate joint density of states",
     )
     parser.add_argument(
         "--kubo",
         dest="is_kubo_kappa",
         action="store_true",
-        default=False,
+        default=None,
         help="Choose Kubo lattice thermal conductivity.",
     )
     parser.add_argument(
         "--lbte",
         dest="is_lbte",
         action="store_true",
-        default=False,
+        default=None,
         help="Calculate thermal conductivity LBTE with Chaput's method",
     )
     parser.add_argument(
@@ -544,7 +536,7 @@ def get_parser(load_phono3py_yaml: bool = False):
         "--nomeshsym",
         dest="is_nomeshsym",
         action="store_true",
-        default=False,
+        default=None,
         help="No symmetrization of triplets is made.",
     )
     if load_phono3py_yaml:
@@ -592,10 +584,6 @@ def get_parser(load_phono3py_yaml: bool = False):
             dest="output_yaml_filename",
             default=None,
             help="Output yaml filename instead of default filename of phono3py.yaml",
-        )
-    else:
-        parser.add_argument(
-            "-o", dest="output_filename", default=None, help="Output filename extension"
         )
     parser.add_argument(
         "--pa",
@@ -738,6 +726,13 @@ def get_parser(load_phono3py_yaml: bool = False):
         action="store_true",
         default=None,
         help="Solve reducible collision matrix",
+    )
+    parser.add_argument(
+        "--relax-atomic-positions",
+        dest="relax_atomic_positions",
+        action="store_true",
+        default=None,
+        help="Relax atomic positions using polynomial MLPs",
     )
     parser.add_argument(
         "--rse",

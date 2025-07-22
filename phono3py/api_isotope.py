@@ -37,6 +37,7 @@
 import numpy as np
 
 from phono3py.other.isotope import Isotope
+from phono3py.phonon.grid import BZGrid
 
 
 class Phono3pyIsotope:
@@ -81,7 +82,7 @@ class Phono3pyIsotope:
         return self._iso.dynamical_matrix
 
     @property
-    def grid(self):
+    def grid(self) -> BZGrid:
         """Return BZGrid class instance."""
         return self._iso.bz_grid
 

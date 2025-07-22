@@ -35,6 +35,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
+from phonopy.harmonic.dynamical_matrix import DynamicalMatrixGL
 from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.physical_units import get_physical_units
 
@@ -210,11 +211,7 @@ class VelocityOperator(GroupVelocity):
         if np.linalg.norm(q) < np.linalg.norm(delta_q):
             flag_gamma = True
 
-        if (
-            (self._dynmat.is_nac())
-            and (self._dynmat.nac_method == "gonze")
-            and flag_gamma
-        ):
+        if isinstance(dynmat, DynamicalMatrixGL) and flag_gamma:
             dynmat.run(
                 q - delta_q, q_direction=(q - delta_q) / np.linalg.norm(q - delta_q)
             )
