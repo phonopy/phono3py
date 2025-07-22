@@ -36,9 +36,10 @@
 
 from __future__ import annotations
 
-from typing import Optional, Union
+import os
 
 import numpy as np
+from numpy.typing import ArrayLike
 
 from phono3py.conductivity.base import ConductivityComponents
 from phono3py.conductivity.direct_solution_base import (
@@ -54,20 +55,20 @@ class ConductivityLBTE(ConductivityLBTEBase):
     def __init__(
         self,
         interaction: Interaction,
-        grid_points: Optional[np.ndarray] = None,
-        temperatures: Optional[Union[list, np.ndarray]] = None,
-        sigmas: Optional[Union[list, np.ndarray]] = None,
-        sigma_cutoff: Optional[float] = None,
+        grid_points: ArrayLike | None = None,
+        temperatures: ArrayLike | None = None,
+        sigmas: ArrayLike | None = None,
+        sigma_cutoff: float | None = None,
         is_isotope: bool = False,
-        mass_variances: Optional[Union[list, np.ndarray]] = None,
-        boundary_mfp: Optional[float] = None,  # in micrometer
+        mass_variances: ArrayLike | None = None,
+        boundary_mfp: float | None = None,  # in micrometer
         solve_collective_phonon: bool = False,
         is_reducible_collision_matrix: bool = False,
         is_kappa_star: bool = True,
-        gv_delta_q: Optional[float] = None,
+        gv_delta_q: float | None = None,
         is_full_pp: bool = False,
         read_pp: bool = False,
-        pp_filename: Optional[float] = None,
+        pp_filename: str | os.PathLike | None = None,
         pinv_cutoff: float = 1.0e-8,
         pinv_solver: int = 0,
         pinv_method: int = 0,

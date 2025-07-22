@@ -200,17 +200,15 @@ def create_FORCES_FC2_from_FORCE_SETS(log_level):
 
 
 def create_FORCE_SETS_from_FORCES_FCx(
-    phonon_smat, input_filename: Optional[str], cell_filename: Optional[str], log_level
+    phonon_smat, cell_filename: Optional[str], log_level
 ):
     """Convert FORCES_FC3 or FORCES_FC2 to FORCE_SETS."""
     if cell_filename is not None and is_file_phonopy_yaml(
         cell_filename, keyword="phono3py"
     ):
         disp_filename = cell_filename
-    elif input_filename is None:
-        disp_filename = "phono3py_disp.yaml"
     else:
-        disp_filename = f"phono3py_disp.{input_filename}.yaml"
+        disp_filename = "phono3py_disp.yaml"
     if phonon_smat is not None:
         forces_filename = "FORCES_FC2"
     else:

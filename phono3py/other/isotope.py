@@ -36,9 +36,8 @@
 
 from __future__ import annotations
 
-from typing import Optional, Union
-
 import numpy as np
+from numpy.typing import ArrayLike
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
 from phonopy.phonon.tetrahedron_mesh import get_tetrahedra_frequencies
 from phonopy.physical_units import get_physical_units
@@ -58,9 +57,9 @@ from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
 
 
 def get_mass_variances(
-    primitive: Optional[PhonopyAtoms] = None,
-    symbols: Optional[Union[list[str], tuple[str]]] = None,
-    isotope_data: Optional[dict] = None,
+    primitive: PhonopyAtoms | None = None,
+    symbols: list[str] | tuple[str] | None = None,
+    isotope_data: dict | None = None,
 ):
     """Calculate mass variances."""
     if primitive is not None:
@@ -93,14 +92,14 @@ class Isotope:
 
     def __init__(
         self,
-        mesh,
-        primitive,
+        mesh: float | ArrayLike,
+        primitive: Primitive,
         mass_variances=None,  # length of list is num_atom.
         isotope_data=None,
         band_indices=None,
         sigma=None,
-        bz_grid=None,
-        frequency_factor_to_THz=None,
+        bz_grid: BZGrid | None = None,
+        frequency_factor_to_THz: float | None = None,
         use_grg=False,
         symprec=1e-5,
         cutoff_frequency=None,
@@ -116,7 +115,6 @@ class Isotope:
             self._mass_variances = np.array(mass_variances, dtype="double")
         self._primitive = primitive
         self._sigma = sigma
-        self._bz_grid = bz_grid
         self._symprec = symprec
         if cutoff_frequency is None:
             self._cutoff_frequency = 0
@@ -143,7 +141,7 @@ class Isotope:
         else:
             self._band_indices = np.array(band_indices, dtype="int64")
 
-        if self._bz_grid is None:
+        if bz_grid is None:
             primitive_symmetry = Symmetry(self._primitive, self._symprec)
             self._bz_grid = BZGrid(
                 self._mesh,
@@ -152,6 +150,8 @@ class Isotope:
                 use_grg=use_grg,
                 store_dense_gp_map=True,
             )
+        else:
+            self._bz_grid = bz_grid
 
     def set_grid_point(self, grid_point):
         """Initialize grid points."""
@@ -196,8 +196,9 @@ class Isotope:
         return self._gamma
 
     @property
-    def bz_grid(self):
+    def bz_grid(self) -> BZGrid:
         """Return BZgrid class instance."""
+        assert self._bz_grid is not None
         return self._bz_grid
 
     @property

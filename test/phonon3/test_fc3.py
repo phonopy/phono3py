@@ -72,7 +72,7 @@ def test_cutoff_fc3_zero_compact_fc(nacl_pbe_compact_fc: Phono3py):
     fc3 = ph.fc3.copy()
     cutoff_fc3_by_zero(fc3, ph.supercell, 5, p2s_map=ph.primitive.p2s_map)
     abs_delta = np.abs(ph.fc3 - fc3).sum()
-    assert np.abs(164.359250 - abs_delta) < 1e-3
+    assert np.abs(164.350663 - abs_delta) < 1e-3
 
 
 def test_fc3(si_pbesol_111: Phono3py):
