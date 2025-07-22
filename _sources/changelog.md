@@ -2,6 +2,12 @@
 
 # Change Log
 
+## Jul-22-2025: Version 3.18.0
+
+- Changed `Phono3py.run_imag_self_energy()` to return `ImagSelfEnergyValues`.
+- Traditional force constants symmetrizer now applies translational and
+  permutation symmetries alternately 3 times in succession (previously once).
+
 ## Jul-5-2025: Version 3.17.1
 
 - Fix direct-solution crashing when executed via command line
