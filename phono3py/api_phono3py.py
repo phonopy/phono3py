@@ -81,7 +81,10 @@ from phonopy.structure.symmetry import Symmetry
 
 from phono3py.conductivity.init_direct_solution import get_thermal_conductivity_LBTE
 from phono3py.conductivity.init_rta import get_thermal_conductivity_RTA
-from phono3py.interface.fc_calculator import FC3Solver
+from phono3py.interface.fc_calculator import (
+    FC3Solver,
+    extract_fc2_fc3_calculators_options,
+)
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon.grid import BZGrid
 from phono3py.phonon3.dataset import forces_in_dataset
@@ -1556,12 +1559,13 @@ class Phono3py:
 
         if fc_calculator == "traditional" or fc_calculator is None:
             if symmetrize_fc3r:
+                fc3_calc_opts = extract_fc2_fc3_calculators_options(
+                    fc_calculator_options, 3
+                )
                 if use_symfc_projector and fc_calculator is None:
-                    self.symmetrize_fc3(
-                        use_symfc_projector=True, options=fc_calculator_options
-                    )
+                    self.symmetrize_fc3(use_symfc_projector=True, options=fc3_calc_opts)
                 else:
-                    self.symmetrize_fc3(options=fc_calculator_options)
+                    self.symmetrize_fc3(options=fc3_calc_opts)
         elif fc_calculator == "symfc":
             symfc_solver = cast(SymfcFCSolver, fc_solver.fc_solver)
             fc3_nonzero_elems = symfc_solver.get_nonzero_atomic_indices_fc3()
@@ -1584,13 +1588,15 @@ class Phono3py:
             self._fc2 = fc2
             if fc_calculator == "traditional" or fc_calculator is None:
                 if symmetrize_fc3r:
+                    fc2_calc_opts = extract_fc2_fc3_calculators_options(
+                        fc_calculator_options, 2
+                    )
                     if use_symfc_projector and fc_calculator is None:
                         self.symmetrize_fc2(
-                            use_symfc_projector=True,
-                            options=fc_calculator_options,
+                            use_symfc_projector=True, options=fc2_calc_opts
                         )
                     else:
-                        self.symmetrize_fc2(options=fc_calculator_options)
+                        self.symmetrize_fc2(options=fc2_calc_opts)
 
     def symmetrize_fc3(
         self,
@@ -2457,7 +2463,7 @@ class Phono3py:
 
         self._mlp.save(filename=filename)
 
-    def load_mlp(self, filename: str | None = None):
+    def load_mlp(self, filename: str | os.PathLike | None = None):
         """Load machine learning potential."""
         self._mlp = PhonopyMLP(log_level=self._log_level)
         self._mlp.load(filename=filename)
