@@ -20,8 +20,8 @@ For further details on combining phono3py calculations with pypolymlp, refer to
 [[doi](https://doi.org/10.1063/5.0211296)]
 [[arxiv](https://arxiv.org/abs/2401.17531)].
 
-An example of its usage can be found in the `example/NaCl-pypolymlp` directory
-in the distribution from GitHub or PyPI.
+Examples of its usage can be found in the `example/NaCl-pypolymlp` and
+`example/AlN-rd` directories in the distribution from GitHub or PyPI.
 
 ## Citation of pypolymlp
 
@@ -42,14 +42,11 @@ in the distribution from GitHub or PyPI.
 
 ## Requirements
 
-- [pypolymlp](https://github.com/sekocha/pypolymlp) < 0.9
+- [pypolymlp](https://github.com/sekocha/pypolymlp)
 
   For linux (x86-64), a compiled package of pypolymlp can be installed via
   conda-forge (recommended). Otherwise, pypolymlp can be installed from
   source-code.
-
-  From pypolymlp 0.9, its file format was changed. This will be taken care of
-  by the future version of phonopy and phono3py.
 
 ## How to calculate
 
@@ -156,28 +153,28 @@ obtained by
 ```
 ``````
 
-
 ### Step 4: Development of MLPs
 
 The `phono3py_params.yaml` file contains the training data required for
 developing polynomial MLPs when running with the `--pypolymlp` option.
 
 ```
-% phono3py-load --pypolymlp phono3py_params.yaml
+ phono3py-load --pypolymlp phono3py_params.yaml
         _                      _____
   _ __ | |__   ___  _ __   ___|___ / _ __  _   _
  | '_ \| '_ \ / _ \| '_ \ / _ \ |_ \| '_ \| | | |
  | |_) | | | | (_) | | | | (_) |__) | |_) | |_| |
  | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
  |_|                                |_|    |___/
-                                      3.11.3
+                                      3.18.0
 
--------------------------[time 2025-01-19 18:02:40]-------------------------
+-------------------------[time 2025-07-26 13:59:10]-------------------------
 Compiled with OpenMP support (max 10 threads).
 Running in phono3py.load mode.
-Python version 3.12.6
-Spglib version 2.5.0
+Python version 3.13.3
+Spglib version 2.6.1
 ----------------------------- General settings -----------------------------
+Run mode: pypolymlp
 HDF5 data compression filter: gzip
 Crystal structure was read from "phono3py_params.yaml".
 Supercell (dim): [2 2 2]
@@ -190,6 +187,7 @@ Use -v option to watch primitive cell, unit cell, and supercell structures.
 NAC parameters were read from "phono3py_params.yaml".
 Displacement dataset for fc3 was read from "phono3py_params.yaml".
 ----------------------------- pypolymlp start ------------------------------
+Pypolymlp version 0.12.9
 Pypolymlp is a generator of polynomial machine learning potentials.
 Please cite the paper: A. Seko, J. Appl. Phys. 133, 011101 (2023).
 Pypolymlp is developed at https://github.com/sekocha/pypolymlp.
@@ -202,26 +200,11 @@ Parameters:
   gaussian_params1: (1.0, 1.0, 1)
   gaussian_params2: (0.0, 7.0, 10)
 Developing MLPs by pypolymlp...
-Regression: cholesky decomposition ...
-- alpha: 0.001
-- alpha: 0.01
-- alpha: 0.1
-- alpha: 1.0
-- alpha: 10.0
-Clear training X.T @ X
-Calculate X.T @ X for test data
-Clear test X.T @ X
-Regression: model selection ...
-- alpha = 1.000e-03 : rmse (train, test) = 1.12211e+15 1.12211e+15
-- alpha = 1.000e-02 : rmse (train, test) = 1.12211e+15 1.12211e+15
-- alpha = 1.000e-01 : rmse (train, test) = 0.00002 0.00002
-- alpha = 1.000e+00 : rmse (train, test) = 0.00002 0.00002
-- alpha = 1.000e+01 : rmse (train, test) = 0.00002 0.00002
 MLPs were written into "polymlp.yaml"
 ------------------------------ pypolymlp end -------------------------------
 Generate displacements (--rd or -d) for proceeding to phonon calculations.
 Summary of calculation was written in "phono3py.yaml".
--------------------------[time 2025-01-19 18:03:44]-------------------------
+-------------------------[time 2025-07-26 14:00:12]-------------------------
                  _
    ___ _ __   __| |
   / _ \ '_ \ / _` |
@@ -252,14 +235,15 @@ structure file.
  | |_) | | | | (_) | | | | (_) |__) | |_) | |_| |
  | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
  |_|                                |_|    |___/
-                                      3.11.3
+                                      3.18.0
 
--------------------------[time 2025-01-19 18:06:46]-------------------------
+-------------------------[time 2025-07-26 14:00:49]-------------------------
 Compiled with OpenMP support (max 10 threads).
 Running in phono3py.load mode.
-Python version 3.12.6
-Spglib version 2.5.0
+Python version 3.13.3
+Spglib version 2.6.1
 ----------------------------- General settings -----------------------------
+Run mode: pypolymlp + force constants
 HDF5 data compression filter: gzip
 Crystal structure was read from "phono3py.yaml".
 Supercell (dim): [2 2 2]
@@ -271,6 +255,7 @@ Spacegroup: Fm-3m (225)
 Use -v option to watch primitive cell, unit cell, and supercell structures.
 NAC parameters were read from "phono3py.yaml".
 ----------------------------- pypolymlp start ------------------------------
+Pypolymlp version 0.12.9
 Pypolymlp is a generator of polynomial machine learning potentials.
 Please cite the paper: A. Seko, J. Appl. Phys. 133, 011101 (2023).
 Pypolymlp is developed at https://github.com/sekocha/pypolymlp.
@@ -279,6 +264,7 @@ Load MLPs from "polymlp.yaml".
 Generate displacements
   Displacement distance: 0.01
 Evaluate forces in 292 supercells by pypolymlp
+Dataset generated using MLPs was written in "phono3py_mlp_eval_dataset.yaml".
 ----------------------------- Force constants ------------------------------
 Computing fc3[ 1, x, x ] using numpy.linalg.pinv.
 Displacements (in Angstrom):
@@ -289,16 +275,26 @@ Displacements (in Angstrom):
     [ 0.0100  0.0000  0.0000]
     [-0.0100  0.0000  0.0000]
 Expanding fc3.
-fc3 was symmetrized.
-fc2 was symmetrized.
-Max drift of fc3: 0.000000 (zzz) 0.000000 (zzz) 0.000000 (zzz)
-Max drift of fc2: 0.000000 (zz) 0.000000 (zz)
+Symmetrizing fc3 by symfc projector.
+Symfc version 1.5.3 (https://github.com/symfc/symfc)
+Citation: A. Seko and A. Togo, Phys. Rev. B, 110, 214302 (2024)
+Symmetrizing fc2 by symfc projector.
+Symfc version 1.5.3 (https://github.com/symfc/symfc)
+Citation: A. Seko and A. Togo, Phys. Rev. B, 110, 214302 (2024)
+Max drift of fc3: 0.00000000 (zyz) 0.00000000 (yzz) 0.00000000 (yzz)
+Max drift of fc2: -0.00000000 (yy) -0.00000000 (yy)
 fc3 was written into "fc3.hdf5".
 fc2 was written into "fc2.hdf5".
+--------------------------- Calculation settings ---------------------------
+Non-analytical term correction (NAC): True
+NAC unit conversion factor:  14.39965
+BZ integration: Tetrahedron-method
+Temperatures: 0.0  300.0
+Cutoff frequency: 0.01
+Frequency conversion factor to THz:  15.63330
 ----------- None of ph-ph interaction calculation was performed. -----------
-Dataset generated using MLPs was written in "phono3py_mlp_eval_dataset.yaml".
 Summary of calculation was written in "phono3py.yaml".
--------------------------[time 2025-01-19 18:06:55]-------------------------
+-------------------------[time 2025-07-26 14:00:58]-------------------------
                  _
    ___ _ __   __| |
   / _ \ '_ \ / _` |
@@ -315,29 +311,28 @@ corresponding forces are stored in the `phono3py_mlp_eval_dataset.yaml` file.
 ### Steps 5-7: Force constants calculation (random displacements in step 5)
 
 Random displacements are generated by specifying {ref}`--rd
-<random_displacements_option>` option. To compute force constants with random
-displacements, an external force constants calculator is necessary. By default,
-symfc is used unless another force constants solver is explicitly specified.
-When running with the `--pypolymlp` option, MLPs are read from `polymlp.yaml`
-if the file exists. In this case, training data is no longer required, and files
-such as `phono3py.yaml` can be used as the input structure file.
+<random_displacements_option>` option. When running with the `--pypolymlp`
+option, MLPs are read from `polymlp.yaml` if the file exists. In this case,
+training data is no longer required, and files such as `phono3py.yaml` can be
+used as the input structure file.
 
 ```
-% phono3py-load --pypolymlp --rd 200 phono3py.yaml
+ % phono3py-load --pypolymlp --rd auto phono3py.yaml
         _                      _____
   _ __ | |__   ___  _ __   ___|___ / _ __  _   _
  | '_ \| '_ \ / _ \| '_ \ / _ \ |_ \| '_ \| | | |
  | |_) | | | | (_) | | | | (_) |__) | |_) | |_| |
  | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
  |_|                                |_|    |___/
-                                      3.11.3
+                                      3.18.0
 
--------------------------[time 2025-01-19 18:13:21]-------------------------
+-------------------------[time 2025-07-26 14:02:24]-------------------------
 Compiled with OpenMP support (max 10 threads).
 Running in phono3py.load mode.
-Python version 3.12.6
-Spglib version 2.5.0
+Python version 3.13.3
+Spglib version 2.6.1
 ----------------------------- General settings -----------------------------
+Run mode: pypolymlp + force constants
 HDF5 data compression filter: gzip
 Crystal structure was read from "phono3py.yaml".
 Supercell (dim): [2 2 2]
@@ -349,6 +344,7 @@ Spacegroup: Fm-3m (225)
 Use -v option to watch primitive cell, unit cell, and supercell structures.
 NAC parameters were read from "phono3py.yaml".
 ----------------------------- pypolymlp start ------------------------------
+Pypolymlp version 0.12.9
 Pypolymlp is a generator of polynomial machine learning potentials.
 Please cite the paper: A. Seko, J. Appl. Phys. 133, 011101 (2023).
 Pypolymlp is developed at https://github.com/sekocha/pypolymlp.
@@ -357,31 +353,34 @@ Load MLPs from "polymlp.yaml".
 Generate random displacements
   Twice of number of snapshots will be generated for plus-minus displacements.
   Displacement distance: 0.01
-Evaluate forces in 400 supercells by pypolymlp
+Evaluate forces in 32 supercells by pypolymlp
+Dataset generated using MLPs was written in "phono3py_mlp_eval_dataset.yaml".
 ----------------------------- Force constants ------------------------------
-Symfc will be used to handle general (or random) displacements.
+Type-II dataset for displacements and forces was provided,
+but the selected force constants calculator cannot process it.
+Use another force constants calculator, e.g., symfc,
+to generate force constants.
+Try symfc to handle general (or random) displacements.
 -------------------------------- Symfc start -------------------------------
-Symfc is a force constants calculator. See the following paper:
-A. Seko and A. Togo, Phys. Rev. B, 110, 214302 (2024).
-Symfc is developed at https://github.com/symfc/symfc.
+Symfc version 1.5.3 (https://github.com/symfc/symfc)
+Citation: A. Seko and A. Togo, Phys. Rev. B, 110, 214302 (2024)
 Computing [2, 3] order force constants.
 Increase log-level to watch detailed symfc log.
 --------------------------------- Symfc end --------------------------------
--------------------------------- Symfc start -------------------------------
-Symfc is a force constants calculator. See the following paper:
-A. Seko and A. Togo, Phys. Rev. B, 110, 214302 (2024).
-Symfc is developed at https://github.com/symfc/symfc.
-Computing [2] order force constants.
-Increase log-level to watch detailed symfc log.
---------------------------------- Symfc end --------------------------------
-Max drift of fc3: -0.000000 (zxz) -0.000000 (xzz) -0.000000 (xzz)
-Max drift of fc2: -0.000000 (yy) -0.000000 (yy)
+Max drift of fc3: -0.00000000 (xyx) -0.00000000 (yxx) -0.00000000 (yxx)
+Max drift of fc2: -0.00000000 (yy) -0.00000000 (yy)
 fc3 was written into "fc3.hdf5".
 fc2 was written into "fc2.hdf5".
+--------------------------- Calculation settings ---------------------------
+Non-analytical term correction (NAC): True
+NAC unit conversion factor:  14.39965
+BZ integration: Tetrahedron-method
+Temperatures: 0.0  300.0
+Cutoff frequency: 0.01
+Frequency conversion factor to THz:  15.63330
 ----------- None of ph-ph interaction calculation was performed. -----------
-Dataset generated using MLPs was written in "phono3py_mlp_eval_dataset.yaml".
 Summary of calculation was written in "phono3py.yaml".
--------------------------[time 2025-01-19 18:13:34]-------------------------
+-------------------------[time 2025-07-26 14:02:29]-------------------------
                  _
    ___ _ __   __| |
   / _ \ '_ \ / _` |
@@ -389,95 +388,127 @@ Summary of calculation was written in "phono3py.yaml".
   \___|_| |_|\__,_|
 ```
 
-After the MLPs are read, 200 supercells with random directional displacements
-are generated. These displacements are then inverted (such as $\Delta
-\mathbf{u}_i$ and $-\Delta \mathbf{u}_i$ of all atoms $i$ in each supercell),
-resulting in an additional 200 supercells. In total, 400 supercells are created.
-The forces for these supercells are then evaluated. Finally, the force constants
-are calculated using symfc.
+After the MLPs are read, 16 supercells with random directional displacements are
+generated by the option `--rd auto`. These displacements are then inverted (such
+as $\Delta \mathbf{u}_i$ and $-\Delta \mathbf{u}_i$ of all atoms $i$ in each
+supercell), resulting in an additional 16 supercells. In total, 32 supercells
+are created. The forces for these supercells are then evaluated. Finally, the
+force constants are calculated using symfc. The `--rd-auto-factor` option can
+change the number of supercells generated.
 
-### Command options for force constants calculation
+## Command options for force constants calculation
 
-After obtaining the MLPs, displacements are generated using those MLPs, and the
-resulting forces are computed accordingly. The displacement distance is set by
-the `--amplitude` option, whose default value is 0.01 Angstrom. When the `--rd`
-option is used, it specifies the number of supercells with random directional
-displacements. Note that to achieve accurate force constants, the actual number
-of generated supercells is twice the specified number. If `--rd` is omitted,
-systematic displacements are introduced.
+After obtaining the MLPs, displacements are generated using these MLPs, and the
+resulting forces are computed. The displacement distance is controlled by the
+`--amplitude` option, with a default value of 0.01 Angstrom. When `-d` is
+specified, systematic displacements are introduced. When the `--rd` option is
+used, it specifies the number of supercells with random directional
+displacements. To ensure accurate force constants, the actual number of
+generated supercells is twice the specified value.
 
-Once the file `polymlp.yaml` is obtained, force constants can be calculated
-using MLPs from `polymlp.yaml`. After removing the `fc3.hdf5` and `fc2.hdf5`
-files, `phono3py-load` will detect `polymlp.yaml` and then compute the force
-constants by loading the MLPs from `polymlp.yaml` as follows:
+When atoms in the unit cell have positional degrees of freedom within the
+crystal symmetry, the `--relax-atomic-positions` option can relax their
+positions using MLPs. In the `example/AlN-rd` case, the following command
+develops polynomial MLPs and then relaxes atomic positions using these MLPs. The
+force constants are calculated using supercells with 0.005 Angstrom systematic
+displacements.
 
 ```
-% phono3py-load --pypolymlp --rd 100 --amplitude 0.005 phono3py.yaml
+% phono3py-load phonopy_params_mp-661.yaml.xz --pypolymlp --relax-atomic-positions -d
+
         _                      _____
   _ __ | |__   ___  _ __   ___|___ / _ __  _   _
  | '_ \| '_ \ / _ \| '_ \ / _ \ |_ \| '_ \| | | |
  | |_) | | | | (_) | | | | (_) |__) | |_) | |_| |
  | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
  |_|                                |_|    |___/
-                                      3.11.3
+                      3.18.0-dev21+ge26f3ecb
 
--------------------------[time 2025-01-19 18:19:02]-------------------------
+-------------------------[time 2025-07-26 14:29:16]-------------------------
 Compiled with OpenMP support (max 10 threads).
 Running in phono3py.load mode.
-Python version 3.12.6
-Spglib version 2.5.0
+Python version 3.13.3
+Spglib version 2.6.1
 ----------------------------- General settings -----------------------------
+Run mode: pypolymlp + force constants
 HDF5 data compression filter: gzip
-Crystal structure was read from "phono3py.yaml".
-Supercell (dim): [2 2 2]
+Crystal structure was read from "phonopy_params_mp-661.yaml.xz".
+Supercell (dim): [4 4 2]
 Primitive matrix:
-  [0.  0.5 0.5]
-  [0.5 0.  0.5]
-  [0.5 0.5 0. ]
-Spacegroup: Fm-3m (225)
+  [1. 0. 0.]
+  [0. 1. 0.]
+  [0. 0. 1.]
+Spacegroup: P6_3mc (186)
 Use -v option to watch primitive cell, unit cell, and supercell structures.
-NAC parameters were read from "phono3py.yaml".
+NAC parameters were read from "phonopy_params_mp-661.yaml.xz".
+Displacement dataset for fc3 was read from "phonopy_params_mp-661.yaml.xz".
 ----------------------------- pypolymlp start ------------------------------
+Pypolymlp version 0.12.9.post0
 Pypolymlp is a generator of polynomial machine learning potentials.
 Please cite the paper: A. Seko, J. Appl. Phys. 133, 011101 (2023).
 Pypolymlp is developed at https://github.com/sekocha/pypolymlp.
-Load MLPs from "polymlp.yaml".
+Parameters:
+  cutoff: 8.0
+  model_type: 3
+  max_p: 2
+  gtinv_order: 3
+  gtinv_maxl: (8, 8)
+  gaussian_params1: (1.0, 1.0, 1)
+  gaussian_params2: (0.0, 7.0, 10)
+Developing MLPs by pypolymlp...
+MLPs were written into "polymlp.yaml"
 ------------------------------ pypolymlp end -------------------------------
-Generate random displacements
-  Twice of number of snapshots will be generated for plus-minus displacements.
+Relaxing atomic positions using polynomial MLPs...
+Change in fractional position and in distance:
+  1 N :  0.00000000  0.00000000 -0.00000021 (|d|=0.00000105)
+  2 N :  0.00000000  0.00000000 -0.00000021 (|d|=0.00000105)
+  3 Al:  0.00000000  0.00000000  0.00000021 (|d|=0.00000105)
+  4 Al:  0.00000000  0.00000000  0.00000021 (|d|=0.00000105)
+----------------------------------------------------------------------------
+Generate displacements
   Displacement distance: 0.005
-Evaluate forces in 200 supercells by pypolymlp
+Evaluate forces in 3720 supercells by pypolymlp
+Dataset generated using MLPs was written in "phono3py_mlp_eval_dataset.yaml".
 ----------------------------- Force constants ------------------------------
-Symfc will be used to handle general (or random) displacements.
--------------------------------- Symfc start -------------------------------
-Symfc is a force constants calculator. See the following paper:
-A. Seko and A. Togo, Phys. Rev. B, 110, 214302 (2024).
-Symfc is developed at https://github.com/symfc/symfc.
-Computing [2, 3] order force constants.
-Increase log-level to watch detailed symfc log.
---------------------------------- Symfc end --------------------------------
--------------------------------- Symfc start -------------------------------
-Symfc is a force constants calculator. See the following paper:
-A. Seko and A. Togo, Phys. Rev. B, 110, 214302 (2024).
-Symfc is developed at https://github.com/symfc/symfc.
-Computing [2] order force constants.
-Increase log-level to watch detailed symfc log.
---------------------------------- Symfc end --------------------------------
-Max drift of fc3: -0.000000 (zxz) -0.000000 (xzz) -0.000000 (xzz)
-Max drift of fc2: -0.000000 (yy) -0.000000 (yy)
+Computing fc3[ 1, x, x ] using numpy.linalg.pinv.
+Displacements (in Angstrom):
+    [ 0.0050  0.0000  0.0000]
+    [-0.0050  0.0000  0.0000]
+    [ 0.0000  0.0000  0.0050]
+    [ 0.0000  0.0000 -0.0050]
+Computing fc3[ 65, x, x ] using numpy.linalg.pinv.
+Displacements (in Angstrom):
+    [ 0.0050  0.0000  0.0000]
+    [-0.0050  0.0000  0.0000]
+    [ 0.0000  0.0000  0.0050]
+    [ 0.0000  0.0000 -0.0050]
+Expanding fc3.
+Symmetrizing fc3 by symfc projector.
+Symfc version 1.5.3 (https://github.com/symfc/symfc)
+Citation: A. Seko and A. Togo, Phys. Rev. B, 110, 214302 (2024)
+Symmetrizing fc2 by symfc projector.
+Symfc version 1.5.3 (https://github.com/symfc/symfc)
+Citation: A. Seko and A. Togo, Phys. Rev. B, 110, 214302 (2024)
+Max drift of fc3: -0.00000000 (xxz) -0.00000000 (xxz) -0.00000000 (xzx)
+Max drift of fc2: -0.00000000 (xx) -0.00000000 (xx)
 fc3 was written into "fc3.hdf5".
 fc2 was written into "fc2.hdf5".
+--------------------------- Calculation settings ---------------------------
+Non-analytical term correction (NAC): True
+NAC unit conversion factor:  14.39965
+BZ integration: Tetrahedron-method
+Temperatures: 0.0  300.0
+Cutoff frequency: 0.01
+Frequency conversion factor to THz:  15.63330
 ----------- None of ph-ph interaction calculation was performed. -----------
-Dataset generated using MLPs was written in "phono3py_mlp_eval_dataset.yaml".
 Summary of calculation was written in "phono3py.yaml".
--------------------------[time 2025-01-19 18:19:09]-------------------------
+-------------------------[time 2025-07-26 14:39:11]-------------------------
                  _
    ___ _ __   __| |
   / _ \ '_ \ / _` |
  |  __/ | | | (_| |
   \___|_| |_|\__,_|
 ```
-
 
 ## Parameters for developing MLPs
 

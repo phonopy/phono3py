@@ -634,11 +634,6 @@ def _run_pypolymlp(
             print("-" * 76)
 
         if relaxed_unitcell is not None:
-            if log_level:
-                print(
-                    "Relaxed crystal structures will be stored in "
-                    f'"{output_yaml_filename}".'
-                )
             _ph3py, _, _ = _init_phono3py(
                 settings,
                 relaxed_unitcell.copy(),
