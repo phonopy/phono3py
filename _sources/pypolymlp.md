@@ -2,8 +2,6 @@
 
 # Force constants calculation using pypolymlp (machine learning potential)
 
-**This is an experimental feature.**
-
 With the `--pypolymlp` option, phono3py can interface with the polynomial
 machine learning potential (MLP) code,
 [pypolymlp](https://github.com/sekocha/pypolymlp), to perform training and
