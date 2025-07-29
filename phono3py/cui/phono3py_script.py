@@ -60,6 +60,8 @@ from phonopy.cui.settings import PhonopySettings
 from phonopy.exception import (
     CellNotFoundError,
     ForceCalculatorRequiredError,
+    PypolymlpDevelopmentError,
+    PypolymlpFileNotFoundError,
     PypolymlpRelaxationError,
 )
 from phonopy.file_IO import is_file_phonopy_yaml
@@ -75,7 +77,7 @@ from phonopy.structure.cells import isclose as cells_isclose
 
 from phono3py import Phono3py, Phono3pyIsotope, Phono3pyJointDos
 from phono3py.cui.create_force_constants import (
-    develop_pypolymlp,
+    develop_or_load_pypolymlp,
     generate_displacements_and_evaluate_pypolymlp,
 )
 from phono3py.cui.create_force_sets import (
@@ -599,11 +601,17 @@ def _run_pypolymlp(
         ph3py.mlp_dataset = ph3py.dataset
         ph3py.dataset = None
 
-    develop_pypolymlp(
-        ph3py,
-        mlp_params=settings.mlp_params,
-        log_level=log_level,
-    )
+    try:
+        develop_or_load_pypolymlp(
+            ph3py,
+            mlp_params=settings.mlp_params,
+            log_level=log_level,
+        )
+    except (PypolymlpDevelopmentError, PypolymlpFileNotFoundError) as e:
+        print_error_message(str(e))
+        if log_level:
+            print_error()
+        sys.exit(1)
 
     _ph3py = ph3py
     if settings.relax_atomic_positions:
