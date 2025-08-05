@@ -40,7 +40,12 @@ import dataclasses
 import os
 import warnings
 from collections.abc import Sequence
-from typing import Literal, cast
+from typing import (  # List and Optional are for < python3.10
+    List,
+    Literal,
+    Optional,
+    cast,
+)
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -826,13 +831,15 @@ class Phono3py:
             Phono3py.generate_displacements.
 
         """
+        if self._dataset is None:
+            raise RuntimeError("Displacement dataset is not set.")
         if self._supercells_with_displacements is None:
             self._build_supercells_with_displacements()
         assert self._supercells_with_displacements is not None
         return self._supercells_with_displacements
 
     @property
-    def phonon_supercells_with_displacements(self) -> list[PhonopyAtoms] | None:
+    def phonon_supercells_with_displacements(self) -> list[PhonopyAtoms]:
         """Return supercells with displacements for fc2.
 
         list of PhonopyAtoms
@@ -840,13 +847,18 @@ class Phono3py:
             Phono3py.generate_displacements.
 
         """
+        if self._phonon_supercell_matrix is None:
+            raise RuntimeError(
+                "Phono3py instance is not created with phonon supercell matrix."
+            )
         if self._phonon_supercells_with_displacements is None:
-            if self._phonon_dataset is not None:
-                self._phonon_supercells_with_displacements = (
-                    self._build_phonon_supercells_with_displacements(
-                        self._phonon_supercell, self._phonon_dataset
-                    )
+            if self._phonon_dataset is None:
+                raise RuntimeError("Phonon displacement dataset is not set.")
+            self._phonon_supercells_with_displacements = (
+                self._build_phonon_supercells_with_displacements(
+                    self._phonon_supercell, self._phonon_dataset
                 )
+            )
         return self._phonon_supercells_with_displacements
 
     @property
@@ -2694,7 +2706,7 @@ class Phono3py:
 
         # One displacement supercells
         supercells = cast(
-            list[PhonopyAtoms | None],
+            List[Optional[PhonopyAtoms]],  # For < python3.10
             self._build_phonon_supercells_with_displacements(
                 self._supercell, self._dataset
             ),
