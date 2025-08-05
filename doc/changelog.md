@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Aug-5-2025: Version 3.19.1
+
+- Typehint fix for running on python 3.9 with phonon supercell matrix
+
 ## Aug-2-2025: Version 3.19.0
 
 - Release to follow the change of phonopy
