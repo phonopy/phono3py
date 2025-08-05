@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 from phonopy.harmonic.force_constants import get_drift_force_constants
 from phonopy.interface.pypolymlp import PypolymlpParams
+from phonopy.structure.atoms import PhonopyAtoms
 
 from phono3py import Phono3py
 from phono3py.phonon3.fc3 import get_drift_fc3
@@ -29,6 +30,20 @@ def test_displacements_setter_NaCl(nacl_pbe: Phono3py):
         primitive_matrix=ph3_in.primitive_matrix,
     )
     ph3.displacements = displacements
+
+
+def test_supercell_displacements_AlN(aln_cell: PhonopyAtoms):
+    """Test Phono3py.(phonon_)supercells_with_displacements.
+
+    Just check no error.
+
+    """
+    ph3 = Phono3py(
+        aln_cell, supercell_matrix=[2, 2, 2], phonon_supercell_matrix=[4, 4, 4]
+    )
+    ph3.generate_displacements()
+    assert len(ph3.supercells_with_displacements) == 582
+    assert len(ph3.phonon_supercells_with_displacements) == 6
 
 
 def test_displacements_setter_Si(si_pbesol_111_222_fd: Phono3py):
