@@ -1237,6 +1237,7 @@ def main(**argparse_control):
         "real_self_energy",
         "jdos",
         "isotope",
+        "phonon",
         "write_grid_info",
         "show_triplets_info",
     )
