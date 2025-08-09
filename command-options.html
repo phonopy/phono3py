@@ -902,7 +902,7 @@ are averaged, and those separated by comma are separately calculated. The output
 file name will be, e.g., <code class="docutils literal notranslate"><span class="pre">gammas-mxxx-gxx(-sx)-bx.dat</span></code> where <code class="docutils literal notranslate"><span class="pre">bxbx...</span></code> shows the
 band indices where the values are calculated and summed and averaged over those
 bands.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--nac<span class="w"> </span>--gp<span class="w"> </span><span class="m">34</span><span class="w"> </span>--bi<span class="w"> </span><span class="s2">&quot;4 5, 6&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--gp<span class="w"> </span><span class="m">34</span><span class="w"> </span>--bi<span class="w"> </span><span class="s2">&quot;4 5, 6&quot;</span>
 </pre></div>
 </div>
 <p>This option may be also useful to distribute the computational demand such like
@@ -1256,7 +1256,7 @@ respect to frequency <span class="math notranslate nohighlight">\(\omega\)</span
 <a class="reference internal" href="#freq-sampling-option"><span class="std std-ref">--num-freq-points, --freq-pitch (NUM_FREQUENCY_POINTS)</span></a>. The output of <span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega)\)</span> is written
 to <code class="docutils literal notranslate"><span class="pre">gammas-mxxx-gx(-sx)-tx-bx.dat</span></code> in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>) with respect to
 samplied frequency points of <span class="math notranslate nohighlight">\(\omega\)</span> in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>).</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--nac<span class="w"> </span>--q-direction<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>--gp<span class="w"> </span><span class="m">0</span><span class="w"> </span>--ise<span class="w"> </span>--bi<span class="w"> </span><span class="s2">&quot;4 5, 6&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--q-direction<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>--gp<span class="w"> </span><span class="m">0</span><span class="w"> </span>--ise<span class="w"> </span>--bi<span class="w"> </span><span class="s2">&quot;4 5, 6&quot;</span>
 </pre></div>
 </div>
 </section>
@@ -1279,7 +1279,7 @@ principal value as <span class="math notranslate nohighlight">\(\varepsilon\)</s
 <span class="math notranslate nohighlight">\(\Delta_\lambda(\omega)\)</span> is written to <code class="docutils literal notranslate"><span class="pre">deltas-mxxx-gx-sx-tx-bx.dat</span></code> in THz
 (without <span class="math notranslate nohighlight">\(2\pi\)</span>) with respect to samplied frequency points of <span class="math notranslate nohighlight">\(\omega\)</span> in THz
 (without <span class="math notranslate nohighlight">\(2\pi\)</span>).</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--nac<span class="w"> </span>--q-direction<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>--gp<span class="w"> </span><span class="m">0</span><span class="w"> </span>--rse<span class="w"> </span>--sigma<span class="w"> </span><span class="m">0</span>.1<span class="w"> </span>--bi<span class="w"> </span><span class="s2">&quot;4 5, 6&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--q-direction<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>--gp<span class="w"> </span><span class="m">0</span><span class="w"> </span>--rse<span class="w"> </span>--sigma<span class="w"> </span><span class="m">0</span>.1<span class="w"> </span>--bi<span class="w"> </span><span class="s2">&quot;4 5, 6&quot;</span>
 </pre></div>
 </div>
 </section>
@@ -1311,7 +1311,7 @@ and then the real part is calculated using the Kramers–Kronig relation. The
 output of <span class="math notranslate nohighlight">\(A_\lambda(\omega)\)</span> is written to <code class="docutils literal notranslate"><span class="pre">spectral-mxxx-gx(-sx)-tx-bx.dat</span></code> in
 THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>) with respect to samplied frequency points of <span class="math notranslate nohighlight">\(\omega\)</span> in
 THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>), and <code class="docutils literal notranslate"><span class="pre">spectral-mxxx-gx.hdf5</span></code>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--nac<span class="w"> </span>--q-direction<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>--gp<span class="w"> </span><span class="m">0</span><span class="w"> </span>--spf
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--q-direction<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>--gp<span class="w"> </span><span class="m">0</span><span class="w"> </span>--spf
 </pre></div>
 </div>
 <div class="admonition note">
@@ -1398,11 +1398,11 @@ default value of <code class="docutils literal notranslate"><span class="pre">--
 <h3><code class="docutils literal notranslate"><span class="pre">--gruneisen</span></code> (<code class="docutils literal notranslate"><span class="pre">GRUNEISEN</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)<a class="headerlink" href="#gruneisen-gruneisen-true" title="Link to this heading">#</a></h3>
 <p>Mode-Gruneisen-parameters are calculated from fc3.</p>
 <p>Mesh sampling mode:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>-v<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--nac<span class="w"> </span>--gruneisen
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>-v<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--gruneisen
 </pre></div>
 </div>
 <p>Band path mode:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>-v<span class="w"> </span>--nac<span class="w"> </span>--gruneisen<span class="w"> </span>--band<span class="w"> </span><span class="s2">&quot;0 0 0  0 0 1/2&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>-v<span class="w"> </span>--gruneisen<span class="w"> </span>--band<span class="w"> </span><span class="s2">&quot;0 0 0  0 0 1/2&quot;</span>
 </pre></div>
 </div>
 </section>
@@ -1446,7 +1446,7 @@ large file. See <a class="reference internal" href="input-output-files.html#iofi
 <p>Phonon frequencies, eigenvectors, and grid point addresses are stored in
 <code class="docutils literal notranslate"><span class="pre">phonon-mxxx.hdf5</span></code> file. <a class="reference internal" href="#pa-option"><span class="std std-ref">–pa</span></a> and <a class="reference internal" href="#nac-option"><span class="std std-ref">–nac</span></a>
 may be required depending on calculation setting. See <a class="reference internal" href="input-output-files.html#iofile-phonon-hdf5"><span class="std std-ref">phonon-*.hdf5</span></a>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--nac<span class="w"> </span>--write-phoonon
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--write-phoonon
 </pre></div>
 </div>
 </section>
@@ -1458,7 +1458,7 @@ values. This is useful when we want to use fixed phonon eigenvectors that can be
 different for degenerate bands when using different eigenvalue solvers or
 different CPU architectures. <a class="reference internal" href="#pa-option"><span class="std std-ref">–pa</span></a> and
 <a class="reference internal" href="#nac-option"><span class="std std-ref">–nac</span></a> may be required depending on calculation setting.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--nac<span class="w"> </span>--read-phoonon<span class="w"> </span>--br
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--read-phoonon<span class="w"> </span>--br
 </pre></div>
 </div>
 </section>
@@ -1473,10 +1473,10 @@ in a simple manner, but in the later case, only necessary elements to calculate
 collisions are stored in a complicated way. In the case of RTA conductivity
 calculation, in writing and reading, ph-ph interaction strength has to be stored
 in memory, so there is overhead in memory than usual RTA calculation.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--nac<span class="w"> </span>--write-pp<span class="w"> </span>--br<span class="w"> </span>--gp<span class="w"> </span><span class="m">1</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--write-pp<span class="w"> </span>--br<span class="w"> </span>--gp<span class="w"> </span><span class="m">1</span>
 </pre></div>
 </div>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--nac<span class="w"> </span>--read-pp<span class="w"> </span>--br<span class="w"> </span>--gp<span class="w"> </span><span class="m">1</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--read-pp<span class="w"> </span>--br<span class="w"> </span>--gp<span class="w"> </span><span class="m">1</span>
 </pre></div>
 </div>
 </section>
