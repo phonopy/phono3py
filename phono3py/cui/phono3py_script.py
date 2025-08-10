@@ -752,12 +752,43 @@ def _produce_force_constants(
             is_compact_fc=settings.is_compact_fc,
         )
 
-    if log_level:
-        if ph3py.fc3 is None:
+    if ph3py.fc3 is None and not settings.write_phonon:
+        if log_level:
             print("fc3 could not be obtained.")
             if not forces_in_dataset(ph3py.dataset):
                 print("Forces were not found.")
-        if ph3py.fc2 is None:
+
+        print_error()
+        sys.exit(1)
+
+    # When settings.write_phonon=True, fc3 can be None.
+    if ph3py.fc3 is None:
+        assert settings.write_phonon
+    else:
+        if log_level:
+            show_drift_fc3(ph3py.fc3, primitive=ph3py.primitive)
+
+        cutoff_distance = settings.cutoff_fc3_distance
+        if cutoff_distance is not None and cutoff_distance > 0:
+            if log_level:
+                print(
+                    "Cutting-off fc3 by zero (cut-off distance: %f)" % cutoff_distance
+                )
+            ph3py.cutoff_fc3_by_zero(cutoff_distance)
+
+        if not read_fc3:
+            write_fc3_to_hdf5(
+                ph3py.fc3,
+                fc3_nonzero_indices=ph3py.fc3_nonzero_indices,
+                p2s_map=ph3py.primitive.p2s_map,
+                fc3_cutoff=ph3py.fc3_cutoff,
+                compression=settings.hdf5_compression,
+            )
+            if log_level:
+                print('fc3 was written into "fc3.hdf5".')
+
+    if ph3py.fc2 is None:
+        if log_level:
             print("fc2 could not be obtained.")
             if ph3py.phonon_supercell_matrix is None:
                 if not forces_in_dataset(ph3py.dataset):
@@ -766,32 +797,14 @@ def _produce_force_constants(
                 if not forces_in_dataset(ph3py.phonon_dataset):
                     print("Forces for dim-fc2 were not found.")
 
-    if ph3py.fc3 is None or ph3py.fc2 is None:
         print_error()
         sys.exit(1)
 
     if log_level:
-        show_drift_fc3(ph3py.fc3, primitive=ph3py.primitive)
         show_drift_force_constants(
             ph3py.fc2, primitive=ph3py.phonon_primitive, name="fc2"
         )
 
-    cutoff_distance = settings.cutoff_fc3_distance
-    if cutoff_distance is not None and cutoff_distance > 0:
-        if log_level:
-            print("Cutting-off fc3 by zero (cut-off distance: %f)" % cutoff_distance)
-        ph3py.cutoff_fc3_by_zero(cutoff_distance)
-
-    if not read_fc3:
-        write_fc3_to_hdf5(
-            ph3py.fc3,
-            fc3_nonzero_indices=ph3py.fc3_nonzero_indices,
-            p2s_map=ph3py.primitive.p2s_map,
-            fc3_cutoff=ph3py.fc3_cutoff,
-            compression=settings.hdf5_compression,
-        )
-        if log_level:
-            print('fc3 was written into "fc3.hdf5".')
     if not read_fc2:
         write_fc2_to_hdf5(
             ph3py.fc2,
@@ -1237,6 +1250,7 @@ def main(**argparse_control):
         "real_self_energy",
         "jdos",
         "isotope",
+        "phonon",
         "write_grid_info",
         "show_triplets_info",
     )

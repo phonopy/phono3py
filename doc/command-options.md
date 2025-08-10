@@ -548,7 +548,7 @@ band indices where the values are calculated and summed and averaged over those
 bands.
 
 ```bash
-% phono3py-load --mesh 16 16 16 --nac --gp 34 --bi "4 5, 6"
+% phono3py-load --mesh 16 16 16 --gp 34 --bi "4 5, 6"
 ```
 
 This option may be also useful to distribute the computational demand such like
@@ -960,7 +960,7 @@ to `gammas-mxxx-gx(-sx)-tx-bx.dat` in THz (without $2\pi$) with respect to
 samplied frequency points of $\omega$ in THz (without $2\pi$).
 
 ```bash
-% phono3py-load --mesh 16 16 16 --nac --q-direction 1 0 0 --gp 0 --ise --bi "4 5, 6"
+% phono3py-load --mesh 16 16 16 --q-direction 1 0 0 --gp 0 --ise --bi "4 5, 6"
 ```
 
 (rse_option)=
@@ -987,7 +987,7 @@ $\Delta_\lambda(\omega)$ is written to `deltas-mxxx-gx-sx-tx-bx.dat` in THz
 (without $2\pi$).
 
 ```bash
-% phono3py-load --mesh 16 16 16 --nac --q-direction 1 0 0 --gp 0 --rse --sigma 0.1 --bi "4 5, 6"
+% phono3py-load --mesh 16 16 16 --q-direction 1 0 0 --gp 0 --rse --sigma 0.1 --bi "4 5, 6"
 ```
 
 (spectral_function_option)=
@@ -1024,7 +1024,7 @@ THz (without $2\pi$) with respect to samplied frequency points of $\omega$ in
 THz (without $2\pi$), and `spectral-mxxx-gx.hdf5`.
 
 ```bash
-% phono3py-load --mesh 16 16 16 --nac --q-direction 1 0 0 --gp 0 --spf
+% phono3py-load --mesh 16 16 16 --q-direction 1 0 0 --gp 0 --spf
 ```
 
 ```{note}
@@ -1123,13 +1123,13 @@ Mode-Gruneisen-parameters are calculated from fc3.
 Mesh sampling mode:
 
 ```bash
-% phono3py-load -v --mesh 16 16 16 --nac --gruneisen
+% phono3py-load -v --mesh 16 16 16 --gruneisen
 ```
 
 Band path mode:
 
 ```bash
-% phono3py-load -v --nac --gruneisen --band "0 0 0  0 0 1/2"
+% phono3py-load -v --gruneisen --band "0 0 0  0 0 1/2"
 ```
 
 ## File I/O
@@ -1182,7 +1182,7 @@ Phonon frequencies, eigenvectors, and grid point addresses are stored in
 may be required depending on calculation setting. See {ref}`iofile_phonon_hdf5`.
 
 ```bash
-% phono3py-load --mesh 11 11 11 --nac --write-phoonon
+% phono3py-load --mesh 11 11 11 --write-phoonon
 ```
 
 
@@ -1198,7 +1198,7 @@ different CPU architectures. {ref}`--pa <pa_option>` and
 {ref}`--nac <nac_option>` may be required depending on calculation setting.
 
 ```bash
-% phono3py-load --mesh 11 11 11 --nac --read-phoonon --br
+% phono3py-load --mesh 11 11 11 --read-phoonon --br
 ```
 
 (write_read_pp_option)=
@@ -1216,11 +1216,11 @@ calculation, in writing and reading, ph-ph interaction strength has to be stored
 in memory, so there is overhead in memory than usual RTA calculation.
 
 ```bash
-% phono3py-load --mesh 11 11 11 --nac --write-pp --br --gp 1
+% phono3py-load --mesh 11 11 11 --write-pp --br --gp 1
 ```
 
 ```bash
-% phono3py-load --mesh 11 11 11 --nac --read-pp --br --gp 1
+% phono3py-load --mesh 11 11 11 --read-pp --br --gp 1
 ```
 
 (hdf5_compression_option)=
