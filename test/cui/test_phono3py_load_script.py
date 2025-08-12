@@ -46,6 +46,7 @@ class MockArgs:
     temperatures: Sequence | None = None
     use_pypolymlp: bool = False
     write_grid_points: bool = False
+    write_phonon: bool = False
 
     def __iter__(self):
         """Make self iterable to support in."""
@@ -94,6 +95,8 @@ def test_phono3py_load():
                 assert file_path.exists()
                 file_path.unlink()
 
+            _check_no_files()
+
         finally:
             os.chdir(original_cwd)
 
@@ -136,6 +139,8 @@ def test_phono3py_load_lbte():
                 file_path = pathlib.Path(created_filename)
                 assert file_path.exists()
                 file_path.unlink()
+
+            _check_no_files()
 
         finally:
             os.chdir(original_cwd)
@@ -183,6 +188,8 @@ def test_phono3py_load_wigner_rta():
                 assert file_path.exists()
                 file_path.unlink()
 
+            _check_no_files()
+
         finally:
             os.chdir(original_cwd)
 
@@ -229,6 +236,8 @@ def test_phono3py_load_wigner_lbte():
                 file_path = pathlib.Path(created_filename)
                 assert file_path.exists()
                 file_path.unlink()
+
+            _check_no_files()
 
         finally:
             os.chdir(original_cwd)
@@ -284,12 +293,14 @@ def test_phono3py_load_with_typeII_dataset(
                                 assert f["fc3_cutoff"][()] == pytest.approx(4.0)
                     file_path.unlink()
 
+            _check_no_files()
+
         finally:
             os.chdir(original_cwd)
 
 
 @pytest.mark.parametrize("load_phono3py_yaml", [True, False])
-def test_phono3py_with_QE_calculator(load_phono3py_yaml):
+def test_phono3py_with_QE_calculator(load_phono3py_yaml: bool):
     """Test phono3py-load script with QE calculator."""
     with tempfile.TemporaryDirectory() as temp_dir:
         original_cwd = pathlib.Path.cwd()
@@ -321,6 +332,8 @@ def test_phono3py_with_QE_calculator(load_phono3py_yaml):
                 file_path = pathlib.Path(created_filename)
                 assert file_path.exists()
                 file_path.unlink()
+
+            _check_no_files()
 
         finally:
             os.chdir(original_cwd)
@@ -391,6 +404,8 @@ def test_phono3py_load_with_pypolymlp_si():
                 file_path = pathlib.Path(created_filename)
                 assert file_path.exists()
                 file_path.unlink()
+
+            _check_no_files()
 
         finally:
             os.chdir(original_cwd)
@@ -537,8 +552,70 @@ def test_phono3py_load_with_pypolymlp_nacl():
                 assert file_path.exists()
                 file_path.unlink()
 
+            _check_no_files()
+
         finally:
             os.chdir(original_cwd)
+
+
+def test_phono3py_load_write_phonon():
+    """Test phono3py-load script."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            # Check sys.exit(0)
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_Si-111-222.yaml",
+                write_phonon=True,
+                mesh_numbers=["5", "5", "5"],
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            # Clean files created by phono3py-load script.
+            for created_filename in (
+                "phonon-m555.hdf5",
+                "fc3.hdf5",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            argparse_control = _get_phono3py_load_args(
+                "phono3py.yaml",
+                write_phonon=True,
+                mesh_numbers=["5", "5", "5"],
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            for created_filename in (
+                "phono3py.yaml",
+                "fc2.hdf5",
+                "phonon-m555.hdf5",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            _check_no_files()
+
+        finally:
+            os.chdir(original_cwd)
+
+
+def _ls():
+    current_dir = pathlib.Path(".")
+    for file in current_dir.iterdir():
+        print(file.name)
+
+
+def _check_no_files():
+    assert not list(pathlib.Path(".").iterdir())
 
 
 def _get_phono3py_load_args(
@@ -555,6 +632,7 @@ def _get_phono3py_load_args(
     random_displacements: int | str | None = None,
     temperatures: Sequence | None = None,
     use_pypolymlp: bool = False,
+    write_phonon: bool = False,
 ):
     # Mock of ArgumentParser.args.
     if load_phono3py_yaml:
@@ -573,6 +651,7 @@ def _get_phono3py_load_args(
             random_displacements=random_displacements,
             temperatures=temperatures,
             use_pypolymlp=use_pypolymlp,
+            write_phonon=write_phonon,
         )
     else:
         mockargs = MockArgs(
@@ -590,6 +669,7 @@ def _get_phono3py_load_args(
             random_displacements=random_displacements,
             temperatures=temperatures,
             use_pypolymlp=use_pypolymlp,
+            write_phonon=write_phonon,
         )
 
     # See phono3py-load script.
