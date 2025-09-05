@@ -501,11 +501,7 @@ def select_and_load_dataset(
 ) -> dict | None:
     """Select and load dataset for fc3."""
     # displacements and forces are in phono3py-yaml-like file
-    if (
-        ph3py_yaml is not None
-        and ph3py_yaml.dataset is not None
-        and forces_in_dataset(ph3py_yaml.dataset)
-    ):
+    if ph3py_yaml is not None and forces_in_dataset(ph3py_yaml.dataset):
         dataset = _get_dataset_for_fc3(
             ph3py,
             ph3py_yaml,
@@ -604,7 +600,7 @@ def select_and_load_phonon_dataset(
         )
         return phonon_dataset
 
-    if ph3py_yaml is not None:
+    if ph3py_yaml is not None and ph3py_yaml.phonon_dataset is not None:
         # not forces_in_dataset(ph3py_yaml.dataset)
         # but want to read displacement dataset.
         phonon_dataset = _get_dataset_for_fc2(
