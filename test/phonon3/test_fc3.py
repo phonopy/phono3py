@@ -1,9 +1,9 @@
 """Tests for fc3."""
 
 import numpy as np
+import phono3py._phono3py as phono3c
 import pytest
 
-import phono3py._phono3py as phono3c
 from phono3py import Phono3py
 from phono3py.phonon3.fc3 import (
     cutoff_fc3_by_zero,

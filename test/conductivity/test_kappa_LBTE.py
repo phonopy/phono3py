@@ -1,9 +1,9 @@
 """Tests for direct solution of LBTE."""
 
 import numpy as np
+import phono3py._phono3py as phono3c
 import pytest
 
-import phono3py._phono3py as phono3c
 from phono3py.api_phono3py import Phono3py
 
 
