@@ -442,27 +442,35 @@ of <code class="docutils literal notranslate"><span class="pre">FORCE_SETS</span
 </section>
 <section id="fc3-hdf5">
 <span id="iofile-fc3-hdf5"></span><h2><code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code><a class="headerlink" href="#fc3-hdf5" title="Link to this heading">#</a></h2>
-<p>Third order force constants (in real space) are stored in
+<p>Third-order supercell force constants (in real space) are stored in
 <span class="math notranslate nohighlight">\(\mathrm{eV}/\text{Angstrom}^3\)</span>.</p>
-<p>In phono3py, this is stored in the numpy array <code class="docutils literal notranslate"><span class="pre">dtype='double'</span></code> and <code class="docutils literal notranslate"><span class="pre">order='C'</span></code>
-in the shape of:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">num_atom</span><span class="p">,</span> <span class="n">num_atom</span><span class="p">,</span> <span class="n">num_atom</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<p>The force cosntas are stored in a numpy array with <code class="docutils literal notranslate"><span class="pre">dtype='double'</span></code> and
+<code class="docutils literal notranslate"><span class="pre">order='C'</span></code>. Two array shapes are supported,</p>
+<ul class="simple">
+<li><p>Full format: <code class="docutils literal notranslate"><span class="pre">(n_satom,</span> <span class="pre">n_satom,</span> <span class="pre">n_satom,</span> <span class="pre">3,</span> <span class="pre">3,</span> <span class="pre">3)</span></code></p></li>
+<li><p>Compact format: <code class="docutils literal notranslate"><span class="pre">(n_patom,</span> <span class="pre">n_satom,</span> <span class="pre">n_satom,</span> <span class="pre">3,</span> <span class="pre">3,</span> <span class="pre">3)</span></code></p></li>
+</ul>
+<p>where <code class="docutils literal notranslate"><span class="pre">n_satom</span></code> and <code class="docutils literal notranslate"><span class="pre">n_patom</span></code> are the numbers of atoms in the supercell and
+primitive cell, respectively. The full format:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">num_satom</span><span class="p">,</span> <span class="n">num_satom</span><span class="p">,</span> <span class="n">num_satom</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>against <span class="math notranslate nohighlight">\(\Phi_{\alpha\beta\gamma}(l\kappa, l'\kappa',
-l''\kappa'')\)</span>. The first
-three <code class="docutils literal notranslate"><span class="pre">num_atom</span></code> are the atom indices in supercell corresponding to <span class="math notranslate nohighlight">\(l\kappa\)</span>,
-<span class="math notranslate nohighlight">\(l'\kappa'\)</span>, <span class="math notranslate nohighlight">\(l''\kappa''\)</span>, respectively. The last three elements are the
-Cartesian coordinates corresponding to <span class="math notranslate nohighlight">\(\alpha\)</span>, <span class="math notranslate nohighlight">\(\beta\)</span>, <span class="math notranslate nohighlight">\(\gamma\)</span>,
-respectively.</p>
-<p>If you want to import a supercell structure and its fc3, you may suffer from
-matching its atom index between the supercell and an expected unit cell. This
-may be easily dealt with by letting phono3py see your supercell as the unit cell
-(e.g., <code class="docutils literal notranslate"><span class="pre">POSCAR</span></code>, <code class="docutils literal notranslate"><span class="pre">unitcell.in</span></code>, etc) and find the unit (primitive) cell using
-<a class="reference internal" href="command-options.html#pa-option"><span class="std std-ref">–pa option</span></a>. For example, let us assume your supercell is the
-2x2x2 multiples of your unit cell that has no centring, then your <code class="docutils literal notranslate"><span class="pre">--pa</span></code> setting
-will be <code class="docutils literal notranslate"><span class="pre">1/2</span> <span class="pre">0</span> <span class="pre">0</span> <span class="pre">0</span> <span class="pre">1/2</span> <span class="pre">0</span> <span class="pre">0</span> <span class="pre">1/2</span> <span class="pre">0</span></code>. If your unit cell is a conventional unit cell
-and has a centring, e.g., the face centring,</p>
+<p>corresponds to <span class="math notranslate nohighlight">\(\Phi_{\alpha\beta\gamma}(l\kappa, l'\kappa', l''\kappa'')\)</span>. The
+first three <code class="docutils literal notranslate"><span class="pre">num_satom</span></code> dimensions are the atom indices in the supercell
+corresponding to <span class="math notranslate nohighlight">\(l\kappa\)</span>, <span class="math notranslate nohighlight">\(l'\kappa'\)</span>, and <span class="math notranslate nohighlight">\(l''\kappa''\)</span>, respectively. The
+last three dimensions are the Cartesian coordinates corresponding to <span class="math notranslate nohighlight">\(\alpha\)</span>,
+<span class="math notranslate nohighlight">\(\beta\)</span>, and <span class="math notranslate nohighlight">\(\gamma\)</span>, respectively.</p>
+<p>Using lattice translation symmetry, a compact format <code class="docutils literal notranslate"><span class="pre">(n_patom,</span> <span class="pre">n_satom,</span> <span class="pre">n_satom,</span> <span class="pre">3,</span> <span class="pre">3,</span> <span class="pre">3)</span></code> is also supported, where <code class="docutils literal notranslate"><span class="pre">n_patom</span></code> is the number of atoms in
+the primitive cell. The atomic indices of the <code class="docutils literal notranslate"><span class="pre">n_patom</span></code> atoms in the supercell are
+stored in the dataset <code class="docutils literal notranslate"><span class="pre">p2s_map</span></code>.</p>
+<p>If you want to import a supercell structure and its fc3 manually, you may
+encounter issues with matching atom indices between the supercell and the
+expected primitive cell. This can be easily resolved by having phono3py treat
+your supercell as the primitive cell (e.g., <code class="docutils literal notranslate"><span class="pre">POSCAR</span></code>, <code class="docutils literal notranslate"><span class="pre">unitcell.in</span></code>, etc.) and
+then finding the primitive cell using the <a class="reference internal" href="command-options.html#pa-option"><span class="std std-ref">–pa option</span></a>. For
+example, if your supercell is 2×2×2 multiples of your primitive cell, your
+<code class="docutils literal notranslate"><span class="pre">--pa</span></code> setting should be <code class="docutils literal notranslate"><span class="pre">1/2</span> <span class="pre">0</span> <span class="pre">0</span> <span class="pre">0</span> <span class="pre">1/2</span> <span class="pre">0</span> <span class="pre">0</span> <span class="pre">0</span> <span class="pre">1/2</span></code>. For a conventional unit cell
+with centering, e.g., face-centered,</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}
 (\mathbf{a}_\text{p}, \mathbf{b}_\text{p}, \mathbf{c}_\text{p}) =
@@ -488,14 +496,21 @@ and has a centring, e.g., the face centring,</p>
 </section>
 <section id="fc2-hdf5">
 <span id="iofile-fc2-hdf5"></span><h2><code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code><a class="headerlink" href="#fc2-hdf5" title="Link to this heading">#</a></h2>
-<p>Second order force constants are stored in <span class="math notranslate nohighlight">\(\mathrm{eV}/\text{Angstrom}^2\)</span>.</p>
-<p>In phono3py, this is stored in the numpy array <code class="docutils literal notranslate"><span class="pre">dtype='double'</span></code> and <code class="docutils literal notranslate"><span class="pre">order='C'</span></code>
-in the shape of:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">num_atom</span><span class="p">,</span> <span class="n">num_atom</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<p>Second-order supercell force constants (in real space) are stored in
+<span class="math notranslate nohighlight">\(\mathrm{eV}/\text{Angstrom}^2\)</span>.</p>
+<p>The force constants are stored in a numpy array with <code class="docutils literal notranslate"><span class="pre">dtype='double'</span></code> and
+<code class="docutils literal notranslate"><span class="pre">order='C'</span></code>. Two array shapes are supported:</p>
+<ul class="simple">
+<li><p>Full format: <code class="docutils literal notranslate"><span class="pre">(n_satom,</span> <span class="pre">n_satom,</span> <span class="pre">3,</span> <span class="pre">3)</span></code></p></li>
+<li><p>Compact format: <code class="docutils literal notranslate"><span class="pre">(n_patom,</span> <span class="pre">n_satom,</span> <span class="pre">3,</span> <span class="pre">3)</span></code></p></li>
+</ul>
+<p>where <code class="docutils literal notranslate"><span class="pre">n_satom</span></code> and <code class="docutils literal notranslate"><span class="pre">n_patom</span></code> are the numbers of atoms in the supercell and
+primitive cell, respectively. The full format:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">num_satom</span><span class="p">,</span> <span class="n">num_satom</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>against <span class="math notranslate nohighlight">\(\Phi_{\alpha\beta}(l\kappa, l'\kappa')\)</span>. More detail is similar to the
-case for <a class="reference internal" href="#iofile-fc3-hdf5"><span class="std std-ref">fc3.hdf5</span></a>.</p>
+<p>corresponds to <span class="math notranslate nohighlight">\(\Phi_{\alpha\beta}(l\kappa, l'\kappa')\)</span>. More details are similar
+to the case for <a class="reference internal" href="#iofile-fc3-hdf5"><span class="std std-ref">fc3.hdf5</span></a>.</p>
 </section>
 <section id="kappa-hdf5">
 <span id="iofile-kappa-hdf5"></span><h2><code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code><a class="headerlink" href="#kappa-hdf5" title="Link to this heading">#</a></h2>
