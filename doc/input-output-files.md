@@ -83,31 +83,41 @@ This is created with {ref}`--cf2 <dim_fc2_option>` option. The file formats
 (iofile_fc3_hdf5)=
 ## `fc3.hdf5`
 
-Third order force constants (in real space) are stored in
+Third-order supercell force constants (in real space) are stored in
 $\mathrm{eV}/\text{Angstrom}^3$.
 
-In phono3py, this is stored in the numpy array `dtype='double'` and `order='C'`
-in the shape of:
+The force cosntas are stored in a numpy array with `dtype='double'` and
+`order='C'`. Two array shapes are supported,
+
+- Full format: `(n_satom, n_satom, n_satom, 3, 3, 3)`
+- Compact format: `(n_patom, n_satom, n_satom, 3, 3, 3)`
+
+where `n_satom` and `n_patom` are the numbers of atoms in the supercell and
+primitive cell, respectively. The full format:
 
 ```
-(num_atom, num_atom, num_atom, 3, 3, 3)
+(num_satom, num_satom, num_satom, 3, 3, 3)
 ```
 
-against $\Phi_{\alpha\beta\gamma}(l\kappa, l'\kappa',
-l''\kappa'')$. The first
-three `num_atom` are the atom indices in supercell corresponding to $l\kappa$,
-$l'\kappa'$, $l''\kappa''$, respectively. The last three elements are the
-Cartesian coordinates corresponding to $\alpha$, $\beta$, $\gamma$,
-respectively.
+corresponds to $\Phi_{\alpha\beta\gamma}(l\kappa, l'\kappa', l''\kappa'')$. The
+first three `num_satom` dimensions are the atom indices in the supercell
+corresponding to $l\kappa$, $l'\kappa'$, and $l''\kappa''$, respectively. The
+last three dimensions are the Cartesian coordinates corresponding to $\alpha$,
+$\beta$, and $\gamma$, respectively.
 
-If you want to import a supercell structure and its fc3, you may suffer from
-matching its atom index between the supercell and an expected unit cell. This
-may be easily dealt with by letting phono3py see your supercell as the unit cell
-(e.g., `POSCAR`, `unitcell.in`, etc) and find the unit (primitive) cell using
-{ref}`--pa option <pa_option>`. For example, let us assume your supercell is the
-2x2x2 multiples of your unit cell that has no centring, then your `--pa` setting
-will be `1/2 0 0 0 1/2 0 0 1/2 0`. If your unit cell is a conventional unit cell
-and has a centring, e.g., the face centring,
+Using lattice translation symmetry, a compact format `(n_patom, n_satom,
+n_satom, 3, 3, 3)` is also supported, where `n_patom` is the number of atoms in
+the primitive cell. The atomic indices of the `n_patom` atoms in the supercell are
+stored in the dataset `p2s_map`.
+
+If you want to import a supercell structure and its fc3 manually, you may
+encounter issues with matching atom indices between the supercell and the
+expected primitive cell. This can be easily resolved by having phono3py treat
+your supercell as the primitive cell (e.g., `POSCAR`, `unitcell.in`, etc.) and
+then finding the primitive cell using the {ref}`--pa option <pa_option>`. For
+example, if your supercell is 2×2×2 multiples of your primitive cell, your
+`--pa` setting should be `1/2 0 0 0 1/2 0 0 0 1/2`. For a conventional unit cell
+with centering, e.g., face-centered,
 
 $$
 (\mathbf{a}_\text{p}, \mathbf{b}_\text{p}, \mathbf{c}_\text{p}) =
@@ -135,17 +145,24 @@ So what you have to set is `--pa="0 1/4 1/4 1/4 0 1/4 1/4 1/4 0"`.
 (iofile_fc2_hdf5)=
 ## `fc2.hdf5`
 
-Second order force constants are stored in $\mathrm{eV}/\text{Angstrom}^2$.
+Second-order supercell force constants (in real space) are stored in
+$\mathrm{eV}/\text{Angstrom}^2$.
 
-In phono3py, this is stored in the numpy array `dtype='double'` and `order='C'`
-in the shape of:
+The force constants are stored in a numpy array with `dtype='double'` and
+`order='C'`. Two array shapes are supported:
+
+- Full format: `(n_satom, n_satom, 3, 3)`
+- Compact format: `(n_patom, n_satom, 3, 3)`
+
+where `n_satom` and `n_patom` are the numbers of atoms in the supercell and
+primitive cell, respectively. The full format:
 
 ```
-(num_atom, num_atom, 3, 3)
+(num_satom, num_satom, 3, 3)
 ```
 
-against $\Phi_{\alpha\beta}(l\kappa, l'\kappa')$. More detail is similar to the
-case for {ref}`iofile_fc3_hdf5`.
+corresponds to $\Phi_{\alpha\beta}(l\kappa, l'\kappa')$. More details are similar
+to the case for {ref}`iofile_fc3_hdf5`.
 
 (iofile_kappa_hdf5)=
 ## `kappa-*.hdf5`
