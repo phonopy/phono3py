@@ -38,7 +38,7 @@ from __future__ import annotations
 
 import textwrap
 from abc import ABC, abstractmethod
-from typing import Optional
+from collections.abc import Sequence
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -48,6 +48,7 @@ from phonopy.physical_units import get_physical_units
 
 from phono3py.other.isotope import Isotope
 from phono3py.phonon.grid import (
+    BZGrid,
     get_grid_points_by_rotations,
     get_ir_grid_points,
     get_qpoints_from_bz_grid_points,
@@ -165,7 +166,7 @@ class ConductivityComponentsBase(ABC):
         grid_weights: NDArray[np.int64],
         point_operations: NDArray[np.int64],
         rotations_cartesian: NDArray[np.int64],
-        temperatures: Optional[NDArray[np.float64]] = None,
+        temperatures: NDArray[np.float64] | None = None,
         average_gv_over_kstar: bool = False,
         is_kappa_star: bool = True,
         gv_delta_q: float | None = None,
@@ -200,7 +201,7 @@ class ConductivityComponentsBase(ABC):
         self._num_sampling_grid_points = 0
 
     @property
-    def mode_heat_capacities(self):
+    def mode_heat_capacities(self) -> NDArray:
         """Return mode heat capacity at constant volume at grid points.
 
         Grid points are those at mode kappa are calculated.
@@ -209,7 +210,7 @@ class ConductivityComponentsBase(ABC):
         return self._cv
 
     @property
-    def group_velocities(self):
+    def group_velocities(self) -> NDArray:
         """Return group velocities at grid points.
 
         Grid points are those at mode kappa are calculated.
@@ -281,10 +282,10 @@ class ConductivityComponents(ConductivityComponentsBase):
         grid_weights: NDArray[np.int64],
         point_operations: NDArray[np.int64],
         rotations_cartesian: NDArray[np.int64],
-        temperatures: Optional[NDArray[np.float64]] = None,
+        temperatures: NDArray[np.float64] | None = None,
         average_gv_over_kstar: bool = False,
         is_kappa_star: bool = True,
-        gv_delta_q: Optional[float] = None,
+        gv_delta_q: float | None = None,
         is_reducible_collision_matrix: bool = False,
         log_level: int = 0,
     ):
@@ -421,7 +422,7 @@ class ConductivityBase(ABC):
         interaction: Interaction,
         grid_points: ArrayLike | None = None,
         temperatures: ArrayLike | None = None,
-        sigmas: ArrayLike | None = None,
+        sigmas: Sequence[float | None] | None = None,
         sigma_cutoff: float | None = None,
         is_isotope=False,
         mass_variances: ArrayLike | None = None,
@@ -441,7 +442,7 @@ class ConductivityBase(ABC):
         temperatures : array_like, optional, default is None
             Temperatures at which thermal conductivity is calculated.
             shape=(temperature_points, ), dtype='double'.
-        sigmas : array_like, optional, default is None
+        sigmas : Sequence[float | None], optional, default is None
             The float values are given as the standard deviations of Gaussian
             function. If None is given as an element of this list, linear
             tetrahedron method is used instead of smearing method.
@@ -523,11 +524,11 @@ class ConductivityBase(ABC):
         self._read_gamma_iso = False
 
         # Allocated in self._allocate_values.
-        self._gamma: np.ndarray
-        self._gamma_iso: Optional[np.ndarray] = None
+        self._gamma: NDArray
+        self._gamma_iso: NDArray | None = None
 
         self._conversion_factor = get_unit_to_WmK() / self._pp.primitive.volume
-        self._averaged_pp_interaction = None
+        self._averaged_pp_interaction: NDArray | None = None
 
         self._conductivity_components: ConductivityComponentsBase
 
@@ -550,7 +551,7 @@ class ConductivityBase(ABC):
             return self._grid_point_count - 1
 
     @property
-    def mode_heat_capacities(self):
+    def mode_heat_capacities(self) -> NDArray:
         """Return mode heat capacity at constant volume at grid points.
 
         Grid points are those at mode kappa are calculated.
@@ -559,7 +560,7 @@ class ConductivityBase(ABC):
         return self._conductivity_components.mode_heat_capacities
 
     @property
-    def group_velocities(self):
+    def group_velocities(self) -> NDArray:
         """Return group velocities at grid points.
 
         Grid points are those at mode kappa are calculated.
@@ -568,17 +569,17 @@ class ConductivityBase(ABC):
         return self._conductivity_components.group_velocities
 
     @property
-    def mesh_numbers(self):
+    def mesh_numbers(self) -> NDArray:
         """Return mesh numbers of GR-grid."""
         return self._pp.mesh_numbers
 
     @property
-    def bz_grid(self):
+    def bz_grid(self) -> BZGrid:
         """Return GR-grid."""
         return self._pp.bz_grid
 
     @property
-    def frequencies(self):
+    def frequencies(self) -> NDArray:
         """Return frequencies at grid points.
 
         Grid points are those at mode kappa are calculated.
@@ -588,7 +589,7 @@ class ConductivityBase(ABC):
         return self._frequencies[self._grid_points]
 
     @property
-    def qpoints(self):
+    def qpoints(self) -> NDArray:
         """Return q-points where mode kappa are calculated."""
         return np.array(
             get_qpoints_from_bz_grid_points(self._grid_points, self._pp.bz_grid),
@@ -597,7 +598,7 @@ class ConductivityBase(ABC):
         )
 
     @property
-    def grid_points(self):
+    def grid_points(self) -> NDArray:
         """Return grid point indices where mode kappa are calculated.
 
         Grid point indices are given in BZ-grid.
@@ -606,12 +607,12 @@ class ConductivityBase(ABC):
         return self._grid_points
 
     @property
-    def grid_weights(self):
+    def grid_weights(self) -> NDArray:
         """Return grid point weights where mode kappa are calculated."""
         return self._grid_weights
 
     @property
-    def temperatures(self):
+    def temperatures(self) -> NDArray | None:
         """Setter and getter of temperatures."""
         return self._temperatures
 
@@ -621,7 +622,7 @@ class ConductivityBase(ABC):
         self._allocate_values()
 
     @property
-    def gamma(self):
+    def gamma(self) -> NDArray:
         """Setter and getter of gamma."""
         return self._gamma
 
@@ -631,7 +632,7 @@ class ConductivityBase(ABC):
         self._read_gamma = True
 
     @property
-    def gamma_isotope(self):
+    def gamma_isotope(self) -> NDArray | None:
         """Setter and getter of gamma from isotope."""
         return self._gamma_iso
 
@@ -641,32 +642,32 @@ class ConductivityBase(ABC):
         self._read_gamma_iso = True
 
     @property
-    def sigmas(self):
+    def sigmas(self) -> Sequence[float | None]:
         """Return sigmas."""
         return self._sigmas
 
     @property
-    def sigma_cutoff_width(self):
+    def sigma_cutoff_width(self) -> float | None:
         """Return smearing width cutoff."""
         return self._sigma_cutoff
 
     @property
-    def grid_point_count(self):
+    def grid_point_count(self) -> int:
         """Return iterator count of self."""
         return self._grid_point_count
 
     @property
-    def averaged_pp_interaction(self):
+    def averaged_pp_interaction(self) -> NDArray | None:
         """Return averaged pp strength."""
         return self._averaged_pp_interaction
 
     @property
-    def boundary_mfp(self) -> Optional[float]:
+    def boundary_mfp(self) -> float | None:
         """Return boundary MFP."""
         return self._boundary_mfp
 
     @property
-    def number_of_sampling_grid_points(self):
+    def number_of_sampling_grid_points(self) -> int:
         """Return number of grid points.
 
         This is calculated by the sum of numbers of arms of k-start in
@@ -701,7 +702,7 @@ class ConductivityBase(ABC):
 
         return point_operations, rotations_cartesian
 
-    def _get_grid_info(self, grid_points) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def _get_grid_info(self, grid_points) -> tuple[NDArray, NDArray, NDArray]:
         """Return grid point information in BZGrid.
 
         Returns
