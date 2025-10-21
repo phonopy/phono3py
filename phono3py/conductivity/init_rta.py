@@ -34,9 +34,13 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from typing import Optional, Union, cast
+from __future__ import annotations
+
+from collections.abc import Sequence
+from typing import Literal, Optional, Union, cast
 
 import numpy as np
+from numpy.typing import ArrayLike
 
 from phono3py.conductivity.base import get_unit_to_WmK
 from phono3py.conductivity.kubo_rta import ConductivityKuboRTA
@@ -57,29 +61,29 @@ cond_RTA_type = Union[ConductivityRTA, ConductivityWignerRTA, ConductivityKuboRT
 
 def get_thermal_conductivity_RTA(
     interaction: Interaction,
-    temperatures=None,
-    sigmas=None,
-    sigma_cutoff=None,
-    mass_variances=None,
-    grid_points=None,
-    is_isotope=False,
-    boundary_mfp=None,  # in micrometer
-    use_ave_pp=False,
-    is_kappa_star=True,
-    gv_delta_q=None,
-    is_full_pp=False,
-    is_N_U=False,
-    conductivity_type=None,
-    write_gamma=False,
-    read_gamma=False,
-    write_kappa=False,
-    write_pp=False,
-    read_pp=False,
-    write_gamma_detail=False,
-    compression="gzip",
-    input_filename=None,
-    output_filename=None,
-    log_level=0,
+    temperatures: ArrayLike | None = None,
+    sigmas: Sequence[float | None] | None = None,
+    sigma_cutoff: float | None = None,
+    mass_variances: ArrayLike | None = None,
+    grid_points: ArrayLike | None = None,
+    is_isotope: bool = False,
+    boundary_mfp: float | None = None,  # in micrometer
+    use_ave_pp: bool = False,
+    is_kappa_star: bool = True,
+    gv_delta_q: float | None = None,
+    is_full_pp: bool = False,
+    is_N_U: bool = False,
+    conductivity_type: Literal["wigner", "kubo"] | None = None,
+    write_gamma: bool = False,
+    read_gamma: bool = False,
+    write_kappa: bool = False,
+    write_pp: bool = False,
+    read_pp: bool = False,
+    write_gamma_detail: bool = False,
+    compression: str = "gzip",
+    input_filename: str | None = None,
+    output_filename: str | None = None,
+    log_level: int = 0,
 ):
     """Run RTA thermal conductivity calculation."""
     if temperatures is None:
@@ -654,7 +658,7 @@ def _set_gamma_from_file(
         )
         if data:
             if verbose:
-                print("Read data from %s." % full_filename)
+                print(f"Read gamma from {full_filename}.")
             gamma[j] = data["gamma"]
             if "gamma_isotope" in data:
                 gamma_iso[j] = data["gamma_isotope"]

@@ -39,11 +39,11 @@ import os
 import pathlib
 import warnings
 from collections.abc import Sequence
-from typing import Optional, TextIO, Union
+from typing import Optional, TextIO
 
 import h5py
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import ArrayLike, NDArray
 from phonopy.cui.load_helper import read_force_constants_from_hdf5
 
 # This import is deactivated for a while.
@@ -1116,12 +1116,12 @@ def write_kappa_to_hdf5(
 
 
 def read_gamma_from_hdf5(
-    mesh,
-    grid_point=None,
-    band_index=None,
-    sigma=None,
-    sigma_cutoff=None,
-    filename=None,
+    mesh: NDArray,
+    grid_point: int | None = None,
+    band_index: int | None = None,
+    sigma: float | None = None,
+    sigma_cutoff: float | None = None,
+    filename: str | None = None,
 ):
     """Read gamma from kappa-*.hdf5 file."""
     if band_index is None:
@@ -1329,12 +1329,12 @@ def write_pp_to_hdf5(
 
 def read_pp_from_hdf5(
     mesh,
-    grid_point=None,
-    sigma=None,
-    sigma_cutoff=None,
-    filename=None,
-    verbose=True,
-    check_consistency=False,
+    grid_point: int | None = None,
+    sigma: float | None = None,
+    sigma_cutoff: float | None = None,
+    filename: str | None = None,
+    verbose: bool = True,
+    check_consistency: bool = False,
 ) -> tuple:
     """Read ph-ph interaction strength from its hdf5 file."""
     suffix = _get_filename_suffix(
@@ -1748,12 +1748,12 @@ def get_length_of_first_line(f):
 
 def _get_filename_suffix(
     mesh,
-    grid_point: Optional[int] = None,
-    band_indices: Optional[Union[np.ndarray, Sequence]] = None,
-    sigma: Optional[float] = None,
-    sigma_cutoff: Optional[float] = None,
-    temperature: Optional[float] = None,
-    filename: Optional[str] = None,
+    grid_point: int | None = None,
+    band_indices: ArrayLike | None = None,
+    sigma: float | None = None,
+    sigma_cutoff: float | None = None,
+    temperature: float | None = None,
+    filename: str | None = None,
 ):
     """Return filename suffix corresponding to parameters."""
     suffix = "-m%d%d%d" % tuple(mesh)
