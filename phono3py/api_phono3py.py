@@ -2157,7 +2157,7 @@ class Phono3py:
     def run_thermal_conductivity(
         self,
         is_LBTE: bool = False,
-        temperatures: Sequence | None = None,
+        temperatures: ArrayLike | None = None,
         is_isotope: bool = False,
         mass_variances: Sequence | None = None,
         grid_points: ArrayLike | None = None,
