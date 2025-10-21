@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Aug-9-2025: Version 3.19.3
+
+- Fixed an issue where the `--read-gamma` option did not work.
+
 ## Aug-9-2025: Version 3.19.2
 
 - Fixed an issue where the `--write-phonon` option did not work.
