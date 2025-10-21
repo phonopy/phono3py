@@ -36,9 +36,10 @@
 
 from __future__ import annotations
 
-from typing import Optional, Union
+from collections.abc import Sequence
 
 import numpy as np
+from numpy.typing import ArrayLike
 
 from phono3py.conductivity.base import ConductivityComponents
 from phono3py.conductivity.rta_base import ConductivityRTABase
@@ -51,20 +52,20 @@ class ConductivityRTA(ConductivityRTABase):
     def __init__(
         self,
         interaction: Interaction,
-        grid_points: Optional[np.ndarray] = None,
-        temperatures: Optional[Union[list, np.ndarray]] = None,
-        sigmas: Optional[Union[list, np.ndarray]] = None,
-        sigma_cutoff: Optional[float] = None,
+        grid_points: ArrayLike | None = None,
+        temperatures: ArrayLike | None = None,
+        sigmas: Sequence[float | None] | None = None,
+        sigma_cutoff: float | None = None,
         is_isotope: bool = False,
-        mass_variances: Optional[Union[list, np.ndarray]] = None,
-        boundary_mfp: Optional[float] = None,  # in micrometer
+        mass_variances: ArrayLike | None = None,
+        boundary_mfp: float | None = None,  # in micrometer
         use_ave_pp: bool = False,
         is_kappa_star: bool = True,
-        gv_delta_q: Optional[float] = None,
+        gv_delta_q: float | None = None,
         is_full_pp: bool = False,
         read_pp: bool = False,
         store_pp: bool = False,
-        pp_filename: Optional[float] = None,
+        pp_filename: str | None = None,
         is_N_U: bool = False,
         is_gamma_detail: bool = False,
         is_frequency_shift_by_bubble: bool = False,

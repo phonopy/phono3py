@@ -75,7 +75,7 @@ class ConductivityRTABase(ConductivityBase):
         is_full_pp: bool = False,
         read_pp: bool = False,
         store_pp: bool = False,
-        pp_filename: float | None = None,
+        pp_filename: str | None = None,
         is_N_U: bool = False,
         is_gamma_detail: bool = False,
         is_frequency_shift_by_bubble: bool = False,
