@@ -752,7 +752,7 @@ def _produce_force_constants(
             is_compact_fc=settings.is_compact_fc,
         )
 
-    if ph3py.fc3 is None and not settings.write_phonon:
+    if ph3py.fc3 is None and not settings.write_phonon and not settings.read_gamma:
         if log_level:
             print("fc3 could not be obtained.")
             if not forces_in_dataset(ph3py.dataset):
@@ -763,7 +763,7 @@ def _produce_force_constants(
 
     # When settings.write_phonon=True, fc3 can be None.
     if ph3py.fc3 is None:
-        assert settings.write_phonon
+        assert settings.write_phonon or settings.read_gamma
     else:
         if log_level:
             show_drift_fc3(ph3py.fc3, primitive=ph3py.primitive)
