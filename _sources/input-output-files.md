@@ -107,8 +107,8 @@ $\beta$, and $\gamma$, respectively.
 
 Using lattice translation symmetry, a compact format `(n_patom, n_satom,
 n_satom, 3, 3, 3)` is also supported, where `n_patom` is the number of atoms in
-the primitive cell. The atomic indices of the `n_patom` atoms in the supercell are
-stored in the dataset `p2s_map`.
+the primitive cell. The atomic indices of the `n_patom` atoms in the supercell
+are stored in the dataset `p2s_map`.
 
 If you want to import a supercell structure and its fc3 manually, you may
 encounter issues with matching atom indices between the supercell and the

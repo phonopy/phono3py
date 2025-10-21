@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Input / Output files &#8212; Phono3py v.3.19.2</title>
+    <title>Input / Output files &#8212; Phono3py v.3.19.3</title>
   
   
   
@@ -36,7 +36,7 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
   <script src="_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
-    <script src="_static/documentation_options.js?v=bd31a056"></script>
+    <script src="_static/documentation_options.js?v=06cd224b"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
@@ -134,7 +134,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.19.2</p>
+    <p class="title logo__title">Phono3py v.3.19.3</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -461,8 +461,8 @@ corresponding to <span class="math notranslate nohighlight">\(l\kappa\)</span>, 
 last three dimensions are the Cartesian coordinates corresponding to <span class="math notranslate nohighlight">\(\alpha\)</span>,
 <span class="math notranslate nohighlight">\(\beta\)</span>, and <span class="math notranslate nohighlight">\(\gamma\)</span>, respectively.</p>
 <p>Using lattice translation symmetry, a compact format <code class="docutils literal notranslate"><span class="pre">(n_patom,</span> <span class="pre">n_satom,</span> <span class="pre">n_satom,</span> <span class="pre">3,</span> <span class="pre">3,</span> <span class="pre">3)</span></code> is also supported, where <code class="docutils literal notranslate"><span class="pre">n_patom</span></code> is the number of atoms in
-the primitive cell. The atomic indices of the <code class="docutils literal notranslate"><span class="pre">n_patom</span></code> atoms in the supercell are
-stored in the dataset <code class="docutils literal notranslate"><span class="pre">p2s_map</span></code>.</p>
+the primitive cell. The atomic indices of the <code class="docutils literal notranslate"><span class="pre">n_patom</span></code> atoms in the supercell
+are stored in the dataset <code class="docutils literal notranslate"><span class="pre">p2s_map</span></code>.</p>
 <p>If you want to import a supercell structure and its fc3 manually, you may
 encounter issues with matching atom indices between the supercell and the
 expected primitive cell. This can be easily resolved by having phono3py treat
