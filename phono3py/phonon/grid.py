@@ -47,7 +47,7 @@ except ImportError:
     from types import SimpleNamespace as SpglibDataset
 
 from types import SimpleNamespace
-from typing import Optional, Union
+from typing import Literal
 
 import numpy as np
 from phonopy.structure.cells import (
@@ -145,15 +145,15 @@ class BZGrid:
     def __init__(
         self,
         mesh: float | ArrayLike,
-        reciprocal_lattice: ArrayLike | None = None,
-        lattice: ArrayLike | None = None,
+        reciprocal_lattice: NDArray | Sequence | None = None,
+        lattice: NDArray | Sequence | None = None,
         symmetry_dataset: SpglibDataset | None = None,
         transformation_matrix: ArrayLike | None = None,
-        is_shift: ArrayLike | None = None,
+        is_shift: NDArray | Sequence | None = None,
         is_time_reversal: bool = True,
         use_grg: bool = False,
         force_SNF: bool = False,
-        SNF_coordinates: str = "reciprocal",
+        SNF_coordinates: Literal["reciprocal", "direct"] = "reciprocal",
         store_dense_gp_map: bool = True,
     ):
         """Init method.
@@ -205,17 +205,17 @@ class BZGrid:
             self._is_shift = [v * 1 for v in is_shift]
         self._is_time_reversal = is_time_reversal
         self._store_dense_gp_map = store_dense_gp_map
-        self._addresses: np.ndarray
-        self._gp_map: np.ndarray
+        self._addresses: NDArray
+        self._gp_map: NDArray
         self._grid_matrix = None
         self._D_diag = np.ones(3, dtype="int64")
         self._Q = np.eye(3, dtype="int64", order="C")
         self._P = np.eye(3, dtype="int64", order="C")
-        self._QDinv: np.ndarray
-        self._microzone_lattice: np.ndarray
-        self._rotations: np.ndarray
-        self._reciprocal_operations: np.ndarray
-        self._rotations_cartesian: np.ndarray
+        self._QDinv: NDArray
+        self._microzone_lattice: NDArray
+        self._rotations: NDArray
+        self._reciprocal_operations: NDArray
+        self._rotations_cartesian: NDArray
         self._gp_Gamma: int
 
         if reciprocal_lattice is not None:
@@ -285,7 +285,7 @@ class BZGrid:
             return np.array(np.dot(self.P, self._is_shift), dtype="int64")
 
     @property
-    def grid_matrix(self) -> Optional[np.ndarray]:
+    def grid_matrix(self) -> NDArray | None:
         """Grid generating matrix to be represented by SNF.
 
         Grid generating matrix used for SNF.
@@ -296,7 +296,7 @@ class BZGrid:
         return self._grid_matrix
 
     @property
-    def addresses(self) -> np.ndarray:
+    def addresses(self) -> NDArray:
         """BZ-grid addresses.
 
         Integer grid address of the points in Brillouin zone including
@@ -349,7 +349,7 @@ class BZGrid:
         return self._grg2bzg
 
     @property
-    def microzone_lattice(self) -> np.ndarray:
+    def microzone_lattice(self) -> NDArray:
         """Basis vectors of microzone.
 
         Basis vectors of microzone of GR-grid in column vectors.
@@ -359,7 +359,7 @@ class BZGrid:
         return self._microzone_lattice
 
     @property
-    def reciprocal_lattice(self) -> np.ndarray:
+    def reciprocal_lattice(self) -> NDArray:
         """Reciprocal basis vectors of primitive cell.
 
         Reciprocal basis vectors of primitive cell in column vectors.
@@ -378,7 +378,7 @@ class BZGrid:
         return self._store_dense_gp_map
 
     @property
-    def rotations(self) -> np.ndarray:
+    def rotations(self) -> NDArray:
         """Return rotation matrices for grid points.
 
         Rotation matrices for GR-grid addresses (g) defined as g'=Rg. This can
@@ -390,12 +390,12 @@ class BZGrid:
         return self._rotations
 
     @property
-    def rotations_cartesian(self) -> np.ndarray:
+    def rotations_cartesian(self) -> NDArray:
         """Return rotations in Cartesian coordinates."""
         return self._rotations_cartesian
 
     @property
-    def reciprocal_operations(self) -> np.ndarray:
+    def reciprocal_operations(self) -> NDArray:
         """Return reciprocal rotations.
 
         Reciprocal space rotation matrices in fractional coordinates defined as
@@ -406,7 +406,7 @@ class BZGrid:
         return self._reciprocal_operations
 
     @property
-    def symmetry_dataset(self) -> Optional[SpglibDataset]:
+    def symmetry_dataset(self) -> SpglibDataset | None:
         """Return Symmetry.dataset."""
         return self._symmetry_dataset
 
@@ -440,7 +440,11 @@ class BZGrid:
         return np.array(self._grg2bzg[gps], dtype="int64")
 
     def _generate_grid(
-        self, mesh, use_grg=False, force_SNF=False, SNF_coordinates="reciprocal"
+        self,
+        mesh: ArrayLike,
+        use_grg: bool = False,
+        force_SNF: bool = False,
+        SNF_coordinates: Literal["reciprocal", "direct"] = "reciprocal",
     ):
         gm = GridMatrix(
             mesh,
@@ -488,7 +492,7 @@ class BZGrid:
         Terminate when symmetry of grid is broken.
 
         """
-        import phono3py._recgrid as recgrid
+        import phono3py._recgrid as recgrid  # type: ignore
 
         if self._symmetry_dataset is None:
             direct_rotations = np.eye(3, dtype="int64", order="C").reshape(1, 3, 3)
@@ -550,13 +554,13 @@ class GridMatrix:
 
     def __init__(
         self,
-        mesh: Union[int, float, Sequence, np.ndarray],
-        lattice: Union[Sequence, np.ndarray],
-        symmetry_dataset: Optional[SpglibDataset] = None,
-        transformation_matrix: Optional[Union[Sequence, np.ndarray]] = None,
+        mesh: ArrayLike,
+        lattice: ArrayLike,
+        symmetry_dataset: SpglibDataset | None = None,
+        transformation_matrix: ArrayLike | None = None,
         use_grg: bool = True,
         force_SNF: bool = False,
-        SNF_coordinates: str = "reciprocal",
+        SNF_coordinates: Literal["reciprocal", "direct"] = "reciprocal",
     ) -> None:
         """Init method.
 
@@ -605,7 +609,7 @@ class GridMatrix:
         )
 
     @property
-    def grid_matrix(self) -> Optional[np.ndarray]:
+    def grid_matrix(self) -> NDArray | None:
         """Grid generating matrix to be represented by SNF.
 
         Grid generating matrix used for SNF.
@@ -616,7 +620,7 @@ class GridMatrix:
         return self._grid_matrix
 
     @property
-    def D_diag(self) -> np.ndarray:
+    def D_diag(self) -> NDArray:
         """Diagonal elements of diagonal matrix after SNF: D=PAQ.
 
         This corresponds to the mesh numbers in transformed reciprocal
@@ -648,12 +652,12 @@ class GridMatrix:
 
     def _set_mesh_numbers(
         self,
-        mesh: Union[int, float, Sequence, np.ndarray],
+        mesh: ArrayLike,
         use_grg: bool = False,
-        symmetry_dataset: Optional[SpglibDataset] = None,
-        transformation_matrix: Optional[Union[Sequence, np.ndarray]] = None,
-        force_SNF=False,
-        coordinates="reciprocal",
+        symmetry_dataset: SpglibDataset | None = None,
+        transformation_matrix: ArrayLike | None = None,
+        force_SNF: bool = False,
+        coordinates: Literal["reciprocal", "direct"] = "reciprocal",
     ) -> None:
         """Set mesh numbers from array or float value.
 
@@ -715,12 +719,12 @@ class GridMatrix:
 
     def _run_grg(
         self,
-        symmetry_dataset,
-        transformation_matrix,
-        length,
-        grid_matrix,
-        force_SNF,
-        coordinates,
+        symmetry_dataset: SpglibDataset | None,
+        transformation_matrix: ArrayLike | None,
+        length: float | None,
+        grid_matrix: ArrayLike | None,
+        force_SNF: bool,
+        coordinates: Literal["reciprocal", "direct"],
     ) -> bool:
         if symmetry_dataset is None and transformation_matrix is None:
             msg = "symmetry_dataset or transformation_matrix has to be specified."
@@ -782,11 +786,11 @@ class GridMatrix:
 
     def _set_GRG_mesh(
         self,
-        sym_dataset: Union[SpglibDataset, SimpleNamespace],
-        length: Optional[float] = None,
-        grid_matrix=None,
-        force_SNF=False,
-        coordinates="reciprocal",
+        sym_dataset: SpglibDataset | SimpleNamespace,
+        length: float | None = None,
+        grid_matrix: ArrayLike | None = None,
+        force_SNF: bool = False,
+        coordinates: Literal["reciprocal", "direct"] = "reciprocal",
     ):
         """Set grid_matrix or D_diag with generalized regular grid.
 
@@ -807,7 +811,7 @@ class GridMatrix:
         if (np.diag(gm_diag) == _grid_matrix).all() and not force_SNF:
             self._D_diag = np.array(gm_diag, dtype="int64")
         else:
-            import phono3py._recgrid as recgrid
+            import phono3py._recgrid as recgrid  # type: ignore
 
             if not recgrid.snf3x3(self._D_diag, self._P, self._Q, _grid_matrix):
                 msg = "SNF3x3 failed."
@@ -817,9 +821,9 @@ class GridMatrix:
 
     def _get_grid_matrix(
         self,
-        sym_dataset: Union[SpglibDataset, SimpleNamespace],
+        sym_dataset: SpglibDataset | SimpleNamespace,
         length: float,
-        coordinates: str = "reciprocal",
+        coordinates: Literal["reciprocal", "direct"] = "reciprocal",
     ):
         """Return grid matrix.
 
@@ -872,9 +876,7 @@ class GridMatrix:
         return grid_matrix
 
 
-def get_qpoints_from_bz_grid_points(
-    gps: Union[int, np.ndarray], bz_grid: BZGrid
-) -> np.ndarray:
+def get_qpoints_from_bz_grid_points(gps: int | NDArray, bz_grid: BZGrid) -> NDArray:
     """Return q-point(s) in reduced coordinates of grid point(s).
 
     Parameters
@@ -888,7 +890,9 @@ def get_qpoints_from_bz_grid_points(
     return bz_grid.addresses[gps] @ bz_grid.QDinv.T
 
 
-def get_grid_point_from_address_py(addresses, D_diag):
+def get_grid_point_from_address_py(
+    addresses: ArrayLike, D_diag: NDArray | Sequence
+) -> NDArray:
     """Return GR-grid point index from addresses.
 
     Python version of get_grid_point_from_address.
@@ -902,7 +906,7 @@ def get_grid_point_from_address_py(addresses, D_diag):
     return np.dot(np.mod(addresses, D_diag), [1, D_diag[0], D_diag[0] * D_diag[1]])
 
 
-def get_grid_point_from_address(address, D_diag):
+def get_grid_point_from_address(address: ArrayLike, D_diag: ArrayLike) -> NDArray:
     """Return GR grid-point indices of grid addresses.
 
     Parameters
@@ -927,7 +931,7 @@ def get_grid_point_from_address(address, D_diag):
         shape=(n, ), dtype='int64'
 
     """
-    import phono3py._recgrid as recgrid
+    import phono3py._recgrid as recgrid  # type: ignore
 
     adrs_array = np.array(address, dtype="int64", order="C")
     mesh_array = np.array(D_diag, dtype="int64")
@@ -941,7 +945,7 @@ def get_grid_point_from_address(address, D_diag):
     return gps
 
 
-def get_ir_grid_points(bz_grid: BZGrid) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def get_ir_grid_points(bz_grid: BZGrid) -> tuple[NDArray, NDArray, NDArray]:
     """Return ir-grid-points in generalized regular grid.
 
     bz_grid : BZGrid
@@ -969,8 +973,11 @@ def get_ir_grid_points(bz_grid: BZGrid) -> tuple[np.ndarray, np.ndarray, np.ndar
 
 
 def get_grid_points_by_rotations(
-    bz_gp, bz_grid: BZGrid, reciprocal_rotations=None, with_surface=False
-):
+    bz_gp: int,
+    bz_grid: BZGrid,
+    reciprocal_rotations: NDArray | None = None,
+    with_surface: bool = False,
+) -> NDArray:
     """Return BZ-grid point indices rotated from a BZ-grid point index.
 
     Parameters
@@ -1009,14 +1016,18 @@ def get_grid_points_by_rotations(
         return _get_grid_points_by_rotations(bz_gp, bz_grid, rec_rots)
 
 
-def _get_grid_points_by_rotations(bz_gp, bz_grid: BZGrid, rotations):
+def _get_grid_points_by_rotations(
+    bz_gp: int, bz_grid: BZGrid, rotations: ArrayLike
+) -> NDArray:
     """Grid point rotations without surface treatment."""
     rot_adrs = np.dot(rotations, bz_grid.addresses[bz_gp])
     grgps = get_grid_point_from_address(rot_adrs, bz_grid.D_diag)
     return bz_grid.grg2bzg[grgps]
 
 
-def _get_grid_points_by_bz_rotations(bz_gp, bz_grid: BZGrid, rotations, lang="C"):
+def _get_grid_points_by_bz_rotations(
+    bz_gp: int, bz_grid: BZGrid, rotations: NDArray, lang: Literal["C", "Py"] = "C"
+):
     """Grid point rotations with surface treatment."""
     if lang == "C":
         return _get_grid_points_by_bz_rotations_c(bz_gp, bz_grid, rotations)
@@ -1024,8 +1035,8 @@ def _get_grid_points_by_bz_rotations(bz_gp, bz_grid: BZGrid, rotations, lang="C"
         return _get_grid_points_by_bz_rotations_py(bz_gp, bz_grid, rotations)
 
 
-def _get_grid_points_by_bz_rotations_c(bz_gp, bz_grid: BZGrid, rotations):
-    import phono3py._recgrid as recgrid
+def _get_grid_points_by_bz_rotations_c(bz_gp, bz_grid: BZGrid, rotations: NDArray):
+    import phono3py._recgrid as recgrid  # type: ignore
 
     bzgps = np.zeros(len(rotations), dtype="int64")
     for i, r in enumerate(rotations):
@@ -1041,7 +1052,7 @@ def _get_grid_points_by_bz_rotations_c(bz_gp, bz_grid: BZGrid, rotations):
     return bzgps
 
 
-def _get_grid_points_by_bz_rotations_py(bz_gp, bz_grid: BZGrid, rotations):
+def _get_grid_points_by_bz_rotations_py(bz_gp, bz_grid: BZGrid, rotations: ArrayLike):
     """Return BZ-grid point indices generated by rotations.
 
     Rotated BZ-grid addresses are compared with translationally
@@ -1074,17 +1085,17 @@ def _get_grid_points_by_bz_rotations_py(bz_gp, bz_grid: BZGrid, rotations):
                 )
                 + num_grgp
             ).tolist()
-            gps.insert(0, gp)  # type: ignore
+            gps.insert(0, gp)
             indices = np.where((bz_grid.addresses[gps] == adrs).all(axis=1))[0]
             if len(indices) == 0:
                 msg = "with_surface did not work properly."
                 raise RuntimeError(msg)
-            bzgps[i] = gps[indices[0]]  # type: ignore
+            bzgps[i] = gps[indices[0]]
 
     return bzgps
 
 
-def _get_grid_address(D_diag):
+def _get_grid_address(D_diag: NDArray | Sequence) -> NDArray:
     """Return generalized regular grid addresses.
 
     Parameters
@@ -1101,7 +1112,7 @@ def _get_grid_address(D_diag):
         shape=(prod(D_diag), 3), dtype='int64'
 
     """
-    import phono3py._recgrid as recgrid
+    import phono3py._recgrid as recgrid  # type: ignore
 
     gr_grid_addresses = np.zeros((np.prod(D_diag), 3), dtype="int64")
     recgrid.gr_grid_addresses(gr_grid_addresses, np.array(D_diag, dtype="int64"))
@@ -1109,11 +1120,11 @@ def _get_grid_address(D_diag):
 
 
 def _relocate_BZ_grid_address(
-    D_diag,
-    Q,
-    reciprocal_lattice,  # column vectors
-    PS=None,
-    store_dense_gp_map=False,
+    D_diag: NDArray | Sequence,
+    Q: ArrayLike,
+    reciprocal_lattice: ArrayLike,  # column vectors
+    PS: ArrayLike | None = None,
+    store_dense_gp_map: bool = False,
 ):
     """Grid addresses are relocated to be inside first Brillouin zone.
 
@@ -1170,7 +1181,7 @@ def _relocate_BZ_grid_address(
     shape=(prod(mesh) + 1, )
 
     """
-    import phono3py._recgrid as recgrid
+    import phono3py._recgrid as recgrid  # type: ignore
 
     if PS is None:
         _PS = np.zeros(3, dtype="int64")
@@ -1235,10 +1246,10 @@ def get_reduced_bases_and_tmat_inv(
 
 
 def _get_ir_grid_map(
-    D_diag: Union[np.ndarray, Sequence],
-    grg_rotations: Union[np.ndarray, Sequence],
-    PS: Optional[Union[np.ndarray, Sequence]] = None,
-) -> np.ndarray:
+    D_diag: NDArray | Sequence,
+    grg_rotations: ArrayLike,
+    PS: ArrayLike | None = None,
+) -> NDArray:
     """Return mapping to irreducible grid points in GR-grid.
 
     Parameters
@@ -1262,7 +1273,7 @@ def _get_ir_grid_map(
         dtype='int64', shape=(prod(mesh),)
 
     """
-    import phono3py._recgrid as recgrid
+    import phono3py._recgrid as recgrid  # type: ignore
 
     ir_grid_map = np.zeros(np.prod(D_diag), dtype="int64")
     if PS is None:
@@ -1283,7 +1294,13 @@ def _get_ir_grid_map(
         raise RuntimeError("_get_ir_grid_map failed to find ir-grid-points.")
 
 
-def _can_use_std_lattice(conv_lat, tmat, std_lattice, rotations, symprec=1e-5):
+def _can_use_std_lattice(
+    conv_lat: ArrayLike,
+    tmat: ArrayLike,
+    std_lattice: ArrayLike,
+    rotations: NDArray | Sequence,
+    symprec: float = 1e-5,
+):
     """Inspect if std_lattice can be used as conv_lat.
 
     r_s is the rotation matrix of conv_lat.
