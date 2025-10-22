@@ -36,20 +36,13 @@
 
 from __future__ import annotations
 
+import dataclasses
 import warnings
 from collections.abc import Sequence
-
-from numpy.typing import ArrayLike, NDArray
-
-try:
-    from spglib import SpglibDataset  # type: ignore
-except ImportError:
-    from types import SimpleNamespace as SpglibDataset
-
-from types import SimpleNamespace
 from typing import Literal
 
 import numpy as np
+from numpy.typing import ArrayLike, NDArray
 from phonopy.structure.cells import (
     determinant,
     estimate_supercell_matrix,
@@ -58,6 +51,18 @@ from phonopy.structure.cells import (
 )
 from phonopy.structure.grid_points import extract_ir_grid_points, length2mesh
 from phonopy.utils import similarity_transformation
+from spglib import SpglibDataset, SpglibMagneticDataset
+
+
+@dataclasses.dataclass
+class MockSymmetryDataset:
+    """Mock class for symmetry dataset."""
+
+    rotations: NDArray
+    transformation_matrix: NDArray
+    std_lattice: NDArray
+    std_types: NDArray
+    number: int
 
 
 class BZGrid:
@@ -147,7 +152,7 @@ class BZGrid:
         mesh: float | ArrayLike,
         reciprocal_lattice: NDArray | Sequence | None = None,
         lattice: NDArray | Sequence | None = None,
-        symmetry_dataset: SpglibDataset | None = None,
+        symmetry_dataset: SpglibDataset | SpglibMagneticDataset | None = None,
         transformation_matrix: ArrayLike | None = None,
         is_shift: NDArray | Sequence | None = None,
         is_time_reversal: bool = True,
@@ -168,8 +173,7 @@ class BZGrid:
             dtype='double', order='C'
         symmetry_dataset : SpglibDataset, optional
             Symmetry dataset (Symmetry.dataset) searched for the primitive cell
-            corresponding to ``reciprocal_lattice`` or ``lattice``. For spglib <
-            v2.5, SimpleNamespace is used instead of SpglibDataset.
+            corresponding to ``reciprocal_lattice`` or ``lattice``.
         transformation_matrix : array_like, optional
             Transformation matrix equivalent to ``transformation_matrix`` in
             spglib-dataset. This is only used when ``use_grg=True`` and
@@ -408,7 +412,7 @@ class BZGrid:
         return self._reciprocal_operations
 
     @property
-    def symmetry_dataset(self) -> SpglibDataset | None:
+    def symmetry_dataset(self) -> SpglibDataset | SpglibMagneticDataset | None:
         """Return Symmetry.dataset."""
         return self._symmetry_dataset
 
@@ -509,6 +513,7 @@ class BZGrid:
         self._reciprocal_operations = np.array(
             rec_rotations[:num_rec_rot], dtype="int64", order="C"
         )
+        self._rotations = self._get_GRG_rotations()
         self._rotations_cartesian = np.array(
             [
                 similarity_transformation(self._reciprocal_lattice, r)
@@ -517,29 +522,23 @@ class BZGrid:
             dtype="double",
             order="C",
         )
-        self._rotations = np.zeros(
+        if self._is_shift is not None:
+            check_grid_shift_symmetry(self._is_shift, self._rotations, self._P)
+
+    def _get_GRG_rotations(self) -> NDArray:
+        """Return rotation matrices in GR-grid."""
+        import phono3py._recgrid as recgrid  # type: ignore
+
+        rotations = np.zeros(
             self._reciprocal_operations.shape, dtype="int64", order="C"
         )
         if not recgrid.transform_rotations(
-            self._rotations, self._reciprocal_operations, self._D_diag, self._Q
+            rotations, self._reciprocal_operations, self._D_diag, self._Q
         ):
             msg = "Grid symmetry is broken. Use generalized regular grid."
             raise RuntimeError(msg)
 
-        if self._is_shift is not None:
-            if not self._satisfy_shift_symmetry():
-                msg = "Grid symmetry is broken by grid shift."
-                raise RuntimeError(msg)
-
-    def _satisfy_shift_symmetry(self) -> bool:
-        Pinv = np.rint(np.linalg.inv(self._P)).astype(int)
-        assert determinant(Pinv) == 1
-        S = np.array(self._is_shift, dtype=int)
-        for r in self._rotations:
-            _S = np.dot(np.dot(Pinv, np.dot(r, self._P)), S)
-            if not np.array_equal((S - _S) % 2, [0, 0, 0]):
-                return False
-        return True
+        return rotations
 
 
 class GridMatrix:
@@ -558,7 +557,7 @@ class GridMatrix:
         self,
         mesh: ArrayLike,
         lattice: ArrayLike,
-        symmetry_dataset: SpglibDataset | None = None,
+        symmetry_dataset: SpglibDataset | SpglibMagneticDataset | None = None,
         transformation_matrix: ArrayLike | None = None,
         use_grg: bool = True,
         force_SNF: bool = False,
@@ -577,8 +576,7 @@ class GridMatrix:
             shape=(3, 3), dtype='double', order='C'
         symmetry_dataset : SpglibDataset, optional
             Symmetry dataset of spglib (Symmetry.dataset) of primitive cell that
-            has `lattice`. Default is None. For spglib <
-            v2.5, SimpleNamespace is used instead of SpglibDataset.
+            has `lattice`. Default is None.
         transformation_matrix : array_like, optional
             Transformation matrix equivalent to ``transformation_matrix`` in
             spglib-dataset. This is only used when ``use_grg=True`` and
@@ -656,7 +654,7 @@ class GridMatrix:
         self,
         mesh: ArrayLike,
         use_grg: bool = False,
-        symmetry_dataset: SpglibDataset | None = None,
+        symmetry_dataset: SpglibDataset | SpglibMagneticDataset | None = None,
         transformation_matrix: ArrayLike | None = None,
         force_SNF: bool = False,
         coordinates: Literal["reciprocal", "direct"] = "reciprocal",
@@ -719,9 +717,12 @@ class GridMatrix:
             if num_values == 3:
                 self._D_diag = np.array(mesh, dtype="int64")
 
+        if symmetry_dataset is not None:
+            check_grid_symmetry(symmetry_dataset.rotations, self._D_diag, self._Q)
+
     def _run_grg(
         self,
-        symmetry_dataset: SpglibDataset | None,
+        symmetry_dataset: SpglibDataset | SpglibMagneticDataset | None,
         transformation_matrix: ArrayLike | None,
         length: float | None,
         grid_matrix: ArrayLike | None,
@@ -731,10 +732,14 @@ class GridMatrix:
         if symmetry_dataset is None and transformation_matrix is None:
             msg = "symmetry_dataset or transformation_matrix has to be specified."
             raise RuntimeError(msg)
+
         if symmetry_dataset is not None:
             sym_dataset = symmetry_dataset
         else:  # transformation_matrix is not None
-            sym_dataset = self._get_mock_symmetry_dataset(transformation_matrix)
+            sym_dataset = self._get_mock_symmetry_dataset(
+                np.array(transformation_matrix)
+            )
+
         if is_primitive_cell(sym_dataset.rotations):
             # self._D_diag or self._grid_matrix is set in this method.
             self._set_GRG_mesh(
@@ -753,11 +758,13 @@ class GridMatrix:
         )
         return False
 
-    def _get_mock_symmetry_dataset(self, transformation_matrix) -> SimpleNamespace:
+    def _get_mock_symmetry_dataset(
+        self, transformation_matrix: NDArray
+    ) -> MockSymmetryDataset:
         """Return mock symmetry_dataset containing transformation matrix.
 
         Assuming self._lattice as standardized cell, and inverse of
-        trahsformation_matrix indicates original primitive lattice with respect
+        transformation_matrix indicates original primitive lattice with respect
         to self._lattice.
 
         """
@@ -776,20 +783,18 @@ class GridMatrix:
             )
             raise RuntimeError(msg)
 
-        sym_dataset = SimpleNamespace(
-            **{
-                "rotations": np.eye(3, dtype="intc", order="C").reshape(1, 3, 3),
-                "transformation_matrix": transformation_matrix,
-                "std_lattice": self._lattice,
-                "std_types": np.array([1], dtype="intc"),
-                "number": 1,
-            }
+        sym_dataset = MockSymmetryDataset(
+            rotations=np.eye(3, dtype="intc", order="C").reshape(1, 3, 3),
+            transformation_matrix=transformation_matrix,
+            std_lattice=np.array(self._lattice),
+            std_types=np.array([1], dtype="intc"),
+            number=1,
         )
         return sym_dataset
 
     def _set_GRG_mesh(
         self,
-        sym_dataset: SpglibDataset | SimpleNamespace,
+        sym_dataset: SpglibDataset | SpglibMagneticDataset | MockSymmetryDataset,
         length: float | None = None,
         grid_matrix: ArrayLike | None = None,
         force_SNF: bool = False,
@@ -824,7 +829,7 @@ class GridMatrix:
 
     def _get_grid_matrix(
         self,
-        sym_dataset: SpglibDataset | SimpleNamespace,
+        sym_dataset: SpglibDataset | SpglibMagneticDataset | MockSymmetryDataset,
         length: float,
         coordinates: Literal["reciprocal", "direct"] = "reciprocal",
     ) -> NDArray:
@@ -877,6 +882,43 @@ class GridMatrix:
             (inv_tmat_int * conv_mesh_numbers).T, dtype="int64", order="C"
         )
         return grid_matrix
+
+
+def check_grid_symmetry(
+    direct_rotations: NDArray | Sequence,
+    D_diag: NDArray | Sequence,
+    Q: NDArray | Sequence,
+) -> NDArray:
+    """Check whether grid symmetry is satisfied.
+
+    Return rotation matrices for test.
+
+    """
+    QDinv = np.array(Q) * (1 / np.array(D_diag, dtype="double"))
+    rotations = []
+    for r in direct_rotations:
+        _r = np.linalg.inv(np.transpose(r) @ QDinv) @ QDinv
+        rotations.append(np.rint(_r))
+        if not np.allclose(_r, np.rint(_r), atol=1e-5):
+            msg = "Grid symmetry is broken."
+            raise RuntimeError(msg)
+    return np.array(rotations, dtype="int64", order="C")
+
+
+def check_grid_shift_symmetry(
+    is_shift: NDArray | Sequence,
+    grg_rotations: NDArray | Sequence,
+    P: NDArray | Sequence,
+):
+    """Check whether given shift satisfies the symmetry."""
+    Pinv = np.rint(np.linalg.inv(P)).astype(int)
+    assert determinant(Pinv) == 1
+    S = np.array(is_shift, dtype=int)
+    for r in grg_rotations:
+        _S = np.dot(np.dot(Pinv, np.dot(r, P)), S)
+        if not np.array_equal((S - _S) % 2, [0, 0, 0]):
+            msg = "Grid symmetry is broken by grid shift."
+            raise RuntimeError(msg)
 
 
 def get_qpoints_from_bz_grid_points(gps: int | NDArray, bz_grid: BZGrid) -> NDArray:

@@ -15,7 +15,7 @@ dependencies = [
     "PyYAML",
     "matplotlib",
     "h5py",
-    "spglib",
+    "spglib>=2.5.0",
     "phonopy>=2.43,<2.44",
 ]
 license = "BSD-3-Clause"

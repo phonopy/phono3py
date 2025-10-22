@@ -18,6 +18,7 @@ from phono3py.phonon.grid import (
     _get_grid_points_by_bz_rotations_py,
     _get_grid_points_by_rotations,
     _relocate_BZ_grid_address,
+    check_grid_symmetry,
     get_grid_point_from_address,
     get_grid_point_from_address_py,
     get_ir_grid_points,
@@ -30,7 +31,7 @@ def _get_qpoints(adrs, bzgrid):
     )
 
 
-def test_get_grid_point_from_address(agno2_cell):
+def test_get_grid_point_from_address():
     """Test for get_grid_point_from_address.
 
     Compare get_grid_point_from_address from spglib and that
@@ -44,6 +45,29 @@ def test_get_grid_point_from_address(agno2_cell):
         gp_py = get_grid_point_from_address_py(address, mesh)
         # print("%s %d %d" % (address, gp_spglib, gp_py))
         np.testing.assert_equal(gp_spglib, gp_py)
+
+
+def test_GRGrid_agno2(agno2_cell: PhonopyAtoms):
+    """Test of GR-grid symmetry by AgNO2."""
+    ph3 = Phono3py(agno2_cell, primitive_matrix="auto")
+    mesh = 10
+    bzgrid = BZGrid(
+        mesh,
+        lattice=ph3.primitive.cell,
+        symmetry_dataset=ph3.primitive_symmetry.dataset,
+        use_grg=True,
+        is_time_reversal=False,
+    )
+    rotations = check_grid_symmetry(
+        ph3.primitive_symmetry.dataset.rotations, bzgrid.D_diag, bzgrid.Q
+    )
+    for r_ref in bzgrid.rotations:
+        do_match = False
+        for r in rotations:
+            if (r == r_ref).all():
+                do_match = True
+                break
+        assert do_match
 
 
 def test_BZGrid(si_pbesol_111: Phono3py):
@@ -178,6 +202,16 @@ def test_BZGrid_SNF(si_pbesol_111: Phono3py):
         store_dense_gp_map=True,
     )
     _test_BZGrid_SNF(bzgrid2)
+
+    bzgrid3 = BZGrid(
+        mesh,
+        lattice=lat,
+        symmetry_dataset=si_pbesol_111.primitive_symmetry.dataset,
+        is_time_reversal=False,
+        use_grg=True,
+        store_dense_gp_map=True,
+    )
+    _test_BZGrid_SNF(bzgrid3)
 
 
 def test_BZGrid_SNF_with_tmat(si_pbesol_111: Phono3py):
