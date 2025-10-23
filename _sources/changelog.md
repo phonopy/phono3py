@@ -2,7 +2,11 @@
 
 # Change Log
 
-## Aug-9-2025: Version 3.19.3
+## Oct-23-2025: Version 3.19.4
+
+- Refactoring of `grid.py`.
+
+## Oct-21-2025: Version 3.19.3
 
 - Fixed an issue where the `--read-gamma` option did not work.
 
