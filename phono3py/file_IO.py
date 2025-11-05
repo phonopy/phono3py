@@ -403,11 +403,12 @@ def read_fc3_from_hdf5(
 
 
 def write_fc2_to_hdf5(
-    force_constants,
-    filename="fc2.hdf5",
-    p2s_map=None,
-    physical_unit=None,
-    compression="gzip",
+    force_constants: NDArray,
+    filename: str = "fc2.hdf5",
+    p2s_map: NDArray | None = None,
+    physical_unit: str | None = None,
+    compression: str | int | None = "gzip",
+    cutoff: float | None = None,
 ):
     """Write fc2 in fc2.hdf5.
 
@@ -417,22 +418,20 @@ def write_fc2_to_hdf5(
     """
 
     def write_force_constants_to_hdf5(
-        force_constants,
-        filename="force_constants.hdf5",
-        p2s_map=None,
-        physical_unit=None,
-        compression=None,
-        version=None,
+        force_constants: NDArray,
+        filename: str = "force_constants.hdf5",
+        p2s_map: NDArray | None = None,
+        physical_unit: str | None = None,
+        compression: str | int | None = "gzip",
+        cutoff: float | None = None,
+        version: str | None = None,
     ):
-        try:
-            import h5py
-        except ImportError as exc:
-            raise ModuleNotFoundError("You need to install python-h5py.") from exc
-
         with h5py.File(filename, "w") as w:
             w.create_dataset(
                 "force_constants", data=force_constants, compression=compression
             )
+            if cutoff is not None:
+                w.create_dataset("cutoff", data=cutoff)
             if p2s_map is not None:
                 w.create_dataset("p2s_map", data=p2s_map)
             if physical_unit is not None:
@@ -449,6 +448,7 @@ def write_fc2_to_hdf5(
         p2s_map=p2s_map,
         physical_unit=physical_unit,
         compression=compression,
+        cutoff=cutoff,
         version=__version__,
     )
 
