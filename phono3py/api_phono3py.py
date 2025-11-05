@@ -61,7 +61,7 @@ from phonopy.harmonic.force_constants import (
     symmetrize_compact_force_constants,
     symmetrize_force_constants,
 )
-from phonopy.interface.fc_calculator import get_fc2
+from phonopy.interface.fc_calculator import get_fc_solver
 from phonopy.interface.mlp import PhonopyMLP
 from phonopy.interface.pypolymlp import (
     PypolymlpParams,
@@ -319,6 +319,7 @@ class Phono3py:
 
         # Force constants
         self._fc2 = None
+        self._fc2_cutoff = None  # available only symfc
         self._fc3 = None
         self._fc3_nonzero_indices = None  # available only symfc
         self._fc3_cutoff = None  # available only symfc
@@ -388,7 +389,11 @@ class Phono3py:
 
     @property
     def fc3_cutoff(self) -> float | None:
-        """Return cutoff value of fc3."""
+        """Return cutoff value of fc3.
+
+        Available only when symfc is used.
+
+        """
         return self._fc3_cutoff
 
     @property
@@ -407,6 +412,15 @@ class Phono3py:
     @fc2.setter
     def fc2(self, fc2):
         self._fc2 = fc2
+
+    @property
+    def fc2_cutoff(self) -> float | None:
+        """Return cutoff value of fc2.
+
+        Available only when symfc is used.
+
+        """
+        return self._fc2_cutoff
 
     @property
     def force_constants(self) -> NDArray | None:
@@ -1584,6 +1598,7 @@ class Phono3py:
             options = symfc_solver.options
             if options is not None and "cutoff" in options:
                 self._fc3_cutoff = options["cutoff"].get(3, None)
+                self._fc2_cutoff = options["cutoff"].get(2, None)
             if fc3_nonzero_elems is not None:
                 if is_compact_fc:
                     self._fc3_nonzero_indices = np.array(
@@ -1718,22 +1733,30 @@ class Phono3py:
         if self._log_level:
             print("Computing phonon fc2.", flush=True)
 
-        self._fc2 = get_fc2(
+        fc_solver = get_fc_solver(
             self._phonon_supercell,
             disp_dataset,
             primitive=self._phonon_primitive,
             fc_calculator=fc_calculator,
             fc_calculator_options=fc_calculator_options,
+            orders=[2],
             is_compact_fc=is_compact_fc,
             symmetry=self._phonon_supercell_symmetry,
             log_level=self._log_level,
         )
+        self._fc2 = fc_solver.force_constants[2]
 
         if symmetrize_fc2 and (fc_calculator is None or fc_calculator == "traditional"):
             self.symmetrize_fc2(
                 use_symfc_projector=use_symfc_projector and fc_calculator is None,
                 options=fc_calculator_options,
             )
+
+        if fc_calculator == "symfc":
+            symfc_solver = cast(SymfcFCSolver, fc_solver.fc_solver)
+            options = symfc_solver.options
+            if options is not None and "cutoff" in options:
+                self._fc2_cutoff = options["cutoff"].get(2, None)
 
     def symmetrize_fc2(
         self,

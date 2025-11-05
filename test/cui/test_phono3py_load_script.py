@@ -560,6 +560,44 @@ def test_phono3py_load_with_pypolymlp_nacl():
             os.chdir(original_cwd)
 
 
+def test_phono3py_load_fc2_fc3_cutoff():
+    """Test --fc-calc-opt option for both fc2 and fc3 cutoff."""
+    pytest.importorskip("symfc")
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            # Stage1 (preparation)
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_MgO-222rd-444rd.yaml.xz",
+                fc_calculator="symfc",
+                fc_calculator_options="cutoff=3.5|cutoff=3.0",
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            for created_filename in ("phono3py.yaml", "fc2.hdf5", "fc3.hdf5"):
+                file_path = pathlib.Path(created_filename)
+                if file_path.exists():
+                    if created_filename == "fc3.hdf5":
+                        with h5py.File(file_path, "r") as f:
+                            assert "fc3_cutoff" in f
+                            assert f["fc3_cutoff"][()] == pytest.approx(3.0)  # type: ignore
+                    elif created_filename == "fc2.hdf5":
+                        with h5py.File(file_path, "r") as f:
+                            assert "cutoff" in f
+                            assert f["cutoff"][()] == pytest.approx(3.5)  # type: ignore
+                    file_path.unlink()
+
+            _check_no_files()
+
+        finally:
+            os.chdir(original_cwd)
+
+
 def test_phono3py_load_write_phonon():
     """Test phono3py-load script with write_phonon."""
     with tempfile.TemporaryDirectory() as temp_dir:
