@@ -342,6 +342,7 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#convergence-with-respect-to-dataset-size">Convergence with respect to dataset size</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#using-polymlp-yaml-in-phonopy">Using <code class="docutils literal notranslate"><span class="pre">polymlp.yaml</span></code> in phonopy</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#converting-phono3py-pmlp-to-polymlp-yaml">Converting <code class="docutils literal notranslate"><span class="pre">phono3py.pmlp</span></code> to <code class="docutils literal notranslate"><span class="pre">polymlp.yaml</span></code></a></li>
 </ul>
             </nav>
@@ -499,7 +500,7 @@ obtained by</p>
 <h3>Step 4: Development of MLPs<a class="headerlink" href="#step-4-development-of-mlps" title="Link to this heading">#</a></h3>
 <p>The <code class="docutils literal notranslate"><span class="pre">phono3py_params.yaml</span></code> file contains the training data required for
 developing polynomial MLPs when running with the <code class="docutils literal notranslate"><span class="pre">--pypolymlp</span></code> option.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span> <span class="n">phono3py</span><span class="o">-</span><span class="n">load</span> <span class="o">--</span><span class="n">pypolymlp</span> <span class="n">phono3py_params</span><span class="o">.</span><span class="n">yaml</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span><span class="o">-</span><span class="n">load</span> <span class="o">--</span><span class="n">pypolymlp</span> <span class="n">phono3py_params</span><span class="o">.</span><span class="n">yaml</span>
         <span class="n">_</span>                      <span class="n">_____</span>
   <span class="n">_</span> <span class="n">__</span> <span class="o">|</span> <span class="o">|</span><span class="n">__</span>   <span class="n">___</span>  <span class="n">_</span> <span class="n">__</span>   <span class="n">___</span><span class="o">|</span><span class="n">___</span> <span class="o">/</span> <span class="n">_</span> <span class="n">__</span>  <span class="n">_</span>   <span class="n">_</span>
  <span class="o">|</span> <span class="s1">&#39;_ \| &#39;</span><span class="n">_</span> \ <span class="o">/</span> <span class="n">_</span> \<span class="o">|</span> <span class="s1">&#39;_ \ / _ \ |_ \| &#39;</span><span class="n">_</span> \<span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span>
@@ -900,6 +901,25 @@ mind, it may be convenient to generate a sufficiently large number of supercells
 with random displacements in advance, such as 1000 supercells, before starting
 the LTC calculation with pypolymlp.</p>
 </section>
+<section id="using-polymlp-yaml-in-phonopy">
+<h2>Using <code class="docutils literal notranslate"><span class="pre">polymlp.yaml</span></code> in phonopy<a class="headerlink" href="#using-polymlp-yaml-in-phonopy" title="Link to this heading">#</a></h2>
+<p>It may be useful to examine the harmonic phonon band structure calculated using
+the MLPs developed as described on this page. The file <code class="docutils literal notranslate"><span class="pre">phonopy_params.yaml</span></code> is
+required to run phonopy and can be obtained by converting <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> as
+follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">phono3py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">phonopy</span>
+<span class="n">ph3</span> <span class="o">=</span> <span class="n">phono3py</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;phono3py.yaml&quot;</span><span class="p">)</span>
+<span class="n">ph</span> <span class="o">=</span> <span class="n">phonopy</span><span class="o">.</span><span class="n">Phonopy</span><span class="p">(</span><span class="n">unitcell</span><span class="o">=</span><span class="n">ph3</span><span class="o">.</span><span class="n">unitcell</span><span class="p">,</span> <span class="n">supercell_matrix</span><span class="o">=</span><span class="n">ph3</span><span class="o">.</span><span class="n">phonon_supercell_matrix</span><span class="p">,</span> <span class="n">primitive_matrix</span><span class="o">=</span><span class="n">ph3</span><span class="o">.</span><span class="n">primitive_matrix</span><span class="p">)</span>
+<span class="n">ph</span><span class="o">.</span><span class="n">nac_params</span> <span class="o">=</span> <span class="n">ph3</span><span class="o">.</span><span class="n">nac_params</span>
+<span class="n">ph</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;phonopy_params.yaml&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Then calculate the harmonic phonon band structure using:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phonopy-load<span class="w"> </span>phonopy_params.yaml<span class="w"> </span>--pypolymlp<span class="w"> </span>-d<span class="w"> </span>--band<span class="w"> </span>auto<span class="w"> </span>-p
+</pre></div>
+</div>
+</section>
 <section id="converting-phono3py-pmlp-to-polymlp-yaml">
 <h2>Converting <code class="docutils literal notranslate"><span class="pre">phono3py.pmlp</span></code> to <code class="docutils literal notranslate"><span class="pre">polymlp.yaml</span></code><a class="headerlink" href="#converting-phono3py-pmlp-to-polymlp-yaml" title="Link to this heading">#</a></h2>
 <p>In older versions, polynomial MLPs were stored in <code class="docutils literal notranslate"><span class="pre">phono3py.pmlp</span></code>. This file can
@@ -973,6 +993,7 @@ be converted to <code class="docutils literal notranslate"><span class="pre">pol
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#convergence-with-respect-to-dataset-size">Convergence with respect to dataset size</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#using-polymlp-yaml-in-phonopy">Using <code class="docutils literal notranslate"><span class="pre">polymlp.yaml</span></code> in phonopy</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#converting-phono3py-pmlp-to-polymlp-yaml">Converting <code class="docutils literal notranslate"><span class="pre">phono3py.pmlp</span></code> to <code class="docutils literal notranslate"><span class="pre">polymlp.yaml</span></code></a></li>
 </ul>
   </nav></div>
