@@ -583,7 +583,7 @@ follows:
 import phono3py
 import phonopy
 ph3 = phono3py.load("phono3py.yaml")
-ph = phonopy.Phonopy(unitcell=ph3.unitcell, supercell_matrix=ph3.phonon_supercell_matrix, primitive_matrix=ph3.primitive_matrix)
+ph = phonopy.Phonopy(unitcell=ph3.unitcell, supercell_matrix=ph3.supercell_matrix, primitive_matrix=ph3.primitive_matrix)
 ph.nac_params = ph3.nac_params
 ph.save("phonopy_params.yaml")
 ```
