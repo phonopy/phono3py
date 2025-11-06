@@ -594,6 +594,34 @@ Then calculate the harmonic phonon band structure using:
 % phonopy-load phonopy_params.yaml --pypolymlp -d --band auto -p
 ```
 
+## Extending the Number of Displacements in `phono3py_disp.yaml`
+
+When you have generated 100 supercells with displacements as shown above but
+later realize that more supercells are necessary (say, 200), you don't need to
+perform 200 supercell force calculations from scratch. Instead, you can reuse
+the 100 results you've already calculated. Here is the procedure:
+
+```bash
+% mv phono3py_disp.yaml phono3py_disp_orig.yaml
+% phono3py -c phono3py_disp_orig.yaml --rd 200
+% rm POSCAR-{00001..00100}
+% mv phono3py_disp.yaml phono3py_disp_200.yaml
+```
+
+You can then perform supercell force calculations for the structures from
+`POSCAR-00101` to `POSCAR-00200`. To finalize the setup, recreate
+`phono3py_disp.yaml` using the following Python script:
+
+```python
+import phono3py
+ph3_orig = phono3py.load("phono3py_disp_orig.yaml")
+ph3 = phono3py.load("phono3py_disp_200.yaml")
+displacements = ph3.displacements
+displacements[:100] = ph3_orig.displacements[:100]
+ph3.displacements = displacements
+ph3.save("phono3py_disp.yaml")
+```
+
 ## Converting `phono3py.pmlp` to `polymlp.yaml`
 
 In older versions, polynomial MLPs were stored in `phono3py.pmlp`. This file can

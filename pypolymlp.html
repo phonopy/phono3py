@@ -343,6 +343,7 @@ document.write(`
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#convergence-with-respect-to-dataset-size">Convergence with respect to dataset size</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#using-polymlp-yaml-in-phonopy">Using <code class="docutils literal notranslate"><span class="pre">polymlp.yaml</span></code> in phonopy</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extending-the-number-of-displacements-in-phono3py-disp-yaml">Extending the Number of Displacements in <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#converting-phono3py-pmlp-to-polymlp-yaml">Converting <code class="docutils literal notranslate"><span class="pre">phono3py.pmlp</span></code> to <code class="docutils literal notranslate"><span class="pre">polymlp.yaml</span></code></a></li>
 </ul>
             </nav>
@@ -920,6 +921,31 @@ follows:</p>
 </pre></div>
 </div>
 </section>
+<section id="extending-the-number-of-displacements-in-phono3py-disp-yaml">
+<h2>Extending the Number of Displacements in <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code><a class="headerlink" href="#extending-the-number-of-displacements-in-phono3py-disp-yaml" title="Link to this heading">#</a></h2>
+<p>When you have generated 100 supercells with displacements as shown above but
+later realize that more supercells are necessary (say, 200), you don’t need to
+perform 200 supercell force calculations from scratch. Instead, you can reuse
+the 100 results you’ve already calculated. Here is the procedure:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>mv<span class="w"> </span>phono3py_disp.yaml<span class="w"> </span>phono3py_disp_orig.yaml
+%<span class="w"> </span>phono3py<span class="w"> </span>-c<span class="w"> </span>phono3py_disp_orig.yaml<span class="w"> </span>--rd<span class="w"> </span><span class="m">200</span>
+%<span class="w"> </span>rm<span class="w"> </span>POSCAR-<span class="o">{</span><span class="m">00001</span>..00100<span class="o">}</span>
+%<span class="w"> </span>mv<span class="w"> </span>phono3py_disp.yaml<span class="w"> </span>phono3py_disp_200.yaml
+</pre></div>
+</div>
+<p>You can then perform supercell force calculations for the structures from
+<code class="docutils literal notranslate"><span class="pre">POSCAR-00101</span></code> to <code class="docutils literal notranslate"><span class="pre">POSCAR-00200</span></code>. To finalize the setup, recreate
+<code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> using the following Python script:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">phono3py</span>
+<span class="n">ph3_orig</span> <span class="o">=</span> <span class="n">phono3py</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;phono3py_disp_orig.yaml&quot;</span><span class="p">)</span>
+<span class="n">ph3</span> <span class="o">=</span> <span class="n">phono3py</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;phono3py_disp_200.yaml&quot;</span><span class="p">)</span>
+<span class="n">displacements</span> <span class="o">=</span> <span class="n">ph3</span><span class="o">.</span><span class="n">displacements</span>
+<span class="n">displacements</span><span class="p">[:</span><span class="mi">100</span><span class="p">]</span> <span class="o">=</span> <span class="n">ph3_orig</span><span class="o">.</span><span class="n">displacements</span><span class="p">[:</span><span class="mi">100</span><span class="p">]</span>
+<span class="n">ph3</span><span class="o">.</span><span class="n">displacements</span> <span class="o">=</span> <span class="n">displacements</span>
+<span class="n">ph3</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;phono3py_disp.yaml&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <section id="converting-phono3py-pmlp-to-polymlp-yaml">
 <h2>Converting <code class="docutils literal notranslate"><span class="pre">phono3py.pmlp</span></code> to <code class="docutils literal notranslate"><span class="pre">polymlp.yaml</span></code><a class="headerlink" href="#converting-phono3py-pmlp-to-polymlp-yaml" title="Link to this heading">#</a></h2>
 <p>In older versions, polynomial MLPs were stored in <code class="docutils literal notranslate"><span class="pre">phono3py.pmlp</span></code>. This file can
@@ -994,6 +1020,7 @@ be converted to <code class="docutils literal notranslate"><span class="pre">pol
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#convergence-with-respect-to-dataset-size">Convergence with respect to dataset size</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#using-polymlp-yaml-in-phonopy">Using <code class="docutils literal notranslate"><span class="pre">polymlp.yaml</span></code> in phonopy</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extending-the-number-of-displacements-in-phono3py-disp-yaml">Extending the Number of Displacements in <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#converting-phono3py-pmlp-to-polymlp-yaml">Converting <code class="docutils literal notranslate"><span class="pre">phono3py.pmlp</span></code> to <code class="docutils literal notranslate"><span class="pre">polymlp.yaml</span></code></a></li>
 </ul>
   </nav></div>
