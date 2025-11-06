@@ -619,6 +619,7 @@ ph3 = phono3py.load("phono3py_disp_200.yaml")
 displacements = ph3.displacements
 displacements[:100] = ph3_orig.displacements[:100]
 ph3.displacements = displacements
+ph3.nac_params = ph3_orig.nac_params
 ph3.save("phono3py_disp.yaml")
 ```
 
