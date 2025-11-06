@@ -594,7 +594,7 @@ Then calculate the harmonic phonon band structure using:
 % phonopy-load phonopy_params.yaml --pypolymlp -d --band auto -p
 ```
 
-## Extending the Number of Displacements in `phono3py_disp.yaml`
+## Extending the number of displacements in `phono3py_disp.yaml`
 
 When you have generated 100 supercells with displacements as shown above but
 later realize that more supercells are necessary (say, 200), you don't need to
