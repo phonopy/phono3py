@@ -61,7 +61,7 @@ from phonopy.harmonic.force_constants import (
     symmetrize_compact_force_constants,
     symmetrize_force_constants,
 )
-from phonopy.interface.fc_calculator import get_fc2
+from phonopy.interface.fc_calculator import get_fc_solver
 from phonopy.interface.mlp import PhonopyMLP
 from phonopy.interface.pypolymlp import (
     PypolymlpParams,
@@ -179,7 +179,7 @@ class Phono3py:
         is_symmetry: bool = True,
         is_mesh_symmetry: bool = True,
         use_grg: bool = False,
-        SNF_coordinates: str = "reciprocal",
+        SNF_coordinates: Literal["reciprocal", "direct"] = "reciprocal",
         make_r0_average: bool = True,
         symprec: float = 1e-5,
         calculator: str | None = None,
@@ -225,7 +225,7 @@ class Phono3py:
             Default is True.
         use_grg : bool, optional
             Use generalized regular grid when True. Default is False.
-        SNF_coordinates : str, optional
+        SNF_coordinates : Literal["direct", "reciprocal"], optional
             `reciprocal` or `direct`. Space of coordinates to generate grid
             generating matrix either in direct or reciprocal space. The default
             is `reciprocal`.
@@ -319,6 +319,7 @@ class Phono3py:
 
         # Force constants
         self._fc2 = None
+        self._fc2_cutoff = None  # available only symfc
         self._fc3 = None
         self._fc3_nonzero_indices = None  # available only symfc
         self._fc3_cutoff = None  # available only symfc
@@ -388,7 +389,11 @@ class Phono3py:
 
     @property
     def fc3_cutoff(self) -> float | None:
-        """Return cutoff value of fc3."""
+        """Return cutoff value of fc3.
+
+        Available only when symfc is used.
+
+        """
         return self._fc3_cutoff
 
     @property
@@ -407,6 +412,15 @@ class Phono3py:
     @fc2.setter
     def fc2(self, fc2):
         self._fc2 = fc2
+
+    @property
+    def fc2_cutoff(self) -> float | None:
+        """Return cutoff value of fc2.
+
+        Available only when symfc is used.
+
+        """
+        return self._fc2_cutoff
 
     @property
     def force_constants(self) -> NDArray | None:
@@ -1584,6 +1598,7 @@ class Phono3py:
             options = symfc_solver.options
             if options is not None and "cutoff" in options:
                 self._fc3_cutoff = options["cutoff"].get(3, None)
+                self._fc2_cutoff = options["cutoff"].get(2, None)
             if fc3_nonzero_elems is not None:
                 if is_compact_fc:
                     self._fc3_nonzero_indices = np.array(
@@ -1718,22 +1733,30 @@ class Phono3py:
         if self._log_level:
             print("Computing phonon fc2.", flush=True)
 
-        self._fc2 = get_fc2(
+        fc_solver = get_fc_solver(
             self._phonon_supercell,
             disp_dataset,
             primitive=self._phonon_primitive,
             fc_calculator=fc_calculator,
             fc_calculator_options=fc_calculator_options,
+            orders=[2],
             is_compact_fc=is_compact_fc,
             symmetry=self._phonon_supercell_symmetry,
             log_level=self._log_level,
         )
+        self._fc2 = fc_solver.force_constants[2]
 
         if symmetrize_fc2 and (fc_calculator is None or fc_calculator == "traditional"):
             self.symmetrize_fc2(
                 use_symfc_projector=use_symfc_projector and fc_calculator is None,
                 options=fc_calculator_options,
             )
+
+        if fc_calculator == "symfc":
+            symfc_solver = cast(SymfcFCSolver, fc_solver.fc_solver)
+            options = symfc_solver.options
+            if options is not None and "cutoff" in options:
+                self._fc2_cutoff = options["cutoff"].get(2, None)
 
     def symmetrize_fc2(
         self,
@@ -1852,7 +1875,7 @@ class Phono3py:
     def run_imag_self_energy(
         self,
         grid_points,
-        temperatures,
+        temperatures: NDArray | Sequence,
         frequency_points=None,
         frequency_step=None,
         num_frequency_points=None,
@@ -2157,7 +2180,7 @@ class Phono3py:
     def run_thermal_conductivity(
         self,
         is_LBTE: bool = False,
-        temperatures: ArrayLike | None = None,
+        temperatures: Sequence | None = None,
         is_isotope: bool = False,
         mass_variances: Sequence | None = None,
         grid_points: ArrayLike | None = None,
@@ -2174,7 +2197,7 @@ class Phono3py:
         write_gamma: bool = False,
         read_gamma: bool = False,
         is_N_U: bool = False,
-        conductivity_type: str | None = None,
+        conductivity_type: Literal["wigner", "kubo"] | None = None,
         write_kappa: bool = False,
         write_gamma_detail: bool = False,
         write_collision: bool = False,
@@ -2766,16 +2789,35 @@ class Phono3py:
         # initialization related to mesh
         self._interaction = None
 
-        self._bz_grid = BZGrid(
-            mesh,
-            lattice=self._primitive.cell,
-            symmetry_dataset=self._primitive_symmetry.dataset,
-            is_time_reversal=self._is_symmetry,
-            use_grg=self._use_grg,
-            force_SNF=False,
-            SNF_coordinates=self._SNF_coordinates,
-            store_dense_gp_map=True,
-        )
+        try:
+            self._bz_grid = BZGrid(
+                mesh,
+                lattice=self._primitive.cell,
+                symmetry_dataset=self._primitive_symmetry.dataset,
+                is_time_reversal=self._is_symmetry,
+                use_grg=self._use_grg,
+                force_SNF=False,
+                SNF_coordinates=self._SNF_coordinates,
+                store_dense_gp_map=True,
+            )
+        except RuntimeError as e:
+            if "Grid symmetry is broken." in str(e) and isinstance(mesh, (float, int)):
+                self._bz_grid = BZGrid(
+                    mesh,
+                    lattice=self._primitive.cell,
+                    symmetry_dataset=self._primitive_symmetry.dataset,
+                    is_time_reversal=self._is_symmetry,
+                    use_grg=True,
+                    force_SNF=False,
+                    SNF_coordinates=self._SNF_coordinates,
+                    store_dense_gp_map=True,
+                )
+            else:
+                msg = (
+                    "Grid symmetry is broken. If grid symmetry is uncertain, "
+                    "try automatic mesh generation using a scalar value."
+                )
+                raise RuntimeError(msg) from e
 
     def _init_dynamical_matrix(self):
         if self._interaction is None:

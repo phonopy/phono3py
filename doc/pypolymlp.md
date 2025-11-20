@@ -157,7 +157,7 @@ The `phono3py_params.yaml` file contains the training data required for
 developing polynomial MLPs when running with the `--pypolymlp` option.
 
 ```
- phono3py-load --pypolymlp phono3py_params.yaml
+% phono3py-load --pypolymlp phono3py_params.yaml
         _                      _____
   _ __ | |__   ___  _ __   ___|___ / _ __  _   _
  | '_ \| '_ \ / _ \| '_ \ / _ \ |_ \| '_ \| | | |
@@ -571,6 +571,57 @@ the next 100 supercells) will be computed and included. With this procedure in
 mind, it may be convenient to generate a sufficiently large number of supercells
 with random displacements in advance, such as 1000 supercells, before starting
 the LTC calculation with pypolymlp.
+
+## Using `polymlp.yaml` in phonopy
+
+It may be useful to examine the harmonic phonon band structure calculated using
+the MLPs developed as described on this page. The file `phonopy_params.yaml` is
+required to run phonopy and can be obtained by converting `phono3py.yaml` as
+follows:
+
+```python
+import phono3py
+import phonopy
+ph3 = phono3py.load("phono3py.yaml")
+ph = phonopy.Phonopy(unitcell=ph3.unitcell, supercell_matrix=ph3.supercell_matrix, primitive_matrix=ph3.primitive_matrix)
+ph.nac_params = ph3.nac_params
+ph.save("phonopy_params.yaml")
+```
+
+Then calculate the harmonic phonon band structure using:
+
+```bash
+% phonopy-load phonopy_params.yaml --pypolymlp -d --band auto -p
+```
+
+## Extending the number of displacements in `phono3py_disp.yaml`
+
+When you have generated 100 supercells with displacements as shown above but
+later realize that more supercells are necessary (say, 200), you don't need to
+perform 200 supercell force calculations from scratch. Instead, you can reuse
+the 100 results you've already calculated. Here is the procedure:
+
+```bash
+% mv phono3py_disp.yaml phono3py_disp_orig.yaml
+% phono3py -c phono3py_disp_orig.yaml --rd 200
+% rm POSCAR-{00001..00100}
+% mv phono3py_disp.yaml phono3py_disp_200.yaml
+```
+
+You can then perform supercell force calculations for the structures from
+`POSCAR-00101` to `POSCAR-00200`. To finalize the setup, recreate
+`phono3py_disp.yaml` using the following Python script:
+
+```python
+import phono3py
+ph3_orig = phono3py.load("phono3py_disp_orig.yaml")
+ph3 = phono3py.load("phono3py_disp_200.yaml")
+displacements = ph3.displacements
+displacements[:100] = ph3_orig.displacements[:100]
+ph3.displacements = displacements
+ph3.nac_params = ph3_orig.nac_params
+ph3.save("phono3py_disp.yaml")
+```
 
 ## Converting `phono3py.pmlp` to `polymlp.yaml`
 

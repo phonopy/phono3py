@@ -810,6 +810,7 @@ def _produce_force_constants(
             ph3py.fc2,
             p2s_map=ph3py.phonon_primitive.p2s_map,
             physical_unit="eV/angstrom^2",
+            cutoff=ph3py.fc2_cutoff,
             compression=settings.hdf5_compression,
         )
         if log_level:
