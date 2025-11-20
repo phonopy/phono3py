@@ -2,6 +2,11 @@
 
 # Change Log
 
+## Nov-20-2025: Version 3.20.0
+
+- Automatic generalized-regular-grid mesh generation with a scalar value is
+  chosen when a conventional regular grid cannot satisfies symmetry.
+
 ## Oct-23-2025: Version 3.19.4
 
 - Refactoring of `grid.py`.
