@@ -580,7 +580,7 @@ class ImagSelfEnergy:
 def get_imag_self_energy(
     interaction: Interaction,
     grid_points: ArrayLike,
-    temperatures: ArrayLike,
+    temperatures: NDArray | Sequence,
     sigmas: Sequence[float | None] | None = None,
     frequency_points: ArrayLike | None = None,
     frequency_step: float | None = None,

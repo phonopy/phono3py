@@ -39,7 +39,7 @@ from __future__ import annotations
 import os
 import sys
 from collections.abc import Sequence
-from typing import Union
+from typing import Literal, Union
 
 from numpy.typing import ArrayLike
 
@@ -77,7 +77,7 @@ def get_thermal_conductivity_LBTE(
     is_kappa_star: bool = True,
     gv_delta_q: float | None = None,
     is_full_pp: bool = False,
-    conductivity_type: str | None = None,
+    conductivity_type: Literal["wigner", "kubo"] | None = None,
     pinv_cutoff: float = 1.0e-8,
     pinv_solver: int = 0,  # default: dsyev in lapacke
     pinv_method: int = 0,  # default: abs(eig) < cutoff
