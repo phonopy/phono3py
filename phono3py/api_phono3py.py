@@ -77,9 +77,8 @@ from phonopy.structure.cells import (
     Primitive,
     Supercell,
     get_primitive,
-    get_primitive_matrix,
+    get_primitive_matrix_with_auto,
     get_supercell,
-    guess_primitive_matrix,
     shape_supercell_matrix,
 )
 from phonopy.structure.symmetry import Symmetry
@@ -171,9 +170,12 @@ class Phono3py:
     def __init__(
         self,
         unitcell: PhonopyAtoms,
-        supercell_matrix: ArrayLike | None = None,
-        primitive_matrix: str | ArrayLike | None = None,
-        phonon_supercell_matrix: ArrayLike | None = None,
+        supercell_matrix: Sequence[Sequence[int]] | NDArray | None = None,
+        primitive_matrix: Literal["P", "F", "I", "A", "C", "R", "auto"]
+        | Sequence[Sequence[float]]
+        | NDArray
+        | None = None,
+        phonon_supercell_matrix: Sequence[Sequence[int]] | NDArray | None = None,
         cutoff_frequency: float = 1e-4,
         frequency_factor_to_THz: float | None = None,
         is_symmetry: bool = True,
@@ -251,7 +253,7 @@ class Phono3py:
         self._is_symmetry = is_symmetry
         self._is_mesh_symmetry = is_mesh_symmetry
         self._use_grg = use_grg
-        self._SNF_coordinates = SNF_coordinates
+        self._SNF_coordinates: Literal["reciprocal", "direct"] = SNF_coordinates
 
         self._make_r0_average = make_r0_average
 
@@ -264,7 +266,9 @@ class Phono3py:
         self._supercell_matrix = np.array(
             shape_supercell_matrix(supercell_matrix), dtype="int64", order="C"
         )
-        self._primitive_matrix = self._determine_primitive_matrix(primitive_matrix)
+        self._primitive_matrix = get_primitive_matrix_with_auto(
+            self._unitcell, primitive_matrix, symprec=self._symprec
+        )
         self._nac_params = None
         if phonon_supercell_matrix is not None:
             self._phonon_supercell_matrix = np.array(
@@ -2772,15 +2776,6 @@ class Phono3py:
             t_mat = np.dot(inv_supercell_matrix, primitive_matrix)
 
         return get_primitive(supercell, t_mat, self._symprec, store_dense_svecs=True)
-
-    def _determine_primitive_matrix(
-        self, primitive_matrix: str | ArrayLike | None
-    ) -> NDArray | None:
-        pmat = get_primitive_matrix(primitive_matrix, symprec=self._symprec)
-        if isinstance(pmat, str) and pmat == "auto":
-            return guess_primitive_matrix(self._unitcell, symprec=self._symprec)
-        else:
-            return pmat
 
     def _set_mesh_numbers(
         self,
