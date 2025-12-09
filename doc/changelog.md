@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Dec-9-2025: Version 3.21.0
+
+- Maintenance release including avoiding nanobind 2.10.0
+
 ## Nov-20-2025: Version 3.20.0
 
 - Automatic generalized-regular-grid mesh generation with a scalar value is
