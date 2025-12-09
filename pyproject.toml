@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core", "nanobind!=2.10.0", "numpy"]
+requires = ["scikit-build-core", "nanobind<2.10.0", "numpy"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -16,7 +16,7 @@ dependencies = [
     "matplotlib",
     "h5py",
     "spglib>=2.5.0",
-    "phonopy>=2.44,<2.45",
+    "phonopy>=2.45.1,<2.46",
 ]
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
