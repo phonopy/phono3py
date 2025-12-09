@@ -38,9 +38,10 @@ from __future__ import annotations
 
 import dataclasses
 import os
+from collections.abc import Sequence
 
 import numpy as np
-from numpy.typing import ArrayLike
+from numpy.typing import NDArray
 from phonopy.cui.collect_cell_info import CellInfoResult
 from phonopy.cui.collect_cell_info import get_cell_info as phonopy_get_cell_info
 from phonopy.interface.calculator import write_supercells_with_displacements
@@ -67,7 +68,7 @@ class Phono3pyCellInfoResult(CellInfoResult):
     """
 
     phono3py_yaml: Phono3pyYaml | None = None
-    phonon_supercell_matrix: ArrayLike | None = None
+    phonon_supercell_matrix: Sequence[Sequence[int]] | NDArray | None = None
 
 
 def get_cell_info(
