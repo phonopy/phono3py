@@ -218,29 +218,36 @@ class Phono3pyYamlLoader(PhonopyYamlLoaderBase):
             d2_list = d1.get("paired_with")
             if d2_list is None:  # backward compatibility
                 d2_list = d1.get("second_atoms")
+            assert d2_list is not None
             for d2 in d2_list:
-                if "forces" in d2:
-                    disp2_id = self._parse_fc3_dataset_type1_with_forces(
-                        data1, d2, disp2_id
-                    )
-                else:
+                if "displacements" in d2:
                     disp2_id = self._parse_fc3_dataset_type1_without_forces(
                         data1, d2, disp2_id
                     )
+                else:
+                    disp2_id = self._parse_fc3_dataset_type1_with_disp_pairs(
+                        data1, d2, disp2_id
+                    )
+
             dataset["first_atoms"].append(data1)
         return dataset
 
-    def _parse_fc3_dataset_type1_with_forces(self, data1, d2, disp2_id):
-        """Parse fc3 type1-dataset that has forces in it.
+    def _parse_fc3_dataset_type1_with_disp_pairs(
+        self, data1: dict, d2: dict, disp2_id: int
+    ) -> int:
+        """Parse fc3 type1-dataset with lists of displacement pairs.
 
-        One displacement couples with one force-set in yaml.
+        One displacement can couple with one force-set.
 
         """
         second_atom_dict = {
             "number": d2["atom"] - 1,
             "displacement": np.array(d2["displacement"], dtype="double"),
-            "forces": np.array(d2["forces"], dtype="double", order="C"),
         }
+        if "forces" in d2:
+            second_atom_dict.update(
+                {"forces": np.array(d2["forces"], dtype="double", order="C")}
+            )
         if "displacement_id" in d2:
             d2_id = d2["displacement_id"]
             if disp2_id + 1 != d2_id:
@@ -255,7 +262,9 @@ class Phono3pyYamlLoader(PhonopyYamlLoaderBase):
         data1["second_atoms"].append(second_atom_dict)
         return disp2_id
 
-    def _parse_fc3_dataset_type1_without_forces(self, data1, d2, disp2_id):
+    def _parse_fc3_dataset_type1_without_forces(
+        self, data1: dict, d2: dict, disp2_id: int
+    ) -> int:
         """Parse fc3 type1-dataset that doesn't have forces in it.
 
         Displacements are stored in `displacements` as a list.
