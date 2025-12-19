@@ -540,7 +540,7 @@ def write_imag_self_energy_at_grid_point(
     gammas_filename += ".dat"
 
     w = open(gammas_filename, "w")
-    for freq, g in zip(frequencies, gammas):
+    for freq, g in zip(frequencies, gammas, strict=True):
         w.write("%15.7f %20.15e\n" % (freq, g))
     w.close()
 
@@ -570,7 +570,7 @@ def write_joint_dos(
             is_mesh_symmetry=is_mesh_symmetry,
         )
     else:
-        for jdos_at_t, t in zip(jdos, temperatures):
+        for jdos_at_t, t in zip(jdos, temperatures, strict=True):
             return _write_joint_dos_at_t(
                 gp,
                 mesh,
@@ -606,7 +606,7 @@ def _write_joint_dos_at_t(
     jdos_filename += ".dat"
 
     with open(jdos_filename, "w") as w:
-        for omega, vals in zip(frequencies, jdos):
+        for omega, vals in zip(frequencies, jdos, strict=True):
             w.write("%15.7f" % omega)
             w.write((" %20.15e" * len(vals)) % tuple(vals))
             w.write("\n")
@@ -642,7 +642,7 @@ def write_real_self_energy_at_grid_point(
     deltas_filename += ".dat"
 
     with open(deltas_filename, "w") as w:
-        for freq, v in zip(frequency_points, deltas):
+        for freq, v in zip(frequency_points, deltas, strict=True):
             w.write("%15.7f %20.15e\n" % (freq, v))
 
     return deltas_filename
@@ -728,7 +728,7 @@ def write_spectral_function_at_grid_point(
     spectral_filename += ".dat"
 
     with open(spectral_filename, "w") as w:
-        for freq, v in zip(frequency_points, spectral_functions):
+        for freq, v in zip(frequency_points, spectral_functions, strict=True):
             w.write("%15.7f %20.15e\n" % (freq, v))
 
     return spectral_filename
@@ -1551,15 +1551,15 @@ def write_ir_grid_points(bz_grid, grid_points, grid_weights, primitive_lattice):
     lines = []
     lines.append("mesh: [ %d, %d, %d ]" % tuple(bz_grid.D_diag))
     lines.append("reciprocal_lattice:")
-    for vec, axis in zip(primitive_lattice.T, ("a*", "b*", "c*")):
+    for vec, axis in zip(primitive_lattice.T, ("a*", "b*", "c*"), strict=True):
         lines.append("- [ %12.8f, %12.8f, %12.8f ] # %2s" % (tuple(vec) + (axis,)))
     lines.append("microzone_lattice:")
-    for vec, axis in zip(bz_grid.microzone_lattice.T, ("a*", "b*", "c*")):
+    for vec, axis in zip(bz_grid.microzone_lattice.T, ("a*", "b*", "c*"), strict=True):
         lines.append("- [ %12.8f, %12.8f, %12.8f ] # %2s" % (tuple(vec) + (axis,)))
     lines.append("num_reduced_ir_grid_points: %d" % len(grid_points))
     lines.append("ir_grid_points:  # [address, weight]")
 
-    for g, weight in zip(grid_points, grid_weights):
+    for g, weight in zip(grid_points, grid_weights, strict=True):
         lines.append("- grid_point: %d" % g)
         lines.append("  weight: %d" % weight)
         lines.append(
@@ -1840,6 +1840,6 @@ def _write_cell_yaml(w, supercell):
     symbols = supercell.get_chemical_symbols()
     positions = supercell.get_scaled_positions()
     w.write("atoms:\n")
-    for i, (s, v) in enumerate(zip(symbols, positions)):
+    for i, (s, v) in enumerate(zip(symbols, positions, strict=True)):
         w.write("- symbol: %-2s # %d\n" % (s, i + 1))
         w.write("  position: [ %18.14f,%18.14f,%18.14f ]\n" % tuple(v))

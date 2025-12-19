@@ -282,7 +282,7 @@ class Phono3pyYamlLoader(PhonopyYamlLoaderBase):
             for d2_dict in disps:
                 d2_dict["included"] = d2["included"]
         if "displacement_ids" in d2:
-            for d2_id, d2_dict in zip(d2["displacement_ids"], disps):
+            for d2_id, d2_dict in zip(d2["displacement_ids"], disps, strict=True):
                 if disp2_id + 1 != d2_id:
                     msg = f"{d2_id} != {disp2_id + 1}. Dataset may be broken."
                     raise RuntimeError(msg)

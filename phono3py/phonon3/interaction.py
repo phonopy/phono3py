@@ -715,7 +715,7 @@ class Interaction:
             distances = np.linalg.norm(
                 np.dot(qpoints, np.linalg.inv(self._primitive.cell).T), axis=1
             )
-            for qpt, dist in zip(qpoints, distances):
+            for qpt, dist in zip(qpoints, distances, strict=True):
                 print(qpt, dist)
 
     def _get_reciprocal_rotations_in_space_group_operations(self):

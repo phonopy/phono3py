@@ -199,7 +199,7 @@ class ShowCalcProgress:
                     ("#%6s       " + " %-10s" * 6 + "#ipm")
                     % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
                 )
-                for j, (t, k) in enumerate(zip(temperatures, kappa[i])):
+                for j, (t, k) in enumerate(zip(temperatures, kappa[i], strict=True)):
                     print(
                         ("%7.1f" + " %10.3f" * 6 + " %d/%d")
                         % (
@@ -213,7 +213,7 @@ class ShowCalcProgress:
                     ("#%6s       " + " %-10s" * 6)
                     % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
                 )
-                for t, k in zip(temperatures, kappa[i]):
+                for t, k in zip(temperatures, kappa[i], strict=True):
                     print(("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
             print("", flush=True)
 
@@ -240,7 +240,9 @@ class ShowCalcProgress:
                     ("#%6s       " + " %-10s" * 6 + "#ipm")
                     % ("      \t   T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
                 )
-                for j, (t, k) in enumerate(zip(temperatures, kappa_P_RTA[i])):
+                for j, (t, k) in enumerate(
+                    zip(temperatures, kappa_P_RTA[i], strict=True)
+                ):
                     print(
                         "K_P\t"
                         + ("%7.1f" + " %10.3f" * 6 + " %d/%d")
@@ -251,7 +253,7 @@ class ShowCalcProgress:
                         )
                     )
                 print(" ")
-                for j, (t, k) in enumerate(zip(temperatures, kappa_C[i])):
+                for j, (t, k) in enumerate(zip(temperatures, kappa_C[i], strict=True)):
                     print(
                         "K_C\t"
                         + ("%7.1f" + " %10.3f" * 6 + " %d/%d")
@@ -262,7 +264,9 @@ class ShowCalcProgress:
                         )
                     )
                 print(" ")
-                for j, (t, k) in enumerate(zip(temperatures, kappa_TOT_RTA[i])):
+                for j, (t, k) in enumerate(
+                    zip(temperatures, kappa_TOT_RTA[i], strict=True)
+                ):
                     print(
                         "K_T\t"
                         + ("%7.1f" + " %10.3f" * 6 + " %d/%d")
@@ -278,13 +282,13 @@ class ShowCalcProgress:
                     % ("      \t   T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
                 )
                 if kappa_P_RTA is not None:
-                    for t, k in zip(temperatures, kappa_P_RTA[i]):
+                    for t, k in zip(temperatures, kappa_P_RTA[i], strict=True):
                         print("K_P\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
                     print(" ")
-                    for t, k in zip(temperatures, kappa_C[i]):
+                    for t, k in zip(temperatures, kappa_C[i], strict=True):
                         print("K_C\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
                 print(" ")
-                for t, k in zip(temperatures, kappa_TOT_RTA[i]):
+                for t, k in zip(temperatures, kappa_TOT_RTA[i], strict=True):
                     print("K_T\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
             print("", flush=True)
 

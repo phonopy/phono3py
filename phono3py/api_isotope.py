@@ -133,7 +133,7 @@ class Phono3pyIsotope:
                     print("")
                     print("Phonon-isotope scattering rate in THz (1/4pi-tau)")
                     print(" Frequency     Rate")
-                    for g, f in zip(self._iso.gamma, frequencies[gp]):
+                    for g, f in zip(self._iso.gamma, frequencies[gp], strict=True):
                         print("%8.3f     %5.3e" % (f, g))
             else:
                 print("sigma or tetrahedron method has to be set.")

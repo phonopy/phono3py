@@ -253,7 +253,7 @@ class RealSelfEnergy:
 
     def _run_py_with_band_indices(self):
         for triplet, w, interaction in zip(
-            self._triplets_at_q, self._weights_at_q, self._pp_strength
+            self._triplets_at_q, self._weights_at_q, self._pp_strength, strict=True
         ):
             freqs = self._frequencies[triplet]
             for j, bi in enumerate(self._band_indices):
@@ -294,7 +294,7 @@ class RealSelfEnergy:
     def _run_py_with_frequency_points(self):
         for k, fpoint in enumerate(self._frequency_points):
             for triplet, w, interaction in zip(
-                self._triplets_at_q, self._weights_at_q, self._pp_strength
+                self._triplets_at_q, self._weights_at_q, self._pp_strength, strict=True
             ):
                 freqs = self._frequencies[triplet]
                 for j, _ in enumerate(self._band_indices):
@@ -695,9 +695,9 @@ def write_real_self_energy(
     else:
         _epsilons = epsilons
 
-    for epsilon, rse_temps in zip(_epsilons, real_self_energy):
-        for t, rse_gps in zip(temperatures, rse_temps):
-            for gp, rse in zip(grid_points, rse_gps):
+    for epsilon, rse_temps in zip(_epsilons, real_self_energy, strict=True):
+        for t, rse_gps in zip(temperatures, rse_temps, strict=True):
+            for gp, rse in zip(grid_points, rse_gps, strict=True):
                 for i, bi in enumerate(band_indices):
                     pos = 0
                     for j in range(i):

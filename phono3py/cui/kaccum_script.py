@@ -23,7 +23,7 @@ def _show_tensor(kdos, temperatures, sampling_points, args):
         if not args.gv:
             print("# %d K" % temperatures[i])
 
-        for f, k in zip(sampling_points[i], kdos_t):  # show kappa_xx
+        for f, k in zip(sampling_points[i], kdos_t, strict=True):  # show kappa_xx
             if args.average:
                 print(("%13.5f " * 3) % (f, k[0][:3].sum() / 3, k[1][:3].sum() / 3))
             elif args.trace:
@@ -38,12 +38,12 @@ def _show_tensor(kdos, temperatures, sampling_points, args):
 def _show_scalar(gdos, temperatures, sampling_points, args):
     """Show scalar values."""
     if args.pqj or args.gruneisen or args.gv_norm:
-        for f, g in zip(sampling_points, gdos[0]):
+        for f, g in zip(sampling_points, gdos[0], strict=True):
             print("%f %e %e" % (f, g[0], g[1]))
     else:
         for i, gdos_t in enumerate(gdos):
             print("# %d K" % temperatures[i])
-            for f, g in zip(sampling_points[i], gdos_t):
+            for f, g in zip(sampling_points[i], gdos_t, strict=True):
                 print("%f %f %f" % (f, g[0], g[1]))
             print("")
             print("")

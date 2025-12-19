@@ -13,7 +13,7 @@ jobs:
         shell: bash -l {0}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Install phonopy
       run: |
         pip install git+https://github.com/phonopy/phonopy@develop

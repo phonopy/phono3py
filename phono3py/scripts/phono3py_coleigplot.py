@@ -121,8 +121,12 @@ def write_dat(args: argparse.Namespace):
                 print("#", file=w)
                 print("#             eigenvalue      log10(abs(eigenvalue))", file=w)
                 log_vals = np.log10(np.abs(f["collision_eigenvalues"][:]))
-                for coleigs, coleigs_log in zip(f["collision_eigenvalues"], log_vals):
-                    for i, (val, val_log) in enumerate(zip(coleigs, coleigs_log)):
+                for coleigs, coleigs_log in zip(
+                    f["collision_eigenvalues"], log_vals, strict=True
+                ):
+                    for i, (val, val_log) in enumerate(
+                        zip(coleigs, coleigs_log, strict=True)
+                    ):
                         print(f"{i + 1:<10d} {val:15.8e}     {val_log:15.8f}", file=w)
                     print(file=w)
                 print(file=w)
