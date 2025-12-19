@@ -1671,7 +1671,7 @@ def parse_FORCES_FC2(
 def parse_FORCES_FC3(
     disp_dataset: dict,
     filename: str | os.PathLike = "FORCES_FC3",
-    use_loadtxt: bool = False,
+    use_loadtxt: bool = True,
     unit_conversion_factor: float | None = None,
 ):
     """Parse type1 FORCES_FC3 and store forces in disp_dataset."""
