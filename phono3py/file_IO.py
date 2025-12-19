@@ -1671,7 +1671,7 @@ def parse_FORCES_FC2(
 def parse_FORCES_FC3(
     disp_dataset: dict,
     filename: str | os.PathLike = "FORCES_FC3",
-    use_loadtxt: bool = False,
+    use_loadtxt: bool = True,
     unit_conversion_factor: float | None = None,
 ):
     """Parse type1 FORCES_FC3 and store forces in disp_dataset."""
@@ -1681,7 +1681,9 @@ def parse_FORCES_FC3(
         num_disp += len(disp1["second_atoms"])
 
     if use_loadtxt:
-        forces_fc3 = np.loadtxt(filename).reshape((num_disp, -1, 3))
+        forces_fc3 = np.loadtxt(filename, dtype="double").reshape((num_disp, -1, 3))
+        if not forces_fc3.flags["C_CONTIGUOUS"]:
+            forces_fc3 = np.array(forces_fc3, dtype="double", order="C")
     else:
         forces_fc3 = np.zeros((num_disp, num_atom, 3), dtype="double", order="C")
         with open(filename, "r") as f3:

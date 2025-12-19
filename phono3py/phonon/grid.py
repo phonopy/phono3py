@@ -50,6 +50,7 @@ from phonopy.structure.cells import (
     is_primitive_cell,
 )
 from phonopy.structure.grid_points import extract_ir_grid_points, length2mesh
+from phonopy.structure.symmetry import NosymDataset
 from phonopy.utils import similarity_transformation
 from spglib import SpglibDataset, SpglibMagneticDataset
 
@@ -152,7 +153,10 @@ class BZGrid:
         mesh: float | ArrayLike,
         reciprocal_lattice: NDArray | Sequence[Sequence[float]] | None = None,
         lattice: NDArray | Sequence[Sequence[float]] | None = None,
-        symmetry_dataset: SpglibDataset | SpglibMagneticDataset | None = None,
+        symmetry_dataset: SpglibDataset
+        | SpglibMagneticDataset
+        | NosymDataset
+        | None = None,
         transformation_matrix: ArrayLike | None = None,
         is_shift: NDArray | Sequence[float] | None = None,
         is_time_reversal: bool = True,
@@ -171,7 +175,7 @@ class BZGrid:
         lattice : array_like
             Direct primitive basis vectors given as row vectors shape=(3, 3),
             dtype='double', order='C'
-        symmetry_dataset : SpglibDataset, optional
+        symmetry_dataset : SpglibDataset, SpglibMagneticDataset, NosymDataset, optional
             Symmetry dataset (Symmetry.dataset) searched for the primitive cell
             corresponding to ``reciprocal_lattice`` or ``lattice``.
         transformation_matrix : array_like, optional
@@ -412,7 +416,9 @@ class BZGrid:
         return self._reciprocal_operations
 
     @property
-    def symmetry_dataset(self) -> SpglibDataset | SpglibMagneticDataset | None:
+    def symmetry_dataset(
+        self,
+    ) -> SpglibDataset | SpglibMagneticDataset | NosymDataset | None:
         """Return Symmetry.dataset."""
         return self._symmetry_dataset
 
@@ -557,7 +563,10 @@ class GridMatrix:
         self,
         mesh: ArrayLike,
         lattice: ArrayLike,
-        symmetry_dataset: SpglibDataset | SpglibMagneticDataset | None = None,
+        symmetry_dataset: SpglibDataset
+        | SpglibMagneticDataset
+        | NosymDataset
+        | None = None,
         transformation_matrix: ArrayLike | None = None,
         use_grg: bool = True,
         force_SNF: bool = False,
@@ -574,7 +583,7 @@ class GridMatrix:
         lattice : array_like
             Primitive basis vectors in direct space given as row vectors.
             shape=(3, 3), dtype='double', order='C'
-        symmetry_dataset : SpglibDataset, optional
+        symmetry_dataset : SpglibDataset, SpglibMagneticDataset, NosymDataset, optional
             Symmetry dataset of spglib (Symmetry.dataset) of primitive cell that
             has `lattice`. Default is None.
         transformation_matrix : array_like, optional
@@ -654,7 +663,10 @@ class GridMatrix:
         self,
         mesh: ArrayLike,
         use_grg: bool = False,
-        symmetry_dataset: SpglibDataset | SpglibMagneticDataset | None = None,
+        symmetry_dataset: SpglibDataset
+        | SpglibMagneticDataset
+        | NosymDataset
+        | None = None,
         transformation_matrix: ArrayLike | None = None,
         force_SNF: bool = False,
         coordinates: Literal["reciprocal", "direct"] = "reciprocal",
@@ -722,23 +734,23 @@ class GridMatrix:
 
     def _run_grg(
         self,
-        symmetry_dataset: SpglibDataset | SpglibMagneticDataset | None,
+        symmetry_dataset: SpglibDataset | SpglibMagneticDataset | NosymDataset | None,
         transformation_matrix: ArrayLike | None,
         length: float | None,
         grid_matrix: ArrayLike | None,
         force_SNF: bool,
         coordinates: Literal["reciprocal", "direct"],
     ) -> bool:
-        if symmetry_dataset is None and transformation_matrix is None:
-            msg = "symmetry_dataset or transformation_matrix has to be specified."
-            raise RuntimeError(msg)
+        if symmetry_dataset is None or isinstance(symmetry_dataset, NosymDataset):
+            if transformation_matrix is None:
+                msg = "symmetry_dataset or transformation_matrix has to be specified."
+                raise RuntimeError(msg)
 
-        if symmetry_dataset is not None:
-            sym_dataset = symmetry_dataset
-        else:  # transformation_matrix is not None
             sym_dataset = self._get_mock_symmetry_dataset(
                 np.array(transformation_matrix)
             )
+        else:
+            sym_dataset = symmetry_dataset
 
         if is_primitive_cell(sym_dataset.rotations):
             # self._D_diag or self._grid_matrix is set in this method.
