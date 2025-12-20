@@ -80,7 +80,7 @@ def get_thermal_conductivity_RTA(
     write_pp: bool = False,
     read_pp: bool = False,
     write_gamma_detail: bool = False,
-    compression: str = "gzip",
+    compression: Literal["gzip", "lzf"] | int | None = "gzip",
     input_filename: str | None = None,
     output_filename: str | None = None,
     log_level: int = 0,

@@ -87,7 +87,7 @@ def get_thermal_conductivity_LBTE(
     write_pp: bool = False,
     read_pp: bool = False,
     write_LBTE_solution: bool = False,
-    compression: str = "gzip",
+    compression: Literal["gzip", "lzf"] | int | None = "gzip",
     input_filename: str | os.PathLike | None = None,
     output_filename: str | os.PathLike | None = None,
     log_level: int = 0,
