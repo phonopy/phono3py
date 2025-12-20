@@ -252,13 +252,18 @@ class Gruneisen:
             f.write("nqpoint: %d\n" % len(self._qpoints))
             f.write("phonon:\n")
             for i, (q, g_at_q, freqs_at_q) in enumerate(
-                zip(self._qpoints, self._gruneisen_parameters, self._frequencies)
+                zip(
+                    self._qpoints,
+                    self._gruneisen_parameters,
+                    self._frequencies,
+                    strict=True,
+                )
             ):
                 f.write("- q-position: [ %10.7f, %10.7f, %10.7f ]\n" % tuple(q))
                 if self._weights is not None:
                     f.write("  multiplicity: %d\n" % self._weights[i])
                 f.write("  band:\n")
-                for j, (g, freq) in enumerate(zip(g_at_q, freqs_at_q)):
+                for j, (g, freq) in enumerate(zip(g_at_q, freqs_at_q, strict=True)):
                     f.write("  - # %d\n" % (j + 1))
                     f.write("    frequency: %15.10f\n" % freq)
                     f.write("    gruneisen: %15.10f\n" % (g.trace() / 3))
@@ -274,14 +279,17 @@ class Gruneisen:
                 self._band_distances,
                 self._gruneisen_parameters,
                 self._frequencies,
+                strict=True,
             ):
                 f.write("- nqpoint: %d\n" % len(path))
                 f.write("  phonon:\n")
-                for q, d, g_at_q, freqs_at_q in zip(path, distances, gs, fs):
+                for q, d, g_at_q, freqs_at_q in zip(
+                    path, distances, gs, fs, strict=True
+                ):
                     f.write("  - q-position: [ %10.7f, %10.7f, %10.7f ]\n" % tuple(q))
                     f.write("    distance: %10.7f\n" % d)
                     f.write("    band:\n")
-                    for j, (g, freq) in enumerate(zip(g_at_q, freqs_at_q)):
+                    for j, (g, freq) in enumerate(zip(g_at_q, freqs_at_q, strict=True)):
                         f.write("    - # %d\n" % (j + 1))
                         f.write("      frequency: %15.10f\n" % freq)
                         f.write("      gruneisen: %15.10f\n" % (g.trace() / 3))

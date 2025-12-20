@@ -349,7 +349,7 @@ class ConductivityComponents(ConductivityComponentsBase):
                     0, self._pp.band_indices, :
                 ]
             gv = np.zeros_like(gvs[irgp])
-            for bz_gp, r in zip(gps_rotated, self._rotations_cartesian):
+            for bz_gp, r in zip(gps_rotated, self._rotations_cartesian, strict=True):
                 gv += np.dot(gvs[bz_gp], r)  # = dot(r_inv, gv)
             return gv / len(self._point_operations)
         else:

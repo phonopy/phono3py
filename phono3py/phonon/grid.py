@@ -1121,7 +1121,7 @@ def _get_grid_points_by_bz_rotations_py(bz_gp, bz_grid: BZGrid, rotations: Array
     grgps = get_grid_point_from_address(rot_adrs, bz_grid.D_diag)
     bzgps = np.zeros(len(grgps), dtype="int64")
     if bz_grid.store_dense_gp_map:
-        for i, (gp, adrs) in enumerate(zip(grgps, rot_adrs)):
+        for i, (gp, adrs) in enumerate(zip(grgps, rot_adrs, strict=True)):
             indices = np.where(
                 (
                     bz_grid.addresses[bz_grid.gp_map[gp] : bz_grid.gp_map[gp + 1]]
@@ -1135,7 +1135,7 @@ def _get_grid_points_by_bz_rotations_py(bz_gp, bz_grid: BZGrid, rotations: Array
     else:
         num_grgp = np.prod(bz_grid.D_diag)
         num_bzgp = num_grgp * 8
-        for i, (gp, adrs) in enumerate(zip(grgps, rot_adrs)):
+        for i, (gp, adrs) in enumerate(zip(grgps, rot_adrs, strict=True)):
             gps = (
                 np.arange(
                     bz_grid.gp_map[num_bzgp + gp], bz_grid.gp_map[num_bzgp + gp + 1]

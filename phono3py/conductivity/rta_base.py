@@ -478,13 +478,13 @@ class ConductivityRTABase(ConductivityBase):
 
     def _show_log_values(self, frequencies, gv, ave_pp):
         if self._is_full_pp or self._use_ave_pp or self._use_const_ave_pp:
-            for f, v, pp in zip(frequencies, gv, ave_pp):
+            for f, v, pp in zip(frequencies, gv, ave_pp, strict=True):
                 print(
                     "%8.3f   (%8.3f %8.3f %8.3f) %8.3f %11.3e"
                     % (f, v[0], v[1], v[2], np.linalg.norm(v), pp)
                 )
         else:
-            for f, v in zip(frequencies, gv):
+            for f, v in zip(frequencies, gv, strict=True):
                 print(
                     "%8.3f   (%8.3f %8.3f %8.3f) %8.3f"
                     % (f, v[0], v[1], v[2], np.linalg.norm(v))
@@ -494,7 +494,7 @@ class ConductivityRTABase(ConductivityBase):
         rotation_map = get_grid_points_by_rotations(gp, self._pp.bz_grid)
         for i, j in enumerate(np.unique(rotation_map)):
             for k, (rot, rot_c) in enumerate(
-                zip(self._point_operations, self._rotations_cartesian)
+                zip(self._point_operations, self._rotations_cartesian, strict=True)
             ):
                 if rotation_map[k] != j:
                     continue
@@ -503,13 +503,15 @@ class ConductivityRTABase(ConductivityBase):
                     " k*%-2d (%5.2f %5.2f %5.2f)" % ((i + 1,) + tuple(np.dot(rot, q)))
                 )
                 if self._is_full_pp or self._use_ave_pp or self._use_const_ave_pp:
-                    for f, v, pp in zip(frequencies, np.dot(rot_c, gv.T).T, ave_pp):
+                    for f, v, pp in zip(
+                        frequencies, np.dot(rot_c, gv.T).T, ave_pp, strict=True
+                    ):
                         print(
                             "%8.3f   (%8.3f %8.3f %8.3f) %8.3f %11.3e"
                             % (f, v[0], v[1], v[2], np.linalg.norm(v), pp)
                         )
                 else:
-                    for f, v in zip(frequencies, np.dot(rot_c, gv.T).T):
+                    for f, v in zip(frequencies, np.dot(rot_c, gv.T).T, strict=True):
                         print(
                             "%8.3f   (%8.3f %8.3f %8.3f) %8.3f"
                             % (f, v[0], v[1], v[2], np.linalg.norm(v))

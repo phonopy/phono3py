@@ -2944,7 +2944,9 @@ class Phono3py:
             raise RuntimeError("Dataset for fc2 does not exist.")
 
         if "first_atoms" in self._phonon_dataset:
-            for disp, v in zip(self._phonon_dataset["first_atoms"], values):
+            for disp, v in zip(
+                self._phonon_dataset["first_atoms"], values, strict=True
+            ):
                 if target == "forces":
                     disp[target] = np.array(v, dtype="double", order="C")
                 elif target == "supercell_energies":
