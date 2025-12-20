@@ -47,7 +47,7 @@ from phonopy import Phonopy
 from phonopy.cui.load_helper import (
     develop_or_load_pypolymlp as develop_or_load_pypolymlp_phonopy,
 )
-from phonopy.file_IO import get_dataset_type2
+from phonopy.file_IO import get_dataset_type2, get_io_module_to_decompress
 from phonopy.interface.calculator import get_calculator_physical_units
 from phonopy.interface.pypolymlp import PypolymlpParams, parse_mlp_params
 
@@ -100,12 +100,12 @@ def parse_forces(
 
     # Forces are not yet found in dataset. Then try to read from FORCES_FC3 or
     # FORCES_FC2.
-    if force_filename is not None:
+    if force_filename is not None and pathlib.Path(force_filename).is_file():
         if dataset is None or (dataset is not None and not forces_in_dataset(dataset)):
-            dataset = _read_FORCES_FC3_or_FC2(
+            dataset, force_sets_type = _read_FORCES_FC3_or_FC2(
                 natom, dataset, fc_type, filename=force_filename, log_level=log_level
             )
-            if dataset:
+            if force_sets_type == 2:
                 filename_read_from = force_filename
 
     if dataset is None:
@@ -156,23 +156,21 @@ def _read_FORCES_FC3_or_FC2(
     fc_type: str,
     filename: str | os.PathLike = "FORCES_FC3",
     log_level: int = 0,
-) -> dict | None:
+) -> tuple[dict, Literal[1, 2]]:
     """Read FORCES_FC3 or FORCES_FC2.
 
     Read the first line of forces file to determine the type of the file.
 
     """
-    if filename is None or not pathlib.Path(filename).exists():
-        return None
-
-    with open(filename, "r") as f:
+    myio = get_io_module_to_decompress(filename)
+    with myio.open(filename, "r") as f:
         len_first_line = get_length_of_first_line(f)
         if len_first_line == 6:  # Type-2
             _dataset = get_dataset_type2(f, natom)
             if log_level:
                 n_disp = len(_dataset["displacements"])
                 print(f'{n_disp} snapshots were found in "{filename}".')
-            return _dataset
+            return _dataset, 2
 
     # Try reading type-1 dataset
     if dataset is None:
@@ -186,7 +184,7 @@ def _read_FORCES_FC3_or_FC2(
             f'Sets of supercell forces were read from "{filename}".',
             flush=True,
         )
-    return dataset
+    return dataset, 1
 
 
 def develop_or_load_pypolymlp(

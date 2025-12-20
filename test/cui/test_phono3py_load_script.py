@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import lzma
 import os
 import pathlib
 import tempfile
@@ -14,6 +15,7 @@ import pytest
 
 import phono3py
 from phono3py.cui.phono3py_script import main
+from phono3py.file_IO import write_FORCES_FC2, write_FORCES_FC3
 
 cwd = pathlib.Path(__file__).parent
 
@@ -778,6 +780,80 @@ def test_phono3py_load_write_gamma():
             os.chdir(original_cwd)
 
 
+def test_phono3py_load_FORCES_FC3_xz():
+    """Test phono3py-load script with reading FORCES_FC3.xz."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        with open(cwd / ".." / "FORCES_FC3_si_pbesol", "rb") as f_in:
+            with lzma.open("FORCES_FC3.xz", "wb") as f_out:
+                f_out.write(f_in.read())
+
+        try:
+            # Check sys.exit(0)
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_si_pbesol.yaml",
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            pathlib.Path("FORCES_FC3.xz").unlink()
+
+            for created_filename in ("phono3py.yaml", "fc3.hdf5", "fc2.hdf5"):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            _check_no_files()
+
+        finally:
+            os.chdir(original_cwd)
+
+
+def test_phono3py_load_FORCES_FC2_xz():
+    """Test phono3py-load script with reading FORCES_FC2.xz."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        ph3 = phono3py.load(cwd / ".." / "phono3py_params_Si-111-222-fd.yaml.xz")
+        ph3.save("phono3py_disp.yaml", settings={"force_sets": False})
+        assert ph3.dataset is not None
+        assert ph3.forces is not None
+        assert ph3.phonon_forces is not None
+        write_FORCES_FC2(ph3.dataset, ph3.phonon_forces)
+        write_FORCES_FC3(ph3.dataset, ph3.forces)
+
+        with open("FORCES_FC2", "rb") as f_in:
+            with lzma.open("FORCES_FC2.xz", "wb") as f_out:
+                f_out.write(f_in.read())
+
+        pathlib.Path("FORCES_FC2").unlink()
+
+        try:
+            # Check sys.exit(0)
+            argparse_control = _get_phono3py_load_args()
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            pathlib.Path("FORCES_FC2.xz").unlink()
+            pathlib.Path("FORCES_FC3").unlink()
+            pathlib.Path("phono3py_disp.yaml").unlink()
+
+            for created_filename in ("phono3py.yaml", "fc3.hdf5", "fc2.hdf5"):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            _check_no_files()
+
+        finally:
+            os.chdir(original_cwd)
+
+
 def _ls():
     current_dir = pathlib.Path(".")
     for file in current_dir.iterdir():
@@ -789,7 +865,7 @@ def _check_no_files():
 
 
 def _get_phono3py_load_args(
-    phono3py_yaml_filepath: str | os.PathLike | None,
+    phono3py_yaml_filepath: str | os.PathLike | None = None,
     fc_calculator: str | None = None,
     fc_calculator_options: str | None = None,
     load_phono3py_yaml: bool = True,
@@ -808,9 +884,13 @@ def _get_phono3py_load_args(
 ):
     # Mock of ArgumentParser.args.
     if load_phono3py_yaml:
-        assert phono3py_yaml_filepath is not None
+        if phono3py_yaml_filepath is None:
+            filename = []
+        else:
+            filename = [phono3py_yaml_filepath]
+        # assert phono3py_yaml_filepath is not None
         mockargs = MockArgs(
-            filename=[phono3py_yaml_filepath],
+            filename=filename,
             fc_calculator=fc_calculator,
             fc_calculator_options=fc_calculator_options,
             is_bterta=is_bterta,

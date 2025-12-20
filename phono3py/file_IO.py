@@ -33,13 +33,14 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+
 from __future__ import annotations
 
 import os
 import pathlib
 import warnings
 from collections.abc import Sequence
-from typing import Optional, TextIO
+from typing import Literal, Optional, TextIO
 
 import h5py
 import numpy as np
@@ -51,6 +52,7 @@ from phonopy.cui.load_helper import read_force_constants_from_hdf5
 from phonopy.file_IO import (
     check_force_constants_indices,
     get_cell_from_disp_yaml,
+    get_io_module_to_decompress,
     write_FORCE_SETS,
 )
 
@@ -191,7 +193,12 @@ def write_disp_fc2_yaml(dataset, supercell, filename="disp_fc2.yaml"):
     return num_first
 
 
-def write_FORCES_FC2(disp_dataset, forces_fc2=None, fp=None, filename="FORCES_FC2"):
+def write_FORCES_FC2(
+    disp_dataset: dict,
+    forces_fc2: Sequence | NDArray | None = None,
+    fp: TextIO | None = None,
+    filename: str | os.PathLike = "FORCES_FC2",
+):
     """Write FORCES_FC2.
 
     fp : IO object, optional, default=None
@@ -230,9 +237,9 @@ def write_FORCES_FC2(disp_dataset, forces_fc2=None, fp=None, filename="FORCES_FC
 
 def write_FORCES_FC3(
     disp_dataset: dict,
-    forces_fc3: Optional[Sequence] = None,
-    fp: Optional[TextIO] = None,
-    filename: str = "FORCES_FC3",
+    forces_fc3: Sequence | NDArray | None = None,
+    fp: TextIO | None = None,
+    filename: str | os.PathLike = "FORCES_FC3",
 ):
     """Write FORCES_FC3.
 
@@ -309,7 +316,7 @@ def write_fc3_to_hdf5(
     filename: str = "fc3.hdf5",
     p2s_map: NDArray | None = None,
     fc3_cutoff: float | None = None,
-    compression: str = "gzip",
+    compression: Literal["gzip", "lzf"] | int | None = "gzip",
 ):
     """Write fc3 in fc3.hdf5.
 
@@ -1492,7 +1499,7 @@ def write_phonon_to_hdf5(
     bz_grid=None,
     ir_grid_points=None,
     ir_grid_weights=None,
-    compression="gzip",
+    compression: Literal["gzip", "lzf"] | int | None = "gzip",
     filename=None,
 ):
     """Write phonon on grid in its hdf5 file."""
@@ -1653,7 +1660,8 @@ def parse_FORCES_FC2(
     num_atom = disp_dataset["natom"]
     num_disp = len(disp_dataset["first_atoms"])
     forces_fc2 = []
-    with open(filename, "r") as f2:
+    myio = get_io_module_to_decompress(filename)
+    with myio.open(filename, "r") as f2:
         for _ in range(num_disp):
             forces = _parse_force_lines(f2, num_atom)
             if forces is None:
@@ -1680,13 +1688,14 @@ def parse_FORCES_FC3(
     for disp1 in disp_dataset["first_atoms"]:
         num_disp += len(disp1["second_atoms"])
 
-    if use_loadtxt:
-        forces_fc3 = np.loadtxt(filename, dtype="double").reshape((num_disp, -1, 3))
-        if not forces_fc3.flags["C_CONTIGUOUS"]:
-            forces_fc3 = np.array(forces_fc3, dtype="double", order="C")
-    else:
-        forces_fc3 = np.zeros((num_disp, num_atom, 3), dtype="double", order="C")
-        with open(filename, "r") as f3:
+    myio = get_io_module_to_decompress(filename)
+    with myio.open(filename, "r") as f3:
+        if use_loadtxt:
+            forces_fc3 = np.loadtxt(f3, dtype="double").reshape((num_disp, -1, 3))
+            if not forces_fc3.flags["C_CONTIGUOUS"]:
+                forces_fc3 = np.array(forces_fc3, dtype="double", order="C")
+        else:
+            forces_fc3 = np.zeros((num_disp, num_atom, 3), dtype="double", order="C")
             for i in range(num_disp):
                 forces = _parse_force_lines(f3, num_atom)
                 if forces is None:
