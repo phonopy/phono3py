@@ -248,7 +248,7 @@ def test_kappados_nacl(nacl_pbe: Phono3py):
         tc.gamma[0, :, :, :, None],
         freq_points=freq_points_in,
     )
-    for f, (jval, ival) in zip(freq_points, kdos):
+    for f, (jval, ival) in zip(freq_points, kdos, strict=True):
         print("[%.7f, %.7f, %.7f]," % (f, jval, ival))
     np.testing.assert_allclose(
         gammados_nacl, np.vstack((freq_points, kdos.T)).T, rtol=0, atol=1e-4

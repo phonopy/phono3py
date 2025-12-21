@@ -505,7 +505,7 @@ class ImagSelfEnergy:
         freqs = np.where(freqs > self._cutoff_frequency, freqs, 1)
         n = bose_einstein(freqs, self._temperature)
         for i, (tp, w, interaction) in enumerate(
-            zip(self._triplets_at_q, self._weights_at_q, self._pp_strength)
+            zip(self._triplets_at_q, self._weights_at_q, self._pp_strength, strict=True)
         ):
             for j, k in list(np.ndindex(interaction.shape[1:])):
                 f1 = self._frequencies[tp[1]][j]
@@ -525,7 +525,7 @@ class ImagSelfEnergy:
 
     def _ise_thm_with_band_indices_0K(self):
         for i, (w, interaction) in enumerate(
-            zip(self._weights_at_q, self._pp_strength)
+            zip(self._weights_at_q, self._pp_strength, strict=True)
         ):
             for j, k in list(np.ndindex(interaction.shape[1:])):
                 g1 = self._g[0, i, :, j, k]
@@ -541,7 +541,7 @@ class ImagSelfEnergy:
 
     def _ise_thm_with_frequency_points(self):
         for i, (tp, w, interaction) in enumerate(
-            zip(self._triplets_at_q, self._weights_at_q, self._pp_strength)
+            zip(self._triplets_at_q, self._weights_at_q, self._pp_strength, strict=True)
         ):
             for j, k in list(np.ndindex(interaction.shape[1:])):
                 f1 = self._frequencies[tp[1]][j]
@@ -562,7 +562,7 @@ class ImagSelfEnergy:
 
     def _ise_thm_with_frequency_points_0K(self):
         for i, (w, interaction) in enumerate(
-            zip(self._weights_at_q, self._pp_strength)
+            zip(self._weights_at_q, self._pp_strength, strict=True)
         ):
             for j, k in list(np.ndindex(interaction.shape[1:])):
                 g1 = self._g[0, i, :, j, k]
@@ -987,9 +987,9 @@ def write_imag_self_energy(
     log_level=0,
 ):
     """Write imaginary-part of self-energies into text files."""
-    for sigma, ise_temps in zip(sigmas, imag_self_energy):
-        for t, ise_gps in zip(temperatures, ise_temps):
-            for gp, ise in zip(grid_points, ise_gps):
+    for sigma, ise_temps in zip(sigmas, imag_self_energy, strict=True):
+        for t, ise_gps in zip(temperatures, ise_temps, strict=True):
+            for gp, ise in zip(grid_points, ise_gps, strict=True):
                 for i, bi in enumerate(band_indices):
                     pos = 0
                     for j in range(i):

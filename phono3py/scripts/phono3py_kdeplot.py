@@ -13,7 +13,7 @@ def collect_data(gamma, weights, frequencies, cutoff, max_freq):
     """Collect data for making input of Gaussian-KDE."""
     freqs = []
     mode_prop = []
-    for w, freq, g in zip(weights, frequencies, gamma):
+    for w, freq, g in zip(weights, frequencies, gamma, strict=True):
         tau = 1.0 / np.where(g > 0, g, -1) / (2 * 2 * np.pi)
         if cutoff:
             tau = np.where(tau < cutoff, tau, -1)
@@ -99,7 +99,7 @@ def plot(
     x_cut = []
     y_cut = []
     threshold = ymax / nbins * short_nbinds / nbins * (nbins - 1)
-    for _x, _y in zip(x, y):
+    for _x, _y in zip(x, y, strict=True):
         if epsilon < _y and _y < threshold and epsilon < _x and _x < xmax - epsilon:
             x_cut.append(_x)
             y_cut.append(_y)
@@ -308,7 +308,7 @@ def main(args):
     #
     # Run
     #
-    for gamma, s in zip(gammas, symbols):
+    for gamma, s in zip(gammas, symbols, strict=True):
         x, y = collect_data(gamma, weights, frequencies, args.cutoff, args.fmax)
         xi, yi, zi, short_nbinds = run_KDE(
             x,

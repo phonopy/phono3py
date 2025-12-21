@@ -8,7 +8,7 @@ dynamic = ["version"]
 readme = { file = "README.md", content-type = "text/markdown" }
 description = "This is the phono3py module."
 authors = [{ name = "Atsushi Togo", email = "atztogo@gmail.com" }]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "numpy",
     "scipy",
@@ -16,7 +16,7 @@ dependencies = [
     "matplotlib",
     "h5py",
     "spglib>=2.5.0",
-    "phonopy>=2.45.1,<2.46",
+    "phonopy>=2.46.0,<2.47",
 ]
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]

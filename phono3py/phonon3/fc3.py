@@ -782,7 +782,7 @@ def _get_fc3_least_atoms(
 def _get_rotated_fc2s(i, j, fc2s, rot_map_syms, site_sym_cart):
     rotated_fc2s = []
     for fc2 in fc2s:
-        for sym, map_sym in zip(site_sym_cart, rot_map_syms):
+        for sym, map_sym in zip(site_sym_cart, rot_map_syms, strict=True):
             fc2_rot = fc2[map_sym[i], map_sym[j]]
             rotated_fc2s.append(similarity_transformation(sym, fc2_rot))
     return np.reshape(rotated_fc2s, (-1, 9))
@@ -809,7 +809,7 @@ def _get_fc3_done(
     translations = symmetry.symmetry_operations["translations"]
 
     atom_mapping = []
-    for rot, trans in zip(rotations, translations):
+    for rot, trans in zip(rotations, translations, strict=True):
         atom_indices = [
             _get_atom_by_symmetry(lattice, positions, rot, trans, i, symprec)
             for i in range(num_atom)

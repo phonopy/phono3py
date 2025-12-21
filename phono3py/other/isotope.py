@@ -356,7 +356,7 @@ class Isotope:
             ti_sum = 0.0
             for gp in self._bz_grid.grg2bzg:
                 for j, (f, vec) in enumerate(
-                    zip(self._frequencies[gp], self._eigenvectors[gp].T)
+                    zip(self._frequencies[gp], self._eigenvectors[gp].T, strict=True)
                 ):
                     if f < self._cutoff_frequency:
                         continue

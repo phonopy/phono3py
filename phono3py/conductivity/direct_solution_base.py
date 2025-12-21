@@ -459,7 +459,7 @@ class ConductivityLBTEBase(ConductivityBase):
                         "warning may be ignored."
                     )
                     print(_g_zero.shape, g_zero.shape)
-                    for i, (_v, v) in enumerate(zip(_g_zero, g_zero)):
+                    for i, (_v, v) in enumerate(zip(_g_zero, g_zero, strict=True)):
                         if (_v != v).any():
                             print(f"{i + 1} {_v.sum()} {v.sum()}")
                     self._collision.set_interaction_strength(
@@ -538,7 +538,9 @@ class ConductivityLBTEBase(ConductivityBase):
         num_band = len(self._pp.primitive) * 3
         for j, k in np.ndindex((len(self._sigmas), len(self._temperatures))):
             for i, ir_gp in enumerate(self._ir_grid_points):
-                for r, r_gp in zip(self._rotations_cartesian, self._rot_grid_points[i]):
+                for r, r_gp in zip(
+                    self._rotations_cartesian, self._rot_grid_points[i], strict=True
+                ):
                     if ir_gp != r_gp:
                         continue
 
@@ -1040,9 +1042,10 @@ class ConductivityLBTEBase(ConductivityBase):
             zip(
                 X.reshape(num_grid_points, num_band, 3),
                 Y.reshape(num_grid_points, num_band, 3),
+                strict=True,
             )
         ):
-            for j, (v, f) in enumerate(zip(v_gp, f_gp)):
+            for j, (v, f) in enumerate(zip(v_gp, f_gp, strict=True)):
                 # Do not consider three lowest modes at Gamma-point
                 # It is assumed that there are no imaginary modes.
                 if (self._pp.bz_grid.addresses[i] == 0).all() and j < 3:
@@ -1102,7 +1105,7 @@ class ConductivityLBTEBase(ConductivityBase):
                 if solver in [1, 2, 4, 5]:
                     mat = mat.T
                 spectra = np.dot(mat.T, X) ** 2 * w
-                for s, eigvec in zip(spectra, mat.T):
+                for s, eigvec in zip(spectra, mat.T, strict=True):
                     vals = s * (eigvec**2).reshape(-1, 3).sum(axis=1)
                     vals = vals.reshape(num_ir_grid_points, num_band)
                     mode_kappa[i_sigma, i_temp, :, :, i] += vals
@@ -1112,9 +1115,9 @@ class ConductivityLBTEBase(ConductivityBase):
 
     def _set_mode_kappa_from_mfp(self, weights, rotations_cartesian, i_sigma, i_temp):
         for i, (v_gp, mfp_gp, cv_gp) in enumerate(
-            zip(self._gv, self._mfp[i_sigma, i_temp], self._cv[i_temp])
+            zip(self._gv, self._mfp[i_sigma, i_temp], self._cv[i_temp], strict=True)
         ):
-            for j, (v, mfp, cv) in enumerate(zip(v_gp, mfp_gp, cv_gp)):
+            for j, (v, mfp, cv) in enumerate(zip(v_gp, mfp_gp, cv_gp, strict=True)):
                 sum_k = np.zeros((3, 3), dtype="double")
                 for r in rotations_cartesian:
                     sum_k += np.outer(np.dot(r, v), np.dot(r, mfp))
@@ -1158,13 +1161,13 @@ class ConductivityLBTEBase(ConductivityBase):
             text += "  (dq=%3.1e)" % self._conductivity_components.gv_delta_q
         print(text)
         if self._is_full_pp:
-            for f, v, pp in zip(frequencies, gv, ave_pp):
+            for f, v, pp in zip(frequencies, gv, ave_pp, strict=True):
                 print(
                     "%8.3f   (%8.3f %8.3f %8.3f) %8.3f %11.3e"
                     % (f, v[0], v[1], v[2], np.linalg.norm(v), pp)
                 )
         else:
-            for f, v in zip(frequencies, gv):
+            for f, v in zip(frequencies, gv, strict=True):
                 print(
                     "%8.3f   (%8.3f %8.3f %8.3f) %8.3f"
                     % (f, v[0], v[1], v[2], np.linalg.norm(v))

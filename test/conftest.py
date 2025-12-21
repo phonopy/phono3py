@@ -1,5 +1,7 @@
 """Pytest conftest.py."""
 
+from __future__ import annotations
+
 import tarfile
 from pathlib import Path
 
@@ -464,6 +466,8 @@ def nacl_pbe_cutoff_fc3(request) -> Phono3py:
     forces = ph3.forces
     ph3.generate_displacements(cutoff_pair_distance=5)
     dataset = ph3.dataset
+    assert dataset is not None
+    assert forces is not None
     dataset["first_atoms"][0]["forces"] = forces[0]
     dataset["first_atoms"][1]["forces"] = forces[1]
     count = 2
