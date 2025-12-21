@@ -41,7 +41,7 @@ import os
 import pathlib
 import sys
 from collections.abc import Sequence
-from typing import cast
+from typing import Literal, cast
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
@@ -470,9 +470,12 @@ def _init_phono3py_with_cell_info(
 def _init_phono3py(
     settings: Phono3pySettings,
     unitcell: PhonopyAtoms,
-    supercell_matrix: ArrayLike | None = None,
-    primitive_matrix: ArrayLike | None = None,
-    phonon_supercell_matrix: ArrayLike | None = None,
+    supercell_matrix: Sequence[Sequence[int]] | NDArray | None = None,
+    primitive_matrix: Literal["P", "F", "I", "A", "C", "R", "auto"]
+    | Sequence[Sequence[float]]
+    | NDArray
+    | None = None,
+    phonon_supercell_matrix: Sequence[Sequence[int]] | NDArray | None = None,
     interface_mode: str | None = None,
     symprec: float = 1e-5,
     log_level: int = 0,

@@ -170,7 +170,10 @@ class Phono3py:
     def __init__(
         self,
         unitcell: PhonopyAtoms,
-        supercell_matrix: Sequence[Sequence[int]] | NDArray | None = None,
+        supercell_matrix: Sequence[int]
+        | Sequence[Sequence[int]]
+        | NDArray
+        | None = None,
         primitive_matrix: Literal["P", "F", "I", "A", "C", "R", "auto"]
         | Sequence[Sequence[float]]
         | NDArray
@@ -897,7 +900,7 @@ class Phono3py:
         return self._thermal_conductivity
 
     @property
-    def displacements(self):
+    def displacements(self) -> NDArray:
         """Setter and getter displacements in supercells.
 
         There are two types of displacement dataset. See the docstring
@@ -969,7 +972,7 @@ class Phono3py:
         self._supercells_with_displacements = None
 
     @property
-    def forces(self):
+    def forces(self) -> NDArray | None:
         """Setter and getter of forces in displacement dataset.
 
         A set of atomic forces in displaced supercells. The order of
@@ -990,7 +993,7 @@ class Phono3py:
         self._set_forces_energies(values, target="forces")
 
     @property
-    def supercell_energies(self):
+    def supercell_energies(self) -> NDArray | None:
         """Setter and getter of supercell energies in displacement dataset.
 
         A set of supercell energies of displaced supercells. The order of
@@ -2209,7 +2212,7 @@ class Phono3py:
         write_pp: bool = False,
         read_pp: bool = False,
         write_LBTE_solution: bool = False,
-        compression: str = "gzip",
+        compression: Literal["gzip", "lzf"] | int | None = "gzip",
         input_filename: str | None = None,
         output_filename: str | None = None,
         log_level: int | None = None,
@@ -2944,7 +2947,9 @@ class Phono3py:
             raise RuntimeError("Dataset for fc2 does not exist.")
 
         if "first_atoms" in self._phonon_dataset:
-            for disp, v in zip(self._phonon_dataset["first_atoms"], values):
+            for disp, v in zip(
+                self._phonon_dataset["first_atoms"], values, strict=True
+            ):
                 if target == "forces":
                     disp[target] = np.array(v, dtype="double", order="C")
                 elif target == "supercell_energies":

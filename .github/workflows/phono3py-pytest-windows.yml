@@ -1,9 +1,8 @@
 name: Pytest on windows
 
 on:
-  push:
-    branches:
-    - windows
+  pull_request:
+    branches: [ develop ]
 
 jobs:
   build-windows:
@@ -13,7 +12,10 @@ jobs:
         shell: bash -l {0}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
+    - uses: actions/setup-python@v6
+      with:
+        python-version: '3.12'  # Use 3.12 to avoid _tkinter.TclError: Can't find a usable init.tcl in the following directories at python 3.13
     - name: Install phonopy
       run: |
         pip install git+https://github.com/phonopy/phonopy@develop

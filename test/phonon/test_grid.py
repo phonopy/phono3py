@@ -905,7 +905,7 @@ def test_SNF_tetrahedra_relative_grid(aln_lda):
     mesh = 25
 
     for snf_coordinates, d_diag in zip(
-        ("direct", "reciprocal"), ([1, 9, 45], [1, 9, 45])
+        ("direct", "reciprocal"), ([1, 9, 45], [1, 9, 45]), strict=True
     ):
         bzgrid = BZGrid(
             mesh,
@@ -923,7 +923,7 @@ def test_SNF_tetrahedra_relative_grid(aln_lda):
         tetrahedra = get_tetrahedra_relative_grid_address(mlat)
         snf_tetrahedra = np.dot(tetrahedra, bzgrid.P.T)
 
-        for mtet, ptet in zip(tetrahedra, snf_tetrahedra):
+        for mtet, ptet in zip(tetrahedra, snf_tetrahedra, strict=True):
             np.testing.assert_allclose(
                 np.dot(mtet, mlat.T),
                 np.dot(np.dot(ptet, bzgrid.QDinv.T), plat.T),
@@ -1339,7 +1339,7 @@ def test_aln_BZGrid_with_shift(aln_cell: PhonopyAtoms):
     ]
 
     for adrs, q_phonopy in zip(
-        bzgrid.addresses[bzgrid.grg2bzg[ir_grid_points]], q_from_phonopy
+        bzgrid.addresses[bzgrid.grg2bzg[ir_grid_points]], q_from_phonopy, strict=True
     ):
         q = np.dot(
             bzgrid.Q, (adrs * 2 + bzgrid.PS) / bzgrid.D_diag.astype("double") / 2

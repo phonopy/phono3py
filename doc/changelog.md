@@ -2,6 +2,13 @@
 
 # Change Log
 
+## Dec-21-2025: Version 3.22.0
+
+- Drop python 3.9 support
+- Support reading `FORCES_FC3` and `FORCES_FC2` compressed with xz, lzma, bz2,
+  or gz. The compression format is determined by the file extension, e.g.,
+  `FORCES_FC3.xz` for xz compression.
+
 ## Dec-9-2025: Version 3.21.0
 
 - Maintenance release including avoiding nanobind 2.10.0

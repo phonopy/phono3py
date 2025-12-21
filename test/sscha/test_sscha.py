@@ -231,7 +231,9 @@ def test_get_sscha_matrices(si_pbesol_111):
     ph3 = si_pbesol_111
     uu = get_sscha_matrices(ph3.supercell, ph3.fc2)
     # _rd = RandomDisplacements(ph3.supercell, ph3.primitive, ph3.fc2)
-    for temp, prob_ref, rd in zip((300, 400), (prob_300, prob_400), (rd_300, rd_400)):
+    for temp, prob_ref, rd in zip(
+        (300, 400), (prob_300, prob_400), (rd_300, rd_400), strict=True
+    ):
         uu.run(temp)
         # _rd.run(temp, number_of_snapshots=n_snapshots)
         # dmat = _rd.u.reshape(n_snapshots, -1)

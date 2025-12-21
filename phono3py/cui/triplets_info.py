@@ -37,6 +37,7 @@
 from __future__ import annotations
 
 import os
+from typing import Literal
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -55,7 +56,7 @@ def write_grid_points(
     temperatures: ArrayLike | None = None,
     is_kappa_star: bool = True,
     is_lbte: bool = False,
-    compression: str | int = "gzip",
+    compression: Literal["gzip", "lzf"] | int | None = "gzip",
     filename: str | os.PathLike | None = None,
 ):
     """Write grid points into files."""

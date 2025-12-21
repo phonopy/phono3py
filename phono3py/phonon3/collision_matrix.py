@@ -198,7 +198,7 @@ class CollisionMatrix(ImagSelfEnergy):
         gp2tp, tp2s, swapped = self._get_gp2tp_map()
         for i in range(self._num_ir_grid_points):
             r_gps = self._rot_grid_points[i]
-            for r, r_gp in zip(self._rotations_cartesian, r_gps):
+            for r, r_gp in zip(self._rotations_cartesian, r_gps, strict=True):
                 inv_sinh = self._get_inv_sinh(tp2s[r_gp])
                 ti = gp2tp[r_gp]
                 for j, k in np.ndindex((num_band0, num_band)):
