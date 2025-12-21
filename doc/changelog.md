@@ -2,7 +2,7 @@
 
 # Change Log
 
-## Dec-x-2025: Version 3.22.0
+## Dec-21-2025: Version 3.22.0
 
 - Drop python 3.9 support
 - Support reading `FORCES_FC3` and `FORCES_FC2` compressed with xz, lzma, bz2,

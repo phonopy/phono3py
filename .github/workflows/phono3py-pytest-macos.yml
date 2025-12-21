@@ -1,9 +1,8 @@
 name: Pytest on macOS
 
 on:
-  push:
-    branches:
-    - macos
+  pull_request:
+    branches: [ develop ]
 
 jobs:
   build-macos:
@@ -13,7 +12,10 @@ jobs:
         shell: bash -l {0}
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
+    - uses: actions/setup-python@v6
+      with:
+        python-version: '3.13'
     - name: Install phono3py
       run: |
         pip install -e . -v
