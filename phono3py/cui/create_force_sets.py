@@ -301,11 +301,8 @@ def _get_force_sets_fc2(
                 f'Displacements don\'t match with atomic positions in "{filename}".'
             )
 
-    if settings.subtract_forces or settings.subtract_forces_fc2:
-        if settings.subtract_forces_fc2:
-            force_filename = settings.subtract_forces_fc2
-        else:
-            force_filename = settings.subtract_forces
+    if settings.subtract_forces_fc2:
+        force_filename = settings.subtract_forces_fc2
         file_exists(force_filename, log_level=log_level)
         calc_dataset_zero = get_calc_dataset(
             interface_mode,
