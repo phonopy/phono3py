@@ -593,7 +593,7 @@ def select_and_load_phonon_dataset(
         )
         return phonon_dataset
 
-    force_filename = _get_filename_with_extension("FORCES_FC3")
+    force_filename = _get_filename_with_extension("FORCES_FC2")
     if forces_fc2_filename is not None:
         force_filename = forces_fc2_filename
     if force_filename is not None:
