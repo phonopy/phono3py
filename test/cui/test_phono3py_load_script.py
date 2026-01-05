@@ -7,58 +7,18 @@ import os
 import pathlib
 import tempfile
 from collections.abc import Sequence
-from dataclasses import dataclass, fields
 
 import h5py
 import numpy as np
 import pytest
 
 import phono3py
+from phono3py.cui.phono3py_argparse import Phono3pyMockArgs
 from phono3py.cui.phono3py_script import main
+from phono3py.cui.settings import Phono3pySettings
 from phono3py.file_IO import write_FORCES_FC2, write_FORCES_FC3
 
 cwd = pathlib.Path(__file__).parent
-
-
-@dataclass
-class MockArgs:
-    """Mock args of ArgumentParser."""
-
-    cell_filename: str | os.PathLike | None = None
-    conf_filename: str | os.PathLike | None = None
-    fc_calculator: str | None = None
-    fc_calculator_options: str | None = None
-    fc_symmetry: bool = True
-    filename: Sequence[str | os.PathLike] | None = None
-    force_sets_mode: bool = False
-    force_sets_to_forces_fc2_mode: bool = False
-    input_filename = None
-    input_output_filename = None
-    log_level: int | None = None
-    is_bterta: bool | None = None
-    is_lbte: bool | None = None
-    is_wigner_kappa: bool | None = None
-    mesh_numbers: Sequence | None = None
-    mlp_params: str | None = None
-    rd_number_estimation_factor: float | None = None
-    read_gamma: bool = False
-    output_filename = None
-    output_yaml_filename: str | os.PathLike | None = None
-    random_displacements: int | str | None = None
-    show_num_triplets: bool = False
-    temperatures: Sequence | None = None
-    use_pypolymlp: bool = False
-    write_gamma: bool = False
-    write_grid_points: bool = False
-    write_phonon: bool = False
-
-    def __iter__(self):
-        """Make self iterable to support in."""
-        return (getattr(self, field.name) for field in fields(self))
-
-    def __contains__(self, item):
-        """Implement in operator."""
-        return item in (field.name for field in fields(self))
 
 
 def test_phono3py_load():
@@ -324,7 +284,10 @@ def test_phono3py_with_QE_calculator(load_phono3py_yaml: bool):
                 main(**argparse_control)
 
             with h5py.File("kappa-m111111.hdf5", "r") as f:
-                np.testing.assert_almost_equal(f["kappa"][0, 0], 118.93, decimal=1)  # type: ignore
+                if load_phono3py_yaml:
+                    assert f["kappa"][0, 0] == pytest.approx(121.42, abs=0.15)  # type: ignore
+                else:
+                    assert f["kappa"][0, 0] == pytest.approx(100.25, abs=0.5)  # type: ignore
 
             # Clean files created by phono3py/phono3py-load script.
             for created_filename in (
@@ -780,6 +743,87 @@ def test_phono3py_load_write_gamma():
             os.chdir(original_cwd)
 
 
+def test_phono3py_load_fc3_r0_average():
+    """Test phono3py-load script with is_fc3_r0_average."""
+    is_fc3_r0_average = Phono3pySettings().is_fc3_r0_average
+    assert is_fc3_r0_average is True
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_AlN332.yaml.xz",
+                load_phono3py_yaml=True,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            argparse_control = _get_phono3py_load_args(
+                "phono3py.yaml",
+                mesh_numbers="11 11 6",
+                is_bterta=True,
+                temperatures=[
+                    "300",
+                ],
+                is_fc3_r0_average=not is_fc3_r0_average,
+                load_phono3py_yaml=True,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            with h5py.File("kappa-m11116.hdf5", "r") as f:
+                np.testing.assert_allclose(
+                    f["kappa"][0, :3],  # type: ignore
+                    [232.950, 232.950, 213.358],
+                    atol=0.3,
+                )
+
+            file_path = pathlib.Path("kappa-m11116.hdf5")
+            assert file_path.exists()
+            file_path.unlink()
+
+            argparse_control = _get_phono3py_load_args(
+                "phono3py.yaml",
+                mesh_numbers="11 11 6",
+                is_bterta=True,
+                temperatures=[
+                    "300",
+                ],
+                is_fc3_r0_average=is_fc3_r0_average,
+                load_phono3py_yaml=True,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            with h5py.File("kappa-m11116.hdf5", "r") as f:
+                np.testing.assert_allclose(
+                    f["kappa"][0, :3],  # type: ignore
+                    [240.807, 240.807, 219.942],
+                    atol=0.3,
+                )
+
+            # Clean files created by phono3py-load script.
+            for created_filename in (
+                "fc3.hdf5",
+                "fc2.hdf5",
+                "phono3py.yaml",
+                "kappa-m11116.hdf5",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            _check_no_files()
+
+        finally:
+            os.chdir(original_cwd)
+
+
 def test_phono3py_load_FORCES_FC3_xz():
     """Test phono3py-load script with reading FORCES_FC3.xz."""
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -854,6 +898,176 @@ def test_phono3py_load_FORCES_FC2_xz():
             os.chdir(original_cwd)
 
 
+@pytest.mark.parametrize("save_params", [False, True])
+def test_create_forces_fc3_fc2_rd(save_params: bool):
+    """Test phono3py with random displacements."""
+
+    def check_supercell_energies(num_fc3_force_files: int, num_fc2_force_files: int):
+        ph3 = phono3py.load("phono3py_params.yaml", produce_fc=False)
+        assert ph3.supercell_energies is not None
+        np.testing.assert_allclose(
+            ph3.supercell_energies,
+            [
+                -223.886324,
+                -223.875031,
+                -223.880732,
+                -223.885302,
+                -223.886291,
+                -223.880438,
+                -223.879852,
+                -223.885472,
+                -223.881605,
+                -223.884761,
+                -223.876625,
+                -223.880542,
+                -223.883219,
+                -223.88378,
+                -223.879651,
+                -223.884732,
+                -223.87873,
+                -223.884416,
+                -223.881279,
+                -223.877764,
+            ][:num_fc3_force_files],
+        )
+        assert ph3.phonon_supercell_energies is not None
+        np.testing.assert_allclose(
+            ph3.phonon_supercell_energies,
+            [-1791.121997, -1791.131866][:num_fc2_force_files],
+        )
+
+    if save_params:
+        created_filenames = ("phono3py_params.yaml",)
+    else:
+        created_filenames = ("FORCES_FC3", "FORCES_FC2")
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            argparse_control = _get_phono3py_load_args(
+                phono3py_yaml_filepath=cwd
+                / "vaspruns_NaCl_rd"
+                / "phono3py_disp.yaml.xz",
+                create_forces_fc3=[
+                    cwd / "vaspruns_NaCl_rd" / f"vasprun-000{i:02d}.xml.xz"
+                    for i in range(1, 21)
+                ],
+                create_forces_fc2=[
+                    cwd / "vaspruns_NaCl_rd" / f"vasprun-ph000{i:02d}.xml.xz"
+                    for i in range(1, 3)
+                ],
+                load_phono3py_yaml=False,
+                save_params=save_params,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            if save_params:
+                check_supercell_energies(20, 2)
+
+            for created_filename in created_filenames:
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            _check_no_files()
+
+            # Allows less number of force files (three disps in phonopy_disp.yaml).
+            argparse_control = _get_phono3py_load_args(
+                phono3py_yaml_filepath=cwd
+                / "vaspruns_NaCl_rd"
+                / "phono3py_disp.yaml.xz",
+                create_forces_fc3=[
+                    cwd / "vaspruns_NaCl_rd" / f"vasprun-000{i:02d}.xml.xz"
+                    for i in range(1, 20)
+                ],
+                create_forces_fc2=[
+                    cwd / "vaspruns_NaCl_rd" / f"vasprun-ph000{i:02d}.xml.xz"
+                    for i in range(1, 3)
+                ],
+                load_phono3py_yaml=False,
+                save_params=save_params,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            if save_params:
+                check_supercell_energies(19, 2)
+
+            for created_filename in created_filenames:
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            _check_no_files()
+
+            argparse_control = _get_phono3py_load_args(
+                phono3py_yaml_filepath=cwd
+                / "vaspruns_NaCl_rd"
+                / "phono3py_disp.yaml.xz",
+                create_forces_fc3=[
+                    cwd / "vaspruns_NaCl_rd" / f"vasprun-000{i:02d}.xml.xz"
+                    for i in range(1, 21)
+                ],
+                create_forces_fc2=[
+                    cwd / "vaspruns_NaCl_rd" / f"vasprun-ph000{i:02d}.xml.xz"
+                    for i in range(1, 3)
+                ],
+                load_phono3py_yaml=False,
+                save_params=save_params,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            if save_params:
+                check_supercell_energies(20, 2)
+
+            for created_filename in created_filenames:
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            _check_no_files()
+
+            # Allows less number of force files (three disps in phonopy_disp.yaml).
+            argparse_control = _get_phono3py_load_args(
+                phono3py_yaml_filepath=cwd
+                / "vaspruns_NaCl_rd"
+                / "phono3py_disp.yaml.xz",
+                create_forces_fc3=[
+                    cwd / "vaspruns_NaCl_rd" / f"vasprun-000{i:02d}.xml.xz"
+                    for i in range(1, 20)
+                ],
+                create_forces_fc2=[
+                    cwd / "vaspruns_NaCl_rd" / f"vasprun-ph000{i:02d}.xml.xz"
+                    for i in range(1, 2)
+                ],
+                load_phono3py_yaml=False,
+                save_params=save_params,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            if save_params:
+                check_supercell_energies(19, 1)
+
+            for created_filename in created_filenames:
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            _check_no_files()
+
+        finally:
+            os.chdir(original_cwd)
+
+
 def _ls():
     current_dir = pathlib.Path(".")
     for file in current_dir.iterdir():
@@ -865,22 +1079,26 @@ def _check_no_files():
 
 
 def _get_phono3py_load_args(
-    phono3py_yaml_filepath: str | os.PathLike | None = None,
+    phono3py_yaml_filepath: str | os.PathLike | None = None,  # =cell_filename
+    create_forces_fc2: list[str | os.PathLike] | None = None,
+    create_forces_fc3: list[str | os.PathLike] | None = None,
     fc_calculator: str | None = None,
     fc_calculator_options: str | None = None,
     load_phono3py_yaml: bool = True,
-    is_bterta: bool = False,
-    is_lbte: bool = False,
-    is_wigner_kappa: bool = False,
+    is_bterta: bool | None = None,
+    is_fc3_r0_average: bool | None = None,
+    is_lbte: bool | None = None,
+    is_wigner_kappa: bool | None = None,
     mesh_numbers: Sequence | None = None,
     mlp_params: str | None = None,
     random_displacements: int | str | None = None,
     rd_number_estimation_factor: float | None = None,
-    read_gamma: bool = False,
+    read_gamma: bool | None = None,
+    save_params: bool | None = None,
     temperatures: Sequence | None = None,
-    use_pypolymlp: bool = False,
-    write_gamma: bool = False,
-    write_phonon: bool = False,
+    use_pypolymlp: bool | None = None,
+    write_gamma: bool | None = None,
+    write_phonon: bool | None = None,
 ):
     # Mock of ArgumentParser.args.
     if load_phono3py_yaml:
@@ -889,11 +1107,14 @@ def _get_phono3py_load_args(
         else:
             filename = [phono3py_yaml_filepath]
         # assert phono3py_yaml_filepath is not None
-        mockargs = MockArgs(
+        mockargs = Phono3pyMockArgs(
             filename=filename,
+            create_forces_fc2=create_forces_fc2,
+            create_forces_fc3=create_forces_fc3,
             fc_calculator=fc_calculator,
             fc_calculator_options=fc_calculator_options,
             is_bterta=is_bterta,
+            is_fc3_r0_average=is_fc3_r0_average,
             is_lbte=is_lbte,
             is_wigner_kappa=is_wigner_kappa,
             log_level=1,
@@ -902,19 +1123,23 @@ def _get_phono3py_load_args(
             random_displacements=random_displacements,
             read_gamma=read_gamma,
             rd_number_estimation_factor=rd_number_estimation_factor,
+            save_params=save_params,
             temperatures=temperatures,
             use_pypolymlp=use_pypolymlp,
             write_gamma=write_gamma,
             write_phonon=write_phonon,
         )
     else:
-        mockargs = MockArgs(
+        mockargs = Phono3pyMockArgs(
             filename=[],
+            create_forces_fc2=create_forces_fc2,
+            create_forces_fc3=create_forces_fc3,
             fc_calculator=fc_calculator,
             fc_calculator_options=fc_calculator_options,
             log_level=1,
             cell_filename=phono3py_yaml_filepath,
             is_bterta=is_bterta,
+            is_fc3_r0_average=is_fc3_r0_average,
             is_lbte=is_lbte,
             is_wigner_kappa=is_wigner_kappa,
             mesh_numbers=mesh_numbers,
@@ -922,6 +1147,7 @@ def _get_phono3py_load_args(
             random_displacements=random_displacements,
             rd_number_estimation_factor=rd_number_estimation_factor,
             read_gamma=read_gamma,
+            save_params=save_params,
             temperatures=temperatures,
             use_pypolymlp=use_pypolymlp,
             write_gamma=write_gamma,

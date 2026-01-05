@@ -227,8 +227,9 @@ def write_FORCES_FC2(
         else:
             if forces_fc2 is None:
                 raise RuntimeError("No forces are found.")
-            dataset = disp_dataset.copy()
+            dataset = {}
             dataset["forces"] = forces_fc2
+            dataset["displacements"] = disp_dataset["displacements"][: len(forces_fc2)]
             write_FORCE_SETS(dataset, filename="FORCES_FC2")
 
     if fp is None:
@@ -259,8 +260,9 @@ def write_FORCES_FC3(
         else:
             if forces_fc3 is None:
                 raise RuntimeError("No forces are found.")
-            dataset = disp_dataset.copy()
+            dataset = {}
             dataset["forces"] = forces_fc3
+            dataset["displacements"] = disp_dataset["displacements"][: len(forces_fc3)]
             write_FORCE_SETS(dataset, filename="FORCES_FC3")
 
 
@@ -1661,7 +1663,7 @@ def parse_FORCES_FC2(
     num_disp = len(disp_dataset["first_atoms"])
     forces_fc2 = []
     myio = get_io_module_to_decompress(filename)
-    with myio.open(filename, "r") as f2:
+    with myio.open(filename, "rt") as f2:
         for _ in range(num_disp):
             forces = _parse_force_lines(f2, num_atom)
             if forces is None:
@@ -1689,7 +1691,7 @@ def parse_FORCES_FC3(
         num_disp += len(disp1["second_atoms"])
 
     myio = get_io_module_to_decompress(filename)
-    with myio.open(filename, "r") as f3:
+    with myio.open(filename, "rt") as f3:
         if use_loadtxt:
             forces_fc3 = np.loadtxt(f3, dtype="double").reshape((num_disp, -1, 3))
             if not forces_fc3.flags["C_CONTIGUOUS"]:
