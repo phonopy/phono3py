@@ -989,7 +989,9 @@ def _init_phph_interaction(
         if settings.is_symmetrize_fc3_q:
             print("Permutation symmetry of ph-ph interaction strengths: True")
         if settings.is_fc3_r0_average:
-            print("fc3 r2q transformation over three atoms: True")
+            print("fc3-r2q-transformation over three atoms: True")
+        else:
+            print("fc3-r2q-transformation over three atoms: False")
 
     ave_pp = settings.constant_averaged_pp_interaction
     phono3py.init_phph_interaction(

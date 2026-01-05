@@ -58,14 +58,13 @@ class Phono3pySettings(Settings):
         self.create_forces_fc3_file = None
         self.cutoff_fc3_distance = None
         self.cutoff_pair_distance = None
-        self.emulate_v2 = False
         self.grid_addresses = None
         self.grid_points = None
         self.grid_matrix = None
         self.ion_clamped = False
         self.is_bterta = False
         self.is_compact_fc = False
-        self.is_fc3_r0_average = False
+        self.is_fc3_r0_average = True
         self.is_full_pp = False
         self.is_gruneisen = False
         self.is_imag_self_energy = False
@@ -218,12 +217,6 @@ class Phono3pyConfParser(ConfParser):
                 self._confs["compact_fc"] = ".true."
             elif args.is_compact_fc is False:
                 self._confs["compact_fc"] = ".false."
-
-        if "emulate_v2" in args:
-            if args.emulate_v2:
-                self._confs["emulate_v2"] = ".true."
-            elif args.emulate_v2 is False:
-                self._confs["emulate_v2"] = ".false."
 
         if "is_gruneisen" in args:
             if args.is_gruneisen:
@@ -523,7 +516,6 @@ class Phono3pyConfParser(ConfParser):
                 "ion_clamped",
                 "bterta",
                 "compact_fc",
-                "emulate_v2",
                 "fc3_r0_average",
                 "real_self_energy",
                 "gruneisen",
@@ -719,10 +711,6 @@ class Phono3pyConfParser(ConfParser):
         # creation with displacements and making third-order force constants
         if "cutoff_pair_distance" in params:
             settings.cutoff_pair_distance = params["cutoff_pair_distance"]
-
-        # Emulate v2.x behavior
-        if "emulate_v2" in params:
-            settings.emulate_v2 = params["emulate_v2"]
 
         # Grid addresses (sets of three integer values)
         if "grid_addresses" in params:
