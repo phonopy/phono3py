@@ -16,6 +16,9 @@ jobs:
     - uses: actions/setup-python@v6
       with:
         python-version: '3.13'
+    - name: Install phonopy
+      run: |
+        pip install git+https://github.com/phonopy/phonopy@develop
     - name: Install phono3py
       run: |
         pip install -e . -v

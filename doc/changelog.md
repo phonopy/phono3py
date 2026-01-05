@@ -2,6 +2,14 @@
 
 # Change Log
 
+## Jan-5-2026: Version 3.23.0
+
+- From v3.16.0, the calculation method to transform supercell third-order force
+  constants (fc3) from real to reciprocal space, introduced in version 3.0.2
+  (see {ref}`changelog_v290`), had been accidentally turned off. This has been
+  turned on again in this version. Note that the behavior before v3.0.2 can be
+  restored using the `--v2` option.
+
 ## Dec-21-2025: Version 3.22.0
 
 - Drop python 3.9 support
