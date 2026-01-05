@@ -884,7 +884,7 @@ def get_parser(load_phono3py_yaml: bool = False):
         dest="is_fc3_r0_average",
         action="store_false",
         default=None,
-        help="Take average in fc3-r2q transformation around three atoms",
+        help="Disable taking average in fc3-r2q transformation around three atoms",
     )
     parser.add_argument(
         "--wgp",
