@@ -15,6 +15,7 @@ import pytest
 import phono3py
 from phono3py.cui.phono3py_argparse import Phono3pyMockArgs
 from phono3py.cui.phono3py_script import main
+from phono3py.cui.settings import Phono3pySettings
 from phono3py.file_IO import write_FORCES_FC2, write_FORCES_FC3
 
 cwd = pathlib.Path(__file__).parent
@@ -732,6 +733,87 @@ def test_phono3py_load_write_gamma():
 
             for gp in [0, 1, 2, 6, 7, 8, 9, 12, 13, 40]:
                 created_filename = f"kappa-m555-g{gp}.hdf5"
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            _check_no_files()
+
+        finally:
+            os.chdir(original_cwd)
+
+
+def test_phono3py_load_fc3_r0_average():
+    """Test phono3py-load script with is_fc3_r0_average."""
+    is_fc3_r0_average = Phono3pySettings().is_fc3_r0_average
+    assert is_fc3_r0_average is True
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_AlN332.yaml.xz",
+                load_phono3py_yaml=True,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            argparse_control = _get_phono3py_load_args(
+                "phono3py.yaml",
+                mesh_numbers="11 11 6",
+                is_bterta=True,
+                temperatures=[
+                    "300",
+                ],
+                is_fc3_r0_average=not is_fc3_r0_average,
+                load_phono3py_yaml=True,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            with h5py.File("kappa-m11116.hdf5", "r") as f:
+                np.testing.assert_allclose(
+                    f["kappa"][0, :3],  # type: ignore
+                    [232.950, 232.950, 213.358],
+                    atol=0.3,
+                )
+
+            file_path = pathlib.Path("kappa-m11116.hdf5")
+            assert file_path.exists()
+            file_path.unlink()
+
+            argparse_control = _get_phono3py_load_args(
+                "phono3py.yaml",
+                mesh_numbers="11 11 6",
+                is_bterta=True,
+                temperatures=[
+                    "300",
+                ],
+                is_fc3_r0_average=is_fc3_r0_average,
+                load_phono3py_yaml=True,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            with h5py.File("kappa-m11116.hdf5", "r") as f:
+                np.testing.assert_allclose(
+                    f["kappa"][0, :3],  # type: ignore
+                    [240.807, 240.807, 219.942],
+                    atol=0.3,
+                )
+
+            # Clean files created by phono3py-load script.
+            for created_filename in (
+                "fc3.hdf5",
+                "fc2.hdf5",
+                "phono3py.yaml",
+                "kappa-m11116.hdf5",
+            ):
                 file_path = pathlib.Path(created_filename)
                 assert file_path.exists()
                 file_path.unlink()
