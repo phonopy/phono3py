@@ -16,7 +16,7 @@ dependencies = [
     "matplotlib",
     "h5py",
     "spglib>=2.5.0",
-    "phonopy>=2.46.0,<2.47",
+    "phonopy>=2.47.0,<2.48",
 ]
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
