@@ -36,7 +36,10 @@
 
 from __future__ import annotations
 
+import dataclasses
+import os
 import sys
+from collections.abc import Sequence
 
 from phonopy.cui.phonopy_argparse import fix_deprecated_option_names
 
@@ -261,13 +264,6 @@ def get_parser(load_phono3py_yaml: bool = False):
             default=None,
             help="Supercell dimension for extra fc2",
         )
-    # parser.add_argument(
-    #     "--emulate-v2",
-    #     dest="emulate_v2",
-    #     action="store_true",
-    #     default=None,
-    #     help="Emulate v2.x behavior.",
-    # )
     parser.add_argument(
         "--factor",
         dest="frequency_conversion_factor",
@@ -953,3 +949,53 @@ def get_parser(load_phono3py_yaml: bool = False):
         parser.add_argument("filename", nargs="*", help="Phono3py configure file")
 
     return parser, deprecated
+
+
+@dataclasses.dataclass
+class Phono3pyMockArgs:
+    """Mock args of ArgumentParser.
+
+    Default values should be None to centralize them in Settings and
+    Phono3pySettings classes.
+
+    """
+
+    cell_filename: str | os.PathLike | None = None
+    conf_filename: str | os.PathLike | None = None
+    create_forces_fc2: Sequence[str | os.PathLike] | None = None
+    create_forces_fc3: Sequence[str | os.PathLike] | None = None
+    fc_calculator: str | None = None
+    fc_calculator_options: str | None = None
+    fc_symmetry: bool | None = None
+    filename: Sequence[str | os.PathLike] | None = None
+    force_sets_mode: bool | None = None
+    force_sets_to_forces_fc2_mode: bool | None = None
+    input_filename = None
+    input_output_filename = None
+    log_level: int | None = None
+    is_bterta: bool | None = None
+    is_fc3_r0_average: bool | None = None
+    is_lbte: bool | None = None
+    is_wigner_kappa: bool | None = None
+    mesh_numbers: Sequence | None = None
+    mlp_params: str | None = None
+    rd_number_estimation_factor: float | None = None
+    read_gamma: bool | None = None
+    output_filename = None
+    output_yaml_filename: str | os.PathLike | None = None
+    random_displacements: int | str | None = None
+    save_params: bool | None = None
+    show_num_triplets: bool | None = None
+    temperatures: Sequence | None = None
+    use_pypolymlp: bool | None = None
+    write_gamma: bool | None = None
+    write_grid_points: bool | None = None
+    write_phonon: bool | None = None
+
+    def __iter__(self):
+        """Make self iterable to support in."""
+        return (getattr(self, field.name) for field in dataclasses.fields(self))
+
+    def __contains__(self, item):
+        """Implement in operator."""
+        return item in (field.name for field in dataclasses.fields(self))
