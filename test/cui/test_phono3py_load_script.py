@@ -1098,6 +1098,30 @@ def test_create_forces_fc3_fc2_fd():
 
             _check_no_files()
 
+            with open("cf3_filenames.txt", "w") as f:
+                for i in range(1, 112):
+                    print(
+                        str(cwd / "vaspruns_Si_PBEsol" / f"vasprun-00{i:03d}.xml.xz"),
+                        file=f,
+                    )
+            argparse_control = _get_phono3py_load_args(
+                phono3py_yaml_filepath=cwd
+                / "vaspruns_Si_PBEsol"
+                / "phono3py_disp.yaml.xz",
+                create_forces_fc3_file="cf3_filenames.txt",
+                load_phono3py_yaml=False,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            for created_filename in (created_filenames[0], "cf3_filenames.txt"):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            _check_no_files()
+
             argparse_control = _get_phono3py_load_args(
                 phono3py_yaml_filepath=cwd
                 / "vaspruns_Si_PBEsol"
@@ -1140,6 +1164,7 @@ def _get_phono3py_load_args(
     phono3py_yaml_filepath: str | os.PathLike | None = None,  # =cell_filename
     create_forces_fc2: list[str | os.PathLike] | None = None,
     create_forces_fc3: list[str | os.PathLike] | None = None,
+    create_forces_fc3_file: str | os.PathLike | None = None,
     fc_calculator: str | None = None,
     fc_calculator_options: str | None = None,
     load_phono3py_yaml: bool = True,
@@ -1169,6 +1194,7 @@ def _get_phono3py_load_args(
             filename=filename,
             create_forces_fc2=create_forces_fc2,
             create_forces_fc3=create_forces_fc3,
+            create_forces_fc3_file=create_forces_fc3_file,
             fc_calculator=fc_calculator,
             fc_calculator_options=fc_calculator_options,
             is_bterta=is_bterta,
@@ -1192,6 +1218,7 @@ def _get_phono3py_load_args(
             filename=[],
             create_forces_fc2=create_forces_fc2,
             create_forces_fc3=create_forces_fc3,
+            create_forces_fc3_file=create_forces_fc3_file,
             fc_calculator=fc_calculator,
             fc_calculator_options=fc_calculator_options,
             log_level=1,
