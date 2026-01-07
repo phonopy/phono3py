@@ -64,6 +64,7 @@ from phono3py.interface.phono3py_yaml import (
     displacements_yaml_lines_type1,
 )
 from phono3py.interface.wien2k import get_fc3_calc_dataset_wien2k
+from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
 
 
 def create_FORCES_FC3_and_FORCES_FC2(
@@ -112,6 +113,8 @@ def create_FORCES_FC3_and_FORCES_FC2(
             print(f"Calculator interface: {interface_mode}")
 
     if settings.create_forces_fc3 or settings.create_forces_fc3_file:
+        assert ph3py_yaml.dataset is not None
+        assert ph3py_yaml.supercell is not None
         calc_dataset_fc3 = _get_force_sets_fc3(
             settings,
             ph3py_yaml.dataset,
@@ -127,6 +130,8 @@ def create_FORCES_FC3_and_FORCES_FC2(
             sys.exit(1)
 
     if settings.create_forces_fc2:
+        assert ph3py_yaml.phonon_dataset is not None
+        assert ph3py_yaml.phonon_supercell is not None
         calc_dataset_fc2 = _get_force_sets_fc2(
             settings,
             ph3py_yaml.phonon_dataset,
@@ -164,6 +169,7 @@ def create_FORCES_FC3_and_FORCES_FC2(
                 print(f'"{fc3_yaml_filename}" has been created.')
     else:
         if settings.create_forces_fc3 or settings.create_forces_fc3_file:
+            assert ph3py_yaml.dataset is not None
             write_FORCES_FC3(
                 ph3py_yaml.dataset,
                 forces_fc3=calc_dataset_fc3["forces"],
@@ -173,6 +179,8 @@ def create_FORCES_FC3_and_FORCES_FC2(
                 print('"FORCES_FC3" has been created.')
 
         if settings.create_forces_fc2:
+            assert ph3py_yaml.phonon_dataset is not None
+            assert calc_dataset_fc2 is not None
             write_FORCES_FC2(
                 ph3py_yaml.phonon_dataset,
                 forces_fc2=calc_dataset_fc2["forces"],
@@ -244,6 +252,7 @@ def create_FORCE_SETS_from_FORCES_FCx(
                 print_error()
             sys.exit(1)
 
+        assert dataset is not None
         parse_FORCES_FC2(dataset, filename=forces_filename)
         write_FORCE_SETS(dataset)
 
@@ -279,6 +288,7 @@ def _get_force_sets_fc2(
         raise RuntimeError("FC2 displacement dataset is broken.")
 
     force_filenames = settings.create_forces_fc2
+    assert force_filenames is not None
     for filename in force_filenames:
         file_exists(filename, log_level=log_level)
 
@@ -365,9 +375,16 @@ def _get_force_sets_fc3(
 
     if settings.create_forces_fc3_file:
         file_exists(settings.create_forces_fc3_file, log_level=log_level)
-        force_filenames = [x.strip() for x in open(settings.create_forces_fc3_file)]
+        force_filenames = []
+        with open(settings.create_forces_fc3_file) as f:
+            for line in f:
+                if line.strip() == "" or line.strip().startswith("#"):
+                    continue
+                force_filenames.append(line.strip())
     else:
         force_filenames = settings.create_forces_fc3
+
+    assert force_filenames is not None
 
     for filename in force_filenames:
         file_exists(filename, log_level=log_level)
@@ -378,9 +395,9 @@ def _get_force_sets_fc3(
 
     if "first_atoms" in disp_dataset and not check_number_of_force_files(
         num_disps, force_filenames, disp_filename
-    ):  # type-1
+    ):
         calc_dataset = {"forces": []}
-    else:  # type-2
+    else:
         if interface_mode == "wien2k":
             calc_dataset = get_fc3_calc_dataset_wien2k(
                 force_filenames,
@@ -398,9 +415,13 @@ def _get_force_sets_fc3(
                 verbose=(log_level > 0),
             )
         force_sets = calc_dataset["forces"]
+        displacements, _ = get_displacements_and_forces_fc3(disp_dataset)
         if "points" in calc_dataset:
             if filename := check_agreements_of_displacements(
-                supercell, disp_dataset, calc_dataset["points"], force_filenames
+                supercell,
+                {"displacements": displacements},
+                calc_dataset["points"],
+                force_filenames,
             ):
                 raise RuntimeError(
                     f'Displacements don\'t match with atomic positions in "{filename}".'
@@ -452,6 +473,7 @@ def _set_forces_and_nac_params(
     calc_dataset_fc2: Optional[dict],
 ):
     """Set forces, energies and nac_params to phono3py_yaml."""
+    assert ph3py_yaml.dataset is not None
     if "first_atoms" in ph3py_yaml.dataset:
         count = len(ph3py_yaml.dataset["first_atoms"])
         for i, d1 in enumerate(ph3py_yaml.dataset["first_atoms"]):
@@ -484,6 +506,7 @@ def _set_forces_and_nac_params(
             ]
 
     if settings.create_forces_fc2 and calc_dataset_fc2:
+        assert ph3py_yaml.phonon_dataset is not None
         if "first_atoms" in ph3py_yaml.phonon_dataset:
             for i, d in enumerate(ph3py_yaml.phonon_dataset["first_atoms"]):
                 d["forces"] = calc_dataset_fc2["forces"][i]
