@@ -84,7 +84,7 @@ def get_thermal_conductivity_RTA(
     input_filename: str | None = None,
     output_filename: str | None = None,
     log_level: int = 0,
-):
+) -> ConductivityRTA | ConductivityKuboRTA | ConductivityWignerRTA:
     """Run RTA thermal conductivity calculation."""
     if temperatures is None:
         _temperatures = np.arange(0, 1001, 10, dtype="double")

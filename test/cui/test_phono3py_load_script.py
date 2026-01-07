@@ -1068,6 +1068,64 @@ def test_create_forces_fc3_fc2_rd(save_params: bool):
             os.chdir(original_cwd)
 
 
+def test_create_forces_fc3_fc2_fd():
+    """Test phono3py with finite differentce."""
+    created_filenames = ("FORCES_FC3", "FORCES_FC2")
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            argparse_control = _get_phono3py_load_args(
+                phono3py_yaml_filepath=cwd
+                / "vaspruns_Si_PBEsol"
+                / "phono3py_disp.yaml.xz",
+                create_forces_fc3=[
+                    cwd / "vaspruns_Si_PBEsol" / f"vasprun-00{i:03d}.xml.xz"
+                    for i in range(1, 112)
+                ],
+                load_phono3py_yaml=False,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            for created_filename in created_filenames[:1]:
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            _check_no_files()
+
+            argparse_control = _get_phono3py_load_args(
+                phono3py_yaml_filepath=cwd
+                / "vaspruns_Si_PBEsol"
+                / "phono3py_disp_dimfc2.yaml.xz",
+                create_forces_fc3=[
+                    cwd / "vaspruns_Si_PBEsol" / f"vasprun-00{i:03d}.xml.xz"
+                    for i in range(1, 112)
+                ],
+                create_forces_fc2=[
+                    cwd / "vaspruns_Si_PBEsol" / "vasprun-ph00001.xml.xz"
+                ],
+                load_phono3py_yaml=False,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            for created_filename in created_filenames:
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            _check_no_files()
+
+        finally:
+            os.chdir(original_cwd)
+
+
 def _ls():
     current_dir = pathlib.Path(".")
     for file in current_dir.iterdir():

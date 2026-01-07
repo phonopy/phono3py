@@ -2,6 +2,12 @@
 
 # Change Log
 
+## Jan-5-2026: Version 3.23.1
+
+- Bug fix in combination use of traditional displacement method (finite
+  difference) and symfc or ALM.
+- Fix `--cf3` option with traditional displacement method (finite difference)
+
 ## Jan-5-2026: Version 3.23.0
 
 - From v3.16.0, the calculation method to transform supercell third-order force

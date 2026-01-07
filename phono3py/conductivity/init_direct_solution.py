@@ -91,7 +91,7 @@ def get_thermal_conductivity_LBTE(
     input_filename: str | os.PathLike | None = None,
     output_filename: str | os.PathLike | None = None,
     log_level: int = 0,
-):
+) -> ConductivityLBTE | ConductivityWignerLBTE:
     """Calculate lattice thermal conductivity by direct solution."""
     if temperatures is None:
         _temperatures = [

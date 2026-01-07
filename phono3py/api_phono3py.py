@@ -178,7 +178,10 @@ class Phono3py:
         | Sequence[Sequence[float]]
         | NDArray
         | None = None,
-        phonon_supercell_matrix: Sequence[Sequence[int]] | NDArray | None = None,
+        phonon_supercell_matrix: Sequence[int]
+        | Sequence[Sequence[int]]
+        | NDArray
+        | None = None,
         cutoff_frequency: float = 1e-4,
         frequency_factor_to_THz: float | None = None,
         is_symmetry: bool = True,

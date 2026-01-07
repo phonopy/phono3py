@@ -39,7 +39,7 @@ from __future__ import annotations
 import os
 
 import numpy as np
-from numpy.typing import ArrayLike
+from numpy.typing import ArrayLike, NDArray
 
 from phono3py.conductivity.base import ConductivityComponents
 from phono3py.conductivity.direct_solution_base import (
@@ -118,27 +118,27 @@ class ConductivityLBTE(ConductivityLBTEBase):
         )
 
     @property
-    def kappa(self):
+    def kappa(self) -> NDArray | None:
         """Return kappa."""
         return self._kappa
 
     @property
-    def mode_kappa(self):
+    def mode_kappa(self) -> NDArray | None:
         """Return mode_kappa."""
         return self._mode_kappa
 
     @property
-    def kappa_RTA(self):
+    def kappa_RTA(self) -> NDArray | None:
         """Return RTA lattice thermal conductivity."""
         return self._kappa_RTA
 
     @property
-    def mode_kappa_RTA(self):
+    def mode_kappa_RTA(self) -> NDArray | None:
         """Return RTA mode lattice thermal conductivities."""
         return self._mode_kappa_RTA
 
     @property
-    def gv_by_gv(self):
+    def gv_by_gv(self) -> NDArray:
         """Return gv_by_gv at grid points where mode kappa are calculated."""
         return self._conductivity_components.gv_by_gv
 

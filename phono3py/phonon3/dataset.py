@@ -34,14 +34,15 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from typing import Optional
+from __future__ import annotations
 
 import numpy as np
+from numpy.typing import NDArray
 
 
 def get_displacements_and_forces_fc3(
     disp_dataset: dict,
-) -> tuple[np.ndarray, Optional[np.ndarray]]:
+) -> tuple[NDArray, NDArray | None]:
     """Return displacements and forces from disp_dataset.
 
     Note
@@ -90,7 +91,7 @@ def get_displacements_and_forces_fc3(
                 else:
                     indices.append(count)
                 displacements[count, disp1["number"]] = disp1["displacement"]
-                displacements[count, disp2["number"]] = disp2["displacement"]
+                displacements[count, disp2["number"]] += disp2["displacement"]
                 if "forces" in disp2:
                     forces_count += 1
                     forces[count] = disp2["forces"]
@@ -115,7 +116,7 @@ def get_displacements_and_forces_fc3(
         raise RuntimeError("disp_dataset doesn't contain correct information.")
 
 
-def forces_in_dataset(dataset: Optional[dict]) -> bool:
+def forces_in_dataset(dataset: dict | None) -> bool:
     """Return whether forces in dataset or not."""
     if dataset is None:
         return False

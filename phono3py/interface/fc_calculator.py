@@ -117,6 +117,7 @@ class FC3Solver(FCSolver):
     def _get_displacements_and_forces(self):
         """Return displacements and forces for fc3."""
         assert self._dataset is not None
+        print("hohogegege")
         return get_displacements_and_forces_fc3(self._dataset)
 
 
