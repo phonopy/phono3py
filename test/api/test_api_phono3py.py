@@ -11,6 +11,7 @@ from phonopy.interface.pypolymlp import PypolymlpParams
 from phonopy.structure.atoms import PhonopyAtoms
 
 from phono3py import Phono3py
+from phono3py.conductivity.rta import ConductivityRTA
 from phono3py.phonon3.fc3 import get_drift_fc3
 
 cwd = Path(__file__).parent
@@ -87,7 +88,9 @@ def test_type1_forces_energies_setter_Si(si_111_222_fd: Phono3py):
         -43.34786243,
         -43.34184454,
     ]
+    assert ph3_in.supercell_energies is not None
     np.testing.assert_allclose(ph3_in.supercell_energies, ref_supercell_energies)
+    assert ph3_in.phonon_supercell_energies is not None
     np.testing.assert_allclose(
         ph3_in.phonon_supercell_energies, ref_ph_supercell_energies
     )
@@ -95,8 +98,10 @@ def test_type1_forces_energies_setter_Si(si_111_222_fd: Phono3py):
     ref_force00 = [-0.4109520800000000, 0.0000000100000000, 0.0000000300000000]
     ref_force_last = [0.1521426300000000, 0.0715600600000000, -0.0715600700000000]
     ref_ph_force00 = [-0.4027479600000000, 0.0000000200000000, 0.0000001000000000]
+    assert ph3_in.forces is not None
     np.testing.assert_allclose(ph3_in.forces[0, 0], ref_force00)
     np.testing.assert_allclose(ph3_in.forces[-1, -1], ref_force_last)
+    assert ph3_in.phonon_forces is not None
     np.testing.assert_allclose(ph3_in.phonon_forces[0, 0], ref_ph_force00)
 
     ph3 = Phono3py(
@@ -150,7 +155,9 @@ def test_type2_forces_energies_setter_Si(si_111_222_rd: Phono3py):
         -43.35037949,  # 19
         -43.35126123,  # 20
     ]
+    assert ph3_in.supercell_energies is not None
     np.testing.assert_allclose(ph3_in.supercell_energies, ref_supercell_energies)
+    assert ph3_in.phonon_supercell_energies is not None
     np.testing.assert_allclose(
         ph3_in.phonon_supercell_energies, ref_ph_supercell_energies
     )
@@ -160,8 +167,10 @@ def test_type2_forces_energies_setter_Si(si_111_222_rd: Phono3py):
     ref_ph_force00 = [-0.0161598900000000, -0.1161657500000000, 0.1399128100000000]
     ref_ph_force_last = [0.1049486700000000, 0.0795870900000000, 0.1062164600000000]
 
+    assert ph3_in.forces is not None
     np.testing.assert_allclose(ph3_in.forces[0, 0], ref_force00)
     np.testing.assert_allclose(ph3_in.forces[-1, -1], ref_force_last)
+    assert ph3_in.phonon_forces is not None
     np.testing.assert_allclose(ph3_in.phonon_forces[0, 0], ref_ph_force00)
     np.testing.assert_allclose(ph3_in.phonon_forces[-1, -1], ref_ph_force_last)
 
@@ -200,6 +209,8 @@ def test_use_pypolymlp_mgo(mgo_222rd_444rd: Phono3py):
         primitive_matrix=ph3_in.primitive_matrix,
         log_level=2,
     )
+    assert ph3_in.forces is not None
+    assert ph3_in.supercell_energies is not None
     ph3.mlp_dataset = {
         "displacements": ph3_in.displacements[:10],
         "forces": ph3_in.forces[:10],
@@ -221,9 +232,10 @@ def test_use_pypolymlp_mgo(mgo_222rd_444rd: Phono3py):
     ph3.mesh_numbers = 30
     ph3.init_phph_interaction()
     ph3.run_thermal_conductivity(temperatures=[300])
-    assert (
-        pytest.approx(63.0018546, abs=1e-1) == ph3.thermal_conductivity.kappa[0, 0, 0]
-    )
+    assert ph3.thermal_conductivity is not None
+    assert isinstance(ph3.thermal_conductivity, ConductivityRTA)
+    assert ph3.thermal_conductivity.kappa is not None
+    assert pytest.approx(63.547, abs=1e-1) == ph3.thermal_conductivity.kappa[0, 0, 0]
 
 
 @pytest.mark.parametrize("is_compact_fc", [True, False])

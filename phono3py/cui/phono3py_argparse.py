@@ -964,6 +964,7 @@ class Phono3pyMockArgs:
     conf_filename: str | os.PathLike | None = None
     create_forces_fc2: Sequence[str | os.PathLike] | None = None
     create_forces_fc3: Sequence[str | os.PathLike] | None = None
+    create_forces_fc3_file: str | os.PathLike | None = None
     fc_calculator: str | None = None
     fc_calculator_options: str | None = None
     fc_symmetry: bool | None = None
