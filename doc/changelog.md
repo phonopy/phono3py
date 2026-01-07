@@ -2,7 +2,7 @@
 
 # Change Log
 
-## Jan-5-2026: Version 3.23.1
+## Jan-7-2026: Version 3.24.0
 
 - Bug fix in combination use of traditional displacement method (finite
   difference) and symfc or ALM.
