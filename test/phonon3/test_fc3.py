@@ -1,5 +1,7 @@
 """Tests for fc3."""
 
+from __future__ import annotations
+
 import numpy as np
 import phono3py._phono3py as phono3c
 import pytest
@@ -22,6 +24,9 @@ def test_cutoff_fc3(nacl_pbe_cutoff_fc3: Phono3py, nacl_pbe: Phono3py):
     """
     fc3_cut = nacl_pbe_cutoff_fc3.fc3
     fc3 = nacl_pbe.fc3
+
+    assert fc3 is not None
+    assert fc3_cut is not FileNotFoundError
     abs_delta = np.abs(fc3_cut - fc3).sum()
 
     assert fc3.shape == (64, 64, 64, 3, 3, 3)
@@ -42,6 +47,8 @@ def test_cutoff_fc3_all_forces(
     """
     fc3_cut = nacl_pbe_cutoff_fc3.fc3
     fc3_cut_all_forces = nacl_pbe_cutoff_fc3_all_forces.fc3
+    assert fc3_cut is not None
+    assert fc3_cut_all_forces is not None
     np.testing.assert_allclose(fc3_cut, fc3_cut_all_forces, atol=1e-8)
 
 
@@ -52,6 +59,8 @@ def test_cutoff_fc3_compact_fc(
     fc3_cfc = nacl_pbe_cutoff_fc3_compact_fc.fc3
     fc3_full = nacl_pbe_cutoff_fc3.fc3
     p2s_map = nacl_pbe_cutoff_fc3.primitive.p2s_map
+    assert fc3_cfc is not None
+    assert fc3_full is not None
     assert fc3_cfc.shape == (2, 64, 64, 3, 3, 3)
     assert fc3_full.shape == (64, 64, 64, 3, 3, 3)
     np.testing.assert_allclose(fc3_cfc, fc3_full[p2s_map], atol=1e-8)
@@ -60,6 +69,7 @@ def test_cutoff_fc3_compact_fc(
 def test_cutoff_fc3_zero(nacl_pbe: Phono3py):
     """Test for abrupt cut of fc3 by distance."""
     ph = nacl_pbe
+    assert ph.fc3 is not None
     fc3 = ph.fc3.copy()
     cutoff_fc3_by_zero(fc3, ph.supercell, 5)
     abs_delta = np.abs(ph.fc3 - fc3).sum()
@@ -69,6 +79,7 @@ def test_cutoff_fc3_zero(nacl_pbe: Phono3py):
 def test_cutoff_fc3_zero_compact_fc(nacl_pbe_compact_fc: Phono3py):
     """Test for abrupt cut of fc3 by distance."""
     ph = nacl_pbe_compact_fc
+    assert ph.fc3 is not None
     fc3 = ph.fc3.copy()
     cutoff_fc3_by_zero(fc3, ph.supercell, 5, p2s_map=ph.primitive.p2s_map)
     abs_delta = np.abs(ph.fc3 - fc3).sum()
@@ -95,6 +106,7 @@ def test_fc3(si_pbesol_111: Phono3py):
             [-0.033945715726795195, -1.4289784633358948e-16, 1.3426036902612163e-17],
         ],
     ]
+    assert ph.fc3 is not None
     np.testing.assert_allclose(ph.fc3[0, 1, 7], fc3_ref, atol=1e-8, rtol=0)
 
 
@@ -118,6 +130,7 @@ def test_phonon_smat_fd(si_pbesol_111_222_fd: Phono3py):
             [-3.39457157e-02, 3.69351540e-17, 5.94504191e-18],
         ],
     ]
+    assert ph.fc3 is not None
     np.testing.assert_allclose(ph.fc3[0, 1, 7], fc3_ref, atol=1e-8, rtol=0)
 
     fc2_ref = [
@@ -125,6 +138,7 @@ def test_phonon_smat_fd(si_pbesol_111_222_fd: Phono3py):
         [-0.0244225, -0.02219682, -0.024112],
         [-0.0244225, -0.024112, -0.02219682],
     ]
+    assert ph.fc2 is not None
     np.testing.assert_allclose(ph.fc2[0, 33], fc2_ref, atol=1e-6, rtol=0)
 
 
@@ -133,27 +147,29 @@ def test_phonon_smat_symfc(si_pbesol_111_222_symfc: Phono3py):
     ph = si_pbesol_111_222_symfc
     fc3_ref = [
         [
-            [0.10725082, 0.0, 0.0],
-            [-0.04225275, -0.09187669, -0.1386571],
-            [0.04225275, -0.1386571, -0.09187669],
+            [0.10725082233070223, 0.0, 0.0],
+            [0.008901878238903862, -0.14303131369612382, -0.1385764832859841],
+            [-0.008901878238903862, -0.1385764832859841, -0.14303131369612382],
         ],
         [
-            [0.04225275, -0.09187669, -0.1386571],
-            [-0.17073504, 0.0, 0.0],
-            [-0.33192165, 0.02516976, 0.02516976],
+            [-0.008901878238903862, -0.14303131369612382, -0.1385764832859841],
+            [-0.03432270217882153, 0.0, 0.0],
+            [-0.33182990143137375, -0.025984864966909885, -0.025984864966909885],
         ],
         [
-            [-0.04225275, -0.1386571, -0.09187669],
-            [-0.33192165, -0.02516976, -0.02516976],
-            [-0.17073504, 0.0, 0.0],
+            [0.008901878238903862, -0.1385764832859841, -0.14303131369612382],
+            [-0.33182990143137375, 0.025984864966909885, 0.025984864966909885],
+            [-0.03432270217882153, 0.0, 0.0],
         ],
     ]
+    assert ph.fc3 is not None
     np.testing.assert_allclose(ph.fc3[0, 1, 7], fc3_ref, atol=1e-6, rtol=0)
     fc2_ref = [
         [-0.20333398, -0.0244225, -0.0244225],
         [-0.0244225, -0.02219682, -0.024112],
         [-0.0244225, -0.024112, -0.02219682],
     ]
+    assert ph.fc2 is not None
     np.testing.assert_allclose(ph.fc2[0, 33], fc2_ref, atol=1e-6, rtol=0)
 
 
@@ -177,12 +193,14 @@ def test_phonon_smat_symfc_fd(si_pbesol_111_222_symfc_fd: Phono3py):
             [-3.39457157e-02, 3.69351540e-17, 5.94504191e-18],
         ],
     ]
+    assert ph.fc3 is not None
     np.testing.assert_allclose(ph.fc3[0, 1, 7], fc3_ref, atol=1e-6, rtol=0)
     fc2_ref = [
         [-0.20333398, -0.0244225, -0.0244225],
         [-0.0244225, -0.02219682, -0.024112],
         [-0.0244225, -0.024112, -0.02219682],
     ]
+    assert ph.fc2 is not None
     np.testing.assert_allclose(ph.fc2[0, 33], fc2_ref, atol=1e-6, rtol=0)
 
 
@@ -191,27 +209,29 @@ def test_phonon_smat_fd_symfc(si_pbesol_111_222_fd_symfc: Phono3py):
     ph = si_pbesol_111_222_fd_symfc
     fc3_ref = [
         [
-            [0.10725082, 0.0, 0.0],
-            [-0.04225275, -0.09187669, -0.1386571],
-            [0.04225275, -0.1386571, -0.09187669],
+            [0.10725082233070223, 0.0, 0.0],
+            [0.008901878238903862, -0.14303131369612382, -0.1385764832859841],
+            [-0.008901878238903862, -0.1385764832859841, -0.14303131369612382],
         ],
         [
-            [0.04225275, -0.09187669, -0.1386571],
-            [-0.17073504, 0.0, 0.0],
-            [-0.33192165, 0.02516976, 0.02516976],
+            [-0.008901878238903862, -0.14303131369612382, -0.1385764832859841],
+            [-0.03432270217882153, 0.0, 0.0],
+            [-0.33182990143137375, -0.025984864966909885, -0.025984864966909885],
         ],
         [
-            [-0.04225275, -0.1386571, -0.09187669],
-            [-0.33192165, -0.02516976, -0.02516976],
-            [-0.17073504, 0.0, 0.0],
+            [0.008901878238903862, -0.1385764832859841, -0.14303131369612382],
+            [-0.33182990143137375, 0.025984864966909885, 0.025984864966909885],
+            [-0.03432270217882153, 0.0, 0.0],
         ],
     ]
+    assert ph.fc3 is not None
     np.testing.assert_allclose(ph.fc3[0, 1, 7], fc3_ref, atol=1e-6, rtol=0)
     fc2_ref = [
         [-0.20333398, -0.0244225, -0.0244225],
         [-0.0244225, -0.02219682, -0.024112],
         [-0.0244225, -0.024112, -0.02219682],
     ]
+    assert ph.fc2 is not None
     np.testing.assert_allclose(ph.fc2[0, 33], fc2_ref, atol=1e-6, rtol=0)
 
 
@@ -257,34 +277,38 @@ def test_phonon_smat_alm_cutoff_fc2(si_pbesol_111_222_alm_cutoff_fc2: Phono3py):
     ph = si_pbesol_111_222_alm_cutoff_fc2
     fc3_ref = [
         [
-            [0.10725082, 0.0, 0.0],
-            [-0.04225275, -0.09187669, -0.1386571],
-            [0.04225275, -0.1386571, -0.09187669],
+            [0.10725082233070826, 0.0, 0.0],
+            [0.008901878238907217, -0.1430313136961221, -0.13857648328597594],
+            [-0.008901878238907217, -0.13857648328597594, -0.1430313136961221],
         ],
         [
-            [0.04225275, -0.09187669, -0.1386571],
-            [-0.17073504, 0.0, 0.0],
-            [-0.33192165, 0.02516976, 0.02516976],
+            [-0.008901878238907217, -0.1430313136961221, -0.13857648328597594],
+            [-0.03432270217882977, 0.0, 0.0],
+            [-0.33182990143136837, -0.02598486496691343, -0.02598486496691343],
         ],
         [
-            [-0.04225275, -0.1386571, -0.09187669],
-            [-0.33192165, -0.02516976, -0.02516976],
-            [-0.17073504, 0.0, 0.0],
+            [0.008901878238907217, -0.13857648328597594, -0.1430313136961221],
+            [-0.33182990143136837, 0.02598486496691343, 0.02598486496691343],
+            [-0.03432270217882977, 0.0, 0.0],
         ],
     ]
+    assert ph.fc3 is not None
     np.testing.assert_allclose(ph.fc3[0, 1, 7], fc3_ref, atol=1e-6, rtol=0)
+    assert ph.fc2 is not None
     np.testing.assert_allclose(ph.fc2[0, 33], 0, atol=1e-6, rtol=0)
 
 
 def test_phonon_smat_alm_cutoff_fc3(si_pbesol_111_222_alm_cutoff_fc3: Phono3py):
     """Test phonon smat and alm with Si PBEsol 1x1x1-2x2x2 cutoff fc3."""
     ph = si_pbesol_111_222_alm_cutoff_fc3
+    assert ph.fc3 is not None
     np.testing.assert_allclose(ph.fc3[0, 1, 7], 0, atol=1e-6, rtol=0)
     fc2_ref = [
         [-0.20333398, -0.0244225, -0.0244225],
         [-0.0244225, -0.02219682, -0.024112],
         [-0.0244225, -0.024112, -0.02219682],
     ]
+    assert ph.fc2 is not None
     np.testing.assert_allclose(ph.fc2[0, 33], fc2_ref, atol=1e-6, rtol=0)
 
 
@@ -332,19 +356,20 @@ def test_fc3_symfc(si_pbesol_111_symfc: Phono3py):
     ph = si_pbesol_111_symfc
     fc3_ref = [
         [
-            [0.10725082233069763, 0.0, 0.0],
-            [-0.04225274805794354, -0.09187668739926935, -0.13865710308133664],
-            [0.04225274805794354, -0.13865710308133664, -0.09187668739926935],
+            [0.10725082233070223, 0.0, 0.0],
+            [0.008901878238903862, -0.14303131369612382, -0.1385764832859841],
+            [-0.008901878238903862, -0.1385764832859841, -0.14303131369612382],
         ],
         [
-            [0.04225274805794354, -0.09187668739926935, -0.13865710308133664],
-            [-0.17073503897042558, 0.0, 0.0],
-            [-0.33192165463027573, 0.02516976132993421, 0.02516976132993421],
+            [-0.008901878238903862, -0.14303131369612382, -0.1385764832859841],
+            [-0.03432270217882153, 0.0, 0.0],
+            [-0.33182990143137375, -0.025984864966909885, -0.025984864966909885],
         ],
         [
-            [-0.04225274805794354, -0.13865710308133664, -0.09187668739926935],
-            [-0.33192165463027573, -0.02516976132993421, -0.02516976132993421],
-            [-0.17073503897042558, 0.0, 0.0],
+            [0.008901878238903862, -0.1385764832859841, -0.14303131369612382],
+            [-0.33182990143137375, 0.025984864966909885, 0.025984864966909885],
+            [-0.03432270217882153, 0.0, 0.0],
         ],
     ]
+    assert ph.fc3 is not None
     np.testing.assert_allclose(ph.fc3[0, 1, 7], fc3_ref, atol=1e-8, rtol=0)

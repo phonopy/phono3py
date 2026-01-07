@@ -39,7 +39,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 import numpy as np
-from numpy.typing import ArrayLike
+from numpy.typing import ArrayLike, NDArray
 
 from phono3py.conductivity.base import ConductivityComponents
 from phono3py.conductivity.rta_base import ConductivityRTABase
@@ -96,7 +96,7 @@ class ConductivityRTA(ConductivityRTABase):
             log_level=log_level,
         )
 
-        self._conductivity_components = ConductivityComponents(
+        self._conductivity_components: ConductivityComponents = ConductivityComponents(
             self._pp,
             self._grid_points,
             self._grid_weights,
@@ -110,17 +110,17 @@ class ConductivityRTA(ConductivityRTABase):
         )
 
     @property
-    def kappa(self):
+    def kappa(self) -> NDArray | None:
         """Return kappa."""
         return self._kappa
 
     @property
-    def mode_kappa(self):
+    def mode_kappa(self) -> NDArray | None:
         """Return mode_kappa."""
         return self._mode_kappa
 
     @property
-    def gv_by_gv(self):
+    def gv_by_gv(self) -> NDArray:
         """Return gv_by_gv at grid points where mode kappa are calculated."""
         return self._conductivity_components.gv_by_gv
 

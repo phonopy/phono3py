@@ -53,8 +53,8 @@ class Phono3pySettings(Settings):
         self.boundary_mfp = 1.0e6  # In micrometer. Value is for avoiding divergence.
         self.conductivity_type = None
         self.constant_averaged_pp_interaction = None
-        self.create_forces_fc2 = None
-        self.create_forces_fc3 = None
+        self.create_forces_fc2: list[str] | None = None
+        self.create_forces_fc3: list[str] | None = None
         self.create_forces_fc3_file = None
         self.cutoff_fc3_distance = None
         self.cutoff_pair_distance = None
