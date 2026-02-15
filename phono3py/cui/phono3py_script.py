@@ -484,7 +484,7 @@ def _init_phono3py(
     """Initialize phono3py and update settings by default values."""
     if interface_mode is not None:
         physical_units = get_calculator_physical_units(interface_mode)
-        distance_to_A = physical_units["distance_to_A"]
+        distance_to_A = physical_units.distance_to_A
         assert distance_to_A is not None
         lattice = unitcell.cell
         lattice *= distance_to_A

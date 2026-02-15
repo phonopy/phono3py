@@ -315,7 +315,7 @@ def load(
 
     # Convert distance unit of unit cell to Angstrom
     physical_units = get_calculator_physical_units(_calculator)
-    factor_to_A = physical_units["distance_to_A"]
+    factor_to_A = physical_units.distance_to_A
     assert cell is not None
     cell.cell = cell.cell * factor_to_A
 
@@ -344,7 +344,7 @@ def load(
             _nac_params,
             born_filename,
             is_nac,
-            physical_units["nac_factor"],
+            physical_units.nac_factor,
             log_level=log_level,
         )
 
