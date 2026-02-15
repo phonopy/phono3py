@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Feb-15-2026: Version 3.25.0
+
+- Maintenance release following the change in phonopy
+
 ## Jan-7-2026: Version 3.24.0
 
 - Bug fix in combination use of traditional displacement method (finite
