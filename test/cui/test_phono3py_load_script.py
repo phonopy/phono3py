@@ -42,18 +42,69 @@ def test_phono3py_load():
                 temperatures=[
                     "300",
                 ],
-                mesh_numbers=["5", "5", "5"],
+                mesh_numbers=["9", "9", "9"],
             )
             with pytest.raises(SystemExit) as excinfo:
                 main(**argparse_control)
             assert excinfo.value.code == 0
+
+            with h5py.File("kappa-m999.hdf5", "r") as f:
+                assert f["kappa"][0, 0] == pytest.approx(96.7, abs=0.5)  # type: ignore
 
             # Clean files created by phono3py-load script.
             for created_filename in (
                 "phono3py.yaml",
                 "fc2.hdf5",
                 "fc3.hdf5",
-                "kappa-m555.hdf5",
+                "kappa-m999.hdf5",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            _check_no_files()
+
+        finally:
+            os.chdir(original_cwd)
+
+
+def test_phono3py_load_with_isotope():
+    """Test phono3py-load script with isotope option."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            # Check sys.exit(0)
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_Si-111-222.yaml",
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            argparse_control = _get_phono3py_load_args(
+                "phono3py.yaml",
+                is_bterta=True,
+                is_isotope=True,
+                temperatures=[
+                    "300",
+                ],
+                mesh_numbers=["9", "9", "9"],
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            with h5py.File("kappa-m999.hdf5", "r") as f:
+                assert f["kappa"][0, 0] == pytest.approx(87.9, abs=0.5)  # type: ignore
+
+            # Clean files created by phono3py-load script.
+            for created_filename in (
+                "phono3py.yaml",
+                "fc2.hdf5",
+                "fc3.hdf5",
+                "kappa-m999.hdf5",
             ):
                 file_path = pathlib.Path(created_filename)
                 assert file_path.exists()
@@ -1170,6 +1221,7 @@ def _get_phono3py_load_args(
     load_phono3py_yaml: bool = True,
     is_bterta: bool | None = None,
     is_fc3_r0_average: bool | None = None,
+    is_isotope: bool | None = None,
     is_lbte: bool | None = None,
     is_wigner_kappa: bool | None = None,
     mesh_numbers: Sequence | None = None,
@@ -1199,6 +1251,7 @@ def _get_phono3py_load_args(
             fc_calculator_options=fc_calculator_options,
             is_bterta=is_bterta,
             is_fc3_r0_average=is_fc3_r0_average,
+            is_isotope=is_isotope,
             is_lbte=is_lbte,
             is_wigner_kappa=is_wigner_kappa,
             log_level=1,
@@ -1225,6 +1278,7 @@ def _get_phono3py_load_args(
             cell_filename=phono3py_yaml_filepath,
             is_bterta=is_bterta,
             is_fc3_r0_average=is_fc3_r0_average,
+            is_isotope=is_isotope,
             is_lbte=is_lbte,
             is_wigner_kappa=is_wigner_kappa,
             mesh_numbers=mesh_numbers,

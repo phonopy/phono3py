@@ -116,8 +116,8 @@ def parse_forces(
     if calculator is not None:
         _convert_unit_in_dataset(
             dataset,
-            distance_to_A=physical_units["distance_to_A"],
-            force_to_eVperA=physical_units["force_to_eVperA"],
+            distance_to_A=physical_units.distance_to_A,
+            force_to_eVperA=physical_units.force_to_eVperA,
         )
 
     if "natom" in dataset and dataset["natom"] != natom:

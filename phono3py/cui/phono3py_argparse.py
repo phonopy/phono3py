@@ -976,6 +976,7 @@ class Phono3pyMockArgs:
     log_level: int | None = None
     is_bterta: bool | None = None
     is_fc3_r0_average: bool | None = None
+    is_isotope: bool | None = None
     is_lbte: bool | None = None
     is_wigner_kappa: bool | None = None
     mesh_numbers: Sequence | None = None
