@@ -72,6 +72,7 @@ from phonopy.interface.pypolymlp import get_change_in_positions, relax_atomic_po
 from phonopy.interface.symfc import estimate_symfc_cutoff_from_memsize
 from phonopy.phonon.band_structure import get_band_qpoints
 from phonopy.physical_units import get_physical_units
+from phonopy.structure.atomic_data import get_atomic_data
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import isclose as cells_isclose
 
@@ -483,7 +484,7 @@ def _init_phono3py(
     """Initialize phono3py and update settings by default values."""
     if interface_mode is not None:
         physical_units = get_calculator_physical_units(interface_mode)
-        distance_to_A = physical_units["distance_to_A"]
+        distance_to_A = physical_units.distance_to_A
         assert distance_to_A is not None
         lattice = unitcell.cell
         lattice *= distance_to_A
@@ -1413,8 +1414,7 @@ def main(**argparse_control):
     # Mass variances for phonon-isotope scattering #
     ################################################
     if settings.is_isotope and settings.mass_variances is None:
-        from phonopy.structure.atoms import isotope_data
-
+        isotope_data = get_atomic_data().isotope_data
         symbols = ph3py.phonon_primitive.symbols
         in_database = True
         for s in set(symbols):

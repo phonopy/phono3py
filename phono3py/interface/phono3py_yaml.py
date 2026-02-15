@@ -55,6 +55,7 @@ if TYPE_CHECKING:
 
 from phonopy import Phonopy
 from phonopy.interface.phonopy_yaml import PhonopyYamlData
+from phonopy.physical_units import CalculatorPhysicalUnits
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive, Supercell
 
@@ -78,7 +79,7 @@ class Phono3pyYamlLoader(PhonopyYamlLoaderBase):
         yaml_data: dict,
         configuration: dict | None = None,
         calculator: str | None = None,
-        physical_units: dict | None = None,
+        physical_units: CalculatorPhysicalUnits | None = None,
     ):
         """Init method.
 
@@ -99,7 +100,7 @@ class Phono3pyYamlLoader(PhonopyYamlLoaderBase):
         """Return Phono3pyYamlData instance."""
         return self._data
 
-    def parse(self) -> "Phono3pyYamlLoader":
+    def parse(self) -> Phono3pyYamlLoader:
         """Yaml dict is parsed. See docstring of this class."""
         super().parse()
         self._parse_fc3_dataset()
@@ -416,7 +417,7 @@ class Phono3pyYaml(PhonopyYaml):
         self,
         configuration: dict | None = None,
         calculator: str | None = None,
-        physical_units: dict | None = None,
+        physical_units: CalculatorPhysicalUnits | None = None,
         settings: dict | None = None,
     ):
         """Init method."""
@@ -638,7 +639,7 @@ def read_phono3py_yaml(
     filename: str | os.PathLike | typing.IO,
     configuration: dict | None = None,
     calculator: str | None = None,
-    physical_units: dict | None = None,
+    physical_units: CalculatorPhysicalUnits | None = None,
 ) -> Phono3pyYamlData:
     """Read phono3py.yaml like file."""
     yaml_data = load_yaml(filename)
@@ -657,7 +658,7 @@ def load_phono3py_yaml(
     yaml_data: dict,
     configuration: dict | None = None,
     calculator: str | None = None,
-    physical_units: dict | None = None,
+    physical_units: CalculatorPhysicalUnits | None = None,
 ) -> Phono3pyYamlData:
     """Return Phono3pyYamlData instance loading yaml data.
 

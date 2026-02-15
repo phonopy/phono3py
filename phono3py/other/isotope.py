@@ -36,13 +36,16 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from typing import Literal
+
 import numpy as np
-from numpy.typing import ArrayLike
-from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
+from numpy.typing import ArrayLike, NDArray
+from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
 from phonopy.phonon.tetrahedron_mesh import get_tetrahedra_frequencies
 from phonopy.physical_units import get_physical_units
+from phonopy.structure.atomic_data import get_atomic_data
 from phonopy.structure.atoms import PhonopyAtoms
-from phonopy.structure.atoms import isotope_data as phonopy_isotope_data
 from phonopy.structure.cells import Primitive
 from phonopy.structure.symmetry import Symmetry
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
@@ -70,6 +73,7 @@ def get_mass_variances(
         raise RuntimeError("primitive or symbols have to be given.")
 
     _isotope_data = {}
+    phonopy_isotope_data = get_atomic_data().isotope_data
     for s in _symbols:
         if isotope_data is not None and s in isotope_data:
             _isotope_data[s] = isotope_data[s]
@@ -94,16 +98,18 @@ class Isotope:
         self,
         mesh: float | ArrayLike,
         primitive: Primitive,
-        mass_variances=None,  # length of list is num_atom.
-        isotope_data=None,
-        band_indices=None,
-        sigma=None,
+        mass_variances: Sequence[float]
+        | NDArray
+        | None = None,  # length of list is num_atom.
+        isotope_data: dict | None = None,
+        band_indices: Sequence[int] | NDArray | None = None,
+        sigma: float | None = None,
         bz_grid: BZGrid | None = None,
         frequency_factor_to_THz: float | None = None,
-        use_grg=False,
-        symprec=1e-5,
-        cutoff_frequency=None,
-        lapack_zheev_uplo="L",
+        use_grg: bool = False,
+        symprec: float = 1e-5,
+        cutoff_frequency: float | None = None,
+        lapack_zheev_uplo: Literal["L", "U"] = "L",
     ):
         """Init method."""
         self._mesh = mesh
@@ -153,7 +159,7 @@ class Isotope:
         else:
             self._bz_grid = bz_grid
 
-    def set_grid_point(self, grid_point):
+    def set_grid_point(self, grid_point: int):
         """Initialize grid points."""
         self._grid_point = grid_point
         self._grid_points = np.arange(len(self._bz_grid.addresses), dtype="int64")
@@ -161,7 +167,7 @@ class Isotope:
         if self._phonon_done is None:
             self._allocate_phonon()
 
-    def run(self, lang="C"):
+    def run(self, lang: Literal["C", "Python"] = "C"):
         """Run isotope scattering calculation."""
         if lang == "C":
             self._run_c()
@@ -169,48 +175,53 @@ class Isotope:
             self._run_py()
 
     @property
-    def sigma(self):
+    def sigma(self) -> float | None:
         """Setter and getter of smearing width."""
         return self._sigma
 
     @sigma.setter
-    def sigma(self, sigma):
+    def sigma(self, sigma: float | None):
         if sigma is None:
             self._sigma = None
         else:
             self._sigma = float(sigma)
 
     @property
-    def dynamical_matrix(self):
+    def dynamical_matrix(self) -> DynamicalMatrix | None:
         """Return DynamicalMatrix* class instance."""
         return self._dm
 
     @property
-    def band_indices(self):
+    def band_indices(self) -> NDArray:
         """Return specified band indices."""
         return self._band_indices
 
     @property
-    def gamma(self):
+    def gamma(self) -> NDArray | None:
         """Return scattering strength."""
         return self._gamma
 
     @property
     def bz_grid(self) -> BZGrid:
         """Return BZgrid class instance."""
-        assert self._bz_grid is not None
         return self._bz_grid
 
     @property
-    def mass_variances(self):
+    def mass_variances(self) -> NDArray:
         """Return mass variances."""
         return self._mass_variances
 
-    def get_phonons(self):
+    def get_phonons(self) -> tuple[NDArray | None, NDArray | None, NDArray | None]:
         """Return phonons on grid."""
         return self._frequencies, self._eigenvectors, self._phonon_done
 
-    def set_phonons(self, frequencies, eigenvectors, phonon_done, dm=None):
+    def set_phonons(
+        self,
+        frequencies: NDArray,
+        eigenvectors: NDArray,
+        phonon_done: NDArray,
+        dm=None,
+    ):
         """Set phonons on grid."""
         self._frequencies = frequencies
         self._eigenvectors = eigenvectors
@@ -223,9 +234,9 @@ class Isotope:
         fc2,
         supercell: PhonopyAtoms,
         primitive: Primitive,
-        nac_params=None,
-        frequency_scale_factor=None,
-        decimals=None,
+        nac_params: dict | None = None,
+        frequency_scale_factor: float | None = None,
+        decimals: int | None = None,
     ):
         """Initialize dynamical matrix."""
         self._primitive = primitive
@@ -238,14 +249,18 @@ class Isotope:
             decimals=decimals,
         )
 
-    def set_nac_q_direction(self, nac_q_direction=None):
+    def set_nac_q_direction(
+        self, nac_q_direction: Sequence[float] | NDArray | None = None
+    ):
         """Set q-direction at q->0 used for NAC."""
         if nac_q_direction is not None:
             self._nac_q_direction = np.array(nac_q_direction, dtype="double")
 
     def _run_c(self):
+        assert self._grid_points is not None
+
         self._run_phonon_solver_c(self._grid_points)
-        import phono3py._phono3py as phono3c
+        import phono3py._phono3py as phono3c  # type: ignore
 
         gamma = np.zeros(len(self._band_indices), dtype="double")
         weights_in_bzgp = np.ones(len(self._grid_points), dtype="double")
@@ -279,7 +294,7 @@ class Isotope:
 
         self._gamma = gamma / np.prod(self._bz_grid.D_diag)
 
-    def _set_integration_weights(self, lang="C"):
+    def _set_integration_weights(self, lang: Literal["C", "Python"] = "C"):
         if lang == "C":
             self._set_integration_weights_c()
         else:
@@ -292,6 +307,8 @@ class Isotope:
         BZ-grid, i.e., self._grid_points, are passed to get_integration_weights.
 
         """
+        assert self._frequencies is not None
+
         unique_grid_points = get_unique_grid_points(self._grid_points, self._bz_grid)
         self._run_phonon_solver_c(unique_grid_points)
         freq_points = np.array(
@@ -309,7 +326,12 @@ class Isotope:
         Python implementation corresponding to _set_integration_weights_c.
 
         """
+        assert self._grid_points is not None
+        assert self._frequencies is not None
+
         thm = TetrahedronMethod(self._bz_grid.microzone_lattice)
+        assert thm.tetrahedra is not None
+
         num_grid_points = len(self._grid_points)
         num_band = len(self._primitive) * 3
         self._integration_weights = np.zeros(
@@ -343,11 +365,15 @@ class Isotope:
                 self._integration_weights[i, :, bi] = iw
 
     def _run_py(self):
+        assert self._grid_points is not None
+        assert self._frequencies is not None
+        assert self._eigenvectors is not None
+
         for gp in self._grid_points:
             self._run_phonon_solver_py(gp)
 
         if self._sigma is None:
-            self._set_integration_weights(lang="Py")
+            self._set_integration_weights(lang="Python")
 
         t_inv = []
         for bi in self._band_indices:
@@ -372,7 +398,7 @@ class Isotope:
 
         self._gamma = np.array(t_inv, dtype="double") / 2
 
-    def _run_phonon_solver_c(self, grid_points):
+    def _run_phonon_solver_c(self, grid_points: NDArray):
         run_phonon_solver_c(
             self._dm,
             self._frequencies,
@@ -386,7 +412,7 @@ class Isotope:
             self._lapack_zheev_uplo,
         )
 
-    def _run_phonon_solver_py(self, grid_point):
+    def _run_phonon_solver_py(self, grid_point: int):
         run_phonon_solver_py(
             grid_point,
             self._phonon_done,
