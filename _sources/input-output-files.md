@@ -304,7 +304,7 @@ ordinal frequency not the angular frequency.
 The array shape is (irreducible q-point, phonon band, 6 = (xx, yy, zz,
 yz, xz, xy)).
 
-### `q-point`
+### `qpoint`
 
 Irreducible q-points in reduced coordinates.
 
