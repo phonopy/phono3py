@@ -39,28 +39,18 @@ from __future__ import annotations
 import os
 import sys
 from collections.abc import Sequence
-from typing import Literal, Union
+from typing import Literal
 
 from numpy.typing import ArrayLike
 
-from phono3py.conductivity.base import get_unit_to_WmK
 from phono3py.conductivity.direct_solution import ConductivityLBTE
 from phono3py.conductivity.direct_solution_base import ConductivityLBTEBase
-from phono3py.conductivity.utils import (
-    select_colmat_solver,
-    write_pp_interaction,
-)
+from phono3py.conductivity.lbte_output import ConductivityLBTEWriter
+from phono3py.conductivity.type_dispatch import get_lbte_conductivity_class
+from phono3py.conductivity.utils import write_pp_interaction
 from phono3py.conductivity.wigner_direct_solution import ConductivityWignerLBTE
-from phono3py.file_IO import (
-    read_collision_from_hdf5,
-    write_collision_eigenvalues_to_hdf5,
-    write_collision_to_hdf5,
-    write_kappa_to_hdf5,
-    write_unitary_matrix_to_hdf5,
-)
+from phono3py.file_IO import read_collision_from_hdf5
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
-
-cond_LBTE_type = Union[ConductivityLBTE, ConductivityWignerLBTE]
 
 
 def get_thermal_conductivity_LBTE(
@@ -112,10 +102,7 @@ def get_thermal_conductivity_LBTE(
     else:
         temps = _temperatures
 
-    if conductivity_type == "wigner":
-        conductivity_LBTE_class = ConductivityWignerLBTE
-    else:
-        conductivity_LBTE_class = ConductivityLBTE
+    conductivity_LBTE_class = get_lbte_conductivity_class(conductivity_type)
 
     lbte = conductivity_LBTE_class(
         interaction,
@@ -206,275 +193,6 @@ def get_thermal_conductivity_LBTE(
             )
 
     return lbte
-
-
-class ConductivityLBTEWriter:
-    """Collection of result writers."""
-
-    @staticmethod
-    def write_collision(
-        lbte: cond_LBTE_type,
-        interaction: Interaction,
-        i=None,
-        is_reducible_collision_matrix=False,
-        is_one_gp_colmat=False,
-        filename=None,
-    ):
-        """Write collision matrix into hdf5 file."""
-        grid_points = lbte.grid_points
-        temperatures = lbte.temperatures
-        sigmas = lbte.sigmas
-        sigma_cutoff = lbte.sigma_cutoff_width
-        gamma = lbte.gamma
-        gamma_isotope = lbte.gamma_isotope
-        collision_matrix = lbte.collision_matrix
-        mesh = lbte.mesh_numbers
-
-        if i is not None:
-            gp = grid_points[i]
-            if is_one_gp_colmat:
-                igp = 0
-            else:
-                if is_reducible_collision_matrix:
-                    igp = interaction.bz_grid.bzg2grg[gp]
-                else:
-                    igp = i
-            if all_bands_exist(interaction):
-                for j, sigma in enumerate(sigmas):
-                    if gamma_isotope is not None:
-                        gamma_isotope_at_sigma = gamma_isotope[j, igp]
-                    else:
-                        gamma_isotope_at_sigma = None
-                    write_collision_to_hdf5(
-                        temperatures,
-                        mesh,
-                        gamma=gamma[j, :, igp],
-                        gamma_isotope=gamma_isotope_at_sigma,
-                        collision_matrix=collision_matrix[j, :, igp],
-                        grid_point=gp,
-                        sigma=sigma,
-                        sigma_cutoff=sigma_cutoff,
-                        filename=filename,
-                    )
-            else:
-                for j, sigma in enumerate(sigmas):
-                    for k, bi in enumerate(interaction.band_indices):
-                        if gamma_isotope is not None:
-                            gamma_isotope_at_sigma = gamma_isotope[j, igp, k]
-                        else:
-                            gamma_isotope_at_sigma = None
-                        write_collision_to_hdf5(
-                            temperatures,
-                            mesh,
-                            gamma=gamma[j, :, igp, k],
-                            gamma_isotope=gamma_isotope_at_sigma,
-                            collision_matrix=collision_matrix[j, :, igp, k],
-                            grid_point=gp,
-                            band_index=bi,
-                            sigma=sigma,
-                            sigma_cutoff=sigma_cutoff,
-                            filename=filename,
-                        )
-        else:
-            for j, sigma in enumerate(sigmas):
-                if gamma_isotope is not None:
-                    gamma_isotope_at_sigma = gamma_isotope[j]
-                else:
-                    gamma_isotope_at_sigma = None
-                write_collision_to_hdf5(
-                    temperatures,
-                    mesh,
-                    gamma=gamma[j],
-                    gamma_isotope=gamma_isotope_at_sigma,
-                    collision_matrix=collision_matrix[j],
-                    sigma=sigma,
-                    sigma_cutoff=sigma_cutoff,
-                    filename=filename,
-                )
-
-    @staticmethod
-    def write_kappa(
-        lbte: cond_LBTE_type,
-        volume: float,
-        is_reducible_collision_matrix: bool = False,
-        write_LBTE_solution: bool = False,
-        pinv_solver: int | None = None,
-        compression: str = "gzip",
-        filename: str | os.PathLike | None = None,
-        log_level: int = 0,
-    ):
-        """Write kappa related properties into a hdf5 file."""
-        if isinstance(lbte, ConductivityLBTE):
-            kappa = lbte.kappa
-            mode_kappa = lbte.mode_kappa
-            kappa_RTA = lbte.kappa_RTA
-            mode_kappa_RTA = lbte.mode_kappa_RTA
-            gv = lbte.group_velocities
-            gv_by_gv = lbte.gv_by_gv
-        else:
-            kappa = None
-            mode_kappa = None
-            kappa_RTA = None
-            mode_kappa_RTA = None
-            gv = None
-            gv_by_gv = None
-
-        if isinstance(lbte, ConductivityWignerLBTE):
-            kappa_P_exact = lbte.kappa_P_exact
-            kappa_P_RTA = lbte.kappa_P_RTA
-            kappa_C = lbte.kappa_C
-            mode_kappa_P_exact = lbte.mode_kappa_P_exact
-            mode_kappa_P_RTA = lbte.mode_kappa_P_RTA
-            mode_kappa_C = lbte.mode_kappa_C
-        else:
-            kappa_P_exact = None
-            kappa_P_RTA = None
-            kappa_C = None
-            mode_kappa_P_exact = None
-            mode_kappa_P_RTA = None
-            mode_kappa_C = None
-
-        temperatures = lbte.temperatures
-        sigmas = lbte.sigmas
-        sigma_cutoff = lbte.sigma_cutoff_width
-        mesh = lbte.mesh_numbers
-        bz_grid = lbte.bz_grid
-        grid_points = lbte.grid_points
-        weights = lbte.grid_weights
-        frequencies = lbte.frequencies
-        ave_pp = lbte.averaged_pp_interaction
-        qpoints = lbte.qpoints
-        gamma = lbte.gamma
-        gamma_isotope = lbte.gamma_isotope
-        f_vector = lbte.get_f_vectors()
-        mode_cv = lbte.mode_heat_capacities
-        mfp = lbte.get_mean_free_path()
-        boundary_mfp = lbte.boundary_mfp
-
-        coleigs = lbte.collision_eigenvalues
-        # After kappa calculation, the variable is overwritten by unitary matrix
-        unitary_matrix = lbte.collision_matrix
-
-        if is_reducible_collision_matrix:
-            frequencies = lbte.get_frequencies_all()
-        else:
-            frequencies = lbte.frequencies
-
-        for i, sigma in enumerate(sigmas):
-            if kappa is None:
-                kappa_at_sigma = None
-            else:
-                kappa_at_sigma = kappa[i]
-            if mode_kappa is None:
-                mode_kappa_at_sigma = None
-            else:
-                mode_kappa_at_sigma = mode_kappa[i]
-            if kappa_RTA is None:
-                kappa_RTA_at_sigma = None
-            else:
-                kappa_RTA_at_sigma = kappa_RTA[i]
-            if mode_kappa_RTA is None:
-                mode_kappa_RTA_at_sigma = None
-            else:
-                mode_kappa_RTA_at_sigma = mode_kappa_RTA[i]
-            if kappa_P_exact is None:
-                kappa_P_exact_at_sigma = None
-            else:
-                kappa_P_exact_at_sigma = kappa_P_exact[i]
-            if kappa_P_RTA is None:
-                kappa_P_RTA_at_sigma = None
-            else:
-                kappa_P_RTA_at_sigma = kappa_P_RTA[i]
-            if kappa_C is None:
-                kappa_C_at_sigma = None
-            else:
-                kappa_C_at_sigma = kappa_C[i]
-            if kappa_P_exact_at_sigma is None or kappa_C_at_sigma is None:
-                kappa_TOT_exact_at_sigma = None
-            else:
-                kappa_TOT_exact_at_sigma = kappa_P_exact_at_sigma + kappa_C_at_sigma
-            if kappa_P_RTA_at_sigma is None or kappa_C_at_sigma is None:
-                kappa_TOT_RTA_at_sigma = None
-            else:
-                kappa_TOT_RTA_at_sigma = kappa_P_RTA_at_sigma + kappa_C_at_sigma
-            if mode_kappa_P_exact is None:
-                mode_kappa_P_exact_at_sigma = None
-            else:
-                mode_kappa_P_exact_at_sigma = mode_kappa_P_exact[i]
-            if mode_kappa_P_RTA is None:
-                mode_kappa_P_RTA_at_sigma = None
-            else:
-                mode_kappa_P_RTA_at_sigma = mode_kappa_P_RTA[i]
-            if mode_kappa_C is None:
-                mode_kappa_C_at_sigma = None
-            else:
-                mode_kappa_C_at_sigma = mode_kappa_C[i]
-            if gamma_isotope is None:
-                gamma_isotope_at_sigma = None
-            else:
-                gamma_isotope_at_sigma = gamma_isotope[i]
-            write_kappa_to_hdf5(
-                temperatures,
-                mesh,
-                boundary_mfp=boundary_mfp,
-                bz_grid=bz_grid,
-                frequency=frequencies,
-                group_velocity=gv,
-                gv_by_gv=gv_by_gv,
-                mean_free_path=mfp[i],
-                heat_capacity=mode_cv,
-                kappa=kappa_at_sigma,
-                mode_kappa=mode_kappa_at_sigma,
-                kappa_RTA=kappa_RTA_at_sigma,
-                mode_kappa_RTA=mode_kappa_RTA_at_sigma,
-                kappa_P_exact=kappa_P_exact_at_sigma,
-                kappa_P_RTA=kappa_P_RTA_at_sigma,
-                kappa_C=kappa_C_at_sigma,
-                kappa_TOT_exact=kappa_TOT_exact_at_sigma,
-                kappa_TOT_RTA=kappa_TOT_RTA_at_sigma,
-                mode_kappa_P_exact=mode_kappa_P_exact_at_sigma,
-                mode_kappa_P_RTA=mode_kappa_P_RTA_at_sigma,
-                mode_kappa_C=mode_kappa_C_at_sigma,
-                f_vector=f_vector,
-                gamma=gamma[i],
-                gamma_isotope=gamma_isotope_at_sigma,
-                averaged_pp_interaction=ave_pp,
-                qpoint=qpoints,
-                grid_point=grid_points,
-                weight=weights,
-                sigma=sigma,
-                sigma_cutoff=sigma_cutoff,
-                kappa_unit_conversion=get_unit_to_WmK() / volume,
-                compression=compression,
-                filename=filename,
-                verbose=log_level,
-            )
-
-            if coleigs is not None:
-                write_collision_eigenvalues_to_hdf5(
-                    temperatures,
-                    mesh,
-                    coleigs[i],
-                    sigma=sigma,
-                    sigma_cutoff=sigma_cutoff,
-                    filename=filename,
-                    verbose=log_level,
-                )
-
-                if write_LBTE_solution:
-                    if pinv_solver is not None:
-                        solver = select_colmat_solver(pinv_solver)
-                        if solver in [1, 2, 3, 4, 5]:
-                            write_unitary_matrix_to_hdf5(
-                                temperatures,
-                                mesh,
-                                unitary_matrix=unitary_matrix,
-                                sigma=sigma,
-                                sigma_cutoff=sigma_cutoff,
-                                solver=solver,
-                                filename=filename,
-                                verbose=log_level,
-                            )
 
 
 def _set_collision_from_file(
