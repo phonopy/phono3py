@@ -41,7 +41,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
+from numpy.typing import NDArray
 from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.phonon.thermal_properties import mode_cv
 from phonopy.physical_units import get_physical_units
@@ -162,8 +162,8 @@ class ConductivityComponentsBase(ABC):
     def __init__(
         self,
         pp: Interaction,
-        grid_points: NDArray[np.int64],
-        grid_weights: NDArray[np.int64],
+        grid_points: Sequence[int] | NDArray,
+        grid_weights: Sequence[int] | NDArray,
         point_operations: NDArray[np.int64],
         rotations_cartesian: NDArray[np.int64],
         temperatures: NDArray[np.float64] | None = None,
@@ -420,12 +420,12 @@ class ConductivityBase(ABC):
     def __init__(
         self,
         interaction: Interaction,
-        grid_points: ArrayLike | None = None,
-        temperatures: ArrayLike | None = None,
+        grid_points: Sequence[int] | NDArray | None = None,
+        temperatures: Sequence[float] | NDArray | None = None,
         sigmas: Sequence[float | None] | None = None,
         sigma_cutoff: float | None = None,
         is_isotope=False,
-        mass_variances: ArrayLike | None = None,
+        mass_variances: Sequence[float] | NDArray | None = None,
         boundary_mfp: float | None = None,
         is_kappa_star: bool = True,
         is_full_pp: bool = False,
@@ -477,7 +477,7 @@ class ConductivityBase(ABC):
             Verbosity control. Default is 0.
 
         """
-        self._pp: Interaction = interaction
+        self._pp = interaction
         self._is_kappa_star = is_kappa_star
         self._is_full_pp = is_full_pp
         self._log_level = log_level
@@ -526,6 +526,7 @@ class ConductivityBase(ABC):
         # Allocated in self._allocate_values.
         self._gamma: NDArray
         self._gamma_iso: NDArray | None = None
+        self._gamma_elph: NDArray | None = None
 
         self._conversion_factor = get_unit_to_WmK() / self._pp.primitive.volume
         self._averaged_pp_interaction: NDArray | None = None
@@ -640,6 +641,16 @@ class ConductivityBase(ABC):
     def gamma_isotope(self, gamma_iso):
         self._gamma_iso = gamma_iso
         self._read_gamma_iso = True
+
+    @property
+    def gamma_elph(self) -> NDArray | None:
+        """Setter and getter of gamma from isotope."""
+        return self._gamma_elph
+
+    @gamma_elph.setter
+    def gamma_elph(self, gamma_elph):
+        self._gamma_elph = gamma_elph
+        self._read_gamma_elph = True
 
     @property
     def sigmas(self) -> Sequence[float | None]:
@@ -812,10 +823,19 @@ class ConductivityBase(ABC):
         )
         self._mass_variances = self._isotope.mass_variances
 
-    def _get_main_diagonal(self, i, j, k):
+    def _get_main_diagonal(self, i: int, j: int, k: int) -> NDArray:
+        """Return main diagonal of collision matrix.
+
+        i: grid point index in BZGrid
+        j: sigma index
+        k: temperature index
+
+        """
         main_diagonal = self._gamma[j, k, i].copy()
-        if self._is_isotope:
+        if self._gamma_iso is not None:
             main_diagonal += self._gamma_iso[j, i]
+        if self._gamma_elph is not None:
+            main_diagonal += self._gamma_elph.sum(axis=0)[k, i]
         if self._boundary_mfp is not None:
             main_diagonal += self._get_boundary_scattering(i)
         return main_diagonal

@@ -696,6 +696,13 @@ def get_parser(load_phono3py_yaml: bool = False):
         help="Read collision matrix and Gammas from files",
     )
     parser.add_argument(
+        "--read-elph",
+        dest="read_elph",
+        type=int,
+        default=None,
+        help="Index to read Gammas of el-ph interaction from phono3py_elph.hdf5",
+    )
+    parser.add_argument(
         "--read-gamma",
         dest="read_gamma",
         action="store_true",
@@ -982,6 +989,7 @@ class Phono3pyMockArgs:
     mesh_numbers: Sequence | None = None
     mlp_params: str | None = None
     rd_number_estimation_factor: float | None = None
+    read_elph: bool | None = None
     read_gamma: bool | None = None
     output_filename = None
     output_yaml_filename: str | os.PathLike | None = None

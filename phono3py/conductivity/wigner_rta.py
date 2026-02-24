@@ -36,7 +36,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
 
 from phono3py.conductivity.rta_base import ConductivityRTABase
@@ -59,12 +62,12 @@ class ConductivityWignerRTA(ConductivityRTABase):
     def __init__(
         self,
         interaction: Interaction,
-        grid_points: np.ndarray | None = None,
-        temperatures: list | np.ndarray | None = None,
-        sigmas: list | np.ndarray | None = None,
+        grid_points: Sequence[int] | NDArray | None = None,
+        temperatures: Sequence[float] | NDArray | None = None,
+        sigmas: Sequence[float | None] | None = None,
         sigma_cutoff: float | None = None,
         is_isotope: bool = False,
-        mass_variances: list | np.ndarray | None = None,
+        mass_variances: Sequence[float] | NDArray | None = None,
         boundary_mfp: float | None = None,  # in micrometer
         use_ave_pp: bool = False,
         is_kappa_star: bool = True,
@@ -72,7 +75,7 @@ class ConductivityWignerRTA(ConductivityRTABase):
         is_full_pp: bool = False,
         read_pp: bool = False,
         store_pp: bool = False,
-        pp_filename: float | None = None,
+        pp_filename: str | None = None,
         is_N_U: bool = False,
         is_gamma_detail: bool = False,
         is_frequency_shift_by_bubble: bool = False,
