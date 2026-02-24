@@ -984,6 +984,7 @@ class Phono3pyMockArgs:
     is_bterta: bool | None = None
     is_fc3_r0_average: bool | None = None
     is_isotope: bool | None = None
+    is_N_U: bool | None = None
     is_lbte: bool | None = None
     is_wigner_kappa: bool | None = None
     mesh_numbers: Sequence | None = None
@@ -999,6 +1000,7 @@ class Phono3pyMockArgs:
     temperatures: Sequence | None = None
     use_pypolymlp: bool | None = None
     write_gamma: bool | None = None
+    write_gamma_detail: bool | None = None
     write_grid_points: bool | None = None
     write_phonon: bool | None = None
 
