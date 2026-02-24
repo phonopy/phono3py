@@ -38,8 +38,10 @@ from __future__ import annotations
 
 import warnings
 from abc import abstractmethod
+from collections.abc import Sequence
 
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
 
 from phono3py.conductivity.base import ConductivityBase
@@ -63,12 +65,12 @@ class ConductivityRTABase(ConductivityBase):
     def __init__(
         self,
         interaction: Interaction,
-        grid_points: np.ndarray | None = None,
-        temperatures: list | np.ndarray | None = None,
-        sigmas: list | np.ndarray | None = None,
+        grid_points: Sequence[int] | NDArray | None = None,
+        temperatures: Sequence[float] | NDArray | None = None,
+        sigmas: Sequence[float | None] | None = None,
         sigma_cutoff: float | None = None,
         is_isotope: bool = False,
-        mass_variances: list | np.ndarray | None = None,
+        mass_variances: Sequence[float] | NDArray | None = None,
         boundary_mfp: float | None = None,  # in micrometer
         use_ave_pp: bool = False,
         is_kappa_star: bool = True,

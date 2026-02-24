@@ -39,8 +39,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Literal, Optional, Union, cast
 
+import h5py
 import numpy as np
-from numpy.typing import ArrayLike
+from numpy.typing import NDArray
 
 from phono3py.conductivity.base import get_unit_to_WmK
 from phono3py.conductivity.kubo_rta import ConductivityKuboRTA
@@ -61,11 +62,11 @@ cond_RTA_type = Union[ConductivityRTA, ConductivityWignerRTA, ConductivityKuboRT
 
 def get_thermal_conductivity_RTA(
     interaction: Interaction,
-    temperatures: ArrayLike | None = None,
+    temperatures: Sequence[float] | NDArray | None = None,
     sigmas: Sequence[float | None] | None = None,
     sigma_cutoff: float | None = None,
-    mass_variances: ArrayLike | None = None,
-    grid_points: ArrayLike | None = None,
+    mass_variances: Sequence[float] | NDArray | None = None,
+    grid_points: Sequence[int] | NDArray | None = None,
     is_isotope: bool = False,
     boundary_mfp: float | None = None,  # in micrometer
     use_ave_pp: bool = False,
@@ -79,6 +80,7 @@ def get_thermal_conductivity_RTA(
     write_kappa: bool = False,
     write_pp: bool = False,
     read_pp: bool = False,
+    read_elph: int | None = None,
     write_gamma_detail: bool = False,
     compression: Literal["gzip", "lzf"] | int | None = "gzip",
     input_filename: str | None = None,
@@ -127,8 +129,14 @@ def get_thermal_conductivity_RTA(
 
     if read_gamma:
         if not _set_gamma_from_file(br, filename=input_filename):
-            print("Reading collisions failed.")
-            return False
+            raise RuntimeError("Reading collisions failed.")
+
+    if read_elph is not None:
+        with h5py.File("phono3py_elph.hdf5", "r") as f:
+            gamma_key = f"gamma_elph_{read_elph}"
+            if gamma_key not in f:
+                raise RuntimeError(f"{gamma_key} not found in phono3py_elph.hdf5.")
+            br.gamma_elph = f[gamma_key][:]  # type: ignore
 
     for i in br:
         if write_pp:

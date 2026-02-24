@@ -34,7 +34,10 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from collections.abc import Sequence
+
 import numpy as np
+from numpy.typing import NDArray
 
 from phono3py.conductivity.kubo_base import ConductivityKuboMixIn
 from phono3py.conductivity.rta_base import ConductivityRTABase
@@ -47,24 +50,24 @@ class ConductivityKuboRTA(ConductivityKuboMixIn, ConductivityRTABase):
     def __init__(
         self,
         interaction: Interaction,
-        grid_points=None,
-        temperatures=None,
-        sigmas=None,
-        sigma_cutoff=None,
-        is_isotope=False,
-        mass_variances=None,
-        boundary_mfp=None,  # in micrometer
-        use_ave_pp=False,
-        is_kappa_star=True,
-        gv_delta_q=None,
-        is_full_pp=False,
-        read_pp=False,
-        store_pp=False,
-        pp_filename=None,
-        is_N_U=False,
-        is_gamma_detail=False,
-        is_frequency_shift_by_bubble=False,
-        log_level=0,
+        grid_points: Sequence[int] | NDArray | None = None,
+        temperatures: Sequence[float] | NDArray | None = None,
+        sigmas: Sequence[float | None] | None = None,
+        sigma_cutoff: float | None = None,
+        is_isotope: bool = False,
+        mass_variances: Sequence[float] | NDArray | None = None,
+        boundary_mfp: float | None = None,  # in micrometer
+        use_ave_pp: bool = False,
+        is_kappa_star: bool = True,
+        gv_delta_q: float | None = None,
+        is_full_pp: bool = False,
+        read_pp: bool = False,
+        store_pp: bool = False,
+        pp_filename: str | None = None,
+        is_N_U: bool = False,
+        is_gamma_detail: bool = False,
+        is_frequency_shift_by_bubble: bool = False,
+        log_level: int = 0,
     ):
         """Init method."""
         self._cv_mat = None
@@ -82,7 +85,6 @@ class ConductivityKuboRTA(ConductivityKuboMixIn, ConductivityRTABase):
             boundary_mfp=boundary_mfp,
             use_ave_pp=use_ave_pp,
             is_kappa_star=is_kappa_star,
-            gv_delta_q=gv_delta_q,
             is_full_pp=is_full_pp,
             read_pp=read_pp,
             store_pp=store_pp,

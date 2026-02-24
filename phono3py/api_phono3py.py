@@ -2214,6 +2214,7 @@ class Phono3py:
         read_collision: str | Sequence | None = None,
         write_pp: bool = False,
         read_pp: bool = False,
+        read_elph: int | None = None,
         write_LBTE_solution: bool = False,
         compression: Literal["gzip", "lzf"] | int | None = "gzip",
         input_filename: str | None = None,
@@ -2303,7 +2304,7 @@ class Phono3py:
             `band_indices` or multiple `sigmas` is specified, the files
             are made for each of them, too.
         read_gamma : bool, optional, default is False
-            RTA only (`is_LBTE=False`). With True, dead files created by
+            RTA only (`is_LBTE=False`). With True, read files created by
             `write_gamma=True` instead of calculating phonon-phonon
             interaction strength and imaginary parts of self-energy.
         is_N_U : bool, optional, default is False
@@ -2334,6 +2335,8 @@ class Phono3py:
             `sigmas`.
         read_pp : bool, optional, default is False
             With True, phonon-phonon interaction strength is read from files.
+        read_elph : int, optional, default is None
+            Index to read gammas of electron-phonon from file.
         write_LBTE_solution : bool, optional, default is False
             Direct solution only (`is_LBTE=True`). With True, eigenvectors of
             collision matrix is written in a file as the row vectors except
@@ -2437,6 +2440,7 @@ class Phono3py:
                 write_kappa=write_kappa,
                 write_pp=write_pp,
                 read_pp=read_pp,
+                read_elph=read_elph,
                 write_gamma_detail=write_gamma_detail,
                 compression=compression,
                 input_filename=input_filename,

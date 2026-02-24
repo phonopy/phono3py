@@ -1522,6 +1522,7 @@ def main(**argparse_control):
             read_collision=settings.read_collision,
             write_pp=settings.write_pp,
             read_pp=settings.read_pp,
+            read_elph=settings.read_elph,
             write_LBTE_solution=settings.write_LBTE_solution,
             compression=settings.hdf5_compression,
         )

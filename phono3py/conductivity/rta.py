@@ -39,7 +39,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
+from numpy.typing import NDArray
 
 from phono3py.conductivity.base import ConductivityComponents
 from phono3py.conductivity.rta_base import ConductivityRTABase
@@ -52,12 +52,12 @@ class ConductivityRTA(ConductivityRTABase):
     def __init__(
         self,
         interaction: Interaction,
-        grid_points: ArrayLike | None = None,
-        temperatures: ArrayLike | None = None,
+        grid_points: Sequence[int] | NDArray | None = None,
+        temperatures: Sequence[float] | NDArray | None = None,
         sigmas: Sequence[float | None] | None = None,
         sigma_cutoff: float | None = None,
         is_isotope: bool = False,
-        mass_variances: ArrayLike | None = None,
+        mass_variances: Sequence[float] | NDArray | None = None,
         boundary_mfp: float | None = None,  # in micrometer
         use_ave_pp: bool = False,
         is_kappa_star: bool = True,
