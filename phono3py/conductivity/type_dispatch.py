@@ -60,7 +60,15 @@ def get_rta_writer_grid_data(
         gv_by_gv_i = None
 
     if isinstance(br, ConductivityWignerRTA):
-        velocity_operator_i = cast(Any, br).velocity_operator[i]
+        velocity_operator = getattr(br, "velocity_operator", None)
+        if velocity_operator is None:
+            conductivity_components = getattr(br, "_conductivity_components", None)
+            velocity_operator = getattr(
+                conductivity_components, "velocity_operator", None
+            )
+        velocity_operator_i = (
+            None if velocity_operator is None else cast(Any, velocity_operator)[i]
+        )
     else:
         velocity_operator_i = None
 

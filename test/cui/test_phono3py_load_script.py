@@ -116,6 +116,117 @@ def test_phono3py_load_with_isotope():
             os.chdir(original_cwd)
 
 
+def test_phono3py_load_generates_kappa_hdf5_contents():
+    """Run phono3py-load and validate generated kappa hdf5 content."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_Si-111-222.yaml",
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            argparse_control = _get_phono3py_load_args(
+                "phono3py.yaml",
+                is_bterta=True,
+                temperatures=["300"],
+                mesh_numbers=["5", "5", "5"],
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            kappa_path = pathlib.Path("kappa-m555.hdf5")
+            assert kappa_path.exists()
+
+            with h5py.File(kappa_path, "r") as f:
+                assert "kappa" in f
+                assert "temperature" in f
+                assert "mesh" in f
+                assert f["kappa"].shape == (1, 6)
+                assert f["temperature"][0] == pytest.approx(300.0)
+                assert np.all(f["mesh"][:] == np.array([5, 5, 5]))
+                assert np.all(np.isfinite(f["kappa"][0]))
+                assert f["kappa"][0, 0] > 0
+
+            for created_filename in (
+                "phono3py.yaml",
+                "fc2.hdf5",
+                "fc3.hdf5",
+                "kappa-m555.hdf5",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            _check_no_files()
+
+        finally:
+            os.chdir(original_cwd)
+
+
+def test_phono3py_load_generates_wigner_kappa_hdf5_contents():
+    """Run phono3py-load in wigner RTA mode and validate kappa hdf5 content."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_Si-111-222.yaml",
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            argparse_control = _get_phono3py_load_args(
+                "phono3py.yaml",
+                is_bterta=True,
+                is_wigner_kappa=True,
+                temperatures=["300"],
+                mesh_numbers=["5", "5", "5"],
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            kappa_path = pathlib.Path("kappa-m555.hdf5")
+            assert kappa_path.exists()
+
+            with h5py.File(kappa_path, "r") as f:
+                assert "kappa_P_RTA" in f
+                assert "kappa_C" in f
+                assert "kappa_TOT_RTA" in f
+                assert "temperature" in f
+                assert "mesh" in f
+                assert f["kappa_P_RTA"].shape == (1, 6)
+                assert f["kappa_C"].shape == (1, 6)
+                assert f["kappa_TOT_RTA"].shape == (1, 6)
+                assert f["temperature"][0] == pytest.approx(300.0)
+                assert np.all(f["mesh"][:] == np.array([5, 5, 5]))
+                assert np.all(np.isfinite(f["kappa_TOT_RTA"][0]))
+                assert f["kappa_TOT_RTA"][0, 0] > 0
+
+            for created_filename in (
+                "phono3py.yaml",
+                "fc2.hdf5",
+                "fc3.hdf5",
+                "kappa-m555.hdf5",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            _check_no_files()
+
+        finally:
+            os.chdir(original_cwd)
+
+
 def test_phono3py_load_lbte():
     """Test phono3py-load script running direct solution."""
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -142,6 +253,31 @@ def test_phono3py_load_lbte():
             with pytest.raises(SystemExit) as excinfo:
                 main(**argparse_control)
             assert excinfo.value.code == 0
+
+            with h5py.File("kappa-m555.hdf5", "r") as f:
+                assert "kappa" in f
+                assert "kappa_RTA" in f
+                assert "temperature" in f
+                assert "mesh" in f
+
+                kappa = f["kappa"][:]
+                kappa_rta = f["kappa_RTA"][:]
+
+                assert kappa.shape == (1, 6)
+                assert kappa_rta.shape == (1, 6)
+                assert f["temperature"][0] == pytest.approx(300.0)
+                assert np.all(f["mesh"][:] == np.array([5, 5, 5]))
+                assert np.all(np.isfinite(kappa))
+                assert np.all(np.isfinite(kappa_rta))
+                assert kappa[0, 0] == pytest.approx(51.5775459, abs=0.5)
+                assert kappa_rta[0, 0] == pytest.approx(56.6801082, abs=0.5)
+
+            with h5py.File("coleigs-m555.hdf5", "r") as f:
+                assert "collision_eigenvalues" in f
+                coleigs = f["collision_eigenvalues"][:]
+                assert coleigs.shape == (1, 180)
+                assert np.all(np.isfinite(coleigs))
+                assert coleigs[0, 0] == pytest.approx(-2.07092051e-17, rel=0.6)
 
             # Clean files created by phono3py-load script.
             for created_filename in (
@@ -236,6 +372,36 @@ def test_phono3py_load_wigner_lbte():
             with pytest.raises(SystemExit) as excinfo:
                 main(**argparse_control)
             assert excinfo.value.code == 0
+
+            with h5py.File("kappa-m555.hdf5", "r") as f:
+                assert "kappa_P_exact" in f
+                assert "kappa_P_RTA" in f
+                assert "kappa_C" in f
+                assert "temperature" in f
+                assert "mesh" in f
+
+                kappa_p_exact = f["kappa_P_exact"][:]
+                kappa_p_rta = f["kappa_P_RTA"][:]
+                kappa_c = f["kappa_C"][:]
+
+                assert kappa_p_exact.shape == (1, 6)
+                assert kappa_p_rta.shape == (1, 6)
+                assert kappa_c.shape == (1, 6)
+                assert f["temperature"][0] == pytest.approx(300.0)
+                assert np.all(f["mesh"][:] == np.array([5, 5, 5]))
+                assert np.all(np.isfinite(kappa_p_exact))
+                assert np.all(np.isfinite(kappa_p_rta))
+                assert np.all(np.isfinite(kappa_c))
+                assert kappa_p_exact[0, 0] == pytest.approx(51.5775458, abs=0.5)
+                assert kappa_p_rta[0, 0] == pytest.approx(56.9656448, abs=0.5)
+                assert kappa_c[0, 0] == pytest.approx(0.0570016902, rel=1e-3)
+
+            with h5py.File("coleigs-m555.hdf5", "r") as f:
+                assert "collision_eigenvalues" in f
+                coleigs = f["collision_eigenvalues"][:]
+                assert coleigs.shape == (1, 180)
+                assert np.all(np.isfinite(coleigs))
+                assert coleigs[0, 0] == pytest.approx(-2.21293179e-17, rel=0.6)
 
             # for filename in pathlib.Path.cwd().iterdir():
             #     print(filename)
@@ -794,6 +960,275 @@ def test_phono3py_load_write_gamma():
             os.chdir(original_cwd)
 
 
+def test_phono3py_load_write_gamma_contains_isotope_and_N_U():
+    """Test write_gamma output contains gamma datasets and expected element values."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_Si-111-222.yaml",
+                mesh_numbers=["5", "5", "5"],
+                is_bterta=True,
+                is_isotope=True,
+                is_N_U=True,
+                temperatures=["300"],
+                write_gamma=True,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            kappa_file = pathlib.Path("kappa-m555.hdf5")
+            assert kappa_file.exists()
+            with h5py.File(kappa_file, "r") as f:
+                assert "gamma" in f
+                assert "gamma_isotope" in f
+                assert "gamma_N" in f
+                assert "gamma_U" in f
+
+                gamma = f["gamma"][:]
+                gamma_isotope = f["gamma_isotope"][:]
+                gamma_n = f["gamma_N"][:]
+                gamma_u = f["gamma_U"][:]
+
+                assert gamma.shape == (1, 10, 6)
+                assert gamma_isotope.shape == (10, 6)
+                assert gamma_n.shape == (1, 10, 6)
+                assert gamma_u.shape == (1, 10, 6)
+                assert np.all(np.isfinite(gamma))
+                assert np.all(np.isfinite(gamma_isotope))
+                assert np.all(np.isfinite(gamma_n))
+                assert np.all(np.isfinite(gamma_u))
+
+                assert gamma[0, 0, 5] == pytest.approx(0.03305086444529516, rel=1e-6)
+                assert gamma[0, 5, 2] == pytest.approx(0.06295054450690822, rel=1e-6)
+                assert gamma_n[0, 0, 5] == pytest.approx(0.03305086444529516, rel=1e-6)
+                assert gamma_u[0, 0, 5] == pytest.approx(0.0, abs=1e-12)
+                assert gamma_u[0, 5, 2] == pytest.approx(0.036852453189789185, rel=1e-6)
+                assert gamma_isotope[0, 0] == pytest.approx(0.0, abs=1e-12)
+                assert gamma_isotope[9, 5] == pytest.approx(
+                    0.04423730060242746, rel=1e-6
+                )
+
+            for created_filename in (
+                "phono3py.yaml",
+                "fc2.hdf5",
+                "fc3.hdf5",
+                "kappa-m555.hdf5",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            for file_path in pathlib.Path(".").glob("kappa-m555-g*.hdf5"):
+                file_path.unlink()
+
+            _check_no_files()
+
+        finally:
+            os.chdir(original_cwd)
+
+
+def test_phono3py_load_write_gamma_detail_outputs_hdf5():
+    """Test write_gamma_detail creates gamma_detail hdf5 files with core datasets."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_Si-111-222.yaml",
+                mesh_numbers=["5", "5", "5"],
+                is_bterta=True,
+                temperatures=["300"],
+                write_gamma_detail=True,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            gamma_detail_files = sorted(
+                pathlib.Path(".").glob("gamma_detail-m555*.hdf5")
+            )
+            assert gamma_detail_files
+
+            with h5py.File(gamma_detail_files[0], "r") as f:
+                assert "gamma_detail" in f
+                assert "temperature" in f
+                assert "mesh" in f
+                assert "triplet" in f
+                assert "triplet_all" in f
+                assert f["temperature"][0] == pytest.approx(300.0)
+                assert np.all(f["mesh"][:] == np.array([5, 5, 5]))
+
+                gamma_detail = f["gamma_detail"][:]
+                assert gamma_detail.shape == (1, 10, 6, 6, 6)
+                assert gamma_detail.size > 0
+                assert gamma_detail[0, 0, 0, 0, 0] == pytest.approx(0.0, abs=1e-16)
+                assert gamma_detail[0, 1, 3, 2, 2] == pytest.approx(
+                    3.791865294511982e-05, rel=1e-6
+                )
+                assert gamma_detail[0, 2, 5, 2, 1] == pytest.approx(
+                    2.5721546025416875e-06, rel=1e-6
+                )
+
+            for created_filename in (
+                "phono3py.yaml",
+                "fc2.hdf5",
+                "fc3.hdf5",
+                "kappa-m555.hdf5",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            for file_path in pathlib.Path(".").glob("gamma_detail-m555*.hdf5"):
+                file_path.unlink()
+
+            _check_no_files()
+
+        finally:
+            os.chdir(original_cwd)
+
+
+def test_phono3py_load_wigner_write_gamma_contains_isotope_and_N_U():
+    """Test wigner write_gamma output contains gamma datasets and values."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_Si-111-222.yaml",
+                mesh_numbers=["5", "5", "5"],
+                is_bterta=True,
+                is_wigner_kappa=True,
+                is_isotope=True,
+                is_N_U=True,
+                temperatures=["300"],
+                write_gamma=True,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            kappa_file = pathlib.Path("kappa-m555.hdf5")
+            assert kappa_file.exists()
+            with h5py.File(kappa_file, "r") as f:
+                assert "gamma" in f
+                assert "gamma_isotope" in f
+                assert "gamma_N" in f
+                assert "gamma_U" in f
+
+                gamma = f["gamma"][:]
+                gamma_isotope = f["gamma_isotope"][:]
+                gamma_n = f["gamma_N"][:]
+                gamma_u = f["gamma_U"][:]
+
+                assert gamma.shape == (1, 10, 6)
+                assert gamma_isotope.shape == (10, 6)
+                assert gamma_n.shape == (1, 10, 6)
+                assert gamma_u.shape == (1, 10, 6)
+                assert np.all(np.isfinite(gamma))
+                assert np.all(np.isfinite(gamma_isotope))
+                assert np.all(np.isfinite(gamma_n))
+                assert np.all(np.isfinite(gamma_u))
+
+                assert gamma[0, 0, 5] == pytest.approx(0.03305086444529516, rel=1e-6)
+                assert gamma[0, 5, 2] == pytest.approx(0.06295054450690822, rel=1e-6)
+                assert gamma_n[0, 0, 5] == pytest.approx(0.03305086444529516, rel=1e-6)
+                assert gamma_n[0, 5, 2] == pytest.approx(0.02609809131711904, rel=1e-6)
+                assert gamma_u[0, 0, 5] == pytest.approx(0.0, abs=1e-12)
+                assert gamma_u[0, 5, 2] == pytest.approx(0.036852453189789185, rel=1e-6)
+                assert gamma_isotope[0, 0] == pytest.approx(0.0, abs=1e-12)
+                assert gamma_isotope[5, 2] == pytest.approx(
+                    0.0007028996880450734, rel=1e-6
+                )
+
+            for created_filename in (
+                "phono3py.yaml",
+                "fc2.hdf5",
+                "fc3.hdf5",
+                "kappa-m555.hdf5",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            for file_path in pathlib.Path(".").glob("kappa-m555-g*.hdf5"):
+                file_path.unlink()
+
+            _check_no_files()
+
+        finally:
+            os.chdir(original_cwd)
+
+
+def test_phono3py_load_wigner_write_gamma_detail_outputs_hdf5():
+    """Test wigner write_gamma_detail creates gamma_detail hdf5 files with values."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_Si-111-222.yaml",
+                mesh_numbers=["5", "5", "5"],
+                is_bterta=True,
+                is_wigner_kappa=True,
+                temperatures=["300"],
+                write_gamma_detail=True,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            gamma_detail_files = sorted(
+                pathlib.Path(".").glob("gamma_detail-m555*.hdf5")
+            )
+            assert gamma_detail_files
+
+            with h5py.File(gamma_detail_files[0], "r") as f:
+                assert "gamma_detail" in f
+                assert "temperature" in f
+                assert "mesh" in f
+                assert "triplet" in f
+                assert "triplet_all" in f
+                assert f["temperature"][0] == pytest.approx(300.0)
+                assert np.all(f["mesh"][:] == np.array([5, 5, 5]))
+
+                gamma_detail = f["gamma_detail"][:]
+                assert gamma_detail.shape == (1, 10, 6, 6, 6)
+                assert gamma_detail.size > 0
+                assert gamma_detail[0, 0, 0, 0, 0] == pytest.approx(0.0, abs=1e-16)
+                assert gamma_detail[0, 1, 3, 2, 2] == pytest.approx(
+                    3.791865294511982e-05, rel=1e-6
+                )
+                assert gamma_detail[0, 1, 4, 2, 2] == pytest.approx(
+                    7.407120833285353e-05, rel=1e-6
+                )
+
+            for created_filename in (
+                "phono3py.yaml",
+                "fc2.hdf5",
+                "fc3.hdf5",
+                "kappa-m555.hdf5",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            for file_path in pathlib.Path(".").glob("gamma_detail-m555*.hdf5"):
+                file_path.unlink()
+
+            _check_no_files()
+
+        finally:
+            os.chdir(original_cwd)
+
+
 def test_phono3py_load_fc3_r0_average():
     """Test phono3py-load script with is_fc3_r0_average."""
     is_fc3_r0_average = Phono3pySettings().is_fc3_r0_average
@@ -1222,6 +1657,7 @@ def _get_phono3py_load_args(
     is_bterta: bool | None = None,
     is_fc3_r0_average: bool | None = None,
     is_isotope: bool | None = None,
+    is_N_U: bool | None = None,
     is_lbte: bool | None = None,
     is_wigner_kappa: bool | None = None,
     mesh_numbers: Sequence | None = None,
@@ -1233,6 +1669,7 @@ def _get_phono3py_load_args(
     temperatures: Sequence | None = None,
     use_pypolymlp: bool | None = None,
     write_gamma: bool | None = None,
+    write_gamma_detail: bool | None = None,
     write_phonon: bool | None = None,
 ):
     # Mock of ArgumentParser.args.
@@ -1252,6 +1689,7 @@ def _get_phono3py_load_args(
             is_bterta=is_bterta,
             is_fc3_r0_average=is_fc3_r0_average,
             is_isotope=is_isotope,
+            is_N_U=is_N_U,
             is_lbte=is_lbte,
             is_wigner_kappa=is_wigner_kappa,
             log_level=1,
@@ -1264,6 +1702,7 @@ def _get_phono3py_load_args(
             temperatures=temperatures,
             use_pypolymlp=use_pypolymlp,
             write_gamma=write_gamma,
+            write_gamma_detail=write_gamma_detail,
             write_phonon=write_phonon,
         )
     else:
@@ -1279,6 +1718,7 @@ def _get_phono3py_load_args(
             is_bterta=is_bterta,
             is_fc3_r0_average=is_fc3_r0_average,
             is_isotope=is_isotope,
+            is_N_U=is_N_U,
             is_lbte=is_lbte,
             is_wigner_kappa=is_wigner_kappa,
             mesh_numbers=mesh_numbers,
@@ -1290,6 +1730,7 @@ def _get_phono3py_load_args(
             temperatures=temperatures,
             use_pypolymlp=use_pypolymlp,
             write_gamma=write_gamma,
+            write_gamma_detail=write_gamma_detail,
             write_phonon=write_phonon,
         )
 
