@@ -248,13 +248,13 @@ def test_phono3py_load_lbte():
                 temperatures=[
                     "300",
                 ],
-                mesh_numbers=["5", "5", "5"],
+                mesh_numbers=["9", "9", "9"],
             )
             with pytest.raises(SystemExit) as excinfo:
                 main(**argparse_control)
             assert excinfo.value.code == 0
 
-            with h5py.File("kappa-m555.hdf5", "r") as f:
+            with h5py.File("kappa-m999.hdf5", "r") as f:
                 assert "kappa" in f
                 assert "kappa_RTA" in f
                 assert "temperature" in f
@@ -266,26 +266,26 @@ def test_phono3py_load_lbte():
                 assert kappa.shape == (1, 6)
                 assert kappa_rta.shape == (1, 6)
                 assert f["temperature"][0] == pytest.approx(300.0)
-                assert np.all(f["mesh"][:] == np.array([5, 5, 5]))
+                assert np.all(f["mesh"][:] == np.array([9, 9, 9]))
                 assert np.all(np.isfinite(kappa))
                 assert np.all(np.isfinite(kappa_rta))
-                assert kappa[0, 0] == pytest.approx(51.5775459, abs=0.5)
-                assert kappa_rta[0, 0] == pytest.approx(56.6801082, abs=0.5)
+                assert kappa[0, 0] == pytest.approx(96.14464298898757, abs=0.8)
+                assert kappa_rta[0, 0] == pytest.approx(96.66875438843746, abs=0.8)
 
-            with h5py.File("coleigs-m555.hdf5", "r") as f:
+            with h5py.File("coleigs-m999.hdf5", "r") as f:
                 assert "collision_eigenvalues" in f
                 coleigs = f["collision_eigenvalues"][:]
-                assert coleigs.shape == (1, 180)
+                assert coleigs.shape == (1, 630)
                 assert np.all(np.isfinite(coleigs))
-                assert coleigs[0, 0] == pytest.approx(-2.07092051e-17, rel=0.6)
+                assert coleigs[0, 0] == pytest.approx(-4.627938906803178e-17, rel=0.7)
 
             # Clean files created by phono3py-load script.
             for created_filename in (
                 "phono3py.yaml",
                 "fc2.hdf5",
                 "fc3.hdf5",
-                "kappa-m555.hdf5",
-                "coleigs-m555.hdf5",
+                "kappa-m999.hdf5",
+                "coleigs-m999.hdf5",
             ):
                 file_path = pathlib.Path(created_filename)
                 assert file_path.exists()
@@ -367,13 +367,13 @@ def test_phono3py_load_wigner_lbte():
                 temperatures=[
                     "300",
                 ],
-                mesh_numbers=["5", "5", "5"],
+                mesh_numbers=["9", "9", "9"],
             )
             with pytest.raises(SystemExit) as excinfo:
                 main(**argparse_control)
             assert excinfo.value.code == 0
 
-            with h5py.File("kappa-m555.hdf5", "r") as f:
+            with h5py.File("kappa-m999.hdf5", "r") as f:
                 assert "kappa_P_exact" in f
                 assert "kappa_P_RTA" in f
                 assert "kappa_C" in f
@@ -388,20 +388,20 @@ def test_phono3py_load_wigner_lbte():
                 assert kappa_p_rta.shape == (1, 6)
                 assert kappa_c.shape == (1, 6)
                 assert f["temperature"][0] == pytest.approx(300.0)
-                assert np.all(f["mesh"][:] == np.array([5, 5, 5]))
+                assert np.all(f["mesh"][:] == np.array([9, 9, 9]))
                 assert np.all(np.isfinite(kappa_p_exact))
                 assert np.all(np.isfinite(kappa_p_rta))
                 assert np.all(np.isfinite(kappa_c))
-                assert kappa_p_exact[0, 0] == pytest.approx(51.5775458, abs=0.5)
-                assert kappa_p_rta[0, 0] == pytest.approx(56.9656448, abs=0.5)
-                assert kappa_c[0, 0] == pytest.approx(0.0570016902, rel=1e-3)
+                assert kappa_p_exact[0, 0] == pytest.approx(96.14464215062665, abs=0.8)
+                assert kappa_p_rta[0, 0] == pytest.approx(97.30006583719721, abs=0.8)
+                assert kappa_c[0, 0] == pytest.approx(0.1731832844767842, rel=2e-2)
 
-            with h5py.File("coleigs-m555.hdf5", "r") as f:
+            with h5py.File("coleigs-m999.hdf5", "r") as f:
                 assert "collision_eigenvalues" in f
                 coleigs = f["collision_eigenvalues"][:]
-                assert coleigs.shape == (1, 180)
+                assert coleigs.shape == (1, 630)
                 assert np.all(np.isfinite(coleigs))
-                assert coleigs[0, 0] == pytest.approx(-2.21293179e-17, rel=0.6)
+                assert coleigs[0, 0] == pytest.approx(-5.92530232954215e-17, rel=0.7)
 
             # for filename in pathlib.Path.cwd().iterdir():
             #     print(filename)
@@ -411,8 +411,8 @@ def test_phono3py_load_wigner_lbte():
                 "phono3py.yaml",
                 "fc2.hdf5",
                 "fc3.hdf5",
-                "kappa-m555.hdf5",
-                "coleigs-m555.hdf5",
+                "kappa-m999.hdf5",
+                "coleigs-m999.hdf5",
             ):
                 file_path = pathlib.Path(created_filename)
                 assert file_path.exists()
@@ -969,7 +969,7 @@ def test_phono3py_load_write_gamma_contains_isotope_and_N_U():
         try:
             argparse_control = _get_phono3py_load_args(
                 cwd / ".." / "phono3py_params_Si-111-222.yaml",
-                mesh_numbers=["5", "5", "5"],
+                mesh_numbers=["9", "9", "9"],
                 is_bterta=True,
                 is_isotope=True,
                 is_N_U=True,
@@ -980,7 +980,7 @@ def test_phono3py_load_write_gamma_contains_isotope_and_N_U():
                 main(**argparse_control)
             assert excinfo.value.code == 0
 
-            kappa_file = pathlib.Path("kappa-m555.hdf5")
+            kappa_file = pathlib.Path("kappa-m999.hdf5")
             assert kappa_file.exists()
             with h5py.File(kappa_file, "r") as f:
                 assert "gamma" in f
@@ -993,36 +993,38 @@ def test_phono3py_load_write_gamma_contains_isotope_and_N_U():
                 gamma_n = f["gamma_N"][:]
                 gamma_u = f["gamma_U"][:]
 
-                assert gamma.shape == (1, 10, 6)
-                assert gamma_isotope.shape == (10, 6)
-                assert gamma_n.shape == (1, 10, 6)
-                assert gamma_u.shape == (1, 10, 6)
+                assert gamma.shape == (1, 35, 6)
+                assert gamma_isotope.shape == (35, 6)
+                assert gamma_n.shape == (1, 35, 6)
+                assert gamma_u.shape == (1, 35, 6)
                 assert np.all(np.isfinite(gamma))
                 assert np.all(np.isfinite(gamma_isotope))
                 assert np.all(np.isfinite(gamma_n))
                 assert np.all(np.isfinite(gamma_u))
 
-                assert gamma[0, 0, 5] == pytest.approx(0.03305086444529516, rel=1e-6)
-                assert gamma[0, 5, 2] == pytest.approx(0.06295054450690822, rel=1e-6)
-                assert gamma_n[0, 0, 5] == pytest.approx(0.03305086444529516, rel=1e-6)
+                assert gamma[0, 0, 5] == pytest.approx(0.04573886317305927, rel=1e-6)
+                assert gamma[0, 5, 2] == pytest.approx(0.0003336127293951538, rel=1e-6)
+                assert gamma_n[0, 0, 5] == pytest.approx(0.04573886317305927, rel=1e-6)
                 assert gamma_u[0, 0, 5] == pytest.approx(0.0, abs=1e-12)
-                assert gamma_u[0, 5, 2] == pytest.approx(0.036852453189789185, rel=1e-6)
+                assert gamma_u[0, 5, 2] == pytest.approx(
+                    2.3868169864121317e-05, rel=1e-6
+                )
                 assert gamma_isotope[0, 0] == pytest.approx(0.0, abs=1e-12)
                 assert gamma_isotope[9, 5] == pytest.approx(
-                    0.04423730060242746, rel=1e-6
+                    0.01034933007118171, rel=1e-6
                 )
 
             for created_filename in (
                 "phono3py.yaml",
                 "fc2.hdf5",
                 "fc3.hdf5",
-                "kappa-m555.hdf5",
+                "kappa-m999.hdf5",
             ):
                 file_path = pathlib.Path(created_filename)
                 assert file_path.exists()
                 file_path.unlink()
 
-            for file_path in pathlib.Path(".").glob("kappa-m555-g*.hdf5"):
+            for file_path in pathlib.Path(".").glob("kappa-m999-g*.hdf5"):
                 file_path.unlink()
 
             _check_no_files()
@@ -1040,7 +1042,7 @@ def test_phono3py_load_write_gamma_detail_outputs_hdf5():
         try:
             argparse_control = _get_phono3py_load_args(
                 cwd / ".." / "phono3py_params_Si-111-222.yaml",
-                mesh_numbers=["5", "5", "5"],
+                mesh_numbers=["9", "9", "9"],
                 is_bterta=True,
                 temperatures=["300"],
                 write_gamma_detail=True,
@@ -1050,7 +1052,7 @@ def test_phono3py_load_write_gamma_detail_outputs_hdf5():
             assert excinfo.value.code == 0
 
             gamma_detail_files = sorted(
-                pathlib.Path(".").glob("gamma_detail-m555*.hdf5")
+                pathlib.Path(".").glob("gamma_detail-m999*.hdf5")
             )
             assert gamma_detail_files
 
@@ -1061,30 +1063,30 @@ def test_phono3py_load_write_gamma_detail_outputs_hdf5():
                 assert "triplet" in f
                 assert "triplet_all" in f
                 assert f["temperature"][0] == pytest.approx(300.0)
-                assert np.all(f["mesh"][:] == np.array([5, 5, 5]))
+                assert np.all(f["mesh"][:] == np.array([9, 9, 9]))
 
                 gamma_detail = f["gamma_detail"][:]
-                assert gamma_detail.shape == (1, 10, 6, 6, 6)
+                assert gamma_detail.shape == (1, 35, 6, 6, 6)
                 assert gamma_detail.size > 0
                 assert gamma_detail[0, 0, 0, 0, 0] == pytest.approx(0.0, abs=1e-16)
-                assert gamma_detail[0, 1, 3, 2, 2] == pytest.approx(
-                    3.791865294511982e-05, rel=1e-6
+                assert gamma_detail[0, 2, 3, 2, 2] == pytest.approx(
+                    4.619265303540619e-06, rel=1e-6
                 )
-                assert gamma_detail[0, 2, 5, 2, 1] == pytest.approx(
-                    2.5721546025416875e-06, rel=1e-6
+                assert gamma_detail[0, 2, 4, 2, 2] == pytest.approx(
+                    9.02338390391884e-06, rel=1e-6
                 )
 
             for created_filename in (
                 "phono3py.yaml",
                 "fc2.hdf5",
                 "fc3.hdf5",
-                "kappa-m555.hdf5",
+                "kappa-m999.hdf5",
             ):
                 file_path = pathlib.Path(created_filename)
                 assert file_path.exists()
                 file_path.unlink()
 
-            for file_path in pathlib.Path(".").glob("gamma_detail-m555*.hdf5"):
+            for file_path in pathlib.Path(".").glob("gamma_detail-m999*.hdf5"):
                 file_path.unlink()
 
             _check_no_files()
@@ -1102,7 +1104,7 @@ def test_phono3py_load_wigner_write_gamma_contains_isotope_and_N_U():
         try:
             argparse_control = _get_phono3py_load_args(
                 cwd / ".." / "phono3py_params_Si-111-222.yaml",
-                mesh_numbers=["5", "5", "5"],
+                mesh_numbers=["9", "9", "9"],
                 is_bterta=True,
                 is_wigner_kappa=True,
                 is_isotope=True,
@@ -1114,7 +1116,7 @@ def test_phono3py_load_wigner_write_gamma_contains_isotope_and_N_U():
                 main(**argparse_control)
             assert excinfo.value.code == 0
 
-            kappa_file = pathlib.Path("kappa-m555.hdf5")
+            kappa_file = pathlib.Path("kappa-m999.hdf5")
             assert kappa_file.exists()
             with h5py.File(kappa_file, "r") as f:
                 assert "gamma" in f
@@ -1127,37 +1129,41 @@ def test_phono3py_load_wigner_write_gamma_contains_isotope_and_N_U():
                 gamma_n = f["gamma_N"][:]
                 gamma_u = f["gamma_U"][:]
 
-                assert gamma.shape == (1, 10, 6)
-                assert gamma_isotope.shape == (10, 6)
-                assert gamma_n.shape == (1, 10, 6)
-                assert gamma_u.shape == (1, 10, 6)
+                assert gamma.shape == (1, 35, 6)
+                assert gamma_isotope.shape == (35, 6)
+                assert gamma_n.shape == (1, 35, 6)
+                assert gamma_u.shape == (1, 35, 6)
                 assert np.all(np.isfinite(gamma))
                 assert np.all(np.isfinite(gamma_isotope))
                 assert np.all(np.isfinite(gamma_n))
                 assert np.all(np.isfinite(gamma_u))
 
-                assert gamma[0, 0, 5] == pytest.approx(0.03305086444529516, rel=1e-6)
-                assert gamma[0, 5, 2] == pytest.approx(0.06295054450690822, rel=1e-6)
-                assert gamma_n[0, 0, 5] == pytest.approx(0.03305086444529516, rel=1e-6)
-                assert gamma_n[0, 5, 2] == pytest.approx(0.02609809131711904, rel=1e-6)
+                assert gamma[0, 0, 5] == pytest.approx(0.04573886317305927, rel=1e-6)
+                assert gamma[0, 5, 2] == pytest.approx(0.0003336127293951538, rel=1e-6)
+                assert gamma_n[0, 0, 5] == pytest.approx(0.04573886317305927, rel=1e-6)
+                assert gamma_n[0, 5, 2] == pytest.approx(
+                    0.0003097445595310325, rel=1e-6
+                )
                 assert gamma_u[0, 0, 5] == pytest.approx(0.0, abs=1e-12)
-                assert gamma_u[0, 5, 2] == pytest.approx(0.036852453189789185, rel=1e-6)
+                assert gamma_u[0, 5, 2] == pytest.approx(
+                    2.3868169864121317e-05, rel=1e-6
+                )
                 assert gamma_isotope[0, 0] == pytest.approx(0.0, abs=1e-12)
                 assert gamma_isotope[5, 2] == pytest.approx(
-                    0.0007028996880450734, rel=1e-6
+                    0.00016285265192635592, rel=1e-6
                 )
 
             for created_filename in (
                 "phono3py.yaml",
                 "fc2.hdf5",
                 "fc3.hdf5",
-                "kappa-m555.hdf5",
+                "kappa-m999.hdf5",
             ):
                 file_path = pathlib.Path(created_filename)
                 assert file_path.exists()
                 file_path.unlink()
 
-            for file_path in pathlib.Path(".").glob("kappa-m555-g*.hdf5"):
+            for file_path in pathlib.Path(".").glob("kappa-m999-g*.hdf5"):
                 file_path.unlink()
 
             _check_no_files()
@@ -1175,7 +1181,7 @@ def test_phono3py_load_wigner_write_gamma_detail_outputs_hdf5():
         try:
             argparse_control = _get_phono3py_load_args(
                 cwd / ".." / "phono3py_params_Si-111-222.yaml",
-                mesh_numbers=["5", "5", "5"],
+                mesh_numbers=["9", "9", "9"],
                 is_bterta=True,
                 is_wigner_kappa=True,
                 temperatures=["300"],
@@ -1186,7 +1192,7 @@ def test_phono3py_load_wigner_write_gamma_detail_outputs_hdf5():
             assert excinfo.value.code == 0
 
             gamma_detail_files = sorted(
-                pathlib.Path(".").glob("gamma_detail-m555*.hdf5")
+                pathlib.Path(".").glob("gamma_detail-m999*.hdf5")
             )
             assert gamma_detail_files
 
@@ -1197,30 +1203,30 @@ def test_phono3py_load_wigner_write_gamma_detail_outputs_hdf5():
                 assert "triplet" in f
                 assert "triplet_all" in f
                 assert f["temperature"][0] == pytest.approx(300.0)
-                assert np.all(f["mesh"][:] == np.array([5, 5, 5]))
+                assert np.all(f["mesh"][:] == np.array([9, 9, 9]))
 
                 gamma_detail = f["gamma_detail"][:]
-                assert gamma_detail.shape == (1, 10, 6, 6, 6)
+                assert gamma_detail.shape == (1, 35, 6, 6, 6)
                 assert gamma_detail.size > 0
                 assert gamma_detail[0, 0, 0, 0, 0] == pytest.approx(0.0, abs=1e-16)
-                assert gamma_detail[0, 1, 3, 2, 2] == pytest.approx(
-                    3.791865294511982e-05, rel=1e-6
+                assert gamma_detail[0, 2, 3, 2, 2] == pytest.approx(
+                    4.619265303540619e-06, rel=1e-6
                 )
-                assert gamma_detail[0, 1, 4, 2, 2] == pytest.approx(
-                    7.407120833285353e-05, rel=1e-6
+                assert gamma_detail[0, 2, 4, 2, 2] == pytest.approx(
+                    9.02338390391884e-06, rel=1e-6
                 )
 
             for created_filename in (
                 "phono3py.yaml",
                 "fc2.hdf5",
                 "fc3.hdf5",
-                "kappa-m555.hdf5",
+                "kappa-m999.hdf5",
             ):
                 file_path = pathlib.Path(created_filename)
                 assert file_path.exists()
                 file_path.unlink()
 
-            for file_path in pathlib.Path(".").glob("gamma_detail-m555*.hdf5"):
+            for file_path in pathlib.Path(".").glob("gamma_detail-m999*.hdf5"):
                 file_path.unlink()
 
             _check_no_files()
