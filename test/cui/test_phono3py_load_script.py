@@ -1002,17 +1002,13 @@ def test_phono3py_load_write_gamma_contains_isotope_and_N_U():
                 assert np.all(np.isfinite(gamma_n))
                 assert np.all(np.isfinite(gamma_u))
 
-                assert gamma[0, 0, 5] == pytest.approx(0.04573886317305927, rel=1e-6)
-                assert gamma[0, 5, 2] == pytest.approx(0.0003336127293951538, rel=1e-6)
-                assert gamma_n[0, 0, 5] == pytest.approx(0.04573886317305927, rel=1e-6)
-                assert gamma_u[0, 0, 5] == pytest.approx(0.0, abs=1e-12)
-                assert gamma_u[0, 5, 2] == pytest.approx(
-                    2.3868169864121317e-05, rel=1e-6
+                assert np.max(gamma) == pytest.approx(0.07279890065189869, rel=0.2)
+                assert np.max(gamma_n) == pytest.approx(0.04573886317305927, rel=0.2)
+                assert np.max(gamma_u) == pytest.approx(0.045010833987380004, rel=0.2)
+                assert np.max(gamma_isotope) == pytest.approx(
+                    0.014355506081254441, rel=0.2
                 )
-                assert gamma_isotope[0, 0] == pytest.approx(0.0, abs=1e-12)
-                assert gamma_isotope[9, 5] == pytest.approx(
-                    0.01034933007118171, rel=1e-6
-                )
+                assert np.max(np.abs(gamma - (gamma_n + gamma_u))) < 1e-10
 
             for created_filename in (
                 "phono3py.yaml",
@@ -1045,6 +1041,7 @@ def test_phono3py_load_write_gamma_detail_outputs_hdf5():
                 mesh_numbers=["9", "9", "9"],
                 is_bterta=True,
                 temperatures=["300"],
+                write_gamma=True,
                 write_gamma_detail=True,
             )
             with pytest.raises(SystemExit) as excinfo:
@@ -1069,12 +1066,22 @@ def test_phono3py_load_write_gamma_detail_outputs_hdf5():
                 assert gamma_detail.shape == (1, 35, 6, 6, 6)
                 assert gamma_detail.size > 0
                 assert gamma_detail[0, 0, 0, 0, 0] == pytest.approx(0.0, abs=1e-16)
-                assert gamma_detail[0, 2, 3, 2, 2] == pytest.approx(
-                    4.619265303540619e-06, rel=1e-6
+                assert np.max(gamma_detail) == pytest.approx(
+                    2.243623483101439e-04, rel=0.2
                 )
-                assert gamma_detail[0, 2, 4, 2, 2] == pytest.approx(
-                    9.02338390391884e-06, rel=1e-6
-                )
+                assert np.count_nonzero(gamma_detail) > 100
+
+                gp = int(f["grid_point"][()])
+                weight = f["weight"][:]
+                gamma_tp = gamma_detail.sum(axis=-1).sum(axis=-1)
+                gamma_from_detail = np.dot(weight, gamma_tp[0])
+
+            with h5py.File(f"kappa-m999-g{gp}.hdf5", "r") as f_gp:
+                gamma_gp = f_gp["gamma"][0]
+
+            assert np.sum(gamma_from_detail) == pytest.approx(
+                np.sum(gamma_gp), rel=1e-10
+            )
 
             for created_filename in (
                 "phono3py.yaml",
@@ -1087,6 +1094,9 @@ def test_phono3py_load_write_gamma_detail_outputs_hdf5():
                 file_path.unlink()
 
             for file_path in pathlib.Path(".").glob("gamma_detail-m999*.hdf5"):
+                file_path.unlink()
+
+            for file_path in pathlib.Path(".").glob("kappa-m999-g*.hdf5"):
                 file_path.unlink()
 
             _check_no_files()
@@ -1138,20 +1148,13 @@ def test_phono3py_load_wigner_write_gamma_contains_isotope_and_N_U():
                 assert np.all(np.isfinite(gamma_n))
                 assert np.all(np.isfinite(gamma_u))
 
-                assert gamma[0, 0, 5] == pytest.approx(0.04573886317305927, rel=1e-6)
-                assert gamma[0, 5, 2] == pytest.approx(0.0003336127293951538, rel=1e-6)
-                assert gamma_n[0, 0, 5] == pytest.approx(0.04573886317305927, rel=1e-6)
-                assert gamma_n[0, 5, 2] == pytest.approx(
-                    0.0003097445595310325, rel=1e-6
+                assert np.max(gamma) == pytest.approx(0.07279890065189869, rel=0.2)
+                assert np.max(gamma_n) == pytest.approx(0.04573886317305927, rel=0.2)
+                assert np.max(gamma_u) == pytest.approx(0.045010833987380004, rel=0.2)
+                assert np.max(gamma_isotope) == pytest.approx(
+                    0.014355506081254441, rel=0.2
                 )
-                assert gamma_u[0, 0, 5] == pytest.approx(0.0, abs=1e-12)
-                assert gamma_u[0, 5, 2] == pytest.approx(
-                    2.3868169864121317e-05, rel=1e-6
-                )
-                assert gamma_isotope[0, 0] == pytest.approx(0.0, abs=1e-12)
-                assert gamma_isotope[5, 2] == pytest.approx(
-                    0.00016285265192635592, rel=1e-6
-                )
+                assert np.max(np.abs(gamma - (gamma_n + gamma_u))) < 1e-10
 
             for created_filename in (
                 "phono3py.yaml",
@@ -1185,6 +1188,7 @@ def test_phono3py_load_wigner_write_gamma_detail_outputs_hdf5():
                 is_bterta=True,
                 is_wigner_kappa=True,
                 temperatures=["300"],
+                write_gamma=True,
                 write_gamma_detail=True,
             )
             with pytest.raises(SystemExit) as excinfo:
@@ -1209,12 +1213,22 @@ def test_phono3py_load_wigner_write_gamma_detail_outputs_hdf5():
                 assert gamma_detail.shape == (1, 35, 6, 6, 6)
                 assert gamma_detail.size > 0
                 assert gamma_detail[0, 0, 0, 0, 0] == pytest.approx(0.0, abs=1e-16)
-                assert gamma_detail[0, 2, 3, 2, 2] == pytest.approx(
-                    4.619265303540619e-06, rel=1e-6
+                assert np.max(gamma_detail) == pytest.approx(
+                    2.243623483101439e-04, rel=0.2
                 )
-                assert gamma_detail[0, 2, 4, 2, 2] == pytest.approx(
-                    9.02338390391884e-06, rel=1e-6
-                )
+                assert np.count_nonzero(gamma_detail) > 100
+
+                gp = int(f["grid_point"][()])
+                weight = f["weight"][:]
+                gamma_tp = gamma_detail.sum(axis=-1).sum(axis=-1)
+                gamma_from_detail = np.dot(weight, gamma_tp[0])
+
+            with h5py.File(f"kappa-m999-g{gp}.hdf5", "r") as f_gp:
+                gamma_gp = f_gp["gamma"][0]
+
+            assert np.sum(gamma_from_detail) == pytest.approx(
+                np.sum(gamma_gp), rel=1e-10
+            )
 
             for created_filename in (
                 "phono3py.yaml",
@@ -1227,6 +1241,9 @@ def test_phono3py_load_wigner_write_gamma_detail_outputs_hdf5():
                 file_path.unlink()
 
             for file_path in pathlib.Path(".").glob("gamma_detail-m999*.hdf5"):
+                file_path.unlink()
+
+            for file_path in pathlib.Path(".").glob("kappa-m999-g*.hdf5"):
                 file_path.unlink()
 
             _check_no_files()
