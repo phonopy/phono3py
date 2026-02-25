@@ -23,19 +23,19 @@ def test_write_kappa_calls_hdf5_writer_per_sigma(monkeypatch):
     mode_cv = np.ones((1, 1, 1), dtype="double")
 
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.get_rta_writer_kappa_data",
-        lambda _br: (
-            kappa,
-            mode_kappa,
-            gv,
-            gv_by_gv,
-            None,
-            None,
-            None,
-            None,
-            None,
-            mode_cv,
-        ),
+        "phono3py.conductivity.rta_output.get_rta_writer_kappa_payload",
+        lambda _br: {
+            "kappa": kappa,
+            "mode_kappa": mode_kappa,
+            "group_velocities": gv,
+            "gv_by_gv": gv_by_gv,
+            "kappa_TOT_RTA": None,
+            "kappa_P_RTA": None,
+            "kappa_C": None,
+            "mode_kappa_P_RTA": None,
+            "mode_kappa_C": None,
+            "mode_heat_capacities": mode_cv,
+        },
     )
     monkeypatch.setattr(
         "phono3py.conductivity.rta_output.write_kappa_to_hdf5",
@@ -90,13 +90,13 @@ def test_write_gamma_all_bands(monkeypatch):
         "phono3py.conductivity.rta_output.all_bands_exist", lambda _interaction: True
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.get_rta_writer_grid_data",
-        lambda _br, _i: (
-            np.array([[1.0, 2.0, 3.0]], dtype="double"),
-            np.array([[1.0, 1.0, 1.0, 0.0, 0.0, 0.0]], dtype="double"),
-            np.array([[[1.0, 0.0, 0.0]]], dtype="complex128"),
-            np.array([[[9.0]]], dtype="double"),
-        ),
+        "phono3py.conductivity.rta_output.get_rta_writer_grid_payload",
+        lambda _br, _i: {
+            "group_velocities_i": np.array([[1.0, 2.0, 3.0]], dtype="double"),
+            "gv_by_gv_i": np.array([[1.0, 1.0, 1.0, 0.0, 0.0, 0.0]], dtype="double"),
+            "velocity_operator_i": np.array([[[1.0, 0.0, 0.0]]], dtype="complex128"),
+            "mode_heat_capacities": np.array([[[9.0]]], dtype="double"),
+        },
     )
     monkeypatch.setattr(
         "phono3py.conductivity.rta_output.write_kappa_to_hdf5",
@@ -143,16 +143,20 @@ def test_write_gamma_band_resolved(monkeypatch):
         "phono3py.conductivity.rta_output.all_bands_exist", lambda _interaction: False
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.get_rta_writer_grid_data",
-        lambda _br, _i: (
-            np.array([[1.0, 0.0, 0.0], [2.0, 0.0, 0.0]], dtype="double"),
-            np.array(
+        "phono3py.conductivity.rta_output.get_rta_writer_grid_payload",
+        lambda _br, _i: {
+            "group_velocities_i": np.array(
+                [[1.0, 0.0, 0.0], [2.0, 0.0, 0.0]], dtype="double"
+            ),
+            "gv_by_gv_i": np.array(
                 [[1.0, 0.0, 0.0, 0.0, 0.0, 0.0], [2.0, 0.0, 0.0, 0.0, 0.0, 0.0]],
                 dtype="double",
             ),
-            np.array([[[1.0, 0.0, 0.0]], [[2.0, 0.0, 0.0]]], dtype="complex128"),
-            np.array([[[3.0, 4.0]]], dtype="double"),
-        ),
+            "velocity_operator_i": np.array(
+                [[[1.0, 0.0, 0.0]], [[2.0, 0.0, 0.0]]], dtype="complex128"
+            ),
+            "mode_heat_capacities": np.array([[[3.0, 4.0]]], dtype="double"),
+        },
     )
     monkeypatch.setattr(
         "phono3py.conductivity.rta_output.write_kappa_to_hdf5",
@@ -297,10 +301,14 @@ def test_show_rta_progress_dispatch_wigner(monkeypatch):
         rta_output,
         "_RTA_PROGRESS_HANDLERS",
         {
-            None: rta_output._show_rta_progress_default,
-            "kubo": rta_output._show_rta_progress_default,
+            "default": rta_output._show_rta_progress_default,
             "wigner": rta_output._show_rta_progress_wigner,
         },
+    )
+    monkeypatch.setattr(
+        rta_output,
+        "get_rta_progress_mode",
+        lambda _conductivity_type: "wigner",
     )
 
     rta_output.show_rta_progress(SimpleNamespace(), "wigner", 1)
@@ -319,10 +327,14 @@ def test_show_rta_progress_dispatch_default(monkeypatch):
         rta_output,
         "_RTA_PROGRESS_HANDLERS",
         {
-            None: rta_output._show_rta_progress_default,
-            "kubo": rta_output._show_rta_progress_default,
+            "default": rta_output._show_rta_progress_default,
             "wigner": rta_output._show_rta_progress_wigner,
         },
+    )
+    monkeypatch.setattr(
+        rta_output,
+        "get_rta_progress_mode",
+        lambda _conductivity_type: "default",
     )
 
     rta_output.show_rta_progress(SimpleNamespace(), None, 1)

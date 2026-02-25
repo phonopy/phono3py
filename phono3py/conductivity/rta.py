@@ -158,36 +158,57 @@ class ConductivityRTA(ConductivityRTABase):
                 for k in range(len(self._temperatures)):
                     g_sum = self._get_main_diagonal(i, j, k)
                     for ll in range(num_band):
-                        if frequencies[ll] < self._pp.cutoff_frequency:
+                        contribution = self._get_mode_contribution(
+                            freq=frequencies[ll],
+                            g_sum=g_sum[ll],
+                            cv=cv[k, ll],
+                            gv_by_gv=gv_by_gv[i, ll],
+                            gp=gp,
+                            band_index=ll,
+                        )
+                        if contribution is None:
                             self._num_ignored_phonon_modes[j, k] += 1  # type: ignore
                             continue
 
-                        old_settings = np.seterr(all="raise")
-                        try:
-                            self._mode_kappa[j, k, i, ll] = (  # type: ignore
-                                gv_by_gv[i, ll]
-                                * cv[k, ll]
-                                / (g_sum[ll] * 2)
-                                * self._conversion_factor
-                            )
-                        except FloatingPointError:
-                            # supposed that g is almost 0 and |gv|=0
-                            pass
-                        except Exception:
-                            print("=" * 26 + " Warning " + "=" * 26)
-                            print(
-                                " Unexpected physical condition of ph-ph "
-                                "interaction calculation was found."
-                            )
-                            print(
-                                " g=%f at gp=%d, band=%d, freq=%f"
-                                % (g_sum[ll], gp, ll + 1, frequencies[ll])
-                            )
-                            print("=" * 61)
-                        np.seterr(**old_settings)
+                        self._mode_kappa[j, k, i, ll] = contribution  # type: ignore
 
         N = self.number_of_sampling_grid_points
         self._kappa = self._mode_kappa.sum(axis=2).sum(axis=2) / N
+
+    def _get_mode_contribution(
+        self,
+        *,
+        freq: float,
+        g_sum: float,
+        cv: float,
+        gv_by_gv,
+        gp: int,
+        band_index: int,
+    ) -> NDArray | None:
+        if freq < self._pp.cutoff_frequency:
+            return None
+
+        old_settings = np.seterr(all="raise")
+        try:
+            contribution = gv_by_gv * cv / (g_sum * 2) * self._conversion_factor
+        except FloatingPointError:
+            # supposed that g is almost 0 and |gv|=0
+            contribution = np.zeros(6, dtype="double")
+        except Exception:
+            print("=" * 26 + " Warning " + "=" * 26)
+            print(
+                " Unexpected physical condition of ph-ph "
+                "interaction calculation was found."
+            )
+            print(
+                " g=%f at gp=%d, band=%d, freq=%f" % (g_sum, gp, band_index + 1, freq)
+            )
+            print("=" * 61)
+            contribution = np.zeros(6, dtype="double")
+        finally:
+            np.seterr(**old_settings)
+
+        return contribution
 
     def _allocate_values(self):
         if self._temperatures is None:

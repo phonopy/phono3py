@@ -119,42 +119,73 @@ class ConductivityKuboRTA(ConductivityKuboMixIn, ConductivityRTABase):
             if freq < self._pp.cutoff_frequency:
                 return
 
-            g = g_sum[i_band] + g_sum[j_band]
             for i_pair, _ in enumerate(
                 ([0, 0], [1, 1], [2, 2], [1, 2], [0, 2], [0, 1])
             ):
-                old_settings = np.seterr(all="raise")
-                try:
-                    self._mode_kappa_mat[j, k, i_gp, i_band, j_band, i_pair] = (
-                        cvm[i_band, j_band]
-                        * gvm_sum2[i_band, j_band, i_pair]
-                        * g
-                        / ((frequencies[j_band] - frequencies[i_band]) ** 2 + g**2)
-                        * self._conversion_factor
-                    )
-                except FloatingPointError:
-                    # supposed that g is almost 0 and |gv|=0
-                    pass
-                except Exception:
-                    gp = self._grid_points[i_gp]
-                    print("=" * 26 + " Warning " + "=" * 26)
-                    print(
-                        " Unexpected physical condition of ph-ph "
-                        "interaction calculation was found."
-                    )
-                    print(
-                        " g=%f at gp=%d, band=%d, freq=%f, band=%d, freq=%f"
-                        % (
-                            g_sum[i_band],
-                            gp,
-                            i_band + 1,
-                            frequencies[i_band],
-                            j_band + 1,
-                            frequencies[j_band],
-                        )
-                    )
-                    print("=" * 61)
-                np.seterr(**old_settings)
+                contribution = self._get_pair_contribution(
+                    g_sum_i_band=g_sum[i_band],
+                    g_sum_j_band=g_sum[j_band],
+                    freq_i_band=frequencies[i_band],
+                    freq_j_band=frequencies[j_band],
+                    cvm_ij=cvm[i_band, j_band],
+                    gvm_sum2_ij=gvm_sum2[i_band, j_band, i_pair],
+                    gp=self._grid_points[i_gp],
+                    i_band=i_band,
+                    j_band=j_band,
+                )
+                if contribution is None:
+                    continue
+                self._mode_kappa_mat[j, k, i_gp, i_band, j_band, i_pair] = contribution
+
+    def _get_pair_contribution(
+        self,
+        *,
+        g_sum_i_band: float,
+        g_sum_j_band: float,
+        freq_i_band: float,
+        freq_j_band: float,
+        cvm_ij,
+        gvm_sum2_ij,
+        gp: int,
+        i_band: int,
+        j_band: int,
+    ):
+        g = g_sum_i_band + g_sum_j_band
+        old_settings = np.seterr(all="raise")
+        try:
+            contribution = (
+                cvm_ij
+                * gvm_sum2_ij
+                * g
+                / ((freq_j_band - freq_i_band) ** 2 + g**2)
+                * self._conversion_factor
+            )
+        except FloatingPointError:
+            # supposed that g is almost 0 and |gv|=0
+            contribution = None
+        except Exception:
+            print("=" * 26 + " Warning " + "=" * 26)
+            print(
+                " Unexpected physical condition of ph-ph "
+                "interaction calculation was found."
+            )
+            print(
+                " g=%f at gp=%d, band=%d, freq=%f, band=%d, freq=%f"
+                % (
+                    g_sum_i_band,
+                    gp,
+                    i_band + 1,
+                    freq_i_band,
+                    j_band + 1,
+                    freq_j_band,
+                )
+            )
+            print("=" * 61)
+            contribution = None
+        finally:
+            np.seterr(**old_settings)
+
+        return contribution
 
     def _allocate_values(self):
         super()._allocate_values()

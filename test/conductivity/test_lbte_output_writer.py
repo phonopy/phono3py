@@ -98,21 +98,21 @@ def test_write_kappa_calls_hdf5_writer_per_sigma(monkeypatch):
     gv_by_gv = np.ones((1, 1, 6), dtype="double")
 
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.get_lbte_writer_kappa_data",
-        lambda _lbte: (
-            kappa,
-            mode_kappa,
-            kappa_rta,
-            mode_kappa_rta,
-            gv,
-            gv_by_gv,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ),
+        "phono3py.conductivity.lbte_output.get_lbte_writer_kappa_payload",
+        lambda _lbte: {
+            "kappa": kappa,
+            "mode_kappa": mode_kappa,
+            "kappa_RTA": kappa_rta,
+            "mode_kappa_RTA": mode_kappa_rta,
+            "group_velocities": gv,
+            "gv_by_gv": gv_by_gv,
+            "kappa_P_exact": None,
+            "kappa_P_RTA": None,
+            "kappa_C": None,
+            "mode_kappa_P_exact": None,
+            "mode_kappa_P_RTA": None,
+            "mode_kappa_C": None,
+        },
     )
     monkeypatch.setattr(
         "phono3py.conductivity.lbte_output.write_kappa_to_hdf5",
@@ -163,21 +163,21 @@ def test_write_kappa_writes_eigen_and_unitary(monkeypatch):
     unitary_calls = []
 
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.get_lbte_writer_kappa_data",
-        lambda _lbte: (
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ),
+        "phono3py.conductivity.lbte_output.get_lbte_writer_kappa_payload",
+        lambda _lbte: {
+            "kappa": None,
+            "mode_kappa": None,
+            "kappa_RTA": None,
+            "mode_kappa_RTA": None,
+            "group_velocities": None,
+            "gv_by_gv": None,
+            "kappa_P_exact": None,
+            "kappa_P_RTA": None,
+            "kappa_C": None,
+            "mode_kappa_P_exact": None,
+            "mode_kappa_P_RTA": None,
+            "mode_kappa_C": None,
+        },
     )
     monkeypatch.setattr(
         "phono3py.conductivity.lbte_output.write_kappa_to_hdf5",
