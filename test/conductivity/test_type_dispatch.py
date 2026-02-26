@@ -5,8 +5,12 @@ from types import SimpleNamespace
 import numpy as np
 
 from phono3py.conductivity.direct_solution import ConductivityLBTE
+from phono3py.conductivity.kubo_base import (
+    ConductivityKuboComponents,
+)
 from phono3py.conductivity.kubo_rta import ConductivityKuboRTA
 from phono3py.conductivity.rta import ConductivityRTA
+from phono3py.conductivity.rta_base import ConductivityRTABase
 from phono3py.conductivity.type_dispatch import (
     get_conductivity_class,
     get_conductivity_class_matrix,
@@ -23,6 +27,17 @@ from phono3py.conductivity.type_dispatch import (
 )
 from phono3py.conductivity.wigner_direct_solution import ConductivityWignerLBTE
 from phono3py.conductivity.wigner_rta import ConductivityWignerRTA
+
+
+def test_kubo_rta_inheritance_is_single_base_regression():
+    """Kubo RTA no longer uses multiple inheritance."""
+    assert issubclass(ConductivityKuboRTA, ConductivityRTABase)
+    assert ConductivityKuboRTA.__bases__ == (ConductivityRTABase,)
+
+
+def test_kubo_components_class_exists_regression():
+    """Kubo components class remains available for composition."""
+    assert isinstance(ConductivityKuboComponents, type)
 
 
 def test_get_conductivity_class_rta_mapping():

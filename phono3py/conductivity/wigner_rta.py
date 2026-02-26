@@ -37,6 +37,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -116,16 +117,18 @@ class ConductivityWignerRTA(ConductivityRTABase):
             self._pp.primitive.volume
         )
 
-        self._conductivity_components = ConductivityWignerComponents(
-            self._pp,
-            self._grid_points,
-            self._grid_weights,
-            self._point_operations,
-            self._rotations_cartesian,
-            temperatures=self._temperatures,
-            is_kappa_star=self._is_kappa_star,
-            gv_delta_q=gv_delta_q,
-            log_level=self._log_level,
+        self._conductivity_components: ConductivityWignerComponents = (
+            ConductivityWignerComponents(
+                self._pp,
+                self._grid_points,
+                self._grid_weights,
+                self._point_operations,
+                cast(NDArray[np.int64], self._rotations_cartesian),
+                temperatures=self._temperatures,
+                is_kappa_star=self._is_kappa_star,
+                gv_delta_q=gv_delta_q,
+                log_level=self._log_level,
+            )
         )
 
     @property
@@ -159,52 +162,96 @@ class ConductivityWignerRTA(ConductivityRTABase):
         k_P + k_C using the scattering operator in the RTA approximation.
 
         """
+        if self._temperatures is None:
+            raise RuntimeError(
+                "Temperatures have not been set yet. "
+                "Set temperatures before this method."
+            )
+        if self._frequencies is None:
+            raise RuntimeError(
+                "Phonon frequencies have not been set yet. "
+                "Run phonon solver before this method."
+            )
+        if (
+            self._mode_kappa_P_RTA is None
+            or self._mode_kappa_C is None
+            or self._num_ignored_phonon_modes is None
+        ):
+            raise RuntimeError("Necessary arrays have not been allocated.")
+
         num_band = len(self._pp.primitive) * 3
         THzToEv = get_physical_units().THzToEv
-        gv_by_gv = self._conductivity_components.gv_by_gv_operator
-        cv = self._conductivity_components.mode_heat_capacities
+        components = self._conductivity_components
+        gv_by_gv = components.gv_by_gv_operator
+        cv = components.mode_heat_capacities
 
         for i, _ in enumerate(self._grid_points):
             gp = self._grid_points[i]
             frequencies = self._frequencies[gp]
             for j in range(len(self._sigmas)):
                 for k in range(len(self._temperatures)):
-                    g_sum = self._get_main_diagonal(
-                        i, j, k
-                    )  # phonon HWHM: q-point, sigma, temperature
-                    cv_at_q = cv[k, i]
-                    for s1 in range(num_band):
-                        for s2 in range(num_band):
-                            pair_contribution = self._get_pair_contribution(
-                                freq_s1=frequencies[s1],
-                                freq_s2=frequencies[s2],
-                                g_sum_s1=g_sum[s1],
-                                g_sum_s2=g_sum[s2],
-                                cv_s1=cv_at_q[s1],
-                                cv_s2=cv_at_q[s2],
-                                gv_by_gv_s1s2=gv_by_gv[i, s1, s2],
-                                THzToEv=THzToEv,
-                            )
-                            if pair_contribution is None:
-                                if s1 == s2:
-                                    self._num_ignored_phonon_modes[j, k] += 1
-                                continue
-
-                            contribution, is_population = pair_contribution
-                            if is_population:
-                                self._mode_kappa_P_RTA[j, k, i, s1] += (
-                                    0.5 * contribution
-                                )
-                                self._mode_kappa_P_RTA[j, k, i, s2] += (
-                                    0.5 * contribution
-                                )
-                            else:
-                                self._mode_kappa_C[j, k, i, s1, s2] += contribution
+                    self._accumulate_mode_kappa_at_sigma_temperature(
+                        i=i,
+                        j=j,
+                        k=k,
+                        num_band=num_band,
+                        frequencies=frequencies,
+                        gv_by_gv=gv_by_gv,
+                        cv=cv,
+                        THzToEv=THzToEv,
+                    )
 
         N = self.number_of_sampling_grid_points
         self._kappa_P_RTA = self._mode_kappa_P_RTA.sum(axis=2).sum(axis=2) / N
         self._kappa_C = self._mode_kappa_C.sum(axis=2).sum(axis=2).sum(axis=2) / N
         self._kappa_TOT_RTA = self._kappa_P_RTA + self._kappa_C
+
+    def _accumulate_mode_kappa_at_sigma_temperature(
+        self,
+        *,
+        i: int,
+        j: int,
+        k: int,
+        num_band: int,
+        frequencies: NDArray[np.float64],
+        gv_by_gv: NDArray[np.complex128],
+        cv: NDArray[np.float64],
+        THzToEv: float,
+    ) -> None:
+        if (
+            self._mode_kappa_P_RTA is None
+            or self._mode_kappa_C is None
+            or self._num_ignored_phonon_modes is None
+        ):
+            raise RuntimeError("Mode kappa arrays have not been allocated yet.")
+
+        g_sum = self._get_main_diagonal(
+            i, j, k
+        )  # phonon HWHM: q-point, sigma, temperature
+        cv_at_q = cv[k, i]
+        for s1 in range(num_band):
+            for s2 in range(num_band):
+                pair_contribution = self._get_pair_contribution(
+                    freq_s1=frequencies[s1],
+                    freq_s2=frequencies[s2],
+                    g_sum_s1=g_sum[s1],
+                    g_sum_s2=g_sum[s2],
+                    cv_s1=cv_at_q[s1],
+                    cv_s2=cv_at_q[s2],
+                    gv_by_gv_s1s2=gv_by_gv[i, s1, s2],
+                    THzToEv=THzToEv,
+                )
+                if pair_contribution is None:
+                    if s1 == s2:
+                        self._num_ignored_phonon_modes[j, k] += 1
+                    continue
+
+                contribution, is_population = pair_contribution
+                if is_population:
+                    self._mode_kappa_P_RTA[j, k, i, s1] += 0.5 * contribution
+                    self._mode_kappa_P_RTA[j, k, i, s2] += 0.5 * contribution
+                else:
+                    self._mode_kappa_C[j, k, i, s1, s2] += contribution
 
     def _get_pair_contribution(
         self,
@@ -258,6 +305,12 @@ class ConductivityWignerRTA(ConductivityRTABase):
 
     def _allocate_values(self):
         super()._allocate_values()
+
+        if self._temperatures is None:
+            raise RuntimeError(
+                "Temperatures have not been set yet. "
+                "Set temperatures before this method."
+            )
 
         num_band0 = len(self._pp.band_indices)
         num_grid_points = len(self._grid_points)

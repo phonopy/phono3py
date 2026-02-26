@@ -36,6 +36,7 @@ class _FakeCollision:
 
 def _bind_extracted_helpers_if_available(dummy):
     helper_names = (
+        "_run_sigma_at_grid_point",
         "_show_gamma_sigma_log",
         "_set_interaction_strength_at_sigma",
         "_set_interaction_strength_from_file",

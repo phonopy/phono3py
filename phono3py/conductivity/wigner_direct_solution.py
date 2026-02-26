@@ -303,33 +303,53 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
 
     def _set_kappa_C_ir_colmat(self, i_sigma: int, i_temp: int) -> None:
         """Calculate coherence term of the thermal conductivity."""
-        N = self.number_of_sampling_grid_points
-        num_band = len(self._pp.primitive) * 3
-        # num_ir_grid_points = len(self._ir_grid_points)
         THzToEv = get_physical_units().THzToEv
         for i, gp in enumerate(self._ir_grid_points):
-            # linewidths at qpoint i, sigma i_sigma, and temperature i_temp
-            g = self._get_main_diagonal(i, i_sigma, i_temp) * 2.0  # linewidth (FWHM)
-            frequencies = self._frequencies[gp]
-            cv = self._conductivity_components.mode_heat_capacities[i_temp, i, :]
-            for s1 in range(num_band):
-                for s2 in range(num_band):
-                    pair_contribution = self._get_coherence_pair_contribution(
-                        freq_s1=frequencies[s1],
-                        freq_s2=frequencies[s2],
-                        linewidth_s1=g[s1],
-                        linewidth_s2=g[s2],
-                        cv_s1=cv[s1],
-                        cv_s2=cv[s2],
-                        gv_by_gv_s1s2=self._conductivity_components.gv_by_gv_operator[
-                            i, s1, s2
-                        ],
-                        THzToEv=THzToEv,
-                    )
-                    if pair_contribution is None:
-                        continue
-                    self._mode_kappa_C[i_sigma, i_temp, i, s1, s2] = pair_contribution
+            self._accumulate_coherence_mode_kappa_at_grid_point(
+                i_sigma=i_sigma,
+                i_temp=i_temp,
+                i=i,
+                gp=gp,
+                THzToEv=THzToEv,
+            )
 
+        self._set_kappa_C_from_mode_kappa(i_sigma, i_temp)
+
+    def _accumulate_coherence_mode_kappa_at_grid_point(
+        self,
+        *,
+        i_sigma: int,
+        i_temp: int,
+        i: int,
+        gp: int,
+        THzToEv: float,
+    ) -> None:
+        num_band = len(self._pp.primitive) * 3
+
+        # linewidths at qpoint i, sigma i_sigma, and temperature i_temp
+        g = self._get_main_diagonal(i, i_sigma, i_temp) * 2.0  # linewidth (FWHM)
+        frequencies = self._frequencies[gp]
+        cv = self._conductivity_components.mode_heat_capacities[i_temp, i, :]
+        for s1 in range(num_band):
+            for s2 in range(num_band):
+                pair_contribution = self._get_coherence_pair_contribution(
+                    freq_s1=frequencies[s1],
+                    freq_s2=frequencies[s2],
+                    linewidth_s1=g[s1],
+                    linewidth_s2=g[s2],
+                    cv_s1=cv[s1],
+                    cv_s2=cv[s2],
+                    gv_by_gv_s1s2=self._conductivity_components.gv_by_gv_operator[
+                        i, s1, s2
+                    ],
+                    THzToEv=THzToEv,
+                )
+                if pair_contribution is None:
+                    continue
+                self._mode_kappa_C[i_sigma, i_temp, i, s1, s2] = pair_contribution
+
+    def _set_kappa_C_from_mode_kappa(self, i_sigma: int, i_temp: int) -> None:
+        N = self.number_of_sampling_grid_points
         self._kappa_C[i_sigma, i_temp] = (
             self._mode_kappa_C[i_sigma, i_temp].sum(axis=0).sum(axis=0).sum(axis=0) / N
         ).real

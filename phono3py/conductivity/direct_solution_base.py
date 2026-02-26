@@ -316,17 +316,13 @@ class ConductivityLBTEBase(ConductivityBase):
 
         self._prepare_collisions_at_grid_point(i_gp, gp)
         i_data = self._get_data_index(i_gp, gp)
-        self._set_velocities(i_gp, i_data)
-        self._set_cv(i_gp, i_data)
-        if self._is_isotope:
-            self._set_isotope_gamma_at_grid_point(i_gp, i_data)
+        self._set_local_properties_at_grid_point(i_gp, i_data)
 
         if self._log_level:
             self._show_log(i_gp)
 
     def _prepare_collisions_at_grid_point(self, i_gp: int, gp: int):
-        if not self._all_grid_points:
-            self._collision_matrix[:] = 0
+        self._reset_collision_matrix_if_needed()
 
         if self._read_gamma:
             return
@@ -335,6 +331,16 @@ class ConductivityLBTEBase(ConductivityBase):
         if self._log_level:
             print("Number of triplets: %d" % len(self._pp.get_triplets_at_q()[0]))
         self._set_collision_matrix_at_sigmas(i_gp)
+
+    def _reset_collision_matrix_if_needed(self) -> None:
+        if not self._all_grid_points:
+            self._collision_matrix[:] = 0
+
+    def _set_local_properties_at_grid_point(self, i_gp: int, i_data: int) -> None:
+        self._set_velocities(i_gp, i_data)
+        self._set_cv(i_gp, i_data)
+        if self._is_isotope:
+            self._set_isotope_gamma_at_grid_point(i_gp, i_data)
 
     def _get_data_index(self, i_gp: int, gp: int) -> int:
         if self._is_reducible_collision_matrix:
@@ -420,16 +426,20 @@ class ConductivityLBTEBase(ConductivityBase):
 
         """
         for j, sigma in enumerate(self._sigmas):
-            self._show_collision_matrix_sigma_log(sigma)
-            self._collision.set_sigma(sigma, sigma_cutoff=self._sigma_cutoff)
-            self._collision.run_integration_weights()
+            self._run_collision_matrix_at_sigma(i_gp, j, sigma)
 
-            self._set_interaction_strength_at_sigma(i_gp, j, sigma)
+    def _run_collision_matrix_at_sigma(self, i_gp: int, i_sigma: int, sigma) -> None:
+        self._show_collision_matrix_sigma_log(sigma)
+        self._collision.set_sigma(sigma, sigma_cutoff=self._sigma_cutoff)
+        self._collision.run_integration_weights()
 
-            if self._is_full_pp and j == 0:
-                self._averaged_pp_interaction[i_gp] = self._pp.averaged_interaction
+        self._set_interaction_strength_at_sigma(i_gp, i_sigma, sigma)
+        self._store_averaged_pp_if_needed(i_gp, i_sigma)
+        self._store_collision_results_at_sigma(i_gp, i_sigma)
 
-            self._store_collision_results_at_sigma(i_gp, j)
+    def _store_averaged_pp_if_needed(self, i_gp: int, i_sigma: int) -> None:
+        if self._is_full_pp and i_sigma == 0:
+            self._averaged_pp_interaction[i_gp] = self._pp.averaged_interaction
 
     def _show_collision_matrix_sigma_log(self, sigma):
         if not self._log_level:
@@ -518,12 +528,15 @@ class ConductivityLBTEBase(ConductivityBase):
         """Collect pieces and construct collision matrix."""
         if self._log_level:
             print(f"- Collision matrix shape {self._collision_matrix.shape}")
-        if self._is_reducible_collision_matrix:
-            weights = self._prepare_reducible_collision_matrix()
-        else:
-            weights = self._prepare_ir_collision_matrix()
 
-        return weights
+        return self._prepare_collision_matrix_by_type()
+
+    def _prepare_collision_matrix_by_type(
+        self,
+    ) -> NDArray[np.float64] | NDArray[np.int64]:
+        if self._is_reducible_collision_matrix:
+            return self._prepare_reducible_collision_matrix()
+        return self._prepare_ir_collision_matrix()
 
     def _prepare_reducible_collision_matrix(self) -> NDArray[np.int64]:
         if self._is_kappa_star:
