@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal, Optional, cast
+from typing import Literal, cast
 
 from phono3py.conductivity.base import get_unit_to_WmK
 from phono3py.conductivity.rta import ConductivityRTA
@@ -185,7 +185,7 @@ class ConductivityRTAWriter:
         interaction: Interaction,
         i: int,
         compression: str = "gzip",
-        filename: Optional[str] = None,
+        filename: str | None = None,
         verbose: bool = True,
     ):
         """Write mode kappa related properties into a hdf5 file."""
@@ -281,7 +281,7 @@ class ConductivityRTAWriter:
         br: cond_RTA_type,
         volume: float,
         compression: str = "gzip",
-        filename: Optional[str] = None,
+        filename: str | None = None,
         log_level: int = 0,
     ):
         """Write kappa related properties into a hdf5 file."""
@@ -361,7 +361,7 @@ class ConductivityRTAWriter:
         interaction: Interaction,
         i: int,
         compression: str = "gzip",
-        filename: Optional[str] = None,
+        filename: str | None = None,
         verbose: bool = True,
     ):
         """Write detailed Gamma values to hdf5 files."""

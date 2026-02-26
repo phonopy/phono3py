@@ -1,4 +1,14 @@
-"""Lattice thermal conductivity calculation with RTA."""
+"""Lattice thermal conductivity calculation with RTA.
+
+Note
+----
+This module implements the standalone RTA workflow directly from mode
+linewidths (main diagonal scattering rates) and mode-resolved transport
+quantities. This differs in role from the RTA paths in
+``conductivity/direct_solution_base.py``, where RTA is evaluated inside the
+LBTE direct-solution pipeline.
+
+"""
 
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
@@ -52,12 +62,12 @@ class ConductivityRTA(ConductivityRTABase):
     def __init__(
         self,
         interaction: Interaction,
-        grid_points: Sequence[int] | NDArray | None = None,
-        temperatures: Sequence[float] | NDArray | None = None,
+        grid_points: Sequence[int] | NDArray[np.int64] | None = None,
+        temperatures: Sequence[float] | NDArray[np.float64] | None = None,
         sigmas: Sequence[float | None] | None = None,
         sigma_cutoff: float | None = None,
         is_isotope: bool = False,
-        mass_variances: Sequence[float] | NDArray | None = None,
+        mass_variances: Sequence[float] | NDArray[np.float64] | None = None,
         boundary_mfp: float | None = None,  # in micrometer
         use_ave_pp: bool = False,
         is_kappa_star: bool = True,
@@ -110,17 +120,17 @@ class ConductivityRTA(ConductivityRTABase):
         )
 
     @property
-    def kappa(self) -> NDArray | None:
+    def kappa(self) -> NDArray[np.float64] | None:
         """Return kappa."""
         return self._kappa
 
     @property
-    def mode_kappa(self) -> NDArray | None:
+    def mode_kappa(self) -> NDArray[np.float64] | None:
         """Return mode_kappa."""
         return self._mode_kappa
 
     @property
-    def gv_by_gv(self) -> NDArray:
+    def gv_by_gv(self) -> NDArray[np.float64]:
         """Return gv_by_gv at grid points where mode kappa are calculated."""
         return self._conductivity_components.gv_by_gv
 
@@ -181,10 +191,10 @@ class ConductivityRTA(ConductivityRTABase):
         freq: float,
         g_sum: float,
         cv: float,
-        gv_by_gv,
+        gv_by_gv: NDArray[np.float64],
         gp: int,
         band_index: int,
-    ) -> NDArray | None:
+    ) -> NDArray[np.float64] | None:
         if freq < self._pp.cutoff_frequency:
             return None
 

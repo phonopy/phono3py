@@ -37,7 +37,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Literal, Optional, TypeAlias, TypedDict
+from typing import Literal, TypeAlias, TypedDict
 
 import h5py
 import numpy as np
@@ -57,35 +57,35 @@ class _OptionalGammaFlags(TypedDict):
 
 
 class _GammaFileData(TypedDict, total=False):
-    gamma: NDArray
-    gamma_isotope: NDArray
-    gamma_N: NDArray
-    gamma_U: NDArray
-    ave_pp: NDArray | float
+    gamma: NDArray[np.float64]
+    gamma_isotope: NDArray[np.float64]
+    gamma_N: NDArray[np.float64]
+    gamma_U: NDArray[np.float64]
+    ave_pp: NDArray[np.float64] | float
 
 
 class _GammaReadContext(TypedDict):
-    mesh: NDArray
+    mesh: NDArray[np.int64]
     sigma_cutoff: float | None
     filename: str | None
-    grid_points: Sequence[int] | NDArray
+    grid_points: Sequence[int] | NDArray[np.int64]
     num_band: int
-    gamma: NDArray
-    gamma_iso: NDArray
-    gamma_N: NDArray
-    gamma_U: NDArray
-    ave_pp: NDArray
+    gamma: NDArray[np.float64]
+    gamma_iso: NDArray[np.float64]
+    gamma_N: NDArray[np.float64]
+    gamma_U: NDArray[np.float64]
+    ave_pp: NDArray[np.float64]
     optional_flags: _OptionalGammaFlags
     verbose: bool
 
 
 class _RTAInitOptions(TypedDict):
-    grid_points: Sequence[int] | NDArray | None
-    temperatures: Sequence[float] | NDArray | None
+    grid_points: Sequence[int] | NDArray[np.int64] | None
+    temperatures: Sequence[float] | NDArray[np.float64] | None
     sigmas: Sequence[float | None] | None
     sigma_cutoff: float | None
     is_isotope: bool
-    mass_variances: Sequence[float] | NDArray | None
+    mass_variances: Sequence[float] | NDArray[np.float64] | None
     boundary_mfp: float | None
     use_ave_pp: bool
     is_kappa_star: bool
@@ -109,7 +109,7 @@ class _RTARunOptions(TypedDict):
 
 
 class _RTAFinalizeOptions(TypedDict):
-    grid_points: Sequence[int] | NDArray | None
+    grid_points: Sequence[int] | NDArray[np.int64] | None
     conductivity_type: Literal["wigner", "kubo"] | None
     write_kappa: bool
     compression: Literal["gzip", "lzf"] | int | None
@@ -123,7 +123,13 @@ class _RTAInputReadOptions(TypedDict):
     input_filename: str | None
 
 
-_GammaReadArrays: TypeAlias = tuple[NDArray, NDArray, NDArray, NDArray, NDArray]
+_GammaReadArrays: TypeAlias = tuple[
+    NDArray[np.float64],
+    NDArray[np.float64],
+    NDArray[np.float64],
+    NDArray[np.float64],
+    NDArray[np.float64],
+]
 
 
 def _allocate_gamma_read_arrays(
@@ -176,10 +182,10 @@ def _build_gamma_read_context(
 def _apply_loaded_gamma_results(
     br: ConductivityRTABase,
     *,
-    gamma: NDArray,
-    gamma_N: NDArray,
-    gamma_U: NDArray,
-    ave_pp: NDArray,
+    gamma: NDArray[np.float64],
+    gamma_N: NDArray[np.float64],
+    gamma_U: NDArray[np.float64],
+    ave_pp: NDArray[np.float64],
     optional_flags: _OptionalGammaFlags,
 ) -> None:
     """Apply loaded gamma arrays and optional payloads to conductivity object."""
@@ -303,11 +309,11 @@ def _apply_rta_input_reads(
 
 def get_thermal_conductivity_RTA(
     interaction: Interaction,
-    temperatures: Sequence[float] | NDArray | None = None,
+    temperatures: Sequence[float] | NDArray[np.float64] | None = None,
     sigmas: Sequence[float | None] | None = None,
     sigma_cutoff: float | None = None,
-    mass_variances: Sequence[float] | NDArray | None = None,
-    grid_points: Sequence[int] | NDArray | None = None,
+    mass_variances: Sequence[float] | NDArray[np.float64] | None = None,
+    grid_points: Sequence[int] | NDArray[np.int64] | None = None,
     is_isotope: bool = False,
     boundary_mfp: float | None = None,  # in micrometer
     use_ave_pp: bool = False,
@@ -394,7 +400,9 @@ def get_thermal_conductivity_RTA(
     return br
 
 
-def _normalize_rta_temperatures(temperatures: Sequence[float] | NDArray | None):
+def _normalize_rta_temperatures(
+    temperatures: Sequence[float] | NDArray[np.float64] | None,
+) -> Sequence[float] | NDArray[np.float64]:
     if temperatures is None:
         return np.arange(0, 1001, 10, dtype="double")
     return temperatures
@@ -448,7 +456,7 @@ def _finalize_rta_kappa(
     br: ConductivityRTABase,
     interaction: Interaction,
     *,
-    grid_points: Sequence[int] | NDArray | None,
+    grid_points: Sequence[int] | NDArray[np.int64] | None,
     conductivity_type: Literal["wigner", "kubo"] | None,
     write_kappa: bool,
     compression: Literal["gzip", "lzf"] | int | None,
@@ -663,7 +671,7 @@ def _load_gamma_for_sigma(
 
 
 def _set_gamma_from_file(
-    br: ConductivityRTABase, filename: Optional[str] = None, verbose: bool = True
+    br: ConductivityRTABase, filename: str | None = None, verbose: bool = True
 ):
     """Read kappa-*.hdf5 files for thermal conductivity calculation.
 
