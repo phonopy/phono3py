@@ -37,11 +37,11 @@
 from __future__ import annotations
 
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
 
 from phono3py.conductivity.direct_solution import (
     ConductivityLBTEBase,
-    diagonalize_collision_matrix,
 )
 from phono3py.conductivity.wigner_base import (
     ConductivityWignerComponents,
@@ -134,54 +134,54 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
         )
 
     @property
-    def kappa_TOT_RTA(self):
+    def kappa_TOT_RTA(self) -> NDArray[np.float64] | None:
         """Return kappa."""
         return self._kappa_TOT_RTA
 
     @property
-    def kappa_P_RTA(self):
+    def kappa_P_RTA(self) -> NDArray[np.float64] | None:
         """Return kappa."""
         return self._kappa_P_RTA
 
     @property
-    def kappa_C(self):
+    def kappa_C(self) -> NDArray[np.float64] | None:
         """Return kappa."""
         return self._kappa_C
 
     @property
-    def mode_kappa_P_RTA(self):
+    def mode_kappa_P_RTA(self) -> NDArray[np.float64] | None:
         """Return mode_kappa."""
         return self._mode_kappa_P_RTA
 
     @property
-    def mode_kappa_C(self):
+    def mode_kappa_C(self) -> NDArray[np.complex128] | None:
         """Return mode_kappa."""
         return self._mode_kappa_C
 
     @property
-    def kappa_TOT_exact(self):
+    def kappa_TOT_exact(self) -> NDArray[np.float64] | None:
         """Return kappa."""
         return self._kappa_TOT_exact
 
     @property
-    def kappa_P_exact(self):
+    def kappa_P_exact(self) -> NDArray[np.float64] | None:
         """Return kappa."""
         return self._kappa_P_exact
 
     @property
-    def mode_kappa_P_exact(self):
+    def mode_kappa_P_exact(self) -> NDArray[np.float64] | None:
         """Return mode_kappa."""
         return self._mode_kappa_P_exact
 
-    def _set_cv(self, i_gp, i_data):
+    def _set_cv(self, i_gp: int, i_data: int) -> None:
         """Set cv for conductivity components."""
         self._conductivity_components.set_heat_capacities(i_gp, i_data)
 
-    def _set_velocities(self, i_gp, i_data):
+    def _set_velocities(self, i_gp: int, i_data: int) -> None:
         """Set velocities for conductivity components."""
         self._conductivity_components.set_velocities(i_gp, i_data)
 
-    def _allocate_local_values(self, num_grid_points):
+    def _allocate_local_values(self, num_grid_points: int) -> None:
         """Allocate grid point local arrays."""
         num_band0 = len(self._pp.band_indices)
         num_temp = len(self._temperatures)
@@ -226,44 +226,13 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
             dtype=complex_dtype,
         )
 
-    def _set_kappa_at_sigmas(self, weights):
+    def _set_kappa_at_sigmas(
+        self, weights: NDArray[np.float64] | NDArray[np.int64]
+    ) -> None:
         """Calculate thermal conductivity from collision matrix."""
-        for j, sigma in enumerate(self._sigmas):
-            if self._log_level:
-                text = "----------- Thermal conductivity (W/m-k) "
-                if sigma:
-                    text += "for sigma=%s -----------" % sigma
-                else:
-                    text += "with tetrahedron method -----------"
-                print(text, flush=True)
+        self._set_kappa_at_sigmas_common(weights)
 
-            for k, t in enumerate(self._temperatures):
-                self._set_kappa_at_sigma_and_temperature(j, k, t, weights)
-
-        if self._log_level:
-            print("", flush=True)
-
-    def _set_kappa_at_sigma_and_temperature(self, i_sigma, i_temp, t, weights):
-        if t <= 0:
-            return
-
-        self._set_kappa_RTA(i_sigma, i_temp, weights)
-
-        w = diagonalize_collision_matrix(
-            self._collision_matrix,
-            i_sigma=i_sigma,
-            i_temp=i_temp,
-            pinv_solver=self._pinv_solver,
-            log_level=self._log_level,
-        )
-        self._collision_eigenvalues[i_sigma, i_temp] = w
-
-        self._set_kappa(i_sigma, i_temp, weights)
-
-        if self._log_level:
-            self._show_kappa_at_temperature(i_sigma, i_temp, t)
-
-    def _show_kappa_at_temperature(self, i_sigma, i_temp, t):
+    def _show_kappa_at_temperature(self, i_sigma: int, i_temp: int, t: float) -> None:
         print(
             ("#%6s       " + " %-10s" * 6)
             % ("         \t\t  T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
@@ -297,32 +266,42 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
         )
         print("-" * 76, flush=True)
 
-    def _set_kappa(self, i_sigma, i_temp, weights):
-        if self._is_reducible_collision_matrix:
-            self._set_kappa_reducible_colmat(
-                self._kappa_P_exact, self._mode_kappa_P_exact, i_sigma, i_temp, weights
-            )
-        else:
-            self._set_kappa_ir_colmat(
-                self._kappa_P_exact, self._mode_kappa_P_exact, i_sigma, i_temp, weights
-            )
+    def _set_kappa(
+        self,
+        i_sigma: int,
+        i_temp: int,
+        weights: NDArray[np.float64] | NDArray[np.int64],
+    ) -> None:
+        self._set_kappa_by_collision_type(
+            self._kappa_P_exact,
+            self._mode_kappa_P_exact,
+            i_sigma,
+            i_temp,
+            weights,
+        )
 
-    def _set_kappa_RTA(self, i_sigma, i_temp, weights):
+    def _set_kappa_RTA(
+        self,
+        i_sigma: int,
+        i_temp: int,
+        weights: NDArray[np.float64] | NDArray[np.int64],
+    ) -> None:
+        self._set_kappa_RTA_by_collision_type(
+            self._kappa_P_RTA,
+            self._mode_kappa_P_RTA,
+            i_sigma,
+            i_temp,
+            weights,
+        )
         if self._is_reducible_collision_matrix:
-            self._set_kappa_RTA_reducible_colmat(
-                self._kappa_P_RTA, self._mode_kappa_P_RTA, i_sigma, i_temp, weights
-            )
             print(
                 " WARNING: Coherences conductivity not implemented for "
                 "is_reducible_collision_matrix=True "
             )
         else:
-            self._set_kappa_RTA_ir_colmat(
-                self._kappa_P_RTA, self._mode_kappa_P_RTA, i_sigma, i_temp, weights
-            )
             self._set_kappa_C_ir_colmat(i_sigma, i_temp)
 
-    def _set_kappa_C_ir_colmat(self, i_sigma, i_temp):
+    def _set_kappa_C_ir_colmat(self, i_sigma: int, i_temp: int) -> None:
         """Calculate coherence term of the thermal conductivity."""
         N = self.number_of_sampling_grid_points
         num_band = len(self._pp.primitive) * 3
@@ -364,9 +343,9 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
         linewidth_s2: float,
         cv_s1: float,
         cv_s2: float,
-        gv_by_gv_s1s2,
+        gv_by_gv_s1s2: NDArray[np.complex128],
         THzToEv: float,
-    ):
+    ) -> NDArray[np.complex128] | None:
         if (freq_s1 <= self._pp.cutoff_frequency) or (
             freq_s2 <= self._pp.cutoff_frequency
         ):

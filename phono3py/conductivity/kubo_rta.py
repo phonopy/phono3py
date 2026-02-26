@@ -50,12 +50,12 @@ class ConductivityKuboRTA(ConductivityKuboMixIn, ConductivityRTABase):
     def __init__(
         self,
         interaction: Interaction,
-        grid_points: Sequence[int] | NDArray | None = None,
-        temperatures: Sequence[float] | NDArray | None = None,
+        grid_points: Sequence[int] | NDArray[np.int64] | None = None,
+        temperatures: Sequence[float] | NDArray[np.float64] | None = None,
         sigmas: Sequence[float | None] | None = None,
         sigma_cutoff: float | None = None,
         is_isotope: bool = False,
-        mass_variances: Sequence[float] | NDArray | None = None,
+        mass_variances: Sequence[float] | NDArray[np.float64] | None = None,
         boundary_mfp: float | None = None,  # in micrometer
         use_ave_pp: bool = False,
         is_kappa_star: bool = True,

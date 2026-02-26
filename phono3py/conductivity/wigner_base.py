@@ -35,7 +35,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import textwrap
-from typing import Optional
 
 import numpy as np
 from numpy.typing import NDArray
@@ -76,9 +75,9 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
         grid_weights: NDArray[np.int64],
         point_operations: NDArray[np.int64],
         rotations_cartesian: NDArray[np.int64],
-        temperatures: Optional[NDArray[np.float64]] = None,
+        temperatures: NDArray[np.float64] | None = None,
         is_kappa_star: bool = True,
-        gv_delta_q: Optional[float] = None,
+        gv_delta_q: float | None = None,
         is_reducible_collision_matrix: bool = False,
         log_level: int = 0,
     ):
@@ -95,8 +94,8 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
             log_level=log_level,
         )
 
-        self._gv_operator: np.ndarray
-        self._gv_operator_sum2: np.ndarray
+        self._gv_operator: NDArray[np.complex128]
+        self._gv_operator_sum2: NDArray[np.complex128]
 
         if self._pp.dynamical_matrix is None:
             raise RuntimeError("Interaction.init_dynamical_matrix() has to be called.")

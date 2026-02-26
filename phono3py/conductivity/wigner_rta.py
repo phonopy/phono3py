@@ -62,12 +62,12 @@ class ConductivityWignerRTA(ConductivityRTABase):
     def __init__(
         self,
         interaction: Interaction,
-        grid_points: Sequence[int] | NDArray | None = None,
-        temperatures: Sequence[float] | NDArray | None = None,
+        grid_points: Sequence[int] | NDArray[np.int64] | None = None,
+        temperatures: Sequence[float] | NDArray[np.float64] | None = None,
         sigmas: Sequence[float | None] | None = None,
         sigma_cutoff: float | None = None,
         is_isotope: bool = False,
-        mass_variances: Sequence[float] | NDArray | None = None,
+        mass_variances: Sequence[float] | NDArray[np.float64] | None = None,
         boundary_mfp: float | None = None,  # in micrometer
         use_ave_pp: bool = False,
         is_kappa_star: bool = True,
@@ -129,27 +129,27 @@ class ConductivityWignerRTA(ConductivityRTABase):
         )
 
     @property
-    def kappa_TOT_RTA(self):
+    def kappa_TOT_RTA(self) -> NDArray[np.float64] | None:
         """Return kappa."""
         return self._kappa_TOT_RTA
 
     @property
-    def kappa_P_RTA(self):
+    def kappa_P_RTA(self) -> NDArray[np.float64] | None:
         """Return kappa."""
         return self._kappa_P_RTA
 
     @property
-    def kappa_C(self):
+    def kappa_C(self) -> NDArray[np.float64] | None:
         """Return kappa."""
         return self._kappa_C
 
     @property
-    def mode_kappa_P_RTA(self):
+    def mode_kappa_P_RTA(self) -> NDArray[np.float64] | None:
         """Return mode_kappa."""
         return self._mode_kappa_P_RTA
 
     @property
-    def mode_kappa_C(self):
+    def mode_kappa_C(self) -> NDArray[np.float64] | None:
         """Return mode_kappa."""
         return self._mode_kappa_C
 
@@ -215,9 +215,9 @@ class ConductivityWignerRTA(ConductivityRTABase):
         g_sum_s2: float,
         cv_s1: float,
         cv_s2: float,
-        gv_by_gv_s1s2,
+        gv_by_gv_s1s2: NDArray[np.complex128],
         THzToEv: float,
-    ) -> tuple[float, bool] | None:
+    ) -> tuple[NDArray[np.float64], bool] | None:
         if (freq_s1 <= self._pp.cutoff_frequency) or (
             freq_s2 <= self._pp.cutoff_frequency
         ):
