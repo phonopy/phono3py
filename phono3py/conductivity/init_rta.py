@@ -37,21 +37,268 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Literal, Optional
+from typing import Literal, Optional, TypeAlias, TypedDict
 
 import h5py
 import numpy as np
 from numpy.typing import NDArray
 
-from phono3py.conductivity.kubo_rta import ConductivityKuboRTA
-from phono3py.conductivity.rta import ConductivityRTA
 from phono3py.conductivity.rta_base import ConductivityRTABase
 from phono3py.conductivity.rta_output import ConductivityRTAWriter, show_rta_progress
 from phono3py.conductivity.type_dispatch import get_rta_conductivity_class
-from phono3py.conductivity.utils import write_pp_interaction
-from phono3py.conductivity.wigner_rta import ConductivityWignerRTA
+from phono3py.conductivity.utils import build_options, write_pp_interaction
 from phono3py.file_IO import read_gamma_from_hdf5
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
+
+
+class _OptionalGammaFlags(TypedDict):
+    has_gamma_N_U: bool
+    has_ave_pp: bool
+
+
+class _GammaFileData(TypedDict, total=False):
+    gamma: NDArray
+    gamma_isotope: NDArray
+    gamma_N: NDArray
+    gamma_U: NDArray
+    ave_pp: NDArray | float
+
+
+class _GammaReadContext(TypedDict):
+    mesh: NDArray
+    sigma_cutoff: float | None
+    filename: str | None
+    grid_points: Sequence[int] | NDArray
+    num_band: int
+    gamma: NDArray
+    gamma_iso: NDArray
+    gamma_N: NDArray
+    gamma_U: NDArray
+    ave_pp: NDArray
+    optional_flags: _OptionalGammaFlags
+    verbose: bool
+
+
+class _RTAInitOptions(TypedDict):
+    grid_points: Sequence[int] | NDArray | None
+    temperatures: Sequence[float] | NDArray | None
+    sigmas: Sequence[float | None] | None
+    sigma_cutoff: float | None
+    is_isotope: bool
+    mass_variances: Sequence[float] | NDArray | None
+    boundary_mfp: float | None
+    use_ave_pp: bool
+    is_kappa_star: bool
+    gv_delta_q: float | None
+    is_full_pp: bool
+    read_pp: bool
+    store_pp: bool
+    pp_filename: str | None
+    is_N_U: bool
+    is_gamma_detail: bool
+    log_level: int
+
+
+class _RTARunOptions(TypedDict):
+    write_pp: bool
+    write_gamma: bool
+    write_gamma_detail: bool
+    compression: Literal["gzip", "lzf"] | int | None
+    output_filename: str | None
+    log_level: int
+
+
+class _RTAFinalizeOptions(TypedDict):
+    grid_points: Sequence[int] | NDArray | None
+    conductivity_type: Literal["wigner", "kubo"] | None
+    write_kappa: bool
+    compression: Literal["gzip", "lzf"] | int | None
+    output_filename: str | None
+    log_level: int
+
+
+class _RTAInputReadOptions(TypedDict):
+    read_gamma: bool
+    read_elph: int | None
+    input_filename: str | None
+
+
+_GammaReadArrays: TypeAlias = tuple[NDArray, NDArray, NDArray, NDArray, NDArray]
+
+
+def _allocate_gamma_read_arrays(
+    sigmas, temperatures, grid_points, num_band: int
+) -> _GammaReadArrays:
+    """Allocate arrays used while collecting gamma payloads from files."""
+    gamma = np.zeros(
+        (len(sigmas), len(temperatures), len(grid_points), num_band), dtype="double"
+    )
+    gamma_N = np.zeros_like(gamma)
+    gamma_U = np.zeros_like(gamma)
+    gamma_iso = np.zeros((len(sigmas), len(grid_points), num_band), dtype="double")
+    ave_pp = np.zeros((len(grid_points), num_band), dtype="double")
+    return gamma, gamma_N, gamma_U, gamma_iso, ave_pp
+
+
+def _build_gamma_read_context(
+    *,
+    mesh,
+    sigma_cutoff,
+    filename,
+    grid_points,
+    num_band: int,
+    gamma,
+    gamma_iso,
+    gamma_N,
+    gamma_U,
+    ave_pp,
+    optional_flags: _OptionalGammaFlags,
+    verbose: bool,
+) -> _GammaReadContext:
+    """Build immutable-like context passed to gamma read helpers."""
+    return build_options(
+        _GammaReadContext,
+        mesh=mesh,
+        sigma_cutoff=sigma_cutoff,
+        filename=filename,
+        grid_points=grid_points,
+        num_band=num_band,
+        gamma=gamma,
+        gamma_iso=gamma_iso,
+        gamma_N=gamma_N,
+        gamma_U=gamma_U,
+        ave_pp=ave_pp,
+        optional_flags=optional_flags,
+        verbose=verbose,
+    )
+
+
+def _apply_loaded_gamma_results(
+    br: ConductivityRTABase,
+    *,
+    gamma: NDArray,
+    gamma_N: NDArray,
+    gamma_U: NDArray,
+    ave_pp: NDArray,
+    optional_flags: _OptionalGammaFlags,
+) -> None:
+    """Apply loaded gamma arrays and optional payloads to conductivity object."""
+    br.gamma = gamma
+    if optional_flags["has_ave_pp"]:
+        br.set_averaged_pp_interaction(ave_pp)
+    if optional_flags["has_gamma_N_U"]:
+        br.set_gamma_N_U(gamma_N, gamma_U)
+
+
+def _build_rta_init_options(
+    *,
+    grid_points,
+    temperatures,
+    sigmas,
+    sigma_cutoff,
+    is_isotope,
+    mass_variances,
+    boundary_mfp,
+    use_ave_pp,
+    is_kappa_star,
+    gv_delta_q,
+    is_full_pp,
+    read_pp,
+    write_pp,
+    input_filename,
+    is_N_U,
+    write_gamma_detail,
+    log_level,
+) -> _RTAInitOptions:
+    return build_options(
+        _RTAInitOptions,
+        grid_points=grid_points,
+        temperatures=temperatures,
+        sigmas=sigmas,
+        sigma_cutoff=sigma_cutoff,
+        is_isotope=is_isotope,
+        mass_variances=mass_variances,
+        boundary_mfp=boundary_mfp,
+        use_ave_pp=use_ave_pp,
+        is_kappa_star=is_kappa_star,
+        gv_delta_q=gv_delta_q,
+        is_full_pp=is_full_pp,
+        read_pp=read_pp,
+        store_pp=write_pp,
+        pp_filename=input_filename,
+        is_N_U=is_N_U,
+        is_gamma_detail=write_gamma_detail,
+        log_level=log_level,
+    )
+
+
+def _build_rta_run_options(
+    *,
+    write_pp,
+    write_gamma,
+    write_gamma_detail,
+    compression,
+    output_filename,
+    log_level,
+) -> _RTARunOptions:
+    return build_options(
+        _RTARunOptions,
+        write_pp=write_pp,
+        write_gamma=write_gamma,
+        write_gamma_detail=write_gamma_detail,
+        compression=compression,
+        output_filename=output_filename,
+        log_level=log_level,
+    )
+
+
+def _build_rta_finalize_options(
+    *,
+    grid_points,
+    conductivity_type,
+    write_kappa,
+    compression,
+    output_filename,
+    log_level,
+) -> _RTAFinalizeOptions:
+    return build_options(
+        _RTAFinalizeOptions,
+        grid_points=grid_points,
+        conductivity_type=conductivity_type,
+        write_kappa=write_kappa,
+        compression=compression,
+        output_filename=output_filename,
+        log_level=log_level,
+    )
+
+
+def _build_rta_input_read_options(
+    *,
+    read_gamma,
+    read_elph,
+    input_filename,
+) -> _RTAInputReadOptions:
+    return build_options(
+        _RTAInputReadOptions,
+        read_gamma=read_gamma,
+        read_elph=read_elph,
+        input_filename=input_filename,
+    )
+
+
+def _apply_rta_input_reads(
+    br: ConductivityRTABase,
+    *,
+    read_gamma: bool,
+    read_elph: int | None,
+    input_filename: str | None,
+) -> None:
+    if read_gamma:
+        if not _set_gamma_from_file(br, filename=input_filename):
+            raise RuntimeError("Reading collisions failed.")
+
+    if read_elph is not None:
+        _set_gamma_elph_from_file(br, read_elph)
 
 
 def get_thermal_conductivity_RTA(
@@ -80,12 +327,9 @@ def get_thermal_conductivity_RTA(
     input_filename: str | None = None,
     output_filename: str | None = None,
     log_level: int = 0,
-) -> ConductivityRTA | ConductivityKuboRTA | ConductivityWignerRTA:
+) -> ConductivityRTABase:
     """Run RTA thermal conductivity calculation."""
-    if temperatures is None:
-        _temperatures = np.arange(0, 1001, 10, dtype="double")
-    else:
-        _temperatures = temperatures
+    _temperatures = _normalize_rta_temperatures(temperatures)
 
     conductivity_RTA_class = get_rta_conductivity_class(conductivity_type)
 
@@ -95,8 +339,7 @@ def get_thermal_conductivity_RTA(
             "--------------------"
         )
 
-    br = conductivity_RTA_class(
-        interaction,
+    init_options = _build_rta_init_options(
         grid_points=grid_points,
         temperatures=_temperatures,
         sigmas=sigmas,
@@ -109,24 +352,73 @@ def get_thermal_conductivity_RTA(
         gv_delta_q=gv_delta_q,
         is_full_pp=is_full_pp,
         read_pp=read_pp,
-        store_pp=write_pp,
-        pp_filename=input_filename,
+        write_pp=write_pp,
+        input_filename=input_filename,
         is_N_U=is_N_U,
-        is_gamma_detail=write_gamma_detail,
+        write_gamma_detail=write_gamma_detail,
         log_level=log_level,
     )
 
-    if read_gamma:
-        if not _set_gamma_from_file(br, filename=input_filename):
-            raise RuntimeError("Reading collisions failed.")
+    br = conductivity_RTA_class(
+        interaction,
+        **init_options,
+    )
 
-    if read_elph is not None:
-        with h5py.File("phono3py_elph.hdf5", "r") as f:
-            gamma_key = f"gamma_elph_{read_elph}"
-            if gamma_key not in f:
-                raise RuntimeError(f"{gamma_key} not found in phono3py_elph.hdf5.")
-            br.gamma_elph = f[gamma_key][:]  # type: ignore
+    input_read_options = _build_rta_input_read_options(
+        read_gamma=read_gamma,
+        read_elph=read_elph,
+        input_filename=input_filename,
+    )
+    _apply_rta_input_reads(br, **input_read_options)
 
+    run_options = _build_rta_run_options(
+        write_pp=write_pp,
+        write_gamma=write_gamma,
+        write_gamma_detail=write_gamma_detail,
+        compression=compression,
+        output_filename=output_filename,
+        log_level=log_level,
+    )
+    _run_rta_grid_point_outputs(br, interaction, **run_options)
+
+    finalize_options = _build_rta_finalize_options(
+        grid_points=grid_points,
+        conductivity_type=conductivity_type,
+        write_kappa=write_kappa,
+        compression=compression,
+        output_filename=output_filename,
+        log_level=log_level,
+    )
+    _finalize_rta_kappa(br, interaction, **finalize_options)
+
+    return br
+
+
+def _normalize_rta_temperatures(temperatures: Sequence[float] | NDArray | None):
+    if temperatures is None:
+        return np.arange(0, 1001, 10, dtype="double")
+    return temperatures
+
+
+def _set_gamma_elph_from_file(br: ConductivityRTABase, read_elph: int):
+    with h5py.File("phono3py_elph.hdf5", "r") as f:
+        gamma_key = f"gamma_elph_{read_elph}"
+        if gamma_key not in f:
+            raise RuntimeError(f"{gamma_key} not found in phono3py_elph.hdf5.")
+        br.gamma_elph = f[gamma_key][:]  # type: ignore
+
+
+def _run_rta_grid_point_outputs(
+    br: ConductivityRTABase,
+    interaction: Interaction,
+    *,
+    write_pp: bool,
+    write_gamma: bool,
+    write_gamma_detail: bool,
+    compression: Literal["gzip", "lzf"] | int | None,
+    output_filename: str | None,
+    log_level: int,
+):
     for i in br:
         if write_pp:
             write_pp_interaction(
@@ -151,20 +443,223 @@ def get_thermal_conductivity_RTA(
                 verbose=log_level,
             )
 
-    if grid_points is None and all_bands_exist(interaction):
-        br.set_kappa_at_sigmas()
-        if log_level:
-            show_rta_progress(br, conductivity_type, log_level)
-        if write_kappa:
-            ConductivityRTAWriter.write_kappa(
-                br,
-                interaction.primitive.volume,
-                compression=compression,
-                filename=output_filename,
-                log_level=log_level,
-            )
 
-    return br
+def _finalize_rta_kappa(
+    br: ConductivityRTABase,
+    interaction: Interaction,
+    *,
+    grid_points: Sequence[int] | NDArray | None,
+    conductivity_type: Literal["wigner", "kubo"] | None,
+    write_kappa: bool,
+    compression: Literal["gzip", "lzf"] | int | None,
+    output_filename: str | None,
+    log_level: int,
+):
+    if grid_points is not None or not all_bands_exist(interaction):
+        return
+
+    br.set_kappa_at_sigmas()
+    if log_level:
+        show_rta_progress(br, conductivity_type, log_level)
+    if write_kappa:
+        ConductivityRTAWriter.write_kappa(
+            br,
+            interaction.primitive.volume,
+            compression=compression,
+            filename=output_filename,
+            log_level=log_level,
+        )
+
+
+def _log_if_verbose(verbose: bool, text: str):
+    """Print text only when verbose mode is enabled."""
+    if verbose:
+        print(text)
+
+
+def _get_gamma_read_params(context: _GammaReadContext):
+    """Extract common file-read settings from gamma read context."""
+    return (
+        context["mesh"],
+        context["sigma_cutoff"],
+        context["filename"],
+        context["verbose"],
+    )
+
+
+def _get_gamma_payload_targets(context: _GammaReadContext):
+    """Extract mutable payload arrays and flags from gamma read context."""
+    return (
+        context["gamma"],
+        context["gamma_iso"],
+        context["gamma_N"],
+        context["gamma_U"],
+        context["ave_pp"],
+        context["optional_flags"],
+    )
+
+
+def _read_gamma_payload(
+    context: _GammaReadContext,
+    *,
+    sigma: float | None,
+    grid_point: int | None = None,
+    band_index: int | None = None,
+):
+    """Read gamma payload from HDF5 using shared context parameters."""
+    mesh, sigma_cutoff, filename, _ = _get_gamma_read_params(context)
+    return read_gamma_from_hdf5(
+        mesh,
+        sigma=sigma,
+        sigma_cutoff=sigma_cutoff,
+        filename=filename,
+        grid_point=grid_point,
+        band_index=band_index,
+    )
+
+
+def _store_gamma_payload(
+    optional_data: _GammaFileData,
+    *,
+    gamma_target,
+    gamma_iso_target,
+    gamma_N_target,
+    gamma_U_target,
+    ave_pp_target,
+    optional_flags: _OptionalGammaFlags,
+) -> None:
+    """Store one gamma payload block into target arrays and optional fields."""
+    if "gamma" not in optional_data:
+        raise KeyError("'gamma' is missing in gamma payload.")
+
+    gamma_target[...] = optional_data["gamma"]
+    _update_optional_gamma_payloads(
+        optional_data=optional_data,
+        gamma_iso_target=gamma_iso_target,
+        gamma_N_target=gamma_N_target,
+        gamma_U_target=gamma_U_target,
+        ave_pp_target=ave_pp_target,
+        optional_flags=optional_flags,
+    )
+
+
+def _load_gamma_for_band(
+    i_sigma: int,
+    sigma: float | None,
+    context: _GammaReadContext,
+    i_gp: int,
+    gp: int,
+    bi: int,
+) -> bool:
+    """Load per-band gamma payload for one grid point and sigma."""
+    _, _, _, verbose = _get_gamma_read_params(context)
+    gamma, gamma_iso, gamma_N, gamma_U, ave_pp, optional_flags = (
+        _get_gamma_payload_targets(context)
+    )
+
+    data_band, full_filename_band = _read_gamma_payload(
+        context,
+        sigma=sigma,
+        grid_point=gp,
+        band_index=bi,
+    )
+    if data_band:
+        _log_if_verbose(verbose, "Read data from %s." % full_filename_band)
+        _store_gamma_payload(
+            data_band,
+            gamma_target=gamma[i_sigma, :, i_gp, bi],
+            gamma_iso_target=gamma_iso[i_sigma, i_gp, bi],
+            gamma_N_target=gamma_N[i_sigma, :, i_gp, bi],
+            gamma_U_target=gamma_U[i_sigma, :, i_gp, bi],
+            ave_pp_target=ave_pp[i_gp, bi],
+            optional_flags=optional_flags,
+        )
+        return True
+
+    _log_if_verbose(verbose, "%s not found." % full_filename_band)
+    return False
+
+
+def _load_gamma_for_grid_point(
+    i_sigma: int,
+    sigma: float | None,
+    context: _GammaReadContext,
+    i_gp: int,
+    gp: int,
+) -> bool:
+    """Load per-grid-point gamma payload, with band-level fallback when missing."""
+    _, _, _, verbose = _get_gamma_read_params(context)
+    num_band = context["num_band"]
+    gamma, gamma_iso, gamma_N, gamma_U, ave_pp, optional_flags = (
+        _get_gamma_payload_targets(context)
+    )
+
+    data_gp, full_filename_gp = _read_gamma_payload(
+        context,
+        sigma=sigma,
+        grid_point=gp,
+    )
+    if data_gp:
+        _log_if_verbose(verbose, "Read data from %s." % full_filename_gp)
+        _store_gamma_payload(
+            data_gp,
+            gamma_target=gamma[i_sigma, :, i_gp],
+            gamma_iso_target=gamma_iso[i_sigma, i_gp],
+            gamma_N_target=gamma_N[i_sigma, :, i_gp],
+            gamma_U_target=gamma_U[i_sigma, :, i_gp],
+            ave_pp_target=ave_pp[i_gp],
+            optional_flags=optional_flags,
+        )
+        return True
+
+    _log_if_verbose(
+        verbose,
+        "%s not found. Look for hdf5 files at bands." % full_filename_gp,
+    )
+    return all(
+        _load_gamma_for_band(i_sigma, sigma, context, i_gp, gp, bi)
+        for bi in range(num_band)
+    )
+
+
+def _load_gamma_for_sigma(
+    i_sigma: int,
+    sigma: float | None,
+    context: _GammaReadContext,
+) -> bool:
+    """Load gamma payload for one sigma, trying full then grid-point files."""
+    _, _, _, verbose = _get_gamma_read_params(context)
+    grid_points = context["grid_points"]
+    gamma, gamma_iso, gamma_N, gamma_U, ave_pp, optional_flags = (
+        _get_gamma_payload_targets(context)
+    )
+
+    data, full_filename = _read_gamma_payload(
+        context,
+        sigma=sigma,
+    )
+    if data:
+        _log_if_verbose(verbose, f"Read gamma from {full_filename}.")
+        _store_gamma_payload(
+            data,
+            gamma_target=gamma[i_sigma],
+            gamma_iso_target=gamma_iso[i_sigma],
+            gamma_N_target=gamma_N[i_sigma],
+            gamma_U_target=gamma_U[i_sigma],
+            ave_pp_target=ave_pp[:],
+            optional_flags=optional_flags,
+        )
+        return True
+
+    _log_if_verbose(
+        verbose,
+        "%s not found. Look for hdf5 files at grid points." % full_filename,
+    )
+
+    return all(
+        _load_gamma_for_grid_point(i_sigma, sigma, context, i, gp)
+        for i, gp in enumerate(grid_points)
+    )
 
 
 def _set_gamma_from_file(
@@ -192,103 +687,71 @@ def _set_gamma_from_file(
     temperatures = br.temperatures
     num_band = br.frequencies.shape[1]
 
-    gamma = np.zeros(
-        (len(sigmas), len(temperatures), len(grid_points), num_band), dtype="double"
+    gamma, gamma_N, gamma_U, gamma_iso, ave_pp = _allocate_gamma_read_arrays(
+        sigmas,
+        temperatures,
+        grid_points,
+        num_band,
     )
-    gamma_N = np.zeros_like(gamma)
-    gamma_U = np.zeros_like(gamma)
-    gamma_iso = np.zeros((len(sigmas), len(grid_points), num_band), dtype="double")
-    ave_pp = np.zeros((len(grid_points), num_band), dtype="double")
 
-    is_gamma_N_U_in = False
-    is_ave_pp_in = False
-    read_succeeded = True
+    optional_flags: _OptionalGammaFlags = {
+        "has_gamma_N_U": False,
+        "has_ave_pp": False,
+    }
+    context = _build_gamma_read_context(
+        mesh=mesh,
+        sigma_cutoff=sigma_cutoff,
+        filename=filename,
+        grid_points=grid_points,
+        num_band=num_band,
+        gamma=gamma,
+        gamma_iso=gamma_iso,
+        gamma_N=gamma_N,
+        gamma_U=gamma_U,
+        ave_pp=ave_pp,
+        optional_flags=optional_flags,
+        verbose=verbose,
+    )
 
-    for j, sigma in enumerate(sigmas):
-        data, full_filename = read_gamma_from_hdf5(
-            mesh,
-            sigma=sigma,
-            sigma_cutoff=sigma_cutoff,
-            filename=filename,
-        )
-        if data:
-            if verbose:
-                print(f"Read gamma from {full_filename}.")
-            gamma[j] = data["gamma"]
-            if "gamma_isotope" in data:
-                gamma_iso[j] = data["gamma_isotope"]
-            if "gamma_N" in data:
-                is_gamma_N_U_in = True
-                gamma_N[j] = data["gamma_N"]
-                gamma_U[j] = data["gamma_U"]
-            if "ave_pp" in data:
-                is_ave_pp_in = True
-                ave_pp[:] = data["ave_pp"]
-        else:
-            if verbose:
-                print(
-                    "%s not found. Look for hdf5 files at grid points." % full_filename
-                )
-            for i, gp in enumerate(grid_points):
-                data_gp, full_filename = read_gamma_from_hdf5(
-                    mesh,
-                    grid_point=gp,
-                    sigma=sigma,
-                    sigma_cutoff=sigma_cutoff,
-                    filename=filename,
-                )
-                if data_gp:
-                    if verbose:
-                        print("Read data from %s." % full_filename)
-                    gamma[j, :, i] = data_gp["gamma"]
-                    if "gamma_iso" in data_gp:
-                        gamma_iso[j, i] = data_gp["gamma_iso"]
-                    if "gamma_N" in data_gp:
-                        is_gamma_N_U_in = True
-                        gamma_N[j, :, i] = data_gp["gamma_N"]
-                        gamma_U[j, :, i] = data_gp["gamma_U"]
-                    if "ave_pp" in data_gp:
-                        is_ave_pp_in = True
-                        ave_pp[i] = data_gp["ave_pp"]
-                else:
-                    if verbose:
-                        print(
-                            "%s not found. Look for hdf5 files at bands."
-                            % full_filename
-                        )
-                    for bi in range(num_band):
-                        data_band, full_filename = read_gamma_from_hdf5(
-                            mesh,
-                            grid_point=gp,
-                            band_index=bi,
-                            sigma=sigma,
-                            sigma_cutoff=sigma_cutoff,
-                            filename=filename,
-                        )
-                        if data_band:
-                            if verbose:
-                                print("Read data from %s." % full_filename)
-                            gamma[j, :, i, bi] = data_band["gamma"]
-                            if "gamma_iso" in data_band:
-                                gamma_iso[j, i, bi] = data_band["gamma_iso"]
-                            if "gamma_N" in data_band:
-                                is_gamma_N_U_in = True
-                                gamma_N[j, :, i, bi] = data_band["gamma_N"]
-                                gamma_U[j, :, i, bi] = data_band["gamma_U"]
-                            if "ave_pp" in data_band:
-                                is_ave_pp_in = True
-                                ave_pp[i, bi] = data_band["ave_pp"]
-                        else:
-                            if verbose:
-                                print("%s not found." % full_filename)
-                            read_succeeded = False
+    read_succeeded = all(
+        _load_gamma_for_sigma(j, sigma, context) for j, sigma in enumerate(sigmas)
+    )
 
-    if read_succeeded:
-        br.gamma = gamma
-        if is_ave_pp_in:
-            br.set_averaged_pp_interaction(ave_pp)
-        if is_gamma_N_U_in:
-            br.set_gamma_N_U(gamma_N, gamma_U)
-        return True
-    else:
+    if not read_succeeded:
         return False
+
+    _apply_loaded_gamma_results(
+        br,
+        gamma=gamma,
+        gamma_N=gamma_N,
+        gamma_U=gamma_U,
+        ave_pp=ave_pp,
+        optional_flags=optional_flags,
+    )
+    return True
+
+
+def _update_optional_gamma_payloads(
+    optional_data: _GammaFileData,
+    *,
+    gamma_iso_target,
+    gamma_N_target,
+    gamma_U_target,
+    ave_pp_target,
+    optional_flags: _OptionalGammaFlags,
+) -> None:
+    """Update optional gamma-derived payload arrays if those keys exist."""
+    gamma_isotope = optional_data.get("gamma_isotope")
+    if gamma_isotope is not None:
+        gamma_iso_target[...] = gamma_isotope
+
+    gamma_N = optional_data.get("gamma_N")
+    if gamma_N is not None:
+        optional_flags["has_gamma_N_U"] = True
+        gamma_N_target[...] = gamma_N
+        gamma_U_target[...] = optional_data["gamma_U"]
+
+    ave_pp = optional_data.get("ave_pp")
+    if ave_pp is not None:
+        optional_flags["has_ave_pp"] = True
+        ave_pp_target[...] = ave_pp

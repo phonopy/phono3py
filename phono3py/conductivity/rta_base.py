@@ -195,121 +195,150 @@ class ConductivityRTABase(ConductivityBase):
         i_gp = self._grid_point_count
         self._show_log_header(i_gp)
         grid_point = self._grid_points[i_gp]
-        self._set_cv(i_gp, i_gp)
-        self._set_velocities(i_gp, i_gp)
 
+        self._prepare_collisions_at_grid_point(i_gp, grid_point)
+        self._set_local_properties_at_grid_point(i_gp)
+        self._set_isotope_gamma_at_grid_point(i_gp)
+
+        if self._log_level:
+            self._show_log(i_gp)
+
+    def _prepare_collisions_at_grid_point(self, i_gp: int, grid_point: int):
         if self._read_gamma:
             if self._use_ave_pp:
                 self._collision.set_grid_point(grid_point)
                 self._set_gamma_at_sigmas(i_gp)
-        else:
-            self._collision.set_grid_point(grid_point)
-            num_triplets = len(self._pp.get_triplets_at_q()[0])
-            if self._log_level:
-                print("Number of triplets: %d" % num_triplets, flush=True)
+            return
 
-            if (
-                self._is_full_pp
-                or self._read_pp
-                or self._store_pp
-                or self._use_ave_pp
-                or self._use_const_ave_pp
-                or self._is_gamma_detail
-            ):
-                self._set_gamma_at_sigmas(i_gp)
-            else:  # can save memory space
-                self._set_gamma_at_sigmas_lowmem(i_gp)
+        self._collision.set_grid_point(grid_point)
+        if self._log_level:
+            print(
+                "Number of triplets: %d" % len(self._pp.get_triplets_at_q()[0]),
+                flush=True,
+            )
 
+        if self._requires_full_gamma_path():
+            self._set_gamma_at_sigmas(i_gp)
+        else:  # can save memory space
+            self._set_gamma_at_sigmas_lowmem(i_gp)
+
+    def _requires_full_gamma_path(self) -> bool:
+        return (
+            self._is_full_pp
+            or self._read_pp
+            or self._store_pp
+            or self._use_ave_pp
+            or self._use_const_ave_pp
+            or self._is_gamma_detail
+        )
+
+    def _set_local_properties_at_grid_point(self, i_gp: int):
+        self._set_cv(i_gp, i_gp)
+        self._set_velocities(i_gp, i_gp)
+
+    def _set_isotope_gamma_at_grid_point(self, i_gp: int):
         if self._is_isotope and not self._read_gamma_iso:
             gamma_iso = self._get_gamma_isotope_at_sigmas(i_gp)
             self._gamma_iso[:, i_gp, :] = gamma_iso[:, self._pp.band_indices]
-
-        if self._log_level:
-            self._show_log(i_gp)
 
     def _set_gamma_at_sigmas(self, i):
         for j, sigma in enumerate(self._sigmas):
             self._collision.set_sigma(sigma, sigma_cutoff=self._sigma_cutoff)
             self._collision.run_integration_weights()
 
-            if self._log_level:
-                text = "Collisions will be calculated with "
-                if sigma is None:
-                    text += "tetrahedron method."
-                else:
-                    text += "sigma=%s" % sigma
-                    if self._sigma_cutoff is None:
-                        text += "."
-                    else:
-                        text += "(%4.2f SD)." % self._sigma_cutoff
-                print(text)
+            self._show_gamma_sigma_log(sigma)
+            self._set_interaction_strength_at_sigma(i, j, sigma)
+            self._allocate_gamma_detail_at_q_if_needed()
+            self._run_collisions_at_temperatures(i, j)
 
-            if self._read_pp:
-                pp, _g_zero = read_pp_from_hdf5(
-                    self._pp.mesh_numbers,
-                    grid_point=self._grid_points[i],
-                    sigma=sigma,
-                    sigma_cutoff=self._sigma_cutoff,
-                    filename=self._pp_filename,
-                    verbose=(self._log_level > 0),
-                )
-                _, g_zero = self._collision.get_integration_weights()
-                if self._log_level:
-                    if len(self._sigmas) > 1:
-                        print(
-                            "Multiple sigmas or mixing smearing and "
-                            "tetrahedron method is not supported."
-                        )
-                if _g_zero is not None and (_g_zero != g_zero).any():
-                    raise ValueError("Inconsistency found in g_zero.")
-                self._collision.set_interaction_strength(pp)
-            elif self._use_ave_pp:
-                self._collision.set_averaged_pp_interaction(
-                    self._averaged_pp_interaction[i]
-                )
-            elif self._use_const_ave_pp:
-                if self._log_level:
-                    print(
-                        "Constant ph-ph interaction of %6.3e is used."
-                        % self._pp.constant_averaged_interaction
-                    )
-                self._collision.run_interaction()
-                self._averaged_pp_interaction[i] = self._pp.averaged_interaction
-            elif j != 0 and (self._is_full_pp or self._sigma_cutoff is None):
-                if self._log_level:
-                    print("Existing ph-ph interaction is used.")
+    def _show_gamma_sigma_log(self, sigma):
+        if not self._log_level:
+            return
+
+        text = "Collisions will be calculated with "
+        if sigma is None:
+            text += "tetrahedron method."
+        else:
+            text += "sigma=%s" % sigma
+            if self._sigma_cutoff is None:
+                text += "."
             else:
-                if self._log_level:
-                    print("Calculating ph-ph interaction...")
-                self._collision.run_interaction(is_full_pp=self._is_full_pp)
-                if self._is_full_pp:
-                    self._averaged_pp_interaction[i] = self._pp.averaged_interaction
+                text += "(%4.2f SD)." % self._sigma_cutoff
+        print(text)
 
-            # Number of triplets depends on q-point.
-            # So this is allocated each time.
-            if self._is_gamma_detail:
-                num_temp = len(self._temperatures)
-                self._gamma_detail_at_q = np.empty(
-                    ((num_temp,) + self._pp.interaction_strength.shape),
-                    dtype="double",
-                    order="C",
-                )
-                self._gamma_detail_at_q[:] = 0
-
+    def _set_interaction_strength_at_sigma(self, i_gp, i_sigma, sigma):
+        if self._read_pp:
+            self._set_interaction_strength_from_file(i_gp, sigma)
+        elif self._use_ave_pp:
+            self._collision.set_averaged_pp_interaction(
+                self._averaged_pp_interaction[i_gp]
+            )
+        elif self._use_const_ave_pp:
             if self._log_level:
-                print("Calculating collisions at temperatures...")
-            for k, t in enumerate(self._temperatures):
-                self._collision.temperature = t
-                self._collision.run()
-                self._gamma[j, k, i] = self._collision.imag_self_energy
-                if self._is_N_U or self._is_gamma_detail:
-                    g_N, g_U = self._collision.get_imag_self_energy_N_and_U()
-                    self._gamma_N[j, k, i] = g_N
-                    self._gamma_U[j, k, i] = g_U
-                if self._is_gamma_detail:
-                    self._gamma_detail_at_q[k] = (
-                        self._collision.get_detailed_imag_self_energy()
-                    )
+                print(
+                    "Constant ph-ph interaction of %6.3e is used."
+                    % self._pp.constant_averaged_interaction
+                )
+            self._collision.run_interaction()
+            self._averaged_pp_interaction[i_gp] = self._pp.averaged_interaction
+        elif i_sigma != 0 and (self._is_full_pp or self._sigma_cutoff is None):
+            if self._log_level:
+                print("Existing ph-ph interaction is used.")
+        else:
+            if self._log_level:
+                print("Calculating ph-ph interaction...")
+            self._collision.run_interaction(is_full_pp=self._is_full_pp)
+            if self._is_full_pp:
+                self._averaged_pp_interaction[i_gp] = self._pp.averaged_interaction
+
+    def _set_interaction_strength_from_file(self, i_gp, sigma):
+        pp, _g_zero = read_pp_from_hdf5(
+            self._pp.mesh_numbers,
+            grid_point=self._grid_points[i_gp],
+            sigma=sigma,
+            sigma_cutoff=self._sigma_cutoff,
+            filename=self._pp_filename,
+            verbose=(self._log_level > 0),
+        )
+        _, g_zero = self._collision.get_integration_weights()
+        if self._log_level and len(self._sigmas) > 1:
+            print(
+                "Multiple sigmas or mixing smearing and "
+                "tetrahedron method is not supported."
+            )
+        if _g_zero is not None and (_g_zero != g_zero).any():
+            raise ValueError("Inconsistency found in g_zero.")
+        self._collision.set_interaction_strength(pp)
+
+    def _allocate_gamma_detail_at_q_if_needed(self):
+        # Number of triplets depends on q-point.
+        # So this is allocated each time.
+        if not self._is_gamma_detail:
+            return
+
+        num_temp = len(self._temperatures)
+        self._gamma_detail_at_q = np.empty(
+            ((num_temp,) + self._pp.interaction_strength.shape),
+            dtype="double",
+            order="C",
+        )
+        self._gamma_detail_at_q[:] = 0
+
+    def _run_collisions_at_temperatures(self, i_gp, i_sigma):
+        if self._log_level:
+            print("Calculating collisions at temperatures...")
+        for k, t in enumerate(self._temperatures):
+            self._collision.temperature = t
+            self._collision.run()
+            self._gamma[i_sigma, k, i_gp] = self._collision.imag_self_energy
+            if self._is_N_U or self._is_gamma_detail:
+                g_N, g_U = self._collision.get_imag_self_energy_N_and_U()
+                self._gamma_N[i_sigma, k, i_gp] = g_N
+                self._gamma_U[i_sigma, k, i_gp] = g_U
+            if self._is_gamma_detail:
+                self._gamma_detail_at_q[k] = (
+                    self._collision.get_detailed_imag_self_energy()
+                )
 
     def _set_gamma_at_sigmas_lowmem(self, i):
         """Calculate gamma without storing ph-ph interaction strength.

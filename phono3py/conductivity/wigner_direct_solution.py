@@ -238,61 +238,64 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
                 print(text, flush=True)
 
             for k, t in enumerate(self._temperatures):
-                if t > 0:
-                    self._set_kappa_RTA(j, k, weights)
-
-                    w = diagonalize_collision_matrix(
-                        self._collision_matrix,
-                        i_sigma=j,
-                        i_temp=k,
-                        pinv_solver=self._pinv_solver,
-                        log_level=self._log_level,
-                    )
-                    self._collision_eigenvalues[j, k] = w
-
-                    self._set_kappa(j, k, weights)
-
-                    if self._log_level:
-                        print(
-                            ("#%6s       " + " %-10s" * 6)
-                            % (
-                                "         \t\t  T(K)",
-                                "xx",
-                                "yy",
-                                "zz",
-                                "yz",
-                                "xz",
-                                "xy",
-                            )
-                        )
-                        print(
-                            "K_P_exact\t\t"
-                            + ("%7.1f " + " %10.3f" * 6)
-                            % ((t,) + tuple(self._kappa_P_exact[j, k]))
-                        )
-                        print(
-                            "(K_P_RTA)\t\t"
-                            + ("%7.1f " + " %10.3f" * 6)
-                            % ((t,) + tuple(self._kappa_P_RTA[j, k]))
-                        )
-                        print(
-                            "K_C      \t\t"
-                            + ("%7.1f " + " %10.3f" * 6)
-                            % ((t,) + tuple(self._kappa_C[j, k].real))
-                        )
-                        print(" ")
-                        print(
-                            "K_TOT=K_P_exact+K_C\t"
-                            + ("%7.1f " + " %10.3f" * 6)
-                            % (
-                                (t,)
-                                + tuple(self._kappa_C[j, k] + self._kappa_P_exact[j, k])
-                            )
-                        )
-                        print("-" * 76, flush=True)
+                self._set_kappa_at_sigma_and_temperature(j, k, t, weights)
 
         if self._log_level:
             print("", flush=True)
+
+    def _set_kappa_at_sigma_and_temperature(self, i_sigma, i_temp, t, weights):
+        if t <= 0:
+            return
+
+        self._set_kappa_RTA(i_sigma, i_temp, weights)
+
+        w = diagonalize_collision_matrix(
+            self._collision_matrix,
+            i_sigma=i_sigma,
+            i_temp=i_temp,
+            pinv_solver=self._pinv_solver,
+            log_level=self._log_level,
+        )
+        self._collision_eigenvalues[i_sigma, i_temp] = w
+
+        self._set_kappa(i_sigma, i_temp, weights)
+
+        if self._log_level:
+            self._show_kappa_at_temperature(i_sigma, i_temp, t)
+
+    def _show_kappa_at_temperature(self, i_sigma, i_temp, t):
+        print(
+            ("#%6s       " + " %-10s" * 6)
+            % ("         \t\t  T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
+        )
+        print(
+            "K_P_exact\t\t"
+            + ("%7.1f " + " %10.3f" * 6)
+            % ((t,) + tuple(self._kappa_P_exact[i_sigma, i_temp]))
+        )
+        print(
+            "(K_P_RTA)\t\t"
+            + ("%7.1f " + " %10.3f" * 6)
+            % ((t,) + tuple(self._kappa_P_RTA[i_sigma, i_temp]))
+        )
+        print(
+            "K_C      \t\t"
+            + ("%7.1f " + " %10.3f" * 6)
+            % ((t,) + tuple(self._kappa_C[i_sigma, i_temp].real))
+        )
+        print(" ")
+        print(
+            "K_TOT=K_P_exact+K_C\t"
+            + ("%7.1f " + " %10.3f" * 6)
+            % (
+                (t,)
+                + tuple(
+                    self._kappa_C[i_sigma, i_temp]
+                    + self._kappa_P_exact[i_sigma, i_temp]
+                )
+            )
+        )
+        print("-" * 76, flush=True)
 
     def _set_kappa(self, i_sigma, i_temp, weights):
         if self._is_reducible_collision_matrix:
@@ -332,39 +335,64 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
             cv = self._conductivity_components.mode_heat_capacities[i_temp, i, :]
             for s1 in range(num_band):
                 for s2 in range(num_band):
-                    hbar_omega_eV_s1 = (
-                        frequencies[s1] * THzToEv
-                    )  # hbar*omega=h*nu in eV
-                    hbar_omega_eV_s2 = (
-                        frequencies[s2] * THzToEv
-                    )  # hbar*omega=h*nu in eV
-                    if (
-                        (frequencies[s1] > self._pp.cutoff_frequency)
-                        and (frequencies[s2] > self._pp.cutoff_frequency)
-                    ) and np.abs(frequencies[s1] - frequencies[s2]) > 1e-4:
-                        # frequencies must be non-degenerate to contribute to k_C,
-                        # otherwise they contribute to k_P
-                        hbar_gamma_eV_s1 = g[s1] * THzToEv
-                        hbar_gamma_eV_s2 = g[s2] * THzToEv
-                        lorentzian_divided_by_hbar = (
-                            0.5 * (hbar_gamma_eV_s1 + hbar_gamma_eV_s2)
-                        ) / (
-                            (hbar_omega_eV_s1 - hbar_omega_eV_s2) ** 2
-                            + 0.25 * ((hbar_gamma_eV_s1 + hbar_gamma_eV_s2) ** 2)
-                        )
-                        #
-                        prefactor = (
-                            0.25
-                            * (hbar_omega_eV_s1 + hbar_omega_eV_s2)
-                            * (cv[s1] / hbar_omega_eV_s1 + cv[s2] / hbar_omega_eV_s2)
-                        )
-                        self._mode_kappa_C[i_sigma, i_temp, i, s1, s2] = (
-                            (self._conductivity_components.gv_by_gv_operator[i, s1, s2])
-                            * prefactor
-                            * lorentzian_divided_by_hbar
-                            * self._conversion_factor_WTE
-                        )
+                    pair_contribution = self._get_coherence_pair_contribution(
+                        freq_s1=frequencies[s1],
+                        freq_s2=frequencies[s2],
+                        linewidth_s1=g[s1],
+                        linewidth_s2=g[s2],
+                        cv_s1=cv[s1],
+                        cv_s2=cv[s2],
+                        gv_by_gv_s1s2=self._conductivity_components.gv_by_gv_operator[
+                            i, s1, s2
+                        ],
+                        THzToEv=THzToEv,
+                    )
+                    if pair_contribution is None:
+                        continue
+                    self._mode_kappa_C[i_sigma, i_temp, i, s1, s2] = pair_contribution
 
         self._kappa_C[i_sigma, i_temp] = (
             self._mode_kappa_C[i_sigma, i_temp].sum(axis=0).sum(axis=0).sum(axis=0) / N
         ).real
+
+    def _get_coherence_pair_contribution(
+        self,
+        *,
+        freq_s1: float,
+        freq_s2: float,
+        linewidth_s1: float,
+        linewidth_s2: float,
+        cv_s1: float,
+        cv_s2: float,
+        gv_by_gv_s1s2,
+        THzToEv: float,
+    ):
+        if (freq_s1 <= self._pp.cutoff_frequency) or (
+            freq_s2 <= self._pp.cutoff_frequency
+        ):
+            return None
+        if np.abs(freq_s1 - freq_s2) <= 1e-4:
+            return None
+
+        hbar_omega_eV_s1 = freq_s1 * THzToEv
+        hbar_omega_eV_s2 = freq_s2 * THzToEv
+        hbar_gamma_eV_s1 = linewidth_s1 * THzToEv
+        hbar_gamma_eV_s2 = linewidth_s2 * THzToEv
+
+        gamma_sum = hbar_gamma_eV_s1 + hbar_gamma_eV_s2
+        delta_omega = hbar_omega_eV_s1 - hbar_omega_eV_s2
+        lorentzian_divided_by_hbar = (0.5 * gamma_sum) / (
+            delta_omega**2 + 0.25 * gamma_sum**2
+        )
+        prefactor = (
+            0.25
+            * (hbar_omega_eV_s1 + hbar_omega_eV_s2)
+            * (cv_s1 / hbar_omega_eV_s1 + cv_s2 / hbar_omega_eV_s2)
+        )
+        contribution = (
+            gv_by_gv_s1s2
+            * prefactor
+            * lorentzian_divided_by_hbar
+            * self._conversion_factor_WTE
+        )
+        return contribution

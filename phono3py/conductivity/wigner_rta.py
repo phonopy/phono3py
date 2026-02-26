@@ -167,79 +167,86 @@ class ConductivityWignerRTA(ConductivityRTABase):
         for i, _ in enumerate(self._grid_points):
             gp = self._grid_points[i]
             frequencies = self._frequencies[gp]
-            # Kappa
             for j in range(len(self._sigmas)):
                 for k in range(len(self._temperatures)):
                     g_sum = self._get_main_diagonal(
                         i, j, k
                     )  # phonon HWHM: q-point, sigma, temperature
+                    cv_at_q = cv[k, i]
                     for s1 in range(num_band):
                         for s2 in range(num_band):
-                            hbar_omega_eV_s1 = (
-                                frequencies[s1] * THzToEv
-                            )  # hbar*omega=h*nu in eV
-                            hbar_omega_eV_s2 = (
-                                frequencies[s2] * THzToEv
-                            )  # hbar*omega=h*nu in eV
-                            if (frequencies[s1] > self._pp.cutoff_frequency) and (
-                                frequencies[s2] > self._pp.cutoff_frequency
-                            ):
-                                hbar_gamma_eV_s1 = 2.0 * g_sum[s1] * THzToEv
-                                hbar_gamma_eV_s2 = 2.0 * g_sum[s2] * THzToEv
-                                #
-                                lorentzian_divided_by_hbar = (
-                                    0.5 * (hbar_gamma_eV_s1 + hbar_gamma_eV_s2)
-                                ) / (
-                                    (hbar_omega_eV_s1 - hbar_omega_eV_s2) ** 2
-                                    + 0.25
-                                    * ((hbar_gamma_eV_s1 + hbar_gamma_eV_s2) ** 2)
-                                )
-                                #
-                                prefactor = (
-                                    0.25
-                                    * (hbar_omega_eV_s1 + hbar_omega_eV_s2)
-                                    * (
-                                        cv[k, i, s1] / hbar_omega_eV_s1
-                                        + cv[k, i, s2] / hbar_omega_eV_s2
-                                    )
-                                )
-                                if np.abs(frequencies[s1] - frequencies[s2]) < 1e-4:
-                                    # degenerate or diagonal s1=s2 modes contribution
-                                    # determine k_P
-                                    contribution = (
-                                        (gv_by_gv[i, s1, s2])
-                                        * prefactor
-                                        * lorentzian_divided_by_hbar
-                                        * self._conversion_factor_WTE
-                                    ).real
-                                    #
-                                    self._mode_kappa_P_RTA[j, k, i, s1] += (
-                                        0.5 * contribution
-                                    )
-                                    self._mode_kappa_P_RTA[j, k, i, s2] += (
-                                        0.5 * contribution
-                                    )
-                                    # prefactor 0.5 arises from the fact that degenerate
-                                    # modes have the same specific heat, hence they give
-                                    # the same contribution to the populations
-                                    # conductivity
-                                else:
-                                    self._mode_kappa_C[j, k, i, s1, s2] += (
-                                        (gv_by_gv[i, s1, s2])
-                                        * prefactor
-                                        * lorentzian_divided_by_hbar
-                                        * self._conversion_factor_WTE
-                                    ).real
+                            pair_contribution = self._get_pair_contribution(
+                                freq_s1=frequencies[s1],
+                                freq_s2=frequencies[s2],
+                                g_sum_s1=g_sum[s1],
+                                g_sum_s2=g_sum[s2],
+                                cv_s1=cv_at_q[s1],
+                                cv_s2=cv_at_q[s2],
+                                gv_by_gv_s1s2=gv_by_gv[i, s1, s2],
+                                THzToEv=THzToEv,
+                            )
+                            if pair_contribution is None:
+                                if s1 == s2:
+                                    self._num_ignored_phonon_modes[j, k] += 1
+                                continue
 
-                            elif s1 == s2:
-                                self._num_ignored_phonon_modes[j, k] += 1
+                            contribution, is_population = pair_contribution
+                            if is_population:
+                                self._mode_kappa_P_RTA[j, k, i, s1] += (
+                                    0.5 * contribution
+                                )
+                                self._mode_kappa_P_RTA[j, k, i, s2] += (
+                                    0.5 * contribution
+                                )
+                            else:
+                                self._mode_kappa_C[j, k, i, s1, s2] += contribution
 
         N = self.number_of_sampling_grid_points
         self._kappa_P_RTA = self._mode_kappa_P_RTA.sum(axis=2).sum(axis=2) / N
-        #
         self._kappa_C = self._mode_kappa_C.sum(axis=2).sum(axis=2).sum(axis=2) / N
-        #
         self._kappa_TOT_RTA = self._kappa_P_RTA + self._kappa_C
+
+    def _get_pair_contribution(
+        self,
+        *,
+        freq_s1: float,
+        freq_s2: float,
+        g_sum_s1: float,
+        g_sum_s2: float,
+        cv_s1: float,
+        cv_s2: float,
+        gv_by_gv_s1s2,
+        THzToEv: float,
+    ) -> tuple[float, bool] | None:
+        if (freq_s1 <= self._pp.cutoff_frequency) or (
+            freq_s2 <= self._pp.cutoff_frequency
+        ):
+            return None
+
+        hbar_omega_eV_s1 = freq_s1 * THzToEv
+        hbar_omega_eV_s2 = freq_s2 * THzToEv
+        hbar_gamma_eV_s1 = 2.0 * g_sum_s1 * THzToEv
+        hbar_gamma_eV_s2 = 2.0 * g_sum_s2 * THzToEv
+
+        gamma_sum = hbar_gamma_eV_s1 + hbar_gamma_eV_s2
+        delta_omega = hbar_omega_eV_s1 - hbar_omega_eV_s2
+        lorentzian_divided_by_hbar = (0.5 * gamma_sum) / (
+            delta_omega**2 + 0.25 * gamma_sum**2
+        )
+        prefactor = (
+            0.25
+            * (hbar_omega_eV_s1 + hbar_omega_eV_s2)
+            * (cv_s1 / hbar_omega_eV_s1 + cv_s2 / hbar_omega_eV_s2)
+        )
+        contribution = (
+            gv_by_gv_s1s2
+            * prefactor
+            * lorentzian_divided_by_hbar
+            * self._conversion_factor_WTE
+        ).real
+        is_population = np.abs(freq_s1 - freq_s2) < 1e-4
+
+        return contribution, is_population
 
     def _set_cv(self, i_gp, i_data):
         """Set cv for conductivity components."""

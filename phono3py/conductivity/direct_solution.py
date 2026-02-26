@@ -193,38 +193,43 @@ class ConductivityLBTE(ConductivityLBTEBase):
                 print(text, flush=True)
 
             for k, t in enumerate(self._temperatures):
-                if t > 0:
-                    self._set_kappa_RTA(j, k, weights)
-
-                    w = diagonalize_collision_matrix(
-                        self._collision_matrix,
-                        i_sigma=j,
-                        i_temp=k,
-                        pinv_solver=self._pinv_solver,
-                        log_level=self._log_level,
-                    )
-                    if w is not None:
-                        self._collision_eigenvalues[j, k] = w
-
-                    self._set_kappa(j, k, weights)
-
-                    if self._log_level:
-                        print(
-                            ("#%6s       " + " %-10s" * 6)
-                            % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
-                        )
-                        print(
-                            ("%7.1f " + " %10.3f" * 6)
-                            % ((t,) + tuple(self._kappa[j, k]))
-                        )
-                        print(
-                            (" %6s " + " %10.3f" * 6)
-                            % (("(RTA)",) + tuple(self._kappa_RTA[j, k]))
-                        )
-                        print("-" * 76, flush=True)
+                self._set_kappa_at_sigma_and_temperature(j, k, t, weights)
 
         if self._log_level:
             print("", flush=True)
+
+    def _set_kappa_at_sigma_and_temperature(self, i_sigma, i_temp, t, weights):
+        if t <= 0:
+            return
+
+        self._set_kappa_RTA(i_sigma, i_temp, weights)
+
+        w = diagonalize_collision_matrix(
+            self._collision_matrix,
+            i_sigma=i_sigma,
+            i_temp=i_temp,
+            pinv_solver=self._pinv_solver,
+            log_level=self._log_level,
+        )
+        if w is not None:
+            self._collision_eigenvalues[i_sigma, i_temp] = w
+
+        self._set_kappa(i_sigma, i_temp, weights)
+
+        if self._log_level:
+            self._show_kappa_at_temperature(i_sigma, i_temp, t)
+
+    def _show_kappa_at_temperature(self, i_sigma, i_temp, t):
+        print(
+            ("#%6s       " + " %-10s" * 6)
+            % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
+        )
+        print(("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(self._kappa[i_sigma, i_temp])))
+        print(
+            (" %6s " + " %10.3f" * 6)
+            % (("(RTA)",) + tuple(self._kappa_RTA[i_sigma, i_temp]))
+        )
+        print("-" * 76, flush=True)
 
     def _set_kappa(self, i_sigma, i_temp, weights):
         if self._is_reducible_collision_matrix:

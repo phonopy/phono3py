@@ -39,75 +39,101 @@ from __future__ import annotations
 import os
 import sys
 from collections.abc import Sequence
-from typing import Literal
+from typing import Literal, TypedDict
 
-from numpy.typing import ArrayLike
+from numpy.typing import NDArray
 
-from phono3py.conductivity.direct_solution import ConductivityLBTE
 from phono3py.conductivity.direct_solution_base import ConductivityLBTEBase
 from phono3py.conductivity.lbte_output import ConductivityLBTEWriter
 from phono3py.conductivity.type_dispatch import get_lbte_conductivity_class
-from phono3py.conductivity.utils import write_pp_interaction
-from phono3py.conductivity.wigner_direct_solution import ConductivityWignerLBTE
+from phono3py.conductivity.utils import build_options, write_pp_interaction
 from phono3py.file_IO import read_collision_from_hdf5
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
 
 
-def get_thermal_conductivity_LBTE(
-    interaction: Interaction,
-    temperatures: Sequence | None = None,
-    sigmas: Sequence | None = None,
-    sigma_cutoff: float | None = None,
-    is_isotope: bool = False,
-    mass_variances: Sequence | None = None,
-    grid_points: ArrayLike | None = None,
-    boundary_mfp: float | None = None,  # in micrometer
-    solve_collective_phonon: bool = False,
-    is_reducible_collision_matrix: bool = False,
-    is_kappa_star: bool = True,
-    gv_delta_q: float | None = None,
-    is_full_pp: bool = False,
-    conductivity_type: Literal["wigner", "kubo"] | None = None,
-    pinv_cutoff: float = 1.0e-8,
-    pinv_solver: int = 0,  # default: dsyev in lapacke
-    pinv_method: int = 0,  # default: abs(eig) < cutoff
-    write_collision: bool = False,
-    read_collision: str | Sequence | None = None,
-    write_kappa: bool = False,
-    write_pp: bool = False,
-    read_pp: bool = False,
-    write_LBTE_solution: bool = False,
-    compression: Literal["gzip", "lzf"] | int | None = "gzip",
-    input_filename: str | os.PathLike | None = None,
-    output_filename: str | os.PathLike | None = None,
-    log_level: int = 0,
-) -> ConductivityLBTE | ConductivityWignerLBTE:
-    """Calculate lattice thermal conductivity by direct solution."""
-    if temperatures is None:
-        _temperatures = [
-            300,
-        ]
-    else:
-        _temperatures = temperatures
-    if sigmas is None:
-        sigmas = []
-    if log_level:
-        print("-" * 19 + " Lattice thermal conductivity (LBTE) " + "-" * 19)
-        print(
-            "Cutoff frequency of pseudo inversion of collision matrix: %s" % pinv_cutoff
-        )
+class _LBTEInitOptions(TypedDict):
+    grid_points: Sequence[int] | NDArray | None
+    temperatures: Sequence[float] | NDArray | None
+    sigmas: Sequence[float | None] | None
+    sigma_cutoff: float | None
+    is_isotope: bool
+    mass_variances: Sequence[float] | NDArray | None
+    boundary_mfp: float | None
+    solve_collective_phonon: bool
+    is_reducible_collision_matrix: bool
+    is_kappa_star: bool
+    gv_delta_q: float | None
+    is_full_pp: bool
+    read_pp: bool
+    pp_filename: str | os.PathLike | None
+    pinv_cutoff: float
+    pinv_solver: int
+    pinv_method: int
+    log_level: int
 
-    if read_collision:
-        temps = None
-    else:
-        temps = _temperatures
 
-    conductivity_LBTE_class = get_lbte_conductivity_class(conductivity_type)
+class _LBTERunOptions(TypedDict):
+    write_pp: bool
+    write_collision: bool
+    is_reducible_collision_matrix: bool
+    has_grid_points: bool
+    output_filename: str | os.PathLike | None
+    compression: Literal["gzip", "lzf"] | int | None
 
-    lbte = conductivity_LBTE_class(
-        interaction,
+
+class _LBTEFullCollisionOptions(TypedDict):
+    write_LBTE_solution: bool
+    read_collision: str | Sequence | None
+    read_from: str | None
+    grid_points: Sequence[int] | NDArray | None
+    output_filename: str | os.PathLike | None
+
+
+class _LBTEFinalizeOptions(TypedDict):
+    grid_points: Sequence[int] | NDArray | None
+    write_kappa: bool
+    is_reducible_collision_matrix: bool
+    write_LBTE_solution: bool
+    pinv_solver: int
+    compression: Literal["gzip", "lzf"] | int | None
+    output_filename: str | os.PathLike | None
+    log_level: int
+
+
+class _CollisionReadContext(TypedDict):
+    mesh: NDArray
+    indices: str | Sequence[int]
+    sigma: float | None
+    sigma_cutoff: float | None
+    filename: str | os.PathLike | None
+    log_level: int
+
+
+def _build_lbte_init_options(
+    *,
+    grid_points,
+    temperatures,
+    sigmas,
+    sigma_cutoff,
+    is_isotope,
+    mass_variances,
+    boundary_mfp,
+    solve_collective_phonon,
+    is_reducible_collision_matrix,
+    is_kappa_star,
+    gv_delta_q,
+    is_full_pp,
+    read_pp,
+    input_filename,
+    pinv_cutoff,
+    pinv_solver,
+    pinv_method,
+    log_level,
+) -> _LBTEInitOptions:
+    return build_options(
+        _LBTEInitOptions,
         grid_points=grid_points,
-        temperatures=temps,
+        temperatures=temperatures,
         sigmas=sigmas,
         sigma_cutoff=sigma_cutoff,
         is_isotope=is_isotope,
@@ -126,10 +152,184 @@ def get_thermal_conductivity_LBTE(
         log_level=log_level,
     )
 
+
+def _build_lbte_run_options(
+    *,
+    write_pp,
+    write_collision,
+    is_reducible_collision_matrix,
+    grid_points,
+    output_filename,
+    compression,
+) -> _LBTERunOptions:
+    return build_options(
+        _LBTERunOptions,
+        write_pp=write_pp,
+        write_collision=write_collision,
+        is_reducible_collision_matrix=is_reducible_collision_matrix,
+        has_grid_points=(grid_points is not None),
+        output_filename=output_filename,
+        compression=compression,
+    )
+
+
+def _build_lbte_full_collision_options(
+    *,
+    write_LBTE_solution,
+    read_collision,
+    read_from,
+    grid_points,
+    output_filename,
+) -> _LBTEFullCollisionOptions:
+    return build_options(
+        _LBTEFullCollisionOptions,
+        write_LBTE_solution=write_LBTE_solution,
+        read_collision=read_collision,
+        read_from=read_from,
+        grid_points=grid_points,
+        output_filename=output_filename,
+    )
+
+
+def _build_lbte_finalize_options(
+    *,
+    grid_points,
+    write_kappa,
+    is_reducible_collision_matrix,
+    write_LBTE_solution,
+    pinv_solver,
+    compression,
+    output_filename,
+    log_level,
+) -> _LBTEFinalizeOptions:
+    return build_options(
+        _LBTEFinalizeOptions,
+        grid_points=grid_points,
+        write_kappa=write_kappa,
+        is_reducible_collision_matrix=is_reducible_collision_matrix,
+        write_LBTE_solution=write_LBTE_solution,
+        pinv_solver=pinv_solver,
+        compression=compression,
+        output_filename=output_filename,
+        log_level=log_level,
+    )
+
+
+def _build_collision_read_context(
+    *,
+    mesh,
+    indices,
+    sigma,
+    sigma_cutoff,
+    filename,
+    log_level,
+) -> _CollisionReadContext:
+    return build_options(
+        _CollisionReadContext,
+        mesh=mesh,
+        indices=indices,
+        sigma=sigma,
+        sigma_cutoff=sigma_cutoff,
+        filename=filename,
+        log_level=log_level,
+    )
+
+
+def _read_collision_payload(
+    context: _CollisionReadContext,
+    *,
+    grid_point: int | None = None,
+    band_index: int | None = None,
+    only_temperatures: bool = False,
+):
+    return read_collision_from_hdf5(
+        context["mesh"],
+        indices=context["indices"],
+        grid_point=grid_point,
+        band_index=band_index,
+        sigma=context["sigma"],
+        sigma_cutoff=context["sigma_cutoff"],
+        filename=context["filename"],
+        only_temperatures=only_temperatures,
+        verbose=(False if only_temperatures else (context["log_level"] > 0)),
+    )
+
+
+def get_thermal_conductivity_LBTE(
+    interaction: Interaction,
+    temperatures: Sequence[float] | NDArray | None = None,
+    sigmas: Sequence[float | None] | None = None,
+    sigma_cutoff: float | None = None,
+    is_isotope: bool = False,
+    mass_variances: Sequence[float] | NDArray | None = None,
+    grid_points: Sequence[int] | NDArray | None = None,
+    boundary_mfp: float | None = None,  # in micrometer
+    solve_collective_phonon: bool = False,
+    is_reducible_collision_matrix: bool = False,
+    is_kappa_star: bool = True,
+    gv_delta_q: float | None = None,
+    is_full_pp: bool = False,
+    conductivity_type: Literal["wigner", "kubo"] | None = None,
+    pinv_cutoff: float = 1.0e-8,
+    pinv_solver: int = 0,  # default: dsyev in lapacke
+    pinv_method: int = 0,  # default: abs(eig) < cutoff
+    write_collision: bool = False,
+    read_collision: str | Sequence[int] | None = None,
+    write_kappa: bool = False,
+    write_pp: bool = False,
+    read_pp: bool = False,
+    write_LBTE_solution: bool = False,
+    compression: Literal["gzip", "lzf"] | int | None = "gzip",
+    input_filename: str | os.PathLike | None = None,
+    output_filename: str | os.PathLike | None = None,
+    log_level: int = 0,
+) -> ConductivityLBTEBase:
+    """Calculate lattice thermal conductivity by direct solution."""
+    _temperatures = _normalize_lbte_temperatures(temperatures)
+    if sigmas is None:
+        sigmas = []
+    if log_level:
+        print("-" * 19 + " Lattice thermal conductivity (LBTE) " + "-" * 19)
+        print(
+            "Cutoff frequency of pseudo inversion of collision matrix: %s" % pinv_cutoff
+        )
+
+    temps = _get_lbte_initial_temperatures(_temperatures, read_collision)
+
+    conductivity_LBTE_class = get_lbte_conductivity_class(conductivity_type)
+
+    init_options = _build_lbte_init_options(
+        grid_points=grid_points,
+        temperatures=temps,
+        sigmas=sigmas,
+        sigma_cutoff=sigma_cutoff,
+        is_isotope=is_isotope,
+        mass_variances=mass_variances,
+        boundary_mfp=boundary_mfp,
+        solve_collective_phonon=solve_collective_phonon,
+        is_reducible_collision_matrix=is_reducible_collision_matrix,
+        is_kappa_star=is_kappa_star,
+        gv_delta_q=gv_delta_q,
+        is_full_pp=is_full_pp,
+        read_pp=read_pp,
+        input_filename=input_filename,
+        pinv_cutoff=pinv_cutoff,
+        pinv_solver=pinv_solver,
+        pinv_method=pinv_method,
+        log_level=log_level,
+    )
+
+    lbte = conductivity_LBTE_class(
+        interaction,
+        **init_options,
+    )
+
+    read_from = None
     if read_collision:
+        read_collision_indices: str | Sequence[int] = read_collision
         read_from = _set_collision_from_file(
             lbte,
-            indices=read_collision,
+            indices=read_collision_indices,
             is_reducible_collision_matrix=is_reducible_collision_matrix,
             filename=input_filename,
             log_level=log_level,
@@ -146,6 +346,63 @@ def get_thermal_conductivity_LBTE(
                 text = (" %.1f " * len(temps_read)) % tuple(temps_read)
             print("Temperature: " + text)
 
+    run_options = _build_lbte_run_options(
+        write_pp=write_pp,
+        write_collision=write_collision,
+        is_reducible_collision_matrix=is_reducible_collision_matrix,
+        grid_points=grid_points,
+        output_filename=output_filename,
+        compression=compression,
+    )
+    _run_lbte_grid_point_outputs(lbte, interaction, **run_options)
+
+    full_collision_options = _build_lbte_full_collision_options(
+        write_LBTE_solution=write_LBTE_solution,
+        read_collision=read_collision,
+        read_from=read_from,
+        grid_points=grid_points,
+        output_filename=output_filename,
+    )
+    _write_full_collision_if_requested(lbte, interaction, **full_collision_options)
+
+    finalize_options = _build_lbte_finalize_options(
+        grid_points=grid_points,
+        write_kappa=write_kappa,
+        is_reducible_collision_matrix=is_reducible_collision_matrix,
+        write_LBTE_solution=write_LBTE_solution,
+        pinv_solver=pinv_solver,
+        compression=compression,
+        output_filename=output_filename,
+        log_level=log_level,
+    )
+    _finalize_lbte_kappa(lbte, interaction, **finalize_options)
+
+    return lbte
+
+
+def _normalize_lbte_temperatures(temperatures: Sequence | None):
+    if temperatures is None:
+        return [300]
+    return temperatures
+
+
+def _get_lbte_initial_temperatures(_temperatures, read_collision):
+    if read_collision:
+        return None
+    return _temperatures
+
+
+def _run_lbte_grid_point_outputs(
+    lbte: ConductivityLBTEBase,
+    interaction: Interaction,
+    *,
+    write_pp: bool,
+    write_collision: bool,
+    is_reducible_collision_matrix: bool,
+    has_grid_points: bool,
+    output_filename: str | os.PathLike | None,
+    compression: Literal["gzip", "lzf"] | int | None,
+):
     # This computes pieces of collision matrix sequentially.
     for i in lbte:
         if write_pp:
@@ -159,45 +416,71 @@ def get_thermal_conductivity_LBTE(
                 interaction,
                 i=i,
                 is_reducible_collision_matrix=is_reducible_collision_matrix,
-                is_one_gp_colmat=(grid_points is not None),
+                is_one_gp_colmat=has_grid_points,
                 filename=output_filename,
             )
 
         lbte.delete_gp_collision_and_pp()
 
+
+def _write_full_collision_if_requested(
+    lbte: ConductivityLBTEBase,
+    interaction: Interaction,
+    *,
+    write_LBTE_solution: bool,
+    read_collision: str | Sequence[int] | None,
+    read_from,
+    grid_points: Sequence[int] | NDArray | None,
+    output_filename: str | os.PathLike | None,
+):
     # Write full collision matrix
-    if write_LBTE_solution:
-        if (
-            read_collision
-            and all_bands_exist(interaction)
-            and read_from == "grid_points"
-            and grid_points is None
-        ) or (not read_collision):
-            ConductivityLBTEWriter.write_collision(
-                lbte, interaction, filename=output_filename
-            )
+    if not write_LBTE_solution:
+        return
 
-    if grid_points is None and all_bands_exist(interaction):
-        lbte.set_kappa_at_sigmas()
+    if (
+        read_collision
+        and all_bands_exist(interaction)
+        and read_from == "grid_points"
+        and grid_points is None
+    ) or (not read_collision):
+        ConductivityLBTEWriter.write_collision(
+            lbte, interaction, filename=output_filename
+        )
 
-        if write_kappa:
-            ConductivityLBTEWriter.write_kappa(
-                lbte,
-                interaction.primitive.volume,
-                is_reducible_collision_matrix=is_reducible_collision_matrix,
-                write_LBTE_solution=write_LBTE_solution,
-                pinv_solver=pinv_solver,
-                compression=compression,
-                filename=output_filename,
-                log_level=log_level,
-            )
 
-    return lbte
+def _finalize_lbte_kappa(
+    lbte: ConductivityLBTEBase,
+    interaction: Interaction,
+    *,
+    grid_points: Sequence[int] | NDArray | None,
+    write_kappa: bool,
+    is_reducible_collision_matrix: bool,
+    write_LBTE_solution: bool,
+    pinv_solver: int,
+    compression: Literal["gzip", "lzf"] | int | None,
+    output_filename: str | os.PathLike | None,
+    log_level: int,
+):
+    if grid_points is not None or not all_bands_exist(interaction):
+        return
+
+    lbte.set_kappa_at_sigmas()
+    if write_kappa:
+        ConductivityLBTEWriter.write_kappa(
+            lbte,
+            interaction.primitive.volume,
+            is_reducible_collision_matrix=is_reducible_collision_matrix,
+            write_LBTE_solution=write_LBTE_solution,
+            pinv_solver=pinv_solver,
+            compression=compression,
+            filename=output_filename,
+            log_level=log_level,
+        )
 
 
 def _set_collision_from_file(
     lbte: ConductivityLBTEBase,
-    indices: str | Sequence | None = "all",
+    indices: str | Sequence[int] = "all",
     is_reducible_collision_matrix=False,
     filename=None,
     log_level=0,
@@ -234,14 +517,15 @@ def _set_collision_from_file(
 
     arrays_allocated = False
     for i_sigma, sigma in enumerate(sigmas):
-        collisions = read_collision_from_hdf5(
-            mesh,
+        context = _build_collision_read_context(
+            mesh=mesh,
             indices=indices,
             sigma=sigma,
             sigma_cutoff=sigma_cutoff,
             filename=filename,
-            verbose=(log_level > 0),
+            log_level=log_level,
         )
+        collisions = _read_collision_payload(context)
         if log_level:
             sys.stdout.flush()
 
@@ -257,12 +541,8 @@ def _set_collision_from_file(
         else:
             vals = _allocate_collision(
                 True,
-                mesh,
-                sigma,
-                sigma_cutoff,
                 grid_points,
-                indices,
-                filename,
+                context,
             )
             if vals:
                 colmat_at_sigma, gamma_at_sigma, temperatures = vals
@@ -271,12 +551,8 @@ def _set_collision_from_file(
                     print("Collision at grid point %d doesn't exist." % grid_points[0])
                 vals = _allocate_collision(
                     False,
-                    mesh,
-                    sigma,
-                    sigma_cutoff,
                     grid_points,
-                    indices,
-                    filename,
+                    context,
                 )
                 if vals:
                     colmat_at_sigma, gamma_at_sigma, temperatures = vals
@@ -298,16 +574,11 @@ def _set_collision_from_file(
                     lbte.collision_matrix[i_sigma],
                     lbte.gamma[i_sigma],
                     temperatures,
-                    mesh,
-                    sigma,
-                    sigma_cutoff,
+                    context,
                     i,
                     gp,
                     bz_grid.bzg2grg,
-                    indices,
                     is_reducible_collision_matrix,
-                    filename,
-                    log_level,
                 ):
                     num_band = lbte.collision_matrix.shape[3]
                     for i_band in range(num_band):
@@ -315,17 +586,12 @@ def _set_collision_from_file(
                             lbte.collision_matrix[i_sigma],
                             lbte.gamma[i_sigma],
                             temperatures,
-                            mesh,
-                            sigma,
-                            sigma_cutoff,
+                            context,
                             i,
                             gp,
                             bz_grid.bzg2grg,
                             i_band,
-                            indices,
                             is_reducible_collision_matrix,
-                            filename,
-                            log_level,
                         ):
                             return False
             read_from = "grid_points"
@@ -335,35 +601,21 @@ def _set_collision_from_file(
 
 def _allocate_collision(
     for_gps,
-    mesh,
-    sigma,
-    sigma_cutoff,
     grid_points,
-    indices,
-    filename,
+    context: _CollisionReadContext,
 ):
     if for_gps:
-        collision = read_collision_from_hdf5(
-            mesh,
-            indices=indices,
+        collision = _read_collision_payload(
+            context,
             grid_point=grid_points[0],
-            sigma=sigma,
-            sigma_cutoff=sigma_cutoff,
-            filename=filename,
             only_temperatures=True,
-            verbose=False,
         )
     else:
-        collision = read_collision_from_hdf5(
-            mesh,
-            indices=indices,
+        collision = _read_collision_payload(
+            context,
             grid_point=grid_points[0],
             band_index=0,
-            sigma=sigma,
-            sigma_cutoff=sigma_cutoff,
-            filename=filename,
             only_temperatures=True,
-            verbose=False,
         )
     if collision is None:
         return False
@@ -376,27 +628,14 @@ def _collect_collision_gp(
     colmat_at_sigma,
     gamma_at_sigma,
     temperatures,
-    mesh,
-    sigma,
-    sigma_cutoff,
+    context: _CollisionReadContext,
     i,
     gp,
     bzg2grg,
-    indices,
     is_reducible_collision_matrix,
-    filename,
-    log_level,
 ):
-    collision_gp = read_collision_from_hdf5(
-        mesh,
-        indices=indices,
-        grid_point=gp,
-        sigma=sigma,
-        sigma_cutoff=sigma_cutoff,
-        filename=filename,
-        verbose=(log_level > 0),
-    )
-    if log_level:
+    collision_gp = _read_collision_payload(context, grid_point=gp)
+    if context["log_level"]:
         sys.stdout.flush()
 
     if not collision_gp:
@@ -418,29 +657,19 @@ def _collect_collision_band(
     colmat_at_sigma,
     gamma_at_sigma,
     temperatures,
-    mesh,
-    sigma,
-    sigma_cutoff,
+    context: _CollisionReadContext,
     i,
     gp,
     bzg2grg,
     j,
-    indices,
     is_reducible_collision_matrix,
-    filename,
-    log_level,
 ):
-    collision_band = read_collision_from_hdf5(
-        mesh,
-        indices=indices,
+    collision_band = _read_collision_payload(
+        context,
         grid_point=gp,
         band_index=j,
-        sigma=sigma,
-        sigma_cutoff=sigma_cutoff,
-        filename=filename,
-        verbose=(log_level > 0),
     )
-    if log_level:
+    if context["log_level"]:
         sys.stdout.flush()
 
     if collision_band is False:
