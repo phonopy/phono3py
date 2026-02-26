@@ -146,9 +146,11 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
         """Set velocity operator."""
         irgp = self._grid_points[i_irgp]
         frequencies, _, _ = self._pp.get_phonons()
+        assert frequencies is not None
         self._velocity_obj.run(
             [get_qpoints_from_bz_grid_points(irgp, self._pp.bz_grid)]
         )
+        assert self._velocity_obj.velocity_operators is not None
         gv_operator = self._velocity_obj.velocity_operators[0, :, :, :]
         self._gv_operator[i_data] = gv_operator[self._pp.band_indices, :, :]
         #
@@ -193,13 +195,12 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
             # self._gv_by_gv[i_data, :, j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
 
     def _get_gv_by_gv_operator(self, i_irgp, i_data):
+        irgp = int(self._grid_points[i_irgp])
         if self._is_kappa_star:
-            rotation_map = get_grid_points_by_rotations(
-                self._grid_points[i_irgp], self._pp.bz_grid
-            )
+            rotation_map = get_grid_points_by_rotations(irgp, self._pp.bz_grid)
         else:
             rotation_map = get_grid_points_by_rotations(
-                self._grid_points[i_irgp],
+                irgp,
                 self._pp.bz_grid,
                 reciprocal_rotations=self._point_operations,
             )
@@ -211,25 +212,8 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
         gv_by_gv_operator = np.zeros((nbands, nat3, 3, 3), dtype=self._complex_dtype)
 
         for r in self._rotations_cartesian:
-            # can be optimized
-            gvs_rot_operator = np.zeros((nbands, nat3, 3), dtype=self._complex_dtype)
-            for s in range(0, nbands):
-                for s_p in range(0, nat3):
-                    for i in range(0, 3):
-                        for j in range(0, 3):
-                            gvs_rot_operator[s, s_p, i] += (
-                                gv_operator[s, s_p, j] * r.T[j, i]
-                            )
-            #
-            for s in range(0, nbands):
-                for s_p in range(0, nat3):
-                    for i in range(0, 3):
-                        for j in range(0, 3):
-                            gv_by_gv_operator[s, s_p, i, j] += gvs_rot_operator[
-                                s, s_p, i
-                            ] * np.conj(gvs_rot_operator[s, s_p, j])
-                            # note np.conj(gvs_rot_operator[s,s_p,j]) =
-                            # gvs_rot_operator[s_p,s,j] since Vel op. is hermitian
+            gvs_rot_operator = self._rotate_velocity_operator(gv_operator, r.T)
+            self._accumulate_gv_by_gv_operator(gv_by_gv_operator, gvs_rot_operator)
 
         order_kstar = len(np.unique(rotation_map))
         gv_by_gv_operator /= len(rotation_map) // len(np.unique(rotation_map))
@@ -252,6 +236,38 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
                     print("*" * 67)
 
         return gv_by_gv_operator, order_kstar
+
+    def _rotate_velocity_operator(
+        self,
+        gv_operator: NDArray[np.complex128],
+        rotation_t: NDArray[np.float64],
+    ) -> NDArray[np.complex128]:
+        nbands, nat3, _ = gv_operator.shape
+        gvs_rot_operator = np.zeros((nbands, nat3, 3), dtype=self._complex_dtype)
+        for s in range(0, nbands):
+            for s_p in range(0, nat3):
+                for i in range(0, 3):
+                    for j in range(0, 3):
+                        gvs_rot_operator[s, s_p, i] += (
+                            gv_operator[s, s_p, j] * rotation_t[j, i]
+                        )
+        return gvs_rot_operator
+
+    def _accumulate_gv_by_gv_operator(
+        self,
+        gv_by_gv_operator: NDArray[np.complex128],
+        gvs_rot_operator: NDArray[np.complex128],
+    ) -> None:
+        nbands, nat3, _ = gvs_rot_operator.shape
+        for s in range(0, nbands):
+            for s_p in range(0, nat3):
+                for i in range(0, 3):
+                    for j in range(0, 3):
+                        gv_by_gv_operator[s, s_p, i, j] += gvs_rot_operator[
+                            s, s_p, i
+                        ] * np.conj(gvs_rot_operator[s, s_p, j])
+                        # note np.conj(gvs_rot_operator[s,s_p,j]) =
+                        # gvs_rot_operator[s_p,s,j] since Vel op. is hermitian
 
     def _allocate_values(self):
         super()._allocate_values()

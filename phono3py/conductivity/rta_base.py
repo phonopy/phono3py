@@ -243,13 +243,16 @@ class ConductivityRTABase(ConductivityBase):
 
     def _set_gamma_at_sigmas(self, i):
         for j, sigma in enumerate(self._sigmas):
-            self._collision.set_sigma(sigma, sigma_cutoff=self._sigma_cutoff)
-            self._collision.run_integration_weights()
+            self._run_sigma_at_grid_point(i, j, sigma)
 
-            self._show_gamma_sigma_log(sigma)
-            self._set_interaction_strength_at_sigma(i, j, sigma)
-            self._allocate_gamma_detail_at_q_if_needed()
-            self._run_collisions_at_temperatures(i, j)
+    def _run_sigma_at_grid_point(self, i_gp: int, i_sigma: int, sigma) -> None:
+        self._collision.set_sigma(sigma, sigma_cutoff=self._sigma_cutoff)
+        self._collision.run_integration_weights()
+
+        self._show_gamma_sigma_log(sigma)
+        self._set_interaction_strength_at_sigma(i_gp, i_sigma, sigma)
+        self._allocate_gamma_detail_at_q_if_needed()
+        self._run_collisions_at_temperatures(i_gp, i_sigma)
 
     def _show_gamma_sigma_log(self, sigma):
         if not self._log_level:

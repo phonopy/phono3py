@@ -1,4 +1,4 @@
-"""Kubo thermal conductivity base class."""
+"""Kubo thermal conductivity components."""
 
 # Copyright (C) 2022 Atsushi Togo
 # All rights reserved.
@@ -34,29 +34,56 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
 
-from phono3py.conductivity.base import get_kstar_order, get_multiplicity_at_q
+from phono3py.conductivity.base import (
+    ConductivityComponentsBase,
+    get_kstar_order,
+    get_multiplicity_at_q,
+)
 from phono3py.phonon.grid import get_qpoints_from_bz_grid_points
 from phono3py.phonon.group_velocity_matrix import GroupVelocityMatrix
 from phono3py.phonon.heat_capacity_matrix import mode_cv_matrix
+from phono3py.phonon3.interaction import Interaction
 
 
-class ConductivityKuboMixIn:
-    """Thermal conductivity mix-in for group velocity matrix."""
+class ConductivityKuboComponents(ConductivityComponentsBase):
+    """Thermal conductivity components for Kubo RTA."""
 
-    @property
-    def kappa(self):
-        """Return kappa."""
-        return self._kappa
+    def __init__(
+        self,
+        pp: Interaction,
+        grid_points: NDArray[np.int64],
+        grid_weights: NDArray[np.int64],
+        point_operations: NDArray[np.int64],
+        rotations_cartesian: NDArray[np.int64],
+        temperatures: NDArray[np.float64] | None = None,
+        is_kappa_star: bool = True,
+        gv_delta_q: float | None = None,
+        log_level: int = 0,
+    ):
+        """Init method."""
+        super().__init__(
+            pp,
+            grid_points,
+            grid_weights,
+            point_operations,
+            rotations_cartesian,
+            temperatures=temperatures,
+            is_kappa_star=is_kappa_star,
+            gv_delta_q=gv_delta_q,
+            log_level=log_level,
+        )
 
-    @property
-    def mode_kappa_mat(self):
-        """Return mode_kappa_mat."""
-        return self._mode_kappa_mat
+        self._complex_dtype = "c%d" % (np.dtype("double").itemsize * 2)
+        self._cv_mat: NDArray[np.float64]
+        self._gv_mat: NDArray[np.complex128]
+        self._gv_mat_sum2: NDArray[np.complex128]
 
-    def _init_velocity(self, gv_delta_q):
         self._velocity_obj = GroupVelocityMatrix(
             self._pp.dynamical_matrix,
             q_length=gv_delta_q,
@@ -64,7 +91,20 @@ class ConductivityKuboMixIn:
             frequency_factor_to_THz=self._pp.frequency_factor_to_THz,
         )
 
-    def _set_cv(self, i_gp, i_data):
+        if self._temperatures is not None:
+            self._allocate_values()
+
+    @property
+    def heat_capacity_matrices(self) -> NDArray[np.float64]:
+        """Return heat capacity matrices at sampling grid points."""
+        return self._cv_mat
+
+    @property
+    def gv_matrix_sum2(self) -> NDArray[np.complex128]:
+        """Return summed products of velocity matrices over k-star."""
+        return self._gv_mat_sum2
+
+    def set_heat_capacities(self, i_gp, i_data):
         """Set heat capacity matrix.
 
         x=freq/T has to be small enough to avoid overflow of exp(x).
@@ -72,8 +112,17 @@ class ConductivityKuboMixIn:
         Otherwise just set 0.
 
         """
+        super().set_heat_capacities(i_gp, i_data)
+
+        if self._temperatures is None:
+            raise RuntimeError(
+                "Temperatures have not been set yet. "
+                "Set temperatures before this method."
+            )
+
         irgp = self._grid_points[i_gp]
-        freqs = self._frequencies[irgp] * get_physical_units().THzToEv
+        frequencies, _, _ = self._pp.get_phonons()
+        freqs = frequencies[irgp] * get_physical_units().THzToEv
         cutoff = self._pp.cutoff_frequency * get_physical_units().THzToEv
 
         for i_temp, temp in enumerate(self._temperatures):
@@ -82,7 +131,30 @@ class ConductivityKuboMixIn:
             cvm = mode_cv_matrix(temp, freqs, cutoff=cutoff)
             self._cv_mat[i_temp, i_data] = cvm[self._pp.band_indices, :]
 
-    def _set_velocities(self, i_gp, i_data):
+    def set_velocities(self, i_gp, i_data):
+        """Set and cache group-velocity-related quantities for a selected grid point.
+
+        This method computes velocity-derived tensors/vectors at the grid point index
+        ``i_gp`` and stores them at data-slot index ``i_data``. It also updates the
+        running count of sampled grid points using the k-star multiplicity.
+
+        Parameters
+        ----------
+        i_gp : int
+            Grid-point index used to compute velocity quantities.
+        i_data : int
+            Destination index in internal storage arrays where computed values are
+            written.
+
+        Notes
+        -----
+        Updates the following internal attributes in-place:
+        - ``self._num_sampling_grid_points`` (incremented by k-star order)
+        - ``self._gv_mat[i_data]`` (group velocity matrix)
+        - ``self._gv_mat_sum2[i_data]`` (summed second-order velocity matrix term)
+        - ``self._gv[i_data]`` (group velocity vector)
+
+        """
         gvm, gv = self._get_gv_matrix(i_gp)
         gvm_sum2, kstar_order = self._get_gvm_by_gvm(i_gp)
         self._num_sampling_grid_points += kstar_order
@@ -169,3 +241,31 @@ class ConductivityKuboMixIn:
             verbose=self._log_level > 0,
         )
         return gvm_sum2, kstar_order
+
+    def _allocate_values(self):
+        super()._allocate_values()
+
+        if self._temperatures is None:
+            raise RuntimeError(
+                "Temperatures have not been set yet. "
+                "Set temperatures before this method."
+            )
+
+        num_band0 = len(self._pp.band_indices)
+        num_band = len(self._pp.primitive) * 3
+        num_temp = len(self._temperatures)
+        num_grid_points = len(self._grid_points)
+
+        self._cv_mat = np.zeros(
+            (num_temp, num_grid_points, num_band0, num_band), dtype="double", order="C"
+        )
+        self._gv_mat = np.zeros(
+            (num_grid_points, num_band0, num_band, 3),
+            dtype=self._complex_dtype,
+            order="C",
+        )
+        self._gv_mat_sum2 = np.zeros(
+            (num_grid_points, num_band0, num_band, 6),
+            dtype=self._complex_dtype,
+            order="C",
+        )

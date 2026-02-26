@@ -333,34 +333,34 @@ class ConductivityComponents(ConductivityComponentsBase):
 
     def _get_gv(self, i_gp):
         """Get group velocity."""
-        irgp = self._grid_points[i_gp]
+        irgp = int(self._grid_points[i_gp])
 
         if self._average_gv_over_kstar and len(self._point_operations) > 1:
-            gps_rotated = get_grid_points_by_rotations(
-                irgp, self._pp.bz_grid, with_surface=True
-            )
-            assert len(gps_rotated) == len(self._point_operations)
+            return self._get_averaged_gv_over_kstar(irgp)
 
-            unique_gps = np.unique(gps_rotated)
-            gvs = {}
-            for bz_gp in unique_gps:
-                self._velocity_obj.run(
-                    [get_qpoints_from_bz_grid_points(bz_gp, self._pp.bz_grid)]
-                )
-                assert self._velocity_obj.group_velocities is not None
-                gvs[bz_gp] = self._velocity_obj.group_velocities[
-                    0, self._pp.band_indices, :
-                ]
-            gv = np.zeros_like(gvs[irgp])
-            for bz_gp, r in zip(gps_rotated, self._rotations_cartesian, strict=True):
-                gv += np.dot(gvs[bz_gp], r)  # = dot(r_inv, gv)
-            return gv / len(self._point_operations)
-        else:
-            self._velocity_obj.run(
-                [get_qpoints_from_bz_grid_points(irgp, self._pp.bz_grid)]
-            )
-            assert self._velocity_obj.group_velocities is not None
-            return self._velocity_obj.group_velocities[0, self._pp.band_indices, :]
+        return self._get_gv_at_bz_grid_point(irgp)
+
+    def _get_gv_at_bz_grid_point(self, bz_gp: int) -> NDArray[np.float64]:
+        self._velocity_obj.run(
+            [get_qpoints_from_bz_grid_points(bz_gp, self._pp.bz_grid)]
+        )
+        assert self._velocity_obj.group_velocities is not None
+        return self._velocity_obj.group_velocities[0, self._pp.band_indices, :]
+
+    def _get_averaged_gv_over_kstar(self, irgp: int) -> NDArray[np.float64]:
+        gps_rotated = get_grid_points_by_rotations(
+            irgp, self._pp.bz_grid, with_surface=True
+        )
+        assert len(gps_rotated) == len(self._point_operations)
+
+        gvs = {
+            bz_gp: self._get_gv_at_bz_grid_point(int(bz_gp))
+            for bz_gp in np.unique(gps_rotated)
+        }
+        gv = np.zeros_like(gvs[irgp])
+        for bz_gp, r in zip(gps_rotated, self._rotations_cartesian, strict=True):
+            gv += np.dot(gvs[bz_gp], r)  # = dot(r_inv, gv)
+        return gv / len(self._point_operations)
 
     def _set_gv_by_gv(self, i_gp, i_data):
         """Outer product of group velocities.
