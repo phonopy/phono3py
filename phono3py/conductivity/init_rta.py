@@ -38,7 +38,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Sequence
-from typing import Literal, TypeAlias, TypedDict
+from typing import Literal, TypeAlias, TypedDict, cast
 
 import h5py
 import numpy as np
@@ -132,9 +132,30 @@ _GammaReadArrays: TypeAlias = tuple[
     NDArray[np.float64],
 ]
 
+_GammaReadResult: TypeAlias = tuple[_GammaFileData | None, str]
+
+_GammaReadParams: TypeAlias = tuple[
+    NDArray[np.int64],
+    float | None,
+    str | None,
+    bool,
+]
+
+_GammaPayloadTargets: TypeAlias = tuple[
+    NDArray[np.float64],
+    NDArray[np.float64],
+    NDArray[np.float64],
+    NDArray[np.float64],
+    NDArray[np.float64],
+    _OptionalGammaFlags,
+]
+
 
 def _allocate_gamma_read_arrays(
-    sigmas, temperatures, grid_points, num_band: int
+    sigmas: Sequence[float | None],
+    temperatures: Sequence[float] | NDArray[np.float64],
+    grid_points: Sequence[int] | NDArray[np.int64],
+    num_band: int,
 ) -> _GammaReadArrays:
     """Allocate arrays used while collecting gamma payloads from files."""
     gamma = np.zeros(
@@ -149,16 +170,16 @@ def _allocate_gamma_read_arrays(
 
 def _build_gamma_read_context(
     *,
-    mesh,
-    sigma_cutoff,
-    filename,
-    grid_points,
+    mesh: NDArray[np.int64],
+    sigma_cutoff: float | None,
+    filename: str | None,
+    grid_points: Sequence[int] | NDArray[np.int64],
     num_band: int,
-    gamma,
-    gamma_iso,
-    gamma_N,
-    gamma_U,
-    ave_pp,
+    gamma: NDArray[np.float64],
+    gamma_iso: NDArray[np.float64],
+    gamma_N: NDArray[np.float64],
+    gamma_U: NDArray[np.float64],
+    ave_pp: NDArray[np.float64],
     optional_flags: _OptionalGammaFlags,
     verbose: bool,
 ) -> _GammaReadContext:
@@ -199,23 +220,23 @@ def _apply_loaded_gamma_results(
 
 def _build_rta_init_options(
     *,
-    grid_points,
-    temperatures,
-    sigmas,
-    sigma_cutoff,
-    is_isotope,
-    mass_variances,
-    boundary_mfp,
-    use_ave_pp,
-    is_kappa_star,
-    gv_delta_q,
-    is_full_pp,
-    read_pp,
-    write_pp,
-    input_filename,
-    is_N_U,
-    write_gamma_detail,
-    log_level,
+    grid_points: Sequence[int] | NDArray[np.int64] | None,
+    temperatures: Sequence[float] | NDArray[np.float64] | None,
+    sigmas: Sequence[float | None] | None,
+    sigma_cutoff: float | None,
+    is_isotope: bool,
+    mass_variances: Sequence[float] | NDArray[np.float64] | None,
+    boundary_mfp: float | None,
+    use_ave_pp: bool,
+    is_kappa_star: bool,
+    gv_delta_q: float | None,
+    is_full_pp: bool,
+    read_pp: bool,
+    write_pp: bool,
+    input_filename: str | None,
+    is_N_U: bool,
+    write_gamma_detail: bool,
+    log_level: int,
 ) -> _RTAInitOptions:
     return build_options(
         _RTAInitOptions,
@@ -241,12 +262,12 @@ def _build_rta_init_options(
 
 def _build_rta_run_options(
     *,
-    write_pp,
-    write_gamma,
-    write_gamma_detail,
-    compression,
-    output_filename,
-    log_level,
+    write_pp: bool,
+    write_gamma: bool,
+    write_gamma_detail: bool,
+    compression: Literal["gzip", "lzf"] | int | None,
+    output_filename: str | None,
+    log_level: int,
 ) -> _RTARunOptions:
     return build_options(
         _RTARunOptions,
@@ -261,12 +282,12 @@ def _build_rta_run_options(
 
 def _build_rta_finalize_options(
     *,
-    grid_points,
-    conductivity_type,
-    write_kappa,
-    compression,
-    output_filename,
-    log_level,
+    grid_points: Sequence[int] | NDArray[np.int64] | None,
+    conductivity_type: Literal["wigner", "kubo"] | None,
+    write_kappa: bool,
+    compression: Literal["gzip", "lzf"] | int | None,
+    output_filename: str | None,
+    log_level: int,
 ) -> _RTAFinalizeOptions:
     return build_options(
         _RTAFinalizeOptions,
@@ -281,9 +302,9 @@ def _build_rta_finalize_options(
 
 def _build_rta_input_read_options(
     *,
-    read_gamma,
-    read_elph,
-    input_filename,
+    read_gamma: bool,
+    read_elph: int | None,
+    input_filename: str | None,
 ) -> _RTAInputReadOptions:
     return build_options(
         _RTAInputReadOptions,
@@ -409,9 +430,9 @@ def _normalize_rta_temperatures(
     return temperatures
 
 
-def _set_gamma_elph_from_file(br: ConductivityRTABase, read_elph: int):
+def _set_gamma_elph_from_file(br: ConductivityRTABase, read_elph: int) -> None:
     with h5py.File("phono3py_elph.hdf5", "r") as f:
-        gamma_key = f"gamma_elph_{read_elph}"
+        gamma_key = f"gamma_{read_elph}"
         if gamma_key not in f:
             raise RuntimeError(f"{gamma_key} not found in phono3py_elph.hdf5.")
         br.gamma_elph = f[gamma_key][:]  # type: ignore
@@ -427,7 +448,7 @@ def _run_rta_grid_point_outputs(
     compression: Literal["gzip", "lzf"] | int | None,
     output_filename: str | os.PathLike | None,
     log_level: int,
-):
+) -> None:
     for i in br:
         if write_pp:
             write_pp_interaction(
@@ -463,7 +484,7 @@ def _finalize_rta_kappa(
     compression: Literal["gzip", "lzf"] | int | None,
     output_filename: str | None,
     log_level: int,
-):
+) -> None:
     if grid_points is not None or not all_bands_exist(interaction):
         return
 
@@ -480,13 +501,13 @@ def _finalize_rta_kappa(
         )
 
 
-def _log_if_verbose(verbose: bool, text: str):
+def _log_if_verbose(verbose: bool, text: str) -> None:
     """Print text only when verbose mode is enabled."""
     if verbose:
         print(text)
 
 
-def _get_gamma_read_params(context: _GammaReadContext):
+def _get_gamma_read_params(context: _GammaReadContext) -> _GammaReadParams:
     """Extract common file-read settings from gamma read context."""
     return (
         context["mesh"],
@@ -496,7 +517,7 @@ def _get_gamma_read_params(context: _GammaReadContext):
     )
 
 
-def _get_gamma_payload_targets(context: _GammaReadContext):
+def _get_gamma_payload_targets(context: _GammaReadContext) -> _GammaPayloadTargets:
     """Extract mutable payload arrays and flags from gamma read context."""
     return (
         context["gamma"],
@@ -514,27 +535,30 @@ def _read_gamma_payload(
     sigma: float | None,
     grid_point: int | None = None,
     band_index: int | None = None,
-):
+) -> _GammaReadResult:
     """Read gamma payload from HDF5 using shared context parameters."""
     mesh, sigma_cutoff, filename, _ = _get_gamma_read_params(context)
-    return read_gamma_from_hdf5(
-        mesh,
-        sigma=sigma,
-        sigma_cutoff=sigma_cutoff,
-        filename=filename,
-        grid_point=grid_point,
-        band_index=band_index,
+    return cast(
+        _GammaReadResult,
+        read_gamma_from_hdf5(
+            mesh,
+            sigma=sigma,
+            sigma_cutoff=sigma_cutoff,
+            filename=filename,
+            grid_point=grid_point,
+            band_index=band_index,
+        ),
     )
 
 
 def _store_gamma_payload(
     optional_data: _GammaFileData,
     *,
-    gamma_target,
-    gamma_iso_target,
-    gamma_N_target,
-    gamma_U_target,
-    ave_pp_target,
+    gamma_target: NDArray[np.float64],
+    gamma_iso_target: NDArray[np.float64],
+    gamma_N_target: NDArray[np.float64],
+    gamma_U_target: NDArray[np.float64],
+    ave_pp_target: NDArray[np.float64],
     optional_flags: _OptionalGammaFlags,
 ) -> None:
     """Store one gamma payload block into target arrays and optional fields."""
@@ -673,7 +697,7 @@ def _load_gamma_for_sigma(
 
 def _set_gamma_from_file(
     br: ConductivityRTABase, filename: str | None = None, verbose: bool = True
-):
+) -> bool:
     """Read kappa-*.hdf5 files for thermal conductivity calculation.
 
     If kappa-m*.hdf5 that contains all data is not found, kappa-m*-gp*.hdf5
@@ -695,6 +719,7 @@ def _set_gamma_from_file(
     grid_points = br.grid_points
     temperatures = br.temperatures
     num_band = br.frequencies.shape[1]
+    assert temperatures is not None
 
     gamma, gamma_N, gamma_U, gamma_iso, ave_pp = _allocate_gamma_read_arrays(
         sigmas,
@@ -743,10 +768,10 @@ def _set_gamma_from_file(
 def _update_optional_gamma_payloads(
     optional_data: _GammaFileData,
     *,
-    gamma_iso_target,
-    gamma_N_target,
-    gamma_U_target,
-    ave_pp_target,
+    gamma_iso_target: NDArray[np.float64],
+    gamma_N_target: NDArray[np.float64],
+    gamma_U_target: NDArray[np.float64],
+    ave_pp_target: NDArray[np.float64],
     optional_flags: _OptionalGammaFlags,
 ) -> None:
     """Update optional gamma-derived payload arrays if those keys exist."""
@@ -756,9 +781,12 @@ def _update_optional_gamma_payloads(
 
     gamma_N = optional_data.get("gamma_N")
     if gamma_N is not None:
+        gamma_U = optional_data.get("gamma_U")
+        if gamma_U is None:
+            raise KeyError("'gamma_U' is missing in gamma payload.")
         optional_flags["has_gamma_N_U"] = True
         gamma_N_target[...] = gamma_N
-        gamma_U_target[...] = optional_data["gamma_U"]
+        gamma_U_target[...] = gamma_U
 
     ave_pp = optional_data.get("ave_pp")
     if ave_pp is not None:

@@ -281,7 +281,7 @@ class ConductivityRTAWriter:
     def write_kappa(
         br: cond_RTA_type,
         volume: float,
-        compression: str = "gzip",
+        compression: Literal["gzip", "lzf"] | int | None,
         filename: str | None = None,
         log_level: int = 0,
     ):

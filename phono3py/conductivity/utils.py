@@ -34,7 +34,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from typing import TYPE_CHECKING, Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
 
 from phono3py.file_IO import write_pp_to_hdf5
 from phono3py.phonon3.interaction import Interaction
@@ -100,7 +100,7 @@ def write_pp_interaction(
     pp: Interaction,
     i,
     filename=None,
-    compression="gzip",
+    compression: Literal["gzip", "lzf"] | int | None = "gzip",
 ):
     """Write ph-ph interaction strength in hdf5 file."""
     grid_point = conductivity.grid_points[i]
