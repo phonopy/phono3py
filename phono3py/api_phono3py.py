@@ -2190,10 +2190,10 @@ class Phono3py:
     def run_thermal_conductivity(
         self,
         is_LBTE: bool = False,
-        temperatures: Sequence | None = None,
+        temperatures: Sequence[float] | NDArray | None = None,
         is_isotope: bool = False,
-        mass_variances: Sequence | None = None,
-        grid_points: ArrayLike | None = None,
+        mass_variances: Sequence[float] | NDArray | None = None,
+        grid_points: Sequence[int] | NDArray | None = None,
         boundary_mfp: float | None = None,  # in micrometer
         solve_collective_phonon: bool = False,
         use_ave_pp: bool = False,
@@ -2211,7 +2211,7 @@ class Phono3py:
         write_kappa: bool = False,
         write_gamma_detail: bool = False,
         write_collision: bool = False,
-        read_collision: str | Sequence | None = None,
+        read_collision: str | Sequence[int] | None = None,
         write_pp: bool = False,
         read_pp: bool = False,
         read_elph: int | None = None,
