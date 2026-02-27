@@ -36,6 +36,7 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Sequence
 from typing import Literal, TypeAlias, TypedDict
 
@@ -424,7 +425,7 @@ def _run_rta_grid_point_outputs(
     write_gamma: bool,
     write_gamma_detail: bool,
     compression: Literal["gzip", "lzf"] | int | None,
-    output_filename: str | None,
+    output_filename: str | os.PathLike | None,
     log_level: int,
 ):
     for i in br:
@@ -439,7 +440,7 @@ def _run_rta_grid_point_outputs(
                 i,
                 compression=compression,
                 filename=output_filename,
-                verbose=log_level,
+                verbose=log_level > 0,
             )
         if write_gamma_detail:
             ConductivityRTAWriter.write_gamma_detail(
@@ -448,7 +449,7 @@ def _run_rta_grid_point_outputs(
                 i,
                 compression=compression,
                 filename=output_filename,
-                verbose=log_level,
+                verbose=log_level > 0,
             )
 
 

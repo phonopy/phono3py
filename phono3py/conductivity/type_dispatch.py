@@ -338,26 +338,32 @@ def _get_dispatch_entry(
 
 def _build_dispatch_metadata_matrix() -> ConductivityDispatchMatrix:
     """Build metadata matrix from dispatch registry entries."""
-    return {
-        approximation: {ctype: asdict(entry) for ctype, entry in entries.items()}
-        for approximation, entries in (
-            ("rta", _get_dispatch_entries("rta")),
-            ("lbte", _get_dispatch_entries("lbte")),
-        )
-    }
+    return cast(
+        ConductivityDispatchMatrix,
+        {
+            approximation: {ctype: asdict(entry) for ctype, entry in entries.items()}
+            for approximation, entries in (
+                ("rta", _get_dispatch_entries("rta")),
+                ("lbte", _get_dispatch_entries("lbte")),
+            )
+        },
+    )
 
 
 def _build_conductivity_class_matrix() -> ConductivityClassMatrix:
     """Build class matrix from dispatch registry entries."""
-    return {
-        approximation: {
-            ctype: entry.conductivity_class for ctype, entry in entries.items()
-        }
-        for approximation, entries in (
-            ("rta", _get_dispatch_entries("rta")),
-            ("lbte", _get_dispatch_entries("lbte")),
-        )
-    }
+    return cast(
+        ConductivityClassMatrix,
+        {
+            approximation: {
+                ctype: entry.conductivity_class for ctype, entry in entries.items()
+            }
+            for approximation, entries in (
+                ("rta", _get_dispatch_entries("rta")),
+                ("lbte", _get_dispatch_entries("lbte")),
+            )
+        },
+    )
 
 
 # Public API: class and progress selectors.

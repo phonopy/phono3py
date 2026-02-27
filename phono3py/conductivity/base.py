@@ -168,7 +168,7 @@ class ConductivityComponentsBase(ABC):
         grid_points: Sequence[int] | NDArray[np.int64],
         grid_weights: Sequence[int] | NDArray[np.int64],
         point_operations: NDArray[np.int64],
-        rotations_cartesian: NDArray[np.int64],
+        rotations_cartesian: NDArray[np.float64],
         temperatures: NDArray[np.float64] | None = None,
         average_gv_over_kstar: bool = False,
         is_kappa_star: bool = True,
@@ -284,7 +284,7 @@ class ConductivityComponents(ConductivityComponentsBase):
         grid_points: NDArray[np.int64],
         grid_weights: NDArray[np.int64],
         point_operations: NDArray[np.int64],
-        rotations_cartesian: NDArray[np.int64],
+        rotations_cartesian: NDArray[np.float64],
         temperatures: NDArray[np.float64] | None = None,
         average_gv_over_kstar: bool = False,
         is_kappa_star: bool = True,
@@ -440,8 +440,7 @@ class ConductivityBase(ABC):
             Interaction class instance.
         grid_points : array_like or None, optional
             Grid point indices in BZgrid. When None, ir-grid points are searched
-            internally. Default is None.
-            shape=(grid_points, ), dtype='int64'.
+            internally. Default is None. shape=(grid_points, ), dtype='int64'.
         temperatures : array_like, optional, default is None
             Temperatures at which thermal conductivity is calculated.
             shape=(temperature_points, ), dtype='double'.
@@ -451,31 +450,31 @@ class ConductivityBase(ABC):
             tetrahedron method is used instead of smearing method.
         sigma_cutoff : float, optional, default is None
             This is given as a multiple of the standard deviation. For example,
-            if this value is 5, the tail of the Gaussian function is cut at 5 sigma.
+            if this value is 5, the tail of the Gaussian function is cut at 5
+            sigma.
         is_isotope : bool, optional, default is False
             With or without isotope scattering.
         mass_variances : array_like, optional, default is None
-            Mass variances for isotope scattering calculation. When None,
-            the values stored in phono3py are used with `is_isotope=True`.
+            Mass variances for isotope scattering calculation. When None, the
+            values stored in phono3py are used with `is_isotope=True`.
             shape(atoms_in_primitive, ), dtype='double'.
         boundary_mfp : float, optional, default is None
-            Mean free path in micrometer to calculate simple boundary
-            scattering contribution to thermal conductivity.
-            None ignores this contribution.
+            Mean free path in micrometer to calculate simple boundary scattering
+            contribution to thermal conductivity. None ignores this
+            contribution.
         is_kappa_star : bool, optional
-            When True, reciprocal space symmetry is used to calculate
-            lattice thermal conductivity. This calculation is performed
-            iterating over specific grid points. With `is_kappa_star=True`
-            and `grid_points=None`, ir-grid points are used for the iteration.
+            When True, reciprocal space symmetry is used to calculate lattice
+            thermal conductivity. This calculation is performed iterating over
+            specific grid points. With `is_kappa_star=True` and
+            `grid_points=None`, ir-grid points are used for the iteration.
             Default is True.
         is_full_pp : bool, optional, default is False
-            With True, full elements of phonon-phonon interaction strength
-            are computed. However with tetrahedron method, part of them are
-            known to be zero and unnecessary to calculation. With False,
-            those elements are not calculated, by which considerable
-            improve of efficiency is expected.
-            With smearing method, even if this is set False, full elements
-            are computed unless `sigma_cutoff` is specified.
+            With True, full elements of phonon-phonon interaction strength are
+            computed. However with tetrahedron method, part of them are known to
+            be zero and unnecessary to calculation. With False, those elements
+            are not calculated, by which considerable improve of efficiency is
+            expected. With smearing method, even if this is set False, full
+            elements are computed unless `sigma_cutoff` is specified.
         log_level : int, optional
             Verbosity control. Default is 0.
 

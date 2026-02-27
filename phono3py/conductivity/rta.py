@@ -81,7 +81,14 @@ class ConductivityRTA(ConductivityRTABase):
         is_frequency_shift_by_bubble: bool = False,
         log_level: int = 0,
     ):
-        """Init method."""
+        """Init method.
+
+        gv_delta_q : float, optional, default is None
+            With non-analytical correction, group velocity is calculated by
+            central finite difference method. This value gives the distance in
+            both directions in reciprocal space. The default value will be 1e-5.
+
+        """
         self._kappa = None
         self._mode_kappa = None
 
@@ -153,6 +160,11 @@ class ConductivityRTA(ConductivityRTABase):
             raise RuntimeError(
                 "Temperatures have not been set yet. "
                 "Set temperatures before this method."
+            )
+        if self._mode_kappa is None:
+            raise RuntimeError(
+                "Mode kappa has not been allocated yet. "
+                "Run self._allocate_values() before this method."
             )
 
         num_band = len(self._pp.primitive) * 3
