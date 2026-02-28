@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import os
 from collections.abc import Callable
-from typing import Literal, TypeAlias, TypeVar, cast
+from typing import Any, Literal, TypeAlias, cast
 
-import numpy as np
+from numpy.typing import NDArray
 
 from phono3py.conductivity.base import get_unit_to_WmK
 from phono3py.conductivity.rta import ConductivityRTA
@@ -24,11 +24,10 @@ from phono3py.phonon3.triplets import get_all_triplets
 cond_RTA_type: TypeAlias = ConductivityRTABase
 _RTAProgressMode: TypeAlias = Literal["default", "wigner"]
 _RTAProgressHandler: TypeAlias = Callable[[cond_RTA_type, int], None]
-_T = TypeVar("_T")
 
 
-def _require_not_none(value: _T | None, name: str) -> _T:
-    """Return non-None value, otherwise fail fast with assertion."""
+def _require_ndarray_not_none(value: NDArray[Any] | None, name: str) -> NDArray[Any]:
+    """Return non-None ndarray, otherwise fail fast with assertion."""
     assert value is not None, f"{name} must not be None"
     return value
 
@@ -77,17 +76,17 @@ class ShowCalcProgress:
     @staticmethod
     def kappa_RTA(br: ConductivityRTA, log_level: int) -> None:
         """Show RTA calculation progress."""
-        temperatures = br.temperatures
+        temperatures = _require_ndarray_not_none(br.temperatures, "br.temperatures")
         sigmas = br.sigmas
-        kappa = _require_not_none(br.kappa, "br.kappa")
-        num_ignored_phonon_modes = _require_not_none(
+        kappa = _require_ndarray_not_none(br.kappa, "br.kappa")
+        num_ignored_phonon_modes = _require_ndarray_not_none(
             br.number_of_ignored_phonon_modes,
             "br.number_of_ignored_phonon_modes",
         )
         num_band = br.frequencies.shape[1]
         num_phonon_modes = br.number_of_sampling_grid_points * num_band
         for i, sigma in enumerate(sigmas):
-            kappa_i = np.asarray(_require_not_none(kappa[i], "kappa[i]"))
+            kappa_i = _require_ndarray_not_none(kappa[i], "kappa[i]")
             text = "----------- Thermal conductivity (W/m-k) "
             if sigma:
                 text += "for sigma=%s -----------" % sigma
@@ -120,24 +119,22 @@ class ShowCalcProgress:
     @staticmethod
     def kappa_Wigner_RTA(br: ConductivityWignerRTA, log_level: int) -> None:
         """Show Wigner-RTA calculation progress."""
-        temperatures = br.temperatures
+        temperatures = _require_ndarray_not_none(br.temperatures, "br.temperatures")
         sigmas = br.sigmas
-        kappa_TOT_RTA = _require_not_none(br.kappa_TOT_RTA, "br.kappa_TOT_RTA")
-        kappa_P_RTA = _require_not_none(br.kappa_P_RTA, "br.kappa_P_RTA")
-        kappa_C = _require_not_none(br.kappa_C, "br.kappa_C")
-        num_ignored_phonon_modes = _require_not_none(
+        kappa_TOT_RTA = _require_ndarray_not_none(br.kappa_TOT_RTA, "br.kappa_TOT_RTA")
+        kappa_P_RTA = _require_ndarray_not_none(br.kappa_P_RTA, "br.kappa_P_RTA")
+        kappa_C = _require_ndarray_not_none(br.kappa_C, "br.kappa_C")
+        num_ignored_phonon_modes = _require_ndarray_not_none(
             br.number_of_ignored_phonon_modes,
             "br.number_of_ignored_phonon_modes",
         )
         num_band = br.frequencies.shape[1]
         num_phonon_modes = br.number_of_sampling_grid_points * num_band
         for i, sigma in enumerate(sigmas):
-            kappa_p_rta_i = np.asarray(
-                _require_not_none(kappa_P_RTA[i], "kappa_P_RTA[i]"),
-            )
-            kappa_c_i = np.asarray(_require_not_none(kappa_C[i], "kappa_C[i]"))
-            kappa_tot_rta_i = np.asarray(
-                _require_not_none(kappa_TOT_RTA[i], "kappa_TOT_RTA[i]"),
+            kappa_p_rta_i = _require_ndarray_not_none(kappa_P_RTA[i], "kappa_P_RTA[i]")
+            kappa_c_i = _require_ndarray_not_none(kappa_C[i], "kappa_C[i]")
+            kappa_tot_rta_i = _require_ndarray_not_none(
+                kappa_TOT_RTA[i], "kappa_TOT_RTA[i]"
             )
             text = "----------- Thermal conductivity (W/m-k) "
             if sigma:
@@ -233,8 +230,10 @@ class ConductivityRTAWriter:
         gamma_N, gamma_U = br.get_gamma_N_U()
 
         gp = grid_points[i]
-        phonons = _require_not_none(interaction.get_phonons()[0], "interaction phonons")
-        mode_heat_capacities = _require_not_none(
+        phonons = _require_ndarray_not_none(
+            interaction.get_phonons()[0], "interaction phonons"
+        )
+        mode_heat_capacities = _require_ndarray_not_none(
             mode_heat_capacities,
             "mode_heat_capacities",
         )
@@ -406,7 +405,7 @@ class ConductivityRTAWriter:
         sigma_cutoff = br.sigma_cutoff_width
         triplets, weights, _, _ = interaction.get_triplets_at_q()
         all_triplets = get_all_triplets(gp, interaction.bz_grid)
-        gamma_detail = _require_not_none(gamma_detail, "gamma_detail")
+        gamma_detail = _require_ndarray_not_none(gamma_detail, "gamma_detail")
 
         if all_bands_exist(interaction):
             for sigma in sigmas:
