@@ -58,11 +58,11 @@ class _OptionalGammaFlags(TypedDict):
 
 
 class _GammaFileData(TypedDict, total=False):
-    gamma: NDArray[np.float64]
-    gamma_isotope: NDArray[np.float64]
-    gamma_N: NDArray[np.float64]
-    gamma_U: NDArray[np.float64]
-    ave_pp: NDArray[np.float64] | float
+    gamma: NDArray[np.double]
+    gamma_isotope: NDArray[np.double]
+    gamma_N: NDArray[np.double]
+    gamma_U: NDArray[np.double]
+    ave_pp: NDArray[np.double] | float
 
 
 class _GammaReadContext(TypedDict):
@@ -71,22 +71,22 @@ class _GammaReadContext(TypedDict):
     filename: str | None
     grid_points: Sequence[int] | NDArray[np.int64]
     num_band: int
-    gamma: NDArray[np.float64]
-    gamma_iso: NDArray[np.float64]
-    gamma_N: NDArray[np.float64]
-    gamma_U: NDArray[np.float64]
-    ave_pp: NDArray[np.float64]
+    gamma: NDArray[np.double]
+    gamma_iso: NDArray[np.double]
+    gamma_N: NDArray[np.double]
+    gamma_U: NDArray[np.double]
+    ave_pp: NDArray[np.double]
     optional_flags: _OptionalGammaFlags
     verbose: bool
 
 
 class _RTAInitOptions(TypedDict):
     grid_points: Sequence[int] | NDArray[np.int64] | None
-    temperatures: Sequence[float] | NDArray[np.float64] | None
+    temperatures: Sequence[float] | NDArray[np.double] | None
     sigmas: Sequence[float | None] | None
     sigma_cutoff: float | None
     is_isotope: bool
-    mass_variances: Sequence[float] | NDArray[np.float64] | None
+    mass_variances: Sequence[float] | NDArray[np.double] | None
     boundary_mfp: float | None
     use_ave_pp: bool
     is_kappa_star: bool
@@ -125,11 +125,11 @@ class _RTAInputReadOptions(TypedDict):
 
 
 _GammaReadArrays: TypeAlias = tuple[
-    NDArray[np.float64],
-    NDArray[np.float64],
-    NDArray[np.float64],
-    NDArray[np.float64],
-    NDArray[np.float64],
+    NDArray[np.double],
+    NDArray[np.double],
+    NDArray[np.double],
+    NDArray[np.double],
+    NDArray[np.double],
 ]
 
 _GammaReadResult: TypeAlias = tuple[_GammaFileData | None, str]
@@ -142,18 +142,18 @@ _GammaReadParams: TypeAlias = tuple[
 ]
 
 _GammaPayloadTargets: TypeAlias = tuple[
-    NDArray[np.float64],
-    NDArray[np.float64],
-    NDArray[np.float64],
-    NDArray[np.float64],
-    NDArray[np.float64],
+    NDArray[np.double],
+    NDArray[np.double],
+    NDArray[np.double],
+    NDArray[np.double],
+    NDArray[np.double],
     _OptionalGammaFlags,
 ]
 
 
 def _allocate_gamma_read_arrays(
     sigmas: Sequence[float | None],
-    temperatures: Sequence[float] | NDArray[np.float64],
+    temperatures: Sequence[float] | NDArray[np.double],
     grid_points: Sequence[int] | NDArray[np.int64],
     num_band: int,
 ) -> _GammaReadArrays:
@@ -175,11 +175,11 @@ def _build_gamma_read_context(
     filename: str | None,
     grid_points: Sequence[int] | NDArray[np.int64],
     num_band: int,
-    gamma: NDArray[np.float64],
-    gamma_iso: NDArray[np.float64],
-    gamma_N: NDArray[np.float64],
-    gamma_U: NDArray[np.float64],
-    ave_pp: NDArray[np.float64],
+    gamma: NDArray[np.double],
+    gamma_iso: NDArray[np.double],
+    gamma_N: NDArray[np.double],
+    gamma_U: NDArray[np.double],
+    ave_pp: NDArray[np.double],
     optional_flags: _OptionalGammaFlags,
     verbose: bool,
 ) -> _GammaReadContext:
@@ -204,10 +204,10 @@ def _build_gamma_read_context(
 def _apply_loaded_gamma_results(
     br: ConductivityRTABase,
     *,
-    gamma: NDArray[np.float64],
-    gamma_N: NDArray[np.float64],
-    gamma_U: NDArray[np.float64],
-    ave_pp: NDArray[np.float64],
+    gamma: NDArray[np.double],
+    gamma_N: NDArray[np.double],
+    gamma_U: NDArray[np.double],
+    ave_pp: NDArray[np.double],
     optional_flags: _OptionalGammaFlags,
 ) -> None:
     """Apply loaded gamma arrays and optional payloads to conductivity object."""
@@ -221,11 +221,11 @@ def _apply_loaded_gamma_results(
 def _build_rta_init_options(
     *,
     grid_points: Sequence[int] | NDArray[np.int64] | None,
-    temperatures: Sequence[float] | NDArray[np.float64] | None,
+    temperatures: Sequence[float] | NDArray[np.double] | None,
     sigmas: Sequence[float | None] | None,
     sigma_cutoff: float | None,
     is_isotope: bool,
-    mass_variances: Sequence[float] | NDArray[np.float64] | None,
+    mass_variances: Sequence[float] | NDArray[np.double] | None,
     boundary_mfp: float | None,
     use_ave_pp: bool,
     is_kappa_star: bool,
@@ -331,10 +331,10 @@ def _apply_rta_input_reads(
 
 def get_thermal_conductivity_RTA(
     interaction: Interaction,
-    temperatures: Sequence[float] | NDArray[np.float64] | None = None,
+    temperatures: Sequence[float] | NDArray[np.double] | None = None,
     sigmas: Sequence[float | None] | None = None,
     sigma_cutoff: float | None = None,
-    mass_variances: Sequence[float] | NDArray[np.float64] | None = None,
+    mass_variances: Sequence[float] | NDArray[np.double] | None = None,
     grid_points: Sequence[int] | NDArray[np.int64] | None = None,
     is_isotope: bool = False,
     boundary_mfp: float | None = None,  # in micrometer
@@ -423,8 +423,8 @@ def get_thermal_conductivity_RTA(
 
 
 def _normalize_rta_temperatures(
-    temperatures: Sequence[float] | NDArray[np.float64] | None,
-) -> Sequence[float] | NDArray[np.float64]:
+    temperatures: Sequence[float] | NDArray[np.double] | None,
+) -> Sequence[float] | NDArray[np.double]:
     if temperatures is None:
         return np.arange(0, 1001, 10, dtype="double")
     return temperatures
@@ -554,11 +554,11 @@ def _read_gamma_payload(
 def _store_gamma_payload(
     optional_data: _GammaFileData,
     *,
-    gamma_target: NDArray[np.float64],
-    gamma_iso_target: NDArray[np.float64],
-    gamma_N_target: NDArray[np.float64],
-    gamma_U_target: NDArray[np.float64],
-    ave_pp_target: NDArray[np.float64],
+    gamma_target: NDArray[np.double],
+    gamma_iso_target: NDArray[np.double],
+    gamma_N_target: NDArray[np.double],
+    gamma_U_target: NDArray[np.double],
+    ave_pp_target: NDArray[np.double],
     optional_flags: _OptionalGammaFlags,
 ) -> None:
     """Store one gamma payload block into target arrays and optional fields."""
@@ -768,10 +768,10 @@ def _set_gamma_from_file(
 def _update_optional_gamma_payloads(
     optional_data: _GammaFileData,
     *,
-    gamma_iso_target: NDArray[np.float64],
-    gamma_N_target: NDArray[np.float64],
-    gamma_U_target: NDArray[np.float64],
-    ave_pp_target: NDArray[np.float64],
+    gamma_iso_target: NDArray[np.double],
+    gamma_N_target: NDArray[np.double],
+    gamma_U_target: NDArray[np.double],
+    ave_pp_target: NDArray[np.double],
     optional_flags: _OptionalGammaFlags,
 ) -> None:
     """Update optional gamma-derived payload arrays if those keys exist."""

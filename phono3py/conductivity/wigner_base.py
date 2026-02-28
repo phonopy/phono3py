@@ -75,7 +75,7 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
         grid_weights: NDArray[np.int64],
         point_operations: NDArray[np.int64],
         rotations_cartesian: NDArray[np.int64],
-        temperatures: NDArray[np.float64] | None = None,
+        temperatures: NDArray[np.double] | None = None,
         is_kappa_star: bool = True,
         gv_delta_q: float | None = None,
         is_reducible_collision_matrix: bool = False,
@@ -240,7 +240,7 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
     def _rotate_velocity_operator(
         self,
         gv_operator: NDArray[np.complex128],
-        rotation_t: NDArray[np.float64],
+        rotation_t: NDArray[np.double],
     ) -> NDArray[np.complex128]:
         nbands, nat3, _ = gv_operator.shape
         gvs_rot_operator = np.zeros((nbands, nat3, 3), dtype=self._complex_dtype)

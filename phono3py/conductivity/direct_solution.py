@@ -128,27 +128,27 @@ class ConductivityLBTE(ConductivityLBTEBase):
         )
 
     @property
-    def kappa(self) -> NDArray[np.float64] | None:
+    def kappa(self) -> NDArray[np.double] | None:
         """Return kappa."""
         return self._kappa
 
     @property
-    def mode_kappa(self) -> NDArray[np.float64] | None:
+    def mode_kappa(self) -> NDArray[np.double] | None:
         """Return mode_kappa."""
         return self._mode_kappa
 
     @property
-    def kappa_RTA(self) -> NDArray[np.float64] | None:
+    def kappa_RTA(self) -> NDArray[np.double] | None:
         """Return RTA lattice thermal conductivity."""
         return self._kappa_RTA
 
     @property
-    def mode_kappa_RTA(self) -> NDArray[np.float64] | None:
+    def mode_kappa_RTA(self) -> NDArray[np.double] | None:
         """Return RTA mode lattice thermal conductivities."""
         return self._mode_kappa_RTA
 
     @property
-    def gv_by_gv(self) -> NDArray[np.float64]:
+    def gv_by_gv(self) -> NDArray[np.double]:
         """Return gv_by_gv at grid points where mode kappa are calculated."""
         return self._conductivity_components.gv_by_gv
 
@@ -192,7 +192,7 @@ class ConductivityLBTE(ConductivityLBTEBase):
         )
 
     def _set_kappa_at_sigmas(
-        self, weights: NDArray[np.float64] | NDArray[np.int64]
+        self, weights: NDArray[np.double] | NDArray[np.int64]
     ) -> None:
         """Calculate thermal conductivity from collision matrix."""
         self._set_kappa_at_sigmas_common(weights)
@@ -213,7 +213,7 @@ class ConductivityLBTE(ConductivityLBTEBase):
         self,
         i_sigma: int,
         i_temp: int,
-        weights: NDArray[np.float64] | NDArray[np.int64],
+        weights: NDArray[np.double] | NDArray[np.int64],
     ) -> None:
         self._set_kappa_by_collision_type(
             self._kappa,
@@ -227,7 +227,7 @@ class ConductivityLBTE(ConductivityLBTEBase):
         self,
         i_sigma: int,
         i_temp: int,
-        weights: NDArray[np.float64] | NDArray[np.int64],
+        weights: NDArray[np.double] | NDArray[np.int64],
     ) -> None:
         self._set_kappa_RTA_by_collision_type(
             self._kappa_RTA,

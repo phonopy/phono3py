@@ -55,11 +55,11 @@ from phono3py.phonon3.interaction import Interaction, all_bands_exist
 
 class _LBTEInitOptions(TypedDict):
     grid_points: Sequence[int] | NDArray[np.int64] | None
-    temperatures: Sequence[float] | NDArray[np.float64] | None
+    temperatures: Sequence[float] | NDArray[np.double] | None
     sigmas: Sequence[float | None] | None
     sigma_cutoff: float | None
     is_isotope: bool
-    mass_variances: Sequence[float] | NDArray[np.float64] | None
+    mass_variances: Sequence[float] | NDArray[np.double] | None
     boundary_mfp: float | None
     solve_collective_phonon: bool
     is_reducible_collision_matrix: bool
@@ -112,23 +112,23 @@ class _CollisionReadContext(TypedDict):
 
 
 _CollisionMatrixPayload: TypeAlias = tuple[
-    NDArray[np.float64],
-    NDArray[np.float64],
-    NDArray[np.float64],
+    NDArray[np.double],
+    NDArray[np.double],
+    NDArray[np.double],
 ]
 _CollisionReadSource: TypeAlias = Literal["full_matrix", "grid_points"]
-_AllocatedCollisionPayload: TypeAlias = tuple[None, None, NDArray[np.float64]]
+_AllocatedCollisionPayload: TypeAlias = tuple[None, None, NDArray[np.double]]
 _CollisionPayload: TypeAlias = _CollisionMatrixPayload | _AllocatedCollisionPayload
 
 
 def _build_lbte_init_options(
     *,
     grid_points: Sequence[int] | NDArray[np.int64] | None,
-    temperatures: Sequence[float] | NDArray[np.float64] | None,
+    temperatures: Sequence[float] | NDArray[np.double] | None,
     sigmas: Sequence[float | None] | None,
     sigma_cutoff: float | None,
     is_isotope: bool,
-    mass_variances: Sequence[float] | NDArray[np.float64] | None,
+    mass_variances: Sequence[float] | NDArray[np.double] | None,
     boundary_mfp: float | None,
     solve_collective_phonon: bool,
     is_reducible_collision_matrix: bool,
@@ -289,11 +289,11 @@ def _read_collision_payload(
 
 def get_thermal_conductivity_LBTE(
     interaction: Interaction,
-    temperatures: Sequence[float] | NDArray[np.float64] | None = None,
+    temperatures: Sequence[float] | NDArray[np.double] | None = None,
     sigmas: Sequence[float | None] | None = None,
     sigma_cutoff: float | None = None,
     is_isotope: bool = False,
-    mass_variances: Sequence[float] | NDArray[np.float64] | None = None,
+    mass_variances: Sequence[float] | NDArray[np.double] | None = None,
     grid_points: Sequence[int] | NDArray[np.int64] | None = None,
     boundary_mfp: float | None = None,  # in micrometer
     solve_collective_phonon: bool = False,
@@ -412,7 +412,7 @@ def _normalize_lbte_temperatures(
 
 
 def _format_lbte_temperatures_log(
-    temperatures: Sequence[float] | NDArray[np.float64],
+    temperatures: Sequence[float] | NDArray[np.double],
 ) -> str:
     if len(temperatures) > 5:
         text = (" %.1f " * 5 + "...") % tuple(temperatures[:5])
@@ -729,9 +729,9 @@ def _allocate_collision_with_fallback(
 
 
 def _collect_collision_gp(
-    colmat_at_sigma: NDArray[np.float64],
-    gamma_at_sigma: NDArray[np.float64],
-    temperatures: NDArray[np.float64],
+    colmat_at_sigma: NDArray[np.double],
+    gamma_at_sigma: NDArray[np.double],
+    temperatures: NDArray[np.double],
     context: _CollisionReadContext,
     i: int,
     gp: int,
@@ -758,9 +758,9 @@ def _collect_collision_gp(
 
 
 def _collect_collision_with_band_fallback(
-    colmat_at_sigma: NDArray[np.float64],
-    gamma_at_sigma: NDArray[np.float64],
-    temperatures: NDArray[np.float64],
+    colmat_at_sigma: NDArray[np.double],
+    gamma_at_sigma: NDArray[np.double],
+    temperatures: NDArray[np.double],
     context: _CollisionReadContext,
     i: int,
     gp: int,
@@ -797,9 +797,9 @@ def _collect_collision_with_band_fallback(
 
 
 def _collect_collision_band(
-    colmat_at_sigma: NDArray[np.float64],
-    gamma_at_sigma: NDArray[np.float64],
-    temperatures: NDArray[np.float64],
+    colmat_at_sigma: NDArray[np.double],
+    gamma_at_sigma: NDArray[np.double],
+    temperatures: NDArray[np.double],
     context: _CollisionReadContext,
     i: int,
     gp: int,

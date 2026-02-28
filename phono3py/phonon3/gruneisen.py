@@ -211,7 +211,7 @@ class Gruneisen:
     ):
         """Set sampling mesh."""
         self._run_mode = "mesh"
-        self._mesh = np.array(mesh, dtype="intc")
+        self._mesh = np.array(mesh, dtype="int64")
         self._qpoints, self._weights = get_qpoints(
             self._mesh,
             np.linalg.inv(self._pcell.cell),

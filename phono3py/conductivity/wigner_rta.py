@@ -64,11 +64,11 @@ class ConductivityWignerRTA(ConductivityRTABase):
         self,
         interaction: Interaction,
         grid_points: Sequence[int] | NDArray[np.int64] | None = None,
-        temperatures: Sequence[float] | NDArray[np.float64] | None = None,
+        temperatures: Sequence[float] | NDArray[np.double] | None = None,
         sigmas: Sequence[float | None] | None = None,
         sigma_cutoff: float | None = None,
         is_isotope: bool = False,
-        mass_variances: Sequence[float] | NDArray[np.float64] | None = None,
+        mass_variances: Sequence[float] | NDArray[np.double] | None = None,
         boundary_mfp: float | None = None,  # in micrometer
         use_ave_pp: bool = False,
         is_kappa_star: bool = True,
@@ -132,27 +132,27 @@ class ConductivityWignerRTA(ConductivityRTABase):
         )
 
     @property
-    def kappa_TOT_RTA(self) -> NDArray[np.float64] | None:
+    def kappa_TOT_RTA(self) -> NDArray[np.double] | None:
         """Return kappa."""
         return self._kappa_TOT_RTA
 
     @property
-    def kappa_P_RTA(self) -> NDArray[np.float64] | None:
+    def kappa_P_RTA(self) -> NDArray[np.double] | None:
         """Return kappa."""
         return self._kappa_P_RTA
 
     @property
-    def kappa_C(self) -> NDArray[np.float64] | None:
+    def kappa_C(self) -> NDArray[np.double] | None:
         """Return kappa."""
         return self._kappa_C
 
     @property
-    def mode_kappa_P_RTA(self) -> NDArray[np.float64] | None:
+    def mode_kappa_P_RTA(self) -> NDArray[np.double] | None:
         """Return mode_kappa."""
         return self._mode_kappa_P_RTA
 
     @property
-    def mode_kappa_C(self) -> NDArray[np.float64] | None:
+    def mode_kappa_C(self) -> NDArray[np.double] | None:
         """Return mode_kappa."""
         return self._mode_kappa_C
 
@@ -213,9 +213,9 @@ class ConductivityWignerRTA(ConductivityRTABase):
         j: int,
         k: int,
         num_band: int,
-        frequencies: NDArray[np.float64],
+        frequencies: NDArray[np.double],
         gv_by_gv: NDArray[np.complex128],
-        cv: NDArray[np.float64],
+        cv: NDArray[np.double],
         THzToEv: float,
     ) -> None:
         if (
@@ -264,7 +264,7 @@ class ConductivityWignerRTA(ConductivityRTABase):
         cv_s2: float,
         gv_by_gv_s1s2: NDArray[np.complex128],
         THzToEv: float,
-    ) -> tuple[NDArray[np.float64], bool] | None:
+    ) -> tuple[NDArray[np.double], bool] | None:
         if (freq_s1 <= self._pp.cutoff_frequency) or (
             freq_s2 <= self._pp.cutoff_frequency
         ):

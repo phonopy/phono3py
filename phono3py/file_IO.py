@@ -683,7 +683,7 @@ def write_real_self_energy_to_hdf5(
     """
     full_filename = "deltas"
     suffix = _get_filename_suffix(mesh, grid_point=grid_point)
-    _band_indices = np.array(band_indices, dtype="intc")
+    _band_indices = np.array(band_indices, dtype="int64")
 
     full_filename += suffix
     if epsilon > 1e-5:
@@ -774,7 +774,7 @@ def write_spectral_function_to_hdf5(
     suffix = _get_filename_suffix(
         mesh, grid_point=grid_point, band_indices=_band_indices, sigma=sigma
     )
-    _band_indices = np.array(band_indices, dtype="intc")
+    _band_indices = np.array(band_indices, dtype="int64")
 
     full_filename += suffix
     if filename is not None:
@@ -1544,8 +1544,8 @@ def read_phonon_from_hdf5(mesh, filename=None, verbose=True) -> tuple:
         eigenvectors = np.array(
             f["eigenvector"][:], dtype=("c%d" % (itemsize * 2)), order="C"
         )
-        mesh_in_file = np.array(f["mesh"][:], dtype="intc")
-        grid_address = np.array(f["grid_address"][:], dtype="intc", order="C")
+        mesh_in_file = np.array(f["mesh"][:], dtype="int64")
+        grid_address = np.array(f["grid_address"][:], dtype="int64", order="C")
 
         assert (mesh_in_file == mesh).all(), "Mesh numbers are inconsistent."
 

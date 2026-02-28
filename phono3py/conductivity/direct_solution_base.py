@@ -524,7 +524,7 @@ class ConductivityLBTEBase(ConductivityBase):
             return self._pp.bz_grid.bzg2grg[self._grid_points[i_gp]]
         return i_gp
 
-    def _prepare_collision_matrix(self) -> NDArray[np.float64] | NDArray[np.int64]:
+    def _prepare_collision_matrix(self) -> NDArray[np.double] | NDArray[np.int64]:
         """Collect pieces and construct collision matrix."""
         if self._log_level:
             print(f"- Collision matrix shape {self._collision_matrix.shape}")
@@ -533,7 +533,7 @@ class ConductivityLBTEBase(ConductivityBase):
 
     def _prepare_collision_matrix_by_type(
         self,
-    ) -> NDArray[np.float64] | NDArray[np.int64]:
+    ) -> NDArray[np.double] | NDArray[np.int64]:
         if self._is_reducible_collision_matrix:
             return self._prepare_reducible_collision_matrix()
         return self._prepare_ir_collision_matrix()
@@ -556,14 +556,14 @@ class ConductivityLBTEBase(ConductivityBase):
     def _get_reducible_collision_weights(self) -> NDArray[np.int64]:
         return np.ones(np.prod(self._pp.mesh_numbers), dtype="int64")
 
-    def _prepare_ir_collision_matrix(self) -> NDArray[np.float64]:
+    def _prepare_ir_collision_matrix(self) -> NDArray[np.double]:
         self._combine_collisions()
         weights = self._apply_ir_collision_weights()
         self._average_collision_matrix_by_degeneracy()
         self._symmetrize_collision_matrix()
         return weights
 
-    def _apply_ir_collision_weights(self) -> NDArray[np.float64]:
+    def _apply_ir_collision_weights(self) -> NDArray[np.double]:
         return self._multiply_weights_to_collisions()
 
     def _get_reducible_rotation_maps(self):
@@ -621,7 +621,7 @@ class ConductivityLBTEBase(ConductivityBase):
 
     def _iter_ir_collision_diagonal_entries(
         self, i_sigma: int, i_temp: int
-    ) -> Iterator[tuple[int, NDArray[np.float64], NDArray[np.float64]]]:
+    ) -> Iterator[tuple[int, NDArray[np.double], NDArray[np.double]]]:
         for i_irgp, ir_gp in enumerate(self._ir_grid_points):
             for rotation, rotated_gp in zip(
                 self._rotations_cartesian, self._rot_grid_points[i_irgp], strict=True
@@ -634,7 +634,7 @@ class ConductivityLBTEBase(ConductivityBase):
 
     def _iter_reducible_collision_diagonal_entries(
         self, i_sigma: int, i_temp: int
-    ) -> Iterator[tuple[int, NDArray[np.float64]]]:
+    ) -> Iterator[tuple[int, NDArray[np.double]]]:
         num_mesh_points = np.prod(self._pp.mesh_numbers)
         for i_mesh in range(num_mesh_points):
             main_diagonal = self._get_main_diagonal(i_mesh, i_sigma, i_temp)
@@ -879,8 +879,8 @@ class ConductivityLBTEBase(ConductivityBase):
         return bi_set
 
     def _get_X(
-        self, i_temp: int, weights: NDArray[np.float64] | NDArray[np.int64]
-    ) -> NDArray[np.float64]:
+        self, i_temp: int, weights: NDArray[np.double] | NDArray[np.int64]
+    ) -> NDArray[np.double]:
         """Calculate X in Chaput's paper."""
         X = self._conductivity_components.group_velocities.copy()
         num_band = len(self._pp.primitive) * 3
@@ -893,14 +893,14 @@ class ConductivityLBTEBase(ConductivityBase):
             return np.zeros_like(X.reshape(-1, 3))
         return X.reshape(-1, 3)
 
-    def _get_X_frequencies(self) -> NDArray[np.float64]:
+    def _get_X_frequencies(self) -> NDArray[np.double]:
         if self._is_reducible_collision_matrix:
             return self._frequencies[self._pp.bz_grid.grg2bzg]
         return self._frequencies[self._ir_grid_points]
 
     def _get_X_frequency_factor(
-        self, freqs: NDArray[np.float64], temperature: float
-    ) -> NDArray[np.float64]:
+        self, freqs: NDArray[np.double], temperature: float
+    ) -> NDArray[np.double]:
         sinh = np.where(
             freqs > self._pp.cutoff_frequency,
             np.sinh(
@@ -920,9 +920,9 @@ class ConductivityLBTEBase(ConductivityBase):
 
     def _scale_X_by_weights_and_frequency(
         self,
-        X: NDArray[np.float64],
-        weights: NDArray[np.float64] | NDArray[np.int64],
-        freqs_factor: NDArray[np.float64],
+        X: NDArray[np.double],
+        weights: NDArray[np.double] | NDArray[np.int64],
+        freqs_factor: NDArray[np.double],
         num_band: int,
     ) -> None:
         for i, f in enumerate(freqs_factor):
@@ -934,9 +934,9 @@ class ConductivityLBTEBase(ConductivityBase):
         self,
         i_sigma: int,
         i_temp: int,
-        weights: NDArray[np.float64] | NDArray[np.int64],
-        X: NDArray[np.float64],
-    ) -> NDArray[np.float64]:
+        weights: NDArray[np.double] | NDArray[np.int64],
+        X: NDArray[np.double],
+    ) -> NDArray[np.double]:
         r"""Calculate Y = (\Omega^-1, X)."""
         solver = self._get_colmat_solver()
         num_grid_points, size = self._get_Y_problem_size()
@@ -972,7 +972,7 @@ class ConductivityLBTEBase(ConductivityBase):
 
     def _get_Y_solver_matrix(
         self, i_sigma: int, i_temp: int, size: int, solver: int
-    ) -> NDArray[np.float64]:
+    ) -> NDArray[np.double]:
         v = self._collision_matrix[i_sigma, i_temp].reshape(size, size)
         if solver in [1, 2, 4, 5]:
             return v.T
@@ -994,11 +994,11 @@ class ConductivityLBTEBase(ConductivityBase):
     def _solve_Y_by_solver(
         self,
         solver: int,
-        v: NDArray[np.float64],
-        X: NDArray[np.float64],
+        v: NDArray[np.double],
+        X: NDArray[np.double],
         i_sigma: int,
         i_temp: int,
-    ) -> NDArray[np.float64]:
+    ) -> NDArray[np.double]:
         if solver in [0, 1, 2, 3, 4, 5]:
             return self._solve_Y_with_eigendecomposition(v, X, i_sigma, i_temp)
         if solver == 6:
@@ -1009,11 +1009,11 @@ class ConductivityLBTEBase(ConductivityBase):
 
     def _solve_Y_with_eigendecomposition(
         self,
-        v: NDArray[np.float64],
-        X: NDArray[np.float64],
+        v: NDArray[np.double],
+        X: NDArray[np.double],
         i_sigma: int,
         i_temp: int,
-    ) -> NDArray[np.float64]:
+    ) -> NDArray[np.double]:
         if self._log_level:
             print(" (np.dot) ", end="")
             sys.stdout.flush()
@@ -1028,11 +1028,11 @@ class ConductivityLBTEBase(ConductivityBase):
 
     def _solve_Y_with_builtin_pinv(
         self,
-        v: NDArray[np.float64],
-        X: NDArray[np.float64],
+        v: NDArray[np.double],
+        X: NDArray[np.double],
         i_sigma: int,
         i_temp: int,
-    ) -> NDArray[np.float64]:
+    ) -> NDArray[np.double]:
         import phono3py._phono3py as phono3c
 
         if self._log_level:
@@ -1050,17 +1050,17 @@ class ConductivityLBTEBase(ConductivityBase):
         return self._solve_Y_with_direct_pinv(v, X)
 
     def _solve_Y_with_direct_pinv(
-        self, v: NDArray[np.float64], X: NDArray[np.float64]
-    ) -> NDArray[np.float64]:
+        self, v: NDArray[np.double], X: NDArray[np.double]
+    ) -> NDArray[np.double]:
         if self._is_reducible_collision_matrix:
             return np.dot(v, X)
         return np.dot(v, X.ravel()).reshape(-1, 3)
 
     def _set_f_vectors(
         self,
-        Y: NDArray[np.float64],
+        Y: NDArray[np.double],
         num_grid_points: int,
-        weights: NDArray[np.float64] | NDArray[np.int64],
+        weights: NDArray[np.double] | NDArray[np.int64],
     ) -> None:
         """Calculate f-vectors.
 
@@ -1073,7 +1073,7 @@ class ConductivityLBTEBase(ConductivityBase):
             (Y / 2).reshape(num_grid_points, num_band * 3).T / weights
         ).T.reshape(self._f_vectors.shape)
 
-    def _get_eigvals_pinv(self, i_sigma: int, i_temp: int) -> NDArray[np.float64]:
+    def _get_eigvals_pinv(self, i_sigma: int, i_temp: int) -> NDArray[np.double]:
         """Return inverse eigenvalues of eigenvalues > epsilon."""
         w = self._collision_eigenvalues[i_sigma, i_temp]
         e = np.zeros_like(w)
@@ -1118,7 +1118,7 @@ class ConductivityLBTEBase(ConductivityBase):
         raise NotImplementedError
 
     def _set_kappa_at_sigmas_common(
-        self, weights: NDArray[np.float64] | NDArray[np.int64]
+        self, weights: NDArray[np.double] | NDArray[np.int64]
     ) -> None:
         """Run common conductivity loop over sigma and temperature."""
         for i_sigma, sigma in enumerate(self._sigmas):
@@ -1149,7 +1149,7 @@ class ConductivityLBTEBase(ConductivityBase):
         i_sigma: int,
         i_temp: int,
         temperature: float,
-        weights: NDArray[np.float64] | NDArray[np.int64],
+        weights: NDArray[np.double] | NDArray[np.int64],
     ) -> None:
         """Run common per-(sigma, temperature) conductivity workflow."""
         if temperature <= 0:
@@ -1173,11 +1173,11 @@ class ConductivityLBTEBase(ConductivityBase):
 
     def _set_kappa_by_collision_type(
         self,
-        kappa: NDArray[np.float64],
-        mode_kappa: NDArray[np.float64],
+        kappa: NDArray[np.double],
+        mode_kappa: NDArray[np.double],
         i_sigma: int,
         i_temp: int,
-        weights: NDArray[np.float64] | NDArray[np.int64],
+        weights: NDArray[np.double] | NDArray[np.int64],
     ) -> None:
         """Dispatch kappa calculation by collision-matrix representation."""
         if self._is_reducible_collision_matrix:
@@ -1199,11 +1199,11 @@ class ConductivityLBTEBase(ConductivityBase):
 
     def _set_kappa_RTA_by_collision_type(
         self,
-        kappa_RTA: NDArray[np.float64],
-        mode_kappa_RTA: NDArray[np.float64],
+        kappa_RTA: NDArray[np.double],
+        mode_kappa_RTA: NDArray[np.double],
         i_sigma: int,
         i_temp: int,
-        weights: NDArray[np.float64] | NDArray[np.int64],
+        weights: NDArray[np.double] | NDArray[np.int64],
     ) -> None:
         """Dispatch RTA kappa calculation by collision-matrix representation."""
         if self._is_reducible_collision_matrix:
@@ -1225,11 +1225,11 @@ class ConductivityLBTEBase(ConductivityBase):
 
     def _set_kappa_RTA_ir_colmat(
         self,
-        kappa_RTA: NDArray[np.float64],
-        mode_kappa_RTA: NDArray[np.float64],
+        kappa_RTA: NDArray[np.double],
+        mode_kappa_RTA: NDArray[np.double],
         i_sigma: int,
         i_temp: int,
-        weights: NDArray[np.float64] | NDArray[np.int64],
+        weights: NDArray[np.double] | NDArray[np.int64],
     ) -> None:
         """Calculate RTA thermal conductivity.
 
@@ -1253,11 +1253,11 @@ class ConductivityLBTEBase(ConductivityBase):
 
     def _set_kappa_RTA_reducible_colmat(
         self,
-        kappa_RTA: NDArray[np.float64],
-        mode_kappa_RTA: NDArray[np.float64],
+        kappa_RTA: NDArray[np.double],
+        mode_kappa_RTA: NDArray[np.double],
         i_sigma: int,
         i_temp: int,
-        weights: NDArray[np.float64] | NDArray[np.int64],
+        weights: NDArray[np.double] | NDArray[np.int64],
     ) -> None:
         """Calculate RTA thermal conductivity.
 
@@ -1284,8 +1284,8 @@ class ConductivityLBTEBase(ConductivityBase):
         )
 
     def _build_rta_Y_ir_colmat(
-        self, i_sigma: int, i_temp: int, X: NDArray[np.float64]
-    ) -> NDArray[np.float64]:
+        self, i_sigma: int, i_temp: int, X: NDArray[np.double]
+    ) -> NDArray[np.double]:
         Y = np.zeros_like(X)
         num_band = len(self._pp.primitive) * 3
         for i, gp in enumerate(self._ir_grid_points):
@@ -1311,8 +1311,8 @@ class ConductivityLBTEBase(ConductivityBase):
         return Y
 
     def _build_rta_Y_reducible_colmat(
-        self, i_sigma: int, i_temp: int, X: NDArray[np.float64]
-    ) -> NDArray[np.float64]:
+        self, i_sigma: int, i_temp: int, X: NDArray[np.double]
+    ) -> NDArray[np.double]:
         num_band = len(self._pp.primitive) * 3
         num_mesh_points = int(np.prod(self._pp.mesh_numbers))
         size = num_mesh_points * num_band
@@ -1330,12 +1330,12 @@ class ConductivityLBTEBase(ConductivityBase):
 
     def _set_mode_kappa_and_accumulate(
         self,
-        kappa: NDArray[np.float64],
-        mode_kappa: NDArray[np.float64],
-        X: NDArray[np.float64],
-        Y: NDArray[np.float64],
+        kappa: NDArray[np.double],
+        mode_kappa: NDArray[np.double],
+        X: NDArray[np.double],
+        Y: NDArray[np.double],
         num_grid_points: int,
-        rotations_cartesian: NDArray[np.float64] | NDArray[np.int64] | None,
+        rotations_cartesian: NDArray[np.double] | NDArray[np.int64] | None,
         i_sigma: int,
         i_temp: int,
         rotation_normalization: float = 1.0,
@@ -1356,8 +1356,8 @@ class ConductivityLBTEBase(ConductivityBase):
 
     def _accumulate_kappa_from_mode_kappa(
         self,
-        kappa: NDArray[np.float64],
-        mode_kappa: NDArray[np.float64],
+        kappa: NDArray[np.double],
+        mode_kappa: NDArray[np.double],
         i_sigma: int,
         i_temp: int,
     ) -> None:
@@ -1368,11 +1368,11 @@ class ConductivityLBTEBase(ConductivityBase):
 
     def _set_mode_kappa(
         self,
-        mode_kappa: NDArray[np.float64],
-        X: NDArray[np.float64],
-        Y: NDArray[np.float64],
+        mode_kappa: NDArray[np.double],
+        X: NDArray[np.double],
+        Y: NDArray[np.double],
         num_grid_points: int,
-        rotations_cartesian: NDArray[np.float64] | NDArray[np.int64] | None,
+        rotations_cartesian: NDArray[np.double] | NDArray[np.int64] | None,
         i_sigma: int,
         i_temp: int,
     ) -> None:
@@ -1415,20 +1415,20 @@ class ConductivityLBTEBase(ConductivityBase):
 
     def _compute_mode_kappa_tensor(
         self,
-        v: NDArray[np.float64],
-        f: NDArray[np.float64],
-        rotations_cartesian: NDArray[np.float64] | NDArray[np.int64] | None,
-    ) -> NDArray[np.float64]:
+        v: NDArray[np.double],
+        f: NDArray[np.double],
+        rotations_cartesian: NDArray[np.double] | NDArray[np.int64] | None,
+    ) -> NDArray[np.double]:
         if rotations_cartesian is None:
             return np.outer(v, f)
         return self._compute_mode_kappa_tensor_with_rotations(v, f, rotations_cartesian)
 
     def _compute_mode_kappa_tensor_with_rotations(
         self,
-        v: NDArray[np.float64],
-        f: NDArray[np.float64],
-        rotations_cartesian: NDArray[np.float64] | NDArray[np.int64],
-    ) -> NDArray[np.float64]:
+        v: NDArray[np.double],
+        f: NDArray[np.double],
+        rotations_cartesian: NDArray[np.double] | NDArray[np.int64],
+    ) -> NDArray[np.double]:
         sum_k = np.zeros((3, 3), dtype="double")
         for r in rotations_cartesian:
             sum_k += np.outer(np.dot(r, v), np.dot(r, f))
@@ -1436,10 +1436,10 @@ class ConductivityLBTEBase(ConductivityBase):
 
     def _set_mode_kappa_Chaput(
         self,
-        mode_kappa: NDArray[np.float64],
+        mode_kappa: NDArray[np.double],
         i_sigma: int,
         i_temp: int,
-        weights: NDArray[np.float64] | NDArray[np.int64],
+        weights: NDArray[np.double] | NDArray[np.int64],
     ) -> None:
         """Calculate mode kappa by the way in Laurent Chaput's PRL paper.
 
@@ -1479,8 +1479,8 @@ class ConductivityLBTEBase(ConductivityBase):
         self,
         i_sigma: int,
         i_temp: int,
-        weights: NDArray[np.float64] | NDArray[np.int64],
-    ) -> tuple[NDArray[np.float64], int, int, int, NDArray[np.float64]]:
+        weights: NDArray[np.double] | NDArray[np.int64],
+    ) -> tuple[NDArray[np.double], int, int, int, NDArray[np.double]]:
         X = self._get_X(i_temp, weights).ravel()
         num_ir_grid_points = len(self._ir_grid_points)
         num_band = len(self._pp.primitive) * 3
@@ -1492,8 +1492,8 @@ class ConductivityLBTEBase(ConductivityBase):
         return X, num_ir_grid_points, num_band, solver, v
 
     def _build_chaput_omega_inverse(
-        self, v: NDArray[np.float64], i_sigma: int, i_temp: int
-    ) -> NDArray[np.float64]:
+        self, v: NDArray[np.double], i_sigma: int, i_temp: int
+    ) -> NDArray[np.double]:
         e = self._get_eigvals_pinv(i_sigma, i_temp)
         omega_inv = np.empty(v.shape, dtype="double", order="C")
         np.dot(v, (e * v).T, out=omega_inv)
@@ -1501,13 +1501,13 @@ class ConductivityLBTEBase(ConductivityBase):
 
     def _accumulate_chaput_mode_kappa_component(
         self,
-        mode_kappa: NDArray[np.float64],
+        mode_kappa: NDArray[np.double],
         i_sigma: int,
         i_temp: int,
         i_elem: int,
         vxf: tuple[int, int],
-        omega_inv: NDArray[np.float64],
-        X: NDArray[np.float64],
+        omega_inv: NDArray[np.double],
+        X: NDArray[np.double],
         num_ir_grid_points: int,
         num_band: int,
         solver: int,
@@ -1631,7 +1631,7 @@ class ConductivityLBTEBase(ConductivityBase):
 
 def diagonalize_collision_matrix(
     collision_matrices, i_sigma=None, i_temp=None, pinv_solver=0, log_level=0
-) -> NDArray[np.float64] | None:
+) -> NDArray[np.double] | None:
     """Diagonalize collision matrices.
 
     Note
