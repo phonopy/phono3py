@@ -300,7 +300,7 @@ def load(
         smat = ph3py_yaml.supercell_matrix
         ph_smat = ph3py_yaml.phonon_supercell_matrix
         if smat is None:
-            smat = np.eye(3, dtype="intc", order="C")
+            smat = np.eye(3, dtype="int64", order="C")
         if primitive_matrix == "auto":
             pmat = "auto"
         else:

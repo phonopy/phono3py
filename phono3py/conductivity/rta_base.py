@@ -66,11 +66,11 @@ class ConductivityRTABase(ConductivityBase):
         self,
         interaction: Interaction,
         grid_points: Sequence[int] | NDArray[np.int64] | None = None,
-        temperatures: Sequence[float] | NDArray[np.float64] | None = None,
+        temperatures: Sequence[float] | NDArray[np.double] | None = None,
         sigmas: Sequence[float | None] | None = None,
         sigma_cutoff: float | None = None,
         is_isotope: bool = False,
-        mass_variances: Sequence[float] | NDArray[np.float64] | None = None,
+        mass_variances: Sequence[float] | NDArray[np.double] | None = None,
         boundary_mfp: float | None = None,  # in micrometer
         use_ave_pp: bool = False,
         is_kappa_star: bool = True,
@@ -188,7 +188,7 @@ class ConductivityRTABase(ConductivityBase):
                 (num_grid_points, num_band0), order="C", dtype="double"
             )
         self._num_ignored_phonon_modes = np.zeros(
-            (len(self._sigmas), num_temp), order="C", dtype="intc"
+            (len(self._sigmas), num_temp), order="C", dtype="int64"
         )
 
     def _run_at_grid_point(self):

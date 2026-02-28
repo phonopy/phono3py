@@ -204,7 +204,7 @@ def distribute_fc3(
         Maps supercell index to compact index. For full-fc3,
         s2compact=np.arange(n_satom).
         shape=(n_satom,)
-        dtype=intc
+        dtype=int64
 
     """
     identity = np.eye(3, dtype=int)
@@ -436,7 +436,7 @@ def _get_constrained_fc2(
     # Shift positions according to set atom1 is at origin
     pos_center = positions[atom1].copy()
     positions -= pos_center
-    rotations = np.array(reduced_site_sym, dtype="intc", order="C")
+    rotations = np.array(reduced_site_sym, dtype="int64", order="C")
     translations = np.zeros((len(reduced_site_sym), 3), dtype="double", order="C")
     permutations = compute_all_sg_permutations(
         positions, rotations, translations, lattice, symprec

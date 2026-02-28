@@ -61,7 +61,7 @@ class ConductivityKuboComponents(ConductivityComponentsBase):
         grid_weights: NDArray[np.int64],
         point_operations: NDArray[np.int64],
         rotations_cartesian: NDArray[np.int64],
-        temperatures: NDArray[np.float64] | None = None,
+        temperatures: NDArray[np.double] | None = None,
         is_kappa_star: bool = True,
         gv_delta_q: float | None = None,
         log_level: int = 0,
@@ -80,7 +80,7 @@ class ConductivityKuboComponents(ConductivityComponentsBase):
         )
 
         self._complex_dtype = "c%d" % (np.dtype("double").itemsize * 2)
-        self._cv_mat: NDArray[np.float64]
+        self._cv_mat: NDArray[np.double]
         self._gv_mat: NDArray[np.complex128]
         self._gv_mat_sum2: NDArray[np.complex128]
 
@@ -95,7 +95,7 @@ class ConductivityKuboComponents(ConductivityComponentsBase):
             self._allocate_values()
 
     @property
-    def heat_capacity_matrices(self) -> NDArray[np.float64]:
+    def heat_capacity_matrices(self) -> NDArray[np.double]:
         """Return heat capacity matrices at sampling grid points."""
         return self._cv_mat
 

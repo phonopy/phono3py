@@ -269,7 +269,7 @@ def test_write_gamma_detail_band_resolved(monkeypatch):
             None,
             None,
         ),
-        get_band_indices=lambda: np.array([3, 7], dtype="int64"),
+        band_indices=np.array([3, 7], dtype="int64"),
     )
     gamma_detail = np.arange(2 * 1 * 2 * 1 * 1, dtype="double").reshape(2, 1, 2, 1, 1)
     br = SimpleNamespace(

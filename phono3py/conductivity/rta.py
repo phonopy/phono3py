@@ -63,11 +63,11 @@ class ConductivityRTA(ConductivityRTABase):
         self,
         interaction: Interaction,
         grid_points: Sequence[int] | NDArray[np.int64] | None = None,
-        temperatures: Sequence[float] | NDArray[np.float64] | None = None,
+        temperatures: Sequence[float] | NDArray[np.double] | None = None,
         sigmas: Sequence[float | None] | None = None,
         sigma_cutoff: float | None = None,
         is_isotope: bool = False,
-        mass_variances: Sequence[float] | NDArray[np.float64] | None = None,
+        mass_variances: Sequence[float] | NDArray[np.double] | None = None,
         boundary_mfp: float | None = None,  # in micrometer
         use_ave_pp: bool = False,
         is_kappa_star: bool = True,
@@ -127,17 +127,17 @@ class ConductivityRTA(ConductivityRTABase):
         )
 
     @property
-    def kappa(self) -> NDArray[np.float64] | None:
+    def kappa(self) -> NDArray[np.double] | None:
         """Return kappa."""
         return self._kappa
 
     @property
-    def mode_kappa(self) -> NDArray[np.float64] | None:
+    def mode_kappa(self) -> NDArray[np.double] | None:
         """Return mode_kappa."""
         return self._mode_kappa
 
     @property
-    def gv_by_gv(self) -> NDArray[np.float64]:
+    def gv_by_gv(self) -> NDArray[np.double]:
         """Return gv_by_gv at grid points where mode kappa are calculated."""
         return self._conductivity_components.gv_by_gv
 
@@ -203,10 +203,10 @@ class ConductivityRTA(ConductivityRTABase):
         freq: float,
         g_sum: float,
         cv: float,
-        gv_by_gv: NDArray[np.float64],
+        gv_by_gv: NDArray[np.double],
         gp: int,
         band_index: int,
-    ) -> NDArray[np.float64] | None:
+    ) -> NDArray[np.double] | None:
         if freq < self._pp.cutoff_frequency:
             return None
 

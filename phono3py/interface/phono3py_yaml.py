@@ -115,7 +115,7 @@ class Phono3pyYamlLoader(PhonopyYamlLoaderBase):
         super()._parse_all_cells()
         if "phonon_supercell_matrix" in self._yaml:
             self._data.phonon_supercell_matrix = np.array(
-                self._yaml["phonon_supercell_matrix"], dtype="intc", order="C"
+                self._yaml["phonon_supercell_matrix"], dtype="int64", order="C"
             )
             if "phonon_primitive_cell" in self._yaml:
                 self._data.phonon_primitive = self._parse_cell(
@@ -466,7 +466,7 @@ class Phono3pyYaml(PhonopyYaml):
     @phonon_supercell_matrix.setter
     def phonon_supercell_matrix(self, value: ArrayLike):
         """Set supercell matrix of phonopy calculation."""
-        self._data.phonon_supercell_matrix = np.array(value, dtype="intc", order="C")
+        self._data.phonon_supercell_matrix = np.array(value, dtype="int64", order="C")
 
     def __str__(self):
         """Return string text of yaml output."""
