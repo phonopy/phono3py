@@ -37,7 +37,6 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -123,7 +122,7 @@ class ConductivityWignerRTA(ConductivityRTABase):
                 self._grid_points,
                 self._grid_weights,
                 self._point_operations,
-                cast(NDArray[np.int64], self._rotations_cartesian),
+                self._rotations_cartesian,
                 temperatures=self._temperatures,
                 is_kappa_star=self._is_kappa_star,
                 gv_delta_q=gv_delta_q,

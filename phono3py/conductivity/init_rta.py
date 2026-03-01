@@ -37,6 +37,7 @@
 from __future__ import annotations
 
 import os
+import pathlib
 from collections.abc import Sequence
 from typing import Literal, TypeAlias, TypedDict, cast
 
@@ -320,13 +321,13 @@ def _apply_rta_input_reads(
     read_gamma: bool,
     read_elph: int | None,
     input_filename: str | None,
+    verbose: bool = False,
 ) -> None:
     if read_gamma:
-        if not _set_gamma_from_file(br, filename=input_filename):
-            raise RuntimeError("Reading collisions failed.")
+        _set_gamma_from_file(br, filename=input_filename, verbose=verbose)
 
     if read_elph is not None:
-        _set_gamma_elph_from_file(br, read_elph)
+        _set_gamma_elph_from_file(br, read_elph, verbose=verbose)
 
 
 def get_thermal_conductivity_RTA(
@@ -397,7 +398,7 @@ def get_thermal_conductivity_RTA(
         read_elph=read_elph,
         input_filename=input_filename,
     )
-    _apply_rta_input_reads(br, **input_read_options)
+    _apply_rta_input_reads(br, **input_read_options, verbose=log_level > 0)
 
     run_options = _build_rta_run_options(
         write_pp=write_pp,
@@ -430,8 +431,16 @@ def _normalize_rta_temperatures(
     return temperatures
 
 
-def _set_gamma_elph_from_file(br: ConductivityRTABase, read_elph: int) -> None:
-    with h5py.File("phono3py_elph.hdf5", "r") as f:
+def _set_gamma_elph_from_file(
+    br: ConductivityRTABase, read_elph: int, verbose: bool = False
+) -> None:
+    mesh_str = "".join(map(str, br.mesh_numbers))
+    filename = pathlib.Path(f"gamma_elph-m{mesh_str}.hdf5")
+    if not filename.is_file():
+        raise RuntimeError(f'"{filename}" not found for gammas of el-ph interaction.')
+    _log_if_verbose(verbose, f'Read gamma of el-ph interaction from "{filename}".')
+
+    with h5py.File(filename, "r") as f:
         gamma_key = f"gamma_{read_elph}"
         if gamma_key not in f:
             raise RuntimeError(f"{gamma_key} not found in phono3py_elph.hdf5.")
@@ -672,7 +681,9 @@ def _load_gamma_for_sigma(
         sigma=sigma,
     )
     if data:
-        _log_if_verbose(verbose, f"Read gamma from {full_filename}.")
+        _log_if_verbose(
+            verbose, f'Read gamma of ph-ph interaction from "{full_filename}".'
+        )
         _store_gamma_payload(
             data,
             gamma_target=gamma[i_sigma],
@@ -696,8 +707,8 @@ def _load_gamma_for_sigma(
 
 
 def _set_gamma_from_file(
-    br: ConductivityRTABase, filename: str | None = None, verbose: bool = True
-) -> bool:
+    br: ConductivityRTABase, filename: str | None = None, verbose: bool = False
+):
     """Read kappa-*.hdf5 files for thermal conductivity calculation.
 
     If kappa-m*.hdf5 that contains all data is not found, kappa-m*-gp*.hdf5
@@ -752,7 +763,7 @@ def _set_gamma_from_file(
     )
 
     if not read_succeeded:
-        return False
+        raise RuntimeError("Reading collisions failed.")
 
     _apply_loaded_gamma_results(
         br,
@@ -762,7 +773,6 @@ def _set_gamma_from_file(
         ave_pp=ave_pp,
         optional_flags=optional_flags,
     )
-    return True
 
 
 def _update_optional_gamma_payloads(

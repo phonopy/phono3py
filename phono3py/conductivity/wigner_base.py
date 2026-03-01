@@ -74,7 +74,7 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
         grid_points: NDArray[np.int64],
         grid_weights: NDArray[np.int64],
         point_operations: NDArray[np.int64],
-        rotations_cartesian: NDArray[np.int64],
+        rotations_cartesian: NDArray[np.double],
         temperatures: NDArray[np.double] | None = None,
         is_kappa_star: bool = True,
         gv_delta_q: float | None = None,
