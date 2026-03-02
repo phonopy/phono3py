@@ -13,8 +13,8 @@ from phono3py.conductivity.rta import ConductivityRTA
 from phono3py.conductivity.rta_base import ConductivityRTABase
 from phono3py.conductivity.type_dispatch import (
     get_rta_progress_mode,
-    get_rta_writer_grid_payload,
-    get_rta_writer_kappa_payload,
+    get_rta_writer_grid_data_map,
+    get_rta_writer_kappa_data_map,
 )
 from phono3py.conductivity.wigner_rta import ConductivityWignerRTA
 from phono3py.file_IO import write_gamma_detail_to_hdf5, write_kappa_to_hdf5
@@ -213,11 +213,11 @@ class ConductivityRTAWriter:
     ) -> None:
         """Write mode kappa related properties into a hdf5 file."""
         grid_points = br.grid_points
-        grid_payload = get_rta_writer_grid_payload(br, i)
-        group_velocities_i = grid_payload["group_velocities_i"]
-        gv_by_gv_i = grid_payload["gv_by_gv_i"]
-        velocity_operator_i = grid_payload["velocity_operator_i"]
-        mode_heat_capacities = grid_payload["mode_heat_capacities"]
+        grid_data = get_rta_writer_grid_data_map(br, i)
+        group_velocities_i = grid_data["group_velocities_i"]
+        gv_by_gv_i = grid_data["gv_by_gv_i"]
+        velocity_operator_i = grid_data["velocity_operator_i"]
+        mode_heat_capacities = grid_data["mode_heat_capacities"]
         ave_pp = br.averaged_pp_interaction
         mesh = br.mesh_numbers
         bz_grid = br.bz_grid
@@ -325,17 +325,17 @@ class ConductivityRTAWriter:
         mesh = br.mesh_numbers
         bz_grid = br.bz_grid
         frequencies = br.frequencies
-        payload = get_rta_writer_kappa_payload(br)
-        kappa = payload["kappa"]
-        mode_kappa = payload["mode_kappa"]
-        gv = payload["group_velocities"]
-        gv_by_gv = payload["gv_by_gv"]
-        kappa_TOT_RTA = payload["kappa_TOT_RTA"]
-        kappa_P_RTA = payload["kappa_P_RTA"]
-        kappa_C = payload["kappa_C"]
-        mode_kappa_P_RTA = payload["mode_kappa_P_RTA"]
-        mode_kappa_C = payload["mode_kappa_C"]
-        mode_cv = payload["mode_heat_capacities"]
+        kappa_data = get_rta_writer_kappa_data_map(br)
+        kappa = kappa_data["kappa"]
+        mode_kappa = kappa_data["mode_kappa"]
+        gv = kappa_data["group_velocities"]
+        gv_by_gv = kappa_data["gv_by_gv"]
+        kappa_TOT_RTA = kappa_data["kappa_TOT_RTA"]
+        kappa_P_RTA = kappa_data["kappa_P_RTA"]
+        kappa_C = kappa_data["kappa_C"]
+        mode_kappa_P_RTA = kappa_data["mode_kappa_P_RTA"]
+        mode_kappa_C = kappa_data["mode_kappa_C"]
+        mode_cv = kappa_data["mode_heat_capacities"]
         ave_pp = br.averaged_pp_interaction
         qpoints = br.qpoints
         grid_points = br.grid_points

@@ -6,7 +6,7 @@ import os
 
 from phono3py.conductivity.base import get_unit_to_WmK
 from phono3py.conductivity.direct_solution_base import ConductivityLBTEBase
-from phono3py.conductivity.type_dispatch import get_lbte_writer_kappa_payload
+from phono3py.conductivity.type_dispatch import get_lbte_writer_kappa_data_map
 from phono3py.conductivity.utils import select_colmat_solver
 from phono3py.file_IO import (
     write_collision_eigenvalues_to_hdf5,
@@ -122,19 +122,19 @@ class ConductivityLBTEWriter:
         log_level: int = 0,
     ):
         """Write kappa related properties into a hdf5 file."""
-        payload = get_lbte_writer_kappa_payload(lbte)
-        kappa = payload["kappa"]
-        mode_kappa = payload["mode_kappa"]
-        kappa_RTA = payload["kappa_RTA"]
-        mode_kappa_RTA = payload["mode_kappa_RTA"]
-        gv = payload["group_velocities"]
-        gv_by_gv = payload["gv_by_gv"]
-        kappa_P_exact = payload["kappa_P_exact"]
-        kappa_P_RTA = payload["kappa_P_RTA"]
-        kappa_C = payload["kappa_C"]
-        mode_kappa_P_exact = payload["mode_kappa_P_exact"]
-        mode_kappa_P_RTA = payload["mode_kappa_P_RTA"]
-        mode_kappa_C = payload["mode_kappa_C"]
+        kappa_data = get_lbte_writer_kappa_data_map(lbte)
+        kappa = kappa_data["kappa"]
+        mode_kappa = kappa_data["mode_kappa"]
+        kappa_RTA = kappa_data["kappa_RTA"]
+        mode_kappa_RTA = kappa_data["mode_kappa_RTA"]
+        gv = kappa_data["group_velocities"]
+        gv_by_gv = kappa_data["gv_by_gv"]
+        kappa_P_exact = kappa_data["kappa_P_exact"]
+        kappa_P_RTA = kappa_data["kappa_P_RTA"]
+        kappa_C = kappa_data["kappa_C"]
+        mode_kappa_P_exact = kappa_data["mode_kappa_P_exact"]
+        mode_kappa_P_RTA = kappa_data["mode_kappa_P_RTA"]
+        mode_kappa_C = kappa_data["mode_kappa_C"]
 
         temperatures = lbte.temperatures
         sigmas = lbte.sigmas

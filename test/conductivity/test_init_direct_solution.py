@@ -19,8 +19,8 @@ def _collision_context(log_level: int = 0):
     }
 
 
-def test_set_collision_from_full_matrix_if_available_sets_payload_and_temperatures():
-    """Full-matrix payload is copied into lbte buffers."""
+def test_set_collision_from_full_matrix_if_available_sets_data_and_temperatures():
+    """Full-matrix data is copied into lbte buffers."""
     lbte = SimpleNamespace(
         temperatures=None,
         collision_matrix=np.zeros((2, 1, 1), dtype="double"),
@@ -146,7 +146,7 @@ def test_collect_collision_with_band_fallback_runs_all_bands(monkeypatch):
 
 
 def test_set_collision_from_file_full_matrix_path(monkeypatch):
-    """`_set_collision_from_file` prefers full-matrix payload when available."""
+    """`_set_collision_from_file` prefers full-matrix data when available."""
     lbte = SimpleNamespace(
         bz_grid=SimpleNamespace(bzg2grg=np.array([0], dtype="int64")),
         sigmas=[None],
@@ -158,14 +158,14 @@ def test_set_collision_from_file_full_matrix_path(monkeypatch):
         gamma=np.zeros((1, 1, 1), dtype="double"),
     )
 
-    def _fake_read_collision_payload(_context, **_kwargs):
+    def _fake_read_collision_data(_context, **_kwargs):
         return (
             np.array([[[9.0]]], dtype="double"),
             np.array([[[4.0]]], dtype="double"),
             np.array([300.0], dtype="double"),
         )
 
-    monkeypatch.setattr(ids, "_read_collision_payload", _fake_read_collision_payload)
+    monkeypatch.setattr(ids, "_read_collision_data", _fake_read_collision_data)
     monkeypatch.setattr(
         ids,
         "_allocate_collision_with_fallback",
@@ -198,7 +198,7 @@ def test_set_collision_from_file_fallback_grid_points_path(monkeypatch):
     )
     calls = []
 
-    monkeypatch.setattr(ids, "_read_collision_payload", lambda *_args, **_kwargs: False)
+    monkeypatch.setattr(ids, "_read_collision_data", lambda *_args, **_kwargs: False)
     monkeypatch.setattr(
         ids,
         "_allocate_collision_with_fallback",

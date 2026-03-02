@@ -76,9 +76,9 @@ __all__ = [
     "RTAWriterGridData",
     "RTAWriterKappaData",
     "LBTEWriterKappaData",
-    "RTAWriterGridPayload",
-    "RTAWriterKappaPayload",
-    "LBTEWriterKappaPayload",
+    "RTAWriterGridDataMap",
+    "RTAWriterKappaDataMap",
+    "LBTEWriterKappaDataMap",
     # Public matrix/class selectors.
     "get_conductivity_dispatch_matrix",
     "get_conductivity_class_matrix",
@@ -88,16 +88,16 @@ __all__ = [
     "get_rta_progress_mode",
     # Public writer helpers.
     "get_rta_writer_grid_data",
-    "get_rta_writer_grid_payload",
+    "get_rta_writer_grid_data_map",
     "get_rta_writer_kappa_data",
-    "get_rta_writer_kappa_payload",
+    "get_rta_writer_kappa_data_map",
     "get_lbte_writer_kappa_data",
-    "get_lbte_writer_kappa_payload",
+    "get_lbte_writer_kappa_data_map",
 ]
 
 
-class RTAWriterGridPayload(TypedDict):
-    """Per-grid payload used by `ConductivityRTAWriter.write_gamma`."""
+class RTAWriterGridDataMap(TypedDict):
+    """Per-grid named data used by `ConductivityRTAWriter.write_gamma`."""
 
     group_velocities_i: Any | None
     gv_by_gv_i: Any | None
@@ -105,8 +105,8 @@ class RTAWriterGridPayload(TypedDict):
     mode_heat_capacities: Any | None
 
 
-class RTAWriterKappaPayload(TypedDict):
-    """Kappa payload used by `ConductivityRTAWriter.write_kappa`."""
+class RTAWriterKappaDataMap(TypedDict):
+    """Kappa named data used by `ConductivityRTAWriter.write_kappa`."""
 
     kappa: Any | None
     mode_kappa: Any | None
@@ -120,8 +120,8 @@ class RTAWriterKappaPayload(TypedDict):
     mode_heat_capacities: Any | None
 
 
-class LBTEWriterKappaPayload(TypedDict):
-    """Kappa payload used by `ConductivityLBTEWriter.write_kappa`."""
+class LBTEWriterKappaDataMap(TypedDict):
+    """Kappa named data used by `ConductivityLBTEWriter.write_kappa`."""
 
     kappa: Any | None
     mode_kappa: Any | None
@@ -422,7 +422,7 @@ def _find_dispatch_entry_by_isinstance(
     return None
 
 
-# Private helpers: payload extraction and tuple shaping.
+# Private helpers: data extraction and tuple shaping.
 def _get_wigner_velocity_operator_i(br: Any, i: int) -> Any | None:
     """Return velocity-operator slice at grid index, if available."""
     velocity_operator = getattr(br, "velocity_operator", None)
@@ -444,46 +444,46 @@ def _get_attr_or_none(obj: Any, name: str) -> Any | None:
     return getattr(obj, name)
 
 
-def _get_payload_attr(
+def _get_data_attr(
     obj: Any,
     entry: DispatchEntry | None,
     attr_name: str,
 ) -> Any | None:
-    """Return payload attribute when permitted by dispatch capability."""
+    """Return data attribute when permitted by dispatch capability."""
     if entry is not None and attr_name not in entry.writer_attrs:
         return None
     return _get_attr_or_none(obj, attr_name)
 
 
-def _get_payload_attrs(
+def _get_data_attrs(
     obj: Any,
     entry: DispatchEntry | None,
     attr_names: tuple[str, ...],
 ) -> tuple[Any | None, ...]:
-    """Return tuple of payload attributes for requested names."""
-    return tuple(_get_payload_attr(obj, entry, attr_name) for attr_name in attr_names)
+    """Return tuple of data attributes for requested names."""
+    return tuple(_get_data_attr(obj, entry, attr_name) for attr_name in attr_names)
 
 
 def _should_pick_wigner_velocity_operator(
     br: Any,
     dispatch_entry: DispatchEntry | None,
 ) -> bool:
-    """Return True when wigner velocity-operator payload should be read."""
-    velocity_operator = _get_payload_attr(br, dispatch_entry, "velocity_operator")
+    """Return True when wigner velocity-operator data should be read."""
+    velocity_operator = _get_data_attr(br, dispatch_entry, "velocity_operator")
     return velocity_operator is not None or _has_all_attrs(
         br, "_conductivity_components"
     )
 
 
-def _payload_values(
-    payload: Mapping[str, Any | None],
+def _data_values(
+    data_map: Mapping[str, Any | None],
     keys: tuple[str, ...],
 ) -> tuple[Any | None, ...]:
-    """Return payload values as a tuple in the requested key order."""
-    return tuple(payload[key] for key in keys)
+    """Return map values as a tuple in the requested key order."""
+    return tuple(data_map[key] for key in keys)
 
 
-# Public API: writer payload and compatibility wrappers.
+# Public API: writer data helpers.
 def get_rta_conductivity_class(
     conductivity_type: ConductivityType,
 ) -> RTAConductivityClass:
@@ -507,20 +507,20 @@ def get_rta_writer_grid_data(
     i: int,
 ) -> RTAWriterGridData:
     """Return optional per-grid-point arrays used by RTA writer."""
-    payload = get_rta_writer_grid_payload(br, i)
-    return cast(RTAWriterGridData, _payload_values(payload, _RTA_GRID_DATA_KEYS))
+    data_map = get_rta_writer_grid_data_map(br, i)
+    return cast(RTAWriterGridData, _data_values(data_map, _RTA_GRID_DATA_KEYS))
 
 
-def get_rta_writer_grid_payload(
+def get_rta_writer_grid_data_map(
     br: ConductivityRTABase,
     i: int,
-) -> RTAWriterGridPayload:
-    """Return named per-grid-point payload used by RTA writer."""
+) -> RTAWriterGridDataMap:
+    """Return named per-grid-point data used by RTA writer."""
     dispatch_entry = _resolve_dispatch_entry("rta", br)
 
     group_velocities_i = None
     gv_by_gv_i = None
-    group_velocities, gv_by_gv, mode_heat_capacities = _get_payload_attrs(
+    group_velocities, gv_by_gv, mode_heat_capacities = _get_data_attrs(
         br, dispatch_entry, _RTA_GRID_ATTR_KEYS
     )
     if group_velocities is not None and gv_by_gv is not None:
@@ -543,14 +543,14 @@ def get_rta_writer_kappa_data(
     br: ConductivityRTABase,
 ) -> RTAWriterKappaData:
     """Return optional conductivity arrays used by RTA kappa writer."""
-    payload = get_rta_writer_kappa_payload(br)
-    return cast(RTAWriterKappaData, _payload_values(payload, _RTA_KAPPA_KEYS))
+    data_map = get_rta_writer_kappa_data_map(br)
+    return cast(RTAWriterKappaData, _data_values(data_map, _RTA_KAPPA_KEYS))
 
 
-def get_rta_writer_kappa_payload(
+def get_rta_writer_kappa_data_map(
     br: ConductivityRTABase,
-) -> RTAWriterKappaPayload:
-    """Return named conductivity payload used by RTA kappa writer."""
+) -> RTAWriterKappaDataMap:
+    """Return named conductivity data used by RTA kappa writer."""
     dispatch_entry = _resolve_dispatch_entry("rta", br)
 
     (
@@ -564,7 +564,7 @@ def get_rta_writer_kappa_payload(
         mode_kappa_P_RTA,
         mode_kappa_C,
         mode_cv,
-    ) = _get_payload_attrs(
+    ) = _get_data_attrs(
         br,
         dispatch_entry,
         _RTA_KAPPA_KEYS,
@@ -586,14 +586,14 @@ def get_rta_writer_kappa_payload(
 
 def get_lbte_writer_kappa_data(lbte: ConductivityLBTEBase) -> LBTEWriterKappaData:
     """Return optional conductivity arrays used by LBTE kappa writer."""
-    payload = get_lbte_writer_kappa_payload(lbte)
-    return cast(LBTEWriterKappaData, _payload_values(payload, _LBTE_KAPPA_KEYS))
+    data_map = get_lbte_writer_kappa_data_map(lbte)
+    return cast(LBTEWriterKappaData, _data_values(data_map, _LBTE_KAPPA_KEYS))
 
 
-def get_lbte_writer_kappa_payload(
+def get_lbte_writer_kappa_data_map(
     lbte: ConductivityLBTEBase,
-) -> LBTEWriterKappaPayload:
-    """Return named conductivity payload used by LBTE kappa writer."""
+) -> LBTEWriterKappaDataMap:
+    """Return named conductivity data used by LBTE kappa writer."""
     dispatch_entry = _resolve_dispatch_entry("lbte", lbte)
 
     (
@@ -609,7 +609,7 @@ def get_lbte_writer_kappa_payload(
         mode_kappa_P_exact,
         mode_kappa_P_RTA,
         mode_kappa_C,
-    ) = _get_payload_attrs(
+    ) = _get_data_attrs(
         lbte,
         dispatch_entry,
         _LBTE_KAPPA_KEYS,

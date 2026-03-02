@@ -48,9 +48,9 @@ _TOptions = TypeVar("_TOptions")
 
 
 def build_options(_options_type: type[_TOptions], **kwargs: Any) -> _TOptions:
-    """Return kwargs cast as a typed options payload.
+    """Return kwargs cast as typed options data.
 
-    This is a tiny helper for constructing `TypedDict` option payloads in init
+    This is a tiny helper for constructing `TypedDict` option data in init
     modules without repeating explicit key-to-value dict literals.
 
     """
