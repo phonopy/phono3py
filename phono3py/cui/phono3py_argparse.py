@@ -700,7 +700,7 @@ def get_parser(load_phono3py_yaml: bool = False):
         dest="read_elph",
         type=int,
         default=None,
-        help="Index to read Gammas of el-ph interaction from phono3py_elph.hdf5",
+        help="An index (e.g., 1, 2, ...) to read Gammas of el-ph interaction from file",
     )
     parser.add_argument(
         "--read-gamma",

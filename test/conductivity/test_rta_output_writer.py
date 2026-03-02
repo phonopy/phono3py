@@ -9,7 +9,7 @@ from phono3py.conductivity.base import get_unit_to_WmK
 from phono3py.conductivity.rta_output import ConductivityRTAWriter
 
 
-def test_write_kappa_calls_hdf5_writer_per_sigma(monkeypatch):
+def test_write_kappa_calls_hdf5_writer(monkeypatch):
     """`write_kappa` forwards per-sigma payload to hdf5 writer."""
     calls = []
 
@@ -47,7 +47,8 @@ def test_write_kappa_calls_hdf5_writer_per_sigma(monkeypatch):
         sigmas=[None, 0.1],
         sigma_cutoff_width=None,
         gamma=np.zeros((2, 1, 1, 1), dtype="double"),
-        gamma_isotope=None,
+        gamma_isotope=np.zeros((2, 1, 1, 1), dtype="double"),
+        gamma_elph=np.zeros((1, 1, 1), dtype="double"),
         mesh_numbers=np.array([2, 2, 2], dtype="int64"),
         bz_grid=SimpleNamespace(),
         frequencies=np.array([[5.0]], dtype="double"),

@@ -321,6 +321,7 @@ class ConductivityRTAWriter:
         gamma = br.gamma
         gamma_isotope = br.gamma_isotope
         gamma_N, gamma_U = br.get_gamma_N_U()
+        gamma_elph = br.gamma_elph
         mesh = br.mesh_numbers
         bz_grid = br.bz_grid
         frequencies = br.frequencies
@@ -352,6 +353,7 @@ class ConductivityRTAWriter:
             gamma_isotope_at_sigma = _pick_sigma_item(gamma_isotope, i)
             gamma_N_at_sigma = _pick_sigma_item(gamma_N, i)
             gamma_U_at_sigma = _pick_sigma_item(gamma_U, i)
+            gamma_elph = _pick_optional_item(gamma_elph)
 
             write_kappa_to_hdf5(
                 temperatures,
@@ -373,6 +375,7 @@ class ConductivityRTAWriter:
                 gamma_isotope=gamma_isotope_at_sigma,
                 gamma_N=gamma_N_at_sigma,
                 gamma_U=gamma_U_at_sigma,
+                gamma_elph=gamma_elph,
                 averaged_pp_interaction=ave_pp,
                 qpoint=qpoints,
                 grid_point=grid_points,
