@@ -339,9 +339,7 @@ class ConductivityRTABase(ConductivityBase):
                 self._gamma_N[i_sigma, k, i_gp] = g_N
                 self._gamma_U[i_sigma, k, i_gp] = g_U
             if self._is_gamma_detail:
-                self._gamma_detail_at_q[k] = (
-                    self._collision.get_detailed_imag_self_energy()
-                )
+                self._gamma_detail_at_q[k] = self._collision.detailed_imag_self_energy
 
     def _set_gamma_at_sigmas_lowmem(self, i):
         """Calculate gamma without storing ph-ph interaction strength.

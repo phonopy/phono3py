@@ -111,14 +111,14 @@ class _CollisionReadContext(TypedDict):
     log_level: int
 
 
-_CollisionMatrixPayload: TypeAlias = tuple[
+_CollisionMatrixData: TypeAlias = tuple[
     NDArray[np.double],
     NDArray[np.double],
     NDArray[np.double],
 ]
 _CollisionReadSource: TypeAlias = Literal["full_matrix", "grid_points"]
-_AllocatedCollisionPayload: TypeAlias = tuple[None, None, NDArray[np.double]]
-_CollisionPayload: TypeAlias = _CollisionMatrixPayload | _AllocatedCollisionPayload
+_AllocatedCollisionData: TypeAlias = tuple[None, None, NDArray[np.double]]
+_CollisionData: TypeAlias = _CollisionMatrixData | _AllocatedCollisionData
 
 
 def _build_lbte_init_options(
@@ -248,32 +248,32 @@ def _build_collision_read_context(
 
 
 @overload
-def _read_collision_payload(
+def _read_collision_data(
     context: _CollisionReadContext,
     *,
     grid_point: int | None = None,
     band_index: int | None = None,
     only_temperatures: Literal[False] = False,
-) -> _CollisionMatrixPayload: ...
+) -> _CollisionMatrixData: ...
 
 
 @overload
-def _read_collision_payload(
+def _read_collision_data(
     context: _CollisionReadContext,
     *,
     grid_point: int | None = None,
     band_index: int | None = None,
     only_temperatures: Literal[True],
-) -> _AllocatedCollisionPayload: ...
+) -> _AllocatedCollisionData: ...
 
 
-def _read_collision_payload(
+def _read_collision_data(
     context: _CollisionReadContext,
     *,
     grid_point: int | None = None,
     band_index: int | None = None,
     only_temperatures: bool = False,
-) -> _CollisionPayload:
+) -> _CollisionData:
     return read_collision_from_hdf5(
         context["mesh"],
         indices=context["indices"],
@@ -599,13 +599,13 @@ def _set_collision_from_file(
             filename=filename,
             log_level=log_level,
         )
-        collisions = _read_collision_payload(context)
+        collision_data = _read_collision_data(context)
         if log_level:
             sys.stdout.flush()
 
         if _set_collision_from_full_matrix_if_available(
             lbte,
-            collisions,
+            collision_data,
             i_sigma,
             arrays_allocated,
         ):
@@ -651,14 +651,14 @@ def _set_collision_from_file(
 
 def _set_collision_from_full_matrix_if_available(
     lbte: ConductivityLBTEBase,
-    collisions: _CollisionMatrixPayload | None,
+    collision_data: _CollisionMatrixData | None,
     i_sigma: int,
     arrays_allocated: bool,
 ) -> bool:
-    if not collisions:
+    if not collision_data:
         return False
 
-    colmat_at_sigma, gamma_at_sigma, temperatures = collisions
+    colmat_at_sigma, gamma_at_sigma, temperatures = collision_data
     if not arrays_allocated:
         # The following invokes self._allocate_values()
         lbte.temperatures = temperatures
@@ -675,15 +675,15 @@ def _allocate_collision(
     for_gps: bool,
     grid_points: Sequence[int] | NDArray[np.int64],
     context: _CollisionReadContext,
-) -> _AllocatedCollisionPayload | Literal[False]:
+) -> _AllocatedCollisionData | Literal[False]:
     if for_gps:
-        collision = _read_collision_payload(
+        collision = _read_collision_data(
             context,
             grid_point=grid_points[0],
             only_temperatures=True,
         )
     else:
-        collision = _read_collision_payload(
+        collision = _read_collision_data(
             context,
             grid_point=grid_points[0],
             band_index=0,
@@ -700,7 +700,7 @@ def _allocate_collision_with_fallback(
     grid_points: Sequence[int] | NDArray[np.int64],
     context: _CollisionReadContext,
     log_level: int,
-) -> _AllocatedCollisionPayload | Literal[False]:
+) -> _AllocatedCollisionData | Literal[False]:
     vals = _allocate_collision(
         True,
         grid_points,
@@ -738,7 +738,7 @@ def _collect_collision_gp(
     bzg2grg: NDArray[np.int64],
     is_reducible_collision_matrix: bool,
 ) -> bool:
-    collision_gp = _read_collision_payload(context, grid_point=gp)
+    collision_gp = _read_collision_data(context, grid_point=gp)
     if context["log_level"]:
         sys.stdout.flush()
 
@@ -807,7 +807,7 @@ def _collect_collision_band(
     j: int,
     is_reducible_collision_matrix: bool,
 ) -> bool:
-    collision_band = _read_collision_payload(
+    collision_band = _read_collision_data(
         context,
         grid_point=gp,
         band_index=j,

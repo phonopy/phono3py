@@ -17,13 +17,13 @@ from phono3py.conductivity.type_dispatch import (
     get_conductivity_dispatch_matrix,
     get_lbte_conductivity_class,
     get_lbte_writer_kappa_data,
-    get_lbte_writer_kappa_payload,
+    get_lbte_writer_kappa_data_map,
     get_rta_conductivity_class,
     get_rta_progress_mode,
     get_rta_writer_grid_data,
-    get_rta_writer_grid_payload,
+    get_rta_writer_grid_data_map,
     get_rta_writer_kappa_data,
-    get_rta_writer_kappa_payload,
+    get_rta_writer_kappa_data_map,
 )
 from phono3py.conductivity.wigner_direct_solution import ConductivityWignerLBTE
 from phono3py.conductivity.wigner_rta import ConductivityWignerRTA
@@ -99,7 +99,7 @@ def test_get_rta_progress_mode():
 
 
 def test_get_rta_writer_grid_data_from_attr_capabilities():
-    """Grid payload is extracted by available attributes, not class identity."""
+    """Grid data is extracted by available attributes, not class identity."""
     velocity_operator = np.array([[[1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]]])
     br_like = SimpleNamespace(
         group_velocities=np.array([[[1.0, 2.0, 3.0]]]),
@@ -115,8 +115,8 @@ def test_get_rta_writer_grid_data_from_attr_capabilities():
     np.testing.assert_allclose(mode_cv, br_like.mode_heat_capacities)
 
 
-def test_get_rta_writer_grid_payload_from_attr_capabilities():
-    """Named RTA grid payload keeps stable key-based access."""
+def test_get_rta_writer_grid_data_map_from_attr_capabilities():
+    """Named RTA grid data keeps stable key-based access."""
     velocity_operator = np.array([[[1.0 + 0.0j, 0.0 + 0.0j, 0.0 + 0.0j]]])
     br_like = SimpleNamespace(
         group_velocities=np.array([[[1.0, 2.0, 3.0]]]),
@@ -125,19 +125,19 @@ def test_get_rta_writer_grid_payload_from_attr_capabilities():
         velocity_operator=velocity_operator,
     )
 
-    payload = get_rta_writer_grid_payload(br_like, 0)
+    data_map = get_rta_writer_grid_data_map(br_like, 0)
     np.testing.assert_allclose(
-        payload["group_velocities_i"], br_like.group_velocities[0]
+        data_map["group_velocities_i"], br_like.group_velocities[0]
     )
-    np.testing.assert_allclose(payload["gv_by_gv_i"], br_like.gv_by_gv[0])
-    np.testing.assert_allclose(payload["velocity_operator_i"], velocity_operator[0])
+    np.testing.assert_allclose(data_map["gv_by_gv_i"], br_like.gv_by_gv[0])
+    np.testing.assert_allclose(data_map["velocity_operator_i"], velocity_operator[0])
     np.testing.assert_allclose(
-        payload["mode_heat_capacities"], br_like.mode_heat_capacities
+        data_map["mode_heat_capacities"], br_like.mode_heat_capacities
     )
 
 
 def test_get_rta_writer_kappa_data_from_attr_capabilities():
-    """Kappa payload fields are picked directly from available attributes."""
+    """Kappa data fields are picked directly from available attributes."""
     br_like = SimpleNamespace(
         kappa=np.array([[[1.0] * 6]]),
         mode_kappa=np.array([[[[[1.0] * 6]]]]),
@@ -151,21 +151,21 @@ def test_get_rta_writer_kappa_data_from_attr_capabilities():
         mode_heat_capacities=np.array([[[10.0]]]),
     )
 
-    payload = get_rta_writer_kappa_data(br_like)
-    assert payload[0] is br_like.kappa
-    assert payload[1] is br_like.mode_kappa
-    assert payload[2] is br_like.group_velocities
-    assert payload[3] is br_like.gv_by_gv
-    assert payload[4] is br_like.kappa_TOT_RTA
-    assert payload[5] is br_like.kappa_P_RTA
-    assert payload[6] is br_like.kappa_C
-    assert payload[7] is br_like.mode_kappa_P_RTA
-    assert payload[8] is br_like.mode_kappa_C
-    assert payload[9] is br_like.mode_heat_capacities
+    data = get_rta_writer_kappa_data(br_like)
+    assert data[0] is br_like.kappa
+    assert data[1] is br_like.mode_kappa
+    assert data[2] is br_like.group_velocities
+    assert data[3] is br_like.gv_by_gv
+    assert data[4] is br_like.kappa_TOT_RTA
+    assert data[5] is br_like.kappa_P_RTA
+    assert data[6] is br_like.kappa_C
+    assert data[7] is br_like.mode_kappa_P_RTA
+    assert data[8] is br_like.mode_kappa_C
+    assert data[9] is br_like.mode_heat_capacities
 
 
-def test_get_rta_writer_kappa_payload_from_attr_capabilities():
-    """Named RTA kappa payload keeps stable key-based access."""
+def test_get_rta_writer_kappa_data_map_from_attr_capabilities():
+    """Named RTA kappa data keeps stable key-based access."""
     br_like = SimpleNamespace(
         kappa=np.array([[[1.0] * 6]]),
         mode_kappa=np.array([[[[[1.0] * 6]]]]),
@@ -179,21 +179,21 @@ def test_get_rta_writer_kappa_payload_from_attr_capabilities():
         mode_heat_capacities=np.array([[[10.0]]]),
     )
 
-    payload = get_rta_writer_kappa_payload(br_like)
-    assert payload["kappa"] is br_like.kappa
-    assert payload["mode_kappa"] is br_like.mode_kappa
-    assert payload["group_velocities"] is br_like.group_velocities
-    assert payload["gv_by_gv"] is br_like.gv_by_gv
-    assert payload["kappa_TOT_RTA"] is br_like.kappa_TOT_RTA
-    assert payload["kappa_P_RTA"] is br_like.kappa_P_RTA
-    assert payload["kappa_C"] is br_like.kappa_C
-    assert payload["mode_kappa_P_RTA"] is br_like.mode_kappa_P_RTA
-    assert payload["mode_kappa_C"] is br_like.mode_kappa_C
-    assert payload["mode_heat_capacities"] is br_like.mode_heat_capacities
+    data_map = get_rta_writer_kappa_data_map(br_like)
+    assert data_map["kappa"] is br_like.kappa
+    assert data_map["mode_kappa"] is br_like.mode_kappa
+    assert data_map["group_velocities"] is br_like.group_velocities
+    assert data_map["gv_by_gv"] is br_like.gv_by_gv
+    assert data_map["kappa_TOT_RTA"] is br_like.kappa_TOT_RTA
+    assert data_map["kappa_P_RTA"] is br_like.kappa_P_RTA
+    assert data_map["kappa_C"] is br_like.kappa_C
+    assert data_map["mode_kappa_P_RTA"] is br_like.mode_kappa_P_RTA
+    assert data_map["mode_kappa_C"] is br_like.mode_kappa_C
+    assert data_map["mode_heat_capacities"] is br_like.mode_heat_capacities
 
 
 def test_get_lbte_writer_kappa_data_from_attr_capabilities():
-    """LBTE payload fields are picked directly from available attributes."""
+    """LBTE data fields are picked directly from available attributes."""
     lbte_like = SimpleNamespace(
         kappa=np.array([[[1.0] * 6]]),
         mode_kappa=np.array([[[[[1.0] * 6]]]]),
@@ -209,23 +209,23 @@ def test_get_lbte_writer_kappa_data_from_attr_capabilities():
         mode_kappa_C=np.array([[[[[0.2] * 6]]]]),
     )
 
-    payload = get_lbte_writer_kappa_data(lbte_like)
-    assert payload[0] is lbte_like.kappa
-    assert payload[1] is lbte_like.mode_kappa
-    assert payload[2] is lbte_like.kappa_RTA
-    assert payload[3] is lbte_like.mode_kappa_RTA
-    assert payload[4] is lbte_like.group_velocities
-    assert payload[5] is lbte_like.gv_by_gv
-    assert payload[6] is lbte_like.kappa_P_exact
-    assert payload[7] is lbte_like.kappa_P_RTA
-    assert payload[8] is lbte_like.kappa_C
-    assert payload[9] is lbte_like.mode_kappa_P_exact
-    assert payload[10] is lbte_like.mode_kappa_P_RTA
-    assert payload[11] is lbte_like.mode_kappa_C
+    data = get_lbte_writer_kappa_data(lbte_like)
+    assert data[0] is lbte_like.kappa
+    assert data[1] is lbte_like.mode_kappa
+    assert data[2] is lbte_like.kappa_RTA
+    assert data[3] is lbte_like.mode_kappa_RTA
+    assert data[4] is lbte_like.group_velocities
+    assert data[5] is lbte_like.gv_by_gv
+    assert data[6] is lbte_like.kappa_P_exact
+    assert data[7] is lbte_like.kappa_P_RTA
+    assert data[8] is lbte_like.kappa_C
+    assert data[9] is lbte_like.mode_kappa_P_exact
+    assert data[10] is lbte_like.mode_kappa_P_RTA
+    assert data[11] is lbte_like.mode_kappa_C
 
 
-def test_get_lbte_writer_kappa_payload_from_attr_capabilities():
-    """Named LBTE kappa payload keeps stable key-based access."""
+def test_get_lbte_writer_kappa_data_map_from_attr_capabilities():
+    """Named LBTE kappa data keeps stable key-based access."""
     lbte_like = SimpleNamespace(
         kappa=np.array([[[1.0] * 6]]),
         mode_kappa=np.array([[[[[1.0] * 6]]]]),
@@ -241,16 +241,16 @@ def test_get_lbte_writer_kappa_payload_from_attr_capabilities():
         mode_kappa_C=np.array([[[[[0.2] * 6]]]]),
     )
 
-    payload = get_lbte_writer_kappa_payload(lbte_like)
-    assert payload["kappa"] is lbte_like.kappa
-    assert payload["mode_kappa"] is lbte_like.mode_kappa
-    assert payload["kappa_RTA"] is lbte_like.kappa_RTA
-    assert payload["mode_kappa_RTA"] is lbte_like.mode_kappa_RTA
-    assert payload["group_velocities"] is lbte_like.group_velocities
-    assert payload["gv_by_gv"] is lbte_like.gv_by_gv
-    assert payload["kappa_P_exact"] is lbte_like.kappa_P_exact
-    assert payload["kappa_P_RTA"] is lbte_like.kappa_P_RTA
-    assert payload["kappa_C"] is lbte_like.kappa_C
-    assert payload["mode_kappa_P_exact"] is lbte_like.mode_kappa_P_exact
-    assert payload["mode_kappa_P_RTA"] is lbte_like.mode_kappa_P_RTA
-    assert payload["mode_kappa_C"] is lbte_like.mode_kappa_C
+    data_map = get_lbte_writer_kappa_data_map(lbte_like)
+    assert data_map["kappa"] is lbte_like.kappa
+    assert data_map["mode_kappa"] is lbte_like.mode_kappa
+    assert data_map["kappa_RTA"] is lbte_like.kappa_RTA
+    assert data_map["mode_kappa_RTA"] is lbte_like.mode_kappa_RTA
+    assert data_map["group_velocities"] is lbte_like.group_velocities
+    assert data_map["gv_by_gv"] is lbte_like.gv_by_gv
+    assert data_map["kappa_P_exact"] is lbte_like.kappa_P_exact
+    assert data_map["kappa_P_RTA"] is lbte_like.kappa_P_RTA
+    assert data_map["kappa_C"] is lbte_like.kappa_C
+    assert data_map["mode_kappa_P_exact"] is lbte_like.mode_kappa_P_exact
+    assert data_map["mode_kappa_P_RTA"] is lbte_like.mode_kappa_P_RTA
+    assert data_map["mode_kappa_C"] is lbte_like.mode_kappa_C

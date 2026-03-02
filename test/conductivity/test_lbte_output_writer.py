@@ -84,7 +84,7 @@ def test_write_collision_band_resolved(monkeypatch):
 
 
 def test_write_kappa_calls_hdf5_writer_per_sigma(monkeypatch):
-    """`write_kappa` forwards per-sigma payload to hdf5 writer."""
+    """`write_kappa` forwards per-sigma data to hdf5 writer."""
     calls = []
 
     def _fake_write_kappa_to_hdf5(*args, **kwargs):
@@ -98,7 +98,7 @@ def test_write_kappa_calls_hdf5_writer_per_sigma(monkeypatch):
     gv_by_gv = np.ones((1, 1, 6), dtype="double")
 
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.get_lbte_writer_kappa_payload",
+        "phono3py.conductivity.lbte_output.get_lbte_writer_kappa_data_map",
         lambda _lbte: {
             "kappa": kappa,
             "mode_kappa": mode_kappa,
@@ -163,7 +163,7 @@ def test_write_kappa_writes_eigen_and_unitary(monkeypatch):
     unitary_calls = []
 
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.get_lbte_writer_kappa_payload",
+        "phono3py.conductivity.lbte_output.get_lbte_writer_kappa_data_map",
         lambda _lbte: {
             "kappa": None,
             "mode_kappa": None,

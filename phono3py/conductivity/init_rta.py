@@ -142,7 +142,7 @@ _GammaReadParams: TypeAlias = tuple[
     bool,
 ]
 
-_GammaPayloadTargets: TypeAlias = tuple[
+_GammaDataTargets: TypeAlias = tuple[
     NDArray[np.double],
     NDArray[np.double],
     NDArray[np.double],
@@ -158,7 +158,7 @@ def _allocate_gamma_read_arrays(
     grid_points: Sequence[int] | NDArray[np.int64],
     num_band: int,
 ) -> _GammaReadArrays:
-    """Allocate arrays used while collecting gamma payloads from files."""
+    """Allocate arrays used while collecting gamma data from files."""
     gamma = np.zeros(
         (len(sigmas), len(temperatures), len(grid_points), num_band), dtype="double"
     )
@@ -211,7 +211,7 @@ def _apply_loaded_gamma_results(
     ave_pp: NDArray[np.double],
     optional_flags: _OptionalGammaFlags,
 ) -> None:
-    """Apply loaded gamma arrays and optional payloads to conductivity object."""
+    """Apply loaded gamma arrays and optional data to conductivity object."""
     br.gamma = gamma
     if optional_flags["has_ave_pp"]:
         br.set_averaged_pp_interaction(ave_pp)
@@ -434,16 +434,33 @@ def _normalize_rta_temperatures(
 def _set_gamma_elph_from_file(
     br: ConductivityRTABase, read_elph: int, verbose: bool = False
 ) -> None:
+    if br.temperatures is None:
+        raise RuntimeError(
+            "br.temperatures must be set to read gamma of el-ph interaction."
+        )
+
     mesh_str = "".join(map(str, br.mesh_numbers))
     filename = pathlib.Path(f"gamma_elph-m{mesh_str}.hdf5")
     if not filename.is_file():
         raise RuntimeError(f'"{filename}" not found for gammas of el-ph interaction.')
-    _log_if_verbose(verbose, f'Read gamma of el-ph interaction from "{filename}".')
 
+    _log_if_verbose(verbose, f'Read gamma of el-ph interaction from "{filename}".')
     with h5py.File(filename, "r") as f:
         gamma_key = f"gamma_{read_elph}"
         if gamma_key not in f:
             raise RuntimeError(f"{gamma_key} not found in phono3py_elph.hdf5.")
+
+        # Check consistency between br.temperatures and file temperatures
+        if f"temperature_{read_elph}" in f:
+            file_temperatures = f[f"temperature_{read_elph}"][:]  # type: ignore
+            if not np.allclose(br.temperatures, file_temperatures):
+                raise RuntimeError(
+                    f"Temperature mismatch: ph-ph {br.temperatures} "
+                    f"el-ph {file_temperatures}."
+                )
+        else:
+            raise RuntimeError('"temperature" dataset not found in gamma el-ph file.')
+
         br.gamma_elph = f[gamma_key][:]  # type: ignore
 
 
@@ -526,8 +543,8 @@ def _get_gamma_read_params(context: _GammaReadContext) -> _GammaReadParams:
     )
 
 
-def _get_gamma_payload_targets(context: _GammaReadContext) -> _GammaPayloadTargets:
-    """Extract mutable payload arrays and flags from gamma read context."""
+def _get_gamma_data_targets(context: _GammaReadContext) -> _GammaDataTargets:
+    """Extract mutable data arrays and flags from gamma read context."""
     return (
         context["gamma"],
         context["gamma_iso"],
@@ -538,14 +555,14 @@ def _get_gamma_payload_targets(context: _GammaReadContext) -> _GammaPayloadTarge
     )
 
 
-def _read_gamma_payload(
+def _read_gamma_data(
     context: _GammaReadContext,
     *,
     sigma: float | None,
     grid_point: int | None = None,
     band_index: int | None = None,
 ) -> _GammaReadResult:
-    """Read gamma payload from HDF5 using shared context parameters."""
+    """Read gamma data from HDF5 using shared context parameters."""
     mesh, sigma_cutoff, filename, _ = _get_gamma_read_params(context)
     return cast(
         _GammaReadResult,
@@ -560,8 +577,8 @@ def _read_gamma_payload(
     )
 
 
-def _store_gamma_payload(
-    optional_data: _GammaFileData,
+def _store_gamma_data(
+    gamma_data: _GammaFileData,
     *,
     gamma_target: NDArray[np.double],
     gamma_iso_target: NDArray[np.double],
@@ -570,13 +587,19 @@ def _store_gamma_payload(
     ave_pp_target: NDArray[np.double],
     optional_flags: _OptionalGammaFlags,
 ) -> None:
-    """Store one gamma payload block into target arrays and optional fields."""
-    if "gamma" not in optional_data:
-        raise KeyError("'gamma' is missing in gamma payload.")
+    """Store one gamma data block into target arrays and optional fields."""
+    if "gamma" not in gamma_data:
+        raise KeyError("'gamma' is missing in gamma data.")
 
-    gamma_target[...] = optional_data["gamma"]
-    _update_optional_gamma_payloads(
-        optional_data=optional_data,
+    if gamma_target.shape != gamma_data["gamma"].shape:
+        raise ValueError(
+            f"Shape mismatch for 'gamma': target {gamma_target.shape} - "
+            f"from file {gamma_data['gamma'].shape}."
+        )
+
+    gamma_target[...] = gamma_data["gamma"]
+    _update_optional_gamma_data(
+        gamma_data=gamma_data,
         gamma_iso_target=gamma_iso_target,
         gamma_N_target=gamma_N_target,
         gamma_U_target=gamma_U_target,
@@ -593,22 +616,22 @@ def _load_gamma_for_band(
     gp: int,
     bi: int,
 ) -> bool:
-    """Load per-band gamma payload for one grid point and sigma."""
+    """Load per-band gamma data for one grid point and sigma."""
     _, _, _, verbose = _get_gamma_read_params(context)
     gamma, gamma_iso, gamma_N, gamma_U, ave_pp, optional_flags = (
-        _get_gamma_payload_targets(context)
+        _get_gamma_data_targets(context)
     )
 
-    data_band, full_filename_band = _read_gamma_payload(
+    gamma_data_band, full_filename_band = _read_gamma_data(
         context,
         sigma=sigma,
         grid_point=gp,
         band_index=bi,
     )
-    if data_band:
+    if gamma_data_band:
         _log_if_verbose(verbose, "Read data from %s." % full_filename_band)
-        _store_gamma_payload(
-            data_band,
+        _store_gamma_data(
+            gamma_data_band,
             gamma_target=gamma[i_sigma, :, i_gp, bi],
             gamma_iso_target=gamma_iso[i_sigma, i_gp, bi],
             gamma_N_target=gamma_N[i_sigma, :, i_gp, bi],
@@ -629,22 +652,22 @@ def _load_gamma_for_grid_point(
     i_gp: int,
     gp: int,
 ) -> bool:
-    """Load per-grid-point gamma payload, with band-level fallback when missing."""
+    """Load per-grid-point gamma data, with band-level fallback when missing."""
     _, _, _, verbose = _get_gamma_read_params(context)
     num_band = context["num_band"]
     gamma, gamma_iso, gamma_N, gamma_U, ave_pp, optional_flags = (
-        _get_gamma_payload_targets(context)
+        _get_gamma_data_targets(context)
     )
 
-    data_gp, full_filename_gp = _read_gamma_payload(
+    gamma_data_gp, full_filename_gp = _read_gamma_data(
         context,
         sigma=sigma,
         grid_point=gp,
     )
-    if data_gp:
+    if gamma_data_gp:
         _log_if_verbose(verbose, "Read data from %s." % full_filename_gp)
-        _store_gamma_payload(
-            data_gp,
+        _store_gamma_data(
+            gamma_data_gp,
             gamma_target=gamma[i_sigma, :, i_gp],
             gamma_iso_target=gamma_iso[i_sigma, i_gp],
             gamma_N_target=gamma_N[i_sigma, :, i_gp],
@@ -669,23 +692,23 @@ def _load_gamma_for_sigma(
     sigma: float | None,
     context: _GammaReadContext,
 ) -> bool:
-    """Load gamma payload for one sigma, trying full then grid-point files."""
+    """Load gamma data for one sigma, trying full then grid-point files."""
     _, _, _, verbose = _get_gamma_read_params(context)
     grid_points = context["grid_points"]
     gamma, gamma_iso, gamma_N, gamma_U, ave_pp, optional_flags = (
-        _get_gamma_payload_targets(context)
+        _get_gamma_data_targets(context)
     )
 
-    data, full_filename = _read_gamma_payload(
+    gamma_data, full_filename = _read_gamma_data(
         context,
         sigma=sigma,
     )
-    if data:
+    if gamma_data:
         _log_if_verbose(
             verbose, f'Read gamma of ph-ph interaction from "{full_filename}".'
         )
-        _store_gamma_payload(
-            data,
+        _store_gamma_data(
+            gamma_data,
             gamma_target=gamma[i_sigma],
             gamma_iso_target=gamma_iso[i_sigma],
             gamma_N_target=gamma_N[i_sigma],
@@ -775,8 +798,8 @@ def _set_gamma_from_file(
     )
 
 
-def _update_optional_gamma_payloads(
-    optional_data: _GammaFileData,
+def _update_optional_gamma_data(
+    gamma_data: _GammaFileData,
     *,
     gamma_iso_target: NDArray[np.double],
     gamma_N_target: NDArray[np.double],
@@ -784,21 +807,21 @@ def _update_optional_gamma_payloads(
     ave_pp_target: NDArray[np.double],
     optional_flags: _OptionalGammaFlags,
 ) -> None:
-    """Update optional gamma-derived payload arrays if those keys exist."""
-    gamma_isotope = optional_data.get("gamma_isotope")
+    """Update optional gamma-derived arrays if those keys exist."""
+    gamma_isotope = gamma_data.get("gamma_isotope")
     if gamma_isotope is not None:
         gamma_iso_target[...] = gamma_isotope
 
-    gamma_N = optional_data.get("gamma_N")
+    gamma_N = gamma_data.get("gamma_N")
     if gamma_N is not None:
-        gamma_U = optional_data.get("gamma_U")
+        gamma_U = gamma_data.get("gamma_U")
         if gamma_U is None:
-            raise KeyError("'gamma_U' is missing in gamma payload.")
+            raise KeyError("'gamma_U' is missing in gamma data.")
         optional_flags["has_gamma_N_U"] = True
         gamma_N_target[...] = gamma_N
         gamma_U_target[...] = gamma_U
 
-    ave_pp = optional_data.get("ave_pp")
+    ave_pp = gamma_data.get("ave_pp")
     if ave_pp is not None:
         optional_flags["has_ave_pp"] = True
         ave_pp_target[...] = ave_pp

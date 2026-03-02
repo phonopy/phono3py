@@ -10,7 +10,7 @@ from phono3py.conductivity.rta_output import ConductivityRTAWriter
 
 
 def test_write_kappa_calls_hdf5_writer(monkeypatch):
-    """`write_kappa` forwards per-sigma payload to hdf5 writer."""
+    """`write_kappa` forwards per-sigma data to hdf5 writer."""
     calls = []
 
     def _fake_write_kappa_to_hdf5(*args, **kwargs):
@@ -23,7 +23,7 @@ def test_write_kappa_calls_hdf5_writer(monkeypatch):
     mode_cv = np.ones((1, 1, 1), dtype="double")
 
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.get_rta_writer_kappa_payload",
+        "phono3py.conductivity.rta_output.get_rta_writer_kappa_data_map",
         lambda _br: {
             "kappa": kappa,
             "mode_kappa": mode_kappa,
@@ -81,7 +81,7 @@ def test_write_kappa_calls_hdf5_writer(monkeypatch):
 
 
 def test_write_gamma_all_bands(monkeypatch):
-    """`write_gamma` writes one payload per sigma in all-band mode."""
+    """`write_gamma` writes one data block per sigma in all-band mode."""
     calls = []
 
     def _fake_write_kappa_to_hdf5(*args, **kwargs):
@@ -91,7 +91,7 @@ def test_write_gamma_all_bands(monkeypatch):
         "phono3py.conductivity.rta_output.all_bands_exist", lambda _interaction: True
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.get_rta_writer_grid_payload",
+        "phono3py.conductivity.rta_output.get_rta_writer_grid_data_map",
         lambda _br, _i: {
             "group_velocities_i": np.array([[1.0, 2.0, 3.0]], dtype="double"),
             "gv_by_gv_i": np.array([[1.0, 1.0, 1.0, 0.0, 0.0, 0.0]], dtype="double"),
@@ -134,7 +134,7 @@ def test_write_gamma_all_bands(monkeypatch):
 
 
 def test_write_gamma_band_resolved(monkeypatch):
-    """`write_gamma` writes one payload per (sigma, band) when not all bands exist."""
+    """`write_gamma` writes one data block per (sigma, band) when bands are split."""
     calls = []
 
     def _fake_write_kappa_to_hdf5(*args, **kwargs):
@@ -144,7 +144,7 @@ def test_write_gamma_band_resolved(monkeypatch):
         "phono3py.conductivity.rta_output.all_bands_exist", lambda _interaction: False
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.get_rta_writer_grid_payload",
+        "phono3py.conductivity.rta_output.get_rta_writer_grid_data_map",
         lambda _br, _i: {
             "group_velocities_i": np.array(
                 [[1.0, 0.0, 0.0], [2.0, 0.0, 0.0]], dtype="double"
@@ -195,7 +195,7 @@ def test_write_gamma_band_resolved(monkeypatch):
 
 
 def test_write_gamma_detail_all_bands(monkeypatch):
-    """`write_gamma_detail` writes one payload per sigma in all-band mode."""
+    """`write_gamma_detail` writes one data block per sigma in all-band mode."""
     calls = []
 
     def _fake_write_gamma_detail_to_hdf5(*args, **kwargs):
@@ -244,7 +244,7 @@ def test_write_gamma_detail_all_bands(monkeypatch):
 
 
 def test_write_gamma_detail_band_resolved(monkeypatch):
-    """`write_gamma_detail` writes one payload per (sigma, band) in band mode."""
+    """`write_gamma_detail` writes one data block per (sigma, band) in band mode."""
     calls = []
 
     def _fake_write_gamma_detail_to_hdf5(*args, **kwargs):
