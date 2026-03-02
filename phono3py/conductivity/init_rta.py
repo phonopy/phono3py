@@ -434,16 +434,33 @@ def _normalize_rta_temperatures(
 def _set_gamma_elph_from_file(
     br: ConductivityRTABase, read_elph: int, verbose: bool = False
 ) -> None:
+    if br.temperatures is None:
+        raise RuntimeError(
+            "br.temperatures must be set to read gamma of el-ph interaction."
+        )
+
     mesh_str = "".join(map(str, br.mesh_numbers))
     filename = pathlib.Path(f"gamma_elph-m{mesh_str}.hdf5")
     if not filename.is_file():
         raise RuntimeError(f'"{filename}" not found for gammas of el-ph interaction.')
-    _log_if_verbose(verbose, f'Read gamma of el-ph interaction from "{filename}".')
 
+    _log_if_verbose(verbose, f'Read gamma of el-ph interaction from "{filename}".')
     with h5py.File(filename, "r") as f:
         gamma_key = f"gamma_{read_elph}"
         if gamma_key not in f:
             raise RuntimeError(f"{gamma_key} not found in phono3py_elph.hdf5.")
+
+        # Check consistency between br.temperatures and file temperatures
+        if f"temperature_{read_elph}" in f:
+            file_temperatures = f[f"temperature_{read_elph}"][:]  # type: ignore
+            if not np.allclose(br.temperatures, file_temperatures):
+                raise RuntimeError(
+                    f"Temperature mismatch: ph-ph {br.temperatures} "
+                    f"el-ph {file_temperatures}."
+                )
+        else:
+            raise RuntimeError('"temperature" dataset not found in gamma el-ph file.')
+
         br.gamma_elph = f[gamma_key][:]  # type: ignore
 
 
@@ -573,6 +590,12 @@ def _store_gamma_payload(
     """Store one gamma payload block into target arrays and optional fields."""
     if "gamma" not in optional_data:
         raise KeyError("'gamma' is missing in gamma payload.")
+
+    if gamma_target.shape != optional_data["gamma"].shape:
+        raise ValueError(
+            f"Shape mismatch for 'gamma': target {gamma_target.shape} - "
+            f"from file {optional_data['gamma'].shape}."
+        )
 
     gamma_target[...] = optional_data["gamma"]
     _update_optional_gamma_payloads(
