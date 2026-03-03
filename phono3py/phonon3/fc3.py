@@ -280,10 +280,10 @@ def set_permutation_symmetry_compact_fc3(fc3, primitive):
         s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map, p2p_map, permutations)
         phono3c.permutation_symmetry_compact_fc3(
             fc3,
-            np.array(permutations, dtype="int64", order="C"),
-            np.array(s2pp_map, dtype="int64"),
-            np.array(p2s_map, dtype="int64"),
-            np.array(nsym_list, dtype="int64"),
+            permutations,
+            s2pp_map,
+            p2s_map,
+            nsym_list,
         )
     except ImportError as exc:
         text = (
@@ -333,11 +333,6 @@ def set_translational_invariance_compact_fc3(fc3, primitive: Primitive):
         p2p_map = primitive.p2p_map
         permutations = primitive.atomic_permutations
         s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map, p2p_map, permutations)
-
-        permutations = np.array(permutations, dtype="int64", order="C")
-        s2pp_map = np.array(s2pp_map, dtype="int64")
-        p2s_map = np.array(p2s_map, dtype="int64")
-        nsym_list = np.array(nsym_list, dtype="int64")
         phono3c.transpose_compact_fc3(
             fc3, permutations, s2pp_map, p2s_map, nsym_list, 0
         )  # dim[0] <--> dim[1]
@@ -628,10 +623,6 @@ def get_drift_fc3(
             p2p_map = primitive.p2p_map
             permutations = primitive.atomic_permutations
             s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map, p2p_map, permutations)
-            permutations = np.array(permutations, dtype="int64", order="C")
-            s2pp_map = np.array(s2pp_map, dtype="int64")
-            p2s_map = np.array(p2s_map, dtype="int64")
-            nsym_list = np.array(nsym_list, dtype="int64")
             num_patom = fc3.shape[0]
             num_satom = fc3.shape[1]
             maxval1 = 0
