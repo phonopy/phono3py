@@ -35,7 +35,7 @@ The indices of the irreducible grid-points neccesarry to specify
 `--ga` option are found by {ref}`--wgp option <wgp_option>`
 
 ```bash
-% phono3py-load --mesh 19 19 19 --br --wgp
+% phono3py-load --mesh 19 19 19 --wgp
 ```
 
 and they are stored in `ir_grid_points.yaml`.
@@ -75,6 +75,7 @@ indices for workload distribution.
 
 import sys
 import yaml
+from yaml import Loader
 
 if len(sys.argv) > 1:
     num = int(sys.argv[1])
@@ -82,7 +83,7 @@ else:
     num = 1
 
 with open("ir_grid_points.yaml") as f:
-    data = yaml.load(f)
+    data = yaml.load(f, Loader=Loader)
     gps = [gp['grid_point'] for gp in data['ir_grid_points']]
     gp_lists = [[] for i in range(num)]
     for i, gp in enumerate(gps):
