@@ -34,42 +34,44 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import numpy as np
+from collections.abc import Sequence
 
-from phono3py.conductivity.kubo_base import ConductivityKuboMixIn
+import numpy as np
+from numpy.typing import NDArray
+
+from phono3py.conductivity.kubo_base import ConductivityKuboComponents
 from phono3py.conductivity.rta_base import ConductivityRTABase
 from phono3py.phonon3.interaction import Interaction
 
 
-class ConductivityKuboRTA(ConductivityKuboMixIn, ConductivityRTABase):
+class ConductivityKuboRTA(ConductivityRTABase):
     """Class of Kubo lattice thermal conductivity under RTA."""
 
     def __init__(
         self,
         interaction: Interaction,
-        grid_points=None,
-        temperatures=None,
-        sigmas=None,
-        sigma_cutoff=None,
-        is_isotope=False,
-        mass_variances=None,
-        boundary_mfp=None,  # in micrometer
-        use_ave_pp=False,
-        is_kappa_star=True,
-        gv_delta_q=None,
-        is_full_pp=False,
-        read_pp=False,
-        store_pp=False,
-        pp_filename=None,
-        is_N_U=False,
-        is_gamma_detail=False,
-        is_frequency_shift_by_bubble=False,
-        log_level=0,
+        grid_points: Sequence[int] | NDArray[np.int64] | None = None,
+        temperatures: Sequence[float] | NDArray[np.double] | None = None,
+        sigmas: Sequence[float | None] | None = None,
+        sigma_cutoff: float | None = None,
+        is_isotope: bool = False,
+        mass_variances: Sequence[float] | NDArray[np.double] | None = None,
+        boundary_mfp: float | None = None,  # in micrometer
+        use_ave_pp: bool = False,
+        is_kappa_star: bool = True,
+        gv_delta_q: float | None = None,
+        is_full_pp: bool = False,
+        read_pp: bool = False,
+        store_pp: bool = False,
+        pp_filename: str | None = None,
+        is_N_U: bool = False,
+        is_gamma_detail: bool = False,
+        is_frequency_shift_by_bubble: bool = False,
+        log_level: int = 0,
     ):
         """Init method."""
-        self._cv_mat = None
-        self._gv_mat = None
         self._kappa = None
+        self._mode_kappa_mat = None
 
         super().__init__(
             interaction,
@@ -82,7 +84,6 @@ class ConductivityKuboRTA(ConductivityKuboMixIn, ConductivityRTABase):
             boundary_mfp=boundary_mfp,
             use_ave_pp=use_ave_pp,
             is_kappa_star=is_kappa_star,
-            gv_delta_q=gv_delta_q,
             is_full_pp=is_full_pp,
             read_pp=read_pp,
             store_pp=store_pp,
@@ -93,8 +94,51 @@ class ConductivityKuboRTA(ConductivityKuboMixIn, ConductivityRTABase):
             log_level=log_level,
         )
 
+        self._conductivity_components: ConductivityKuboComponents = (
+            ConductivityKuboComponents(
+                self._pp,
+                self._grid_points,
+                self._grid_weights,
+                self._point_operations,
+                self._rotations_cartesian,
+                temperatures=self._temperatures,
+                is_kappa_star=self._is_kappa_star,
+                gv_delta_q=gv_delta_q,
+                log_level=self._log_level,
+            )
+        )
+
+    @property
+    def kappa(self):
+        """Return kappa."""
+        return self._kappa
+
+    @property
+    def mode_kappa_mat(self):
+        """Return mode_kappa_mat."""
+        return self._mode_kappa_mat
+
+    def _set_cv(self, i_gp, i_data):
+        self._conductivity_components.set_heat_capacities(i_gp, i_data)
+
+    def _set_velocities(self, i_gp, i_data):
+        self._conductivity_components.set_velocities(i_gp, i_data)
+
     def set_kappa_at_sigmas(self):
         """Calculate kappa from ph-ph interaction results."""
+        if self._temperatures is None:
+            raise RuntimeError(
+                "Temperatures have not been set yet. "
+                "Set temperatures before this method."
+            )
+        if self._frequencies is None:
+            raise RuntimeError(
+                "Phonon frequencies have not been set yet. "
+                "Run phonon solver before this method."
+            )
+        if self._mode_kappa_mat is None or self._num_ignored_phonon_modes is None:
+            raise RuntimeError("Necessary arrays have not been allocated.")
+
         for i_gp, _ in enumerate(self._grid_points):
             frequencies = self._frequencies[self._grid_points[i_gp]]
             for j in range(len(self._sigmas)):
@@ -107,74 +151,100 @@ class ConductivityKuboRTA(ConductivityKuboMixIn, ConductivityRTABase):
                         self._set_kappa_at_sigmas(
                             j, k, i_gp, i_band, g_sum, frequencies
                         )
-        N = self._num_sampling_grid_points
+        N = self.number_of_sampling_grid_points
         self._kappa = self._mode_kappa_mat.sum(axis=2).sum(axis=2).sum(axis=2).real / N
 
     def _set_kappa_at_sigmas(self, j, k, i_gp, i_band, g_sum, frequencies):
-        gvm_sum2 = self._gv_mat_sum2[i_gp]
-        cvm = self._cv_mat[k, i_gp]
+        if self._mode_kappa_mat is None:
+            raise RuntimeError("mode_kappa_mat has not been allocated yet.")
+
+        components = self._conductivity_components
+        gvm_sum2 = components.gv_matrix_sum2[i_gp]
+        cvm = components.heat_capacity_matrices[k, i_gp]
         for j_band, freq in enumerate(frequencies):
             if freq < self._pp.cutoff_frequency:
                 return
 
-            g = g_sum[i_band] + g_sum[j_band]
             for i_pair, _ in enumerate(
                 ([0, 0], [1, 1], [2, 2], [1, 2], [0, 2], [0, 1])
             ):
-                old_settings = np.seterr(all="raise")
-                try:
-                    self._mode_kappa_mat[j, k, i_gp, i_band, j_band, i_pair] = (
-                        cvm[i_band, j_band]
-                        * gvm_sum2[i_band, j_band, i_pair]
-                        * g
-                        / ((frequencies[j_band] - frequencies[i_band]) ** 2 + g**2)
-                        * self._conversion_factor
-                    )
-                except FloatingPointError:
-                    # supposed that g is almost 0 and |gv|=0
-                    pass
-                except Exception:
-                    gp = self._grid_points[i_gp]
-                    print("=" * 26 + " Warning " + "=" * 26)
-                    print(
-                        " Unexpected physical condition of ph-ph "
-                        "interaction calculation was found."
-                    )
-                    print(
-                        " g=%f at gp=%d, band=%d, freq=%f, band=%d, freq=%f"
-                        % (
-                            g_sum[i_band],
-                            gp,
-                            i_band + 1,
-                            frequencies[i_band],
-                            j_band + 1,
-                            frequencies[j_band],
-                        )
-                    )
-                    print("=" * 61)
-                np.seterr(**old_settings)
+                contribution = self._get_pair_contribution(
+                    g_sum_i_band=g_sum[i_band],
+                    g_sum_j_band=g_sum[j_band],
+                    freq_i_band=frequencies[i_band],
+                    freq_j_band=frequencies[j_band],
+                    cvm_ij=cvm[i_band, j_band],
+                    gvm_sum2_ij=gvm_sum2[i_band, j_band, i_pair],
+                    gp=int(self._grid_points[i_gp]),
+                    i_band=i_band,
+                    j_band=j_band,
+                )
+                if contribution is None:
+                    continue
+                self._mode_kappa_mat[j, k, i_gp, i_band, j_band, i_pair] = contribution
+
+    def _get_pair_contribution(
+        self,
+        *,
+        g_sum_i_band: float,
+        g_sum_j_band: float,
+        freq_i_band: float,
+        freq_j_band: float,
+        cvm_ij,
+        gvm_sum2_ij,
+        gp: int,
+        i_band: int,
+        j_band: int,
+    ):
+        g = g_sum_i_band + g_sum_j_band
+        old_settings = np.seterr(all="raise")
+        try:
+            contribution = (
+                cvm_ij
+                * gvm_sum2_ij
+                * g
+                / ((freq_j_band - freq_i_band) ** 2 + g**2)
+                * self._conversion_factor
+            )
+        except FloatingPointError:
+            # supposed that g is almost 0 and |gv|=0
+            contribution = None
+        except Exception:
+            print("=" * 26 + " Warning " + "=" * 26)
+            print(
+                " Unexpected physical condition of ph-ph "
+                "interaction calculation was found."
+            )
+            print(
+                " g=%f at gp=%d, band=%d, freq=%f, band=%d, freq=%f"
+                % (
+                    g_sum_i_band,
+                    gp,
+                    i_band + 1,
+                    freq_i_band,
+                    j_band + 1,
+                    freq_j_band,
+                )
+            )
+            print("=" * 61)
+            contribution = None
+        finally:
+            np.seterr(**old_settings)
+
+        return contribution
 
     def _allocate_values(self):
         super()._allocate_values()
 
-        num_band0 = len(self._pp.band_indices)
-        num_band = len(self._pp.primitive) * 3
-        num_grid_points = len(self._grid_points)
-        num_temp = len(self._temperatures)
+        if self._temperatures is None:
+            raise RuntimeError(
+                "Temperatures have not been set yet. "
+                "Set temperatures before this method."
+            )
 
-        self._cv_mat = np.zeros(
-            (num_temp, num_grid_points, num_band0, num_band), dtype="double", order="C"
-        )
-        self._gv_mat = np.zeros(
-            (num_grid_points, num_band0, num_band, 3),
-            dtype=self._complex_dtype,
-            order="C",
-        )
-        self._gv_mat_sum2 = np.zeros(
-            (num_grid_points, num_band0, num_band, 6),
-            dtype=self._complex_dtype,
-            order="C",
-        )
+        num_band = len(self._pp.primitive) * 3
+        num_temp = len(self._temperatures)
+        num_grid_points = len(self._grid_points)
 
         # kappa and mode_kappa_mat are accessed when all bands exist, i.e.,
         # num_band0==num_band.

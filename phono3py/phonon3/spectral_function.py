@@ -156,7 +156,7 @@ def run_spectral_function(
             if write_hdf5:
                 filename = write_spectral_function_to_hdf5(
                     gp,
-                    bi,
+                    band_indices,
                     temperatures,
                     spf.spectral_functions[sigma_i, :, i],
                     spf.shifts[sigma_i, :, i],

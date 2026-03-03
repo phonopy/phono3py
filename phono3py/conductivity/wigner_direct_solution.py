@@ -37,11 +37,11 @@
 from __future__ import annotations
 
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
 
 from phono3py.conductivity.direct_solution import (
     ConductivityLBTEBase,
-    diagonalize_collision_matrix,
 )
 from phono3py.conductivity.wigner_base import (
     ConductivityWignerComponents,
@@ -134,54 +134,54 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
         )
 
     @property
-    def kappa_TOT_RTA(self):
+    def kappa_TOT_RTA(self) -> NDArray[np.double] | None:
         """Return kappa."""
         return self._kappa_TOT_RTA
 
     @property
-    def kappa_P_RTA(self):
+    def kappa_P_RTA(self) -> NDArray[np.double] | None:
         """Return kappa."""
         return self._kappa_P_RTA
 
     @property
-    def kappa_C(self):
+    def kappa_C(self) -> NDArray[np.double] | None:
         """Return kappa."""
         return self._kappa_C
 
     @property
-    def mode_kappa_P_RTA(self):
+    def mode_kappa_P_RTA(self) -> NDArray[np.double] | None:
         """Return mode_kappa."""
         return self._mode_kappa_P_RTA
 
     @property
-    def mode_kappa_C(self):
+    def mode_kappa_C(self) -> NDArray[np.complex128] | None:
         """Return mode_kappa."""
         return self._mode_kappa_C
 
     @property
-    def kappa_TOT_exact(self):
+    def kappa_TOT_exact(self) -> NDArray[np.double] | None:
         """Return kappa."""
         return self._kappa_TOT_exact
 
     @property
-    def kappa_P_exact(self):
+    def kappa_P_exact(self) -> NDArray[np.double] | None:
         """Return kappa."""
         return self._kappa_P_exact
 
     @property
-    def mode_kappa_P_exact(self):
+    def mode_kappa_P_exact(self) -> NDArray[np.double] | None:
         """Return mode_kappa."""
         return self._mode_kappa_P_exact
 
-    def _set_cv(self, i_gp, i_data):
+    def _set_cv(self, i_gp: int, i_data: int) -> None:
         """Set cv for conductivity components."""
         self._conductivity_components.set_heat_capacities(i_gp, i_data)
 
-    def _set_velocities(self, i_gp, i_data):
+    def _set_velocities(self, i_gp: int, i_data: int) -> None:
         """Set velocities for conductivity components."""
         self._conductivity_components.set_velocities(i_gp, i_data)
 
-    def _allocate_local_values(self, num_grid_points):
+    def _allocate_local_values(self, num_grid_points: int) -> None:
         """Allocate grid point local arrays."""
         num_band0 = len(self._pp.band_indices)
         num_temp = len(self._temperatures)
@@ -226,145 +226,172 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
             dtype=complex_dtype,
         )
 
-    def _set_kappa_at_sigmas(self, weights):
+    def _set_kappa_at_sigmas(
+        self, weights: NDArray[np.double] | NDArray[np.int64]
+    ) -> None:
         """Calculate thermal conductivity from collision matrix."""
-        for j, sigma in enumerate(self._sigmas):
-            if self._log_level:
-                text = "----------- Thermal conductivity (W/m-k) "
-                if sigma:
-                    text += "for sigma=%s -----------" % sigma
-                else:
-                    text += "with tetrahedron method -----------"
-                print(text, flush=True)
+        self._set_kappa_at_sigmas_common(weights)
 
-            for k, t in enumerate(self._temperatures):
-                if t > 0:
-                    self._set_kappa_RTA(j, k, weights)
+    def _show_kappa_at_temperature(self, i_sigma: int, i_temp: int, t: float) -> None:
+        print(
+            ("#%6s       " + " %-10s" * 6)
+            % ("         \t\t  T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
+        )
+        print(
+            "K_P_exact\t\t"
+            + ("%7.1f " + " %10.3f" * 6)
+            % ((t,) + tuple(self._kappa_P_exact[i_sigma, i_temp]))
+        )
+        print(
+            "(K_P_RTA)\t\t"
+            + ("%7.1f " + " %10.3f" * 6)
+            % ((t,) + tuple(self._kappa_P_RTA[i_sigma, i_temp]))
+        )
+        print(
+            "K_C      \t\t"
+            + ("%7.1f " + " %10.3f" * 6)
+            % ((t,) + tuple(self._kappa_C[i_sigma, i_temp].real))
+        )
+        print(" ")
+        print(
+            "K_TOT=K_P_exact+K_C\t"
+            + ("%7.1f " + " %10.3f" * 6)
+            % (
+                (t,)
+                + tuple(
+                    self._kappa_C[i_sigma, i_temp]
+                    + self._kappa_P_exact[i_sigma, i_temp]
+                )
+            )
+        )
+        print("-" * 76, flush=True)
 
-                    w = diagonalize_collision_matrix(
-                        self._collision_matrix,
-                        i_sigma=j,
-                        i_temp=k,
-                        pinv_solver=self._pinv_solver,
-                        log_level=self._log_level,
-                    )
-                    self._collision_eigenvalues[j, k] = w
+    def _set_kappa(
+        self,
+        i_sigma: int,
+        i_temp: int,
+        weights: NDArray[np.double] | NDArray[np.int64],
+    ) -> None:
+        self._set_kappa_by_collision_type(
+            self._kappa_P_exact,
+            self._mode_kappa_P_exact,
+            i_sigma,
+            i_temp,
+            weights,
+        )
 
-                    self._set_kappa(j, k, weights)
-
-                    if self._log_level:
-                        print(
-                            ("#%6s       " + " %-10s" * 6)
-                            % (
-                                "         \t\t  T(K)",
-                                "xx",
-                                "yy",
-                                "zz",
-                                "yz",
-                                "xz",
-                                "xy",
-                            )
-                        )
-                        print(
-                            "K_P_exact\t\t"
-                            + ("%7.1f " + " %10.3f" * 6)
-                            % ((t,) + tuple(self._kappa_P_exact[j, k]))
-                        )
-                        print(
-                            "(K_P_RTA)\t\t"
-                            + ("%7.1f " + " %10.3f" * 6)
-                            % ((t,) + tuple(self._kappa_P_RTA[j, k]))
-                        )
-                        print(
-                            "K_C      \t\t"
-                            + ("%7.1f " + " %10.3f" * 6)
-                            % ((t,) + tuple(self._kappa_C[j, k].real))
-                        )
-                        print(" ")
-                        print(
-                            "K_TOT=K_P_exact+K_C\t"
-                            + ("%7.1f " + " %10.3f" * 6)
-                            % (
-                                (t,)
-                                + tuple(self._kappa_C[j, k] + self._kappa_P_exact[j, k])
-                            )
-                        )
-                        print("-" * 76, flush=True)
-
-        if self._log_level:
-            print("", flush=True)
-
-    def _set_kappa(self, i_sigma, i_temp, weights):
+    def _set_kappa_RTA(
+        self,
+        i_sigma: int,
+        i_temp: int,
+        weights: NDArray[np.double] | NDArray[np.int64],
+    ) -> None:
+        self._set_kappa_RTA_by_collision_type(
+            self._kappa_P_RTA,
+            self._mode_kappa_P_RTA,
+            i_sigma,
+            i_temp,
+            weights,
+        )
         if self._is_reducible_collision_matrix:
-            self._set_kappa_reducible_colmat(
-                self._kappa_P_exact, self._mode_kappa_P_exact, i_sigma, i_temp, weights
-            )
-        else:
-            self._set_kappa_ir_colmat(
-                self._kappa_P_exact, self._mode_kappa_P_exact, i_sigma, i_temp, weights
-            )
-
-    def _set_kappa_RTA(self, i_sigma, i_temp, weights):
-        if self._is_reducible_collision_matrix:
-            self._set_kappa_RTA_reducible_colmat(
-                self._kappa_P_RTA, self._mode_kappa_P_RTA, i_sigma, i_temp, weights
-            )
             print(
                 " WARNING: Coherences conductivity not implemented for "
                 "is_reducible_collision_matrix=True "
             )
         else:
-            self._set_kappa_RTA_ir_colmat(
-                self._kappa_P_RTA, self._mode_kappa_P_RTA, i_sigma, i_temp, weights
-            )
             self._set_kappa_C_ir_colmat(i_sigma, i_temp)
 
-    def _set_kappa_C_ir_colmat(self, i_sigma, i_temp):
+    def _set_kappa_C_ir_colmat(self, i_sigma: int, i_temp: int) -> None:
         """Calculate coherence term of the thermal conductivity."""
-        N = self.number_of_sampling_grid_points
-        num_band = len(self._pp.primitive) * 3
-        # num_ir_grid_points = len(self._ir_grid_points)
         THzToEv = get_physical_units().THzToEv
         for i, gp in enumerate(self._ir_grid_points):
-            # linewidths at qpoint i, sigma i_sigma, and temperature i_temp
-            g = self._get_main_diagonal(i, i_sigma, i_temp) * 2.0  # linewidth (FWHM)
-            frequencies = self._frequencies[gp]
-            cv = self._conductivity_components.mode_heat_capacities[i_temp, i, :]
-            for s1 in range(num_band):
-                for s2 in range(num_band):
-                    hbar_omega_eV_s1 = (
-                        frequencies[s1] * THzToEv
-                    )  # hbar*omega=h*nu in eV
-                    hbar_omega_eV_s2 = (
-                        frequencies[s2] * THzToEv
-                    )  # hbar*omega=h*nu in eV
-                    if (
-                        (frequencies[s1] > self._pp.cutoff_frequency)
-                        and (frequencies[s2] > self._pp.cutoff_frequency)
-                    ) and np.abs(frequencies[s1] - frequencies[s2]) > 1e-4:
-                        # frequencies must be non-degenerate to contribute to k_C,
-                        # otherwise they contribute to k_P
-                        hbar_gamma_eV_s1 = g[s1] * THzToEv
-                        hbar_gamma_eV_s2 = g[s2] * THzToEv
-                        lorentzian_divided_by_hbar = (
-                            0.5 * (hbar_gamma_eV_s1 + hbar_gamma_eV_s2)
-                        ) / (
-                            (hbar_omega_eV_s1 - hbar_omega_eV_s2) ** 2
-                            + 0.25 * ((hbar_gamma_eV_s1 + hbar_gamma_eV_s2) ** 2)
-                        )
-                        #
-                        prefactor = (
-                            0.25
-                            * (hbar_omega_eV_s1 + hbar_omega_eV_s2)
-                            * (cv[s1] / hbar_omega_eV_s1 + cv[s2] / hbar_omega_eV_s2)
-                        )
-                        self._mode_kappa_C[i_sigma, i_temp, i, s1, s2] = (
-                            (self._conductivity_components.gv_by_gv_operator[i, s1, s2])
-                            * prefactor
-                            * lorentzian_divided_by_hbar
-                            * self._conversion_factor_WTE
-                        )
+            self._accumulate_coherence_mode_kappa_at_grid_point(
+                i_sigma=i_sigma,
+                i_temp=i_temp,
+                i=i,
+                gp=gp,
+                THzToEv=THzToEv,
+            )
 
+        self._set_kappa_C_from_mode_kappa(i_sigma, i_temp)
+
+    def _accumulate_coherence_mode_kappa_at_grid_point(
+        self,
+        *,
+        i_sigma: int,
+        i_temp: int,
+        i: int,
+        gp: int,
+        THzToEv: float,
+    ) -> None:
+        num_band = len(self._pp.primitive) * 3
+
+        # linewidths at qpoint i, sigma i_sigma, and temperature i_temp
+        g = self._get_main_diagonal(i, i_sigma, i_temp) * 2.0  # linewidth (FWHM)
+        frequencies = self._frequencies[gp]
+        cv = self._conductivity_components.mode_heat_capacities[i_temp, i, :]
+        for s1 in range(num_band):
+            for s2 in range(num_band):
+                pair_contribution = self._get_coherence_pair_contribution(
+                    freq_s1=frequencies[s1],
+                    freq_s2=frequencies[s2],
+                    linewidth_s1=g[s1],
+                    linewidth_s2=g[s2],
+                    cv_s1=cv[s1],
+                    cv_s2=cv[s2],
+                    gv_by_gv_s1s2=self._conductivity_components.gv_by_gv_operator[
+                        i, s1, s2
+                    ],
+                    THzToEv=THzToEv,
+                )
+                if pair_contribution is None:
+                    continue
+                self._mode_kappa_C[i_sigma, i_temp, i, s1, s2] = pair_contribution
+
+    def _set_kappa_C_from_mode_kappa(self, i_sigma: int, i_temp: int) -> None:
+        N = self.number_of_sampling_grid_points
         self._kappa_C[i_sigma, i_temp] = (
             self._mode_kappa_C[i_sigma, i_temp].sum(axis=0).sum(axis=0).sum(axis=0) / N
         ).real
+
+    def _get_coherence_pair_contribution(
+        self,
+        *,
+        freq_s1: float,
+        freq_s2: float,
+        linewidth_s1: float,
+        linewidth_s2: float,
+        cv_s1: float,
+        cv_s2: float,
+        gv_by_gv_s1s2: NDArray[np.complex128],
+        THzToEv: float,
+    ) -> NDArray[np.complex128] | None:
+        if (freq_s1 <= self._pp.cutoff_frequency) or (
+            freq_s2 <= self._pp.cutoff_frequency
+        ):
+            return None
+        if np.abs(freq_s1 - freq_s2) <= 1e-4:
+            return None
+
+        hbar_omega_eV_s1 = freq_s1 * THzToEv
+        hbar_omega_eV_s2 = freq_s2 * THzToEv
+        hbar_gamma_eV_s1 = linewidth_s1 * THzToEv
+        hbar_gamma_eV_s2 = linewidth_s2 * THzToEv
+
+        gamma_sum = hbar_gamma_eV_s1 + hbar_gamma_eV_s2
+        delta_omega = hbar_omega_eV_s1 - hbar_omega_eV_s2
+        lorentzian_divided_by_hbar = (0.5 * gamma_sum) / (
+            delta_omega**2 + 0.25 * gamma_sum**2
+        )
+        prefactor = (
+            0.25
+            * (hbar_omega_eV_s1 + hbar_omega_eV_s2)
+            * (cv_s1 / hbar_omega_eV_s1 + cv_s2 / hbar_omega_eV_s2)
+        )
+        contribution = (
+            gv_by_gv_s1s2
+            * prefactor
+            * lorentzian_divided_by_hbar
+            * self._conversion_factor_WTE
+        )
+        return contribution

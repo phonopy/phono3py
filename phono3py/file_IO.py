@@ -44,7 +44,7 @@ from typing import Literal, Optional, TextIO
 
 import h5py
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
+from numpy.typing import NDArray
 from phonopy.cui.load_helper import read_force_constants_from_hdf5
 
 # This import is deactivated for a while.
@@ -498,7 +498,7 @@ def write_grid_address_to_hdf5(
     filename: str | os.PathLike | None = None,
 ):
     """Write grid addresses to grid_address.hdf5."""
-    suffix = _get_filename_suffix(mesh, filename=filename)
+    suffix = _get_filename_suffix(mesh, middle_filename=filename)
     full_filename = "grid_address" + suffix + ".hdf5"
     with h5py.File(full_filename, "w") as w:
         w.create_dataset("version", data=np.bytes_(__version__))
@@ -603,7 +603,7 @@ def _write_joint_dos_at_t(
     is_mesh_symmetry=True,
 ):
     suffix = _get_filename_suffix(
-        mesh, grid_point=grid_point, sigma=sigma, filename=filename
+        mesh, grid_point=grid_point, sigma=sigma, middle_filename=filename
     )
     jdos_filename = "jdos%s" % suffix
     if temperature is not None:
@@ -683,7 +683,7 @@ def write_real_self_energy_to_hdf5(
     """
     full_filename = "deltas"
     suffix = _get_filename_suffix(mesh, grid_point=grid_point)
-    _band_indices = np.array(band_indices, dtype="intc")
+    _band_indices = np.array(band_indices, dtype="int64")
 
     full_filename += suffix
     if epsilon > 1e-5:
@@ -774,7 +774,7 @@ def write_spectral_function_to_hdf5(
     suffix = _get_filename_suffix(
         mesh, grid_point=grid_point, band_indices=_band_indices, sigma=sigma
     )
-    _band_indices = np.array(band_indices, dtype="intc")
+    _band_indices = np.array(band_indices, dtype="int64")
 
     full_filename += suffix
     if filename is not None:
@@ -825,7 +825,7 @@ def write_collision_to_hdf5(
         band_indices=band_indices,
         sigma=sigma,
         sigma_cutoff=sigma_cutoff,
-        filename=filename,
+        middle_filename=filename,
     )
     full_filename = "collision" + suffix + ".hdf5"
     with h5py.File(full_filename, "w") as w:
@@ -888,7 +888,7 @@ def write_unitary_matrix_to_hdf5(
 
     """
     suffix = _get_filename_suffix(
-        mesh, sigma=sigma, sigma_cutoff=sigma_cutoff, filename=filename
+        mesh, sigma=sigma, sigma_cutoff=sigma_cutoff, middle_filename=filename
     )
     hdf5_filename = "unitary" + suffix + ".hdf5"
     with h5py.File(hdf5_filename, "w") as w:
@@ -929,7 +929,7 @@ def write_collision_eigenvalues_to_hdf5(
 ):
     """Write eigenvalues of collision matrix to coleigs-*.hdf5."""
     suffix = _get_filename_suffix(
-        mesh, sigma=sigma, sigma_cutoff=sigma_cutoff, filename=filename
+        mesh, sigma=sigma, sigma_cutoff=sigma_cutoff, middle_filename=filename
     )
     with h5py.File("coleigs" + suffix + ".hdf5", "w") as w:
         w.create_dataset("version", data=np.bytes_(__version__))
@@ -949,7 +949,7 @@ def write_collision_eigenvalues_to_hdf5(
 def write_kappa_to_hdf5(
     temperature,
     mesh,
-    boundary_mfp: float = None,
+    boundary_mfp: float | None = None,
     bz_grid=None,
     frequency=None,
     group_velocity=None,
@@ -974,6 +974,7 @@ def write_kappa_to_hdf5(
     gamma_isotope=None,
     gamma_N=None,
     gamma_U=None,
+    gamma_elph: NDArray[np.double] | None = None,
     averaged_pp_interaction=None,
     qpoint=None,
     weight=None,
@@ -997,7 +998,7 @@ def write_kappa_to_hdf5(
         band_indices=band_indices,
         sigma=sigma,
         sigma_cutoff=sigma_cutoff,
-        filename=filename,
+        middle_filename=filename,
     )
     full_filename = "kappa" + suffix + ".hdf5"
     with h5py.File(full_filename, "w") as w:
@@ -1072,6 +1073,8 @@ def write_kappa_to_hdf5(
             w.create_dataset("gamma_N", data=gamma_N, compression=compression)
         if gamma_U is not None:
             w.create_dataset("gamma_U", data=gamma_U, compression=compression)
+        if gamma_elph is not None:
+            w.create_dataset("gamma_elph", data=gamma_elph, compression=compression)
         if averaged_pp_interaction is not None:
             w.create_dataset(
                 "ave_pp", data=averaged_pp_interaction, compression=compression
@@ -1143,7 +1146,7 @@ def read_gamma_from_hdf5(
         band_indices=band_indices,
         sigma=sigma,
         sigma_cutoff=sigma_cutoff,
-        filename=filename,
+        middle_filename=filename,
     )
     full_filename = "kappa" + suffix + ".hdf5"
     if not pathlib.Path(full_filename).exists():
@@ -1190,7 +1193,7 @@ def read_collision_from_hdf5(
         band_indices=band_indices,
         sigma=sigma,
         sigma_cutoff=sigma_cutoff,
-        filename=filename,
+        middle_filename=filename,
     )
     full_filename = "collision" + suffix + ".hdf5"
     if not pathlib.Path(full_filename).exists():
@@ -1268,7 +1271,7 @@ def write_pp_to_hdf5(
         grid_point=grid_point,
         sigma=sigma,
         sigma_cutoff=sigma_cutoff,
-        filename=filename,
+        middle_filename=filename,
     )
     full_filename = "pp" + suffix + ".hdf5"
 
@@ -1351,7 +1354,7 @@ def read_pp_from_hdf5(
         grid_point=grid_point,
         sigma=sigma,
         sigma_cutoff=sigma_cutoff,
-        filename=filename,
+        middle_filename=filename,
     )
     full_filename = "pp" + suffix + ".hdf5"
     if not pathlib.Path(full_filename).exists():
@@ -1430,7 +1433,7 @@ def write_gamma_detail_to_hdf5(
         band_indices=band_indices,
         sigma=sigma,
         sigma_cutoff=sigma_cutoff,
-        filename=filename,
+        middle_filename=filename,
     )
     full_filename = "gamma_detail" + suffix + ".hdf5"
 
@@ -1505,7 +1508,7 @@ def write_phonon_to_hdf5(
     filename=None,
 ):
     """Write phonon on grid in its hdf5 file."""
-    suffix = _get_filename_suffix(mesh, filename=filename)
+    suffix = _get_filename_suffix(mesh, middle_filename=filename)
     full_filename = "phonon" + suffix + ".hdf5"
 
     with h5py.File(full_filename, "w") as w:
@@ -1531,26 +1534,32 @@ def write_phonon_to_hdf5(
     return None
 
 
-def read_phonon_from_hdf5(mesh, filename=None, verbose=True) -> tuple:
+def read_phonon_from_hdf5(
+    mesh: Sequence[int] | NDArray[np.int64],
+    middle_filename: str | None = None,
+    verbose=True,
+) -> tuple:
     """Read phonon from its hdf5 file."""
-    suffix = _get_filename_suffix(mesh, filename=filename)
+    suffix = _get_filename_suffix(mesh, middle_filename=middle_filename)
     full_filename = "phonon" + suffix + ".hdf5"
     if not pathlib.Path(full_filename).exists():
         raise FileNotFoundError(f"{full_filename} not found.")
 
     with h5py.File(full_filename, "r") as f:
-        frequencies = np.array(f["frequency"][:], dtype="double", order="C")
+        frequencies = np.array(f["frequency"][:], dtype="double", order="C")  # type: ignore
         itemsize = frequencies.itemsize
         eigenvectors = np.array(
-            f["eigenvector"][:], dtype=("c%d" % (itemsize * 2)), order="C"
+            f["eigenvector"][:],  # type: ignore
+            dtype=("c%d" % (itemsize * 2)),
+            order="C",
         )
-        mesh_in_file = np.array(f["mesh"][:], dtype="intc")
-        grid_address = np.array(f["grid_address"][:], dtype="intc", order="C")
+        mesh_in_file = np.array(f["mesh"][:], dtype="int64")  # type: ignore
+        grid_address = np.array(f["grid_address"][:], dtype="int64", order="C")  # type: ignore
 
         assert (mesh_in_file == mesh).all(), "Mesh numbers are inconsistent."
 
         if verbose:
-            print('Phonons were read from "%s".' % full_filename, flush=True)
+            print(f'Phonons were read from "{full_filename}".', flush=True)
 
         return frequencies, eigenvectors, grid_address
 
@@ -1736,7 +1745,7 @@ def get_filename_suffix(
         sigma=sigma,
         sigma_cutoff=sigma_cutoff,
         temperature=temperature,
-        filename=filename,
+        middle_filename=filename,
     )
 
 
@@ -1760,13 +1769,13 @@ def get_length_of_first_line(f):
 
 
 def _get_filename_suffix(
-    mesh,
+    mesh: Sequence[int] | NDArray[np.int64],
     grid_point: int | None = None,
-    band_indices: ArrayLike | None = None,
+    band_indices: Sequence[int] | NDArray | None = None,
     sigma: float | None = None,
     sigma_cutoff: float | None = None,
     temperature: float | None = None,
-    filename: str | None = None,
+    middle_filename: str | None = None,
 ):
     """Return filename suffix corresponding to parameters."""
     suffix = "-m%d%d%d" % tuple(mesh)
@@ -1786,8 +1795,8 @@ def _get_filename_suffix(
             suffix += "-sd" + sigma_cutoff_str
     if temperature is not None:
         suffix += "-t" + _del_zeros(temperature)
-    if filename is not None:
-        suffix += "." + filename
+    if middle_filename is not None:
+        suffix += "." + middle_filename
 
     return suffix
 

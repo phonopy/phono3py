@@ -34,7 +34,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
 
 from phono3py.file_IO import write_pp_to_hdf5
 from phono3py.phonon3.interaction import Interaction
@@ -42,6 +42,19 @@ from phono3py.phonon3.triplets import get_all_triplets
 
 if TYPE_CHECKING:
     from phono3py.conductivity.base import ConductivityBase
+
+
+_TOptions = TypeVar("_TOptions")
+
+
+def build_options(_options_type: type[_TOptions], **kwargs: Any) -> _TOptions:
+    """Return kwargs cast as typed options data.
+
+    This is a tiny helper for constructing `TypedDict` option data in init
+    modules without repeating explicit key-to-value dict literals.
+
+    """
+    return cast(_TOptions, kwargs)
 
 
 def select_colmat_solver(pinv_solver):
@@ -87,7 +100,7 @@ def write_pp_interaction(
     pp: Interaction,
     i,
     filename=None,
-    compression="gzip",
+    compression: Literal["gzip", "lzf"] | int | None = "gzip",
 ):
     """Write ph-ph interaction strength in hdf5 file."""
     grid_point = conductivity.grid_points[i]

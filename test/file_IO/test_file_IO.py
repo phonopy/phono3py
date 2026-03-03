@@ -29,7 +29,7 @@ def test_kappa_filename():
         band_indices=band_indices,
         sigma=sigma,
         sigma_cutoff=sigma_cutoff,
-        filename=filename,
+        middle_filename=filename,
     )
     full_filename = "kappa" + suffix + ".hdf5"
     assert full_filename == "kappa-m444.hdf5"

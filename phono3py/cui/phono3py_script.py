@@ -929,7 +929,7 @@ def _run_isotope_then_exit(
     """Run isotope scattering calculation."""
     mass_variances = settings.mass_variances
     if settings.band_indices is not None:
-        band_indices = np.hstack(settings.band_indices).astype("intc")
+        band_indices = np.hstack(settings.band_indices).astype("int64")
     else:
         band_indices = None
     iso = Phono3pyIsotope(
@@ -1003,9 +1003,11 @@ def _init_phph_interaction(
         lapack_zheev_uplo=settings.lapack_zheev_uplo,
     )
 
+    if log_level:
+        print("-" * 27 + " Phonon calculations " + "-" * 28)
+
     if not settings.read_phonon:
         if log_level:
-            print("-" * 27 + " Phonon calculations " + "-" * 28)
             dm = phono3py.dynamical_matrix
             if isinstance(dm, DynamicalMatrixGL):
                 dm.show_nac_message()
@@ -1013,30 +1015,29 @@ def _init_phph_interaction(
             sys.stdout.flush()
         phono3py.run_phonon_solver()
 
-    if settings.write_phonon:
-        freqs, eigvecs, grid_address = phono3py.get_phonon_data()
-        ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(bz_grid)
-        ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype="int64")
-        filename = write_phonon_to_hdf5(
-            freqs,
-            eigvecs,
-            grid_address,
-            phono3py.mesh_numbers,
-            bz_grid=bz_grid,
-            ir_grid_points=ir_grid_points,
-            ir_grid_weights=ir_grid_weights,
-            compression=settings.hdf5_compression,
-        )
-        if filename:
-            if log_level:
-                print('Phonons are written into "%s".' % filename)
-        else:
-            print("Writing phonons failed.")
-            if log_level:
-                print_error()
-            sys.exit(1)
-
-    if settings.read_phonon:
+        if settings.write_phonon:
+            freqs, eigvecs, grid_address = phono3py.get_phonon_data()
+            ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(bz_grid)
+            ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype="int64")
+            filename = write_phonon_to_hdf5(
+                freqs,
+                eigvecs,
+                grid_address,
+                phono3py.mesh_numbers,
+                bz_grid=bz_grid,
+                ir_grid_points=ir_grid_points,
+                ir_grid_weights=ir_grid_weights,
+                compression=settings.hdf5_compression,
+            )
+            if filename:
+                if log_level:
+                    print('Phonons are written into "%s".' % filename)
+            else:
+                print("Writing phonons failed.")
+                if log_level:
+                    print_error()
+                sys.exit(1)
+    else:
         phonons = read_phonon_from_hdf5(phono3py.mesh_numbers, verbose=(log_level > 0))
         if phonons is None:
             print("Reading phonons failed.")
@@ -1522,6 +1523,7 @@ def main(**argparse_control):
             read_collision=settings.read_collision,
             write_pp=settings.write_pp,
             read_pp=settings.read_pp,
+            read_elph=settings.read_elph,
             write_LBTE_solution=settings.write_LBTE_solution,
             compression=settings.hdf5_compression,
         )

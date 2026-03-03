@@ -1,4 +1,15 @@
-"""Calculate lattice thermal conductivity with direct solution."""
+"""Calculate lattice thermal conductivity with direct solution.
+
+Note
+----
+The RTA paths in this module are used inside the LBTE direct-solution
+workflow (mainly as reference quantities next to the full solution).
+For irreducible collision matrices, this is intended to be consistent with the
+standalone RTA implementation in ``conductivity/rta.py``. For reducible
+collision matrices, the RTA definition here follows the diagonal part of the
+constructed collision matrix and is not strictly equivalent to ``rta.py``.
+
+"""
 
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
@@ -44,7 +55,6 @@ from numpy.typing import ArrayLike, NDArray
 from phono3py.conductivity.base import ConductivityComponents
 from phono3py.conductivity.direct_solution_base import (
     ConductivityLBTEBase,
-    diagonalize_collision_matrix,
 )
 from phono3py.phonon3.interaction import Interaction
 
@@ -118,39 +128,39 @@ class ConductivityLBTE(ConductivityLBTEBase):
         )
 
     @property
-    def kappa(self) -> NDArray | None:
+    def kappa(self) -> NDArray[np.double] | None:
         """Return kappa."""
         return self._kappa
 
     @property
-    def mode_kappa(self) -> NDArray | None:
+    def mode_kappa(self) -> NDArray[np.double] | None:
         """Return mode_kappa."""
         return self._mode_kappa
 
     @property
-    def kappa_RTA(self) -> NDArray | None:
+    def kappa_RTA(self) -> NDArray[np.double] | None:
         """Return RTA lattice thermal conductivity."""
         return self._kappa_RTA
 
     @property
-    def mode_kappa_RTA(self) -> NDArray | None:
+    def mode_kappa_RTA(self) -> NDArray[np.double] | None:
         """Return RTA mode lattice thermal conductivities."""
         return self._mode_kappa_RTA
 
     @property
-    def gv_by_gv(self) -> NDArray:
+    def gv_by_gv(self) -> NDArray[np.double]:
         """Return gv_by_gv at grid points where mode kappa are calculated."""
         return self._conductivity_components.gv_by_gv
 
-    def _set_cv(self, i_gp, i_data):
+    def _set_cv(self, i_gp: int, i_data: int) -> None:
         """Set cv for conductivity components."""
         self._conductivity_components.set_heat_capacities(i_gp, i_data)
 
-    def _set_velocities(self, i_gp, i_data):
+    def _set_velocities(self, i_gp: int, i_data: int) -> None:
         """Set velocities for conductivity components."""
         self._conductivity_components.set_velocities(i_gp, i_data)
 
-    def _allocate_local_values(self, num_grid_points):
+    def _allocate_local_values(self, num_grid_points: int) -> None:
         """Allocate grid point local arrays.
 
         For full collision matrix, `num_grid_points` equals to the number of
@@ -181,67 +191,48 @@ class ConductivityLBTE(ConductivityLBTEBase):
             (len(self._sigmas), num_temp, num_grid_points, num_band0, 6), dtype="double"
         )
 
-    def _set_kappa_at_sigmas(self, weights):
+    def _set_kappa_at_sigmas(
+        self, weights: NDArray[np.double] | NDArray[np.int64]
+    ) -> None:
         """Calculate thermal conductivity from collision matrix."""
-        for j, sigma in enumerate(self._sigmas):
-            if self._log_level:
-                text = "----------- Thermal conductivity (W/m-k) "
-                if sigma:
-                    text += "for sigma=%s -----------" % sigma
-                else:
-                    text += "with tetrahedron method -----------"
-                print(text, flush=True)
+        self._set_kappa_at_sigmas_common(weights)
 
-            for k, t in enumerate(self._temperatures):
-                if t > 0:
-                    self._set_kappa_RTA(j, k, weights)
+    def _show_kappa_at_temperature(self, i_sigma: int, i_temp: int, t: float) -> None:
+        print(
+            ("#%6s       " + " %-10s" * 6)
+            % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
+        )
+        print(("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(self._kappa[i_sigma, i_temp])))
+        print(
+            (" %6s " + " %10.3f" * 6)
+            % (("(RTA)",) + tuple(self._kappa_RTA[i_sigma, i_temp]))
+        )
+        print("-" * 76, flush=True)
 
-                    w = diagonalize_collision_matrix(
-                        self._collision_matrix,
-                        i_sigma=j,
-                        i_temp=k,
-                        pinv_solver=self._pinv_solver,
-                        log_level=self._log_level,
-                    )
-                    if w is not None:
-                        self._collision_eigenvalues[j, k] = w
+    def _set_kappa(
+        self,
+        i_sigma: int,
+        i_temp: int,
+        weights: NDArray[np.double] | NDArray[np.int64],
+    ) -> None:
+        self._set_kappa_by_collision_type(
+            self._kappa,
+            self._mode_kappa,
+            i_sigma,
+            i_temp,
+            weights,
+        )
 
-                    self._set_kappa(j, k, weights)
-
-                    if self._log_level:
-                        print(
-                            ("#%6s       " + " %-10s" * 6)
-                            % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
-                        )
-                        print(
-                            ("%7.1f " + " %10.3f" * 6)
-                            % ((t,) + tuple(self._kappa[j, k]))
-                        )
-                        print(
-                            (" %6s " + " %10.3f" * 6)
-                            % (("(RTA)",) + tuple(self._kappa_RTA[j, k]))
-                        )
-                        print("-" * 76, flush=True)
-
-        if self._log_level:
-            print("", flush=True)
-
-    def _set_kappa(self, i_sigma, i_temp, weights):
-        if self._is_reducible_collision_matrix:
-            self._set_kappa_reducible_colmat(
-                self._kappa, self._mode_kappa, i_sigma, i_temp, weights
-            )
-        else:
-            self._set_kappa_ir_colmat(
-                self._kappa, self._mode_kappa, i_sigma, i_temp, weights
-            )
-
-    def _set_kappa_RTA(self, i_sigma, i_temp, weights):
-        if self._is_reducible_collision_matrix:
-            self._set_kappa_RTA_reducible_colmat(
-                self._kappa_RTA, self._mode_kappa_RTA, i_sigma, i_temp, weights
-            )
-        else:
-            self._set_kappa_RTA_ir_colmat(
-                self._kappa_RTA, self._mode_kappa_RTA, i_sigma, i_temp, weights
-            )
+    def _set_kappa_RTA(
+        self,
+        i_sigma: int,
+        i_temp: int,
+        weights: NDArray[np.double] | NDArray[np.int64],
+    ) -> None:
+        self._set_kappa_RTA_by_collision_type(
+            self._kappa_RTA,
+            self._mode_kappa_RTA,
+            i_sigma,
+            i_temp,
+            weights,
+        )

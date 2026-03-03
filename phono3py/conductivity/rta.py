@@ -1,4 +1,14 @@
-"""Lattice thermal conductivity calculation with RTA."""
+"""Lattice thermal conductivity calculation with RTA.
+
+Note
+----
+This module implements the standalone RTA workflow directly from mode
+linewidths (main diagonal scattering rates) and mode-resolved transport
+quantities. This differs in role from the RTA paths in
+``conductivity/direct_solution_base.py``, where RTA is evaluated inside the
+LBTE direct-solution pipeline.
+
+"""
 
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
@@ -39,7 +49,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
+from numpy.typing import NDArray
 
 from phono3py.conductivity.base import ConductivityComponents
 from phono3py.conductivity.rta_base import ConductivityRTABase
@@ -52,12 +62,12 @@ class ConductivityRTA(ConductivityRTABase):
     def __init__(
         self,
         interaction: Interaction,
-        grid_points: ArrayLike | None = None,
-        temperatures: ArrayLike | None = None,
+        grid_points: Sequence[int] | NDArray[np.int64] | None = None,
+        temperatures: Sequence[float] | NDArray[np.double] | None = None,
         sigmas: Sequence[float | None] | None = None,
         sigma_cutoff: float | None = None,
         is_isotope: bool = False,
-        mass_variances: ArrayLike | None = None,
+        mass_variances: Sequence[float] | NDArray[np.double] | None = None,
         boundary_mfp: float | None = None,  # in micrometer
         use_ave_pp: bool = False,
         is_kappa_star: bool = True,
@@ -71,7 +81,14 @@ class ConductivityRTA(ConductivityRTABase):
         is_frequency_shift_by_bubble: bool = False,
         log_level: int = 0,
     ):
-        """Init method."""
+        """Init method.
+
+        gv_delta_q : float, optional, default is None
+            With non-analytical correction, group velocity is calculated by
+            central finite difference method. This value gives the distance in
+            both directions in reciprocal space. The default value will be 1e-5.
+
+        """
         self._kappa = None
         self._mode_kappa = None
 
@@ -110,17 +127,17 @@ class ConductivityRTA(ConductivityRTABase):
         )
 
     @property
-    def kappa(self) -> NDArray | None:
+    def kappa(self) -> NDArray[np.double] | None:
         """Return kappa."""
         return self._kappa
 
     @property
-    def mode_kappa(self) -> NDArray | None:
+    def mode_kappa(self) -> NDArray[np.double] | None:
         """Return mode_kappa."""
         return self._mode_kappa
 
     @property
-    def gv_by_gv(self) -> NDArray:
+    def gv_by_gv(self) -> NDArray[np.double]:
         """Return gv_by_gv at grid points where mode kappa are calculated."""
         return self._conductivity_components.gv_by_gv
 
@@ -144,6 +161,11 @@ class ConductivityRTA(ConductivityRTABase):
                 "Temperatures have not been set yet. "
                 "Set temperatures before this method."
             )
+        if self._mode_kappa is None:
+            raise RuntimeError(
+                "Mode kappa has not been allocated yet. "
+                "Run self._allocate_values() before this method."
+            )
 
         num_band = len(self._pp.primitive) * 3
         mode_heat_capacities = self._conductivity_components.mode_heat_capacities
@@ -158,36 +180,57 @@ class ConductivityRTA(ConductivityRTABase):
                 for k in range(len(self._temperatures)):
                     g_sum = self._get_main_diagonal(i, j, k)
                     for ll in range(num_band):
-                        if frequencies[ll] < self._pp.cutoff_frequency:
+                        contribution = self._get_mode_contribution(
+                            freq=frequencies[ll],
+                            g_sum=g_sum[ll],
+                            cv=cv[k, ll],
+                            gv_by_gv=gv_by_gv[i, ll],
+                            gp=gp,
+                            band_index=ll,
+                        )
+                        if contribution is None:
                             self._num_ignored_phonon_modes[j, k] += 1  # type: ignore
                             continue
 
-                        old_settings = np.seterr(all="raise")
-                        try:
-                            self._mode_kappa[j, k, i, ll] = (  # type: ignore
-                                gv_by_gv[i, ll]
-                                * cv[k, ll]
-                                / (g_sum[ll] * 2)
-                                * self._conversion_factor
-                            )
-                        except FloatingPointError:
-                            # supposed that g is almost 0 and |gv|=0
-                            pass
-                        except Exception:
-                            print("=" * 26 + " Warning " + "=" * 26)
-                            print(
-                                " Unexpected physical condition of ph-ph "
-                                "interaction calculation was found."
-                            )
-                            print(
-                                " g=%f at gp=%d, band=%d, freq=%f"
-                                % (g_sum[ll], gp, ll + 1, frequencies[ll])
-                            )
-                            print("=" * 61)
-                        np.seterr(**old_settings)
+                        self._mode_kappa[j, k, i, ll] = contribution  # type: ignore
 
         N = self.number_of_sampling_grid_points
         self._kappa = self._mode_kappa.sum(axis=2).sum(axis=2) / N
+
+    def _get_mode_contribution(
+        self,
+        *,
+        freq: float,
+        g_sum: float,
+        cv: float,
+        gv_by_gv: NDArray[np.double],
+        gp: int,
+        band_index: int,
+    ) -> NDArray[np.double] | None:
+        if freq < self._pp.cutoff_frequency:
+            return None
+
+        old_settings = np.seterr(all="raise")
+        try:
+            contribution = gv_by_gv * cv / (g_sum * 2) * self._conversion_factor
+        except FloatingPointError:
+            # supposed that g is almost 0 and |gv|=0
+            contribution = np.zeros(6, dtype="double")
+        except Exception:
+            print("=" * 26 + " Warning " + "=" * 26)
+            print(
+                " Unexpected physical condition of ph-ph "
+                "interaction calculation was found."
+            )
+            print(
+                " g=%f at gp=%d, band=%d, freq=%f" % (g_sum, gp, band_index + 1, freq)
+            )
+            print("=" * 61)
+            contribution = np.zeros(6, dtype="double")
+        finally:
+            np.seterr(**old_settings)
+
+        return contribution
 
     def _allocate_values(self):
         if self._temperatures is None:

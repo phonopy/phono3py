@@ -354,7 +354,9 @@ class Interaction:
 
     def get_phonons(
         self,
-    ) -> tuple[NDArray | None, NDArray | None, NDArray | None]:
+    ) -> tuple[
+        NDArray[np.double] | None, NDArray[np.double] | None, NDArray[np.double] | None
+    ]:
         """Return phonons on grid.
 
         Returns

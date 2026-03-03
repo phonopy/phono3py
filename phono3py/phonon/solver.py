@@ -37,6 +37,7 @@
 from __future__ import annotations
 
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.harmonic.dynamical_matrix import (
     DynamicalMatrix,
     DynamicalMatrixGL,
@@ -254,7 +255,7 @@ def _extract_params(dm: DynamicalMatrix | DynamicalMatrixNAC):
     )
 
 
-def _get_fc_elements_mapping(dm, fc):
+def _get_fc_elements_mapping(dm: DynamicalMatrix, fc: NDArray[np.double]):
     p2s_map = dm.primitive.p2s_map
     s2p_map = dm.primitive.s2p_map
     if fc.shape[0] == fc.shape[1]:  # full fc
@@ -264,9 +265,9 @@ def _get_fc_elements_mapping(dm, fc):
         primitive = dm.primitive
         p2p_map = primitive.p2p_map
         s2pp_map = np.array(
-            [p2p_map[s2p_map[i]] for i in range(len(s2p_map))], dtype="intc"
+            [p2p_map[s2p_map[i]] for i in range(len(s2p_map))], dtype="int64"
         )
-        fc_p2s = np.arange(len(p2s_map), dtype="intc")
+        fc_p2s = np.arange(len(p2s_map), dtype="int64")
         fc_s2p = s2pp_map
 
     return np.array(fc_p2s, dtype="int64"), np.array(fc_s2p, dtype="int64")

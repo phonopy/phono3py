@@ -92,6 +92,7 @@ class Phono3pySettings(Settings):
         else:
             self.read_fc2 = False
             self.read_fc3 = False
+        self.read_elph = None
         self.read_gamma = False
         self.read_phonon = False
         self.read_pp = False
@@ -372,6 +373,10 @@ class Phono3pyConfParser(ConfParser):
             if rd_fc2 is not None:
                 self._confs["random_displacements_fc2"] = rd_fc2
 
+        if "read_elph" in args:
+            if args.read_elph is not None:
+                self._confs["read_elph"] = args.read_elph
+
         if "read_fc2" in args:
             if args.read_fc2:
                 self._confs["read_fc2"] = ".true."
@@ -553,6 +558,7 @@ class Phono3pyConfParser(ConfParser):
 
             # int
             if conf_key in (
+                "read_elph",
                 "pinv_method",
                 "pinv_solver",
                 "num_points_in_batch",
@@ -830,9 +836,13 @@ class Phono3pyConfParser(ConfParser):
         if "real_self_energy" in params:
             settings.is_real_self_energy = params["real_self_energy"]
 
-            # Read collision matrix and gammas from hdf5
+        # Read collision matrix and gammas from hdf5
         if "read_collision" in params:
             settings.read_collision = params["read_collision"]
+
+        # Read gammas of electron-phonon interaction from hdf5
+        if "read_elph" in params:
+            settings.read_elph = params["read_elph"]
 
         # Read fc2 from hdf5
         if "read_fc2" in params:
