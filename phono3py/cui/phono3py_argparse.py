@@ -696,6 +696,13 @@ def get_parser(load_phono3py_yaml: bool = False):
         help="Read collision matrix and Gammas from files",
     )
     parser.add_argument(
+        "--read-elph",
+        dest="read_elph",
+        type=int,
+        default=None,
+        help="An index (e.g., 1, 2, ...) to read Gammas of el-ph interaction from file",
+    )
+    parser.add_argument(
         "--read-gamma",
         dest="read_gamma",
         action="store_true",
@@ -977,11 +984,13 @@ class Phono3pyMockArgs:
     is_bterta: bool | None = None
     is_fc3_r0_average: bool | None = None
     is_isotope: bool | None = None
+    is_N_U: bool | None = None
     is_lbte: bool | None = None
     is_wigner_kappa: bool | None = None
     mesh_numbers: Sequence | None = None
     mlp_params: str | None = None
     rd_number_estimation_factor: float | None = None
+    read_elph: bool | None = None
     read_gamma: bool | None = None
     output_filename = None
     output_yaml_filename: str | os.PathLike | None = None
@@ -991,6 +1000,7 @@ class Phono3pyMockArgs:
     temperatures: Sequence | None = None
     use_pypolymlp: bool | None = None
     write_gamma: bool | None = None
+    write_gamma_detail: bool | None = None
     write_grid_points: bool | None = None
     write_phonon: bool | None = None
 

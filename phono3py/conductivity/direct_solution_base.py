@@ -40,10 +40,10 @@ import os
 import sys
 import time
 from abc import abstractmethod
-from typing import Optional
+from collections.abc import Callable, Iterator
 
 import numpy as np
-from numpy.typing import ArrayLike
+from numpy.typing import ArrayLike, NDArray
 from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.physical_units import get_physical_units
 
@@ -241,7 +241,7 @@ class ConductivityLBTEBase(ConductivityBase):
         """
         N = self.number_of_sampling_grid_points
         X = self._get_X(i_temp, weights)
-        num_mesh_points = np.prod(self._pp.mesh_numbers)
+        num_mesh_points = int(np.prod(self._pp.mesh_numbers))
         Y = self._get_Y(i_sigma, i_temp, weights, X)
         self._set_mean_free_path(i_sigma, i_temp, weights, Y)
         # Putting self._rotations_cartesian is to symmetrize kappa.
@@ -314,30 +314,43 @@ class ConductivityLBTEBase(ConductivityBase):
         self._show_log_header(i_gp)
         gp = self._grid_points[i_gp]
 
-        if not self._all_grid_points:
-            self._collision_matrix[:] = 0
-
-        if not self._read_gamma:
-            self._collision.set_grid_point(gp)
-
-            if self._log_level:
-                print("Number of triplets: %d" % len(self._pp.get_triplets_at_q()[0]))
-
-            self._set_collision_matrix_at_sigmas(i_gp)
-
-        if self._is_reducible_collision_matrix:
-            i_data = self._pp.bz_grid.bzg2grg[gp]
-        else:
-            i_data = i_gp
-        self._set_velocities(i_gp, i_data)
-        self._set_cv(i_gp, i_data)
-        if self._is_isotope:
-            gamma_iso = self._get_gamma_isotope_at_sigmas(i_gp)
-            band_indices = self._pp.band_indices
-            self._gamma_iso[:, i_data, :] = gamma_iso[:, band_indices]
+        self._prepare_collisions_at_grid_point(i_gp, gp)
+        i_data = self._get_data_index(i_gp, gp)
+        self._set_local_properties_at_grid_point(i_gp, i_data)
 
         if self._log_level:
             self._show_log(i_gp)
+
+    def _prepare_collisions_at_grid_point(self, i_gp: int, gp: int):
+        self._reset_collision_matrix_if_needed()
+
+        if self._read_gamma:
+            return
+
+        self._collision.set_grid_point(gp)
+        if self._log_level:
+            print("Number of triplets: %d" % len(self._pp.get_triplets_at_q()[0]))
+        self._set_collision_matrix_at_sigmas(i_gp)
+
+    def _reset_collision_matrix_if_needed(self) -> None:
+        if not self._all_grid_points:
+            self._collision_matrix[:] = 0
+
+    def _set_local_properties_at_grid_point(self, i_gp: int, i_data: int) -> None:
+        self._set_velocities(i_gp, i_data)
+        self._set_cv(i_gp, i_data)
+        if self._is_isotope:
+            self._set_isotope_gamma_at_grid_point(i_gp, i_data)
+
+    def _get_data_index(self, i_gp: int, gp: int) -> int:
+        if self._is_reducible_collision_matrix:
+            return self._pp.bz_grid.bzg2grg[gp]
+        return i_gp
+
+    def _set_isotope_gamma_at_grid_point(self, i_gp: int, i_data: int):
+        gamma_iso = self._get_gamma_isotope_at_sigmas(i_gp)
+        band_indices = self._pp.band_indices
+        self._gamma_iso[:, i_data, :] = gamma_iso[:, band_indices]
 
     def _allocate_reducible_colmat_values(self):
         """Allocate arrays for reducilble collision matrix."""
@@ -413,118 +426,160 @@ class ConductivityLBTEBase(ConductivityBase):
 
         """
         for j, sigma in enumerate(self._sigmas):
-            if self._log_level:
-                text = "Calculating collision matrix with "
-                if sigma is None:
-                    text += "tetrahedron method."
-                else:
-                    text += "sigma=%s" % sigma
-                    if self._sigma_cutoff is None:
-                        text += "."
-                    else:
-                        text += "(%4.2f SD)." % self._sigma_cutoff
-                print(text)
+            self._run_collision_matrix_at_sigma(i_gp, j, sigma)
 
-            self._collision.set_sigma(sigma, sigma_cutoff=self._sigma_cutoff)
-            self._collision.run_integration_weights()
+    def _run_collision_matrix_at_sigma(self, i_gp: int, i_sigma: int, sigma) -> None:
+        self._show_collision_matrix_sigma_log(sigma)
+        self._collision.set_sigma(sigma, sigma_cutoff=self._sigma_cutoff)
+        self._collision.run_integration_weights()
 
-            if self._read_pp:
-                pp_strength, _g_zero = read_pp_from_hdf5(
-                    self._pp.mesh_numbers,
-                    grid_point=self._grid_points[i_gp],
-                    sigma=sigma,
-                    sigma_cutoff=self._sigma_cutoff,
-                    filename=self._pp_filename,
-                    verbose=(self._log_level > 0),
-                )
-                _, g_zero = self._collision.get_integration_weights()
-                if self._log_level:
-                    if len(self._sigmas) > 1:
-                        print(
-                            "Multiple sigmas or mixing smearing and "
-                            "tetrahedron method is not supported."
-                        )
-                if _g_zero is not None and (_g_zero != g_zero).any():
-                    print("=" * 26 + " Warning " + "=" * 26)
-                    print("Inconsistency found in g_zero.")
-                    print(
-                        "The inconsistency may come from slight numerical "
-                        "calculator difference between hardwares or linear algebra "
-                        "libraries. "
-                        "To avoid the inconsistency, it is recommended to use the same "
-                        "phonon-*.hdf5 for generating pp-*.hdf5 because phonon "
-                        "frequencies are used to determine g_zero. "
-                        "If significant difference of values below is found, it can be "
-                        "a sign of that something is really wrong. Otherwise, this "
-                        "warning may be ignored."
-                    )
-                    print(_g_zero.shape, g_zero.shape)
-                    for i, (_v, v) in enumerate(zip(_g_zero, g_zero, strict=True)):
-                        if (_v != v).any():
-                            print(f"{i + 1} {_v.sum()} {v.sum()}")
-                    self._collision.set_interaction_strength(
-                        pp_strength, g_zero=_g_zero
-                    )
-                else:
-                    self._collision.set_interaction_strength(pp_strength)
-            elif j != 0 and (self._is_full_pp or self._sigma_cutoff is None):
-                if self._log_level:
-                    print("Existing ph-ph interaction is used.")
+        self._set_interaction_strength_at_sigma(i_gp, i_sigma, sigma)
+        self._store_averaged_pp_if_needed(i_gp, i_sigma)
+        self._store_collision_results_at_sigma(i_gp, i_sigma)
+
+    def _store_averaged_pp_if_needed(self, i_gp: int, i_sigma: int) -> None:
+        if self._is_full_pp and i_sigma == 0:
+            self._averaged_pp_interaction[i_gp] = self._pp.averaged_interaction
+
+    def _show_collision_matrix_sigma_log(self, sigma):
+        if not self._log_level:
+            return
+
+        text = "Calculating collision matrix with "
+        if sigma is None:
+            text += "tetrahedron method."
+        else:
+            text += "sigma=%s" % sigma
+            if self._sigma_cutoff is None:
+                text += "."
             else:
-                if self._log_level:
-                    print("Calculating ph-ph interaction...")
-                self._collision.run_interaction(is_full_pp=self._is_full_pp)
+                text += "(%4.2f SD)." % self._sigma_cutoff
+        print(text)
 
-            if self._is_full_pp and j == 0:
-                self._averaged_pp_interaction[i_gp] = self._pp.averaged_interaction
+    def _set_interaction_strength_at_sigma(self, i_gp, i_sigma, sigma):
+        if self._read_pp:
+            self._set_interaction_strength_from_file(i_gp, sigma)
+        elif i_sigma != 0 and (self._is_full_pp or self._sigma_cutoff is None):
+            if self._log_level:
+                print("Existing ph-ph interaction is used.")
+        else:
+            if self._log_level:
+                print("Calculating ph-ph interaction...")
+            self._collision.run_interaction(is_full_pp=self._is_full_pp)
 
-            for k, t in enumerate(self._temperatures):
-                self._collision.temperature = t
-                self._collision.run()
-                if self._all_grid_points:
-                    if self._is_reducible_collision_matrix:
-                        i_data = self._pp.bz_grid.bzg2grg[self._grid_points[i_gp]]
-                    else:
-                        i_data = i_gp
-                else:
-                    i_data = 0
-                self._gamma[j, k, i_data] = self._collision.imag_self_energy
-                self._collision_matrix[j, k, i_data] = (
-                    self._collision.get_collision_matrix()
-                )
+    def _set_interaction_strength_from_file(self, i_gp, sigma):
+        pp_strength, _g_zero = read_pp_from_hdf5(
+            self._pp.mesh_numbers,
+            grid_point=self._grid_points[i_gp],
+            sigma=sigma,
+            sigma_cutoff=self._sigma_cutoff,
+            filename=self._pp_filename,
+            verbose=(self._log_level > 0),
+        )
+        _, g_zero = self._collision.get_integration_weights()
+        if self._log_level and len(self._sigmas) > 1:
+            print(
+                "Multiple sigmas or mixing smearing and "
+                "tetrahedron method is not supported."
+            )
+        if _g_zero is not None and (_g_zero != g_zero).any():
+            self._show_g_zero_inconsistency_warning(_g_zero, g_zero)
+            self._collision.set_interaction_strength(pp_strength, g_zero=_g_zero)
+        else:
+            self._collision.set_interaction_strength(pp_strength)
 
-    def _prepare_collision_matrix(self):
+    def _show_g_zero_inconsistency_warning(self, g_zero_from_file, g_zero_runtime):
+        print("=" * 26 + " Warning " + "=" * 26)
+        print("Inconsistency found in g_zero.")
+        print(
+            "The inconsistency may come from slight numerical "
+            "calculator difference between hardwares or linear algebra "
+            "libraries. "
+            "To avoid the inconsistency, it is recommended to use the same "
+            "phonon-*.hdf5 for generating pp-*.hdf5 because phonon "
+            "frequencies are used to determine g_zero. "
+            "If significant difference of values below is found, it can be "
+            "a sign of that something is really wrong. Otherwise, this "
+            "warning may be ignored."
+        )
+        print(g_zero_from_file.shape, g_zero_runtime.shape)
+        for i, (_v, v) in enumerate(zip(g_zero_from_file, g_zero_runtime, strict=True)):
+            if (_v != v).any():
+                print(f"{i + 1} {_v.sum()} {v.sum()}")
+
+    def _store_collision_results_at_sigma(self, i_gp, i_sigma):
+        i_data = self._get_collision_storage_index(i_gp)
+        for k, t in enumerate(self._temperatures):
+            self._collision.temperature = t
+            self._collision.run()
+            self._gamma[i_sigma, k, i_data] = self._collision.imag_self_energy
+            self._collision_matrix[i_sigma, k, i_data] = (
+                self._collision.get_collision_matrix()
+            )
+
+    def _get_collision_storage_index(self, i_gp):
+        if not self._all_grid_points:
+            return 0
+        if self._is_reducible_collision_matrix:
+            return self._pp.bz_grid.bzg2grg[self._grid_points[i_gp]]
+        return i_gp
+
+    def _prepare_collision_matrix(self) -> NDArray[np.double] | NDArray[np.int64]:
         """Collect pieces and construct collision matrix."""
         if self._log_level:
             print(f"- Collision matrix shape {self._collision_matrix.shape}")
-        if self._is_reducible_collision_matrix:
-            if self._is_kappa_star:
-                self._average_collision_matrix_by_degeneracy()
-                num_mesh_points = np.prod(self._pp.mesh_numbers)
-                num_rot = len(self._point_operations)
-                rot_grid_points = np.zeros((num_rot, num_mesh_points), dtype="int64")
-                # Ir-grid points and rot_grid_points in generalized regular grid
-                ir_gr_grid_points = np.array(
-                    self._pp.bz_grid.bzg2grg[self._ir_grid_points], dtype="int64"
-                )
-                for i in range(num_mesh_points):
-                    rot_grid_points[:, i] = self._pp.bz_grid.bzg2grg[
-                        get_grid_points_by_rotations(
-                            self._pp.bz_grid.grg2bzg[i], self._pp.bz_grid
-                        )
-                    ]
-                self._expand_reducible_collisions(ir_gr_grid_points, rot_grid_points)
-                self._expand_local_values(ir_gr_grid_points, rot_grid_points)
-            self._combine_reducible_collisions()
-            weights = np.ones(np.prod(self._pp.mesh_numbers), dtype="int64")
-            self._symmetrize_collision_matrix()
-        else:
-            self._combine_collisions()
-            weights = self._multiply_weights_to_collisions()
-            self._average_collision_matrix_by_degeneracy()
-            self._symmetrize_collision_matrix()
 
+        return self._prepare_collision_matrix_by_type()
+
+    def _prepare_collision_matrix_by_type(
+        self,
+    ) -> NDArray[np.double] | NDArray[np.int64]:
+        if self._is_reducible_collision_matrix:
+            return self._prepare_reducible_collision_matrix()
+        return self._prepare_ir_collision_matrix()
+
+    def _prepare_reducible_collision_matrix(self) -> NDArray[np.int64]:
+        if self._is_kappa_star:
+            self._expand_reducible_collision_matrix_by_symmetry()
+
+        self._combine_reducible_collisions()
+        weights = self._get_reducible_collision_weights()
+        self._symmetrize_collision_matrix()
         return weights
+
+    def _expand_reducible_collision_matrix_by_symmetry(self) -> None:
+        self._average_collision_matrix_by_degeneracy()
+        ir_gr_grid_points, rot_grid_points = self._get_reducible_rotation_maps()
+        self._expand_reducible_collisions(ir_gr_grid_points, rot_grid_points)
+        self._expand_local_values(ir_gr_grid_points, rot_grid_points)
+
+    def _get_reducible_collision_weights(self) -> NDArray[np.int64]:
+        return np.ones(np.prod(self._pp.mesh_numbers), dtype="int64")
+
+    def _prepare_ir_collision_matrix(self) -> NDArray[np.double]:
+        self._combine_collisions()
+        weights = self._apply_ir_collision_weights()
+        self._average_collision_matrix_by_degeneracy()
+        self._symmetrize_collision_matrix()
+        return weights
+
+    def _apply_ir_collision_weights(self) -> NDArray[np.double]:
+        return self._multiply_weights_to_collisions()
+
+    def _get_reducible_rotation_maps(self):
+        num_mesh_points = np.prod(self._pp.mesh_numbers)
+        num_rot = len(self._point_operations)
+        rot_grid_points = np.zeros((num_rot, num_mesh_points), dtype="int64")
+        ir_gr_grid_points = np.array(
+            self._pp.bz_grid.bzg2grg[self._ir_grid_points], dtype="int64"
+        )
+        for i in range(num_mesh_points):
+            rot_grid_points[:, i] = self._pp.bz_grid.bzg2grg[
+                get_grid_points_by_rotations(
+                    self._pp.bz_grid.grg2bzg[i], self._pp.bz_grid
+                )
+            ]
+        return ir_gr_grid_points, rot_grid_points
 
     def _multiply_weights_to_collisions(self):
         weights = self._get_weights()
@@ -535,31 +590,69 @@ class ConductivityLBTEBase(ConductivityBase):
 
     def _combine_collisions(self):
         """Include diagonal elements into collision matrix."""
-        num_band = len(self._pp.primitive) * 3
-        for j, k in np.ndindex((len(self._sigmas), len(self._temperatures))):
-            for i, ir_gp in enumerate(self._ir_grid_points):
-                for r, r_gp in zip(
-                    self._rotations_cartesian, self._rot_grid_points[i], strict=True
-                ):
-                    if ir_gp != r_gp:
-                        continue
-
-                    main_diagonal = self._get_main_diagonal(i, j, k)
-                    for ll in range(num_band):
-                        self._collision_matrix[j, k, i, ll, :, i, ll, :] += (
-                            main_diagonal[ll] * r
-                        )
+        for j, k in self._iter_sigma_temperature_indices():
+            for (
+                i_irgp,
+                main_diagonal,
+                rotation,
+            ) in self._iter_ir_collision_diagonal_entries(j, k):
+                self._add_main_diagonal_to_ir_collision(
+                    i_sigma=j,
+                    i_temp=k,
+                    i_irgp=i_irgp,
+                    main_diagonal=main_diagonal,
+                    rotation=rotation,
+                )
 
     def _combine_reducible_collisions(self):
         """Include diagonal elements into collision matrix."""
-        num_band = len(self._pp.primitive) * 3
-        num_mesh_points = np.prod(self._pp.mesh_numbers)
+        for j, k in self._iter_sigma_temperature_indices():
+            entries = self._iter_reducible_collision_diagonal_entries(j, k)
+            for i_mesh, main_diagonal in entries:
+                self._add_main_diagonal_to_reducible_collision(
+                    i_sigma=j,
+                    i_temp=k,
+                    i_mesh=i_mesh,
+                    main_diagonal=main_diagonal,
+                )
 
-        for j, k in np.ndindex((len(self._sigmas), len(self._temperatures))):
-            for i in range(num_mesh_points):
-                main_diagonal = self._get_main_diagonal(i, j, k)
-                for ll in range(num_band):
-                    self._collision_matrix[j, k, i, ll, i, ll] += main_diagonal[ll]
+    def _iter_sigma_temperature_indices(self) -> Iterator[tuple[int, int]]:
+        return np.ndindex((len(self._sigmas), len(self._temperatures)))
+
+    def _iter_ir_collision_diagonal_entries(
+        self, i_sigma: int, i_temp: int
+    ) -> Iterator[tuple[int, NDArray[np.double], NDArray[np.double]]]:
+        for i_irgp, ir_gp in enumerate(self._ir_grid_points):
+            for rotation, rotated_gp in zip(
+                self._rotations_cartesian, self._rot_grid_points[i_irgp], strict=True
+            ):
+                if ir_gp != rotated_gp:
+                    continue
+
+                main_diagonal = self._get_main_diagonal(i_irgp, i_sigma, i_temp)
+                yield i_irgp, main_diagonal, rotation
+
+    def _iter_reducible_collision_diagonal_entries(
+        self, i_sigma: int, i_temp: int
+    ) -> Iterator[tuple[int, NDArray[np.double]]]:
+        num_mesh_points = np.prod(self._pp.mesh_numbers)
+        for i_mesh in range(num_mesh_points):
+            main_diagonal = self._get_main_diagonal(i_mesh, i_sigma, i_temp)
+            yield i_mesh, main_diagonal
+
+    def _add_main_diagonal_to_ir_collision(
+        self, *, i_sigma, i_temp, i_irgp, main_diagonal, rotation
+    ):
+        for ll, diag in enumerate(main_diagonal):
+            self._collision_matrix[i_sigma, i_temp, i_irgp, ll, :, i_irgp, ll, :] += (
+                diag * rotation
+            )
+
+    def _add_main_diagonal_to_reducible_collision(
+        self, *, i_sigma, i_temp, i_mesh, main_diagonal
+    ):
+        for ll, diag in enumerate(main_diagonal):
+            self._collision_matrix[i_sigma, i_temp, i_mesh, ll, i_mesh, ll] += diag
 
     def _expand_reducible_collisions(self, ir_gr_grid_points, rot_grid_points):
         """Fill elements of full collision matrix by symmetry."""
@@ -660,7 +753,7 @@ class ConductivityLBTEBase(ConductivityBase):
 
         return weights / np.sqrt(self._rot_grid_points.shape[1])
 
-    def _symmetrize_collision_matrix(self):
+    def _symmetrize_collision_matrix(self) -> None:
         r"""Symmetrize collision matrix.
 
         (\Omega + \Omega^T) / 2.
@@ -668,31 +761,55 @@ class ConductivityLBTEBase(ConductivityBase):
         """
         start = time.time()
 
-        try:
-            import phono3py._phono3py as phono3c
-
-            if self._log_level:
-                sys.stdout.write("- Making collision matrix symmetric (built-in) ")
-                sys.stdout.flush()
-            phono3c.symmetrize_collision_matrix(self._collision_matrix)
-        except ImportError:
-            if self._log_level:
-                sys.stdout.write("- Making collision matrix symmetric (numpy) ")
-                sys.stdout.flush()
-
-            if self._is_reducible_collision_matrix:
-                size = np.prod(self._collision_matrix.shape[2:4])
-            else:
-                size = np.prod(self._collision_matrix.shape[2:5])
-            for i in range(self._collision_matrix.shape[0]):
-                for j in range(self._collision_matrix.shape[1]):
-                    col_mat = self._collision_matrix[i, j].reshape(size, size)
-                    col_mat += col_mat.T
-                    col_mat /= 2
+        symmetrizer = self._select_collision_matrix_symmetrizer()
+        symmetrizer()
 
         if self._log_level:
             print("[%.3fs]" % (time.time() - start))
             sys.stdout.flush()
+
+    def _select_collision_matrix_symmetrizer(self) -> Callable[[], None]:
+        """Return available symmetrization backend."""
+        if self._can_use_builtin_collision_symmetrizer():
+            return self._symmetrize_collision_matrix_with_builtin
+        return self._symmetrize_collision_matrix_with_numpy
+
+    def _can_use_builtin_collision_symmetrizer(self) -> bool:
+        """Return True when C-extension symmetrizer is available."""
+        try:
+            import phono3py._phono3py  # noqa: F401
+
+            return True
+        except ImportError:
+            return False
+
+    def _symmetrize_collision_matrix_with_builtin(self) -> None:
+        """Symmetrize collision matrix using C-extension backend."""
+        import phono3py._phono3py as phono3c
+
+        if self._log_level:
+            sys.stdout.write("- Making collision matrix symmetric (built-in) ")
+            sys.stdout.flush()
+        phono3c.symmetrize_collision_matrix(self._collision_matrix)
+
+    def _symmetrize_collision_matrix_with_numpy(self) -> None:
+        """Symmetrize collision matrix by numpy fallback."""
+        if self._log_level:
+            sys.stdout.write("- Making collision matrix symmetric (numpy) ")
+            sys.stdout.flush()
+
+        size = self._get_symmetrization_matrix_size()
+        for i in range(self._collision_matrix.shape[0]):
+            for j in range(self._collision_matrix.shape[1]):
+                col_mat = self._collision_matrix[i, j].reshape(size, size)
+                col_mat += col_mat.T
+                col_mat /= 2
+
+    def _get_symmetrization_matrix_size(self):
+        """Return flattened matrix size used in symmetrization."""
+        if self._is_reducible_collision_matrix:
+            return np.prod(self._collision_matrix.shape[2:4])
+        return np.prod(self._collision_matrix.shape[2:5])
 
     def _average_collision_matrix_by_degeneracy(self):
         """Average symmetrically equivalent elements of collision matrix."""
@@ -706,14 +823,18 @@ class ConductivityLBTEBase(ConductivityBase):
             sys.stdout.flush()
 
         col_mat = self._collision_matrix
+        self._average_collision_matrix_rows_by_degeneracy(col_mat)
+        self._average_collision_matrix_columns_by_degeneracy(col_mat)
+
+        if self._log_level:
+            print("[%.3fs]" % (time.time() - start))
+            sys.stdout.flush()
+
+    def _average_collision_matrix_rows_by_degeneracy(self, col_mat):
         for i, gp in enumerate(self._ir_grid_points):
             freqs = self._frequencies[gp]
-            deg_sets = degenerate_sets(freqs)
-            for dset in deg_sets:
-                bi_set = []
-                for j in range(len(freqs)):
-                    if j in dset:
-                        bi_set.append(j)
+            for dset in degenerate_sets(freqs):
+                bi_set = self._get_bi_set_from_degenerate_set(freqs, dset)
 
                 if self._is_reducible_collision_matrix:
                     i_data = self._pp.bz_grid.bzg2grg[gp]
@@ -729,14 +850,12 @@ class ConductivityLBTEBase(ConductivityBase):
                     for j in bi_set:
                         col_mat[:, :, i, j, :, :, :, :] = sum_col
 
+    def _average_collision_matrix_columns_by_degeneracy(self, col_mat):
         for i, gp in enumerate(self._ir_grid_points):
             freqs = self._frequencies[gp]
-            deg_sets = degenerate_sets(freqs)
-            for dset in deg_sets:
-                bi_set = []
-                for j in range(len(freqs)):
-                    if j in dset:
-                        bi_set.append(j)
+            for dset in degenerate_sets(freqs):
+                bi_set = self._get_bi_set_from_degenerate_set(freqs, dset)
+
                 if self._is_reducible_collision_matrix:
                     i_data = self._pp.bz_grid.bzg2grg[gp]
                     sum_col = col_mat[:, :, :, :, i_data, bi_set].sum(axis=4) / len(
@@ -751,115 +870,81 @@ class ConductivityLBTEBase(ConductivityBase):
                     for j in bi_set:
                         col_mat[:, :, :, :, :, i, j, :] = sum_col
 
-        if self._log_level:
-            print("[%.3fs]" % (time.time() - start))
-            sys.stdout.flush()
+    @staticmethod
+    def _get_bi_set_from_degenerate_set(freqs, dset):
+        bi_set = []
+        for j in range(len(freqs)):
+            if j in dset:
+                bi_set.append(j)
+        return bi_set
 
-    def _get_X(self, i_temp, weights):
+    def _get_X(
+        self, i_temp: int, weights: NDArray[np.double] | NDArray[np.int64]
+    ) -> NDArray[np.double]:
         """Calculate X in Chaput's paper."""
-        num_band = len(self._pp.primitive) * 3
         X = self._conductivity_components.group_velocities.copy()
-        if self._is_reducible_collision_matrix:
-            freqs = self._frequencies[self._pp.bz_grid.grg2bzg]
-        else:
-            freqs = self._frequencies[self._ir_grid_points]
-
+        num_band = len(self._pp.primitive) * 3
+        freqs = self._get_X_frequencies()
         t = self._temperatures[i_temp]
+        freqs_factor = self._get_X_frequency_factor(freqs, t)
+        self._scale_X_by_weights_and_frequency(X, weights, freqs_factor, num_band)
+
+        if t <= 0:
+            return np.zeros_like(X.reshape(-1, 3))
+        return X.reshape(-1, 3)
+
+    def _get_X_frequencies(self) -> NDArray[np.double]:
+        if self._is_reducible_collision_matrix:
+            return self._frequencies[self._pp.bz_grid.grg2bzg]
+        return self._frequencies[self._ir_grid_points]
+
+    def _get_X_frequency_factor(
+        self, freqs: NDArray[np.double], temperature: float
+    ) -> NDArray[np.double]:
         sinh = np.where(
             freqs > self._pp.cutoff_frequency,
             np.sinh(
-                freqs * get_physical_units().THzToEv / (2 * get_physical_units().KB * t)
+                freqs
+                * get_physical_units().THzToEv
+                / (2 * get_physical_units().KB * temperature)
             ),
             -1.0,
         )
         inv_sinh = np.where(sinh > 0, 1.0 / sinh, 0)
-        freqs_sinh = (
+        return (
             freqs
             * get_physical_units().THzToEv
             * inv_sinh
-            / (4 * get_physical_units().KB * t**2)
+            / (4 * get_physical_units().KB * temperature**2)
         )
 
-        for i, f in enumerate(freqs_sinh):
+    def _scale_X_by_weights_and_frequency(
+        self,
+        X: NDArray[np.double],
+        weights: NDArray[np.double] | NDArray[np.int64],
+        freqs_factor: NDArray[np.double],
+        num_band: int,
+    ) -> None:
+        for i, f in enumerate(freqs_factor):
             X[i] *= weights[i]
             for j in range(num_band):
                 X[i, j] *= f[j]
 
-        if t > 0:
-            return X.reshape(-1, 3)
-        else:
-            return np.zeros_like(X.reshape(-1, 3))
-
-    def _get_Y(self, i_sigma, i_temp, weights, X):
+    def _get_Y(
+        self,
+        i_sigma: int,
+        i_temp: int,
+        weights: NDArray[np.double] | NDArray[np.int64],
+        X: NDArray[np.double],
+    ) -> NDArray[np.double]:
         r"""Calculate Y = (\Omega^-1, X)."""
-        solver = select_colmat_solver(self._pinv_solver)
-        if self._pinv_solver == 6:
-            solver = 6
-        num_band = len(self._pp.primitive) * 3
-
-        if self._is_reducible_collision_matrix:
-            num_grid_points = np.prod(self._pp.mesh_numbers)
-            size = num_grid_points * num_band
-        else:
-            num_grid_points = len(self._ir_grid_points)
-            size = num_grid_points * num_band * 3
-        v = self._collision_matrix[i_sigma, i_temp].reshape(size, size)
-        # Transpose eigvecs because colmat was solved by column major order
-        if solver in [1, 2, 4, 5]:
-            v = v.T
+        solver = self._get_colmat_solver()
+        num_grid_points, size = self._get_Y_problem_size()
+        v = self._get_Y_solver_matrix(i_sigma, i_temp, size, solver)
 
         start = time.time()
-
-        if self._log_level and solver != 7:
-            if self._pinv_method == 0:
-                eig_str = "abs(eig)"
-            else:
-                eig_str = "eig"
-            w = self._collision_eigenvalues[i_sigma, i_temp]
-            null_space = (np.abs(w) < self._pinv_cutoff).sum()
-            print(
-                f"Pinv by ignoring {null_space}/{len(w)} dims "
-                f"under {eig_str}<{self._pinv_cutoff:<.1e}",
-                end="",
-            )
-        if solver in [0, 1, 2, 3, 4, 5]:
-            if self._log_level:
-                print(" (np.dot) ", end="")
-                sys.stdout.flush()
-            e = self._get_eigvals_pinv(i_sigma, i_temp)
-            if self._is_reducible_collision_matrix:
-                X1 = np.dot(v.T, X)
-                for i in range(3):
-                    X1[:, i] *= e
-                Y = np.dot(v, X1)
-            else:
-                Y = np.dot(v, e * np.dot(v.T, X.ravel())).reshape(-1, 3)
-        elif solver == 6:  # solver=6 This is slower as far as tested.
-            import phono3py._phono3py as phono3c
-
-            if self._log_level:
-                print(" (built-in-pinv) ", end="", flush=True)
-
-            w = self._collision_eigenvalues[i_sigma, i_temp]
-            phono3c.pinv_from_eigensolution(
-                self._collision_matrix,
-                w,
-                i_sigma,
-                i_temp,
-                self._pinv_cutoff,
-                self._pinv_method,
-            )
-            if self._is_reducible_collision_matrix:
-                Y = np.dot(v, X)
-            else:
-                Y = np.dot(v, X.ravel()).reshape(-1, 3)
-        elif solver == 7:
-            if self._is_reducible_collision_matrix:
-                Y = np.dot(v, X)
-            else:
-                Y = np.dot(v, X.ravel()).reshape(-1, 3)
-        else:
-            raise ValueError(f"Unknown collision matrix solver {solver}")
+        self._show_Y_solver_log(i_sigma, i_temp, solver)
+        Y = self._solve_Y_by_solver(solver, v, X, i_sigma, i_temp)
 
         self._set_f_vectors(Y, num_grid_points, weights)
 
@@ -869,7 +954,114 @@ class ConductivityLBTEBase(ConductivityBase):
 
         return Y
 
-    def _set_f_vectors(self, Y, num_grid_points, weights):
+    def _get_colmat_solver(self) -> int:
+        solver = select_colmat_solver(self._pinv_solver)
+        if self._pinv_solver == 6:
+            return 6
+        return solver
+
+    def _get_Y_problem_size(self) -> tuple[int, int]:
+        num_band = len(self._pp.primitive) * 3
+        if self._is_reducible_collision_matrix:
+            num_grid_points = int(np.prod(self._pp.mesh_numbers))
+            size = num_grid_points * num_band
+        else:
+            num_grid_points = len(self._ir_grid_points)
+            size = num_grid_points * num_band * 3
+        return num_grid_points, size
+
+    def _get_Y_solver_matrix(
+        self, i_sigma: int, i_temp: int, size: int, solver: int
+    ) -> NDArray[np.double]:
+        v = self._collision_matrix[i_sigma, i_temp].reshape(size, size)
+        if solver in [1, 2, 4, 5]:
+            return v.T
+        return v
+
+    def _show_Y_solver_log(self, i_sigma: int, i_temp: int, solver: int) -> None:
+        if not self._log_level or solver == 7:
+            return
+
+        eig_str = "abs(eig)" if self._pinv_method == 0 else "eig"
+        w = self._collision_eigenvalues[i_sigma, i_temp]
+        null_space = (np.abs(w) < self._pinv_cutoff).sum()
+        print(
+            f"Pinv by ignoring {null_space}/{len(w)} dims "
+            f"under {eig_str}<{self._pinv_cutoff:<.1e}",
+            end="",
+        )
+
+    def _solve_Y_by_solver(
+        self,
+        solver: int,
+        v: NDArray[np.double],
+        X: NDArray[np.double],
+        i_sigma: int,
+        i_temp: int,
+    ) -> NDArray[np.double]:
+        if solver in [0, 1, 2, 3, 4, 5]:
+            return self._solve_Y_with_eigendecomposition(v, X, i_sigma, i_temp)
+        if solver == 6:
+            return self._solve_Y_with_builtin_pinv(v, X, i_sigma, i_temp)
+        if solver == 7:
+            return self._solve_Y_with_direct_pinv(v, X)
+        raise ValueError(f"Unknown collision matrix solver {solver}")
+
+    def _solve_Y_with_eigendecomposition(
+        self,
+        v: NDArray[np.double],
+        X: NDArray[np.double],
+        i_sigma: int,
+        i_temp: int,
+    ) -> NDArray[np.double]:
+        if self._log_level:
+            print(" (np.dot) ", end="")
+            sys.stdout.flush()
+
+        e = self._get_eigvals_pinv(i_sigma, i_temp)
+        if self._is_reducible_collision_matrix:
+            X1 = np.dot(v.T, X)
+            for i in range(3):
+                X1[:, i] *= e
+            return np.dot(v, X1)
+        return np.dot(v, e * np.dot(v.T, X.ravel())).reshape(-1, 3)
+
+    def _solve_Y_with_builtin_pinv(
+        self,
+        v: NDArray[np.double],
+        X: NDArray[np.double],
+        i_sigma: int,
+        i_temp: int,
+    ) -> NDArray[np.double]:
+        import phono3py._phono3py as phono3c
+
+        if self._log_level:
+            print(" (built-in-pinv) ", end="", flush=True)
+
+        w = self._collision_eigenvalues[i_sigma, i_temp]
+        phono3c.pinv_from_eigensolution(
+            self._collision_matrix,
+            w,
+            i_sigma,
+            i_temp,
+            self._pinv_cutoff,
+            self._pinv_method,
+        )
+        return self._solve_Y_with_direct_pinv(v, X)
+
+    def _solve_Y_with_direct_pinv(
+        self, v: NDArray[np.double], X: NDArray[np.double]
+    ) -> NDArray[np.double]:
+        if self._is_reducible_collision_matrix:
+            return np.dot(v, X)
+        return np.dot(v, X.ravel()).reshape(-1, 3)
+
+    def _set_f_vectors(
+        self,
+        Y: NDArray[np.double],
+        num_grid_points: int,
+        weights: NDArray[np.double] | NDArray[np.int64],
+    ) -> None:
         """Calculate f-vectors.
 
         Collision matrix is half of that defined in Chaput's paper.
@@ -881,7 +1073,7 @@ class ConductivityLBTEBase(ConductivityBase):
             (Y / 2).reshape(num_grid_points, num_band * 3).T / weights
         ).T.reshape(self._f_vectors.shape)
 
-    def _get_eigvals_pinv(self, i_sigma, i_temp):
+    def _get_eigvals_pinv(self, i_sigma: int, i_temp: int) -> NDArray[np.double]:
         """Return inverse eigenvalues of eigenvalues > epsilon."""
         w = self._collision_eigenvalues[i_sigma, i_temp]
         e = np.zeros_like(w)
@@ -925,25 +1117,177 @@ class ConductivityLBTEBase(ConductivityBase):
     def _set_kappa_RTA(self, i_sigma, i_temp, weights):
         raise NotImplementedError
 
-        """Calculate RTA thermal conductivity with either ir or full colmat."""
-        if self._is_reducible_collision_matrix:
-            self._set_kappa_RTA_reducible_colmat(i_sigma, i_temp, weights)
+    def _set_kappa_at_sigmas_common(
+        self, weights: NDArray[np.double] | NDArray[np.int64]
+    ) -> None:
+        """Run common conductivity loop over sigma and temperature."""
+        for i_sigma, sigma in enumerate(self._sigmas):
+            if self._log_level:
+                self._show_kappa_sigma_header(sigma)
+
+            for i_temp, temperature in enumerate(self._temperatures):
+                self._set_kappa_at_sigma_and_temperature_common(
+                    i_sigma,
+                    i_temp,
+                    temperature,
+                    weights,
+                )
+
+        if self._log_level:
+            print("", flush=True)
+
+    def _show_kappa_sigma_header(self, sigma: float | None) -> None:
+        text = "----------- Thermal conductivity (W/m-k) "
+        if sigma:
+            text += "for sigma=%s -----------" % sigma
         else:
-            self._set_kappa_RTA_ir_colmat(i_sigma, i_temp, weights)
+            text += "with tetrahedron method -----------"
+        print(text, flush=True)
+
+    def _set_kappa_at_sigma_and_temperature_common(
+        self,
+        i_sigma: int,
+        i_temp: int,
+        temperature: float,
+        weights: NDArray[np.double] | NDArray[np.int64],
+    ) -> None:
+        """Run common per-(sigma, temperature) conductivity workflow."""
+        if temperature <= 0:
+            return
+
+        self._set_kappa_RTA(i_sigma, i_temp, weights)
+        w = diagonalize_collision_matrix(
+            self._collision_matrix,
+            i_sigma=i_sigma,
+            i_temp=i_temp,
+            pinv_solver=self._pinv_solver,
+            log_level=self._log_level,
+        )
+        if w is not None:
+            self._collision_eigenvalues[i_sigma, i_temp] = w
+
+        self._set_kappa(i_sigma, i_temp, weights)
+
+        if self._log_level:
+            self._show_kappa_at_temperature(i_sigma, i_temp, temperature)
+
+    def _set_kappa_by_collision_type(
+        self,
+        kappa: NDArray[np.double],
+        mode_kappa: NDArray[np.double],
+        i_sigma: int,
+        i_temp: int,
+        weights: NDArray[np.double] | NDArray[np.int64],
+    ) -> None:
+        """Dispatch kappa calculation by collision-matrix representation."""
+        if self._is_reducible_collision_matrix:
+            self._set_kappa_reducible_colmat(
+                kappa,
+                mode_kappa,
+                i_sigma,
+                i_temp,
+                weights,
+            )
+        else:
+            self._set_kappa_ir_colmat(
+                kappa,
+                mode_kappa,
+                i_sigma,
+                i_temp,
+                weights,
+            )
+
+    def _set_kappa_RTA_by_collision_type(
+        self,
+        kappa_RTA: NDArray[np.double],
+        mode_kappa_RTA: NDArray[np.double],
+        i_sigma: int,
+        i_temp: int,
+        weights: NDArray[np.double] | NDArray[np.int64],
+    ) -> None:
+        """Dispatch RTA kappa calculation by collision-matrix representation."""
+        if self._is_reducible_collision_matrix:
+            self._set_kappa_RTA_reducible_colmat(
+                kappa_RTA,
+                mode_kappa_RTA,
+                i_sigma,
+                i_temp,
+                weights,
+            )
+        else:
+            self._set_kappa_RTA_ir_colmat(
+                kappa_RTA,
+                mode_kappa_RTA,
+                i_sigma,
+                i_temp,
+                weights,
+            )
 
     def _set_kappa_RTA_ir_colmat(
-        self, kappa_RTA, mode_kappa_RTA, i_sigma, i_temp, weights
-    ):
+        self,
+        kappa_RTA: NDArray[np.double],
+        mode_kappa_RTA: NDArray[np.double],
+        i_sigma: int,
+        i_temp: int,
+        weights: NDArray[np.double] | NDArray[np.int64],
+    ) -> None:
         """Calculate RTA thermal conductivity.
 
         This RTA is supposed to be the same as conductivity_RTA.
 
         """
-        N = self.number_of_sampling_grid_points
-        num_band = len(self._pp.primitive) * 3
         X = self._get_X(i_temp, weights)
-        Y = np.zeros_like(X)
+        Y = self._build_rta_Y_ir_colmat(i_sigma, i_temp, X)
         num_ir_grid_points = len(self._ir_grid_points)
+
+        self._set_mode_kappa_and_accumulate(
+            kappa_RTA,
+            mode_kappa_RTA,
+            X,
+            Y,
+            num_ir_grid_points,
+            self._rotations_cartesian,
+            i_sigma,
+            i_temp,
+        )
+
+    def _set_kappa_RTA_reducible_colmat(
+        self,
+        kappa_RTA: NDArray[np.double],
+        mode_kappa_RTA: NDArray[np.double],
+        i_sigma: int,
+        i_temp: int,
+        weights: NDArray[np.double] | NDArray[np.int64],
+    ) -> None:
+        """Calculate RTA thermal conductivity.
+
+        This RTA is not equivalent to conductivity_RTA.
+        The lifetime is defined from the diagonal part of collision matrix.
+
+        `kappa` and `mode_kappa` are overwritten.
+
+        """
+        X = self._get_X(i_temp, weights)
+        num_mesh_points = int(np.prod(self._pp.mesh_numbers))
+        Y = self._build_rta_Y_reducible_colmat(i_sigma, i_temp, X)
+        rotation_norm = float(len(self._rotations_cartesian))
+        self._set_mode_kappa_and_accumulate(
+            kappa_RTA,
+            mode_kappa_RTA,
+            X,
+            Y,
+            num_mesh_points,
+            self._rotations_cartesian,
+            i_sigma,
+            i_temp,
+            rotation_normalization=rotation_norm,
+        )
+
+    def _build_rta_Y_ir_colmat(
+        self, i_sigma: int, i_temp: int, X: NDArray[np.double]
+    ) -> NDArray[np.double]:
+        Y = np.zeros_like(X)
+        num_band = len(self._pp.primitive) * 3
         for i, gp in enumerate(self._ir_grid_points):
             g = self._get_main_diagonal(i, i_sigma, i_temp)
             frequencies = self._frequencies[gp]
@@ -964,68 +1308,74 @@ class ConductivityLBTEBase(ConductivityBase):
                         )
                         print("=" * 61)
                     np.seterr(**old_settings)
+        return Y
 
-        self._set_mode_kappa(
-            mode_kappa_RTA,
-            X,
-            Y,
-            num_ir_grid_points,
-            self._rotations_cartesian,
-            i_sigma,
-            i_temp,
-        )
-        kappa_RTA[i_sigma, i_temp] = (
-            mode_kappa_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
-        )
-
-    def _set_kappa_RTA_reducible_colmat(
-        self, kappa_RTA, mode_kappa_RTA, i_sigma, i_temp, weights
-    ):
-        """Calculate RTA thermal conductivity.
-
-        This RTA is not equivalent to conductivity_RTA.
-        The lifetime is defined from the diagonal part of collision matrix.
-
-        `kappa` and `mode_kappa` are overwritten.
-
-        """
-        N = self.number_of_sampling_grid_points
+    def _build_rta_Y_reducible_colmat(
+        self, i_sigma: int, i_temp: int, X: NDArray[np.double]
+    ) -> NDArray[np.double]:
         num_band = len(self._pp.primitive) * 3
-        X = self._get_X(i_temp, weights)
-        Y = np.zeros_like(X)
-
-        num_mesh_points = np.prod(self._pp.mesh_numbers)
+        num_mesh_points = int(np.prod(self._pp.mesh_numbers))
         size = num_mesh_points * num_band
         v_diag = np.diagonal(
             self._collision_matrix[i_sigma, i_temp].reshape(size, size)
         )
-
+        Y = np.zeros_like(X)
         for gp in range(num_mesh_points):
             frequencies = self._frequencies[gp]
             for j, f in enumerate(frequencies):
                 if f > self._pp.cutoff_frequency:
                     i_mode = gp * num_band + j
                     Y[i_mode, :] = X[i_mode, :] / v_diag[i_mode]
-        # Putting self._rotations_cartesian is to symmetrize kappa.
-        # None can be put instead for watching pure information.
+        return Y
+
+    def _set_mode_kappa_and_accumulate(
+        self,
+        kappa: NDArray[np.double],
+        mode_kappa: NDArray[np.double],
+        X: NDArray[np.double],
+        Y: NDArray[np.double],
+        num_grid_points: int,
+        rotations_cartesian: NDArray[np.double] | NDArray[np.int64] | None,
+        i_sigma: int,
+        i_temp: int,
+        rotation_normalization: float = 1.0,
+    ) -> None:
+        """Set mode kappa and accumulate into kappa."""
         self._set_mode_kappa(
-            mode_kappa_RTA,
+            mode_kappa,
             X,
             Y,
-            num_mesh_points,
-            self._rotations_cartesian,
+            num_grid_points,
+            rotations_cartesian,
             i_sigma,
             i_temp,
         )
-        g = len(self._rotations_cartesian)
-        mode_kappa_RTA[i_sigma, i_temp] /= g
-        kappa_RTA[i_sigma, i_temp] = (
-            mode_kappa_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
+        if rotation_normalization != 1.0:
+            mode_kappa[i_sigma, i_temp] /= rotation_normalization
+        self._accumulate_kappa_from_mode_kappa(kappa, mode_kappa, i_sigma, i_temp)
+
+    def _accumulate_kappa_from_mode_kappa(
+        self,
+        kappa: NDArray[np.double],
+        mode_kappa: NDArray[np.double],
+        i_sigma: int,
+        i_temp: int,
+    ) -> None:
+        n_sampling = self.number_of_sampling_grid_points
+        kappa[i_sigma, i_temp] = (
+            mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0) / n_sampling
         )
 
     def _set_mode_kappa(
-        self, mode_kappa, X, Y, num_grid_points, rotations_cartesian, i_sigma, i_temp
-    ):
+        self,
+        mode_kappa: NDArray[np.double],
+        X: NDArray[np.double],
+        Y: NDArray[np.double],
+        num_grid_points: int,
+        rotations_cartesian: NDArray[np.double] | NDArray[np.int64] | None,
+        i_sigma: int,
+        i_temp: int,
+    ) -> None:
         """Calculate mode thermal conductivity.
 
         kappa = A*(RX, RY) = A*(RX, R omega^-1 X), where A = k_B T^2 / V.
@@ -1051,12 +1401,7 @@ class ConductivityLBTEBase(ConductivityBase):
                 if (self._pp.bz_grid.addresses[i] == 0).all() and j < 3:
                     continue
 
-                if rotations_cartesian is None:
-                    sum_k = np.outer(v, f)
-                else:
-                    sum_k = np.zeros((3, 3), dtype="double")
-                    for r in rotations_cartesian:
-                        sum_k += np.outer(np.dot(r, v), np.dot(r, f))
+                sum_k = self._compute_mode_kappa_tensor(v, f, rotations_cartesian)
                 sum_k = sum_k + sum_k.T
                 for k, vxf in enumerate(
                     ((0, 0), (1, 1), (2, 2), (1, 2), (0, 2), (0, 1))
@@ -1068,13 +1413,74 @@ class ConductivityLBTEBase(ConductivityBase):
             self._conversion_factor * get_physical_units().KB * t**2
         )
 
-    def _set_mode_kappa_Chaput(self, mode_kappa, i_sigma, i_temp, weights):
+    def _compute_mode_kappa_tensor(
+        self,
+        v: NDArray[np.double],
+        f: NDArray[np.double],
+        rotations_cartesian: NDArray[np.double] | NDArray[np.int64] | None,
+    ) -> NDArray[np.double]:
+        if rotations_cartesian is None:
+            return np.outer(v, f)
+        return self._compute_mode_kappa_tensor_with_rotations(v, f, rotations_cartesian)
+
+    def _compute_mode_kappa_tensor_with_rotations(
+        self,
+        v: NDArray[np.double],
+        f: NDArray[np.double],
+        rotations_cartesian: NDArray[np.double] | NDArray[np.int64],
+    ) -> NDArray[np.double]:
+        sum_k = np.zeros((3, 3), dtype="double")
+        for r in rotations_cartesian:
+            sum_k += np.outer(np.dot(r, v), np.dot(r, f))
+        return sum_k
+
+    def _set_mode_kappa_Chaput(
+        self,
+        mode_kappa: NDArray[np.double],
+        i_sigma: int,
+        i_temp: int,
+        weights: NDArray[np.double] | NDArray[np.int64],
+    ) -> None:
         """Calculate mode kappa by the way in Laurent Chaput's PRL paper.
 
         This gives the different result from _set_mode_kappa and requires more
         memory space.
 
         """
+        X, num_ir_grid_points, num_band, solver, v = self._prepare_chaput_inputs(
+            i_sigma,
+            i_temp,
+            weights,
+        )
+        t = self._temperatures[i_temp]
+
+        omega_inv = self._build_chaput_omega_inverse(v, i_sigma, i_temp)
+        self._set_f_vectors(np.dot(omega_inv, X), num_ir_grid_points, weights)
+        elems = ((0, 0), (1, 1), (2, 2), (1, 2), (0, 2), (0, 1))
+        for i, vxf in enumerate(elems):
+            mode_kappa[i_sigma, i_temp, :, :, i] = 0
+            self._accumulate_chaput_mode_kappa_component(
+                mode_kappa,
+                i_sigma,
+                i_temp,
+                i,
+                vxf,
+                omega_inv,
+                X,
+                num_ir_grid_points,
+                num_band,
+                solver,
+            )
+
+        factor = self._conversion_factor * get_physical_units().KB * t**2
+        mode_kappa[i_sigma, i_temp] *= factor
+
+    def _prepare_chaput_inputs(
+        self,
+        i_sigma: int,
+        i_temp: int,
+        weights: NDArray[np.double] | NDArray[np.int64],
+    ) -> tuple[NDArray[np.double], int, int, int, NDArray[np.double]]:
         X = self._get_X(i_temp, weights).ravel()
         num_ir_grid_points = len(self._ir_grid_points)
         num_band = len(self._pp.primitive) * 3
@@ -1083,35 +1489,46 @@ class ConductivityLBTEBase(ConductivityBase):
         solver = select_colmat_solver(self._pinv_solver)
         if solver in [1, 2, 4, 5]:
             v = v.T
-        e = self._get_eigvals_pinv(i_sigma, i_temp)
-        t = self._temperatures[i_temp]
+        return X, num_ir_grid_points, num_band, solver, v
 
+    def _build_chaput_omega_inverse(
+        self, v: NDArray[np.double], i_sigma: int, i_temp: int
+    ) -> NDArray[np.double]:
+        e = self._get_eigvals_pinv(i_sigma, i_temp)
         omega_inv = np.empty(v.shape, dtype="double", order="C")
         np.dot(v, (e * v).T, out=omega_inv)
-        Y = np.dot(omega_inv, X)
-        self._set_f_vectors(Y, num_ir_grid_points, weights)
-        elems = ((0, 0), (1, 1), (2, 2), (1, 2), (0, 2), (0, 1))
-        for i, vxf in enumerate(elems):
-            mat = self._get_I(vxf[0], vxf[1], num_ir_grid_points * num_band)
-            mode_kappa[i_sigma, i_temp, :, :, i] = 0
-            if mat is not None:
-                np.dot(mat, omega_inv, out=mat)
-                # vals = (X ** 2 * np.diag(mat)).reshape(-1, 3).sum(axis=1)
-                # vals = vals.reshape(num_ir_grid_points, num_band)
-                # self._mode_kappa[i_sigma, i_temp, :, :, i] = vals
-                w = diagonalize_collision_matrix(
-                    mat, pinv_solver=self._pinv_solver, log_level=self._log_level
-                )
-                if solver in [1, 2, 4, 5]:
-                    mat = mat.T
-                spectra = np.dot(mat.T, X) ** 2 * w
-                for s, eigvec in zip(spectra, mat.T, strict=True):
-                    vals = s * (eigvec**2).reshape(-1, 3).sum(axis=1)
-                    vals = vals.reshape(num_ir_grid_points, num_band)
-                    mode_kappa[i_sigma, i_temp, :, :, i] += vals
+        return omega_inv
 
-        factor = self._conversion_factor * get_physical_units().KB * t**2
-        mode_kappa[i_sigma, i_temp] *= factor
+    def _accumulate_chaput_mode_kappa_component(
+        self,
+        mode_kappa: NDArray[np.double],
+        i_sigma: int,
+        i_temp: int,
+        i_elem: int,
+        vxf: tuple[int, int],
+        omega_inv: NDArray[np.double],
+        X: NDArray[np.double],
+        num_ir_grid_points: int,
+        num_band: int,
+        solver: int,
+    ) -> None:
+        mat = self._get_I(vxf[0], vxf[1], num_ir_grid_points * num_band)
+        if mat is None:
+            return
+
+        np.dot(mat, omega_inv, out=mat)
+        w = diagonalize_collision_matrix(
+            mat,
+            pinv_solver=self._pinv_solver,
+            log_level=self._log_level,
+        )
+        if solver in [1, 2, 4, 5]:
+            mat = mat.T
+        spectra = np.dot(mat.T, X) ** 2 * w
+        for s, eigvec in zip(spectra, mat.T, strict=True):
+            vals = s * (eigvec**2).reshape(-1, 3).sum(axis=1)
+            vals = vals.reshape(num_ir_grid_points, num_band)
+            mode_kappa[i_sigma, i_temp, :, :, i_elem] += vals
 
     def _set_mode_kappa_from_mfp(self, weights, rotations_cartesian, i_sigma, i_temp):
         for i, (v_gp, mfp_gp, cv_gp) in enumerate(
@@ -1214,7 +1631,7 @@ class ConductivityLBTEBase(ConductivityBase):
 
 def diagonalize_collision_matrix(
     collision_matrices, i_sigma=None, i_temp=None, pinv_solver=0, log_level=0
-) -> Optional[np.ndarray]:
+) -> NDArray[np.double] | None:
     """Diagonalize collision matrices.
 
     Note

@@ -315,7 +315,7 @@ class ImagSelfEnergy:
         num_triplets = len(self._triplets_at_q)
         num_band = len(self._pp.primitive) * 3
         num_grid = np.prod(self._pp.mesh_numbers)
-        bi = self._pp.get_band_indices()
+        bi = self._pp.band_indices
         self._pp_strength = np.zeros(
             (num_triplets, len(bi), num_band, num_band), dtype="double"
         )
