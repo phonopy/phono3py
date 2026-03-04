@@ -270,4 +270,4 @@ def _get_fc_elements_mapping(dm: DynamicalMatrix, fc: NDArray[np.double]):
         fc_p2s = np.arange(len(p2s_map), dtype="int64")
         fc_s2p = s2pp_map
 
-    return np.array(fc_p2s, dtype="int64"), np.array(fc_s2p, dtype="int64")
+    return fc_p2s, fc_s2p

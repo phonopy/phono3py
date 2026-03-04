@@ -335,7 +335,7 @@ def write_fc3_to_hdf5(
         Filename to be used.
     p2s_map : ndarray, optional
         Primitive atom indices in supercell index system shape=(n_patom,),
-        dtype=intc
+        dtype=int64
     fc3_cutoff : float, optional
         Cutoff distance for fc3.
     compression : str or int, optional
@@ -770,7 +770,7 @@ def write_spectral_function_to_hdf5(
     if all_band_exist:
         _band_indices = None
     else:
-        _band_indices = np.hstack(band_indices).astype("int64")
+        _band_indices = np.hstack(band_indices, dtype="int64")
     suffix = _get_filename_suffix(
         mesh, grid_point=grid_point, band_indices=_band_indices, sigma=sigma
     )
