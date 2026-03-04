@@ -822,7 +822,7 @@ class Phono3py:
             self._band_indices = [np.arange(num_band, dtype="int64")]
         else:
             self._band_indices = [np.array(bi, dtype="int64") for bi in band_indices]
-        self._band_indices_flatten = np.hstack(self._band_indices).astype("int64")
+        self._band_indices_flatten = np.hstack(self._band_indices, dtype="int64")
 
     @property
     def masses(self) -> NDArray:

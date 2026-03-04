@@ -174,8 +174,8 @@ class Interaction:
 
         self._svecs, self._multi = self._primitive.get_smallest_vectors()
         self._masses = np.array(self._primitive.masses, dtype="double")
-        self._p2s = np.array(self._primitive.p2s_map, dtype="int64")
-        self._s2p = np.array(self._primitive.s2p_map, dtype="int64")
+        self._p2s = self._primitive.p2s_map
+        self._s2p = self._primitive.s2p_map
         n_satom, n_patom, _ = self._multi.shape
         self._all_shortest = np.zeros(
             (n_patom, n_satom, n_satom), dtype="byte", order="C"
@@ -680,7 +680,7 @@ class Interaction:
 
         d2r_map = self._get_reciprocal_rotations_in_space_group_operations()
 
-        # perms.shape = (len(spg_ops), len(primitive)), dtype='intc'
+        # perms.shape = (len(spg_ops), len(primitive)), dtype='int64'
         perms = compute_all_sg_permutations(
             self._primitive.scaled_positions,
             self._bz_grid.symmetry_dataset.rotations,  # type: ignore

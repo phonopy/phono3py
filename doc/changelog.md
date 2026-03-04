@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Mar-4-2026: Version 3.27.0
+
+- Update following changes in phonopy.
+
 ## Mar-3-2026: Version 3.26.0
 
 - Refactoring of lattice thermal conductivity routines.

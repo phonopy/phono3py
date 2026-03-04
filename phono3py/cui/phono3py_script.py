@@ -929,7 +929,7 @@ def _run_isotope_then_exit(
     """Run isotope scattering calculation."""
     mass_variances = settings.mass_variances
     if settings.band_indices is not None:
-        band_indices = np.hstack(settings.band_indices).astype("int64")
+        band_indices = np.hstack(settings.band_indices, dtype="int64")
     else:
         band_indices = None
     iso = Phono3pyIsotope(
