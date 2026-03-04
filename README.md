@@ -17,8 +17,7 @@ Usual phono3py questions should be sent to phonopy mailing list
 
 ## Dependency
 
-See `requirements.txt`. Optionally `symfc` and `scipy` are required
-for using additional features.
+See `pyproject.toml`.
 
 ## Development
 
