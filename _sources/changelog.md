@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Mar-5-2026: Version 3.27.1
+
+- Phonopy dependency update following the fix in phonopy.
+
 ## Mar-4-2026: Version 3.27.0
 
 - Update following changes in phonopy.
