@@ -45,8 +45,8 @@ import numpy as np
 from numpy.typing import NDArray
 
 from phono3py.conductivity.direct_solution_base import ConductivityLBTEBase
+from phono3py.conductivity.direct_solution_output import ConductivityLBTEWriter
 from phono3py.conductivity.exceptions import LBTECollisionReadError
-from phono3py.conductivity.lbte_output import ConductivityLBTEWriter
 from phono3py.conductivity.type_dispatch import get_lbte_conductivity_class
 from phono3py.conductivity.utils import build_options, write_pp_interaction
 from phono3py.file_IO import read_collision_from_hdf5

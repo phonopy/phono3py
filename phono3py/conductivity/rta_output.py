@@ -13,8 +13,8 @@ from phono3py.conductivity.rta import ConductivityRTA
 from phono3py.conductivity.rta_base import ConductivityRTABase
 from phono3py.conductivity.type_dispatch import (
     get_rta_progress_mode,
-    get_rta_writer_grid_data_map,
-    get_rta_writer_kappa_data_map,
+    get_rta_writer_grid_data,
+    get_rta_writer_kappa_data,
 )
 from phono3py.conductivity.wigner_rta import ConductivityWignerRTA
 from phono3py.file_IO import write_gamma_detail_to_hdf5, write_kappa_to_hdf5
@@ -213,7 +213,7 @@ class ConductivityRTAWriter:
     ) -> None:
         """Write mode kappa related properties into a hdf5 file."""
         grid_points = br.grid_points
-        grid_data = get_rta_writer_grid_data_map(br, i)
+        grid_data = get_rta_writer_grid_data(br, i)
         group_velocities_i = grid_data["group_velocities_i"]
         gv_by_gv_i = grid_data["gv_by_gv_i"]
         velocity_operator_i = grid_data["velocity_operator_i"]
@@ -325,7 +325,7 @@ class ConductivityRTAWriter:
         mesh = br.mesh_numbers
         bz_grid = br.bz_grid
         frequencies = br.frequencies
-        kappa_data = get_rta_writer_kappa_data_map(br)
+        kappa_data = get_rta_writer_kappa_data(br)
         kappa = kappa_data["kappa"]
         mode_kappa = kappa_data["mode_kappa"]
         gv = kappa_data["group_velocities"]

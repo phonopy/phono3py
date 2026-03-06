@@ -197,11 +197,11 @@ class ConductivityLBTEBase(ConductivityBase):
 
     @abstractmethod
     def _set_kappa(self, i_sigma, i_temp, weights):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @abstractmethod
     def _set_kappa_at_sigmas(weights):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _set_kappa_ir_colmat(self, kappa, mode_kappa, i_sigma, i_temp, weights):
         """Calculate direct solution thermal conductivity of ir colmat.
@@ -1115,7 +1115,7 @@ class ConductivityLBTEBase(ConductivityBase):
 
     @abstractmethod
     def _set_kappa_RTA(self, i_sigma, i_temp, weights):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _set_kappa_at_sigmas_common(
         self, weights: NDArray[np.double] | NDArray[np.int64]
@@ -1170,6 +1170,10 @@ class ConductivityLBTEBase(ConductivityBase):
 
         if self._log_level:
             self._show_kappa_at_temperature(i_sigma, i_temp, temperature)
+
+    @abstractmethod
+    def _show_kappa_at_temperature(i_sigma, i_temp, temperature):
+        raise NotImplementedError()
 
     def _set_kappa_by_collision_type(
         self,
