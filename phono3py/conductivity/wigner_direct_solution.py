@@ -173,6 +173,11 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
         """Return mode_kappa."""
         return self._mode_kappa_P_exact
 
+    @property
+    def velocity_operator(self) -> NDArray[np.complex128]:
+        """Return velocity operator at sampled grid points."""
+        return self._conductivity_components.velocity_operator
+
     def _set_cv(self, i_gp: int, i_data: int) -> None:
         """Set cv for conductivity components."""
         self._conductivity_components.set_heat_capacities(i_gp, i_data)
