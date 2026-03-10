@@ -2,6 +2,11 @@
 
 # Change Log
 
+## Mar-10-2026: Version 3.28.0
+
+- Update following changes in phonopy to fix writing supercells to files for
+  various calculators.
+
 ## Mar-5-2026: Version 3.27.1
 
 - Phonopy dependency update following the fix in phonopy.
