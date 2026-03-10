@@ -6,7 +6,7 @@ import os
 
 from phono3py.conductivity.base import get_unit_to_WmK
 from phono3py.conductivity.direct_solution_base import ConductivityLBTEBase
-from phono3py.conductivity.type_dispatch import get_lbte_writer_kappa_data_map
+from phono3py.conductivity.type_dispatch import get_lbte_writer_kappa_data
 from phono3py.conductivity.utils import select_colmat_solver
 from phono3py.file_IO import (
     write_collision_eigenvalues_to_hdf5,
@@ -122,7 +122,7 @@ class ConductivityLBTEWriter:
         log_level: int = 0,
     ):
         """Write kappa related properties into a hdf5 file."""
-        kappa_data = get_lbte_writer_kappa_data_map(lbte)
+        kappa_data = get_lbte_writer_kappa_data(lbte)
         kappa = kappa_data["kappa"]
         mode_kappa = kappa_data["mode_kappa"]
         kappa_RTA = kappa_data["kappa_RTA"]

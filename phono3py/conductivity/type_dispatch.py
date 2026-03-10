@@ -8,9 +8,11 @@ reduce repeated conditionals in initialization entry points.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import asdict, dataclass
-from typing import Any, Literal, TypeAlias, TypedDict, cast
+from typing import Any, Literal, TypeAlias, TypedDict
+
+import numpy as np
+from numpy.typing import NDArray
 
 from phono3py.conductivity.direct_solution import ConductivityLBTE
 from phono3py.conductivity.direct_solution_base import ConductivityLBTEBase
@@ -36,34 +38,6 @@ ConductivityClassMatrix: TypeAlias = dict[
     dict[ConductivityType, RTAConductivityClass | LBTEConductivityClass],
 ]
 
-RTAWriterGridData: TypeAlias = tuple[Any | None, Any | None, Any | None, Any | None]
-RTAWriterKappaData: TypeAlias = tuple[
-    Any | None,
-    Any | None,
-    Any | None,
-    Any | None,
-    Any | None,
-    Any | None,
-    Any | None,
-    Any | None,
-    Any | None,
-    Any | None,
-]
-LBTEWriterKappaData: TypeAlias = tuple[
-    Any | None,
-    Any | None,
-    Any | None,
-    Any | None,
-    Any | None,
-    Any | None,
-    Any | None,
-    Any | None,
-    Any | None,
-    Any | None,
-    Any | None,
-    Any | None,
-]
-
 __all__ = [
     # Public types.
     "ApproximationType",
@@ -76,9 +50,6 @@ __all__ = [
     "RTAWriterGridData",
     "RTAWriterKappaData",
     "LBTEWriterKappaData",
-    "RTAWriterGridDataMap",
-    "RTAWriterKappaDataMap",
-    "LBTEWriterKappaDataMap",
     # Public matrix/class selectors.
     "get_conductivity_dispatch_matrix",
     "get_conductivity_class_matrix",
@@ -88,53 +59,50 @@ __all__ = [
     "get_rta_progress_mode",
     # Public writer helpers.
     "get_rta_writer_grid_data",
-    "get_rta_writer_grid_data_map",
     "get_rta_writer_kappa_data",
-    "get_rta_writer_kappa_data_map",
     "get_lbte_writer_kappa_data",
-    "get_lbte_writer_kappa_data_map",
 ]
 
 
-class RTAWriterGridDataMap(TypedDict):
+class RTAWriterGridData(TypedDict):
     """Per-grid named data used by `ConductivityRTAWriter.write_gamma`."""
 
-    group_velocities_i: Any | None
-    gv_by_gv_i: Any | None
-    velocity_operator_i: Any | None
-    mode_heat_capacities: Any | None
+    group_velocities_i: NDArray[np.double] | None
+    gv_by_gv_i: NDArray[np.double] | None
+    velocity_operator_i: NDArray[np.double] | None
+    mode_heat_capacities: NDArray[np.double] | None
 
 
-class RTAWriterKappaDataMap(TypedDict):
+class RTAWriterKappaData(TypedDict):
     """Kappa named data used by `ConductivityRTAWriter.write_kappa`."""
 
-    kappa: Any | None
-    mode_kappa: Any | None
-    group_velocities: Any | None
-    gv_by_gv: Any | None
-    kappa_TOT_RTA: Any | None
-    kappa_P_RTA: Any | None
-    kappa_C: Any | None
-    mode_kappa_P_RTA: Any | None
-    mode_kappa_C: Any | None
-    mode_heat_capacities: Any | None
+    kappa: NDArray[np.double] | None
+    mode_kappa: NDArray[np.double] | None
+    group_velocities: NDArray[np.double] | None
+    gv_by_gv: NDArray[np.double] | None
+    kappa_TOT_RTA: NDArray[np.double] | None
+    kappa_P_RTA: NDArray[np.double] | None
+    kappa_C: NDArray[np.double] | None
+    mode_kappa_P_RTA: NDArray[np.double] | None
+    mode_kappa_C: NDArray[np.double] | None
+    mode_heat_capacities: NDArray[np.double] | None
 
 
-class LBTEWriterKappaDataMap(TypedDict):
+class LBTEWriterKappaData(TypedDict):
     """Kappa named data used by `ConductivityLBTEWriter.write_kappa`."""
 
-    kappa: Any | None
-    mode_kappa: Any | None
-    kappa_RTA: Any | None
-    mode_kappa_RTA: Any | None
-    group_velocities: Any | None
-    gv_by_gv: Any | None
-    kappa_P_exact: Any | None
-    kappa_P_RTA: Any | None
-    kappa_C: Any | None
-    mode_kappa_P_exact: Any | None
-    mode_kappa_P_RTA: Any | None
-    mode_kappa_C: Any | None
+    kappa: NDArray[np.double] | None
+    mode_kappa: NDArray[np.double] | None
+    kappa_RTA: NDArray[np.double] | None
+    mode_kappa_RTA: NDArray[np.double] | None
+    group_velocities: NDArray[np.double] | None
+    gv_by_gv: NDArray[np.double] | None
+    kappa_P_exact: NDArray[np.double] | None
+    kappa_P_RTA: NDArray[np.double] | None
+    kappa_C: NDArray[np.double] | None
+    mode_kappa_P_exact: NDArray[np.double] | None
+    mode_kappa_P_RTA: NDArray[np.double] | None
+    mode_kappa_C: NDArray[np.double] | None
 
 
 @dataclass(frozen=True)
@@ -187,46 +155,7 @@ _LBTE_WIGNER_WRITER_ATTRS: tuple[str, ...] = (
     "mode_kappa_C",
 )
 
-_RTA_GRID_ATTR_KEYS: tuple[str, ...] = (
-    "group_velocities",
-    "gv_by_gv",
-    "mode_heat_capacities",
-)
-
-_RTA_GRID_DATA_KEYS: tuple[str, ...] = (
-    "group_velocities_i",
-    "gv_by_gv_i",
-    "velocity_operator_i",
-    "mode_heat_capacities",
-)
-
-_RTA_KAPPA_KEYS: tuple[str, ...] = (
-    "kappa",
-    "mode_kappa",
-    "group_velocities",
-    "gv_by_gv",
-    "kappa_TOT_RTA",
-    "kappa_P_RTA",
-    "kappa_C",
-    "mode_kappa_P_RTA",
-    "mode_kappa_C",
-    "mode_heat_capacities",
-)
-
-_LBTE_KAPPA_KEYS: tuple[str, ...] = (
-    "kappa",
-    "mode_kappa",
-    "kappa_RTA",
-    "mode_kappa_RTA",
-    "group_velocities",
-    "gv_by_gv",
-    "kappa_P_exact",
-    "kappa_P_RTA",
-    "kappa_C",
-    "mode_kappa_P_exact",
-    "mode_kappa_P_RTA",
-    "mode_kappa_C",
-)
+_APPROXIMATION_TYPES: tuple[ApproximationType, ApproximationType] = ("rta", "lbte")
 
 
 _DISPATCH_REGISTRY: dict[ApproximationType, dict[ConductivityType, DispatchEntry]] = {
@@ -290,25 +219,35 @@ def _get_dispatch_entries(
     return _DISPATCH_REGISTRY[approximation]
 
 
-def _build_conductivity_class_registry(
-    approximation: ApproximationType,
-) -> dict[ConductivityType, RTAConductivityClass | LBTEConductivityClass]:
-    """Build conductivity-class lookup map for one approximation axis."""
-    return {
-        ctype: entry.conductivity_class
-        for ctype, entry in _get_dispatch_entries(approximation).items()
-    }
+def _build_rta_class_registry() -> dict[ConductivityType, RTAConductivityClass]:
+    """Build typed RTA class lookup map."""
+    registry: dict[ConductivityType, RTAConductivityClass] = {}
+    for ctype, entry in _get_dispatch_entries("rta").items():
+        conductivity_class = entry.conductivity_class
+        if not issubclass(conductivity_class, ConductivityRTABase):
+            raise TypeError(f"Invalid RTA conductivity class: {conductivity_class!r}")
+        registry[ctype] = conductivity_class
+    return registry
 
 
-_RTA_CLASS_REGISTRY: dict[ConductivityType, RTAConductivityClass] = {
-    ctype: cast(RTAConductivityClass, conductivity_class)
-    for ctype, conductivity_class in _build_conductivity_class_registry("rta").items()
-}
+def _build_lbte_class_registry() -> dict[ConductivityType, LBTEConductivityClass]:
+    """Build typed LBTE class lookup map."""
+    registry: dict[ConductivityType, LBTEConductivityClass] = {}
+    for ctype, entry in _get_dispatch_entries("lbte").items():
+        conductivity_class = entry.conductivity_class
+        if not issubclass(conductivity_class, ConductivityLBTEBase):
+            raise TypeError(f"Invalid LBTE conductivity class: {conductivity_class!r}")
+        registry[ctype] = conductivity_class
+    return registry
 
-_LBTE_CLASS_REGISTRY: dict[ConductivityType, LBTEConductivityClass] = {
-    ctype: cast(LBTEConductivityClass, conductivity_class)
-    for ctype, conductivity_class in _build_conductivity_class_registry("lbte").items()
-}
+
+_RTA_CLASS_REGISTRY: dict[ConductivityType, RTAConductivityClass] = (
+    _build_rta_class_registry()
+)
+
+_LBTE_CLASS_REGISTRY: dict[ConductivityType, LBTEConductivityClass] = (
+    _build_lbte_class_registry()
+)
 
 
 def _build_dispatch_class_registry(
@@ -317,7 +256,7 @@ def _build_dispatch_class_registry(
     """Build exact-class to dispatch-entry lookup map."""
     class_registry: dict[type[object], DispatchEntry] = {}
     for entry in _DISPATCH_REGISTRY[approximation].values():
-        conductivity_class = cast(type[object], entry.conductivity_class)
+        conductivity_class = entry.conductivity_class
         class_registry.setdefault(conductivity_class, entry)
     return class_registry
 
@@ -338,32 +277,24 @@ def _get_dispatch_entry(
 
 def _build_dispatch_metadata_matrix() -> ConductivityDispatchMatrix:
     """Build metadata matrix from dispatch registry entries."""
-    return cast(
-        ConductivityDispatchMatrix,
-        {
-            approximation: {ctype: asdict(entry) for ctype, entry in entries.items()}
-            for approximation, entries in (
-                ("rta", _get_dispatch_entries("rta")),
-                ("lbte", _get_dispatch_entries("lbte")),
-            )
-        },
-    )
+    matrix: ConductivityDispatchMatrix = {}
+    for approximation in _APPROXIMATION_TYPES:
+        entries = _get_dispatch_entries(approximation)
+        matrix[approximation] = {
+            ctype: asdict(entry) for ctype, entry in entries.items()
+        }
+    return matrix
 
 
 def _build_conductivity_class_matrix() -> ConductivityClassMatrix:
     """Build class matrix from dispatch registry entries."""
-    return cast(
-        ConductivityClassMatrix,
-        {
-            approximation: {
-                ctype: entry.conductivity_class for ctype, entry in entries.items()
-            }
-            for approximation, entries in (
-                ("rta", _get_dispatch_entries("rta")),
-                ("lbte", _get_dispatch_entries("lbte")),
-            )
-        },
-    )
+    matrix: ConductivityClassMatrix = {}
+    for approximation in _APPROXIMATION_TYPES:
+        entries = _get_dispatch_entries(approximation)
+        matrix[approximation] = {
+            ctype: entry.conductivity_class for ctype, entry in entries.items()
+        }
+    return matrix
 
 
 # Public API: class and progress selectors.
@@ -400,14 +331,21 @@ def get_rta_progress_mode(conductivity_type: ConductivityType) -> RTAProgressMod
 def _resolve_dispatch_entry(
     approximation: ApproximationType,
     conductivity: ConductivityRTABase | ConductivityLBTEBase,
-) -> DispatchEntry | None:
+) -> DispatchEntry:
     """Resolve dispatch entry by exact class, then by isinstance fallback."""
     class_registry = _DISPATCH_CLASS_REGISTRY[approximation]
     entry = class_registry.get(type(conductivity))
     if entry is not None:
         return entry
 
-    return _find_dispatch_entry_by_isinstance(approximation, conductivity)
+    fallback_entry = _find_dispatch_entry_by_isinstance(approximation, conductivity)
+    if fallback_entry is not None:
+        return fallback_entry
+
+    raise TypeError(
+        "Unsupported conductivity instance for dispatch: "
+        f"approximation={approximation!r}, class={type(conductivity).__name__!r}"
+    )
 
 
 def _find_dispatch_entry_by_isinstance(
@@ -422,65 +360,126 @@ def _find_dispatch_entry_by_isinstance(
     return None
 
 
+def _build_fallback_dispatch_entry(
+    approximation: ApproximationType,
+    conductivity: object,
+) -> DispatchEntry:
+    """Build fallback dispatch entry for attribute-based test doubles.
+
+    Detects conductivity type by checking for wigner-specific writer attributes.
+    """
+    if approximation == "rta":
+        conductivity_type: ConductivityType = (
+            "wigner"
+            if any(
+                hasattr(conductivity, attr_name)
+                for attr_name in _RTA_WIGNER_WRITER_ATTRS
+            )
+            else None
+        )
+        writer_attrs = (
+            _RTA_BASE_WRITER_ATTRS
+            + _RTA_KAPPA_WRITER_ATTRS
+            + (_RTA_WIGNER_WRITER_ATTRS if conductivity_type == "wigner" else ())
+        )
+        return DispatchEntry(
+            conductivity_class=ConductivityRTABase,
+            approximation="rta",
+            conductivity_type=conductivity_type,
+            has_dedicated_class=False,
+            writer_attrs=writer_attrs,
+            progress_mode="wigner" if conductivity_type == "wigner" else "default",
+        )
+
+    # LBTE fallback
+    conductivity_type = (
+        "wigner"
+        if any(
+            hasattr(conductivity, attr_name) for attr_name in _LBTE_WIGNER_WRITER_ATTRS
+        )
+        else None
+    )
+    writer_attrs = _LBTE_BASE_WRITER_ATTRS + (
+        _LBTE_WIGNER_WRITER_ATTRS if conductivity_type == "wigner" else ()
+    )
+    return DispatchEntry(
+        conductivity_class=ConductivityLBTEBase,
+        approximation="lbte",
+        conductivity_type=conductivity_type,
+        has_dedicated_class=False,
+        writer_attrs=writer_attrs,
+    )
+
+
+def _resolve_writer_dispatch_entry(
+    approximation: ApproximationType,
+    conductivity: object,
+) -> DispatchEntry:
+    """Resolve dispatch entry for writer helpers.
+
+    Writer helpers also support attribute-based test doubles that are not
+    conductivity-class instances.
+
+    """
+    try:
+        return _resolve_dispatch_entry(
+            approximation,
+            conductivity,  # type: ignore[arg-type]
+        )
+    except TypeError:
+        return _build_fallback_dispatch_entry(approximation, conductivity)
+
+
 # Private helpers: data extraction and tuple shaping.
-def _get_wigner_velocity_operator_i(br: Any, i: int) -> Any | None:
+def _get_wigner_velocity_operator_i(
+    conductivity: object, i: int
+) -> NDArray[np.double] | None:
     """Return velocity-operator slice at grid index, if available."""
-    velocity_operator = getattr(br, "velocity_operator", None)
+    velocity_operator = _get_attr_or_none(conductivity, "velocity_operator")
     if velocity_operator is None:
-        conductivity_components = getattr(br, "_conductivity_components", None)
-        velocity_operator = getattr(conductivity_components, "velocity_operator", None)
-    return None if velocity_operator is None else cast(Any, velocity_operator)[i]
+        return None
+    return velocity_operator[i]
 
 
-def _has_all_attrs(obj: Any, *names: str) -> bool:
-    """Return True when object has all requested attributes."""
-    return all(hasattr(obj, name) for name in names)
-
-
-def _get_attr_or_none(obj: Any, name: str) -> Any | None:
-    """Return attribute value or None when attribute is missing."""
+def _get_attr_or_none(obj: Any, name: str) -> NDArray[np.double] | None:
+    """Return ndarray attribute value or None when attribute is unavailable."""
     if not hasattr(obj, name):
         return None
-    return getattr(obj, name)
+    value = getattr(obj, name)
+    if value is None:
+        return None
+    return _ensure_writer_value(value, context=f"attribute {name!r}")
+
+
+def _ensure_writer_value(value: object, context: str) -> NDArray[np.double] | None:
+    """Validate and normalize writer value type."""
+    if value is None:
+        return None
+    if isinstance(value, np.ndarray):
+        return value
+    raise TypeError(
+        f"Expected numpy.ndarray or None for {context}, got {type(value).__name__}."
+    )
 
 
 def _get_data_attr(
     obj: Any,
-    entry: DispatchEntry | None,
+    entry: DispatchEntry,
     attr_name: str,
-) -> Any | None:
+) -> NDArray[np.double] | None:
     """Return data attribute when permitted by dispatch capability."""
-    if entry is not None and attr_name not in entry.writer_attrs:
+    if attr_name not in entry.writer_attrs:
         return None
     return _get_attr_or_none(obj, attr_name)
 
 
-def _get_data_attrs(
+def _get_data_attr_map(
     obj: Any,
-    entry: DispatchEntry | None,
+    entry: DispatchEntry,
     attr_names: tuple[str, ...],
-) -> tuple[Any | None, ...]:
-    """Return tuple of data attributes for requested names."""
-    return tuple(_get_data_attr(obj, entry, attr_name) for attr_name in attr_names)
-
-
-def _should_pick_wigner_velocity_operator(
-    br: Any,
-    dispatch_entry: DispatchEntry | None,
-) -> bool:
-    """Return True when wigner velocity-operator data should be read."""
-    velocity_operator = _get_data_attr(br, dispatch_entry, "velocity_operator")
-    return velocity_operator is not None or _has_all_attrs(
-        br, "_conductivity_components"
-    )
-
-
-def _data_values(
-    data_map: Mapping[str, Any | None],
-    keys: tuple[str, ...],
-) -> tuple[Any | None, ...]:
-    """Return map values as a tuple in the requested key order."""
-    return tuple(data_map[key] for key in keys)
+) -> dict[str, NDArray[np.double] | None]:
+    """Return dict of data attributes for requested names."""
+    return {name: _get_data_attr(obj, entry, name) for name in attr_names}
 
 
 # Public API: writer data helpers.
@@ -503,129 +502,59 @@ def get_lbte_conductivity_class(
 
 
 def get_rta_writer_grid_data(
-    br: ConductivityRTABase,
+    conductivity: ConductivityRTABase,
     i: int,
 ) -> RTAWriterGridData:
-    """Return optional per-grid-point arrays used by RTA writer."""
-    data_map = get_rta_writer_grid_data_map(br, i)
-    return cast(RTAWriterGridData, _data_values(data_map, _RTA_GRID_DATA_KEYS))
-
-
-def get_rta_writer_grid_data_map(
-    br: ConductivityRTABase,
-    i: int,
-) -> RTAWriterGridDataMap:
     """Return named per-grid-point data used by RTA writer."""
-    dispatch_entry = _resolve_dispatch_entry("rta", br)
+    dispatch_entry = _resolve_writer_dispatch_entry("rta", conductivity)
 
     group_velocities_i = None
     gv_by_gv_i = None
-    group_velocities, gv_by_gv, mode_heat_capacities = _get_data_attrs(
-        br, dispatch_entry, _RTA_GRID_ATTR_KEYS
+    group_velocities = _get_data_attr(conductivity, dispatch_entry, "group_velocities")
+    gv_by_gv = _get_data_attr(conductivity, dispatch_entry, "gv_by_gv")
+    mode_heat_capacities = _get_data_attr(
+        conductivity, dispatch_entry, "mode_heat_capacities"
     )
+
     if group_velocities is not None and gv_by_gv is not None:
-        group_velocities_i = cast(Any, group_velocities)[i]
-        gv_by_gv_i = cast(Any, gv_by_gv)[i]
+        group_velocities_i = group_velocities[i]
+        gv_by_gv_i = gv_by_gv[i]
 
     velocity_operator_i = None
-    if _should_pick_wigner_velocity_operator(br, dispatch_entry):
-        velocity_operator_i = _get_wigner_velocity_operator_i(br, i)
+    if "velocity_operator" in dispatch_entry.writer_attrs:
+        velocity_operator_i = _get_wigner_velocity_operator_i(conductivity, i)
 
-    return {
-        "group_velocities_i": group_velocities_i,
-        "gv_by_gv_i": gv_by_gv_i,
-        "velocity_operator_i": velocity_operator_i,
-        "mode_heat_capacities": mode_heat_capacities,
-    }
+    return RTAWriterGridData(
+        group_velocities_i=group_velocities_i,
+        gv_by_gv_i=gv_by_gv_i,
+        velocity_operator_i=velocity_operator_i,
+        mode_heat_capacities=mode_heat_capacities,
+    )
 
 
 def get_rta_writer_kappa_data(
-    br: ConductivityRTABase,
+    conductivity: ConductivityRTABase,
 ) -> RTAWriterKappaData:
-    """Return optional conductivity arrays used by RTA kappa writer."""
-    data_map = get_rta_writer_kappa_data_map(br)
-    return cast(RTAWriterKappaData, _data_values(data_map, _RTA_KAPPA_KEYS))
-
-
-def get_rta_writer_kappa_data_map(
-    br: ConductivityRTABase,
-) -> RTAWriterKappaDataMap:
     """Return named conductivity data used by RTA kappa writer."""
-    dispatch_entry = _resolve_dispatch_entry("rta", br)
-
-    (
-        kappa,
-        mode_kappa,
-        gv,
-        gv_by_gv,
-        kappa_TOT_RTA,
-        kappa_P_RTA,
-        kappa_C,
-        mode_kappa_P_RTA,
-        mode_kappa_C,
-        mode_cv,
-    ) = _get_data_attrs(
-        br,
-        dispatch_entry,
-        _RTA_KAPPA_KEYS,
+    dispatch_entry = _resolve_writer_dispatch_entry("rta", conductivity)
+    return RTAWriterKappaData(
+        **_get_data_attr_map(
+            conductivity,
+            dispatch_entry,
+            tuple(RTAWriterKappaData.__annotations__),
+        )
     )
 
-    return {
-        "kappa": kappa,
-        "mode_kappa": mode_kappa,
-        "group_velocities": gv,
-        "gv_by_gv": gv_by_gv,
-        "kappa_TOT_RTA": kappa_TOT_RTA,
-        "kappa_P_RTA": kappa_P_RTA,
-        "kappa_C": kappa_C,
-        "mode_kappa_P_RTA": mode_kappa_P_RTA,
-        "mode_kappa_C": mode_kappa_C,
-        "mode_heat_capacities": mode_cv,
-    }
 
-
-def get_lbte_writer_kappa_data(lbte: ConductivityLBTEBase) -> LBTEWriterKappaData:
-    """Return optional conductivity arrays used by LBTE kappa writer."""
-    data_map = get_lbte_writer_kappa_data_map(lbte)
-    return cast(LBTEWriterKappaData, _data_values(data_map, _LBTE_KAPPA_KEYS))
-
-
-def get_lbte_writer_kappa_data_map(
-    lbte: ConductivityLBTEBase,
-) -> LBTEWriterKappaDataMap:
+def get_lbte_writer_kappa_data(
+    conductivity: ConductivityLBTEBase,
+) -> LBTEWriterKappaData:
     """Return named conductivity data used by LBTE kappa writer."""
-    dispatch_entry = _resolve_dispatch_entry("lbte", lbte)
-
-    (
-        kappa,
-        mode_kappa,
-        kappa_RTA,
-        mode_kappa_RTA,
-        gv,
-        gv_by_gv,
-        kappa_P_exact,
-        kappa_P_RTA,
-        kappa_C,
-        mode_kappa_P_exact,
-        mode_kappa_P_RTA,
-        mode_kappa_C,
-    ) = _get_data_attrs(
-        lbte,
-        dispatch_entry,
-        _LBTE_KAPPA_KEYS,
+    dispatch_entry = _resolve_writer_dispatch_entry("lbte", conductivity)
+    return LBTEWriterKappaData(
+        **_get_data_attr_map(
+            conductivity,
+            dispatch_entry,
+            tuple(LBTEWriterKappaData.__annotations__),
+        )
     )
-
-    return {
-        "kappa": kappa,
-        "mode_kappa": mode_kappa,
-        "kappa_RTA": kappa_RTA,
-        "mode_kappa_RTA": mode_kappa_RTA,
-        "group_velocities": gv,
-        "gv_by_gv": gv_by_gv,
-        "kappa_P_exact": kappa_P_exact,
-        "kappa_P_RTA": kappa_P_RTA,
-        "kappa_C": kappa_C,
-        "mode_kappa_P_exact": mode_kappa_P_exact,
-        "mode_kappa_P_RTA": mode_kappa_P_RTA,
-        "mode_kappa_C": mode_kappa_C,
-    }

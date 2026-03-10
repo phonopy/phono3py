@@ -23,7 +23,7 @@ def test_write_kappa_calls_hdf5_writer(monkeypatch):
     mode_cv = np.ones((1, 1, 1), dtype="double")
 
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.get_rta_writer_kappa_data_map",
+        "phono3py.conductivity.rta_output.get_rta_writer_kappa_data",
         lambda _br: {
             "kappa": kappa,
             "mode_kappa": mode_kappa,
@@ -91,7 +91,7 @@ def test_write_gamma_all_bands(monkeypatch):
         "phono3py.conductivity.rta_output.all_bands_exist", lambda _interaction: True
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.get_rta_writer_grid_data_map",
+        "phono3py.conductivity.rta_output.get_rta_writer_grid_data",
         lambda _br, _i: {
             "group_velocities_i": np.array([[1.0, 2.0, 3.0]], dtype="double"),
             "gv_by_gv_i": np.array([[1.0, 1.0, 1.0, 0.0, 0.0, 0.0]], dtype="double"),
@@ -144,7 +144,7 @@ def test_write_gamma_band_resolved(monkeypatch):
         "phono3py.conductivity.rta_output.all_bands_exist", lambda _interaction: False
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.get_rta_writer_grid_data_map",
+        "phono3py.conductivity.rta_output.get_rta_writer_grid_data",
         lambda _br, _i: {
             "group_velocities_i": np.array(
                 [[1.0, 0.0, 0.0], [2.0, 0.0, 0.0]], dtype="double"

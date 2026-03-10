@@ -1659,6 +1659,46 @@ def test_create_forces_fc3_fc2_fd():
             os.chdir(original_cwd)
 
 
+def test_VASP_create_displacements_fc3_fc2():
+    """Test create displacements."""
+    created_filenames = [
+        "phono3py_disp.yaml",
+        "SPOSCAR",
+        "SPOSCAR_FC2",
+        "phono3py.yaml",
+    ]
+    created_filenames += [f"POSCAR-{i:05d}" for i in range(1, 27)]
+    created_filenames += [f"POSCAR_FC2-{i:05d}" for i in range(1, 3)]
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            argparse_control = _get_phono3py_load_args(
+                phono3py_yaml_filepath=cwd / "POSCAR-unitcell-NaCl",
+                load_phono3py_yaml=False,
+                is_displacement=True,
+                supercell_dimension="1 1 1",
+                phonon_supercell_dimension="2 2 2",
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            for created_filename in created_filenames:
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            _ls()
+
+            _check_no_files()
+
+        finally:
+            os.chdir(original_cwd)
+
+
 def _ls():
     current_dir = pathlib.Path(".")
     for file in current_dir.iterdir():
@@ -1678,6 +1718,7 @@ def _get_phono3py_load_args(
     fc_calculator_options: str | None = None,
     load_phono3py_yaml: bool = True,
     is_bterta: bool | None = None,
+    is_displacement: bool | None = None,
     is_fc3_r0_average: bool | None = None,
     is_isotope: bool | None = None,
     is_N_U: bool | None = None,
@@ -1685,10 +1726,12 @@ def _get_phono3py_load_args(
     is_wigner_kappa: bool | None = None,
     mesh_numbers: Sequence | None = None,
     mlp_params: str | None = None,
+    phonon_supercell_dimension: Sequence | None = None,
     random_displacements: int | str | None = None,
     rd_number_estimation_factor: float | None = None,
     read_gamma: bool | None = None,
     save_params: bool | None = None,
+    supercell_dimension: Sequence | None = None,
     temperatures: Sequence | None = None,
     use_pypolymlp: bool | None = None,
     write_gamma: bool | None = None,
@@ -1710,6 +1753,7 @@ def _get_phono3py_load_args(
             fc_calculator=fc_calculator,
             fc_calculator_options=fc_calculator_options,
             is_bterta=is_bterta,
+            is_displacement=is_displacement,
             is_fc3_r0_average=is_fc3_r0_average,
             is_isotope=is_isotope,
             is_N_U=is_N_U,
@@ -1718,10 +1762,12 @@ def _get_phono3py_load_args(
             log_level=1,
             mesh_numbers=mesh_numbers,
             mlp_params=mlp_params,
+            phonon_supercell_dimension=phonon_supercell_dimension,
             random_displacements=random_displacements,
             read_gamma=read_gamma,
             rd_number_estimation_factor=rd_number_estimation_factor,
             save_params=save_params,
+            supercell_dimension=supercell_dimension,
             temperatures=temperatures,
             use_pypolymlp=use_pypolymlp,
             write_gamma=write_gamma,
@@ -1739,6 +1785,7 @@ def _get_phono3py_load_args(
             log_level=1,
             cell_filename=phono3py_yaml_filepath,
             is_bterta=is_bterta,
+            is_displacement=is_displacement,
             is_fc3_r0_average=is_fc3_r0_average,
             is_isotope=is_isotope,
             is_N_U=is_N_U,
@@ -1746,10 +1793,12 @@ def _get_phono3py_load_args(
             is_wigner_kappa=is_wigner_kappa,
             mesh_numbers=mesh_numbers,
             mlp_params=mlp_params,
+            phonon_supercell_dimension=phonon_supercell_dimension,
             random_displacements=random_displacements,
             rd_number_estimation_factor=rd_number_estimation_factor,
             read_gamma=read_gamma,
             save_params=save_params,
+            supercell_dimension=supercell_dimension,
             temperatures=temperatures,
             use_pypolymlp=use_pypolymlp,
             write_gamma=write_gamma,

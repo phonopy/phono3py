@@ -109,17 +109,16 @@ def run_phonon_solver_c(
     ) = _extract_params(dm)
 
     if isinstance(dm, DynamicalMatrixGL):
-        gonze_nac_dataset = dm.Gonze_nac_dataset
-        if gonze_nac_dataset[0] is None:
+        if dm.short_range_force_constants is None:
             dm.make_Gonze_nac_dataset()
-            gonze_nac_dataset = dm.Gonze_nac_dataset
+
         (
             gonze_fc,  # fc where the dipole-diple contribution is removed.
             dd_q0,  # second term of dipole-dipole expression.
             G_cutoff,  # Cutoff radius in reciprocal space. This will not be used.
             G_list,  # List of G points where d-d interactions are integrated.
             Lambda,
-        ) = gonze_nac_dataset  # Convergence parameter
+        ) = dm.Gonze_nac_dataset  # Convergence parameter
         assert Lambda is not None
         fc = gonze_fc
         use_GL_NAC = True

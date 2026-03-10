@@ -1,11 +1,11 @@
-"""Unit tests for init_direct_solution helper flows."""
+"""Unit tests for direct_solution_init helper flows."""
 
 from types import SimpleNamespace
 from typing import Any, cast
 
 import numpy as np
 
-from phono3py.conductivity import init_direct_solution as ids
+from phono3py.conductivity import direct_solution_init as ids
 
 
 def _collision_context(log_level: int = 0):
