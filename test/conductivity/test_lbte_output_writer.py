@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import numpy as np
 
 from phono3py.conductivity.base import get_unit_to_WmK
-from phono3py.conductivity.lbte_output import ConductivityLBTEWriter
+from phono3py.conductivity.direct_solution_output import ConductivityLBTEWriter
 
 
 def test_write_collision_all_bands(monkeypatch):
@@ -16,10 +16,11 @@ def test_write_collision_all_bands(monkeypatch):
         calls.append((args, kwargs))
 
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.all_bands_exist", lambda _interaction: True
+        "phono3py.conductivity.direct_solution_output.all_bands_exist",
+        lambda _interaction: True,
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.write_collision_to_hdf5",
+        "phono3py.conductivity.direct_solution_output.write_collision_to_hdf5",
         _fake_write_collision_to_hdf5,
     )
 
@@ -54,10 +55,11 @@ def test_write_collision_band_resolved(monkeypatch):
         calls.append((args, kwargs))
 
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.all_bands_exist", lambda _interaction: False
+        "phono3py.conductivity.direct_solution_output.all_bands_exist",
+        lambda _interaction: False,
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.write_collision_to_hdf5",
+        "phono3py.conductivity.direct_solution_output.write_collision_to_hdf5",
         _fake_write_collision_to_hdf5,
     )
 
@@ -98,7 +100,7 @@ def test_write_kappa_calls_hdf5_writer_per_sigma(monkeypatch):
     gv_by_gv = np.ones((1, 1, 6), dtype="double")
 
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.get_lbte_writer_kappa_data_map",
+        "phono3py.conductivity.direct_solution_output.get_lbte_writer_kappa_data",
         lambda _lbte: {
             "kappa": kappa,
             "mode_kappa": mode_kappa,
@@ -115,11 +117,11 @@ def test_write_kappa_calls_hdf5_writer_per_sigma(monkeypatch):
         },
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.write_kappa_to_hdf5",
+        "phono3py.conductivity.direct_solution_output.write_kappa_to_hdf5",
         _fake_write_kappa_to_hdf5,
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.write_collision_eigenvalues_to_hdf5",
+        "phono3py.conductivity.direct_solution_output.write_collision_eigenvalues_to_hdf5",
         lambda *args, **kwargs: None,
     )
 
@@ -163,7 +165,7 @@ def test_write_kappa_writes_eigen_and_unitary(monkeypatch):
     unitary_calls = []
 
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.get_lbte_writer_kappa_data_map",
+        "phono3py.conductivity.direct_solution_output.get_lbte_writer_kappa_data",
         lambda _lbte: {
             "kappa": None,
             "mode_kappa": None,
@@ -180,19 +182,20 @@ def test_write_kappa_writes_eigen_and_unitary(monkeypatch):
         },
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.write_kappa_to_hdf5",
+        "phono3py.conductivity.direct_solution_output.write_kappa_to_hdf5",
         lambda *args, **kwargs: None,
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.write_collision_eigenvalues_to_hdf5",
+        "phono3py.conductivity.direct_solution_output.write_collision_eigenvalues_to_hdf5",
         lambda *args, **kwargs: eigen_calls.append((args, kwargs)),
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.write_unitary_matrix_to_hdf5",
+        "phono3py.conductivity.direct_solution_output.write_unitary_matrix_to_hdf5",
         lambda *args, **kwargs: unitary_calls.append((args, kwargs)),
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.select_colmat_solver", lambda _solver: 1
+        "phono3py.conductivity.direct_solution_output.select_colmat_solver",
+        lambda _solver: 1,
     )
 
     lbte = SimpleNamespace(

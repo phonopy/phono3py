@@ -982,6 +982,7 @@ class Phono3pyMockArgs:
     input_output_filename = None
     log_level: int | None = None
     is_bterta: bool | None = None
+    is_displacement: bool | None = None
     is_fc3_r0_average: bool | None = None
     is_isotope: bool | None = None
     is_N_U: bool | None = None
@@ -989,6 +990,7 @@ class Phono3pyMockArgs:
     is_wigner_kappa: bool | None = None
     mesh_numbers: Sequence | None = None
     mlp_params: str | None = None
+    phonon_supercell_dimension: Sequence | None = None
     rd_number_estimation_factor: float | None = None
     read_elph: bool | None = None
     read_gamma: bool | None = None
@@ -997,6 +999,7 @@ class Phono3pyMockArgs:
     random_displacements: int | str | None = None
     save_params: bool | None = None
     show_num_triplets: bool | None = None
+    supercell_dimension: Sequence | None = None
     temperatures: Sequence | None = None
     use_pypolymlp: bool | None = None
     write_gamma: bool | None = None

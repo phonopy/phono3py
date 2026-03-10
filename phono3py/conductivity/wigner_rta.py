@@ -155,6 +155,11 @@ class ConductivityWignerRTA(ConductivityRTABase):
         """Return mode_kappa."""
         return self._mode_kappa_C
 
+    @property
+    def velocity_operator(self) -> NDArray[np.complex128]:
+        """Return velocity operator at sampled grid points."""
+        return self._conductivity_components.velocity_operator
+
     def set_kappa_at_sigmas(self):
         """Calculate the Wigner thermal conductivity.
 
