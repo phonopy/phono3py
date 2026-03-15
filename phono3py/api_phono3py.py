@@ -49,6 +49,8 @@ from typing import (  # List and Optional are for < python3.10
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
+from phonopy import Phonopy
+from phonopy.api_phonopy import set_yaml
 from phonopy.harmonic.displacement import (
     directions_to_displacement_dataset,
     get_least_displacements,
@@ -63,6 +65,7 @@ from phonopy.harmonic.force_constants import (
 )
 from phonopy.interface.fc_calculator import get_fc_solver
 from phonopy.interface.mlp import PhonopyMLP
+from phonopy.interface.phonopy_yaml import PhonopyYaml
 from phonopy.interface.pypolymlp import (
     PypolymlpParams,
 )
@@ -71,7 +74,7 @@ from phonopy.interface.symfc import (
     parse_symfc_options,
     symmetrize_by_projector,
 )
-from phonopy.physical_units import get_physical_units
+from phonopy.physical_units import get_calculator_physical_units, get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import (
     Primitive,
@@ -2471,8 +2474,7 @@ class Phono3py:
                  'dielectric_constant': True}
 
         """
-        ph3py_yaml = Phono3pyYaml(settings=settings)
-        ph3py_yaml.set_phonon_info(self)
+        ph3py_yaml = self.get_yaml(settings=settings)
         with open(filename, "w") as w:
             w.write(str(ph3py_yaml))
 
@@ -2611,6 +2613,24 @@ class Phono3py:
         energies, forces, _ = mlp.evaluate(self.phonon_supercells_with_displacements)
         self.phonon_supercell_energies = energies
         self.phonon_forces = forces
+
+    def get_yaml(
+        self, configuration: dict | None = None, settings: dict | None = None
+    ) -> Phono3pyYaml:
+        """Return Phono3pyYaml class instance with this data."""
+        units = get_calculator_physical_units(self.calculator)
+        phpy_yaml = Phono3pyYaml(
+            configuration=configuration, physical_units=units, settings=settings
+        )
+        set_yaml(cast(PhonopyYaml, phpy_yaml), cast(Phonopy, self))
+        phpy_yaml.frequency_unit_conversion_factor = self.unit_conversion_factor
+        if self.phonon_supercell_matrix is not None:
+            phpy_yaml.phonon_supercell_matrix = self.phonon_supercell_matrix
+            if self.phonon_dataset is not None:
+                phpy_yaml.phonon_dataset = self.phonon_dataset
+        phpy_yaml.phonon_primitive = self.phonon_primitive
+        phpy_yaml.phonon_supercell = self.phonon_supercell
+        return phpy_yaml
 
     ###################
     # private methods #

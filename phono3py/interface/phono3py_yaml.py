@@ -51,9 +51,8 @@ from phonopy.interface.phonopy_yaml import (
 )
 
 if TYPE_CHECKING:
-    from phono3py import Phono3py
+    pass
 
-from phonopy import Phonopy
 from phonopy.interface.phonopy_yaml import PhonopyYamlData
 from phonopy.physical_units import CalculatorPhysicalUnits
 from phonopy.structure.atoms import PhonopyAtoms
@@ -394,17 +393,14 @@ class Phono3pyYaml(PhonopyYaml):
     Details are found in the docstring of PhonopyYaml.
     The common usages are as follows:
 
-    1. Set phono3py instance.
-        p3yml = Phono3pyYaml()
-        p3yml.set_phonon_info(phono3py_instance)
-    2. Read phono3py.yaml file.
+    1. Read phono3py.yaml file.
         p3yml = Phono3pyYaml()
         p3yml.read(filename)
-    3. Parse yaml dict of phono3py.yaml.
+    2. Parse yaml dict of phono3py.yaml.
         with open("phono3py.yaml", 'r') as f:
             p3yml.yaml_data = yaml.load(f, Loader=yaml.CLoader)
             p3yml.parse()
-    4. Save stored data in Phono3pyYaml instance into a text file in yaml.
+    3. Save stored data in Phono3pyYaml instance into a text file in yaml.
         with open(filename, 'w') as w:
             w.write(str(ph3py_yaml))
 
@@ -484,14 +480,6 @@ class Phono3pyYaml(PhonopyYaml):
             physical_units=self._data.physical_units,
         )
         return self
-
-    def set_phonon_info(self, phono3py: "Phono3py"):
-        """Store data in Phono3py instance in this instance."""
-        super().set_phonon_info(cast(Phonopy, phono3py))
-        self._data.phonon_supercell_matrix = phono3py.phonon_supercell_matrix
-        self._data.phonon_dataset = phono3py.phonon_dataset
-        self._data.phonon_primitive = phono3py.phonon_primitive
-        self._data.phonon_supercell = phono3py.phonon_supercell
 
 
 def displacements_yaml_lines_type1(
