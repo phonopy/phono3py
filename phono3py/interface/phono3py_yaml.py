@@ -39,21 +39,17 @@ from __future__ import annotations
 import dataclasses
 import os
 import typing
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from phonopy.interface.phonopy_yaml import (
     PhonopyYaml,
+    PhonopyYamlData,
     PhonopyYamlDumperBase,
     PhonopyYamlLoaderBase,
     load_yaml,
 )
-
-if TYPE_CHECKING:
-    pass
-
-from phonopy.interface.phonopy_yaml import PhonopyYamlData
 from phonopy.physical_units import CalculatorPhysicalUnits
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive, Supercell
