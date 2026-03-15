@@ -178,18 +178,13 @@ def _finalize_phono3py(
     else:
         yaml_filename = filename
 
-    _physical_units = get_calculator_physical_units(phono3py.calculator)
-
-    ph3py_yaml = Phono3pyYaml(
+    ph3py_yaml = phono3py.get_yaml(
         configuration=confs_dict,
-        calculator=phono3py.calculator,
-        physical_units=_physical_units,
         settings={
             "force_sets": False,
             "displacements": write_displacements,
         },
     )
-    ph3py_yaml.set_phonon_info(phono3py)
     with open(yaml_filename, "w") as w:
         w.write(str(ph3py_yaml))
 
