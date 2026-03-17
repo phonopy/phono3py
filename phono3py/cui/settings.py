@@ -121,7 +121,7 @@ class Phono3pySettings(Settings):
         self.write_LBTE_solution = False
 
 
-class Phono3pyConfParser(ConfParser):
+class Phono3pyConfParser(ConfParser[Phono3pySettings]):
     """Phonopy conf parser.
 
     Attributes
