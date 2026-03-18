@@ -394,7 +394,7 @@ def _get_force_sets_fc3(
         print(f'  Number of displacements in "{disp_filename}": {num_disps}')
 
     if "first_atoms" in disp_dataset and not check_number_of_force_files(
-        num_disps, force_filenames, disp_filename
+        num_disps, force_filenames, disp_filename, log_level=log_level
     ):
         calc_dataset = {"forces": []}
     else:
