@@ -231,7 +231,7 @@ def _read_files(args: argparse.Namespace) -> tuple[h5py.File, PhonopyAtoms | Non
         phonopy_yaml_cls=Phono3pyYaml,
         load_phonopy_yaml=True,
     )
-    cell_filename = cell_info.optional_structure_info[0]
+    cell_filename = cell_info.optional_structure_info.unitcell_filename
     print(f'# Crystal structure was read from "{cell_filename}".')
     cell = cell_info.unitcell
     phpy_yaml = cell_info.phonopy_yaml

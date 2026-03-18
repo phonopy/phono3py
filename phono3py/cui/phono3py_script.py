@@ -413,9 +413,9 @@ def _check_supercell_in_yaml(
             yaml_cell.cell = yaml_cell.cell * d2A
             if not cells_isclose(yaml_cell, ph3.supercell):
                 if log_level:
+                    fname = cell_info.optional_structure_info.unitcell_filename
                     print(
-                        "Generated supercell is inconsistent with "
-                        f'that in "{cell_info.optional_structure_info[0]}".'
+                        f'Generated supercell is inconsistent with that in "{fname}".'
                     )
                     print_error()
                 sys.exit(1)
@@ -427,9 +427,10 @@ def _check_supercell_in_yaml(
             yaml_cell.cell = yaml_cell.cell * d2A
             if not cells_isclose(yaml_cell, ph3.phonon_supercell):
                 if log_level:
+                    fname = cell_info.optional_structure_info.unitcell_filename
                     print(
                         "Generated phonon supercell is inconsistent with "
-                        f'that in "{cell_info.optional_structure_info[0]}".'
+                        f'that in "{fname}".'
                     )
                     print_error()
                 sys.exit(1)
@@ -1166,7 +1167,7 @@ def main(**argparse_control):
             print_error()
         sys.exit(1)
 
-    unitcell_filename = cell_info.optional_structure_info[0]
+    unitcell_filename = cell_info.optional_structure_info.unitcell_filename
     interface_mode = cell_info.interface_mode
 
     if run_mode is None:
