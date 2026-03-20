@@ -96,7 +96,7 @@ from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon.grid import BZGrid
 from phono3py.phonon3.dataset import forces_in_dataset
 from phono3py.phonon3.displacement_fc3 import (
-    direction_to_displacement,
+    Fc3DisplacementDataset,
     get_third_order_displacements,
 )
 from phono3py.phonon3.fc3 import (
@@ -311,7 +311,7 @@ class Phono3py:
         self._search_phonon_supercell_symmetry()
 
         # Displacements and supercells
-        self._dataset: dict | None = None
+        self._dataset: Fc3DisplacementDataset | None = None
         self._phonon_dataset: dict | None = None
         self._supercells_with_displacements: list | None = None
         self._phonon_supercells_with_displacements: list | None = None
@@ -652,7 +652,7 @@ class Phono3py:
         return self._frequency_factor_to_THz
 
     @property
-    def dataset(self) -> dict | None:
+    def dataset(self) -> Fc3DisplacementDataset | None:
         """Setter and getter of displacement-force dataset.
 
         dict
@@ -695,13 +695,13 @@ class Phono3py:
         return self._dataset
 
     @dataset.setter
-    def dataset(self, dataset):
+    def dataset(self, dataset: Fc3DisplacementDataset | None):
         if dataset is None:
             self._dataset = None
         elif "first_atoms" in dataset:
             self._dataset = copy.deepcopy(dataset)
         elif "displacements" in dataset:
-            self._dataset = {}
+            self._dataset = {}  # type: ignore[assignment]
             self.displacements = dataset["displacements"]
             if "forces" in dataset:
                 self.forces = dataset["forces"]
@@ -971,7 +971,7 @@ class Phono3py:
         if disps.ndim != 3 or disps.shape[1:] != (natom, 3):
             raise RuntimeError("Array shape of displacements is incorrect.")
         if self._dataset is None:
-            self._dataset = {}
+            self._dataset = {}  # type: ignore[assignment]
         elif "first_atoms" in self._dataset:
             raise RuntimeError("Displacements are incompatible with dataset.")
         self._dataset["displacements"] = disps
@@ -1431,17 +1431,13 @@ class Phono3py:
             if cutoff_pair_distance is not None:
                 self._dataset["cutoff_distance"] = cutoff_pair_distance
         else:
-            direction_dataset = get_third_order_displacements(
+            self._dataset = get_third_order_displacements(
                 self._supercell,
                 self._symmetry,
+                _distance,
                 is_plusminus=is_plusminus,
                 is_diagonal=is_diagonal,
-            )
-            self._dataset = direction_to_displacement(
-                direction_dataset,
-                _distance,
-                self._supercell,
-                cutoff_distance=cutoff_pair_distance,
+                cutoff_pair_distance=cutoff_pair_distance,
             )
         self._supercells_with_displacements = None
 

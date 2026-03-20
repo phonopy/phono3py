@@ -36,10 +36,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Literal, TypeAlias, TypedDict
 
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.harmonic.displacement import (
+    Type2DisplacementDataset,
     directions_axis,
     get_displacement,
     get_least_displacements,
@@ -50,96 +52,63 @@ from phonopy.structure.cells import get_smallest_vectors
 from phonopy.structure.symmetry import Symmetry
 
 
-def direction_to_displacement(
-    direction_dataset,
-    displacement_distance,
-    supercell: PhonopyAtoms,
-    cutoff_distance=None,
-):
-    """Convert displacement directions to those in Cartesian coordinates.
+class SecondAtomDisplacement(TypedDict):
+    """Displacement information of second displaced atom."""
 
-    Parameters
-    ----------
-    direction_dataset : Return value of get_third_order_displacements
-    displacement_distance :
+    number: int
+    displacement: NDArray[np.double]
 
 
-    Returns
-    -------
-    dict
-        Data structure is like (see docstring of Phonopy.dataset):
-        {'natom': 64,
-         'cutoff_distance': 4.000000,
-         'first_atoms':
-          [{'number': atom1,
-            'displacement': [0.03, 0., 0.],
-            'id': 1,
-            'second_atoms': [ {'number': atom2,
-                               'displacement': [0., -0.03, 0.],
-                               'distance': 2.353,
-                               'id': 7},
-                              {'number': ... }, ... ] },
-           {'number': atom1, ... }, ... ]}
+class SecondAtomDisplacementWithForces(SecondAtomDisplacement, total=False):
+    """Second atom displacement entry optionally containing forces and energy."""
 
-    """
-    duplicates = _find_duplicates(direction_dataset)
-    d3_count = len(direction_dataset) + 1
+    pair_distance: float
+    id: int
+    forces: NDArray[np.double]
+    supercell_energy: float
+    included: bool
 
-    lattice = supercell.cell.T
-    new_dataset: dict[str, Any] = {}
-    new_dataset["natom"] = len(supercell)
 
-    if duplicates:
-        new_dataset["duplicates"] = duplicates
+class FirstAtomDisplacement(TypedDict):
+    """Displacement information of first displaced atom."""
 
-    if cutoff_distance is not None:
-        new_dataset["cutoff_distance"] = cutoff_distance
-    new_first_atoms = []
-    for i, first_atoms in enumerate(direction_dataset):
-        atom1 = first_atoms["number"]
-        direction1 = first_atoms["direction"]
-        disp_cart1 = np.dot(direction1, lattice.T)
-        disp_cart1 *= displacement_distance / np.linalg.norm(disp_cart1)
-        new_second_atoms = []
-        for second_atom in first_atoms["second_atoms"]:
-            atom2 = second_atom["number"]
-            pair_distance = second_atom["distance"]
-            included = cutoff_distance is None or pair_distance < cutoff_distance
-            for direction2 in second_atom["directions"]:
-                disp_cart2 = np.dot(direction2, lattice.T)
-                norm = np.linalg.norm(disp_cart2)
-                disp_cart2 *= displacement_distance / norm
-                disp2_dict = {
-                    "id": d3_count,
-                    "number": atom2,
-                    "direction": direction2,
-                    "displacement": disp_cart2,
-                    "pair_distance": pair_distance,
-                }
-                if cutoff_distance is not None:
-                    disp2_dict["included"] = included
-                new_second_atoms.append(disp2_dict)
-                d3_count += 1
-        new_first_atoms.append(
-            {
-                "number": atom1,
-                "direction": direction1,
-                "displacement": disp_cart1,
-                "id": (i + 1),
-                "second_atoms": new_second_atoms,
-            }
-        )
-    new_dataset["first_atoms"] = new_first_atoms
+    number: int
+    displacement: NDArray[np.double]
+    second_atoms: list[SecondAtomDisplacementWithForces]
 
-    return new_dataset
+
+class FirstAtomDisplacementWithForces(FirstAtomDisplacement, total=False):
+    """First atom displacement entry optionally containing forces."""
+
+    id: int
+    forces: NDArray[np.double]
+
+
+class Type1DisplacementDatasetBase(TypedDict):
+    """Displacement dataset in the type-1 format."""
+
+    natom: int
+    first_atoms: list[FirstAtomDisplacementWithForces]
+
+
+class Type1DisplacementDataset(Type1DisplacementDatasetBase, total=False):
+    """Type-1 displacement dataset with optional cutoff distance and duplicates."""
+
+    cutoff_distance: float
+    duplicates: list[list[int]]
+
+
+Fc3DisplacementDataset: TypeAlias = Type1DisplacementDataset | Type2DisplacementDataset
 
 
 def get_third_order_displacements(
     cell: PhonopyAtoms,
     symmetry: Symmetry,
+    displacement_distance: float,
     is_plusminus: bool | Literal["auto"] = "auto",
     is_diagonal: bool = False,
-):
+    cutoff_pair_distance: float | None = None,
+) -> Type1DisplacementDataset:
     """Create displacement dataset.
 
     Note
@@ -158,21 +127,19 @@ def get_third_order_displacements(
         Supercell
     symmetry : Symmetry
         Symmetry of supercell
+    displacement_distance : float
+        Displacement distance in Cartesian coordinates.
     is_plusminus : str or bool, optional
         Type of displacements, plus only (False), always plus and minus (True),
         and plus and minus depending on site symmetry ('auto').
     is_diagonal : bool, optional
         Whether allow diagonal displacements of Atom 2 or not
+    cutoff_pair_distance : float, optional
+        Cutoff distance for considering pair interactions.
 
     Returns
     -------
-    [{'number': atom1,
-      'direction': [1, 0, 0],  # int
-      'second_atoms': [ {'number': atom2,
-                         'directions': [ [1, 0, 0], [-1, 0, 0], ... ]
-                         'distance': distance-between-atom1-and-atom2},
-                        {'number': ... }, ... ] },
-     {'number': atom1, ... } ]
+    See docstring of Phono3py.dataset.
 
     """
     positions = cell.scaled_positions
@@ -214,7 +181,95 @@ def get_third_order_displacements(
             dds_atom1["second_atoms"].append(dds_atom2)  # type: ignore[attr-defined]
         dds.append(dds_atom1)
 
-    return dds
+    dataset = _direction_to_displacement(
+        dds,
+        displacement_distance,
+        cell,
+        cutoff_distance=cutoff_pair_distance,
+    )
+
+    return dataset
+
+
+def _direction_to_displacement(
+    direction_dataset,
+    displacement_distance,
+    supercell: PhonopyAtoms,
+    cutoff_distance=None,
+) -> Type1DisplacementDataset:
+    """Convert displacement directions to those in Cartesian coordinates.
+
+    Parameters
+    ----------
+    direction_dataset : Return value of get_third_order_displacements
+    displacement_distance :
+
+
+    Returns
+    -------
+    dict
+        Data structure is like (see docstring of Phonopy.dataset):
+        {'natom': 64,
+         'cutoff_distance': 4.000000,
+         'first_atoms':
+          [{'number': atom1,
+            'displacement': [0.03, 0., 0.],
+            'id': 1,
+            'second_atoms': [ {'number': atom2,
+                               'displacement': [0., -0.03, 0.],
+                               'distance': 2.353,
+                               'id': 7},
+                              {'number': ... }, ... ] },
+           {'number': atom1, ... }, ... ]}
+
+    """
+    duplicates = _find_duplicates(direction_dataset)
+    d3_count = len(direction_dataset) + 1
+
+    lattice = supercell.cell.T
+    new_dataset: Type1DisplacementDataset = {"natom": len(supercell), "first_atoms": []}
+
+    if duplicates:
+        new_dataset["duplicates"] = duplicates
+
+    if cutoff_distance is not None:
+        new_dataset["cutoff_distance"] = cutoff_distance
+    for i, first_atoms in enumerate(direction_dataset):
+        atom1 = first_atoms["number"]
+        direction1 = first_atoms["direction"]
+        disp_cart1 = np.dot(direction1, lattice.T)
+        disp_cart1 *= displacement_distance / np.linalg.norm(disp_cart1)
+        new_second_atoms: list[SecondAtomDisplacementWithForces] = []
+        for second_atom in first_atoms["second_atoms"]:
+            atom2 = second_atom["number"]
+            pair_distance = second_atom["distance"]
+            included = cutoff_distance is None or pair_distance < cutoff_distance
+            for direction2 in second_atom["directions"]:
+                disp_cart2 = np.dot(direction2, lattice.T)
+                norm = np.linalg.norm(disp_cart2)
+                disp_cart2 *= displacement_distance / norm
+                disp2_dict: SecondAtomDisplacementWithForces = {
+                    "id": d3_count,
+                    "number": atom2,
+                    # "direction": direction2,
+                    "displacement": disp_cart2,
+                    "pair_distance": pair_distance,
+                }
+                if cutoff_distance is not None:
+                    disp2_dict["included"] = included
+                new_second_atoms.append(disp2_dict)
+                d3_count += 1
+        new_dataset["first_atoms"].append(
+            {
+                "number": atom1,
+                # "direction": direction1,
+                "displacement": disp_cart1,
+                "id": (i + 1),
+                "second_atoms": new_second_atoms,
+            }
+        )
+
+    return new_dataset
 
 
 def _get_next_displacements(
