@@ -61,7 +61,7 @@ from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
 
 def get_mass_variances(
     primitive: PhonopyAtoms | None = None,
-    symbols: list[str] | tuple[str] | None = None,
+    symbols: Sequence[str] | None = None,
     isotope_data: dict | None = None,
 ):
     """Calculate mass variances."""
@@ -123,7 +123,7 @@ class Isotope:
         self._sigma = sigma
         self._symprec = symprec
         if cutoff_frequency is None:
-            self._cutoff_frequency = 0
+            self._cutoff_frequency = 0.0
         else:
             self._cutoff_frequency = cutoff_frequency
         if frequency_factor_to_THz is None:
@@ -162,7 +162,7 @@ class Isotope:
     def set_grid_point(self, grid_point: int):
         """Initialize grid points."""
         self._grid_point = grid_point
-        self._grid_points = np.arange(len(self._bz_grid.addresses), dtype="int64")
+        self._grid_points = np.arange(len(self._bz_grid.addresses), dtype="int64")  # type: ignore[assignment]
 
         if self._phonon_done is None:
             self._allocate_phonon()
@@ -223,9 +223,9 @@ class Isotope:
         dm=None,
     ):
         """Set phonons on grid."""
-        self._frequencies = frequencies
-        self._eigenvectors = eigenvectors
-        self._phonon_done = phonon_done
+        self._frequencies = frequencies  # type: ignore[assignment]
+        self._eigenvectors = eigenvectors  # type: ignore[assignment]
+        self._phonon_done = phonon_done  # type: ignore[assignment]
         if dm is not None:
             self._dm = dm
 
@@ -240,7 +240,7 @@ class Isotope:
     ):
         """Initialize dynamical matrix."""
         self._primitive = primitive
-        self._dm = get_dynamical_matrix(
+        self._dm = get_dynamical_matrix(  # type: ignore[assignment]
             fc2,
             supercell,
             primitive,
@@ -254,7 +254,7 @@ class Isotope:
     ):
         """Set q-direction at q->0 used for NAC."""
         if nac_q_direction is not None:
-            self._nac_q_direction = np.array(nac_q_direction, dtype="double")
+            self._nac_q_direction = np.array(nac_q_direction, dtype="double")  # type: ignore[assignment]
 
     def _run_c(self):
         assert self._grid_points is not None

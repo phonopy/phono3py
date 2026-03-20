@@ -98,7 +98,7 @@ def get_displacements_and_forces_fc3(
                 count += 1
 
         if forces_count == 0:
-            forces = None
+            forces = None  # type: ignore[assignment]
         else:
             forces = np.array(forces[indices], dtype="double", order="C")
             assert forces_count == count

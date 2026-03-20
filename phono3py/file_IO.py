@@ -40,7 +40,7 @@ import os
 import pathlib
 import warnings
 from collections.abc import Sequence
-from typing import Literal, Optional, TextIO
+from typing import Literal, TextIO
 
 import h5py
 import numpy as np
@@ -206,7 +206,7 @@ def write_FORCES_FC2(
 
     """
     if fp is None:
-        w = open(filename, "w")
+        w: TextIO = open(filename, "w")
     else:
         w = fp
 
@@ -218,7 +218,7 @@ def write_FORCES_FC2(
             if "forces" in disp1 and forces_fc2 is None:
                 force_set = disp1["forces"]
             else:
-                force_set = forces_fc2[i]
+                force_set = forces_fc2[i]  # type: ignore[index]
             for forces in force_set:
                 w.write("%15.10f %15.10f %15.10f\n" % tuple(forces))
     else:
@@ -268,8 +268,8 @@ def write_FORCES_FC3(
 
 def _write_FORCES_FC3_typeI(
     disp_dataset: dict,
-    w: Optional[TextIO],
-    forces_fc3: Optional[Sequence] = None,
+    w: TextIO,
+    forces_fc3: Sequence | NDArray | None = None,
 ):
     """Write FORCES_FC3.
 
@@ -302,7 +302,7 @@ def _write_FORCES_FC3_typeI(
                 if "forces" in disp2 and forces_fc3 is None:
                     force_set = disp2["forces"]
                 else:
-                    force_set = forces_fc3[file_count]
+                    force_set = forces_fc3[file_count]  # type: ignore[index]
                 for force in force_set:
                     w.write("%15.10f %15.10f %15.10f\n" % tuple(force))
                 file_count += 1
@@ -391,9 +391,10 @@ def read_fc3_from_hdf5(
                 fc3.shape[:2], p2s_map_in_file, p2s_map, filename
             )
 
-        fc3_nonzero_indices = None  # type: ignore
+        fc3_nonzero_indices: NDArray | None = None
         if "fc3_nonzero_indices" in f:
-            fc3_nonzero_indices: NDArray = f["fc3_nonzero_indices"][:]  # type: ignore
+            fc3_nonzero_indices = f["fc3_nonzero_indices"][:]  # type: ignore[assignment]
+            assert fc3_nonzero_indices is not None
             if (
                 fc3_nonzero_indices.dtype == np.dtype("byte")
                 and fc3_nonzero_indices.flags.c_contiguous
@@ -498,7 +499,7 @@ def write_grid_address_to_hdf5(
     filename: str | os.PathLike | None = None,
 ):
     """Write grid addresses to grid_address.hdf5."""
-    suffix = _get_filename_suffix(mesh, middle_filename=filename)
+    suffix = _get_filename_suffix(mesh, middle_filename=filename)  # type: ignore[arg-type]
     full_filename = "grid_address" + suffix + ".hdf5"
     with h5py.File(full_filename, "w") as w:
         w.create_dataset("version", data=np.bytes_(__version__))
@@ -1780,7 +1781,7 @@ def _get_filename_suffix(
     """Return filename suffix corresponding to parameters."""
     suffix = "-m%d%d%d" % tuple(mesh)
     try:
-        gp_suffix = "-g%d" % grid_point
+        gp_suffix = "-g%d" % grid_point  # type: ignore[str-format]
         suffix += gp_suffix
     except TypeError:
         pass
@@ -1815,7 +1816,7 @@ def _parse_yaml(file_yaml):
     """
     warnings.warn("_parse_yaml() is deprecated.", DeprecationWarning, stacklevel=2)
 
-    import yaml
+    import yaml  # type: ignore[import-untyped]
 
     try:
         from yaml import CLoader as Loader

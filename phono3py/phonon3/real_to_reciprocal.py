@@ -34,13 +34,23 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import numpy as np
+from numpy.typing import NDArray
+from phonopy.structure.cells import Primitive
 
 
 class RealToReciprocal:
     """Transform fc3 in real space to reciprocal space."""
 
-    def __init__(self, fc3, primitive, mesh, symprec=1e-5):
+    def __init__(
+        self,
+        fc3: NDArray[np.double],
+        primitive: Primitive,
+        mesh: NDArray[np.int64],
+        symprec: float = 1e-5,
+    ):
         """Init method."""
         self._fc3 = fc3
         self._primitive = primitive
@@ -51,9 +61,9 @@ class RealToReciprocal:
         self._s2p_map = primitive.s2p_map
         # Reduce supercell atom index to primitive index
         self._svecs, self._multi = self._primitive.get_smallest_vectors()
-        self._fc3_reciprocal = None
+        self._fc3_reciprocal: NDArray[np.cdouble] | None = None
 
-    def run(self, triplet):
+    def run(self, triplet: NDArray[np.int64]) -> None:
         """Run at each triplet of q-vectors."""
         self._triplet = triplet
         num_patom = len(self._primitive)
@@ -63,11 +73,12 @@ class RealToReciprocal:
         )
         self._real_to_reciprocal()
 
-    def get_fc3_reciprocal(self):
+    def get_fc3_reciprocal(self) -> NDArray[np.cdouble] | None:
         """Return fc3 in reciprocal space."""
         return self._fc3_reciprocal
 
-    def _real_to_reciprocal(self):
+    def _real_to_reciprocal(self) -> None:
+        assert self._fc3_reciprocal is not None
         num_patom = len(self._primitive)
         sum_triplets = np.where(
             np.all(self._triplet != 0, axis=0), self._triplet.sum(axis=0), 0
@@ -83,7 +94,9 @@ class RealToReciprocal:
             prephase = self._get_prephase(sum_q, i)
             self._fc3_reciprocal[i] *= prephase
 
-    def _real_to_reciprocal_elements(self, patom_indices):
+    def _real_to_reciprocal_elements(
+        self, patom_indices: tuple[int, int, int]
+    ) -> NDArray[np.cdouble]:
         num_satom = len(self._s2p_map)
         pi = patom_indices
         i = self._p2s_map[pi[0]]
@@ -99,11 +112,11 @@ class RealToReciprocal:
                 fc3_reciprocal += self._fc3[i, j, k] * phase
         return fc3_reciprocal
 
-    def _get_prephase(self, sum_q, patom_index):
+    def _get_prephase(self, sum_q: NDArray[np.double], patom_index: int) -> complex:
         r = self._primitive.scaled_positions[patom_index]
         return np.exp(2j * np.pi * np.dot(sum_q, r))
 
-    def _get_phase(self, satom_indices, patom0_index):
+    def _get_phase(self, satom_indices: tuple[int, int], patom0_index: int) -> complex:
         si = satom_indices
         p0 = patom0_index
         phase = 1 + 0j

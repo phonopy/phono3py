@@ -705,7 +705,7 @@ def _get_fc3_least_atoms(
         num_patom = len(primitive)
         s2p_map = primitive.s2p_map
         p2p_map = primitive.p2p_map
-        first_atom_nums = []
+        first_atom_nums: list[int] = []
         for i in unique_first_atom_nums:
             if i != s2p_map[i]:
                 print("Something wrong in displacement dataset.")
@@ -716,7 +716,7 @@ def _get_fc3_least_atoms(
             (num_patom, num_satom, num_satom, 3, 3, 3), dtype="double", order="C"
         )
     else:
-        first_atom_nums = unique_first_atom_nums
+        first_atom_nums = unique_first_atom_nums  # type: ignore[assignment]
         fc3 = np.zeros(
             (num_satom, num_satom, num_satom, 3, 3, 3), dtype="double", order="C"
         )
@@ -814,7 +814,7 @@ def _get_fc3_done(
             dataset_first_atom["displacement"], np.linalg.inv(supercell.cell)
         )
         reduced_site_sym = get_reduced_site_symmetry(site_symmetry, direction, symprec)
-        least_second_atom_nums = []
+        least_second_atom_nums: list[int] = []
         for second_atoms in dataset_first_atom["second_atoms"]:
             if "included" in second_atoms:
                 if second_atoms["included"]:
@@ -830,8 +830,9 @@ def _get_fc3_done(
                     least_second_atom_nums.append(second_atoms["number"])
 
         positions_shifted = positions - positions[first_atom_num]
-        least_second_atom_nums = np.unique(least_second_atom_nums)
+        least_second_atom_nums = np.unique(least_second_atom_nums)  # type: ignore[assignment]
 
+        second_atom_nums: list | NDArray
         for red_rot in reduced_site_sym:
             second_atom_nums = [
                 _get_atom_by_symmetry(

@@ -467,7 +467,7 @@ class BZGrid:
             force_SNF=force_SNF,
             SNF_coordinates=SNF_coordinates,
         )
-        self._grid_matrix = gm.grid_matrix
+        self._grid_matrix = gm.grid_matrix  # type: ignore[assignment]
         self._D_diag = gm.D_diag
         self._P = gm.P
         self._Q = gm.Q
@@ -708,10 +708,12 @@ class GridMatrix:
                 )
             if not use_grg or not found_grg:
                 if symmetry_dataset is None:
-                    mesh_numbers = length2mesh(length, self._lattice)
+                    mesh_numbers = length2mesh(length, self._lattice)  # type: ignore[arg-type]
                 else:
                     mesh_numbers = length2mesh(
-                        length, self._lattice, rotations=symmetry_dataset.rotations
+                        length,
+                        self._lattice,
+                        rotations=symmetry_dataset.rotations,  # type: ignore[arg-type]
                     )
                 self._D_diag = np.array(mesh_numbers, dtype="int64")
 
@@ -750,7 +752,7 @@ class GridMatrix:
                 np.array(transformation_matrix)
             )
         else:
-            sym_dataset = symmetry_dataset
+            sym_dataset = symmetry_dataset  # type: ignore[assignment]
 
         if is_primitive_cell(sym_dataset.rotations):
             # self._D_diag or self._grid_matrix is set in this method.
@@ -837,7 +839,7 @@ class GridMatrix:
                 msg = "SNF3x3 failed."
                 raise RuntimeError(msg)
 
-            self._grid_matrix = _grid_matrix
+            self._grid_matrix = _grid_matrix  # type: ignore[assignment]
 
     def _get_grid_matrix(
         self,
@@ -880,10 +882,12 @@ class GridMatrix:
             num_cells = int(np.prod(length2mesh(length, conv_lat)))
             max_num_atoms = num_cells * len(sym_dataset.std_types)
             conv_mesh_numbers = estimate_supercell_matrix(
-                sym_dataset, max_num_atoms=max_num_atoms, max_iter=200
+                sym_dataset,
+                max_num_atoms=max_num_atoms,
+                max_iter=200,  # type: ignore[arg-type]
             )
         elif coordinates == "reciprocal":
-            conv_mesh_numbers = length2mesh(length, conv_lat)
+            conv_mesh_numbers = length2mesh(length, conv_lat)  # type: ignore[assignment]
         else:
             raise TypeError('Expect "direct" or "reciprocal" for coordinates.')
 
@@ -1366,7 +1370,7 @@ def _can_use_std_lattice(
 
     """
     for r in rotations:
-        r_s = similarity_transformation(tmat, r)
+        r_s = similarity_transformation(tmat, r)  # type: ignore[arg-type]
         if np.allclose(
             np.linalg.det(r_s) * np.dot(np.transpose(conv_lat), r_s),
             np.transpose(std_lattice),

@@ -77,10 +77,10 @@ class CollisionMatrix(ImagSelfEnergy):
         self._triplets_map_at_q = None
         self._weights_at_q = None
         self._band_indices = None
-        self._unit_conversion = None
-        self._cutoff_frequency = None
-        self._g = None
-        self._unit_conversion = None
+        self._unit_conversion = None  # type: ignore[assignment]
+        self._cutoff_frequency = None  # type: ignore[assignment]
+        self._g = None  # type: ignore[assignment]
+        self._unit_conversion = None  # type: ignore[assignment]
         self._log_level = log_level
 
         super().__init__(interaction, lang=lang)

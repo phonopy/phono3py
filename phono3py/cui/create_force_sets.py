@@ -117,7 +117,7 @@ def create_FORCES_FC3_and_FORCES_FC2(
         assert ph3py_yaml.supercell is not None
         calc_dataset_fc3 = _get_force_sets_fc3(
             settings,
-            ph3py_yaml.dataset,
+            ph3py_yaml.dataset,  # type: ignore[arg-type]
             ph3py_yaml.supercell,
             disp_filename,
             interface_mode,
@@ -171,7 +171,7 @@ def create_FORCES_FC3_and_FORCES_FC2(
         if settings.create_forces_fc3 or settings.create_forces_fc3_file:
             assert ph3py_yaml.dataset is not None
             write_FORCES_FC3(
-                ph3py_yaml.dataset,
+                ph3py_yaml.dataset,  # type: ignore[arg-type]
                 forces_fc3=calc_dataset_fc3["forces"],
                 filename="FORCES_FC3",
             )
@@ -238,7 +238,7 @@ def create_FORCE_SETS_from_FORCES_FCx(
             dataset = copy.deepcopy(ph3yml.dataset)
             smat = ph3yml.supercell_matrix
         else:
-            dataset = copy.deepcopy(ph3yml.phonon_dataset)
+            dataset = copy.deepcopy(ph3yml.phonon_dataset)  # type: ignore[assignment]
             smat = ph3yml.phonon_supercell_matrix
 
         if smat is None or (phonon_smat is not None and (phonon_smat != smat).any()):
@@ -253,8 +253,8 @@ def create_FORCE_SETS_from_FORCES_FCx(
             sys.exit(1)
 
         assert dataset is not None
-        parse_FORCES_FC2(dataset, filename=forces_filename)
-        write_FORCE_SETS(dataset)
+        parse_FORCES_FC2(dataset, filename=forces_filename)  # type: ignore[arg-type]
+        write_FORCE_SETS(dataset)  # type: ignore[arg-type]
 
         if log_level:
             print("FORCE_SETS has been created.")
@@ -304,8 +304,11 @@ def _get_force_sets_fc2(
     )
     force_sets = calc_dataset["forces"]
     if "points" in calc_dataset:
-        if filename := check_agreements_of_displacements(
-            supercell, disp_dataset, calc_dataset["points"], force_filenames
+        if filename := check_agreements_of_displacements(  # type: ignore[assignment]
+            supercell,
+            disp_dataset,
+            calc_dataset["points"],
+            force_filenames,  # type: ignore[arg-type]
         ):
             raise RuntimeError(
                 f'Displacements don\'t match with atomic positions in "{filename}".'
@@ -394,9 +397,12 @@ def _get_force_sets_fc3(
         print(f'  Number of displacements in "{disp_filename}": {num_disps}')
 
     if "first_atoms" in disp_dataset and not check_number_of_force_files(
-        num_disps, force_filenames, disp_filename, log_level=log_level
+        num_disps,
+        force_filenames,
+        disp_filename,
+        log_level=log_level,  # type: ignore[arg-type]
     ):
-        calc_dataset = {"forces": []}
+        calc_dataset: dict = {"forces": []}
     else:
         if interface_mode == "wien2k":
             calc_dataset = get_fc3_calc_dataset_wien2k(
@@ -417,11 +423,11 @@ def _get_force_sets_fc3(
         force_sets = calc_dataset["forces"]
         displacements, _ = get_displacements_and_forces_fc3(disp_dataset)
         if "points" in calc_dataset:
-            if filename := check_agreements_of_displacements(
+            if filename := check_agreements_of_displacements(  # type: ignore[assignment]
                 supercell,
                 {"displacements": displacements},
                 calc_dataset["points"],
-                force_filenames,
+                force_filenames,  # type: ignore[arg-type]
             ):
                 raise RuntimeError(
                     f'Displacements don\'t match with atomic positions in "{filename}".'
@@ -475,8 +481,8 @@ def _set_forces_and_nac_params(
     """Set forces, energies and nac_params to phono3py_yaml."""
     assert ph3py_yaml.dataset is not None
     if "first_atoms" in ph3py_yaml.dataset:
-        count = len(ph3py_yaml.dataset["first_atoms"])
-        for i, d1 in enumerate(ph3py_yaml.dataset["first_atoms"]):
+        count = len(ph3py_yaml.dataset["first_atoms"])  # type: ignore[typeddict-item]
+        for i, d1 in enumerate(ph3py_yaml.dataset["first_atoms"]):  # type: ignore[typeddict-item]
             d1["forces"] = calc_dataset_fc3["forces"][i]
             if "supercell_energies" in calc_dataset_fc3:
                 d1["supercell_energy"] = float(

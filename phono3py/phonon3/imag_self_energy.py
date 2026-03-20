@@ -579,7 +579,7 @@ class ImagSelfEnergy:
 
 def get_imag_self_energy(
     interaction: Interaction,
-    grid_points: ArrayLike,
+    grid_points: Sequence[int],
     temperatures: NDArray | Sequence,
     sigmas: Sequence[float | None] | None = None,
     frequency_points: ArrayLike | None = None,
@@ -674,18 +674,18 @@ def get_imag_self_energy(
 
     """
     if sigmas is None:
-        _sigmas = [None]
+        _sigmas: Sequence[float | None] = [None]
     else:
         _sigmas = sigmas
 
-    if (interaction.get_phonons()[2] == 0).any():
+    if (interaction.get_phonons()[2] == 0).any():  # type: ignore[union-attr]
         if log_level:
             print("Running harmonic phonon calculations...")
         interaction.run_phonon_solver()
 
     # Set phonon at Gamma without NAC for finding max_phonon_freq.
     interaction.run_phonon_solver_at_gamma()
-    max_phonon_freq = np.amax(interaction.get_phonons()[0])
+    max_phonon_freq = np.amax(interaction.get_phonons()[0])  # type: ignore[arg-type]
     interaction.run_phonon_solver_at_gamma(is_nac=True)
 
     num_band0 = len(interaction.band_indices)
@@ -693,7 +693,7 @@ def get_imag_self_energy(
     if frequency_points_at_bands:
         _frequency_points = None
         _num_frequency_points = num_band0
-        gamma = np.zeros(
+        gamma = np.zeros(  # type: ignore[call-overload]
             (len(_sigmas), len(temperatures), len(grid_points), _num_frequency_points),
             dtype="double",
             order="C",
@@ -707,7 +707,7 @@ def get_imag_self_energy(
             num_frequency_points=num_frequency_points,
         )
         _num_frequency_points = len(_frequency_points)
-        gamma = np.zeros(
+        gamma = np.zeros(  # type: ignore[call-overload]
             (
                 len(_sigmas),
                 len(temperatures),
@@ -719,7 +719,7 @@ def get_imag_self_energy(
             order="C",
         )
 
-    detailed_gamma = []
+    detailed_gamma: list = []
 
     ise = ImagSelfEnergy(
         interaction, with_detail=(write_gamma_detail or return_gamma_detail)
@@ -730,6 +730,7 @@ def get_imag_self_energy(
         if log_level:
             bz_grid = interaction.bz_grid
             weights = interaction.get_triplets_at_q()[1]
+            assert weights is not None
             if len(grid_points) > 1:
                 print(
                     "---------------- Imaginary part of self energy -o- (%d/%d) "
@@ -744,7 +745,7 @@ def get_imag_self_energy(
             print("Number of ir-triplets: %d / %d" % (len(weights), weights.sum()))
 
         ise.run_interaction()
-        frequencies = interaction.get_phonons()[0][gp]
+        frequencies = interaction.get_phonons()[0][gp]  # type: ignore[index]
 
         if log_level:
             qpoint = np.dot(bz_grid.QDinv, bz_grid.addresses[gp])
@@ -795,11 +796,13 @@ def _get_imag_self_energy_at_gp(
 ):
     num_band0 = len(interaction.band_indices)
     frequencies = interaction.get_phonons()[0]
+    assert frequencies is not None
     mesh = interaction.mesh_numbers
     bz_grid = interaction.bz_grid
 
     if write_gamma_detail or return_gamma_detail:
         triplets, weights, _, _ = interaction.get_triplets_at_q()
+        assert weights is not None
         num_band = frequencies.shape[1]
         if _frequency_points is None:
             detailed_gamma_at_gp = np.zeros(
@@ -814,7 +817,7 @@ def _get_imag_self_energy_at_gp(
                 dtype="double",
             )
         else:
-            detailed_gamma_at_gp = np.zeros(
+            detailed_gamma_at_gp = np.zeros(  # type: ignore[call-overload]
                 (
                     len(_sigmas),
                     len(temperatures),
@@ -853,6 +856,7 @@ def _get_imag_self_energy_at_gp(
         )
 
         if write_gamma_detail:
+            assert detailed_gamma_at_gp is not None
             full_filename = write_gamma_detail_to_hdf5(
                 temperatures,
                 mesh,
