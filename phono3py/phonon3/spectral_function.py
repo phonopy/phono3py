@@ -130,6 +130,7 @@ def run_spectral_function(
     )
     for i, gp in enumerate(spf):
         frequencies = interaction.get_phonons()[0]
+        assert frequencies is not None
         for sigma_i, sigma in enumerate(spf.sigmas):
             for t, spf_at_t in zip(
                 temperatures, spf.spectral_functions[sigma_i, :, i], strict=True

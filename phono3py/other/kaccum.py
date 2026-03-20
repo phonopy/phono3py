@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from typing import Optional, Union
 
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.phonon.dos import NormalDistribution
 
 from phono3py.other.tetrahedron_method import get_integration_weights
@@ -315,8 +316,8 @@ def run_mfp_dos(
     mode_prop : shape=(temperatures, ir_grid_points, 6, 6)
 
     """
-    kdos = []
-    sampling_points = []
+    kdos: list = []
+    sampling_points: list = []
     for i, _ in enumerate(mean_freepath):
         kappa_dos = KappaDOSTHM(
             mode_prop[i : i + 1, :, :],
@@ -329,10 +330,10 @@ def run_mfp_dos(
         sampling_points_at_T, kdos_at_T = kappa_dos.get_kdos()
         kdos.append(kdos_at_T[0])
         sampling_points.append(sampling_points_at_T)
-    kdos = np.array(kdos)
-    sampling_points = np.array(sampling_points)
+    kdos_array: NDArray = np.array(kdos)
+    sampling_points_array: NDArray = np.array(sampling_points)
 
-    return kdos, sampling_points
+    return kdos_array, sampling_points_array
 
 
 def get_mfp(g, gv):

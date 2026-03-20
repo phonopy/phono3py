@@ -34,7 +34,10 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import sys
+from collections.abc import Sequence
 
 import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
@@ -478,7 +481,7 @@ class ImagToReal:
 
 def get_real_self_energy(
     interaction: Interaction,
-    grid_points,
+    grid_points: Sequence[int],
     temperatures,
     epsilons=None,
     frequency_points=None,
@@ -556,7 +559,7 @@ def get_real_self_energy(
 
     _temperatures = np.array(temperatures, dtype="double")
 
-    if (interaction.get_phonons()[2] == 0).any():
+    if (interaction.get_phonons()[2] == 0).any():  # type: ignore[union-attr]
         if log_level:
             print("Running harmonic phonon calculations...")
         interaction.run_phonon_solver()
@@ -567,7 +570,7 @@ def get_real_self_energy(
 
     # Set phonon at Gamma without NAC for finding max_phonon_freq.
     interaction.run_phonon_solver_at_gamma()
-    max_phonon_freq = np.amax(interaction.get_phonons()[0])
+    max_phonon_freq = np.amax(interaction.get_phonons()[0])  # type: ignore[arg-type]
     interaction.run_phonon_solver_at_gamma(is_nac=True)
 
     band_indices = interaction.band_indices
@@ -604,6 +607,7 @@ def get_real_self_energy(
         fst.grid_point = gp
         if log_level:
             weights = interaction.get_triplets_at_q()[1]
+            assert weights is not None
             if len(grid_points) > 1:
                 print(
                     "------------------- Real part of self energy -o- (%d/%d) "
@@ -618,7 +622,7 @@ def get_real_self_energy(
             print("Number of ir-triplets: %d / %d" % (len(weights), weights.sum()))
 
         fst.run_interaction()
-        frequencies = interaction.get_phonons()[0][gp]
+        frequencies = interaction.get_phonons()[0][gp]  # type: ignore[index]
 
         if log_level:
             bz_grid = interaction.bz_grid

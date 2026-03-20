@@ -474,7 +474,7 @@ def _load_fc3(
     if fc3_filename is None:
         _fc3_filename = "fc3.hdf5"
     else:
-        _fc3_filename = fc3_filename
+        _fc3_filename = fc3_filename  # type: ignore[assignment]
     fc3 = read_fc3_from_hdf5(filename=_fc3_filename, p2s_map=p2s_map)
     if isinstance(fc3, dict):
         # fc3 is read from a file with type-1 format.
@@ -503,7 +503,7 @@ def select_and_load_dataset(
 ) -> dict | None:
     """Select and load dataset for fc3."""
     # displacements and forces are in phono3py-yaml-like file
-    if ph3py_yaml is not None and forces_in_dataset(ph3py_yaml.dataset):
+    if ph3py_yaml is not None and forces_in_dataset(ph3py_yaml.dataset):  # type: ignore[arg-type]
         dataset = _get_dataset_for_fc3(
             ph3py,
             ph3py_yaml,
@@ -518,7 +518,7 @@ def select_and_load_dataset(
     # displacements and forces are in FORCES_FC3-like file
     force_filename = _get_filename_with_extension("FORCES_FC3")
     if forces_fc3_filename is not None:
-        force_filename = forces_fc3_filename
+        force_filename = forces_fc3_filename  # type: ignore[assignment]
     if force_filename is not None:
         dataset = _get_dataset_for_fc3(
             ph3py,
@@ -563,7 +563,7 @@ def _load_fc2(
     if fc2_filename is None:
         _fc2_filename = "fc2.hdf5"
     else:
-        _fc2_filename = fc2_filename
+        _fc2_filename = fc2_filename  # type: ignore[assignment]
     fc2 = read_fc2_from_hdf5(filename=_fc2_filename, p2s_map=phonon_p2s_map)
     _check_fc2_shape(ph3py, fc2, filename=_fc2_filename)
     if log_level:
@@ -595,7 +595,7 @@ def select_and_load_phonon_dataset(
 
     force_filename = _get_filename_with_extension("FORCES_FC2")
     if forces_fc2_filename is not None:
-        force_filename = forces_fc2_filename
+        force_filename = forces_fc2_filename  # type: ignore[assignment]
     if force_filename is not None:
         phonon_dataset = _get_dataset_for_fc2(
             ph3py,

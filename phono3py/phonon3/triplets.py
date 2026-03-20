@@ -100,6 +100,7 @@ def get_triplets_at_q(
         shape=(prod(mesh),), dtype='int64'
 
     """
+    rotations: Sequence | np.ndarray
     if reciprocal_rotations is None:
         rotations = bz_grid.rotations
     else:
@@ -170,18 +171,20 @@ def get_triplets_integration_weights(
 
     """
     triplets = interaction.get_triplets_at_q()[0]
+    assert triplets is not None
     frequencies = interaction.get_phonons()[0]
+    assert frequencies is not None
     num_band = frequencies.shape[1]
     g_zero = None
 
     if is_collision_matrix:
-        g = np.empty(
+        g = np.empty(  # type: ignore[call-overload]
             (3, len(triplets), len(frequency_points), num_band, num_band),
             dtype="double",
             order="C",
         )
     else:
-        g = np.empty(
+        g = np.empty(  # type: ignore[call-overload]
             (2, len(triplets), len(frequency_points), num_band, num_band),
             dtype="double",
             order="C",
@@ -193,8 +196,9 @@ def get_triplets_integration_weights(
             import phono3py._phono3py as phono3c
 
             g_zero = np.zeros(g.shape[1:], dtype="byte", order="C")
+            cutoff: float
             if sigma_cutoff is None:
-                cutoff = -1
+                cutoff = -1.0
             else:
                 cutoff = float(sigma_cutoff)
             # cutoff < 0 disables g_zero feature.
@@ -395,6 +399,7 @@ def _set_triplets_integration_weights_py(
     )
     pp.run_phonon_solver()
     frequencies = pp.get_phonons()[0]
+    assert frequencies is not None
     num_band = frequencies.shape[1]
     for i, vertices in enumerate(tetrahedra_vertices):
         for j, k in list(np.ndindex((num_band, num_band))):
@@ -403,13 +408,16 @@ def _set_triplets_integration_weights_py(
             thm.set_tetrahedra_omegas(f1_v + f2_v)
             thm.run(frequency_points)
             g0 = thm.get_integration_weight()
+            assert g0 is not None
             g[0, i, :, j, k] = g0
             thm.set_tetrahedra_omegas(-f1_v + f2_v)
             thm.run(frequency_points)
             g1 = thm.get_integration_weight()
+            assert g1 is not None
             thm.set_tetrahedra_omegas(f1_v - f2_v)
             thm.run(frequency_points)
             g2 = thm.get_integration_weight()
+            assert g2 is not None
             g[1, i, :, j, k] = g1 - g2
             if len(g) == 3:
                 g[2, i, :, j, k] = g0 + g1 + g2

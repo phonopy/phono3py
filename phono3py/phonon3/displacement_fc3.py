@@ -36,7 +36,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 from phonopy.harmonic.displacement import (
@@ -86,7 +86,7 @@ def direction_to_displacement(
     d3_count = len(direction_dataset) + 1
 
     lattice = supercell.cell.T
-    new_dataset = {}
+    new_dataset: dict[str, Any] = {}
     new_dataset["natom"] = len(supercell)
 
     if duplicates:
@@ -211,7 +211,7 @@ def get_third_order_displacements(
             min_vec = get_smallest_vector_of_atom_pair(atom1, atom2, cell, symprec)
             min_distance = np.linalg.norm(np.dot(lattice, min_vec))
             dds_atom2["distance"] = min_distance
-            dds_atom1["second_atoms"].append(dds_atom2)
+            dds_atom1["second_atoms"].append(dds_atom2)  # type: ignore[attr-defined]
         dds.append(dds_atom1)
 
     return dds
@@ -296,8 +296,8 @@ def get_smallest_vector_of_atom_pair(
     s_pos = supercell.scaled_positions
     svecs, _ = get_smallest_vectors(
         supercell.cell,
-        [s_pos[atom_number_supercell]],
-        [s_pos[atom_number_primitive]],
+        np.array([s_pos[atom_number_supercell]]),
+        np.array([s_pos[atom_number_primitive]]),
         store_dense_svecs=True,
         symprec=symprec,
     )

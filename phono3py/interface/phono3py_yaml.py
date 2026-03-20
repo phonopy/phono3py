@@ -84,7 +84,7 @@ class Phono3pyYamlLoader(PhonopyYamlLoaderBase):
 
         """
         self._yaml = yaml_data
-        self._data = Phono3pyYamlData(
+        self._data: Phono3pyYamlData = Phono3pyYamlData(
             configuration=configuration,
             calculator=calculator,
             physical_units=physical_units,
@@ -191,7 +191,7 @@ class Phono3pyYamlLoader(PhonopyYamlLoaderBase):
 
     def _parse_fc3_dataset_type1(self, natom: int) -> dict:
         """Parse fc3 type1-dataset."""
-        dataset = {"natom": natom, "first_atoms": []}
+        dataset: dict = {"natom": natom, "first_atoms": []}
         disp2_id = len(self._yaml["displacement_pairs"])
         for disp1_id, d1 in enumerate(self._yaml["displacement_pairs"]):
             data1 = {
@@ -303,7 +303,7 @@ class Phono3pyYamlDumper(PhonopyYamlDumperBase):
 
     def __init__(self, data: Phono3pyYamlData, dumper_settings: dict | None = None):
         """Init method."""
-        self._data = data
+        self._data: Phono3pyYamlData = data
         self._init_dumper_settings(dumper_settings)
 
     def _cell_info_yaml_lines(self) -> list:
@@ -358,7 +358,7 @@ class Phono3pyYamlDumper(PhonopyYamlDumperBase):
         lines = []
         if self._data.phonon_dataset is not None:
             lines += self._displacements_yaml_lines_2types(
-                self._data.phonon_dataset,
+                self._data.phonon_dataset,  # type: ignore[arg-type]
                 with_forces=with_forces,
                 key_prefix="phonon_",
             )
@@ -368,7 +368,7 @@ class Phono3pyYamlDumper(PhonopyYamlDumperBase):
         )
         return lines
 
-    def _displacements_yaml_lines_type1(
+    def _displacements_yaml_lines_type1(  # type: ignore[override]
         self, dataset: dict, with_forces: bool = False, key_prefix: str = ""
     ) -> list:
         """Get YAML lines for type1 phonon_dataset and dataset.
@@ -413,7 +413,7 @@ class Phono3pyYaml(PhonopyYaml):
         settings: dict | None = None,
     ):
         """Init method."""
-        self._data = Phono3pyYamlData(
+        self._data: Phono3pyYamlData = Phono3pyYamlData(
             configuration=configuration,
             calculator=calculator,
             physical_units=physical_units,

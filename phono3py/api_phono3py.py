@@ -286,7 +286,7 @@ class Phono3py:
                 order="C",
             )
         else:
-            self._phonon_supercell_matrix = None
+            self._phonon_supercell_matrix = None  # type: ignore[assignment]
         self._supercell: Supercell
         self._primitive: Primitive
         self._phonon_supercell: Supercell
@@ -338,9 +338,9 @@ class Phono3py:
         self._fc3_cutoff = None  # available only symfc
 
         # MLP
-        self._mlp = None
+        self._mlp: PhonopyMLP | None = None
         self._mlp_dataset: dict | None = None
-        self._phonon_mlp = None
+        self._phonon_mlp: PhonopyMLP | None = None
         self._phonon_mlp_dataset: dict | None = None
 
         # Setup interaction
@@ -1416,7 +1416,7 @@ class Phono3py:
                     else:
                         _number_of_snapshots *= 8
                 else:
-                    _number_of_snapshots *= number_estimation_factor
+                    _number_of_snapshots *= number_estimation_factor  # type: ignore[assignment]
                     _number_of_snapshots = int(_number_of_snapshots)
             else:
                 _number_of_snapshots = number_of_snapshots
@@ -1539,7 +1539,7 @@ class Phono3py:
                 is_plusminus=is_plusminus,
                 is_diagonal=is_diagonal,
             )
-            self._phonon_dataset = directions_to_displacement_dataset(
+            self._phonon_dataset = directions_to_displacement_dataset(  # type: ignore[assignment]
                 phonon_displacement_directions, _distance, self._phonon_supercell
             )
         self._phonon_supercells_with_displacements = None
@@ -1593,7 +1593,7 @@ class Phono3py:
         fc2 = fc_solver.force_constants[2]
         fc3 = fc_solver.force_constants[3]
 
-        self._fc3 = fc3
+        self._fc3 = fc3  # type: ignore[assignment]
         self._fc3_nonzero_indices = None
 
         if fc_calculator == "traditional" or fc_calculator is None:
@@ -1614,13 +1614,13 @@ class Phono3py:
                 self._fc2_cutoff = options["cutoff"].get(2, None)
             if fc3_nonzero_elems is not None:
                 if is_compact_fc:
-                    self._fc3_nonzero_indices = np.array(
+                    self._fc3_nonzero_indices = np.array(  # type: ignore[assignment]
                         fc3_nonzero_elems[self._primitive.p2s_map],
                         dtype="byte",
                         order="C",
                     )
                 else:
-                    self._fc3_nonzero_indices = np.array(
+                    self._fc3_nonzero_indices = np.array(  # type: ignore[assignment]
                         fc3_nonzero_elems, dtype="byte", order="C"
                     )
 
@@ -1757,7 +1757,7 @@ class Phono3py:
             symmetry=self._phonon_supercell_symmetry,
             log_level=self._log_level,
         )
-        self._fc2 = fc_solver.force_constants[2]
+        self._fc2 = fc_solver.force_constants[2]  # type: ignore[assignment]
 
         if symmetrize_fc2 and (fc_calculator is None or fc_calculator == "traditional"):
             self.symmetrize_fc2(
@@ -2501,7 +2501,7 @@ class Phono3py:
 
         self._mlp = PhonopyMLP(log_level=self._log_level)
         self._mlp.develop(
-            self._mlp_dataset,
+            self._mlp_dataset,  # type: ignore[arg-type]
             self._supercell,
             params=params,
             test_size=test_size,
@@ -2565,7 +2565,7 @@ class Phono3py:
 
         self._phonon_mlp = PhonopyMLP(log_level=self._log_level)
         self._phonon_mlp.develop(
-            self._phonon_mlp_dataset,
+            self._phonon_mlp_dataset,  # type: ignore[arg-type]
             self._phonon_supercell,
             params=params,
             test_size=test_size,
@@ -2815,7 +2815,7 @@ class Phono3py:
         self._interaction = None
 
         try:
-            self._bz_grid = BZGrid(
+            self._bz_grid = BZGrid(  # type: ignore[assignment]
                 mesh,
                 lattice=self._primitive.cell,
                 symmetry_dataset=self._primitive_symmetry.dataset,
@@ -2827,7 +2827,7 @@ class Phono3py:
             )
         except RuntimeError as e:
             if "Grid symmetry is broken." in str(e) and isinstance(mesh, (float, int)):
-                self._bz_grid = BZGrid(
+                self._bz_grid = BZGrid(  # type: ignore[assignment]
                     mesh,
                     lattice=self._primitive.cell,
                     symmetry_dataset=self._primitive_symmetry.dataset,
@@ -2900,7 +2900,7 @@ class Phono3py:
                 )
                 type1_target = "forces"
             elif target == "supercell_energies":
-                values = np.zeros(num_scells, dtype="double")
+                values = np.zeros(num_scells, dtype="double")  # type: ignore[assignment]
                 type1_target = "supercell_energy"
             count = 0
             for disp1 in self._dataset["first_atoms"]:
@@ -3020,7 +3020,7 @@ class Phono3py:
         if _random_seed is None:
             dataset = {"displacements": d}
         else:
-            dataset = {"random_seed": _random_seed, "displacements": d}
+            dataset = {"random_seed": _random_seed, "displacements": d}  # type: ignore[dict-item]
         return dataset
 
     def _check_mlp_dataset(self, mlp_dataset: dict):

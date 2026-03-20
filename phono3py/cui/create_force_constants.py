@@ -370,7 +370,7 @@ def _to_ndarray(array, dtype="double"):
 def _extract_dataset_from_ph3py_yaml(ph3py_yaml: Phono3pyYaml, fc_type) -> dict | None:
     if ph3py_yaml.phonon_supercell is None or fc_type == "fc3":
         if ph3py_yaml.dataset is not None:
-            return copy.deepcopy(ph3py_yaml.dataset)
+            return copy.deepcopy(ph3py_yaml.dataset)  # type: ignore[return-value]
     else:
         if ph3py_yaml.phonon_dataset is not None:
             return copy.deepcopy(ph3py_yaml.phonon_dataset)

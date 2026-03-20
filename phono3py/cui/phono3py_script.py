@@ -325,16 +325,17 @@ def _get_default_values(settings: Phono3pySettings):
     """Set default values."""
     # Brillouin zone integration: Tetrahedron (default) or smearing method
     sigma = settings.sigma
+    sigmas: list[float | None]
     if sigma is None:
         sigmas = []
     elif isinstance(sigma, float):
         sigmas = [sigma]
     else:
-        sigmas = sigma
+        sigmas = sigma  # type: ignore[assignment]
     if settings.is_tetrahedron_method:
-        sigmas = [None] + sigmas
+        sigmas = [None] + sigmas  # type: ignore[assignment,operator]
     if len(sigmas) == 0:
-        sigmas = [None]
+        sigmas = [None]  # type: ignore[assignment]
 
     if settings.temperatures is None:
         if settings.is_joint_dos:
@@ -381,7 +382,7 @@ def _get_default_values(settings: Phono3pySettings):
     else:
         cutoff_frequency = settings.cutoff_frequency
 
-    params = {}
+    params: dict = {}
     params["sigmas"] = sigmas
     params["temperature_points"] = temperature_points
     params["temperatures"] = temperatures
@@ -662,7 +663,7 @@ def _run_pypolymlp(
             _ph3py,
             displacement_distance=settings.displacement_distance,
             number_of_snapshots=settings.random_displacements,
-            number_estimation_factor=settings.rd_number_estimation_factor,
+            number_estimation_factor=settings.rd_number_estimation_factor,  # type: ignore[arg-type]
             random_seed=settings.random_seed,
             fc_calculator=settings.fc_calculator,
             fc_calculator_options=settings.fc_calculator_options,
@@ -847,7 +848,7 @@ def _run_gruneisen_then_exit(
         else:
             npoints = settings.band_points
         band_paths = settings.band_paths
-        bands = get_band_qpoints(band_paths, npoints=npoints)
+        bands = get_band_qpoints(band_paths, npoints=npoints)  # type: ignore[arg-type]
     else:
         bands = None
 
@@ -1297,8 +1298,8 @@ def main(**argparse_control):
         write_grid_points(
             ph3py.primitive,
             ph3py.grid,
+            updated_settings["sigmas"],
             band_indices=settings.band_indices,
-            sigmas=updated_settings["sigmas"],
             temperatures=updated_settings["temperatures"],
             is_kappa_star=settings.is_kappa_star,
             is_lbte=(settings.write_collision or settings.is_lbte),

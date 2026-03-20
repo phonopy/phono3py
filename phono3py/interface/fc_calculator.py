@@ -145,7 +145,7 @@ def extract_fc2_fc3_calculators(
                 f"Unknown fc_calculator: {_fc_calculator}. "
                 "Available calculators are 'traditional', 'symfc', and 'alm'."
             )
-        return fc_calculator_lower
+        return fc_calculator_lower  # type: ignore[return-value]
 
 
 def extract_fc2_fc3_calculators_options(

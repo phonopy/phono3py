@@ -78,7 +78,7 @@ def get_cell_info(
     load_phonopy_yaml: bool = True,
 ) -> Phono3pyCellInfoResult:
     """Return calculator interface and crystal structure information."""
-    cell_info = phonopy_get_cell_info(
+    _raw = phonopy_get_cell_info(
         settings,
         cell_filename,
         log_level=log_level,
@@ -87,12 +87,12 @@ def get_cell_info(
     )
 
     cell_info = Phono3pyCellInfoResult(
-        unitcell=cell_info.unitcell,
-        optional_structure_info=cell_info.optional_structure_info,
-        supercell_matrix=cell_info.supercell_matrix,
-        primitive_matrix=cell_info.primitive_matrix,
-        interface_mode=cell_info.interface_mode,
-        phono3py_yaml=cell_info.phonopy_yaml,
+        unitcell=_raw.unitcell,
+        optional_structure_info=_raw.optional_structure_info,
+        supercell_matrix=_raw.supercell_matrix,
+        primitive_matrix=_raw.primitive_matrix,
+        interface_mode=_raw.interface_mode,
+        phono3py_yaml=_raw.phonopy_yaml,  # type: ignore[arg-type]
         phonon_supercell_matrix=settings.phonon_supercell_matrix,
     )
 

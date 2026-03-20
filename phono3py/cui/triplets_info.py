@@ -37,10 +37,10 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Sequence
 from typing import Literal
 
 import numpy as np
-from numpy.typing import ArrayLike
 from phonopy.structure.atoms import PhonopyAtoms
 
 from phono3py.file_IO import write_grid_address_to_hdf5, write_ir_grid_points
@@ -51,9 +51,9 @@ from phono3py.phonon3.triplets import get_triplets_at_q
 def write_grid_points(
     primitive: PhonopyAtoms,
     bz_grid: BZGrid,
-    band_indices: ArrayLike | None = None,
-    sigmas: ArrayLike | None = None,
-    temperatures: ArrayLike | None = None,
+    sigmas: Sequence[float | None],
+    band_indices: Sequence[int] | None = None,
+    temperatures: Sequence[float] | None = None,
     is_kappa_star: bool = True,
     is_lbte: bool = False,
     compression: Literal["gzip", "lzf"] | int | None = "gzip",
@@ -70,7 +70,7 @@ def write_grid_points(
         bz_grid.addresses,
         bz_grid.D_diag,
         bz_grid.gp_map,
-        compression=compression,
+        compression=compression,  # type: ignore[arg-type]
         filename=filename,
     )
 
@@ -112,8 +112,8 @@ def write_grid_points(
 def show_num_triplets(
     primitive: PhonopyAtoms,
     bz_grid: BZGrid,
-    band_indices: ArrayLike | None = None,
-    grid_points: ArrayLike | None = None,
+    band_indices: Sequence[int] | None = None,
+    grid_points: Sequence[int] | None = None,
     is_kappa_star: bool = True,
 ):
     """Show numbers of triplets at grid points."""
