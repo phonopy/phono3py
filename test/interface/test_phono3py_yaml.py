@@ -39,7 +39,7 @@ def test_read_phono3py_yaml():
 def test_write_phono3py_yaml(nacl_pbe: Phono3py):
     """Test Phono3py.get_yaml, __str__, yaml_data, parse."""
     phonon3 = nacl_pbe
-    ph3py_yaml = phonon3.get_yaml()
+    ph3py_yaml = phonon3.to_phono3py_yaml()
     ph3py_yaml_test = Phono3pyYaml()
     ph3py_yaml_test._data = load_phono3py_yaml(
         yaml.safe_load(StringIO(str(ph3py_yaml))), calculator=ph3py_yaml.calculator
@@ -84,7 +84,7 @@ def _test_write_phono3py_yaml_extra(phonon3: Phono3py):
         "born_effective_charge": True,
         "dielectric_constant": True,
     }
-    ph3py_yaml = phonon3.get_yaml(settings=settings)
+    ph3py_yaml = phonon3.to_phono3py_yaml(settings=settings)
     ph3py_yaml_test = Phono3pyYaml()
     ph3py_yaml_test._data = load_phono3py_yaml(
         yaml.safe_load(StringIO(str(ph3py_yaml))), calculator=ph3py_yaml.calculator

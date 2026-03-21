@@ -178,7 +178,7 @@ def _finalize_phono3py(
     else:
         yaml_filename = filename
 
-    ph3py_yaml = phono3py.get_yaml(
+    ph3py_yaml = phono3py.to_phono3py_yaml(
         configuration=confs_dict,
         settings={
             "force_sets": False,

@@ -50,7 +50,7 @@ from typing import (  # List and Optional are for < python3.10
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from phonopy import Phonopy
-from phonopy.api_phonopy import set_yaml
+from phonopy.api_phonopy import set_data_to_phonopy_yaml
 from phonopy.harmonic.displacement import (
     directions_to_displacement_dataset,
     get_least_displacements,
@@ -2470,7 +2470,7 @@ class Phono3py:
                  'dielectric_constant': True}
 
         """
-        ph3py_yaml = self.get_yaml(settings=settings)
+        ph3py_yaml = self.to_phono3py_yaml(settings=settings)
         with open(filename, "w") as w:
             w.write(str(ph3py_yaml))
 
@@ -2610,23 +2610,22 @@ class Phono3py:
         self.phonon_supercell_energies = energies
         self.phonon_forces = forces
 
-    def get_yaml(
+    def to_phono3py_yaml(
         self, configuration: dict | None = None, settings: dict | None = None
     ) -> Phono3pyYaml:
         """Return Phono3pyYaml class instance with this data."""
         units = get_calculator_physical_units(self.calculator)
-        phpy_yaml = Phono3pyYaml(
+        ph3py_yaml = Phono3pyYaml(
             configuration=configuration, physical_units=units, settings=settings
         )
-        set_yaml(cast(PhonopyYaml, phpy_yaml), cast(Phonopy, self))
-        phpy_yaml.frequency_unit_conversion_factor = self.unit_conversion_factor
+        set_data_to_phonopy_yaml(cast(PhonopyYaml, ph3py_yaml), cast(Phonopy, self))
         if self.phonon_supercell_matrix is not None:
-            phpy_yaml.phonon_supercell_matrix = self.phonon_supercell_matrix
+            ph3py_yaml.phonon_supercell_matrix = self.phonon_supercell_matrix
             if self.phonon_dataset is not None:
-                phpy_yaml.phonon_dataset = self.phonon_dataset
-        phpy_yaml.phonon_primitive = self.phonon_primitive
-        phpy_yaml.phonon_supercell = self.phonon_supercell
-        return phpy_yaml
+                ph3py_yaml.phonon_dataset = self.phonon_dataset
+        ph3py_yaml.phonon_primitive = self.phonon_primitive
+        ph3py_yaml.phonon_supercell = self.phonon_supercell
+        return ph3py_yaml
 
     ###################
     # private methods #
