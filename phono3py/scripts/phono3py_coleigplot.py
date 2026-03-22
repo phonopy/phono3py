@@ -1,14 +1,21 @@
+from __future__ import annotations
+
 import argparse
 import os
 import sys
+from typing import TYPE_CHECKING
 
-import h5py
+import h5py  # type: ignore[import-untyped]
 import numpy as np
+from numpy.typing import NDArray
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
 
 epsilon = 1.0e-8
 
 
-def get_options():
+def get_options() -> argparse.Namespace:
     """Parse command line options."""
     parser = argparse.ArgumentParser(description="Plot collision matrix eigenvalues")
     parser.add_argument(
@@ -30,7 +37,7 @@ def get_options():
     return args
 
 
-def get_t_index(temperatures, args):
+def get_t_index(temperatures: NDArray[np.double], args: argparse.Namespace) -> int:
     """Return temperature index."""
     if len(temperatures) > 29:
         t_index = 30
@@ -43,7 +50,12 @@ def get_t_index(temperatures, args):
     return t_index
 
 
-def plot_one(ax, coleigs, temperatures, args):
+def plot_one(
+    ax: Axes,
+    coleigs: NDArray[np.double],
+    temperatures: NDArray[np.double],
+    args: argparse.Namespace,
+) -> None:
     """Plot collision matrix eigenvalues at one temperature."""
     t_index = get_t_index(temperatures, args)
     coleigs_p = coleigs[t_index].copy()
@@ -55,7 +67,7 @@ def plot_one(ax, coleigs, temperatures, args):
     ax.set_xlim(0, len(coleigs_p))
 
 
-def plot_one_file(ax, args):
+def plot_one_file(ax: Axes, args: argparse.Namespace) -> None:
     """Plot collision matrix eigenvalues at one temperature from file."""
     filename = args.filenames[0]
     if os.path.isfile(filename):
@@ -68,7 +80,12 @@ def plot_one_file(ax, args):
         sys.exit(1)
 
 
-def plot_more(ax, coleigs, temperatures, args):
+def plot_more(
+    ax: Axes,
+    coleigs: list[NDArray[np.double]],
+    temperatures: list[NDArray[np.double]],
+    args: argparse.Namespace,
+) -> None:
     """Update plot by collision matrix eigenvalues from one file."""
     t_index = get_t_index(temperatures[0], args)
     y = [np.abs(v[t_index]) for v in coleigs]
@@ -76,10 +93,10 @@ def plot_more(ax, coleigs, temperatures, args):
     ax.set_xlim(0, len(y[0]))
 
 
-def plot_more_files(ax, args):
+def plot_more_files(ax: Axes, args: argparse.Namespace) -> None:
     """Plot collision matrix eigenvalues from multiple files."""
-    temperatures = []
-    coleigs = []
+    temperatures: list[NDArray[np.double]] = []
+    coleigs: list[NDArray[np.double]] = []
     for filename in args.filenames:
         if os.path.isfile(filename):
             with h5py.File(filename, "r") as f:
@@ -91,7 +108,7 @@ def plot_more_files(ax, args):
     plot_more(ax, coleigs, temperatures, args)
 
 
-def plot(args: argparse.Namespace):
+def plot(args: argparse.Namespace) -> None:
     """Plot collision matrix eigenvalues."""
     import matplotlib.pyplot as plt
 
@@ -111,7 +128,7 @@ def plot(args: argparse.Namespace):
     plt.show()
 
 
-def write_dat(args: argparse.Namespace):
+def write_dat(args: argparse.Namespace) -> None:
     """Write collision matrix eigenvalues to a file in gnuplot style."""
     with open("coleigs.dat", "w") as w:
         for filename in args.filenames:
@@ -133,7 +150,7 @@ def write_dat(args: argparse.Namespace):
                 print(file=w)
 
 
-def main(args: argparse.Namespace):
+def main(args: argparse.Namespace) -> None:
     """Run phono3py-coleigplot."""
     if args.savetxt:
         write_dat(args)
@@ -141,6 +158,6 @@ def main(args: argparse.Namespace):
         plot(args)
 
 
-def run():
+def run() -> None:
     """Run phono3py-coleigplot script."""
     main(get_options())

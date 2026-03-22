@@ -32,10 +32,12 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 from phono3py.cui.phono3py_script import main
 
 
-def run():
+def run() -> None:
     """Run phono3py script."""
     argparse_control = {"load_phono3py_yaml": False}
     main(**argparse_control)
