@@ -683,8 +683,8 @@ class Interaction:
         # perms.shape = (len(spg_ops), len(primitive)), dtype='int64'
         perms = compute_all_sg_permutations(
             self._primitive.scaled_positions,
-            self._bz_grid.symmetry_dataset.rotations,  # type: ignore
-            self._bz_grid.symmetry_dataset.translations,  # type: ignore
+            self._bz_grid.grid_symmetry_dataset.rotations,  # type: ignore
+            self._bz_grid.grid_symmetry_dataset.translations,  # type: ignore
             np.array(self._primitive.cell.T, dtype="double", order="C"),
             symprec=self._symprec,
         )
@@ -732,13 +732,13 @@ class Interaction:
 
         """
         d2r_map = []
-        for r in self._bz_grid.symmetry_dataset.rotations:  # type: ignore
+        for r in self._bz_grid.grid_symmetry_dataset.rotations:  # type: ignore
             for i, rec_r in enumerate(self._bz_grid.reciprocal_operations):
                 if (rec_r.T == r).all():
                     d2r_map.append(i)
                     break
 
-        assert len(d2r_map) == len(self._bz_grid.symmetry_dataset.rotations)  # type: ignore
+        assert len(d2r_map) == len(self._bz_grid.grid_symmetry_dataset.rotations)  # type: ignore
 
         return d2r_map
 
@@ -753,7 +753,7 @@ class Interaction:
         assert self._eigenvectors is not None
 
         Rq = np.dot(self._bz_grid.QDinv, self._bz_grid.addresses[bzgp])
-        tau = self._bz_grid.symmetry_dataset.translations[t_i]  # type: ignore
+        tau = self._bz_grid.grid_symmetry_dataset.translations[t_i]  # type: ignore
         phase_factor = np.exp(-2j * np.pi * np.dot(Rq, tau))
         self._phonon_done[bzgp] = 1
         self._frequencies[bzgp, :] = self._frequencies[orig_gp, :]
