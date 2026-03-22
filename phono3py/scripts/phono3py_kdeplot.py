@@ -1,18 +1,31 @@
+from __future__ import annotations
+
 import argparse
 import os
 import sys
+from typing import TYPE_CHECKING
 
 import h5py
 import numpy as np
+from numpy.typing import NDArray
 from scipy import stats
+
+if TYPE_CHECKING:
+    from matplotlib.figure import Figure
 
 epsilon = 1.0e-8
 
 
-def collect_data(gamma, weights, frequencies, cutoff, max_freq):
+def collect_data(
+    gamma: NDArray[np.double],
+    weights: NDArray[np.int64],
+    frequencies: NDArray[np.double],
+    cutoff: float | None,
+    max_freq: float | None,
+) -> tuple[NDArray[np.double], NDArray[np.double]]:
     """Collect data for making input of Gaussian-KDE."""
-    freqs = []
-    mode_prop = []
+    freqs: list[float] = []
+    mode_prop: list[float] = []
     for w, freq, g in zip(weights, frequencies, gamma, strict=True):
         tau = 1.0 / np.where(g > 0, g, -1) / (2 * 2 * np.pi)
         if cutoff:
@@ -35,7 +48,14 @@ def collect_data(gamma, weights, frequencies, cutoff, max_freq):
     return x, y
 
 
-def run_KDE(x, y, nbins, x_max=None, y_max=None, density_ratio=0.1):
+def run_KDE(
+    x: NDArray[np.double],
+    y: NDArray[np.double],
+    nbins: int,
+    x_max: float | None = None,
+    y_max: float | None = None,
+    density_ratio: float = 0.1,
+) -> tuple[NDArray[np.double], NDArray[np.double], NDArray[np.double], int]:
     """Run Gaussian-KDE by scipy."""
     x_min = 0
     if x_max is None:
@@ -76,23 +96,23 @@ def run_KDE(x, y, nbins, x_max=None, y_max=None, density_ratio=0.1):
 
 def plot(
     plt,
-    xi,
-    yi,
-    zi,
-    x,
-    y,
-    short_nbinds,
-    nbins,
-    y_max=None,
-    z_max=None,
-    cmap=None,
-    aspect=None,
-    flip=False,
-    no_points=False,
-    show_colorbar=True,
-    point_size=5,
-    title=None,
-):
+    xi: NDArray[np.double],
+    yi: NDArray[np.double],
+    zi: NDArray[np.double],
+    x: NDArray[np.double],
+    y: NDArray[np.double],
+    short_nbinds: int,
+    nbins: int,
+    y_max: float | None = None,
+    z_max: float | None = None,
+    cmap: str | None = None,
+    aspect: float | None = None,
+    flip: bool = False,
+    no_points: bool = False,
+    show_colorbar: bool = True,
+    point_size: float = 5,
+    title: str | None = None,
+) -> Figure:
     """Plot lifetime distribution."""
     xmax = np.max(x)
     ymax = np.max(y)
@@ -157,7 +177,7 @@ def plot(
     return fig
 
 
-def get_options():
+def get_options() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
         description="Plot property density with gaussian KDE"
@@ -244,7 +264,7 @@ def get_options():
     return args
 
 
-def main(args):
+def main(args: argparse.Namespace) -> None:
     """Run phono3py-kdeplot."""
     import matplotlib
 
@@ -348,6 +368,6 @@ def main(args):
         plt.close(fig)
 
 
-def run():
+def run() -> None:
     """Run phono3py-kdeplot script."""
     main(get_options())

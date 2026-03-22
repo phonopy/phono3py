@@ -34,7 +34,14 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-calculator_info = {
+from __future__ import annotations
+
+from typing import Any
+
+import numpy as np
+from numpy.typing import NDArray
+
+calculator_info: dict[str, dict[str, dict[str, str]]] = {
     "abinit": {"option": {"name": "--abinit", "help": "Invoke Abinit mode"}},
     # 'aims': {'option': {'name': "--aims",
     #                     'help': "Invoke FHI-aims mode"}},
@@ -54,7 +61,7 @@ calculator_info = {
 }
 
 
-def get_default_displacement_distance(interface_mode):
+def get_default_displacement_distance(interface_mode: str | None) -> float:
     """Return default displacement distances for calculators."""
     if interface_mode in ("qe", "abinit", "turbomole"):
         displacement_distance = 0.06
@@ -65,9 +72,12 @@ def get_default_displacement_distance(interface_mode):
     return displacement_distance
 
 
-def get_additional_info_to_write_supercells(interface_mode, supercell_matrix):
+def get_additional_info_to_write_supercells(
+    interface_mode: str | None,
+    supercell_matrix: NDArray[np.int64],
+) -> dict[str, Any]:
     """Return additional information to write supercells for calculators."""
-    additional_info = {}
+    additional_info: dict[str, Any] = {}
     if interface_mode == "crystal":
         additional_info["template_file"] = "TEMPLATE3"
         additional_info["supercell_matrix"] = supercell_matrix
@@ -75,10 +85,12 @@ def get_additional_info_to_write_supercells(interface_mode, supercell_matrix):
 
 
 def get_additional_info_to_write_fc2_supercells(
-    interface_mode, phonon_supercell_matrix, suffix: str = "fc2"
-):
+    interface_mode: str | None,
+    phonon_supercell_matrix: NDArray[np.int64],
+    suffix: str = "fc2",
+) -> dict[str, Any]:
     """Return additional information to write fc2-supercells for calculators."""
-    additional_info = {}
+    additional_info: dict[str, Any] = {}
     if interface_mode == "qe":
         additional_info["pre_filename"] = "supercell_%s" % suffix
     elif interface_mode == "crystal":

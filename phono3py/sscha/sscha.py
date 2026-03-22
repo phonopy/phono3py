@@ -41,14 +41,23 @@ Formulae implemented are based on these papers:
 
 """
 
+from __future__ import annotations
+
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.harmonic.dynmat_to_fc import DynmatToForceConstants
 from phonopy.physical_units import get_physical_units
+from phonopy.structure.atoms import PhonopyAtoms
+from phonopy.structure.cells import Primitive
 
 from phono3py.phonon.func import sigma_squared
 
 
-def get_sscha_matrices(supercell, force_constants, cutoff_frequency=None):
+def get_sscha_matrices(
+    supercell: PhonopyAtoms,
+    force_constants: NDArray[np.double],
+    cutoff_frequency: float | None = None,
+) -> DispCorrMatrix:
     """Return instance of DispCorrMatrix.
 
     This can be used to compute probability distribution of supercell displacements
@@ -97,7 +106,12 @@ class SupercellPhonon:
 
     """
 
-    def __init__(self, supercell, force_constants, frequency_factor_to_THz=None):
+    def __init__(
+        self,
+        supercell: PhonopyAtoms,
+        force_constants: NDArray[np.double],
+        frequency_factor_to_THz: float | None = None,
+    ) -> None:
         """Init method.
 
         Parameters
@@ -128,33 +142,39 @@ class SupercellPhonon:
             freqs *= get_physical_units().DefaultToTHz
         else:
             freqs *= frequency_factor_to_THz
-        self._eigenvalues = np.array(eigvals, dtype="double", order="C")
-        self._eigenvectors = np.array(eigvecs, dtype="double", order="C")
-        self._frequencies = np.array(freqs, dtype="double", order="C")
-        self._force_constants = _fc2
+        self._eigenvalues: NDArray[np.double] = np.array(
+            eigvals, dtype="double", order="C"
+        )
+        self._eigenvectors: NDArray[np.double] = np.array(
+            eigvecs, dtype="double", order="C"
+        )
+        self._frequencies: NDArray[np.double] = np.array(
+            freqs, dtype="double", order="C"
+        )
+        self._force_constants: NDArray[np.double] = _fc2
 
     @property
-    def eigenvalues(self):
+    def eigenvalues(self) -> NDArray[np.double]:
         """Return eigenvalues."""
         return self._eigenvalues
 
     @property
-    def eigenvectors(self):
+    def eigenvectors(self) -> NDArray[np.double]:
         """Return eigenvectors."""
         return self._eigenvectors
 
     @property
-    def frequencies(self):
+    def frequencies(self) -> NDArray[np.double]:
         """Return frequencies."""
         return self._frequencies
 
     @property
-    def force_constants(self):
+    def force_constants(self) -> NDArray[np.double]:
         """Return harmonic force cosntants."""
         return self._force_constants
 
     @property
-    def supercell(self):
+    def supercell(self) -> PhonopyAtoms:
         """Return supercell."""
         return self._supercell
 
@@ -178,7 +198,11 @@ class DispCorrMatrix:
 
     """
 
-    def __init__(self, supercell_phonon, cutoff_frequency=None):
+    def __init__(
+        self,
+        supercell_phonon: SupercellPhonon,
+        cutoff_frequency: float | None = None,
+    ) -> None:
         """Init method.
 
         Parameters
@@ -193,14 +217,14 @@ class DispCorrMatrix:
         """
         self._supercell_phonon = supercell_phonon
         if cutoff_frequency is None:
-            self._cutoff_frequency = 1e-5
+            self._cutoff_frequency: float = 1e-5
         else:
             self._cutoff_frequency = cutoff_frequency
-        self._psi_matrix = None
-        self._upsilon_matrix = None
-        self._determinant = None
+        self._psi_matrix: NDArray[np.double] | None = None
+        self._upsilon_matrix: NDArray[np.double] | None = None
+        self._prefactor: float | None = None
 
-    def run(self, T):
+    def run(self, T: float) -> None:
         """Calculate displacement correlation matrix from supercell phonon.
 
         N doesn't appear in the computation explicitly because N=1, i.e.,
@@ -231,25 +255,27 @@ class DispCorrMatrix:
             sqrt_masses * (sqrt_masses * matrix).T, dtype="double", order="C"
         )
 
-        self._prefactor = np.sqrt(1 / np.prod(2 * np.pi * np.extract(condition, a2)))
+        self._prefactor = float(
+            np.sqrt(1 / np.prod(2 * np.pi * np.extract(condition, a2)))
+        )
 
     @property
-    def upsilon_matrix(self):
+    def upsilon_matrix(self) -> NDArray[np.double] | None:
         """Return Upsilon matrix."""
         return self._upsilon_matrix
 
     @property
-    def psi_matrix(self):
+    def psi_matrix(self) -> NDArray[np.double] | None:
         """Return Psi matrix."""
         return self._psi_matrix
 
     @property
-    def supercell_phonon(self):
+    def supercell_phonon(self) -> SupercellPhonon:
         """Return SupercellPhonon class instance."""
         return self._supercell_phonon
 
     @property
-    def prefactor(self):
+    def prefactor(self) -> float | None:
         """Return prefactor of probability distribution."""
         return self._prefactor
 
@@ -277,21 +303,31 @@ class DispCorrMatrixMesh:
 
     """
 
-    def __init__(self, primitive, supercell, cutoff_frequency=1e-5):
+    def __init__(
+        self,
+        primitive: Primitive,
+        supercell: PhonopyAtoms,
+        cutoff_frequency: float = 1e-5,
+    ) -> None:
         """Init method."""
         self._d2f = DynmatToForceConstants(primitive, supercell, is_full_fc=True)
-        self._masses = supercell.masses
+        self._masses: NDArray[np.double] = supercell.masses
         self._cutoff_frequency = cutoff_frequency
 
-        self._psi_matrix = None
-        self._upsilon_matrix = None
+        self._psi_matrix: NDArray[np.double] | None = None
+        self._upsilon_matrix: NDArray[np.double] | None = None
 
     @property
-    def commensurate_points(self):
+    def commensurate_points(self) -> NDArray[np.double]:
         """Return commensurate points."""
         return self._d2f.commensurate_points
 
-    def run(self, frequencies, eigenvectors, T):
+    def run(
+        self,
+        frequencies: NDArray[np.double],
+        eigenvectors: NDArray[np.double],
+        T: float,
+    ) -> None:
         """Calculate displacement correlation matrix from normal phonon results.
 
         Parameters
@@ -315,12 +351,14 @@ class DispCorrMatrixMesh:
         self._d2f.create_dynamical_matrices(a2_inv, eigenvectors)
         self._d2f.run()
         matrix = self._d2f.force_constants
+        assert matrix is not None
         matrix = np.transpose(matrix, axes=[0, 2, 1, 3]).reshape(shape)
         self._upsilon_matrix = np.array(matrix, dtype="double", order="C")
 
         self._d2f.create_dynamical_matrices(a2, eigenvectors)
         self._d2f.run()
         matrix = self._d2f.force_constants
+        assert matrix is not None
         for i, m_i in enumerate(self._masses):
             for j, m_j in enumerate(self._masses):
                 matrix[i, j] /= m_i * m_j
@@ -328,12 +366,12 @@ class DispCorrMatrixMesh:
         self._psi_matrix = np.array(matrix, dtype="double", order="C")
 
     @property
-    def upsilon_matrix(self):
+    def upsilon_matrix(self) -> NDArray[np.double] | None:
         """Return Upsilon matrix."""
         return self._upsilon_matrix
 
     @property
-    def psi_matrix(self):
+    def psi_matrix(self) -> NDArray[np.double] | None:
         """Return Psi matrix."""
         return self._psi_matrix
 
@@ -360,12 +398,12 @@ class SecondOrderFC:
 
     def __init__(
         self,
-        displacements,
-        forces,
-        supercell_phonon,
-        cutoff_frequency=1e-5,
-        log_level=0,
-    ):
+        displacements: NDArray[np.double],
+        forces: NDArray[np.double],
+        supercell_phonon: SupercellPhonon,
+        cutoff_frequency: float = 1e-5,
+        log_level: int = 0,
+    ) -> None:
         """Init method.
 
         Parameters
@@ -385,29 +423,30 @@ class SecondOrderFC:
         shape = displacements.shape
         u = np.array(displacements.reshape(shape[0], -1), dtype="double", order="C")
         f = np.array(forces.reshape(shape[0], -1), dtype="double", order="C")
-        self._displacements = u
-        self._forces = f
+        self._displacements: NDArray[np.double] = u
+        self._forces: NDArray[np.double] = f
         self._uu = DispCorrMatrix(supercell_phonon, cutoff_frequency=cutoff_frequency)
-        self._force_constants = supercell_phonon.force_constants
+        self._force_constants: NDArray[np.double] = supercell_phonon.force_constants
         self._cutoff_frequency = cutoff_frequency
         self._log_level = log_level
+        self._fc2: NDArray[np.double] | None = None
 
     @property
-    def displacements(self):
+    def displacements(self) -> NDArray[np.double]:
         """Return input displacements."""
         return self._displacements
 
     @property
-    def forces(self):
+    def forces(self) -> NDArray[np.double]:
         """Return input forces."""
         return self._forces
 
     @property
-    def fc2(self):
+    def fc2(self) -> NDArray[np.double] | None:
         """Return fc2 calculated stochastically."""
         return self._fc2
 
-    def run(self, T=300.0):
+    def run(self, T: float = 300.0) -> None:
         """Calculate fc2 stochastically.
 
         As displacement correlation matrix <u_a u_b>^-1, two choices exist.
@@ -473,12 +512,12 @@ class ThirdOrderFC:
 
     def __init__(
         self,
-        displacements,
-        forces,
-        supercell_phonon,
-        cutoff_frequency=1e-5,
-        log_level=0,
-    ):
+        displacements: NDArray[np.double],
+        forces: NDArray[np.double],
+        supercell_phonon: SupercellPhonon,
+        cutoff_frequency: float = 1e-5,
+        log_level: int = 0,
+    ) -> None:
         """Init method.
 
         Parameters
@@ -497,38 +536,38 @@ class ThirdOrderFC:
         shape = displacements.shape
         u = np.array(displacements.reshape(shape[0], -1), dtype="double", order="C")
         f = np.array(forces.reshape(shape[0], -1), dtype="double", order="C")
-        self._displacements = u
-        self._forces = f
+        self._displacements: NDArray[np.double] = u
+        self._forces: NDArray[np.double] = f
         self._uu = DispCorrMatrix(supercell_phonon, cutoff_frequency=cutoff_frequency)
-        self._force_constants = supercell_phonon.force_constants
+        self._force_constants: NDArray[np.double] = supercell_phonon.force_constants
         self._cutoff_frequency = cutoff_frequency
         self._log_level = log_level
 
-        self._drift = u.sum(axis=0) / u.shape[0]
-        self._fmat = None
-        self._fc3 = None
+        self._drift: NDArray[np.double] = u.sum(axis=0) / u.shape[0]
+        self._fmat: NDArray[np.double] | None = None
+        self._fc3: NDArray[np.double] | None = None
 
     @property
-    def displacements(self):
+    def displacements(self) -> NDArray[np.double]:
         """Return input displacements."""
         return self._displacements
 
     @property
-    def forces(self):
+    def forces(self) -> NDArray[np.double]:
         """Return input forces."""
         return self._forces
 
     @property
-    def fc3(self):
+    def fc3(self) -> NDArray[np.double] | None:
         """Return fc3 calculated stochastically."""
         return self._fc3
 
     @property
-    def ff(self):
+    def ff(self) -> NDArray[np.double] | None:
         """Return force matrix."""
         return self._fmat
 
-    def run(self, T=300.0):
+    def run(self, T: float = 300.0) -> None:
         """Calculate fc3 stochastically."""
         if self._fmat is None:
             self._fmat = self._run_fmat()
@@ -540,15 +579,16 @@ class ThirdOrderFC:
             np.transpose(fc3, axes=[0, 2, 4, 1, 3, 5]), dtype="double", order="C"
         )
 
-    def _run_fmat(self):
+    def _run_fmat(self) -> NDArray[np.double]:
         f = self._forces
         u = self._displacements
         fc2 = self._force_constants
         return f - f.sum(axis=0) / f.shape[0] + np.dot(u, fc2)
 
-    def _run_fc3_ave(self, T):
+    def _run_fc3_ave(self, T: float) -> NDArray[np.double]:
         # self._uu.run(T)
         # Y = self._uu.upsilon_matrix
+        assert self._fmat is not None
         f = self._fmat
         u = self._displacements
         Y = np.linalg.pinv(np.dot(u.T, u) / u.shape[0])
