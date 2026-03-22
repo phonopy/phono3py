@@ -39,7 +39,7 @@ from __future__ import annotations
 import dataclasses
 import warnings
 from collections.abc import Sequence
-from typing import Any, Literal, cast
+from typing import Literal, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -151,7 +151,7 @@ class BZGrid:
 
     def __init__(
         self,
-        mesh: float | np.floating[Any] | Sequence[int] | NDArray[np.int64],
+        mesh: float | np.number | Sequence[int] | NDArray[np.int64],
         reciprocal_lattice: Sequence[Sequence[float]]
         | NDArray[np.double]
         | None = None,
@@ -555,7 +555,7 @@ class GridMatrix:
 
     def __init__(
         self,
-        mesh: float | np.generic | Sequence[int] | NDArray[np.int64],
+        mesh: float | np.number | Sequence[int] | NDArray[np.int64],
         lattice: Sequence[Sequence[float]] | NDArray[np.double],
         symmetry_dataset: SpglibDataset
         | SpglibMagneticDataset
@@ -672,7 +672,7 @@ class GridMatrix:
 
     def _set_mesh_numbers(
         self,
-        mesh: float | np.generic | Sequence[int] | NDArray[np.int64],
+        mesh: float | np.number | Sequence[int] | NDArray[np.int64],
         use_grg: bool = False,
         force_SNF: bool = False,
         coordinates: Literal["reciprocal", "direct"] = "reciprocal",
@@ -701,7 +701,7 @@ class GridMatrix:
             have similar lengths.
 
         """
-        if isinstance(mesh, (int, float, np.generic)):
+        if isinstance(mesh, (int, float, np.number)):
             length = float(mesh)
             if use_grg:
                 found_grg = self._run_grg(
