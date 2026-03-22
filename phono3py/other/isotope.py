@@ -40,7 +40,7 @@ from collections.abc import Sequence
 from typing import Literal
 
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
+from numpy.typing import NDArray
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
 from phonopy.phonon.tetrahedron_mesh import get_tetrahedra_frequencies
 from phonopy.physical_units import get_physical_units
@@ -63,8 +63,9 @@ def get_mass_variances(
     primitive: PhonopyAtoms | None = None,
     symbols: Sequence[str] | None = None,
     isotope_data: dict | None = None,
-):
+) -> NDArray[np.double]:
     """Calculate mass variances."""
+    _symbols: Sequence[str]
     if primitive is not None:
         _symbols = primitive.symbols
     elif symbols is not None:
@@ -96,13 +97,13 @@ class Isotope:
 
     def __init__(
         self,
-        mesh: float | ArrayLike,
+        mesh: float | NDArray[np.int64] | Sequence[int],
         primitive: Primitive,
         mass_variances: Sequence[float]
-        | NDArray
+        | NDArray[np.double]
         | None = None,  # length of list is num_atom.
         isotope_data: dict | None = None,
-        band_indices: Sequence[int] | NDArray | None = None,
+        band_indices: Sequence[int] | NDArray[np.int64] | None = None,
         sigma: float | None = None,
         bz_grid: BZGrid | None = None,
         frequency_factor_to_THz: float | None = None,
@@ -130,18 +131,19 @@ class Isotope:
             self._frequency_factor_to_THz = get_physical_units().DefaultToTHz
         else:
             self._frequency_factor_to_THz = frequency_factor_to_THz
-        self._lapack_zheev_uplo = lapack_zheev_uplo
-        self._nac_q_direction = None
+        self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
+        self._nac_q_direction: NDArray[np.double] | None = None
 
-        self._grid_points = None
-        self._frequencies = None
-        self._eigenvectors = None
-        self._phonon_done = None
-        self._dm = None
-        self._gamma = None
-        self._tetrahedron_method = None
+        self._grid_points: NDArray[np.int64] | None = None
+        self._frequencies: NDArray[np.double] | None = None
+        self._eigenvectors: NDArray[np.cdouble] | None = None
+        self._phonon_done: NDArray[np.byte] | None = None
+        self._dm: DynamicalMatrix | None = None
+        self._gamma: NDArray[np.double] | None = None
+        self._integration_weights: NDArray[np.double] | None = None
 
         num_band = len(self._primitive) * 3
+        self._band_indices: NDArray[np.int64]
         if band_indices is None:
             self._band_indices = np.arange(num_band, dtype="int64")
         else:
@@ -159,7 +161,7 @@ class Isotope:
         else:
             self._bz_grid = bz_grid
 
-    def set_grid_point(self, grid_point: int):
+    def set_grid_point(self, grid_point: int) -> None:
         """Initialize grid points."""
         self._grid_point = grid_point
         self._grid_points = np.arange(len(self._bz_grid.addresses), dtype="int64")  # type: ignore[assignment]
@@ -167,7 +169,7 @@ class Isotope:
         if self._phonon_done is None:
             self._allocate_phonon()
 
-    def run(self, lang: Literal["C", "Python"] = "C"):
+    def run(self, lang: Literal["C", "Python"] = "C") -> None:
         """Run isotope scattering calculation."""
         if lang == "C":
             self._run_c()
@@ -180,7 +182,7 @@ class Isotope:
         return self._sigma
 
     @sigma.setter
-    def sigma(self, sigma: float | None):
+    def sigma(self, sigma: float | None) -> None:
         if sigma is None:
             self._sigma = None
         else:
@@ -192,12 +194,12 @@ class Isotope:
         return self._dm
 
     @property
-    def band_indices(self) -> NDArray:
+    def band_indices(self) -> NDArray[np.int64]:
         """Return specified band indices."""
         return self._band_indices
 
     @property
-    def gamma(self) -> NDArray | None:
+    def gamma(self) -> NDArray[np.double] | None:
         """Return scattering strength."""
         return self._gamma
 
@@ -207,21 +209,25 @@ class Isotope:
         return self._bz_grid
 
     @property
-    def mass_variances(self) -> NDArray:
+    def mass_variances(self) -> NDArray[np.double]:
         """Return mass variances."""
         return self._mass_variances
 
-    def get_phonons(self) -> tuple[NDArray | None, NDArray | None, NDArray | None]:
+    def get_phonons(
+        self,
+    ) -> tuple[
+        NDArray[np.double] | None, NDArray[np.cdouble] | None, NDArray[np.byte] | None
+    ]:
         """Return phonons on grid."""
         return self._frequencies, self._eigenvectors, self._phonon_done
 
     def set_phonons(
         self,
-        frequencies: NDArray,
-        eigenvectors: NDArray,
-        phonon_done: NDArray,
-        dm=None,
-    ):
+        frequencies: NDArray[np.double],
+        eigenvectors: NDArray[np.cdouble],
+        phonon_done: NDArray[np.byte],
+        dm: DynamicalMatrix | None = None,
+    ) -> None:
         """Set phonons on grid."""
         self._frequencies = frequencies  # type: ignore[assignment]
         self._eigenvectors = eigenvectors  # type: ignore[assignment]
@@ -231,13 +237,13 @@ class Isotope:
 
     def init_dynamical_matrix(
         self,
-        fc2,
+        fc2: NDArray[np.double],
         supercell: PhonopyAtoms,
         primitive: Primitive,
         nac_params: dict | None = None,
         frequency_scale_factor: float | None = None,
         decimals: int | None = None,
-    ):
+    ) -> None:
         """Initialize dynamical matrix."""
         self._primitive = primitive
         self._dm = get_dynamical_matrix(  # type: ignore[assignment]
@@ -249,14 +255,17 @@ class Isotope:
             decimals=decimals,
         )
 
-    def set_nac_q_direction(
-        self, nac_q_direction: Sequence[float] | NDArray | None = None
-    ):
+    def set_nac__qdirection(
+        self, nac_q_direction: Sequence[float] | NDArray[np.double] | None = None
+    ) -> None:
         """Set q-direction at q->0 used for NAC."""
-        if nac_q_direction is not None:
-            self._nac_q_direction = np.array(nac_q_direction, dtype="double")  # type: ignore[assignment]
+        self._nac_q_direction = (
+            np.array(nac_q_direction, dtype="double")
+            if nac_q_direction is not None
+            else None
+        )
 
-    def _run_c(self):
+    def _run_c(self) -> None:
         assert self._grid_points is not None
 
         self._run_phonon_solver_c(self._grid_points)
@@ -294,13 +303,13 @@ class Isotope:
 
         self._gamma = gamma / np.prod(self._bz_grid.D_diag)
 
-    def _set_integration_weights(self, lang: Literal["C", "Python"] = "C"):
+    def _set_integration_weights(self, lang: Literal["C", "Python"] = "C") -> None:
         if lang == "C":
             self._set_integration_weights_c()
         else:
             self._set_integration_weights_py()
 
-    def _set_integration_weights_c(self):
+    def _set_integration_weights_c(self) -> None:
         """Set tetrahedron method integration weights.
 
         self._frequencies are those on all BZ-grid. So all those grid points in
@@ -320,7 +329,7 @@ class Isotope:
             freq_points, self._frequencies, self._bz_grid, grid_points=self._grid_points
         )
 
-    def _set_integration_weights_py(self):
+    def _set_integration_weights_py(self) -> None:
         """Set tetrahedron method integration weights.
 
         Python implementation corresponding to _set_integration_weights_c.
@@ -355,7 +364,7 @@ class Isotope:
                     self._bz_grid.D_diag[0],
                     self._bz_grid.D_diag[0] * self._bz_grid.D_diag[1],
                 ],
-                lang="Py",
+                lang="Python",
             )
 
             for bi, frequencies in enumerate(tfreqs):
@@ -364,7 +373,7 @@ class Isotope:
                 iw = thm.get_integration_weight()
                 self._integration_weights[i, :, bi] = iw
 
-    def _run_py(self):
+    def _run_py(self) -> None:
         assert self._grid_points is not None
         assert self._frequencies is not None
         assert self._eigenvectors is not None
@@ -391,6 +400,7 @@ class Isotope:
                         * self._mass_variances
                     )
                     if self._sigma is None:
+                        assert self._integration_weights is not None
                         ti_sum += ti_sum_band * self._integration_weights[gp, bi, j]
                     else:
                         ti_sum += ti_sum_band * gaussian(f0 - f, self._sigma)
@@ -398,7 +408,11 @@ class Isotope:
 
         self._gamma = np.array(t_inv, dtype="double") / 2
 
-    def _run_phonon_solver_c(self, grid_points: NDArray):
+    def _run_phonon_solver_c(self, grid_points: NDArray[np.int64]) -> None:
+        assert self._dm is not None
+        assert self._frequencies is not None
+        assert self._eigenvectors is not None
+        assert self._phonon_done is not None
         run_phonon_solver_c(
             self._dm,
             self._frequencies,
@@ -412,7 +426,11 @@ class Isotope:
             self._lapack_zheev_uplo,
         )
 
-    def _run_phonon_solver_py(self, grid_point: int):
+    def _run_phonon_solver_py(self, grid_point: int) -> None:
+        assert self._phonon_done is not None
+        assert self._frequencies is not None
+        assert self._eigenvectors is not None
+        assert self._dm is not None
         run_phonon_solver_py(
             grid_point,
             self._phonon_done,
@@ -425,12 +443,11 @@ class Isotope:
             self._lapack_zheev_uplo,
         )
 
-    def _allocate_phonon(self):
+    def _allocate_phonon(self) -> None:
         num_band = len(self._primitive) * 3
         num_grid = len(self._bz_grid.addresses)
         self._phonon_done = np.zeros(num_grid, dtype="byte")
-        self._frequencies = np.zeros((num_grid, num_band), dtype="double")
-        itemsize = self._frequencies.itemsize
+        self._frequencies = np.zeros((num_grid, num_band), dtype="double", order="C")
         self._eigenvectors = np.zeros(
-            (num_grid, num_band, num_band), dtype=("c%d" % (itemsize * 2))
+            (num_grid, num_band, num_band), dtype="complex128", order="C"
         )

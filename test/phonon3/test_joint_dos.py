@@ -434,7 +434,7 @@ def test_jdos_nac_NaCl_300K_Py(nacl_pbe: Phono3py):
     jdos.temperature = 300
     jdos.run_phonon_solver()
     jdos.run_integration_weights()
-    jdos.run_jdos(lang="Py")
+    jdos.run_jdos(lang="Python")
     np.testing.assert_allclose(
         nacl_jdos_12_at_300K[2:], jdos.joint_dos.ravel()[2:], rtol=1e-2, atol=1e-5
     )
@@ -451,8 +451,8 @@ def test_jdos_nac_NaCl_300K_PyPy(nacl_pbe: Phono3py):
     jdos.frequency_points = nacl_freq_points_at_300K
     jdos.temperature = 300
     jdos.run_phonon_solver()
-    jdos.run_integration_weights(lang="Py")
-    jdos.run_jdos(lang="Py")
+    jdos.run_integration_weights(lang="Python")
+    jdos.run_jdos(lang="Python")
     np.testing.assert_allclose(
         nacl_jdos_12_at_300K[2:], jdos.joint_dos.ravel()[2:], rtol=1e-2, atol=1e-5
     )
