@@ -255,7 +255,7 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
             elif args.is_joint_dos is False:
                 self._confs["joint_dos"] = ".false."
 
-        if "no_kappa_star" in args:
+        if "kappa_star" in args:
             if args.kappa_star:
                 self._confs["kappa_star"] = ".true."
             elif args.kappa_star is False:
