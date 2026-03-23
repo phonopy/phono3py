@@ -95,7 +95,7 @@ def test_write_gamma_all_bands(monkeypatch):
         lambda _br, _i: {
             "group_velocities_i": np.array([[1.0, 2.0, 3.0]], dtype="double"),
             "gv_by_gv_i": np.array([[1.0, 1.0, 1.0, 0.0, 0.0, 0.0]], dtype="double"),
-            "velocity_operator_i": np.array([[[1.0, 0.0, 0.0]]], dtype="complex128"),
+            "velocity_operator_i": np.array([[[1.0, 0.0, 0.0]]], dtype="cdouble"),
             "mode_heat_capacities": np.array([[[9.0]]], dtype="double"),
         },
     )
@@ -154,7 +154,7 @@ def test_write_gamma_band_resolved(monkeypatch):
                 dtype="double",
             ),
             "velocity_operator_i": np.array(
-                [[[1.0, 0.0, 0.0]], [[2.0, 0.0, 0.0]]], dtype="complex128"
+                [[[1.0, 0.0, 0.0]], [[2.0, 0.0, 0.0]]], dtype="cdouble"
             ),
             "mode_heat_capacities": np.array([[[3.0, 4.0]]], dtype="double"),
         },

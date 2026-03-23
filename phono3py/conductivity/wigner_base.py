@@ -94,8 +94,8 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
             log_level=log_level,
         )
 
-        self._gv_operator: NDArray[np.complex128]
-        self._gv_operator_sum2: NDArray[np.complex128]
+        self._gv_operator: NDArray[np.cdouble]
+        self._gv_operator_sum2: NDArray[np.cdouble]
 
         if self._pp.dynamical_matrix is None:
             raise RuntimeError("Interaction.init_dynamical_matrix() has to be called.")
@@ -239,9 +239,9 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
 
     def _rotate_velocity_operator(
         self,
-        gv_operator: NDArray[np.complex128],
+        gv_operator: NDArray[np.cdouble],
         rotation_t: NDArray[np.double],
-    ) -> NDArray[np.complex128]:
+    ) -> NDArray[np.cdouble]:
         nbands, nat3, _ = gv_operator.shape
         gvs_rot_operator = np.zeros((nbands, nat3, 3), dtype=self._complex_dtype)
         for s in range(0, nbands):
@@ -255,8 +255,8 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
 
     def _accumulate_gv_by_gv_operator(
         self,
-        gv_by_gv_operator: NDArray[np.complex128],
-        gvs_rot_operator: NDArray[np.complex128],
+        gv_by_gv_operator: NDArray[np.cdouble],
+        gvs_rot_operator: NDArray[np.cdouble],
     ) -> None:
         nbands, nat3, _ = gvs_rot_operator.shape
         for s in range(0, nbands):

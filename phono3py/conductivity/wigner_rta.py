@@ -156,7 +156,7 @@ class ConductivityWignerRTA(ConductivityRTABase):
         return self._mode_kappa_C
 
     @property
-    def velocity_operator(self) -> NDArray[np.complex128]:
+    def velocity_operator(self) -> NDArray[np.cdouble]:
         """Return velocity operator at sampled grid points."""
         return self._conductivity_components.velocity_operator
 
@@ -218,7 +218,7 @@ class ConductivityWignerRTA(ConductivityRTABase):
         k: int,
         num_band: int,
         frequencies: NDArray[np.double],
-        gv_by_gv: NDArray[np.complex128],
+        gv_by_gv: NDArray[np.cdouble],
         cv: NDArray[np.double],
         THzToEv: float,
     ) -> None:
@@ -266,7 +266,7 @@ class ConductivityWignerRTA(ConductivityRTABase):
         g_sum_s2: float,
         cv_s1: float,
         cv_s2: float,
-        gv_by_gv_s1s2: NDArray[np.complex128],
+        gv_by_gv_s1s2: NDArray[np.cdouble],
         THzToEv: float,
     ) -> tuple[NDArray[np.double], bool] | None:
         if (freq_s1 <= self._pp.cutoff_frequency) or (

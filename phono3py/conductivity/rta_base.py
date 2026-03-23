@@ -353,13 +353,10 @@ class ConductivityRTABase(ConductivityBase):
         """
         num_band = len(self._pp.primitive) * 3
         band_indices = self._pp.band_indices
-        (
-            svecs,
-            multi,
-            p2s,
-            s2p,
-            masses,
-        ) = self._pp.get_primitive_and_supercell_correspondence()
+        svecs, multi = self._pp.primitive.get_smallest_vectors()
+        p2s = self._pp.primitive.p2s_map
+        s2p = self._pp.primitive.s2p_map
+        masses = self._pp.primitive.masses
         triplets_at_q, weights_at_q, _, _ = self._pp.get_triplets_at_q()
 
         if None in self._sigmas:
