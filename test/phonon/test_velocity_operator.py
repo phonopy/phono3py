@@ -62,7 +62,7 @@ def test_gv_operator_nacl(ph_nacl: Phonopy):
                 5.330574757358162969e02 - 0.000000000000000000e00j,
             ],
         ],
-        dtype=np.complex128,
+        dtype=np.cdouble,
     )
 
     gv_operator_square_modulus_ref[1] = np.array(
@@ -116,7 +116,7 @@ def test_gv_operator_nacl(ph_nacl: Phonopy):
                 7.731035849319536801e00 + 0.000000000000000000e00j,
             ],
         ],
-        dtype=np.complex128,
+        dtype=np.cdouble,
     )
 
     gv_operator_square_modulus_ref[2] = np.array(
@@ -170,7 +170,7 @@ def test_gv_operator_nacl(ph_nacl: Phonopy):
                 4.059989780585400165e-01 - 0.000000000000000000e00j,
             ],
         ],
-        dtype=np.complex128,
+        dtype=np.cdouble,
     )
 
     eigvals_NaCl_Ref = np.array(
@@ -203,7 +203,7 @@ def test_gv_operator_nacl(ph_nacl: Phonopy):
     # we chose an 'ugly' q-point because we want to avoid degeneracies.
     # degeneracies are tested in phono3py
     gv_operator.run([[0.1, 0.22, 0.33]])
-    square_modulus_q = np.zeros((6, 6, 3), dtype=np.complex128)
+    square_modulus_q = np.zeros((6, 6, 3), dtype=np.cdouble)
     for direction in range(0, 3):
         vel_op = gv_operator.velocity_operators[0][:, :, direction]
         for id_i in range(0, 6):
@@ -274,7 +274,7 @@ def test_gv_operator_si(ph_si: Phonopy):
                 8.803667409305997182e01 - 0.000000000000000000e00j,
             ],
         ],
-        dtype=np.complex128,
+        dtype=np.cdouble,
     )
 
     # direction 1
@@ -329,7 +329,7 @@ def test_gv_operator_si(ph_si: Phonopy):
                 9.539659480379510725e00 - 0.000000000000000000e00j,
             ],
         ],
-        dtype=np.complex128,
+        dtype=np.cdouble,
     )
 
     gv_operator_square_modulus_ref[2] = np.array(
@@ -383,7 +383,7 @@ def test_gv_operator_si(ph_si: Phonopy):
                 8.511045046101584424e-03 + 0.000000000000000000e00j,
             ],
         ],
-        dtype=np.complex128,
+        dtype=np.cdouble,
     )
 
     eigvals_si_Ref = np.array(
@@ -413,7 +413,7 @@ def test_gv_operator_si(ph_si: Phonopy):
     )
 
     gv_operator.run([[0.1, 0.22, 0.33]])
-    square_modulus_q = np.zeros((6, 6, 3), dtype=np.complex128)
+    square_modulus_q = np.zeros((6, 6, 3), dtype=np.cdouble)
     for direction in range(0, 3):
         vel_op = gv_operator.velocity_operators[0][:, :, direction]
         for id_i in range(0, 6):

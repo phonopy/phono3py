@@ -386,7 +386,7 @@ def read_fc3_from_hdf5(
             )
 
         if "p2s_map" in f:
-            p2s_map_in_file = f["p2s_map"][:]
+            p2s_map_in_file: NDArray[np.int64] = f["p2s_map"][:]  # type: ignore
             check_force_constants_indices(
                 fc3.shape[:2], p2s_map_in_file, p2s_map, filename
             )
@@ -557,43 +557,7 @@ def write_imag_self_energy_at_grid_point(
     return gammas_filename
 
 
-def write_joint_dos(
-    gp,
-    mesh,
-    frequencies,
-    jdos,
-    sigma=None,
-    temperatures=None,
-    filename=None,
-    is_mesh_symmetry=True,
-):
-    """Write joint-DOS spectrum in jdos-*.dat."""
-    if temperatures is None:
-        return _write_joint_dos_at_t(
-            gp,
-            mesh,
-            frequencies,
-            jdos[0],
-            sigma=sigma,
-            temperature=None,
-            filename=filename,
-            is_mesh_symmetry=is_mesh_symmetry,
-        )
-    else:
-        for jdos_at_t, t in zip(jdos, temperatures, strict=True):
-            return _write_joint_dos_at_t(
-                gp,
-                mesh,
-                frequencies,
-                jdos_at_t,
-                sigma=sigma,
-                temperature=t,
-                filename=filename,
-                is_mesh_symmetry=is_mesh_symmetry,
-            )
-
-
-def _write_joint_dos_at_t(
+def write_joint_dos_at_t(
     grid_point,
     mesh,
     frequencies,
@@ -603,6 +567,7 @@ def _write_joint_dos_at_t(
     filename=None,
     is_mesh_symmetry=True,
 ):
+    """Write joint density of states at temperature in jdos-*.dat."""
     suffix = _get_filename_suffix(
         mesh, grid_point=grid_point, sigma=sigma, middle_filename=filename
     )

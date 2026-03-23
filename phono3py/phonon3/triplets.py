@@ -1,5 +1,7 @@
 """Utilities to handle q-point triplets."""
 
+from __future__ import annotations
+
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -33,11 +35,11 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 
 from phono3py.other.tetrahedron_method import get_tetrahedra_relative_grid_address
@@ -56,10 +58,12 @@ if TYPE_CHECKING:
 def get_triplets_at_q(
     grid_point: int,
     bz_grid: BZGrid,
-    reciprocal_rotations: Optional[Union[Sequence, np.ndarray]] = None,
+    reciprocal_rotations: Sequence[Sequence[Sequence[int]]]
+    | NDArray[np.int64]
+    | None = None,
     is_time_reversal: bool = True,
     swappable: bool = True,
-):
+) -> tuple[NDArray[np.int64], NDArray[np.int64], NDArray[np.int64], NDArray[np.int64]]:
     """Generate q-point triplets.
 
     Parameters
@@ -100,7 +104,7 @@ def get_triplets_at_q(
         shape=(prod(mesh),), dtype='int64'
 
     """
-    rotations: Sequence | np.ndarray
+    rotations: Sequence[Sequence[Sequence[int]]] | NDArray[np.int64]
     if reciprocal_rotations is None:
         rotations = bz_grid.rotations
     else:
@@ -123,7 +127,7 @@ def get_triplets_at_q(
     return triplets_at_q, weights, map_triplets, map_q
 
 
-def get_all_triplets(grid_point: int, bz_grid: BZGrid):
+def get_all_triplets(grid_point: int, bz_grid: BZGrid) -> NDArray[np.int64]:
     """Return all triplets of a grid point.
 
     Almost equivalent to ``get_nosym_triplets_at_q``.
@@ -137,7 +141,9 @@ def get_all_triplets(grid_point: int, bz_grid: BZGrid):
     return triplets_at_q
 
 
-def get_nosym_triplets_at_q(grid_point: int, bz_grid: BZGrid):
+def get_nosym_triplets_at_q(
+    grid_point: int, bz_grid: BZGrid
+) -> tuple[NDArray[np.int64], NDArray[np.int64], NDArray[np.int64], NDArray[np.int64]]:
     """Return triplets information without imposing mesh symmetry.
 
     See the docstring of get_triplets_at_q.
@@ -151,13 +157,13 @@ def get_nosym_triplets_at_q(grid_point: int, bz_grid: BZGrid):
 
 
 def get_triplets_integration_weights(
-    interaction: Union["Interaction", "JointDos"],
-    frequency_points,
-    sigma,
-    sigma_cutoff=None,
-    is_collision_matrix=False,
-    lang="C",
-):
+    interaction: Interaction | JointDos,
+    frequency_points: NDArray[np.double],
+    sigma: float | None,
+    sigma_cutoff: float | None = None,
+    is_collision_matrix: bool = False,
+    lang: Literal["C", "Python"] = "C",
+) -> tuple[NDArray[np.double], NDArray[np.byte] | None]:
     """Calculate triplets integration weights.
 
     Returns
@@ -235,8 +241,12 @@ def get_triplets_integration_weights(
 
 
 def _get_triplets_reciprocal_mesh_at_q(
-    fixed_grid_number, D_diag, rec_rotations, is_time_reversal=True, swappable=True
-):
+    fixed_grid_number: int,
+    D_diag: NDArray[np.int64],
+    rec_rotations: NDArray[np.int64] | Sequence[Sequence[Sequence[int]]],
+    is_time_reversal: bool = True,
+    swappable: bool = True,
+) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
     """Search symmetry reduced triplets fixing one q-point.
 
     Triplets of (q0, q1, q2) are searched. This method doesn't consider
@@ -290,7 +300,11 @@ def _get_triplets_reciprocal_mesh_at_q(
     return map_triplets, map_q
 
 
-def _get_BZ_triplets_at_q(bz_grid_index, bz_grid: BZGrid, map_triplets):
+def _get_BZ_triplets_at_q(
+    bz_grid_index: int,
+    bz_grid: BZGrid,
+    map_triplets: NDArray[np.int64],
+) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
     """Grid point triplets are searched considering BZ surface.
 
     Looking for q+q'+q''=G with smallest |G|. In this condition,
@@ -356,11 +370,11 @@ def _get_BZ_triplets_at_q(bz_grid_index, bz_grid: BZGrid, map_triplets):
 
 
 def _set_triplets_integration_weights_c(
-    g: np.ndarray,
-    g_zero: np.ndarray,
-    pp: Union["Interaction", "JointDos"],
-    frequency_points,
-):
+    g: NDArray[np.double],
+    g_zero: NDArray[np.byte],
+    pp: Interaction | JointDos,
+    frequency_points: NDArray[np.double],
+) -> None:
     import phono3py._phono3py as phono3c
 
     tetrahedra = get_tetrahedra_relative_grid_address(pp.bz_grid.microzone_lattice)
@@ -383,8 +397,10 @@ def _set_triplets_integration_weights_c(
 
 
 def _set_triplets_integration_weights_py(
-    g, pp: Union["Interaction", "JointDos"], frequency_points
-):
+    g: NDArray[np.double],
+    pp: Interaction | JointDos,
+    frequency_points: NDArray[np.double],
+) -> None:
     """Python version of _set_triplets_integration_weights_c.
 
     Tetrahedron method engine is that implemented in phonopy written mainly in C.
@@ -392,6 +408,7 @@ def _set_triplets_integration_weights_py(
     """
     thm = TetrahedronMethod(pp.bz_grid.microzone_lattice)
     triplets_at_q = pp.get_triplets_at_q()[0]
+    assert triplets_at_q is not None
     tetrahedra_vertices = _get_tetrahedra_vertices(
         np.array(np.dot(thm.tetrahedra, pp.bz_grid.P.T), dtype="int64", order="C"),
         triplets_at_q,
@@ -423,7 +440,11 @@ def _set_triplets_integration_weights_py(
                 g[2, i, :, j, k] = g0 + g1 + g2
 
 
-def _get_tetrahedra_vertices(relative_address, triplets_at_q, bz_grid: BZGrid):
+def _get_tetrahedra_vertices(
+    relative_address: NDArray[np.int64],
+    triplets_at_q: NDArray[np.int64],
+    bz_grid: BZGrid,
+) -> NDArray[np.int64]:
     """Return vertices of tetrahedra used for tetrahedron method.
 
     Equivalent function is implemented in C and this python version exists

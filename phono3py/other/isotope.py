@@ -449,5 +449,5 @@ class Isotope:
         self._phonon_done = np.zeros(num_grid, dtype="byte")
         self._frequencies = np.zeros((num_grid, num_band), dtype="double", order="C")
         self._eigenvectors = np.zeros(
-            (num_grid, num_band, num_band), dtype="complex128", order="C"
+            (num_grid, num_band, num_band), dtype="cdouble", order="C"
         )

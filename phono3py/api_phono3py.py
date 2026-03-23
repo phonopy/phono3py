@@ -1240,7 +1240,7 @@ class Phono3py:
         eigenvectors : array_like
             Phonon eigenvectors
             shape=(num_grid_points, num_band, num_band)
-            dtype='complex128', order='C'
+            dtype='cdouble', order='C'
         grid_address : array_like
             Grid point addresses by integers. The first dimension may not be
             prod(mesh) because it includes Brillouin zone boundary. The detail

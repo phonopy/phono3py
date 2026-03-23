@@ -122,7 +122,7 @@ class GroupVelocityMatrix(GroupVelocity):
             self._calculate_group_velocity_matrix_at_q(q)
             for q in np.asarray(q_points, dtype="double")
         ]
-        self._group_velocity_matrices = np.array(gvm, dtype="complex128", order="C")
+        self._group_velocity_matrices = np.array(gvm, dtype="cdouble", order="C")
 
     @property
     def group_velocity_matrices(self) -> NDArray[np.cdouble] | None:
@@ -156,7 +156,7 @@ class GroupVelocityMatrix(GroupVelocity):
         freqs = np.where(condition, freqs, 1)
         rot_eigvecs = rot_eigvecs * np.where(condition, 1 / np.sqrt(2 * freqs), 0)
 
-        gvm = np.zeros((3,) + eigvecs.shape, dtype="complex128")
+        gvm = np.zeros((3,) + eigvecs.shape, dtype="cdouble")
         for i, ddm in enumerate(ddms[1:]):
             ddm = ddm * (self._factor**2)
             gvm[i] = np.dot(rot_eigvecs.T.conj(), np.dot(ddm, rot_eigvecs))

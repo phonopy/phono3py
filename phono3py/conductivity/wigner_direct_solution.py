@@ -154,7 +154,7 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
         return self._mode_kappa_P_RTA
 
     @property
-    def mode_kappa_C(self) -> NDArray[np.complex128] | None:
+    def mode_kappa_C(self) -> NDArray[np.cdouble] | None:
         """Return mode_kappa."""
         return self._mode_kappa_C
 
@@ -174,7 +174,7 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
         return self._mode_kappa_P_exact
 
     @property
-    def velocity_operator(self) -> NDArray[np.complex128]:
+    def velocity_operator(self) -> NDArray[np.cdouble]:
         """Return velocity operator at sampled grid points."""
         return self._conductivity_components.velocity_operator
 
@@ -368,9 +368,9 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
         linewidth_s2: float,
         cv_s1: float,
         cv_s2: float,
-        gv_by_gv_s1s2: NDArray[np.complex128],
+        gv_by_gv_s1s2: NDArray[np.cdouble],
         THzToEv: float,
-    ) -> NDArray[np.complex128] | None:
+    ) -> NDArray[np.cdouble] | None:
         if (freq_s1 <= self._pp.cutoff_frequency) or (
             freq_s2 <= self._pp.cutoff_frequency
         ):

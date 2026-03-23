@@ -1,5 +1,7 @@
 """Calculate spectral function due to bubble diagram."""
 
+from __future__ import annotations
+
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -33,10 +35,12 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
+import os
 import sys
+from collections.abc import Iterator, Sequence
 
 import numpy as np
+from numpy.typing import NDArray
 
 from phono3py.file_IO import (
     write_spectral_function_at_grid_point,
@@ -53,19 +57,19 @@ from phono3py.phonon3.real_self_energy import imag_to_real
 
 def run_spectral_function(
     interaction: Interaction,
-    grid_points,
-    temperatures=None,
-    sigmas=None,
-    frequency_points=None,
-    frequency_step=None,
-    num_frequency_points=None,
-    num_points_in_batch=None,
-    band_indices=None,
-    write_txt=False,
-    write_hdf5=False,
-    output_filename=None,
-    log_level=0,
-):
+    grid_points: Sequence[int] | NDArray[np.int64],
+    temperatures: Sequence[float] | NDArray[np.double] | None = None,
+    sigmas: Sequence[float | None] | None = None,
+    frequency_points: Sequence[float] | NDArray[np.double] | None = None,
+    frequency_step: float | None = None,
+    num_frequency_points: int | None = None,
+    num_points_in_batch: int | None = None,
+    band_indices: list[list[int]] | None = None,
+    write_txt: bool = False,
+    write_hdf5: bool = False,
+    output_filename: str | os.PathLike | None = None,
+    log_level: int = 0,
+) -> SpectralFunction:
     """Spectral function of self energy at frequency points.
 
     Band indices to be calculated at are kept in Interaction instance.
@@ -128,9 +132,12 @@ def run_spectral_function(
         temperatures=temperatures,
         log_level=log_level,
     )
+    assert temperatures is not None
+    assert band_indices is not None
     for i, gp in enumerate(spf):
         frequencies = interaction.get_phonons()[0]
         assert frequencies is not None
+        assert spf.spectral_functions is not None
         for sigma_i, sigma in enumerate(spf.sigmas):
             for t, spf_at_t in zip(
                 temperatures, spf.spectral_functions[sigma_i, :, i], strict=True
@@ -155,6 +162,8 @@ def run_spectral_function(
                         print(f'Spectral functions were written to "{filename}".')
 
             if write_hdf5:
+                assert spf.shifts is not None
+                assert spf.half_linewidths is not None
                 filename = write_spectral_function_to_hdf5(
                     gp,
                     band_indices,
@@ -184,50 +193,57 @@ class SpectralFunction:
     def __init__(
         self,
         interaction: Interaction,
-        grid_points,
-        frequency_points=None,
-        frequency_step=None,
-        num_frequency_points=None,
-        num_points_in_batch=None,
-        sigmas=None,
-        temperatures=None,
-        log_level=0,
-    ):
+        grid_points: Sequence[int] | NDArray[np.int64],
+        frequency_points: Sequence[float] | NDArray[np.double] | None = None,
+        frequency_step: float | None = None,
+        num_frequency_points: int | None = None,
+        num_points_in_batch: int | None = None,
+        sigmas: Sequence[float | None] | None = None,
+        temperatures: Sequence[float] | NDArray[np.double] | None = None,
+        log_level: int = 0,
+    ) -> None:
         """Init method."""
         self._pp = interaction
-        self._grid_points = grid_points
-        self._frequency_points_in = frequency_points
+        self._grid_points = np.asarray(grid_points, dtype="int64")
+        self._frequency_points_in = (
+            np.asarray(frequency_points, dtype="double")
+            if frequency_points is not None
+            else None
+        )
         self._num_points_in_batch = num_points_in_batch
         self._frequency_step = frequency_step
         self._num_frequency_points = num_frequency_points
-        self._temperatures = temperatures
+        self._temperatures = (
+            np.asarray(temperatures, dtype="double")
+            if temperatures is not None
+            else None
+        )
         self._log_level = log_level
 
         if sigmas is None:
-            self._sigmas = [
-                None,
-            ]
+            self._sigmas: list[float | None] = [None]
         else:
-            self._sigmas = sigmas
-        self._frequency_points = None
-        self._gammas = None
-        self._deltas = None
-        self._spectral_functions = None
-        self._gp_index = None
+            self._sigmas = list(sigmas)
+        self._frequency_points: NDArray[np.double] | None = None
+        self._gammas: NDArray[np.double] | None = None
+        self._deltas: NDArray[np.double] | None = None
+        self._spectral_functions: NDArray[np.double] | None = None
+        self._gp_index: int | None = None
 
-    def run(self):
+    def run(self) -> None:
         """Calculate spectral function over grid points."""
         for _ in self:
             pass
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[int]:
         """Initialize iterator."""
         self._prepare()
 
         return self
 
-    def __next__(self):
+    def __next__(self) -> int:
         """Calculate at next grid point."""
+        assert self._gp_index is not None
         if self._gp_index >= len(self._grid_points):
             if self._log_level:
                 print("-" * 74)
@@ -263,38 +279,40 @@ class SpectralFunction:
         return gp
 
     @property
-    def spectral_functions(self):
+    def spectral_functions(self) -> NDArray[np.double] | None:
         """Return calculated spectral functions."""
         return self._spectral_functions
 
     @property
-    def shifts(self):
+    def shifts(self) -> NDArray[np.double] | None:
         """Return real part of self energies."""
         return self._deltas
 
     @property
-    def half_linewidths(self):
+    def half_linewidths(self) -> NDArray[np.double] | None:
         """Return imaginary part of self energies."""
         return self._gammas
 
     @property
-    def frequency_points(self):
+    def frequency_points(self) -> NDArray[np.double] | None:
         """Return frequency points."""
         return self._frequency_points
 
     @property
-    def grid_points(self):
+    def grid_points(self) -> NDArray[np.int64]:
         """Return grid points."""
         return self._grid_points
 
     @property
-    def sigmas(self):
+    def sigmas(self) -> list[float | None]:
         """Return sigmas."""
         return self._sigmas
 
-    def _prepare(self):
+    def _prepare(self) -> None:
         self._set_frequency_points()
-        self._gammas = np.zeros(
+        assert self._temperatures is not None
+        assert self._frequency_points is not None
+        self._gammas = np.zeros(  # type: ignore[call-overload]
             (
                 len(self._sigmas),
                 len(self._temperatures),
@@ -309,10 +327,19 @@ class SpectralFunction:
         self._spectral_functions = np.zeros_like(self._gammas)
         self._gp_index = 0
 
-    def _run_gamma(self, ise, i, sigma, sigma_i):
+    def _run_gamma(
+        self,
+        ise: ImagSelfEnergy,
+        i: int,
+        sigma: float | None,
+        sigma_i: int,
+    ) -> None:
         if self._log_level:
             print("* Imaginary part of self energy")
 
+        assert self._frequency_points is not None
+        assert self._temperatures is not None
+        assert self._gammas is not None
         ise.set_sigma(sigma)
         run_ise_at_frequency_points_batch(
             i,
@@ -325,11 +352,15 @@ class SpectralFunction:
             log_level=self._log_level,
         )
 
-    def _run_delta(self, i, sigma_i):
+    def _run_delta(self, i: int, sigma_i: int) -> None:
         if self._log_level:
             print("* Real part of self energy")
             print("Running Kramers-Kronig relation integration...")
 
+        assert self._temperatures is not None
+        assert self._gammas is not None
+        assert self._deltas is not None
+        assert self._frequency_points is not None
         for j, _ in enumerate(self._temperatures):
             for k, _ in enumerate(self._pp.band_indices):
                 re_part, fpoints = imag_to_real(
@@ -338,7 +369,7 @@ class SpectralFunction:
                 self._deltas[sigma_i, j, i, k] = -re_part
         assert (np.abs(self._frequency_points - fpoints) < 1e-8).all()
 
-    def _run_spectral_function(self, i, grid_point, sigma_i):
+    def _run_spectral_function(self, i: int, grid_point: int, sigma_i: int) -> None:
         """Compute spectral functions from self-energies.
 
         Note
@@ -356,7 +387,12 @@ class SpectralFunction:
         """
         if self._log_level:
             print("* Spectral function")
+        assert self._temperatures is not None
+        assert self._gammas is not None
+        assert self._deltas is not None
+        assert self._spectral_functions is not None
         frequencies = self._pp.get_phonons()[0]
+        assert frequencies is not None
         for j, _ in enumerate(self._temperatures):
             for k, bi in enumerate(self._pp.band_indices):
                 freq = frequencies[grid_point, bi]
@@ -365,7 +401,13 @@ class SpectralFunction:
                 vals = self._get_spectral_function(gammas, deltas, freq)
                 self._spectral_functions[sigma_i, j, i, k] = vals
 
-    def _get_spectral_function(self, gammas, deltas, freq):
+    def _get_spectral_function(
+        self,
+        gammas: NDArray[np.double],
+        deltas: NDArray[np.double],
+        freq: NDArray[np.double],
+    ) -> NDArray[np.double]:
+        assert self._frequency_points is not None
         fpoints = self._frequency_points
         nums = 4 * freq**2 * gammas / np.pi
         denoms = (fpoints**2 - freq**2 - 2 * freq * deltas) ** 2 + (
@@ -374,15 +416,19 @@ class SpectralFunction:
         vals = np.where(denoms > 0, nums / denoms, 0)
         return vals
 
-    def _set_frequency_points(self):
-        if (self._pp.get_phonons()[2] == 0).any():
+    def _set_frequency_points(self) -> None:
+        phonon_done = self._pp.get_phonons()[2]
+        assert phonon_done is not None
+        if (phonon_done == 0).any():
             if self._log_level:
                 print("Running harmonic phonon calculations...")
             self._pp.run_phonon_solver()
 
         # Set phonon at Gamma without NAC for finding max_phonon_freq.
         self._pp.run_phonon_solver_at_gamma()
-        max_phonon_freq = np.amax(self._pp.get_phonons()[0])
+        phonons = self._pp.get_phonons()[0]
+        assert phonons is not None
+        max_phonon_freq = np.amax(phonons)
         self._pp.run_phonon_solver_at_gamma(is_nac=True)
 
         self._frequency_points = get_frequency_points(
