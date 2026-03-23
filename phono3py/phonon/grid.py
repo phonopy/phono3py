@@ -1109,6 +1109,7 @@ def _get_grid_points_by_bz_rotations_py(
                 )
                 + num_grgp
             ).tolist()
+            assert isinstance(gps, list)
             gps.insert(0, gp)
             indices = np.where((bz_grid.addresses[gps] == adrs).all(axis=1))[0]
             if len(indices) == 0:

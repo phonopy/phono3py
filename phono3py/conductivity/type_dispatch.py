@@ -538,7 +538,7 @@ def get_rta_writer_kappa_data(
     """Return named conductivity data used by RTA kappa writer."""
     dispatch_entry = _resolve_writer_dispatch_entry("rta", conductivity)
     return RTAWriterKappaData(
-        **_get_data_attr_map(
+        **_get_data_attr_map(  # type: ignore[typeddict-item]
             conductivity,
             dispatch_entry,
             tuple(RTAWriterKappaData.__annotations__),
@@ -552,7 +552,7 @@ def get_lbte_writer_kappa_data(
     """Return named conductivity data used by LBTE kappa writer."""
     dispatch_entry = _resolve_writer_dispatch_entry("lbte", conductivity)
     return LBTEWriterKappaData(
-        **_get_data_attr_map(
+        **_get_data_attr_map(  # type: ignore[typeddict-item]
             conductivity,
             dispatch_entry,
             tuple(LBTEWriterKappaData.__annotations__),

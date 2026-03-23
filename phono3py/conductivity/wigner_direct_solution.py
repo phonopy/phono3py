@@ -231,9 +231,7 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
             dtype=complex_dtype,
         )
 
-    def _set_kappa_at_sigmas(
-        self, weights: NDArray[np.double] | NDArray[np.int64]
-    ) -> None:
+    def _set_kappa_at_sigmas(self, weights: NDArray[np.double]) -> None:
         """Calculate thermal conductivity from collision matrix."""
         self._set_kappa_at_sigmas_common(weights)
 
@@ -272,31 +270,17 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
         print("-" * 76, flush=True)
 
     def _set_kappa(
-        self,
-        i_sigma: int,
-        i_temp: int,
-        weights: NDArray[np.double] | NDArray[np.int64],
+        self, i_sigma: int, i_temp: int, weights: NDArray[np.double]
     ) -> None:
         self._set_kappa_by_collision_type(
-            self._kappa_P_exact,
-            self._mode_kappa_P_exact,
-            i_sigma,
-            i_temp,
-            weights,
+            self._kappa_P_exact, self._mode_kappa_P_exact, i_sigma, i_temp, weights
         )
 
     def _set_kappa_RTA(
-        self,
-        i_sigma: int,
-        i_temp: int,
-        weights: NDArray[np.double] | NDArray[np.int64],
+        self, i_sigma: int, i_temp: int, weights: NDArray[np.double]
     ) -> None:
         self._set_kappa_RTA_by_collision_type(
-            self._kappa_P_RTA,
-            self._mode_kappa_P_RTA,
-            i_sigma,
-            i_temp,
-            weights,
+            self._kappa_P_RTA, self._mode_kappa_P_RTA, i_sigma, i_temp, weights
         )
         if self._is_reducible_collision_matrix:
             print(

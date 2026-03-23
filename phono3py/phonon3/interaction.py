@@ -345,10 +345,11 @@ class Interaction:
     def nac_q_direction(
         self, nac_q_direction: Sequence[float] | NDArray[np.double] | None
     ) -> None:
-        if nac_q_direction is None:
-            self._nac_q_direction = None
-        else:
-            self._nac_q_direction = np.array(nac_q_direction, dtype="double")
+        self._nac_q_direction = (
+            np.array(nac_q_direction, dtype="double")
+            if nac_q_direction is not None
+            else None
+        )
 
     @property
     def zero_value_positions(self) -> NDArray[np.byte] | None:
@@ -665,12 +666,12 @@ class Interaction:
         self._phonon_done[self._bz_grid.gp_Gamma] = 0
         if is_nac:
             self._done_nac_at_gamma = True
-            self.run_phonon_solver(np.array([self._bz_grid.gp_Gamma], dtype="int64"))
+            self.run_phonon_solver([self._bz_grid.gp_Gamma])
         else:
             self._done_nac_at_gamma = False
             _nac_q_direction = self._nac_q_direction
             self._nac_q_direction = None
-            self.run_phonon_solver(np.array([self._bz_grid.gp_Gamma], dtype="int64"))
+            self.run_phonon_solver([self._bz_grid.gp_Gamma])
             self._nac_q_direction = _nac_q_direction
 
     def run_phonon_solver_with_eigvec_rotation(self) -> None:
