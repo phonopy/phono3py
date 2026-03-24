@@ -417,7 +417,7 @@ def write_fc2_to_hdf5(
     filename: str = "fc2.hdf5",
     p2s_map: NDArray | None = None,
     physical_unit: str | None = None,
-    compression: str | int | None = "gzip",
+    compression: Literal["gzip", "lzf"] | int | None = "gzip",
     cutoff: float | None = None,
 ):
     """Write fc2 in fc2.hdf5.
@@ -432,7 +432,7 @@ def write_fc2_to_hdf5(
         filename: str = "force_constants.hdf5",
         p2s_map: NDArray | None = None,
         physical_unit: str | None = None,
-        compression: str | int | None = "gzip",
+        compression: Literal["gzip", "lzf"] | int | None = "gzip",
         cutoff: float | None = None,
         version: str | None = None,
     ):
@@ -474,7 +474,7 @@ def write_datasets_to_hdf5(
     dataset: dict,
     phonon_dataset: dict | None = None,
     filename: str = "datasets.hdf5",
-    compression: str = "gzip",
+    compression: Literal["gzip", "lzf"] | int | None = "gzip",
 ):
     """Write dataset and phonon_dataset in datasets.hdf5."""
 
@@ -495,7 +495,7 @@ def write_grid_address_to_hdf5(
     mesh,
     grid_mapping_table,
     bz_grid: BZGrid | None = None,
-    compression: str | int = "gzip",
+    compression: Literal["gzip", "lzf"] | int | None = "gzip",
     filename: str | os.PathLike | None = None,
 ):
     """Write grid addresses to grid_address.hdf5."""
@@ -949,7 +949,7 @@ def write_kappa_to_hdf5(
     sigma=None,
     sigma_cutoff=None,
     kappa_unit_conversion=None,
-    compression="gzip",
+    compression: Literal["gzip", "lzf"] | int | None = "gzip",
     filename=None,
     verbose=True,
 ):
@@ -1229,7 +1229,7 @@ def write_pp_to_hdf5(
     filename=None,
     verbose=True,
     check_consistency=False,
-    compression="gzip",
+    compression: Literal["gzip", "lzf"] | int | None = "gzip",
 ):
     """Write ph-ph interaction strength in its hdf5 file."""
     suffix = _get_filename_suffix(
@@ -1384,7 +1384,7 @@ def write_gamma_detail_to_hdf5(
     band_index=None,
     sigma=None,
     sigma_cutoff=None,
-    compression="gzip",
+    compression: Literal["gzip", "lzf"] | int | None = "gzip",
     filename=None,
     verbose=True,
 ):

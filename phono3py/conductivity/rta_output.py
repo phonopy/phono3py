@@ -207,7 +207,7 @@ class ConductivityRTAWriter:
         br: cond_RTA_type,
         interaction: Interaction,
         i: int,
-        compression: Literal["gzip", "lzf"] = "gzip",
+        compression: Literal["gzip", "lzf"] | int | None = "gzip",
         filename: str | os.PathLike | None = None,
         verbose: bool = True,
     ) -> None:
@@ -310,7 +310,7 @@ class ConductivityRTAWriter:
     def write_kappa(
         br: cond_RTA_type,
         volume: float,
-        compression: Literal["gzip", "lzf"],
+        compression: Literal["gzip", "lzf"] | int | None,
         filename: str | None = None,
         log_level: int = 0,
     ) -> None:
@@ -393,7 +393,7 @@ class ConductivityRTAWriter:
         br: cond_RTA_type,
         interaction: Interaction,
         i: int,
-        compression: Literal["gzip", "lzf"] = "gzip",
+        compression: Literal["gzip", "lzf"] | int | None = "gzip",
         filename: str | os.PathLike | None = None,
         verbose: bool = True,
     ) -> None:

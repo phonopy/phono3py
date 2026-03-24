@@ -370,7 +370,7 @@ class Phono3py:
         return self._calculator
 
     @property
-    def fc3(self) -> NDArray | None:
+    def fc3(self) -> NDArray[np.double] | None:
         """Setter and getter of third order force constants (fc3).
 
         ndarray, optional
@@ -383,7 +383,7 @@ class Phono3py:
         return self._fc3
 
     @fc3.setter
-    def fc3(self, fc3):
+    def fc3(self, fc3: NDArray[np.double] | None):
         self._fc3 = fc3
 
     @property
@@ -410,7 +410,7 @@ class Phono3py:
         return self._fc3_cutoff
 
     @property
-    def fc2(self) -> NDArray | None:
+    def fc2(self) -> NDArray[np.double] | None:
         """Setter and getter of second order force constants (fc2).
 
         ndarray
@@ -423,7 +423,7 @@ class Phono3py:
         return self._fc2
 
     @fc2.setter
-    def fc2(self, fc2):
+    def fc2(self, fc2: NDArray[np.double] | None):
         self._fc2 = fc2
 
     @property
