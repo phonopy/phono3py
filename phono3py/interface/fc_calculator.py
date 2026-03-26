@@ -39,13 +39,20 @@ from __future__ import annotations
 from typing import Literal
 
 import numpy as np
+from numpy.typing import NDArray
+from phonopy.harmonic.force_constants import FDFCSolver
 from phonopy.interface.fc_calculator import FCSolver, fc_calculator_names
-from phonopy.interface.symfc import parse_symfc_options, update_symfc_cutoff_by_memsize
+from phonopy.interface.symfc import (
+    SymfcFCSolver,
+    parse_symfc_options,
+    update_symfc_cutoff_by_memsize,
+)
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive
 from phonopy.structure.symmetry import Symmetry
 
 from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
+from phono3py.phonon3.displacement_fc3 import Fc3Type1DisplacementDataset
 from phono3py.phonon3.fc3 import get_fc3
 
 
@@ -61,10 +68,10 @@ class FDFC3Solver:
         supercell: PhonopyAtoms,
         primitive: Primitive,
         symmetry: Symmetry,
-        dataset: dict,
+        dataset: Fc3Type1DisplacementDataset,
         is_compact_fc: bool = False,
         log_level: int = 0,  # currently not used
-    ):
+    ) -> None:
         self._fc2, self._fc3 = self._run(
             supercell,
             primitive,
@@ -91,10 +98,10 @@ class FDFC3Solver:
         supercell: PhonopyAtoms,
         primitive: Primitive,
         symmetry: Symmetry,
-        dataset: dict,
+        dataset: Fc3Type1DisplacementDataset,
         is_compact_fc: bool,
         log_level: int,
-    ):
+    ) -> tuple[NDArray[np.double], NDArray[np.double]]:
         return get_fc3(
             supercell,
             primitive,
@@ -108,16 +115,20 @@ class FDFC3Solver:
 class FC3Solver(FCSolver):
     """Force constants solver for fc3."""
 
-    def _set_traditional_solver(self, solver_class: type | None = FDFC3Solver):
+    def _set_traditional_solver(
+        self, solver_class: type | None = FDFC3Solver
+    ) -> FDFCSolver:
         return super()._set_traditional_solver(solver_class=solver_class)
 
-    def _set_symfc_solver(self):
-        return super()._set_symfc_solver(order=3)
+    def _set_symfc_solver(self, order: int = 3) -> SymfcFCSolver:
+        return super()._set_symfc_solver(order=order)
 
-    def _get_displacements_and_forces(self):
+    def _get_displacements_and_forces(
+        self,
+    ) -> tuple[NDArray[np.double], NDArray[np.double] | None]:
         """Return displacements and forces for fc3."""
         assert self._dataset is not None
-        return get_displacements_and_forces_fc3(self._dataset)
+        return get_displacements_and_forces_fc3(self._dataset)  # type: ignore[arg-type]
 
 
 def extract_fc2_fc3_calculators(
@@ -168,7 +179,9 @@ def extract_fc2_fc3_calculators_options(
         return _fc_calculator_opts
 
 
-def _split_fc_calculator_str(fc_calculator: str, order: int) -> str | None:
+def _split_fc_calculator_str(
+    fc_calculator: Literal["traditional", "symfc", "alm"] | str, order: int
+) -> str | None:
     if "|" in fc_calculator:
         _fc_calculator = fc_calculator.split("|")[order - 2]
         if _fc_calculator == "":
@@ -205,7 +218,7 @@ def update_cutoff_fc_calculator_options(
 
 
 def get_fc_calculator_params(
-    fc_calculator: str | None,
+    fc_calculator: Literal["traditional", "symfc", "alm"] | str | None,
     fc_calculator_options: str | None,
     cutoff_pair_distance: float | None,
     log_level: int = 0,
@@ -239,7 +252,7 @@ def get_fc_calculator_params(
 
 
 def determine_cutoff_pair_distance(
-    fc_calculator: str | None = None,
+    fc_calculator: Literal["traditional", "symfc", "alm"] | str | None = None,
     fc_calculator_options: str | None = None,
     cutoff_pair_distance: float | None = None,
     symfc_memory_size: float | None = None,
@@ -284,7 +297,7 @@ def _set_cutoff_in_fc_calculator_options(
     fc_calculator_options: str | None,
     cutoff_str: str,
     log_level: int,
-):
+) -> str:
     str_appended = f"cutoff={cutoff_str}"
     calc_opts = fc_calculator_options
     if calc_opts is None:
@@ -308,7 +321,7 @@ def _set_cutoff_in_fc_calculator_options(
 
 
 def _get_cutoff_pair_distance(
-    fc_calculator: str | None,
+    fc_calculator: Literal["traditional", "symfc", "alm"] | str | None,
     fc_calculator_options: str | None,
     cutoff_pair_distance: float | None,
     symfc_memory_size: float | None,

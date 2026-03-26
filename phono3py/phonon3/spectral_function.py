@@ -64,7 +64,7 @@ def run_spectral_function(
     frequency_step: float | None = None,
     num_frequency_points: int | None = None,
     num_points_in_batch: int | None = None,
-    band_indices: list[list[int]] | None = None,
+    band_indices: Sequence[NDArray[np.int64]] | None = None,
     write_txt: bool = False,
     write_hdf5: bool = False,
     output_filename: str | os.PathLike | None = None,

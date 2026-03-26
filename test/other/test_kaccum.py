@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Optional
 
 import numpy as np
+import pytest
 
 from phono3py import Phono3py
 from phono3py.other.kaccum import (
@@ -292,6 +293,65 @@ def test_GammaDOSsmearing(nacl_pbe: Phono3py):
         [7.39199693e00, 2.86997789e-02],
     ]
 
+    np.testing.assert_allclose(
+        np.c_[fpoints, gdos_vals[0, :, 1]], gdos_ref, rtol=0, atol=1e-5
+    )
+
+
+@pytest.mark.parametrize(
+    "sigma,gdos_ref",
+    [
+        (
+            0.5,
+            [
+                [-1.30235600e-07, 9.50477186e-03],
+                [8.21332877e-01, 7.69536176e-02],
+                [1.64266588e00, 3.13334519e-01],
+                [2.46399889e00, 8.82406425e-01],
+                [3.28533190e00, 1.40817939e00],
+                [4.10666490e00, 1.85919540e00],
+                [4.92799791e00, 1.70898105e00],
+                [5.74933092e00, 6.65224558e-01],
+                [6.57066392e00, 2.93999184e-01],
+                [7.39199693e00, 8.24248337e-02],
+            ],
+        ),
+        (
+            0.3,
+            [
+                [-1.30235600e-07, 3.29817062e-03],
+                [8.21332877e-01, 5.97326058e-02],
+                [1.64266588e00, 2.64290543e-01],
+                [2.46399889e00, 8.88151288e-01],
+                [3.28533190e00, 1.41527252e00],
+                [4.10666490e00, 1.90607496e00],
+                [4.92799791e00, 1.98375766e00],
+                [5.74933092e00, 4.97576075e-01],
+                [6.57066392e00, 3.00025228e-01],
+                [7.39199693e00, 5.74070952e-02],
+            ],
+        ),
+    ],
+)
+def test_GammaDOSsmearing_with_sigma(nacl_pbe: Phono3py, sigma: float, gdos_ref: list):
+    """Test for GammaDOSsmearing with user-specified sigma.
+
+    Verifies that the sigma parameter is actually used (regression test for
+    a bug where sigma was silently ignored and 0.1 was used instead).
+    """
+    ph3 = nacl_pbe
+    ph3.mesh_numbers = [21, 21, 21]
+    ph3.init_phph_interaction()
+    ph3.run_phonon_solver()
+    bz_grid = ph3.grid
+    frequencies, _, _ = ph3.get_phonon_data()
+    ir_grid_points, ir_weights, _ = get_ir_grid_points(bz_grid)
+    ir_frequencies = frequencies[bz_grid.grg2bzg[ir_grid_points]]
+    phonon_states = np.ones((1,) + ir_frequencies.shape, dtype="double", order="C")
+    gdos = GammaDOSsmearing(
+        phonon_states, ir_frequencies, ir_weights, sigma=sigma, num_sampling_points=10
+    )
+    fpoints, gdos_vals = gdos.get_gdos()
     np.testing.assert_allclose(
         np.c_[fpoints, gdos_vals[0, :, 1]], gdos_ref, rtol=0, atol=1e-5
     )

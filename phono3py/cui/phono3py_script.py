@@ -717,7 +717,7 @@ def _produce_force_constants(
     if cutoff_pair_distance is None and ph3py.dataset is not None:
         cutoff_pair_distance = ph3py.dataset.get("cutoff_distance")
 
-    (fc_calculator, fc_calculator_options) = get_fc_calculator_params(
+    fc_calculator, fc_calculator_options = get_fc_calculator_params(
         settings.fc_calculator,
         settings.fc_calculator_options,
         cutoff_pair_distance,

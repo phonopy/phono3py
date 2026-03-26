@@ -36,11 +36,13 @@
 
 from __future__ import annotations
 
-from typing import Literal, TypeAlias, TypedDict
+from collections.abc import Sequence
+from typing import Any, Literal, TypeAlias, TypedDict
 
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.harmonic.displacement import (
+    FirstAtomDisplacementWithForces,
     Type2DisplacementDataset,
     directions_axis,
     get_displacement,
@@ -69,36 +71,30 @@ class SecondAtomDisplacementWithForces(SecondAtomDisplacement, total=False):
     included: bool
 
 
-class FirstAtomDisplacement(TypedDict):
-    """Displacement information of first displaced atom."""
-
-    number: int
-    displacement: NDArray[np.double]
-    second_atoms: list[SecondAtomDisplacementWithForces]
-
-
-class FirstAtomDisplacementWithForces(FirstAtomDisplacement, total=False):
+class Fc3FirstAtomDisplacementWithForces(FirstAtomDisplacementWithForces):
     """First atom displacement entry optionally containing forces."""
 
     id: int
-    forces: NDArray[np.double]
+    second_atoms: list[SecondAtomDisplacementWithForces]
 
 
-class Type1DisplacementDatasetBase(TypedDict):
+class Fc3Type1DisplacementDatasetBase(TypedDict):
     """Displacement dataset in the type-1 format."""
 
     natom: int
-    first_atoms: list[FirstAtomDisplacementWithForces]
+    first_atoms: list[Fc3FirstAtomDisplacementWithForces]
 
 
-class Type1DisplacementDataset(Type1DisplacementDatasetBase, total=False):
+class Fc3Type1DisplacementDataset(Fc3Type1DisplacementDatasetBase, total=False):
     """Type-1 displacement dataset with optional cutoff distance and duplicates."""
 
     cutoff_distance: float
     duplicates: list[list[int]]
 
 
-Fc3DisplacementDataset: TypeAlias = Type1DisplacementDataset | Type2DisplacementDataset
+Fc3DisplacementDataset: TypeAlias = (
+    Fc3Type1DisplacementDataset | Type2DisplacementDataset
+)
 
 
 def get_third_order_displacements(
@@ -108,7 +104,7 @@ def get_third_order_displacements(
     is_plusminus: bool | Literal["auto"] = "auto",
     is_diagonal: bool = False,
     cutoff_pair_distance: float | None = None,
-) -> Type1DisplacementDataset:
+) -> Fc3Type1DisplacementDataset:
     """Create displacement dataset.
 
     Note
@@ -192,11 +188,11 @@ def get_third_order_displacements(
 
 
 def _direction_to_displacement(
-    direction_dataset,
-    displacement_distance,
+    direction_dataset: list[dict],
+    displacement_distance: float,
     supercell: PhonopyAtoms,
-    cutoff_distance=None,
-) -> Type1DisplacementDataset:
+    cutoff_distance: float | None = None,
+) -> Fc3Type1DisplacementDataset:
     """Convert displacement directions to those in Cartesian coordinates.
 
     Parameters
@@ -227,7 +223,10 @@ def _direction_to_displacement(
     d3_count = len(direction_dataset) + 1
 
     lattice = supercell.cell.T
-    new_dataset: Type1DisplacementDataset = {"natom": len(supercell), "first_atoms": []}
+    new_dataset: Fc3Type1DisplacementDataset = {
+        "natom": len(supercell),
+        "first_atoms": [],
+    }
 
     if duplicates:
         new_dataset["duplicates"] = duplicates
@@ -273,8 +272,14 @@ def _direction_to_displacement(
 
 
 def _get_next_displacements(
-    atom1, atom2, reduced_site_sym, lattice, positions, symprec, is_diagonal
-):
+    atom1: int,
+    atom2: int,
+    reduced_site_sym: NDArray[np.int64],
+    lattice: NDArray[np.double],
+    positions: NDArray[np.double],
+    symprec: float,
+    is_diagonal: bool,
+) -> dict:
     """Find displacements of second atom."""
     # Bond symmetry between first and second atoms.
     reduced_bond_sym = get_bond_symmetry(
@@ -291,7 +296,7 @@ def _get_next_displacements(
         disps_second = get_displacement(reduced_bond_sym)
     else:
         disps_second = get_displacement(reduced_bond_sym, directions_axis)
-    dds_atom2 = {"number": atom2, "directions": []}
+    dds_atom2: dict[str, Any] = {"number": atom2, "directions": []}
     for disp2 in disps_second:
         dds_atom2["directions"].append(list(disp2))
         if is_minus_displacement(disp2, reduced_bond_sym):
@@ -300,18 +305,27 @@ def _get_next_displacements(
     return dds_atom2
 
 
-def get_reduced_site_symmetry(site_sym, direction, symprec=1e-5):
+def get_reduced_site_symmetry(
+    site_sym: NDArray[np.int64],
+    direction: Sequence[int] | NDArray[np.double],
+    symprec: float = 1e-5,
+) -> NDArray[np.int64]:
     """Return site symmetry that may be broken by a displacement."""
     reduced_site_sym = []
     for rot in site_sym:
         if (abs(direction - np.dot(direction, rot.T)) < symprec).all():
             reduced_site_sym.append(rot)
-    return np.array(reduced_site_sym, dtype="int64")
+    return np.array(reduced_site_sym, dtype="int64", order="C")
 
 
 def get_bond_symmetry(
-    site_symmetry, lattice, positions, atom_center, atom_disp, symprec=1e-5
-):
+    site_symmetry: NDArray[np.int64],
+    lattice: NDArray[np.double],
+    positions: NDArray[np.double],
+    atom_center: int,
+    atom_disp: int,
+    symprec: float = 1e-5,
+) -> NDArray[np.int64]:
     """Return bond symmetry.
 
     Bond symmetry is the symmetry operations that keep the symmetry
@@ -331,7 +345,12 @@ def get_bond_symmetry(
     return np.array(bond_sym)
 
 
-def get_least_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
+def get_least_orbits(
+    atom_index: int,
+    cell: PhonopyAtoms,
+    site_symmetry: NDArray[np.int64],
+    symprec: float = 1e-5,
+) -> NDArray[np.int64]:
     """Find least orbits for a centering atom."""
     orbits = _get_orbits(atom_index, cell, site_symmetry, symprec)
     mapping = np.arange(len(cell))
@@ -345,8 +364,11 @@ def get_least_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
 
 
 def get_smallest_vector_of_atom_pair(
-    atom_number_supercell, atom_number_primitive, supercell: PhonopyAtoms, symprec
-):
+    atom_number_supercell: int,
+    atom_number_primitive: int,
+    supercell: PhonopyAtoms,
+    symprec: float,
+) -> NDArray[np.double]:
     """Return smallest vectors of an atom pair in supercell."""
     s_pos = supercell.scaled_positions
     svecs, _ = get_smallest_vectors(
@@ -359,7 +381,12 @@ def get_smallest_vector_of_atom_pair(
     return svecs[0]
 
 
-def _get_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
+def _get_orbits(
+    atom_index: int,
+    cell: PhonopyAtoms,
+    site_symmetry: NDArray[np.int64],
+    symprec: float = 1e-5,
+) -> NDArray[np.int64]:
     lattice = cell.cell.T
     positions = cell.scaled_positions
     center = positions[atom_index]
@@ -389,10 +416,10 @@ def _get_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
     return np.array(orbits)
 
 
-def _find_duplicates(direction_dataset):
-    direction_sets = {}
+def _find_duplicates(direction_dataset: list[dict]) -> list[list[int]]:
+    direction_sets: dict[tuple[int, int], list] = {}
     idx = len(direction_dataset) + 1
-    pair_idx = {}
+    pair_idx: dict[tuple[int, int], list[int]] = {}
 
     # (List index of direction_sets + id_offset + 1) gives the displacement id.
     # This id is stamped in direction_to_displacement by the sequence of
@@ -441,7 +468,14 @@ def _find_duplicates(direction_dataset):
     return duplucates
 
 
-def _compare(n1, n2, dset1, dset2, pidx1, pidx2):
+def _compare(
+    n1: int,
+    n2: int,
+    dset1: list,
+    dset2: list,
+    pidx1: list[int],
+    pidx2: list[int],
+) -> list[list[int]]:
     flip_sets = np.array(dset2)[:, [3, 4, 5, 0, 1, 2]]
     duplucates = []
 
@@ -453,7 +487,7 @@ def _compare(n1, n2, dset1, dset2, pidx1, pidx2):
     return [[i, j] for (i, j) in duplucates if i > j]
 
 
-def _compare_opposite(dset1, pidx1):
+def _compare_opposite(dset1: list, pidx1: list[int]) -> list[list[int]]:
     flip_sets = np.array(dset1)[:, [3, 4, 5, 0, 1, 2]]
     duplucates = []
     for d1 in dset1:

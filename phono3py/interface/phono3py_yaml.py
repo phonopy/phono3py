@@ -43,6 +43,7 @@ from typing import cast
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
+from phonopy.harmonic.displacement import DisplacementDataset
 from phonopy.interface.phonopy_yaml import (
     PhonopyYaml,
     PhonopyYamlData,
@@ -54,14 +55,17 @@ from phonopy.physical_units import CalculatorPhysicalUnits
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive, Supercell
 
+from phono3py.phonon3.displacement_fc3 import Fc3DisplacementDataset
+
 
 @dataclasses.dataclass
 class Phono3pyYamlData(PhonopyYamlData):
     """Phono3pyYaml data structure."""
 
     command_name: str = "phono3py"
-    phonon_supercell_matrix: NDArray | None = None
-    phonon_dataset: dict | None = None
+    dataset: Fc3DisplacementDataset | None = None
+    phonon_supercell_matrix: NDArray[np.int64] | None = None
+    phonon_dataset: DisplacementDataset | None = None
     phonon_supercell: Supercell | PhonopyAtoms | None = None
     phonon_primitive: Primitive | PhonopyAtoms | None = None
 
@@ -421,6 +425,16 @@ class Phono3pyYaml(PhonopyYaml):
         self._dumper_settings = settings
 
     @property
+    def dataset(self) -> Fc3DisplacementDataset | None:
+        """Return dataset of fc3 calculation."""
+        return self._data.dataset
+
+    @dataset.setter
+    def dataset(self, value: Fc3DisplacementDataset | None):
+        """Set dataset of fc3 calculation."""
+        self._data.dataset = value
+
+    @property
     def phonon_primitive(self) -> PhonopyAtoms | None:
         """Return phonon primitive cell of phonopy calculation."""
         return self._data.phonon_primitive
@@ -441,17 +455,17 @@ class Phono3pyYaml(PhonopyYaml):
         self._data.phonon_supercell = value
 
     @property
-    def phonon_dataset(self) -> dict | None:
-        """Return phonon dataset of phonopy calculation."""
+    def phonon_dataset(self) -> DisplacementDataset | None:
+        """Return phonon dataset of fc2 calculation."""
         return self._data.phonon_dataset
 
     @phonon_dataset.setter
-    def phonon_dataset(self, value: dict):
-        """Set phonon dataset of phonopy calculation."""
+    def phonon_dataset(self, value: DisplacementDataset | None):
+        """Set phonon dataset of fc2 calculation."""
         self._data.phonon_dataset = value
 
     @property
-    def phonon_supercell_matrix(self) -> NDArray | None:
+    def phonon_supercell_matrix(self) -> NDArray[np.int64] | None:
         """Return phonon supercell matrix of phonopy calculation."""
         return self._data.phonon_supercell_matrix
 

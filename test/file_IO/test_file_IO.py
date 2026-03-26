@@ -13,17 +13,29 @@ import pytest
 from phono3py import Phono3py
 from phono3py.file_IO import (
     _get_filename_suffix,
+    get_filename_suffix,
+    get_length_of_first_line,
+    parse_FORCES_FC2,
+    parse_FORCES_FC3,
     read_collision_from_hdf5,
     read_fc3_from_hdf5,
+    read_gamma_from_hdf5,
     read_phonon_from_hdf5,
     read_pp_from_hdf5,
     write_collision_to_hdf5,
     write_fc2_to_hdf5,
     write_fc3_to_hdf5,
+    write_FORCES_FC2,
+    write_FORCES_FC3,
     write_full_collision_matrix,
+    write_gamma_detail_to_hdf5,
     write_imag_self_energy_at_grid_point,
+    write_joint_dos_at_t,
     write_phonon_to_hdf5,
     write_pp_to_hdf5,
+    write_real_self_energy_at_grid_point,
+    write_real_self_energy_to_hdf5,
+    write_spectral_function_at_grid_point,
 )
 
 cwd = pathlib.Path(__file__).parent
@@ -450,3 +462,244 @@ def _set_kappa(
     )
     suffix = _get_filename_suffix(mesh)
     return "kappa" + suffix + ".hdf5"
+
+
+# ---------------------------------------------------------------------------
+# get_filename_suffix (public wrapper)
+# ---------------------------------------------------------------------------
+
+
+def test_get_filename_suffix_basic():
+    """get_filename_suffix is a public wrapper of _get_filename_suffix."""
+    assert get_filename_suffix([4, 4, 4]) == "-m444"
+
+
+def test_get_filename_suffix_with_temperature():
+    """get_filename_suffix includes temperature."""
+    suffix = get_filename_suffix([2, 2, 2], temperature=300.0)
+    assert "t300" in suffix
+
+
+# ---------------------------------------------------------------------------
+# get_length_of_first_line
+# ---------------------------------------------------------------------------
+
+
+def test_get_length_of_first_line(tmp_path):
+    """get_length_of_first_line returns number of tokens on first data line."""
+    f = tmp_path / "data.txt"
+    f.write_text("# comment\n\n1.0 2.0 3.0\n4.0 5.0 6.0\n")
+    with open(f) as fh:
+        length = get_length_of_first_line(fh)
+    assert length == 3
+
+
+# ---------------------------------------------------------------------------
+# write_FORCES_FC2 / parse_FORCES_FC2
+# ---------------------------------------------------------------------------
+
+
+def test_forces_fc2_roundtrip(tmp_path):
+    """write_FORCES_FC2 and parse_FORCES_FC2 round-trip."""
+    rng = np.random.default_rng(10)
+    n_atom = 4
+    forces = rng.random((n_atom, 3))
+    disp_dataset = {
+        "natom": n_atom,
+        "first_atoms": [
+            {
+                "number": 0,
+                "displacement": np.array([0.01, 0.0, 0.0]),
+                "forces": forces,
+            }
+        ],
+    }
+    filename = tmp_path / "FORCES_FC2"
+    write_FORCES_FC2(disp_dataset, filename=filename)
+    assert filename.exists()
+
+    parse_FORCES_FC2(disp_dataset, filename=filename)
+    np.testing.assert_array_almost_equal(
+        disp_dataset["first_atoms"][0]["forces"], forces
+    )
+
+
+# ---------------------------------------------------------------------------
+# write_FORCES_FC3 / parse_FORCES_FC3
+# ---------------------------------------------------------------------------
+
+
+def test_forces_fc3_roundtrip(tmp_path):
+    """write_FORCES_FC3 and parse_FORCES_FC3 round-trip."""
+    rng = np.random.default_rng(11)
+    n_atom = 4
+    forces1 = rng.random((n_atom, 3))
+    forces2 = rng.random((n_atom, 3))
+    disp_dataset = {
+        "natom": n_atom,
+        "first_atoms": [
+            {
+                "number": 0,
+                "displacement": np.array([0.01, 0.0, 0.0]),
+                "forces": forces1,
+                "second_atoms": [
+                    {
+                        "number": 1,
+                        "displacement": np.array([0.0, 0.01, 0.0]),
+                        "forces": forces2,
+                    }
+                ],
+            }
+        ],
+    }
+    filename = tmp_path / "FORCES_FC3"
+    write_FORCES_FC3(disp_dataset, filename=filename)
+    assert filename.exists()
+
+    parse_FORCES_FC3(disp_dataset, filename=filename)
+    np.testing.assert_array_almost_equal(
+        disp_dataset["first_atoms"][0]["forces"], forces1
+    )
+    np.testing.assert_array_almost_equal(
+        disp_dataset["first_atoms"][0]["second_atoms"][0]["forces"], forces2
+    )
+
+
+# ---------------------------------------------------------------------------
+# write_joint_dos_at_t
+# ---------------------------------------------------------------------------
+
+
+def test_write_joint_dos_at_t(tmp_path):
+    """write_joint_dos_at_t writes a .dat file with correct content."""
+    frequencies = np.array([1.0, 2.0, 3.0])
+    jdos = np.array([[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]])
+    orig_dir = pathlib.Path.cwd()
+    os.chdir(tmp_path)
+    try:
+        fname = write_joint_dos_at_t(0, [4, 4, 4], frequencies, jdos)
+        assert pathlib.Path(fname).exists()
+        data = np.loadtxt(fname)
+    finally:
+        os.chdir(orig_dir)
+    np.testing.assert_array_almost_equal(data[:, 0], frequencies)
+    np.testing.assert_array_almost_equal(data[:, 1:], jdos)
+
+
+# ---------------------------------------------------------------------------
+# write_real_self_energy_at_grid_point
+# ---------------------------------------------------------------------------
+
+
+def test_write_real_self_energy_at_grid_point(tmp_path):
+    """write_real_self_energy_at_grid_point writes a .dat file."""
+    freq_points = np.array([1.0, 2.0, 3.0])
+    deltas = np.array([0.01, 0.02, 0.03])
+    orig_dir = pathlib.Path.cwd()
+    os.chdir(tmp_path)
+    try:
+        fname = write_real_self_energy_at_grid_point(
+            5, [0], freq_points, deltas, [4, 4, 4], epsilon=0.1, temperature=300.0
+        )
+        assert pathlib.Path(fname).exists()
+        data = np.loadtxt(fname)
+    finally:
+        os.chdir(orig_dir)
+    np.testing.assert_array_almost_equal(data[:, 0], freq_points)
+    np.testing.assert_array_almost_equal(data[:, 1], deltas)
+
+
+# ---------------------------------------------------------------------------
+# write_real_self_energy_to_hdf5
+# ---------------------------------------------------------------------------
+
+
+def test_write_real_self_energy_to_hdf5(tmp_path):
+    """write_real_self_energy_to_hdf5 writes expected datasets."""
+    rng = np.random.default_rng(12)
+    temperatures = np.array([100.0, 200.0])
+    deltas = rng.random((2, 3))
+    orig_dir = pathlib.Path.cwd()
+    os.chdir(tmp_path)
+    try:
+        fname = write_real_self_energy_to_hdf5(
+            grid_point=5,
+            band_indices=[0, 1, 2],
+            temperatures=temperatures,
+            deltas=deltas,
+            mesh=[4, 4, 4],
+            epsilon=0.1,
+        )
+        assert pathlib.Path(fname).exists()
+        with h5py.File(fname, "r") as f:
+            np.testing.assert_array_almost_equal(f["temperature"][:], temperatures)
+            np.testing.assert_array_almost_equal(f["delta"][:], deltas)
+    finally:
+        os.chdir(orig_dir)
+
+
+# ---------------------------------------------------------------------------
+# write_spectral_function_at_grid_point
+# ---------------------------------------------------------------------------
+
+
+def test_write_spectral_function_at_grid_point(tmp_path):
+    """write_spectral_function_at_grid_point writes a .dat file."""
+    freq_points = np.array([1.0, 2.0, 3.0])
+    spectral = np.array([0.1, 0.2, 0.3])
+    orig_dir = pathlib.Path.cwd()
+    os.chdir(tmp_path)
+    try:
+        fname = write_spectral_function_at_grid_point(
+            5, [0], freq_points, spectral, [4, 4, 4], temperature=300.0
+        )
+        assert pathlib.Path(fname).exists()
+        data = np.loadtxt(fname)
+    finally:
+        os.chdir(orig_dir)
+    np.testing.assert_array_almost_equal(data[:, 0], freq_points)
+    np.testing.assert_array_almost_equal(data[:, 1], spectral)
+
+
+# ---------------------------------------------------------------------------
+# write_gamma_detail_to_hdf5
+# ---------------------------------------------------------------------------
+
+
+def test_write_gamma_detail_to_hdf5(tmp_path):
+    """write_gamma_detail_to_hdf5 writes expected datasets."""
+    rng = np.random.default_rng(13)
+    gamma_detail = rng.random((5, 3, 3))
+    orig_dir = pathlib.Path.cwd()
+    os.chdir(tmp_path)
+    try:
+        fname = write_gamma_detail_to_hdf5(
+            temperature=300.0,
+            mesh=[4, 4, 4],
+            gamma_detail=gamma_detail,
+            grid_point=5,
+            verbose=False,
+        )
+        assert pathlib.Path(fname).exists()
+        with h5py.File(fname, "r") as f:
+            assert "gamma_detail" in f
+            np.testing.assert_array_almost_equal(f["gamma_detail"][:], gamma_detail)
+    finally:
+        os.chdir(orig_dir)
+
+
+# ---------------------------------------------------------------------------
+# read_gamma_from_hdf5 (file absent)
+# ---------------------------------------------------------------------------
+
+
+def test_read_gamma_from_hdf5_file_not_found(tmp_path):
+    """read_gamma_from_hdf5 returns (None, filename) when file is absent."""
+    orig_dir = pathlib.Path.cwd()
+    os.chdir(tmp_path)
+    try:
+        result, fname = read_gamma_from_hdf5(np.array([4, 4, 4], dtype=np.int64))
+    finally:
+        os.chdir(orig_dir)
+    assert result is None
+    assert "kappa" in fname

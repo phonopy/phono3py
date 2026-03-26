@@ -34,13 +34,21 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
+from typing import Literal
+
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 
 from phono3py.phonon.grid import BZGrid
 
 
-def get_unique_grid_points(grid_points, bz_grid: BZGrid):
+def get_unique_grid_points(
+    grid_points: NDArray[np.int64],
+    bz_grid: BZGrid,
+) -> NDArray[np.int64]:
     """Collect grid points on tetrahedron vertices around input grid points.
 
     Find grid points of 24 tetrahedra around each grid point and
@@ -60,7 +68,7 @@ def get_unique_grid_points(grid_points, bz_grid: BZGrid):
         shape=(unique_grid_points, ), dtype='int64'.
 
     """
-    import phono3py._phono3py as phono3c
+    import phono3py._phono3py as phono3c  # type: ignore
 
     if _check_ndarray_state(grid_points, "int64"):
         _grid_points = grid_points
@@ -89,13 +97,13 @@ def get_unique_grid_points(grid_points, bz_grid: BZGrid):
 
 
 def get_integration_weights(
-    sampling_points,
-    grid_values,
+    sampling_points: NDArray[np.double],
+    grid_values: NDArray[np.double],
     bz_grid: BZGrid,
-    grid_points=None,
-    bzgp2irgp_map=None,
-    function="I",
-):
+    grid_points: NDArray[np.int64] | None = None,
+    bzgp2irgp_map: NDArray[np.int64] | None = None,
+    function: Literal["I", "J"] = "I",
+) -> NDArray[np.double]:
     """Return tetrahedron method integration weights.
 
     Parameters
@@ -125,7 +133,7 @@ def get_integration_weights(
         order='C'
 
     """
-    import phono3py._phono3py as phono3c
+    import phono3py._phono3py as phono3c  # type: ignore
 
     relative_grid_addresses = np.array(
         np.dot(
@@ -176,7 +184,9 @@ def get_integration_weights(
     return integration_weights
 
 
-def get_tetrahedra_relative_grid_address(microzone_lattice):
+def get_tetrahedra_relative_grid_address(
+    microzone_lattice: NDArray[np.double],
+) -> NDArray[np.int64]:
     """Return relative (differences of) grid addresses from the central.
 
     Parameter
@@ -186,7 +196,7 @@ def get_tetrahedra_relative_grid_address(microzone_lattice):
         microzone_lattice = np.linalg.inv(cell.get_cell()) / mesh
 
     """
-    import phono3py._phono3py as phono3c
+    import phono3py._phono3py as phono3c  # type: ignore
 
     relative_grid_address = np.zeros((24, 4, 3), dtype="int64", order="C")
     phono3c.tetrahedra_relative_grid_address(
@@ -196,6 +206,6 @@ def get_tetrahedra_relative_grid_address(microzone_lattice):
     return relative_grid_address
 
 
-def _check_ndarray_state(array, dtype):
+def _check_ndarray_state(array: np.ndarray, dtype: str) -> bool:
     """Check contiguousness and dtype."""
     return array.dtype == dtype and array.flags.c_contiguous

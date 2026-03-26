@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Optional, Union
 
 import numpy as np
 from numpy.typing import NDArray
@@ -52,13 +51,13 @@ class KappaDOSTHM:
 
     def __init__(
         self,
-        mode_kappa: np.ndarray,
-        frequencies: np.ndarray,
+        mode_kappa: NDArray[np.double],
+        frequencies: NDArray[np.double],
         bz_grid: BZGrid,
-        ir_grid_points: Optional[np.ndarray] = None,
-        ir_grid_weights: Optional[np.ndarray] = None,
-        ir_grid_map: Optional[np.ndarray] = None,
-        frequency_points: Optional[Union[np.ndarray, Sequence]] = None,
+        ir_grid_points: NDArray[np.int64] | None = None,
+        ir_grid_weights: NDArray[np.int64] | None = None,
+        ir_grid_map: NDArray[np.int64] | None = None,
+        frequency_points: NDArray[np.double] | Sequence[float] | None = None,
         num_sampling_points: int = 100,
     ):
         """Init method.
@@ -139,7 +138,7 @@ class KappaDOSTHM:
                 )
         self._kdos /= np.prod(bz_grid.D_diag)
 
-    def get_kdos(self):
+    def get_kdos(self) -> tuple[NDArray[np.double], NDArray[np.double]]:
         """Return thermal conductivity spectram.
 
         Returns
@@ -154,7 +153,12 @@ class KappaDOSTHM:
         """
         return self._frequency_points, self._kdos
 
-    def _get_bzgp2irgp_map(self, bzg2grg, ir_grid_map, ir_grid_points):
+    def _get_bzgp2irgp_map(
+        self,
+        bzg2grg: NDArray[np.int64],
+        ir_grid_map: NDArray[np.int64],
+        ir_grid_points: NDArray[np.int64],
+    ) -> NDArray[np.int64]:
         """Return mapping table from BZ-grid indices to ir-grid point indices.
 
         More precisely, return mapping table from grid points in BZ-grid to
@@ -195,10 +199,10 @@ class GammaDOSsmearing:
 
     def __init__(
         self,
-        gamma,
-        frequencies,
-        ir_grid_weights,
-        sigma: Optional[float] = None,
+        gamma: NDArray[np.double],
+        frequencies: NDArray[np.double],
+        ir_grid_weights: NDArray[np.int64],
+        sigma: float | None = None,
         num_sampling_points: int = 200,
     ):
         """Init method.
@@ -231,11 +235,11 @@ class GammaDOSsmearing:
                 max(self._frequency_points) - min(self._frequency_points)
             ) / 100
         else:
-            self._sigma = 0.1
+            self._sigma = sigma
         self._smearing_function = NormalDistribution(self._sigma)
         self._run_smearing_method()
 
-    def get_gdos(self):
+    def get_gdos(self) -> tuple[NDArray[np.double], NDArray[np.double]]:
         """Return Gamma spectram.
 
         gdos[:, :, 0] is not used but eixts to be similar shape to kdos.
@@ -243,15 +247,14 @@ class GammaDOSsmearing:
         """
         return self._frequency_points, self._gdos
 
-    def _set_frequency_points(self):
+    def _set_frequency_points(self) -> None:
         min_freq = np.min(self._frequencies)
         max_freq = np.max(self._frequencies) + epsilon
         self._frequency_points = np.linspace(
             min_freq, max_freq, self._num_sampling_points
         )
 
-    def _run_smearing_method(self):
-        self._dos = []
+    def _run_smearing_method(self) -> None:
         num_gp = np.sum(self._ir_grid_weights)
         for i, f in enumerate(self._frequency_points):
             dos = self._smearing_function.calc(self._frequencies - f)
@@ -262,13 +265,13 @@ class GammaDOSsmearing:
 
 
 def run_prop_dos(
-    frequencies,
-    mode_prop,
-    ir_grid_map,
-    ir_grid_points,
+    frequencies: NDArray[np.double],
+    mode_prop: NDArray[np.double],
+    ir_grid_map: NDArray[np.int64],
+    ir_grid_points: NDArray[np.int64],
     num_sampling_points: int,
     bz_grid: BZGrid,
-):
+) -> tuple[NDArray[np.double], NDArray[np.double]]:
     """Run DOS-like calculation.
 
     This is a simple wrapper of KappsDOSTHM.
@@ -303,21 +306,21 @@ def run_prop_dos(
 
 
 def run_mfp_dos(
-    mean_freepath,
-    mode_prop,
-    ir_grid_map,
-    ir_grid_points,
+    mean_freepath: NDArray[np.double],
+    mode_prop: NDArray[np.double],
+    ir_grid_map: NDArray[np.int64],
+    ir_grid_points: NDArray[np.int64],
     num_sampling_points: int,
     bz_grid: BZGrid,
-):
+) -> tuple[NDArray[np.double], NDArray[np.double]]:
     """Run DOS-like calculation for mean free path.
 
     mean_freepath : shape=(temperatures, ir_grid_points, 6)
     mode_prop : shape=(temperatures, ir_grid_points, 6, 6)
 
     """
-    kdos: list = []
-    sampling_points: list = []
+    kdos: list[NDArray[np.double]] = []
+    sampling_points: list[NDArray[np.double]] = []
     for i, _ in enumerate(mean_freepath):
         kappa_dos = KappaDOSTHM(
             mode_prop[i : i + 1, :, :],
@@ -330,13 +333,16 @@ def run_mfp_dos(
         sampling_points_at_T, kdos_at_T = kappa_dos.get_kdos()
         kdos.append(kdos_at_T[0])
         sampling_points.append(sampling_points_at_T)
-    kdos_array: NDArray = np.array(kdos)
-    sampling_points_array: NDArray = np.array(sampling_points)
+    kdos_array: NDArray[np.double] = np.array(kdos)
+    sampling_points_array: NDArray[np.double] = np.array(sampling_points)
 
     return kdos_array, sampling_points_array
 
 
-def get_mfp(g, gv):
+def get_mfp(
+    g: NDArray[np.double],
+    gv: NDArray[np.double],
+) -> NDArray[np.double]:
     """Calculate mean free path from inverse lifetime and group velocity."""
     g = np.where(g > 0, g, -1)
     gv_norm = np.sqrt((gv**2).sum(axis=2))

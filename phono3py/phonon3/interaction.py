@@ -328,7 +328,7 @@ class Interaction:
         return self._nac_params
 
     @property
-    def nac_q_direction(self) -> NDArray | None:
+    def nac_q_direction(self) -> NDArray[np.double] | None:
         """Return q-direction used for NAC at q->0.
 
         Direction of q-vector watching from Gamma point used for
