@@ -40,9 +40,9 @@ import os
 import pathlib
 import warnings
 from collections.abc import Sequence
-from typing import Literal, TextIO
+from typing import Any, Literal, TextIO
 
-import h5py
+import h5py  # type: ignore[import-untyped]
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.cui.load_helper import read_force_constants_from_hdf5
@@ -55,12 +55,17 @@ from phonopy.file_IO import (
     get_io_module_to_decompress,
     write_FORCE_SETS,
 )
+from phonopy.structure.atoms import PhonopyAtoms
 
 from phono3py.phonon.grid import BZGrid
 from phono3py.version import __version__
 
 
-def write_disp_fc3_yaml(dataset, supercell, filename="disp_fc3.yaml"):
+def write_disp_fc3_yaml(
+    dataset: dict,
+    supercell: PhonopyAtoms,
+    filename: str | os.PathLike = "disp_fc3.yaml",
+) -> tuple[int, int]:
     """Write disp_fc3.yaml.
 
     This function should not be called from phono3py script from version 3.
@@ -160,7 +165,11 @@ def write_disp_fc3_yaml(dataset, supercell, filename="disp_fc3.yaml"):
     return num_first + num_second, num_disp_files
 
 
-def write_disp_fc2_yaml(dataset, supercell, filename="disp_fc2.yaml"):
+def write_disp_fc2_yaml(
+    dataset: dict,
+    supercell: PhonopyAtoms | None,
+    filename: str | os.PathLike = "disp_fc2.yaml",
+) -> int:
     """Write disp_fc2.yaml.
 
     This function should not be called from phono3py script from version 3.
@@ -195,10 +204,10 @@ def write_disp_fc2_yaml(dataset, supercell, filename="disp_fc2.yaml"):
 
 def write_FORCES_FC2(
     disp_dataset: dict,
-    forces_fc2: Sequence | NDArray | None = None,
+    forces_fc2: Sequence | NDArray[np.double] | None = None,
     fp: TextIO | None = None,
     filename: str | os.PathLike = "FORCES_FC2",
-):
+) -> None:
     """Write FORCES_FC2.
 
     fp : IO object, optional, default=None
@@ -238,10 +247,10 @@ def write_FORCES_FC2(
 
 def write_FORCES_FC3(
     disp_dataset: dict,
-    forces_fc3: Sequence | NDArray | None = None,
+    forces_fc3: Sequence | NDArray[np.double] | None = None,
     fp: TextIO | None = None,
     filename: str | os.PathLike = "FORCES_FC3",
-):
+) -> None:
     """Write FORCES_FC3.
 
     fp : IO object, optional, default=None
@@ -269,8 +278,8 @@ def write_FORCES_FC3(
 def _write_FORCES_FC3_typeI(
     disp_dataset: dict,
     w: TextIO,
-    forces_fc3: Sequence | NDArray | None = None,
-):
+    forces_fc3: Sequence | NDArray[np.double] | None = None,
+) -> None:
     """Write FORCES_FC3.
 
     w : TextIO object, optional, default=None
@@ -313,13 +322,13 @@ def _write_FORCES_FC3_typeI(
 
 
 def write_fc3_to_hdf5(
-    fc3: NDArray,
-    fc3_nonzero_indices: NDArray | None = None,
+    fc3: NDArray[np.double],
+    fc3_nonzero_indices: NDArray[np.byte] | None = None,
     filename: str = "fc3.hdf5",
-    p2s_map: NDArray | None = None,
+    p2s_map: NDArray[np.int64] | None = None,
     fc3_cutoff: float | None = None,
     compression: Literal["gzip", "lzf"] | int | None = "gzip",
-):
+) -> None:
     """Write fc3 in fc3.hdf5.
 
     Parameters
@@ -358,8 +367,8 @@ def write_fc3_to_hdf5(
 
 
 def read_fc3_from_hdf5(
-    filename: str | os.PathLike = "fc3.hdf5", p2s_map: NDArray | None = None
-) -> NDArray | dict:
+    filename: str | os.PathLike = "fc3.hdf5", p2s_map: NDArray[np.int64] | None = None
+) -> NDArray[np.double] | dict:
     """Read fc3 from fc3.hdf5.
 
     fc3 can be in full or compact format. They are distinguished by
@@ -376,7 +385,7 @@ def read_fc3_from_hdf5(
                 f"{filename} does not have 'fc3' dataset. "
                 "This file is not a valid fc3.hdf5."
             )
-        fc3: NDArray = f["fc3"][:]  # type: ignore
+        fc3: NDArray[np.double] = f["fc3"][:]  # type: ignore
         if fc3.dtype == np.dtype("double") and fc3.flags.c_contiguous:
             pass
         else:
@@ -391,7 +400,7 @@ def read_fc3_from_hdf5(
                 fc3.shape[:2], p2s_map_in_file, p2s_map, filename
             )
 
-        fc3_nonzero_indices: NDArray | None = None
+        fc3_nonzero_indices: NDArray[np.byte] | None = None
         if "fc3_nonzero_indices" in f:
             fc3_nonzero_indices = f["fc3_nonzero_indices"][:]  # type: ignore[assignment]
             assert fc3_nonzero_indices is not None
@@ -413,13 +422,13 @@ def read_fc3_from_hdf5(
 
 
 def write_fc2_to_hdf5(
-    force_constants: NDArray,
+    force_constants: NDArray[np.double],
     filename: str = "fc2.hdf5",
-    p2s_map: NDArray | None = None,
+    p2s_map: NDArray[np.int64] | None = None,
     physical_unit: str | None = None,
     compression: Literal["gzip", "lzf"] | int | None = "gzip",
     cutoff: float | None = None,
-):
+) -> None:
     """Write fc2 in fc2.hdf5.
 
     write_force_constants_to_hdf5 was copied from phonopy because
@@ -428,14 +437,14 @@ def write_fc2_to_hdf5(
     """
 
     def write_force_constants_to_hdf5(
-        force_constants: NDArray,
+        force_constants: NDArray[np.double],
         filename: str = "force_constants.hdf5",
-        p2s_map: NDArray | None = None,
+        p2s_map: NDArray[np.int64] | None = None,
         physical_unit: str | None = None,
         compression: Literal["gzip", "lzf"] | int | None = "gzip",
         cutoff: float | None = None,
         version: str | None = None,
-    ):
+    ) -> None:
         with h5py.File(filename, "w") as w:
             w.create_dataset(
                 "force_constants", data=force_constants, compression=compression
@@ -463,7 +472,9 @@ def write_fc2_to_hdf5(
     )
 
 
-def read_fc2_from_hdf5(filename: str | os.PathLike = "fc2.hdf5", p2s_map=None):
+def read_fc2_from_hdf5(
+    filename: str | os.PathLike = "fc2.hdf5", p2s_map: NDArray[np.int64] | None = None
+) -> NDArray[np.double]:
     """Read fc2 from fc2.hdf5."""
     return read_force_constants_from_hdf5(
         filename=filename, p2s_map=p2s_map, calculator="vasp"
@@ -475,10 +486,10 @@ def write_datasets_to_hdf5(
     phonon_dataset: dict | None = None,
     filename: str = "datasets.hdf5",
     compression: Literal["gzip", "lzf"] | int | None = "gzip",
-):
+) -> None:
     """Write dataset and phonon_dataset in datasets.hdf5."""
 
-    def _write_dataset(w, dataset: dict, group_name: str):
+    def _write_dataset(w: Any, dataset: dict, group_name: str) -> None:
         dataset_w = w.create_group(group_name)
         for key in dataset:
             dataset_w.create_dataset(key, data=dataset[key], compression=compression)
@@ -491,13 +502,13 @@ def write_datasets_to_hdf5(
 
 
 def write_grid_address_to_hdf5(
-    grid_address,
-    mesh,
-    grid_mapping_table,
+    grid_address: NDArray[np.int64],
+    mesh: Sequence[int] | NDArray[np.int64],
+    grid_mapping_table: NDArray[np.int64],
     bz_grid: BZGrid | None = None,
     compression: Literal["gzip", "lzf"] | int | None = "gzip",
     filename: str | os.PathLike | None = None,
-):
+) -> str | None:
     """Write grid addresses to grid_address.hdf5."""
     suffix = _get_filename_suffix(mesh, middle_filename=filename)  # type: ignore[arg-type]
     full_filename = "grid_address" + suffix + ".hdf5"
@@ -517,17 +528,17 @@ def write_grid_address_to_hdf5(
 
 
 def write_imag_self_energy_at_grid_point(
-    gp,
-    band_indices,
-    mesh,
-    frequencies,
-    gammas,
-    sigma=None,
-    temperature=None,
-    scattering_event_class=None,
-    filename=None,
-    is_mesh_symmetry=True,
-):
+    gp: int,
+    band_indices: Sequence[int] | NDArray[np.int64],
+    mesh: Sequence[int] | NDArray[np.int64],
+    frequencies: NDArray[np.double],
+    gammas: NDArray[np.double],
+    sigma: float | None = None,
+    temperature: float | None = None,
+    scattering_event_class: int | None = None,
+    filename: str | None = None,
+    is_mesh_symmetry: bool = True,
+) -> str:
     """Write imaginary part of self-energy spectrum in gamma-*.dat."""
     gammas_filename = "gammas"
     gammas_filename += "-m%d%d%d-g%d-" % (mesh[0], mesh[1], mesh[2], gp)
@@ -558,15 +569,15 @@ def write_imag_self_energy_at_grid_point(
 
 
 def write_joint_dos_at_t(
-    grid_point,
-    mesh,
-    frequencies,
-    jdos,
-    sigma=None,
-    temperature=None,
-    filename=None,
-    is_mesh_symmetry=True,
-):
+    grid_point: int,
+    mesh: Sequence[int] | NDArray[np.int64],
+    frequencies: NDArray[np.double],
+    jdos: NDArray[np.double],
+    sigma: float | None = None,
+    temperature: float | None = None,
+    filename: str | None = None,
+    is_mesh_symmetry: bool = True,
+) -> str:
     """Write joint density of states at temperature in jdos-*.dat."""
     suffix = _get_filename_suffix(
         mesh, grid_point=grid_point, sigma=sigma, middle_filename=filename
@@ -589,16 +600,16 @@ def write_joint_dos_at_t(
 
 
 def write_real_self_energy_at_grid_point(
-    gp,
-    band_indices,
-    frequency_points,
-    deltas,
-    mesh,
-    epsilon,
-    temperature,
-    filename=None,
-    is_mesh_symmetry=True,
-):
+    gp: int,
+    band_indices: Sequence[int] | NDArray[np.int64],
+    frequency_points: NDArray[np.double],
+    deltas: NDArray[np.double],
+    mesh: Sequence[int] | NDArray[np.int64],
+    epsilon: float,
+    temperature: float | None,
+    filename: str | None = None,
+    is_mesh_symmetry: bool = True,
+) -> str:
     """Write real part of self-energy spectrum in deltas-*.dat."""
     deltas_filename = "deltas"
     deltas_filename += _get_filename_suffix(mesh, grid_point=gp)
@@ -624,17 +635,17 @@ def write_real_self_energy_at_grid_point(
 
 
 def write_real_self_energy_to_hdf5(
-    grid_point,
-    band_indices,
-    temperatures,
-    deltas,
-    mesh,
-    epsilon,
-    bz_grid=None,
-    frequency_points=None,
-    frequencies=None,
-    filename=None,
-):
+    grid_point: int,
+    band_indices: Sequence[int] | NDArray[np.int64],
+    temperatures: NDArray[np.double],
+    deltas: NDArray[np.double],
+    mesh: Sequence[int] | NDArray[np.int64],
+    epsilon: float,
+    bz_grid: BZGrid | None = None,
+    frequency_points: NDArray[np.double] | None = None,
+    frequencies: NDArray[np.double] | None = None,
+    filename: str | None = None,
+) -> str:
     """Write real part of self energy (currently only bubble) in hdf5.
 
     deltas : ndarray
@@ -679,16 +690,16 @@ def write_real_self_energy_to_hdf5(
 
 
 def write_spectral_function_at_grid_point(
-    gp,
-    band_indices,
-    frequency_points,
-    spectral_functions,
-    mesh,
-    temperature,
-    sigma=None,
-    filename=None,
-    is_mesh_symmetry=True,
-):
+    gp: int,
+    band_indices: Sequence[int] | NDArray[np.int64],
+    frequency_points: NDArray[np.double],
+    spectral_functions: NDArray[np.double],
+    mesh: Sequence[int] | NDArray[np.int64],
+    temperature: float | None,
+    sigma: float | None = None,
+    filename: str | None = None,
+    is_mesh_symmetry: bool = True,
+) -> str:
     """Write spectral function spectrum in spectral-*.dat."""
     spectral_filename = "spectral"
     spectral_filename += _get_filename_suffix(mesh, grid_point=gp, sigma=sigma)
@@ -710,20 +721,20 @@ def write_spectral_function_at_grid_point(
 
 
 def write_spectral_function_to_hdf5(
-    grid_point,
-    band_indices,
-    temperatures,
-    spectral_functions,
-    shifts,
-    half_linewidths,
-    mesh,
-    bz_grid=None,
-    sigma=None,
-    frequency_points=None,
-    frequencies=None,
-    all_band_exist=False,
-    filename=None,
-):
+    grid_point: int,
+    band_indices: Sequence[int] | NDArray[np.int64],
+    temperatures: NDArray[np.double],
+    spectral_functions: NDArray[np.double],
+    shifts: NDArray[np.double],
+    half_linewidths: NDArray[np.double],
+    mesh: Sequence[int] | NDArray[np.int64],
+    bz_grid: BZGrid | None = None,
+    sigma: float | None = None,
+    frequency_points: NDArray[np.double] | None = None,
+    frequencies: NDArray[np.double] | None = None,
+    all_band_exist: bool = False,
+    filename: str | None = None,
+) -> str:
     """Write spectral functions (currently only bubble) in hdf5.
 
     spectral_functions : ndarray
@@ -736,7 +747,7 @@ def write_spectral_function_to_hdf5(
     if all_band_exist:
         _band_indices = None
     else:
-        _band_indices = np.hstack(band_indices, dtype="int64")
+        _band_indices = np.hstack(band_indices, dtype="int64")  # type: ignore[arg-type]
     suffix = _get_filename_suffix(
         mesh, grid_point=grid_point, band_indices=_band_indices, sigma=sigma
     )
@@ -769,17 +780,17 @@ def write_spectral_function_to_hdf5(
 
 
 def write_collision_to_hdf5(
-    temperature,
-    mesh,
-    gamma=None,
-    gamma_isotope=None,
-    collision_matrix=None,
-    grid_point=None,
-    band_index=None,
-    sigma=None,
-    sigma_cutoff=None,
-    filename=None,
-):
+    temperature: NDArray[np.double],
+    mesh: Sequence[int] | NDArray[np.int64],
+    gamma: NDArray[np.double] | None = None,
+    gamma_isotope: NDArray[np.double] | None = None,
+    collision_matrix: NDArray[np.double] | None = None,
+    grid_point: int | None = None,
+    band_index: int | None = None,
+    sigma: float | None = None,
+    sigma_cutoff: float | None = None,
+    filename: str | None = None,
+) -> str:
     """Write collision matrix to collision-*.hdf5."""
     if band_index is None:
         band_indices = None
@@ -830,7 +841,10 @@ def write_collision_to_hdf5(
     return full_filename
 
 
-def write_full_collision_matrix(collision_matrix, filename="fcm.hdf5"):
+def write_full_collision_matrix(
+    collision_matrix: NDArray[np.double],
+    filename: str | os.PathLike = "fcm.hdf5",
+) -> None:
     """Write full (non-symmetrized) collision matrix to collision-*.hdf5."""
     with h5py.File(filename, "w") as w:
         w.create_dataset("version", data=np.bytes_(__version__))
@@ -838,15 +852,15 @@ def write_full_collision_matrix(collision_matrix, filename="fcm.hdf5"):
 
 
 def write_unitary_matrix_to_hdf5(
-    temperature,
-    mesh,
-    unitary_matrix=None,
-    sigma=None,
-    sigma_cutoff=None,
-    solver=None,
-    filename=None,
-    verbose=False,
-):
+    temperature: NDArray[np.double],
+    mesh: Sequence[int] | NDArray[np.int64],
+    unitary_matrix: NDArray[np.cdouble] | None = None,
+    sigma: float | None = None,
+    sigma_cutoff: float | None = None,
+    solver: int | None = None,
+    filename: str | None = None,
+    verbose: bool = False,
+) -> None:
     """Write eigenvectors of collision matrices at temperatures.
 
     Depending on the choice of the solver, eigenvectors are stored in
@@ -885,14 +899,14 @@ def write_unitary_matrix_to_hdf5(
 
 
 def write_collision_eigenvalues_to_hdf5(
-    temperatures,
-    mesh,
-    collision_eigenvalues,
-    sigma=None,
-    sigma_cutoff=None,
-    filename=None,
-    verbose=True,
-):
+    temperatures: NDArray[np.double],
+    mesh: Sequence[int] | NDArray[np.int64],
+    collision_eigenvalues: NDArray[np.double],
+    sigma: float | None = None,
+    sigma_cutoff: float | None = None,
+    filename: str | None = None,
+    verbose: bool = True,
+) -> None:
     """Write eigenvalues of collision matrix to coleigs-*.hdf5."""
     suffix = _get_filename_suffix(
         mesh, sigma=sigma, sigma_cutoff=sigma_cutoff, middle_filename=filename
@@ -913,46 +927,46 @@ def write_collision_eigenvalues_to_hdf5(
 
 
 def write_kappa_to_hdf5(
-    temperature,
-    mesh,
+    temperature: NDArray[np.double],
+    mesh: Sequence[int] | NDArray[np.int64],
     boundary_mfp: float | None = None,
-    bz_grid=None,
-    frequency=None,
-    group_velocity=None,
-    gv_by_gv=None,
-    velocity_operator=None,
-    mean_free_path=None,
-    heat_capacity=None,
-    kappa=None,
-    mode_kappa=None,
-    kappa_P_exact=None,
-    kappa_P_RTA=None,
-    kappa_C=None,
-    kappa_TOT_exact=None,
-    kappa_TOT_RTA=None,
-    mode_kappa_P_exact=None,  # k_P from the exact solution of the LBTE
-    mode_kappa_P_RTA=None,  # k_P in the RTA calculated in the LBTE
-    mode_kappa_C=None,
-    kappa_RTA=None,  # RTA calculated in LBTE
-    mode_kappa_RTA=None,  # RTA calculated in LBTE
-    f_vector=None,
-    gamma=None,
-    gamma_isotope=None,
-    gamma_N=None,
-    gamma_U=None,
+    bz_grid: BZGrid | None = None,
+    frequency: NDArray[np.double] | None = None,
+    group_velocity: NDArray[np.double] | None = None,
+    gv_by_gv: NDArray[np.double] | None = None,
+    velocity_operator: NDArray[np.cdouble] | None = None,
+    mean_free_path: NDArray[np.double] | None = None,
+    heat_capacity: NDArray[np.double] | None = None,
+    kappa: NDArray[np.double] | None = None,
+    mode_kappa: NDArray[np.double] | None = None,
+    kappa_P_exact: NDArray[np.double] | None = None,
+    kappa_P_RTA: NDArray[np.double] | None = None,
+    kappa_C: NDArray[np.double] | None = None,
+    kappa_TOT_exact: NDArray[np.double] | None = None,
+    kappa_TOT_RTA: NDArray[np.double] | None = None,
+    mode_kappa_P_exact: NDArray[np.double] | None = None,  # k_P from exact LBTE
+    mode_kappa_P_RTA: NDArray[np.double] | None = None,  # k_P in RTA in LBTE
+    mode_kappa_C: NDArray[np.double] | None = None,
+    kappa_RTA: NDArray[np.double] | None = None,  # RTA calculated in LBTE
+    mode_kappa_RTA: NDArray[np.double] | None = None,  # RTA calculated in LBTE
+    f_vector: NDArray[np.double] | None = None,
+    gamma: NDArray[np.double] | None = None,
+    gamma_isotope: NDArray[np.double] | None = None,
+    gamma_N: NDArray[np.double] | None = None,
+    gamma_U: NDArray[np.double] | None = None,
     gamma_elph: NDArray[np.double] | None = None,
-    averaged_pp_interaction=None,
-    qpoint=None,
-    weight=None,
-    grid_point=None,
-    band_index=None,
-    sigma=None,
-    sigma_cutoff=None,
-    kappa_unit_conversion=None,
+    averaged_pp_interaction: NDArray[np.double] | None = None,
+    qpoint: NDArray[np.double] | None = None,
+    weight: NDArray[np.int64] | None = None,
+    grid_point: int | None = None,
+    band_index: int | None = None,
+    sigma: float | None = None,
+    sigma_cutoff: float | None = None,
+    kappa_unit_conversion: float | None = None,
     compression: Literal["gzip", "lzf"] | int | None = "gzip",
-    filename=None,
-    verbose=True,
-):
+    filename: str | os.PathLike | None = None,
+    verbose: bool = True,
+) -> str:
     """Write thermal conductivity related properties in kappa-*.hdf5."""
     if band_index is None:
         band_indices = None
@@ -964,7 +978,7 @@ def write_kappa_to_hdf5(
         band_indices=band_indices,
         sigma=sigma,
         sigma_cutoff=sigma_cutoff,
-        middle_filename=filename,
+        middle_filename=str(filename) if filename is not None else None,
     )
     full_filename = "kappa" + suffix + ".hdf5"
     with h5py.File(full_filename, "w") as w:
@@ -1094,13 +1108,13 @@ def write_kappa_to_hdf5(
 
 
 def read_gamma_from_hdf5(
-    mesh: NDArray,
+    mesh: Sequence[int] | NDArray[np.int64],
     grid_point: int | None = None,
     band_index: int | None = None,
     sigma: float | None = None,
     sigma_cutoff: float | None = None,
     filename: str | None = None,
-):
+) -> tuple[dict | None, str]:
     """Read gamma from kappa-*.hdf5 file."""
     if band_index is None:
         band_indices = None
@@ -1133,15 +1147,15 @@ def read_gamma_from_hdf5(
 
 
 def read_collision_from_hdf5(
-    mesh,
-    indices: str | Sequence = "all",
-    grid_point=None,
-    band_index=None,
-    sigma=None,
-    sigma_cutoff=None,
-    filename=None,
-    only_temperatures=False,
-    verbose=True,
+    mesh: Sequence[int] | NDArray[np.int64],
+    indices: str | Sequence[int] = "all",
+    grid_point: int | None = None,
+    band_index: int | None = None,
+    sigma: float | None = None,
+    sigma_cutoff: float | None = None,
+    filename: str | None = None,
+    only_temperatures: bool = False,
+    verbose: bool = True,
 ) -> tuple:
     """Read collision matrix.
 
@@ -1216,21 +1230,21 @@ def read_collision_from_hdf5(
 
 
 def write_pp_to_hdf5(
-    mesh,
-    pp=None,
-    g_zero=None,
-    grid_point=None,
-    triplet=None,
-    weight=None,
-    triplet_map=None,
-    triplet_all=None,
-    sigma=None,
-    sigma_cutoff=None,
-    filename=None,
-    verbose=True,
-    check_consistency=False,
+    mesh: Sequence[int] | NDArray[np.int64],
+    pp: NDArray[np.double] | None = None,
+    g_zero: NDArray[np.byte] | None = None,
+    grid_point: int | None = None,
+    triplet: NDArray[np.int64] | None = None,
+    weight: NDArray[np.int64] | None = None,
+    triplet_map: NDArray[np.int64] | None = None,
+    triplet_all: NDArray[np.int64] | None = None,
+    sigma: float | None = None,
+    sigma_cutoff: float | None = None,
+    filename: str | None = None,
+    verbose: bool = True,
+    check_consistency: bool = False,
     compression: Literal["gzip", "lzf"] | int | None = "gzip",
-):
+) -> str:
     """Write ph-ph interaction strength in its hdf5 file."""
     suffix = _get_filename_suffix(
         mesh,
@@ -1306,7 +1320,7 @@ def write_pp_to_hdf5(
 
 
 def read_pp_from_hdf5(
-    mesh,
+    mesh: Sequence[int] | NDArray[np.int64],
     grid_point: int | None = None,
     sigma: float | None = None,
     sigma_cutoff: float | None = None,
@@ -1371,23 +1385,23 @@ def read_pp_from_hdf5(
 
 
 def write_gamma_detail_to_hdf5(
-    temperature,
-    mesh,
-    bz_grid=None,
-    gamma_detail=None,
-    grid_point=None,
-    triplet=None,
-    weight=None,
-    triplet_map=None,
-    triplet_all=None,
-    frequency_points=None,
-    band_index=None,
-    sigma=None,
-    sigma_cutoff=None,
+    temperature: float,
+    mesh: Sequence[int] | NDArray[np.int64],
+    bz_grid: BZGrid | None = None,
+    gamma_detail: NDArray[np.double] | None = None,
+    grid_point: int | None = None,
+    triplet: NDArray[np.int64] | None = None,
+    weight: NDArray[np.int64] | None = None,
+    triplet_map: NDArray[np.int64] | None = None,
+    triplet_all: NDArray[np.int64] | None = None,
+    frequency_points: NDArray[np.double] | None = None,
+    band_index: int | None = None,
+    sigma: float | None = None,
+    sigma_cutoff: float | None = None,
     compression: Literal["gzip", "lzf"] | int | None = "gzip",
-    filename=None,
-    verbose=True,
-):
+    filename: str | None = None,
+    verbose: bool = True,
+) -> str | None:
     """Write detailed gamma in its hdf5 file."""
     if band_index is None:
         band_indices = None
@@ -1463,16 +1477,16 @@ def write_gamma_detail_to_hdf5(
 
 
 def write_phonon_to_hdf5(
-    frequency,
-    eigenvector,
-    grid_address,
-    mesh,
-    bz_grid=None,
-    ir_grid_points=None,
-    ir_grid_weights=None,
+    frequency: NDArray[np.double],
+    eigenvector: NDArray[np.cdouble],
+    grid_address: NDArray[np.int64],
+    mesh: Sequence[int] | NDArray[np.int64],
+    bz_grid: BZGrid | None = None,
+    ir_grid_points: NDArray[np.int64] | None = None,
+    ir_grid_weights: NDArray[np.int64] | None = None,
     compression: Literal["gzip", "lzf"] | int | None = "gzip",
-    filename=None,
-):
+    filename: str | None = None,
+) -> str | None:
     """Write phonon on grid in its hdf5 file."""
     suffix = _get_filename_suffix(mesh, middle_filename=filename)
     full_filename = "phonon" + suffix + ".hdf5"
@@ -1503,7 +1517,7 @@ def write_phonon_to_hdf5(
 def read_phonon_from_hdf5(
     mesh: Sequence[int] | NDArray[np.int64],
     middle_filename: str | None = None,
-    verbose=True,
+    verbose: bool = True,
 ) -> tuple:
     """Read phonon from its hdf5 file."""
     suffix = _get_filename_suffix(mesh, middle_filename=middle_filename)
@@ -1530,7 +1544,12 @@ def read_phonon_from_hdf5(
         return frequencies, eigenvectors, grid_address
 
 
-def write_ir_grid_points(bz_grid, grid_points, grid_weights, primitive_lattice):
+def write_ir_grid_points(
+    bz_grid: BZGrid,
+    grid_points: NDArray[np.int64],
+    grid_weights: NDArray[np.int64],
+    primitive_lattice: NDArray[np.double],
+) -> None:
     """Write ir-grid-points in yaml."""
     lines = []
     lines.append("mesh: [ %d, %d, %d ]" % tuple(bz_grid.D_diag))
@@ -1557,7 +1576,9 @@ def write_ir_grid_points(bz_grid, grid_points, grid_weights, primitive_lattice):
         w.write("\n".join(lines))
 
 
-def parse_disp_fc2_yaml(filename="disp_fc2.yaml", return_cell=False):
+def parse_disp_fc2_yaml(
+    filename: str | os.PathLike = "disp_fc2.yaml", return_cell: bool = False
+) -> dict | tuple[dict, PhonopyAtoms]:
     """Parse disp_fc2.yaml file.
 
     This function should not be called from phono3py script from version 3.
@@ -1586,7 +1607,9 @@ def parse_disp_fc2_yaml(filename="disp_fc2.yaml", return_cell=False):
         return new_dataset
 
 
-def parse_disp_fc3_yaml(filename="disp_fc3.yaml", return_cell=False):
+def parse_disp_fc3_yaml(
+    filename: str | os.PathLike = "disp_fc3.yaml", return_cell: bool = False
+) -> dict | tuple[dict, PhonopyAtoms]:
     """Parse disp_fc3.yaml file.
 
     This function should not be called from phono3py script from version 3.
@@ -1632,7 +1655,7 @@ def parse_FORCES_FC2(
     disp_dataset: dict,
     filename: str | os.PathLike = "FORCES_FC2",
     unit_conversion_factor: float | None = None,
-):
+) -> list | None:
     """Parse type1 FORCES_FC2 file and store forces in disp_dataset."""
     num_atom = disp_dataset["natom"]
     num_disp = len(disp_dataset["first_atoms"])
@@ -1651,6 +1674,7 @@ def parse_FORCES_FC2(
             disp1["forces"] = forces_fc2[i] * unit_conversion_factor
         else:
             disp1["forces"] = forces_fc2[i]
+    return None
 
 
 def parse_FORCES_FC3(
@@ -1658,7 +1682,7 @@ def parse_FORCES_FC3(
     filename: str | os.PathLike = "FORCES_FC3",
     use_loadtxt: bool = True,
     unit_conversion_factor: float | None = None,
-):
+) -> None:
     """Parse type1 FORCES_FC3 and store forces in disp_dataset."""
     num_atom = disp_dataset["natom"]
     num_disp = len(disp_dataset["first_atoms"])
@@ -1695,14 +1719,14 @@ def parse_FORCES_FC3(
 
 
 def get_filename_suffix(
-    mesh,
-    grid_point=None,
-    band_indices=None,
-    sigma=None,
-    sigma_cutoff=None,
-    temperature=None,
-    filename=None,
-):
+    mesh: Sequence[int] | NDArray[np.int64],
+    grid_point: int | None = None,
+    band_indices: Sequence[int] | NDArray[np.int64] | None = None,
+    sigma: float | None = None,
+    sigma_cutoff: float | None = None,
+    temperature: float | None = None,
+    filename: str | None = None,
+) -> str:
     """Return filename suffix corresponding to parameters."""
     return _get_filename_suffix(
         mesh,
@@ -1715,7 +1739,7 @@ def get_filename_suffix(
     )
 
 
-def get_length_of_first_line(f):
+def get_length_of_first_line(f: TextIO) -> int:
     """Return length of first line of text file.
 
     This is used to distinguish the data format of the text file.
@@ -1737,12 +1761,12 @@ def get_length_of_first_line(f):
 def _get_filename_suffix(
     mesh: Sequence[int] | NDArray[np.int64],
     grid_point: int | None = None,
-    band_indices: Sequence[int] | NDArray | None = None,
+    band_indices: Sequence[int] | NDArray[np.int64] | None = None,
     sigma: float | None = None,
     sigma_cutoff: float | None = None,
     temperature: float | None = None,
     middle_filename: str | None = None,
-):
+) -> str:
     """Return filename suffix corresponding to parameters."""
     suffix = "-m%d%d%d" % tuple(mesh)
     try:
@@ -1767,12 +1791,12 @@ def _get_filename_suffix(
     return suffix
 
 
-def _del_zeros(val):
+def _del_zeros(val: float) -> str:
     """Remove trailing zeros after decimal point."""
     return ("%f" % val).rstrip("0").rstrip(r"\.")
 
 
-def _parse_yaml(file_yaml):
+def _parse_yaml(file_yaml: str | os.PathLike) -> dict:
     """Open yaml file and return the dictionary.
 
     Used only from parse_disp_fc3_yaml and parse_disp_fc2_yaml.
@@ -1794,7 +1818,7 @@ def _parse_yaml(file_yaml):
     return data
 
 
-def _parse_force_lines(forcefile, num_atom):
+def _parse_force_lines(forcefile: TextIO, num_atom: int) -> NDArray[np.double] | None:
     forces = []
     for line in forcefile:
         if line.strip() == "":
@@ -1811,7 +1835,7 @@ def _parse_force_lines(forcefile, num_atom):
         return np.array(forces)
 
 
-def _write_cell_yaml(w, supercell):
+def _write_cell_yaml(w: TextIO, supercell: PhonopyAtoms) -> None:
     """Write cell info.
 
     This is only used from write_disp_fc3_yaml and write_disp_fc2_yaml.
@@ -1821,10 +1845,10 @@ def _write_cell_yaml(w, supercell):
     warnings.warn("write_cell_yaml() is deprecated.", DeprecationWarning, stacklevel=2)
 
     w.write("lattice:\n")
-    for axis in supercell.get_cell():
+    for axis in supercell.get_cell():  # type: ignore[attr-defined]
         w.write("- [ %20.15f,%20.15f,%20.15f ]\n" % tuple(axis))
-    symbols = supercell.get_chemical_symbols()
-    positions = supercell.get_scaled_positions()
+    symbols = supercell.get_chemical_symbols()  # type: ignore[attr-defined]
+    positions = supercell.get_scaled_positions()  # type: ignore[attr-defined]
     w.write("atoms:\n")
     for i, (s, v) in enumerate(zip(symbols, positions, strict=True)):
         w.write("- symbol: %-2s # %d\n" % (s, i + 1))

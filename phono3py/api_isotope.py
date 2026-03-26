@@ -34,7 +34,16 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
+from collections.abc import Sequence
+from typing import Literal
+
 import numpy as np
+from numpy.typing import NDArray
+from phonopy.harmonic.dynamical_matrix import DynamicalMatrix
+from phonopy.structure.atoms import PhonopyAtoms
+from phonopy.structure.cells import Primitive
 
 from phono3py.other.isotope import Isotope
 from phono3py.phonon.grid import BZGrid
@@ -45,22 +54,21 @@ class Phono3pyIsotope:
 
     def __init__(
         self,
-        mesh,
-        primitive,
-        mass_variances=None,  # length of list is num_atom.
-        band_indices=None,
-        sigmas=None,
-        frequency_factor_to_THz=None,
-        use_grg=False,
-        symprec=1e-5,
-        cutoff_frequency=None,
-        lapack_zheev_uplo="L",
-    ):
+        mesh: Sequence[int] | NDArray[np.int64],
+        primitive: Primitive,
+        mass_variances: Sequence[float] | NDArray[np.double] | None = None,
+        band_indices: Sequence[int] | NDArray[np.int64] | None = None,
+        sigmas: Sequence[float | None] | None = None,
+        frequency_factor_to_THz: float | None = None,
+        use_grg: bool = False,
+        symprec: float = 1e-5,
+        cutoff_frequency: float | None = None,
+        lapack_zheev_uplo: Literal["L", "U"] = "L",
+    ) -> None:
         """Init method."""
+        self._sigmas: Sequence[float | None]
         if sigmas is None:
-            self._sigmas = [
-                None,
-            ]
+            self._sigmas = [None]
         else:
             self._sigmas = sigmas
 
@@ -77,7 +85,7 @@ class Phono3pyIsotope:
         )
 
     @property
-    def dynamical_matrix(self):
+    def dynamical_matrix(self) -> DynamicalMatrix | None:
         """Return dynamical matrix class instance."""
         return self._iso.dynamical_matrix
 
@@ -87,21 +95,25 @@ class Phono3pyIsotope:
         return self._iso.bz_grid
 
     @property
-    def gamma(self):
+    def gamma(self) -> NDArray[np.double]:
         """Return calculated isotope scattering."""
         return self._gamma
 
     @property
-    def frequencies(self):
+    def frequencies(self) -> NDArray[np.double]:
         """Return phonon frequencies at grid points."""
-        return self._iso.get_phonons()[0][self._grid_points]
+        return self._iso.get_phonons()[0][self._grid_points]  # type: ignore[index]
 
     @property
-    def grid_points(self):
+    def grid_points(self) -> NDArray[np.int64]:
         """Return grid points in BZ-grid."""
         return self._grid_points
 
-    def run(self, grid_points, lang="C"):
+    def run(
+        self,
+        grid_points: Sequence[int] | NDArray[np.int64],
+        lang: Literal["C", "Python"] = "C",
+    ) -> None:
         """Calculate isotope scattering."""
         gamma = np.zeros(
             (len(self._sigmas), len(grid_points), len(self._iso.band_indices)),
@@ -133,7 +145,7 @@ class Phono3pyIsotope:
                     print("")
                     print("Phonon-isotope scattering rate in THz (1/4pi-tau)")
                     print(" Frequency     Rate")
-                    for g, f in zip(self._iso.gamma, frequencies[gp], strict=True):
+                    for g, f in zip(self._iso.gamma, frequencies[gp], strict=True):  # type: ignore[index, arg-type]
                         print("%8.3f     %5.3e" % (f, g))
             else:
                 print("sigma or tetrahedron method has to be set.")
@@ -141,13 +153,13 @@ class Phono3pyIsotope:
 
     def init_dynamical_matrix(
         self,
-        fc2,
-        supercell,
-        primitive,
-        nac_params=None,
-        frequency_scale_factor=None,
-        decimals=None,
-    ):
+        fc2: NDArray[np.double],
+        supercell: PhonopyAtoms,
+        primitive: Primitive,
+        nac_params: dict | None = None,
+        frequency_scale_factor: float | None = None,
+        decimals: int | None = None,
+    ) -> None:
         """Initialize dynamical matrix."""
         self._primitive = primitive
         self._iso.init_dynamical_matrix(
@@ -159,6 +171,6 @@ class Phono3pyIsotope:
             decimals=decimals,
         )
 
-    def set_sigma(self, sigma):
+    def set_sigma(self, sigma: float | None) -> None:
         """Set sigma. None means tetrahedron method."""
-        self._iso.set_sigma(sigma)
+        self._iso.sigma = sigma

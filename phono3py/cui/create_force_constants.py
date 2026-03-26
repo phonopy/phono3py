@@ -208,7 +208,7 @@ def generate_displacements_and_evaluate_pypolymlp(
     number_of_snapshots: int | Literal["auto"] | None = None,
     number_estimation_factor: int | None = None,
     random_seed: int | None = None,
-    fc_calculator: str | None = None,
+    fc_calculator: Literal["traditional", "symfc", "alm"] | str | None = None,
     fc_calculator_options: str | None = None,
     cutoff_pair_distance: float | None = None,
     symfc_memory_size: float | None = None,

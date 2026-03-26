@@ -551,10 +551,10 @@ class ImagToReal:
 
 def get_real_self_energy(
     interaction: Interaction,
-    grid_points: Sequence[int],
+    grid_points: Sequence[int] | NDArray[np.int64],
     temperatures: Sequence[float] | NDArray[np.double],
     epsilons: Sequence[float | None] | None = None,
-    frequency_points: NDArray[np.double] | None = None,
+    frequency_points: Sequence[float] | NDArray[np.double] | None = None,
     frequency_step: float | None = None,
     num_frequency_points: int | None = None,
     frequency_points_at_bands: bool = False,
@@ -753,11 +753,11 @@ def get_real_self_energy(
 def write_real_self_energy(
     real_self_energy: NDArray[np.double],
     mesh: NDArray[np.int64],
-    grid_points: Sequence[int],
-    band_indices: list[list[int]],
+    grid_points: Sequence[int] | NDArray[np.int64],
+    band_indices: Sequence[NDArray[np.int64]],
     frequency_points: NDArray[np.double] | None,
     temperatures: Sequence[float] | NDArray[np.double],
-    epsilons: Sequence[float] | None = None,
+    epsilons: Sequence[float | None] | None = None,
     output_filename: str | os.PathLike | None = None,
     is_mesh_symmetry: bool = True,
     log_level: int = 0,

@@ -48,10 +48,12 @@ from typing import (  # List and Optional are for < python3.10
 )
 
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
+from numpy.typing import NDArray
 from phonopy import Phonopy
 from phonopy.api_phonopy import set_data_to_phonopy_yaml
 from phonopy.harmonic.displacement import (
+    DisplacementDataset,
+    Type2DisplacementDataset,
     directions_to_displacement_dataset,
     get_least_displacements,
     get_random_displacements_dataset,
@@ -86,6 +88,7 @@ from phonopy.structure.cells import (
 )
 from phonopy.structure.symmetry import Symmetry
 
+from phono3py.conductivity.base import ConductivityBase
 from phono3py.conductivity.direct_solution_init import get_thermal_conductivity_LBTE
 from phono3py.conductivity.rta_init import get_thermal_conductivity_RTA
 from phono3py.interface.fc_calculator import (
@@ -123,10 +126,10 @@ from phono3py.version import __version__
 class ImagSelfEnergyValues:
     """Parameters for imaginary self-energy calculation."""
 
-    frequency_points: NDArray | None
-    gammas: NDArray
-    scattering_event_class: int | None = None
-    detailed_gammas: Sequence | None = None
+    frequency_points: NDArray[np.double] | None
+    gammas: NDArray[np.double]
+    scattering_event_class: Literal[1, 2] | None = None
+    detailed_gammas: list[NDArray[np.double]] | None = None
 
 
 class Phono3py:
@@ -278,7 +281,7 @@ class Phono3py:
         self._primitive_matrix = get_primitive_matrix_with_auto(
             self._unitcell, primitive_matrix, symprec=self._symprec
         )
-        self._nac_params = None
+        self._nac_params: dict | None = None
         if phonon_supercell_matrix is not None:
             self._phonon_supercell_matrix = np.array(
                 shape_supercell_matrix(phonon_supercell_matrix),
@@ -296,8 +299,8 @@ class Phono3py:
         self._build_phonon_supercell()
         self._build_phonon_primitive_cell()
 
-        self._sigmas = [None]
-        self._sigma_cutoff = None
+        self._sigmas: list[float | None] = [None]
+        self._sigma_cutoff: float | None = None
 
         # Grid
         self._bz_grid = None
@@ -312,41 +315,38 @@ class Phono3py:
 
         # Displacements and supercells
         self._dataset: Fc3DisplacementDataset | None = None
-        self._phonon_dataset: dict | None = None
-        self._supercells_with_displacements: list | None = None
-        self._phonon_supercells_with_displacements: list | None = None
+        self._phonon_dataset: DisplacementDataset | None = None
+        self._supercells_with_displacements: list[PhonopyAtoms | None] | None = None
+        self._phonon_supercells_with_displacements: list[PhonopyAtoms] | None = None
 
         # Thermal conductivity
         # conductivity_RTA or conductivity_LBTE class instance
-        self._thermal_conductivity = None
+        self._thermal_conductivity: ConductivityBase | None = None
 
         # Imaginary part of self energy at frequency points
-        self._ise_params = None
+        self._ise_params: ImagSelfEnergyValues | None = None
 
-        # Frequency shift (real part of bubble diagram)
-        self._real_self_energy = None
-
-        self._grid_points = None
-        self._frequency_points = None
-        self._temperatures = None
+        self._grid_points: NDArray[np.int64] | None = None
+        self._temperatures: NDArray[np.double] | None = None
 
         # Force constants
-        self._fc2 = None
-        self._fc2_cutoff = None  # available only symfc
-        self._fc3 = None
-        self._fc3_nonzero_indices = None  # available only symfc
-        self._fc3_cutoff = None  # available only symfc
+        self._fc2: NDArray[np.double] | None = None
+        self._fc2_cutoff: float | None = None  # available only symfc
+        self._fc3: NDArray[np.double] | None = None
+        # available only symfc
+        self._fc3_nonzero_indices: NDArray[np.byte] | None = None
+        self._fc3_cutoff: float | None = None  # available only symfc
 
         # MLP
         self._mlp: PhonopyMLP | None = None
-        self._mlp_dataset: dict | None = None
+        self._mlp_dataset: Type2DisplacementDataset | None = None
         self._phonon_mlp: PhonopyMLP | None = None
-        self._phonon_mlp_dataset: dict | None = None
+        self._phonon_mlp_dataset: Type2DisplacementDataset | None = None
 
         # Setup interaction
-        self._interaction = None
-        self._band_indices = None
-        self._band_indices_flatten = None
+        self._interaction: Interaction | None = None
+        self._band_indices: Sequence[NDArray[np.int64]]
+        self._band_indices_flatten: NDArray[np.int64]
         self._set_band_indices()
 
     @property
@@ -383,11 +383,11 @@ class Phono3py:
         return self._fc3
 
     @fc3.setter
-    def fc3(self, fc3: NDArray[np.double] | None):
+    def fc3(self, fc3: NDArray[np.double] | None) -> None:
         self._fc3 = fc3
 
     @property
-    def fc3_nonzero_indices(self) -> NDArray | None:
+    def fc3_nonzero_indices(self) -> NDArray[np.byte] | None:
         """Setter and getter of non-zero indices of fc3.
 
         ndarray, optional
@@ -397,7 +397,7 @@ class Phono3py:
         return self._fc3_nonzero_indices
 
     @fc3_nonzero_indices.setter
-    def fc3_nonzero_indices(self, fc3_nonzero_indices):
+    def fc3_nonzero_indices(self, fc3_nonzero_indices: NDArray[np.byte] | None) -> None:
         self._fc3_nonzero_indices = fc3_nonzero_indices
 
     @property
@@ -423,7 +423,7 @@ class Phono3py:
         return self._fc2
 
     @fc2.setter
-    def fc2(self, fc2: NDArray[np.double] | None):
+    def fc2(self, fc2: NDArray[np.double] | None) -> None:
         self._fc2 = fc2
 
     @property
@@ -436,7 +436,7 @@ class Phono3py:
         return self._fc2_cutoff
 
     @property
-    def force_constants(self) -> NDArray | None:
+    def force_constants(self) -> NDArray[np.double] | None:
         """Return fc2. This is same as the getter attribute `fc2`."""
         return self.fc2
 
@@ -453,7 +453,7 @@ class Phono3py:
         return self._sigmas
 
     @sigmas.setter
-    def sigmas(self, sigmas):
+    def sigmas(self, sigmas: Sequence[float | None] | float | int | None) -> None:
         if sigmas is None:
             self._sigmas = [
                 None,
@@ -484,7 +484,7 @@ class Phono3py:
         return self._sigma_cutoff
 
     @sigma_cutoff.setter
-    def sigma_cutoff(self, sigma_cutoff):
+    def sigma_cutoff(self, sigma_cutoff: float | None) -> None:
         self._sigma_cutoff = sigma_cutoff
 
     @property
@@ -506,7 +506,7 @@ class Phono3py:
         return self._nac_params
 
     @nac_params.setter
-    def nac_params(self, nac_params):
+    def nac_params(self, nac_params: dict | None) -> None:
         self._nac_params = nac_params
         if self._interaction is not None:
             self._init_dynamical_matrix()
@@ -607,7 +607,7 @@ class Phono3py:
         return self._phonon_supercell_symmetry
 
     @property
-    def supercell_matrix(self) -> NDArray:
+    def supercell_matrix(self) -> NDArray[np.int64]:
         """Return transformation matrix to supercell cell from unit cell.
 
         ndarray
@@ -618,7 +618,7 @@ class Phono3py:
         return self._supercell_matrix
 
     @property
-    def phonon_supercell_matrix(self) -> NDArray | None:
+    def phonon_supercell_matrix(self) -> NDArray[np.int64] | None:
         """Return transformation matrix to phonon supercell from unit cell.
 
         ndarray
@@ -629,7 +629,7 @@ class Phono3py:
         return self._phonon_supercell_matrix
 
     @property
-    def primitive_matrix(self) -> NDArray | None:
+    def primitive_matrix(self) -> NDArray[np.double] | None:
         """Return transformation matrix to primitive cell from unit cell.
 
         ndarray or None
@@ -714,7 +714,7 @@ class Phono3py:
         self._phonon_supercells_with_displacements = None
 
     @property
-    def phonon_dataset(self) -> dict | None:
+    def phonon_dataset(self) -> DisplacementDataset | None:
         """Setter and getter of displacement-force dataset for fc2.
 
         dict
@@ -741,13 +741,13 @@ class Phono3py:
         return self._phonon_dataset
 
     @phonon_dataset.setter
-    def phonon_dataset(self, dataset):
+    def phonon_dataset(self, dataset: DisplacementDataset | None) -> None:
         if dataset is None:
             self._phonon_dataset = None
         elif "first_atoms" in dataset:
             self._phonon_dataset = copy.deepcopy(dataset)
         elif "displacements" in dataset:
-            self._phonon_dataset = {}
+            self._phonon_dataset = {}  # type: ignore[assignment]
             self.phonon_displacements = dataset["displacements"]
             if "forces" in dataset:
                 self.phonon_forces = dataset["forces"]
@@ -759,7 +759,7 @@ class Phono3py:
         self._phonon_supercells_with_displacements = None
 
     @property
-    def mlp_dataset(self) -> dict | None:
+    def mlp_dataset(self) -> Type2DisplacementDataset | None:
         """Return displacement-force dataset.
 
         The supercell matrix is equal to that of usual displacement-force
@@ -770,12 +770,12 @@ class Phono3py:
         return self._mlp_dataset
 
     @mlp_dataset.setter
-    def mlp_dataset(self, mlp_dataset: dict):
+    def mlp_dataset(self, mlp_dataset: Type2DisplacementDataset) -> None:
         self._check_mlp_dataset(mlp_dataset)
         self._mlp_dataset = mlp_dataset
 
     @property
-    def phonon_mlp_dataset(self) -> dict | None:
+    def phonon_mlp_dataset(self) -> Type2DisplacementDataset | None:
         """Return phonon displacement-force dataset.
 
         The phonon supercell matrix is equal to that of usual displacement-force
@@ -786,7 +786,7 @@ class Phono3py:
         return self._phonon_mlp_dataset
 
     @phonon_mlp_dataset.setter
-    def phonon_mlp_dataset(self, mlp_dataset: dict):
+    def phonon_mlp_dataset(self, mlp_dataset: Type2DisplacementDataset) -> None:
         self._check_mlp_dataset(mlp_dataset)
         self._phonon_mlp_dataset = mlp_dataset
 
@@ -796,19 +796,19 @@ class Phono3py:
         return self._mlp
 
     @mlp.setter
-    def mlp(self, mlp: PhonopyMLP):
+    def mlp(self, mlp: PhonopyMLP) -> None:
         self._mlp = mlp
 
     @property
-    def phonon_mlp(self):
+    def phonon_mlp(self) -> PhonopyMLP | None:
         """Return MLP instance for fc2."""
         return self._phonon_mlp
 
     @property
-    def band_indices(self) -> list[NDArray] | None:
+    def band_indices(self) -> Sequence[NDArray[np.int64]]:
         """Setter and getter of band indices.
 
-        list[NDArray]
+        list[NDArray[np.int64]]
             List of band indices specified to select specific bands
             to computer ph-ph interaction related properties.
 
@@ -816,10 +816,14 @@ class Phono3py:
         return self._band_indices
 
     @band_indices.setter
-    def band_indices(self, band_indices):
+    def band_indices(
+        self, band_indices: Sequence[Sequence[int]] | NDArray[np.int64] | None
+    ) -> None:
         self._set_band_indices(band_indices=band_indices)
 
-    def _set_band_indices(self, band_indices=None):
+    def _set_band_indices(
+        self, band_indices: Sequence[Sequence[int]] | NDArray[np.int64] | None = None
+    ) -> None:
         if band_indices is None:
             num_band = len(self._primitive) * 3
             self._band_indices = [np.arange(num_band, dtype="int64")]
@@ -828,12 +832,12 @@ class Phono3py:
         self._band_indices_flatten = np.hstack(self._band_indices, dtype="int64")
 
     @property
-    def masses(self) -> NDArray:
+    def masses(self) -> NDArray[np.double]:
         """Setter and getter of atomic masses of primitive cell."""
         return self._primitive.masses
 
     @masses.setter
-    def masses(self, masses):
+    def masses(self, masses: Sequence[float] | NDArray[np.double] | None) -> None:
         if masses is None:
             return
         p_masses = np.array(masses)
@@ -889,7 +893,7 @@ class Phono3py:
         return self._phonon_supercells_with_displacements
 
     @property
-    def mesh_numbers(self) -> NDArray | None:
+    def mesh_numbers(self) -> NDArray[np.int64] | None:
         """Setter and getter of sampling mesh numbers in reciprocal space."""
         if self._bz_grid is None:
             return None
@@ -897,41 +901,36 @@ class Phono3py:
             return self._bz_grid.D_diag
 
     @mesh_numbers.setter
-    def mesh_numbers(self, mesh_numbers: float | ArrayLike):
+    def mesh_numbers(
+        self, mesh_numbers: float | NDArray[np.int64] | Sequence[int]
+    ) -> None:
         self._set_mesh_numbers(mesh_numbers)
 
     @property
-    def thermal_conductivity(self):
+    def thermal_conductivity(self) -> ConductivityBase | None:
         """Return thermal conductivity class instance."""
         return self._thermal_conductivity
 
     @property
-    def displacements(self) -> NDArray:
+    def displacements(self) -> NDArray[np.double]:
         """Setter and getter displacements in supercells.
 
-        There are two types of displacement dataset. See the docstring
-        of dataset about types 1 and 2 for the displacement dataset formats.
-        Displacements set returned depends on either type-1 or type-2 as
-        follows:
+        There are two types of displacement dataset. See the docstring of
+        dataset about types 1 and 2 for the displacement dataset formats. For
+        type 1 dataset, displacements are extracted and returned in type 2
+        format. Therefore displacements returned are always in the format of
+        type-2 as follows:
 
-        Type-1, List of list
-            The internal list has 4 elements such as [32, 0.01, 0.0, 0.0]].
-            The first element is the supercell atom index starting with 0.
-            The remaining three elements give the displacement in Cartesian
-            coordinates.
         Type-2, array_like
             Displacements of all atoms of all supercells in Cartesian
-            coordinates.
-            shape=(supercells, natom, 3)
-            dtype='double'
+            coordinates. shape=(supercells, natom, 3) dtype='double'
 
 
         For setter, only type-2 dataset format is allowed.
 
         displacements : array_like
-            Atomic displacements of all atoms of all supercells.
-            Only all displacements in each supercell case (type-2) is
-            supported.
+            Atomic displacements of all atoms of all supercells. Only all
+            displacements in each supercell case (type-2) is supported.
             shape=(supercells, natom, 3), dtype='double', order='C'
 
         """
@@ -941,8 +940,8 @@ class Phono3py:
             raise RuntimeError("displacement dataset is not set.")
 
         if "first_atoms" in dataset:
-            num_scells = len(dataset["first_atoms"])
-            for disp1 in dataset["first_atoms"]:
+            num_scells = len(dataset["first_atoms"])  # type: ignore[typeddict-item]
+            for disp1 in dataset["first_atoms"]:  # type: ignore[typeddict-item]
                 num_scells += len(disp1["second_atoms"])
             displacements = np.zeros(
                 (num_scells, len(self._supercell), 3),
@@ -950,10 +949,10 @@ class Phono3py:
                 order="C",
             )
             i = 0
-            for disp1 in dataset["first_atoms"]:
+            for disp1 in dataset["first_atoms"]:  # type: ignore[typeddict-item]
                 displacements[i, disp1["number"]] = disp1["displacement"]
                 i += 1
-            for disp1 in dataset["first_atoms"]:
+            for disp1 in dataset["first_atoms"]:  # type: ignore[typeddict-item]
                 for disp2 in disp1["second_atoms"]:
                     displacements[i, disp2["number"]] = disp2["displacement"]
                     i += 1
@@ -965,7 +964,12 @@ class Phono3py:
         return displacements
 
     @displacements.setter
-    def displacements(self, displacements):
+    def displacements(
+        self,
+        displacements: Sequence[Sequence[Sequence[float]]]
+        | Sequence[NDArray[np.double]]
+        | NDArray[np.double],
+    ) -> None:
         disps = np.array(displacements, dtype="double", order="C")
         natom = len(self._supercell)
         if disps.ndim != 3 or disps.shape[1:] != (natom, 3):
@@ -974,11 +978,11 @@ class Phono3py:
             self._dataset = {}  # type: ignore[assignment]
         elif "first_atoms" in self._dataset:
             raise RuntimeError("Displacements are incompatible with dataset.")
-        self._dataset["displacements"] = disps
+        self._dataset["displacements"] = disps  # type: ignore[typeddict-unknown-key, index]
         self._supercells_with_displacements = None
 
     @property
-    def forces(self) -> NDArray | None:
+    def forces(self) -> NDArray[np.double] | None:
         """Setter and getter of forces in displacement dataset.
 
         A set of atomic forces in displaced supercells. The order of
@@ -995,11 +999,16 @@ class Phono3py:
         return self._get_forces_energies(target="forces")
 
     @forces.setter
-    def forces(self, values):
+    def forces(
+        self,
+        values: NDArray[np.double]
+        | Sequence[NDArray[np.double]]
+        | Sequence[Sequence[Sequence[float]]],
+    ) -> None:
         self._set_forces_energies(values, target="forces")
 
     @property
-    def supercell_energies(self) -> NDArray | None:
+    def supercell_energies(self) -> NDArray[np.double] | None:
         """Setter and getter of supercell energies in displacement dataset.
 
         A set of supercell energies of displaced supercells. The order of
@@ -1016,11 +1025,11 @@ class Phono3py:
         return self._get_forces_energies(target="supercell_energies")
 
     @supercell_energies.setter
-    def supercell_energies(self, values):
+    def supercell_energies(self, values: Sequence[float] | NDArray[np.double]) -> None:
         self._set_forces_energies(values, target="supercell_energies")
 
     @property
-    def phonon_displacements(self):
+    def phonon_displacements(self) -> NDArray[np.double]:
         """Setter and getter of displacements in supercells for fc2.
 
         There are two types of displacement dataset. See the docstring
@@ -1067,24 +1076,27 @@ class Phono3py:
         return displacements
 
     @phonon_displacements.setter
-    def phonon_displacements(self, displacements):
+    def phonon_displacements(
+        self,
+        displacements: Sequence[Sequence[Sequence[float]]]
+        | Sequence[NDArray[np.double]]
+        | NDArray[np.double],
+    ) -> None:
         if self._phonon_supercell_matrix is None:
             raise RuntimeError("phonon_supercell_matrix is not set.")
 
-        disps = np.array(displacements, dtype="double", order="C")
+        disps = np.asarray(displacements, dtype="double", order="C")
         natom = len(self._phonon_supercell)
         if disps.ndim != 3 or disps.shape[1:] != (natom, 3):
             raise RuntimeError("Array shape of displacements is incorrect.")
-        if self._phonon_dataset is None:
-            self._phonon_dataset = {}
-        elif "first_atoms" in self._phonon_dataset:
+        if self._phonon_dataset is not None and "first_atoms" in self._phonon_dataset:
             raise RuntimeError("Displacements are incompatible with dataset.")
 
-        self._phonon_dataset["displacements"] = disps
+        self._phonon_dataset = {"displacements": disps}
         self._phonon_supercells_with_displacements = None
 
     @property
-    def phonon_forces(self):
+    def phonon_forces(self) -> NDArray[np.double] | None:
         """Setter and getter of forces in fc2 displacement dataset.
 
         A set of atomic forces in displaced supercells. The order of
@@ -1102,11 +1114,16 @@ class Phono3py:
         return self._get_phonon_forces_energies(target="forces")
 
     @phonon_forces.setter
-    def phonon_forces(self, values):
+    def phonon_forces(
+        self,
+        values: NDArray[np.double]
+        | Sequence[NDArray[np.double]]
+        | Sequence[Sequence[Sequence[float]]],
+    ) -> None:
         self._set_phonon_forces_energies(values, target="forces")
 
     @property
-    def phonon_supercell_energies(self):
+    def phonon_supercell_energies(self) -> NDArray[np.double] | None:
         """Setter and getter of supercell energies in fc2 displacement dataset.
 
         shape=(displaced supercells,)
@@ -1121,23 +1138,25 @@ class Phono3py:
         return self._get_phonon_forces_energies(target="supercell_energies")
 
     @phonon_supercell_energies.setter
-    def phonon_supercell_energies(self, values):
+    def phonon_supercell_energies(
+        self, values: Sequence[float] | NDArray[np.double]
+    ) -> None:
         self._set_phonon_forces_energies(values, target="supercell_energies")
 
     @property
-    def phph_interaction(self):
+    def phph_interaction(self) -> Interaction | None:
         """Return Interaction instance."""
         return self._interaction
 
     @property
-    def detailed_gammas(self):
+    def detailed_gammas(self) -> list[NDArray[np.double]] | None:
         """Return detailed gamma."""
         if self._ise_params is None:
             raise RuntimeError("Imaginary self energy parameters are not set.")
         return self._ise_params.detailed_gammas
 
     @property
-    def grid(self):
+    def grid(self) -> BZGrid | None:
         """Return Brillouin zone grid information.
 
         BZGrid
@@ -1148,13 +1167,13 @@ class Phono3py:
 
     def init_phph_interaction(
         self,
-        nac_q_direction: ArrayLike | None = None,
+        nac_q_direction: NDArray[np.double] | Sequence[float] | None = None,
         constant_averaged_interaction: float | None = None,
         frequency_scale_factor: float | None = None,
         symmetrize_fc3q: bool = False,
         lapack_zheev_uplo: Literal["L", "U"] = "L",
         openmp_per_triplets: bool | None = None,
-    ):
+    ) -> None:
         """Initialize ph-ph interaction calculation.
 
         This method creates an instance of Interaction class, which
@@ -1224,7 +1243,12 @@ class Phono3py:
         self._interaction.nac_q_direction = nac_q_direction
         self._init_dynamical_matrix()
 
-    def set_phonon_data(self, frequencies, eigenvectors, grid_address):
+    def set_phonon_data(
+        self,
+        frequencies: NDArray[np.double],
+        eigenvectors: NDArray[np.cdouble],
+        grid_address: NDArray[np.int64],
+    ) -> None:
         """Set phonon frequencies and eigenvectors in Interaction instance.
 
         Harmonic phonon information is stored in Interaction instance. For
@@ -1252,7 +1276,9 @@ class Phono3py:
         if self._interaction is not None:
             self._interaction.set_phonon_data(frequencies, eigenvectors, grid_address)
 
-    def get_phonon_data(self):
+    def get_phonon_data(
+        self,
+    ) -> tuple[NDArray[np.double], NDArray[np.cdouble], NDArray[np.int64]]:
         """Get phonon frequencies and eigenvectors in Interaction instance.
 
         Harmonic phonon information is stored in Interaction instance. This
@@ -1270,6 +1296,8 @@ class Phono3py:
         """
         if self._interaction is not None:
             freqs, eigvecs, _ = self._interaction.get_phonons()
+            # In Phono3py, if self._interaction is not None, phonon data should be set.
+            assert freqs is not None and eigvecs is not None
             return freqs, eigvecs, self._interaction.bz_grid.addresses
         else:
             msg = (
@@ -1278,7 +1306,9 @@ class Phono3py:
             )
             raise RuntimeError(msg)
 
-    def run_phonon_solver(self, grid_points=None):
+    def run_phonon_solver(
+        self, grid_points: Sequence[int] | NDArray[np.int64] | None = None
+    ) -> None:
         """Run harmonic phonon calculation on grid points.
 
         Parameters
@@ -1313,7 +1343,7 @@ class Phono3py:
         random_seed: int | None = None,
         max_distance: float | None = None,
         number_estimation_factor: float | None = None,
-    ):
+    ) -> None:
         """Generate displacement dataset in supercell for fc3.
 
         Systematic displacements
@@ -1420,7 +1450,7 @@ class Phono3py:
                     _number_of_snapshots = int(_number_of_snapshots)
             else:
                 _number_of_snapshots = number_of_snapshots
-            self._dataset = self._generate_random_displacements(
+            self._dataset = self._generate_random_displacements(  # type: ignore[assignment]
                 _number_of_snapshots,
                 len(self._supercell),
                 distance=_distance,
@@ -1429,7 +1459,7 @@ class Phono3py:
                 max_distance=max_distance,
             )
             if cutoff_pair_distance is not None:
-                self._dataset["cutoff_distance"] = cutoff_pair_distance
+                self._dataset["cutoff_distance"] = cutoff_pair_distance  # type: ignore[typeddict-unknown-key, index]
         else:
             self._dataset = get_third_order_displacements(
                 self._supercell,
@@ -1454,7 +1484,7 @@ class Phono3py:
         number_of_snapshots: int | Literal["auto"] | None = None,
         random_seed: int | None = None,
         max_distance: float | None = None,
-    ):
+    ) -> None:
         """Generate displacement dataset in phonon supercell for fc2.
 
         This systematically generates single atomic displacements in supercells
@@ -1547,7 +1577,7 @@ class Phono3py:
         fc_calculator: Literal["traditional", "symfc", "alm"] | None = None,
         fc_calculator_options: str | None = None,
         use_symfc_projector: bool = False,
-    ):
+    ) -> None:
         """Calculate fc3 from displacements and forces.
 
         Parameters
@@ -1579,7 +1609,7 @@ class Phono3py:
             fc_solver_name,
             self._supercell,
             symmetry=self._symmetry,
-            dataset=self._dataset,
+            dataset=self._dataset,  # type: ignore[arg-type]
             is_compact_fc=is_compact_fc,
             primitive=self._primitive,
             orders=[2, 3],
@@ -1638,7 +1668,7 @@ class Phono3py:
         self,
         use_symfc_projector: bool = False,
         options: str | None = None,
-    ):
+    ) -> None:
         """Symmetrize fc3 by symfc projector or traditional approach.
 
         Parameters
@@ -1702,7 +1732,7 @@ class Phono3py:
         fc_calculator: Literal["traditional", "symfc", "alm"] | None = None,
         fc_calculator_options: str | None = None,
         use_symfc_projector: bool = False,
-    ):
+    ) -> None:
         """Calculate fc2 from displacements and forces.
 
         Parameters
@@ -1732,11 +1762,11 @@ class Phono3py:
         if self._phonon_dataset is None:
             disp_dataset = self._dataset
         else:
-            disp_dataset = self._phonon_dataset
+            disp_dataset = self._phonon_dataset  # type: ignore[assignment]
 
         if disp_dataset is None:
             raise RuntimeError("Displacement dataset is not set.")
-        if not forces_in_dataset(disp_dataset):
+        if not forces_in_dataset(disp_dataset):  # type: ignore[arg-type]
             raise RuntimeError("Forces are not set in the dataset.")
 
         if self._log_level:
@@ -1744,7 +1774,7 @@ class Phono3py:
 
         fc_solver = get_fc_solver(
             self._phonon_supercell,
-            disp_dataset,
+            disp_dataset,  # type: ignore[arg-type]
             primitive=self._phonon_primitive,
             fc_calculator=fc_calculator,
             fc_calculator_options=fc_calculator_options,
@@ -1771,7 +1801,7 @@ class Phono3py:
         self,
         use_symfc_projector: bool = False,
         options: str | None = None,
-    ):
+    ) -> None:
         """Symmetrize fc2 by symfc projector or traditional approach.
 
         Parameters
@@ -1836,7 +1866,11 @@ class Phono3py:
                 else:
                     symmetrize_compact_force_constants(self._fc2, primitive)
 
-    def cutoff_fc3_by_zero(self, cutoff_distance, fc3=None):
+    def cutoff_fc3_by_zero(
+        self,
+        cutoff_distance: float,
+        fc3: NDArray[np.double] | None = None,
+    ) -> None:
         """Set zero to fc3 elements out of cutoff distance.
 
         Note
@@ -1854,6 +1888,8 @@ class Phono3py:
             _fc3 = self._fc3
         else:
             _fc3 = fc3
+        if _fc3 is None:
+            raise RuntimeError("fc3 is not set.")
         cutoff_fc3_by_zero(
             _fc3,
             self._supercell,
@@ -1862,14 +1898,14 @@ class Phono3py:
             symprec=self._symprec,
         )
 
-    def set_permutation_symmetry(self):
+    def set_permutation_symmetry(self) -> None:
         """Enforce permutation symmetry to fc2 and fc3."""
         if self._fc2 is not None:
             set_permutation_symmetry(self._fc2)
         if self._fc3 is not None:
             set_permutation_symmetry_fc3(self._fc3)
 
-    def set_translational_invariance(self):
+    def set_translational_invariance(self) -> None:
         """Enforce translation invariance.
 
         This subtracts drift divided by number of elements in each row and
@@ -1883,18 +1919,18 @@ class Phono3py:
 
     def run_imag_self_energy(
         self,
-        grid_points,
-        temperatures: NDArray | Sequence,
-        frequency_points=None,
-        frequency_step=None,
-        num_frequency_points=None,
-        num_points_in_batch=None,
-        frequency_points_at_bands=False,
-        scattering_event_class=None,
-        write_txt=False,
-        write_gamma_detail=False,
-        keep_gamma_detail=False,
-        output_filename=None,
+        grid_points: Sequence[int] | NDArray[np.int64],
+        temperatures: NDArray[np.double] | Sequence[float],
+        frequency_points: NDArray[np.double] | Sequence[float] | None = None,
+        frequency_step: float | None = None,
+        num_frequency_points: int | None = None,
+        num_points_in_batch: int | None = None,
+        frequency_points_at_bands: bool = False,
+        scattering_event_class: Literal[1, 2] | None = None,
+        write_txt: bool = False,
+        write_gamma_detail: bool = False,
+        keep_gamma_detail: bool = False,
+        output_filename: str | None = None,
     ) -> ImagSelfEnergyValues:
         """Calculate imaginary part of self-energy of bubble diagram (Gamma).
 
@@ -1954,12 +1990,10 @@ class Phono3py:
             raise RuntimeError(msg)
 
         if temperatures is None:
-            self._temperatures = [
-                300.0,
-            ]
+            self._temperatures = np.array([300.0], dtype="double")
         else:
-            self._temperatures = temperatures
-        self._grid_points = grid_points
+            self._temperatures = np.asarray(temperatures, dtype="double")
+        self._grid_points = np.asarray(grid_points, dtype="int64")
         vals = get_imag_self_energy(
             self._interaction,
             grid_points,
@@ -1993,9 +2027,14 @@ class Phono3py:
 
         return self._ise_params
 
-    def _write_imag_self_energy(self, output_filename=None):
+    def _write_imag_self_energy(self, output_filename: str | None = None) -> None:
+        assert self._temperatures is not None
         if self._ise_params is None:
             raise RuntimeError("Imaginary self-energy is not calculated.")
+        # if self._ise_params is not None
+        assert self.mesh_numbers is not None
+        assert self._grid_points is not None
+        assert self._band_indices is not None
         write_imag_self_energy(
             self._ise_params.gammas,
             self.mesh_numbers,
@@ -2012,17 +2051,17 @@ class Phono3py:
 
     def run_real_self_energy(
         self,
-        grid_points,
-        temperatures,
-        frequency_points_at_bands=False,
-        frequency_points=None,
-        frequency_step=None,
-        num_frequency_points=None,
-        epsilons=None,
-        write_txt=False,
-        write_hdf5=False,
-        output_filename=None,
-    ):
+        grid_points: Sequence[int] | NDArray[np.int64],
+        temperatures: NDArray[np.double] | Sequence[float],
+        frequency_points_at_bands: bool = False,
+        frequency_points: NDArray[np.double] | Sequence[float] | None = None,
+        frequency_step: float | None = None,
+        num_frequency_points: int | None = None,
+        epsilons: Sequence[float | None] | None = None,
+        write_txt: bool = False,
+        write_hdf5: bool = False,
+        output_filename: str | None = None,
+    ) -> tuple[NDArray[np.double] | None, NDArray[np.double]]:
         """Calculate real-part of self-energy of bubble diagram (Delta).
 
         Pi = Delta - i Gamma.
@@ -2076,15 +2115,10 @@ class Phono3py:
         if epsilons is not None:
             _epsilons = epsilons
         else:
-            if len(self._sigmas) == 1 and self._sigmas[0] is None:
-                _epsilons = None
-            elif self._sigmas[0] is None:
-                _epsilons = self._sigmas[1:]
-            else:
-                _epsilons = self._sigmas
+            _epsilons = self._sigmas
 
         # (epsilon, grid_point, temperature, band)
-        frequency_points, deltas = get_real_self_energy(
+        _frequency_points, deltas = get_real_self_energy(
             self._interaction,
             grid_points,
             temperatures,
@@ -2099,12 +2133,13 @@ class Phono3py:
         )
 
         if write_txt:
+            assert self.mesh_numbers is not None
             write_real_self_energy(
                 deltas,
                 self.mesh_numbers,
                 grid_points,
                 self._band_indices,
-                frequency_points,
+                _frequency_points,
                 temperatures,
                 _epsilons,
                 output_filename=output_filename,
@@ -2112,20 +2147,20 @@ class Phono3py:
                 log_level=self._log_level,
             )
 
-        return frequency_points, deltas
+        return _frequency_points, deltas
 
     def run_spectral_function(
         self,
-        grid_points,
-        temperatures,
-        frequency_points=None,
-        frequency_step=None,
-        num_frequency_points=None,
-        num_points_in_batch=None,
-        write_txt=False,
-        write_hdf5=False,
-        output_filename=None,
-    ):
+        grid_points: Sequence[int] | NDArray[np.int64],
+        temperatures: NDArray[np.double] | Sequence[float],
+        frequency_points: NDArray[np.double] | Sequence[float] | None = None,
+        frequency_step: float | None = None,
+        num_frequency_points: int | None = None,
+        num_points_in_batch: int | None = None,
+        write_txt: bool = False,
+        write_hdf5: bool = False,
+        output_filename: str | None = None,
+    ) -> None:
         """Frequency shift from lowest order diagram is calculated.
 
         Parameters
@@ -2189,10 +2224,10 @@ class Phono3py:
     def run_thermal_conductivity(
         self,
         is_LBTE: bool = False,
-        temperatures: Sequence[float] | NDArray | None = None,
+        temperatures: Sequence[float] | NDArray[np.double] | None = None,
         is_isotope: bool = False,
-        mass_variances: Sequence[float] | NDArray | None = None,
-        grid_points: Sequence[int] | NDArray | None = None,
+        mass_variances: Sequence[float] | NDArray[np.double] | None = None,
+        grid_points: Sequence[int] | NDArray[np.int64] | None = None,
         boundary_mfp: float | None = None,  # in micrometer
         solve_collective_phonon: bool = False,
         use_ave_pp: bool = False,
@@ -2219,7 +2254,7 @@ class Phono3py:
         input_filename: str | None = None,
         output_filename: str | None = None,
         log_level: int | None = None,
-    ):
+    ) -> None:
         """Run thermal conductivity calculation.
 
         Parameters
@@ -2451,7 +2486,7 @@ class Phono3py:
         self,
         filename: str | os.PathLike = "phono3py_params.yaml",
         settings: dict | None = None,
-    ):
+    ) -> None:
         """Save parameters in Phono3py instants into file.
 
         Parameters
@@ -2478,7 +2513,7 @@ class Phono3py:
         self,
         params: PypolymlpParams | dict | str | None = None,
         test_size: float = 0.1,
-    ):
+    ) -> None:
         """Develop machine learning potential.
 
         Parameters
@@ -2503,19 +2538,19 @@ class Phono3py:
             test_size=test_size,
         )
 
-    def save_mlp(self, filename: str | None = None):
+    def save_mlp(self, filename: str | os.PathLike | None = None) -> None:
         """Save machine learning potential."""
         if self._mlp is None:
             raise RuntimeError("MLP is not developed yet.")
 
         self._mlp.save(filename=filename)
 
-    def load_mlp(self, filename: str | os.PathLike | None = None):
+    def load_mlp(self, filename: str | os.PathLike | None = None) -> None:
         """Load machine learning potential."""
         self._mlp = PhonopyMLP(log_level=self._log_level)
         self._mlp.load(filename=filename)
 
-    def evaluate_mlp(self):
+    def evaluate_mlp(self) -> None:
         """Evaluate machine learning potential.
 
         This method calculates the supercell energies and forces from the MLP
@@ -2542,7 +2577,7 @@ class Phono3py:
         self,
         params: PypolymlpParams | dict | str | None = None,
         test_size: float = 0.1,
-    ):
+    ) -> None:
         """Develop MLP for fc2.
 
         Parameters
@@ -2567,19 +2602,19 @@ class Phono3py:
             test_size=test_size,
         )
 
-    def save_phonon_mlp(self, filename: str | os.PathLike | None = None):
+    def save_phonon_mlp(self, filename: str | os.PathLike | None = None) -> None:
         """Save machine learning potential."""
         if self._phonon_mlp is None:
             raise RuntimeError("MLP is not developed yet.")
 
         self._phonon_mlp.save(filename=filename)
 
-    def load_phonon_mlp(self, filename: str | None = None):
+    def load_phonon_mlp(self, filename: str | os.PathLike | None = None) -> None:
         """Load machine learning potential."""
         self._phonon_mlp = PhonopyMLP(log_level=self._log_level)
         self._phonon_mlp.load(filename=filename)
 
-    def evaluate_phonon_mlp(self):
+    def evaluate_phonon_mlp(self) -> None:
         """Evaluate the machine learning potential.
 
         This method calculates the supercell energies and forces from the MLP
@@ -2630,12 +2665,12 @@ class Phono3py:
     ###################
     # private methods #
     ###################
-    def _search_symmetry(self):
+    def _search_symmetry(self) -> None:
         self._symmetry = Symmetry(
             self._supercell, symprec=self._symprec, is_symmetry=self._is_symmetry
         )
 
-    def _search_primitive_symmetry(self):
+    def _search_primitive_symmetry(self) -> None:
         self._primitive_symmetry = Symmetry(
             self._primitive, self._symprec, self._is_symmetry
         )
@@ -2647,7 +2682,7 @@ class Phono3py:
                 "cell are different."
             )
 
-    def _search_phonon_supercell_symmetry(self):
+    def _search_phonon_supercell_symmetry(self) -> None:
         if self._phonon_supercell_matrix is None:
             self._phonon_supercell_symmetry = self._symmetry
         else:
@@ -2657,12 +2692,12 @@ class Phono3py:
                 is_symmetry=self._is_symmetry,
             )
 
-    def _build_supercell(self):
+    def _build_supercell(self) -> None:
         self._supercell = get_supercell(
             self._unitcell, self._supercell_matrix, symprec=self._symprec
         )
 
-    def _build_primitive_cell(self):
+    def _build_primitive_cell(self) -> None:
         """Create primitive cell.
 
         primitive_matrix:
@@ -2677,7 +2712,7 @@ class Phono3py:
             self._supercell, self._supercell_matrix, self._primitive_matrix
         )
 
-    def _build_phonon_supercell(self):
+    def _build_phonon_supercell(self) -> None:
         """Create phonon supercell for fc2.
 
         phonon_supercell:
@@ -2694,7 +2729,7 @@ class Phono3py:
                 self._unitcell, self._phonon_supercell_matrix, symprec=self._symprec
             )
 
-    def _build_phonon_primitive_cell(self):
+    def _build_phonon_primitive_cell(self) -> None:
         if self._phonon_supercell_matrix is None:
             self._phonon_primitive = self._primitive
         else:
@@ -2711,7 +2746,7 @@ class Phono3py:
                 raise RuntimeError
 
     def _build_phonon_supercells_with_displacements(
-        self, supercell: PhonopyAtoms, dataset
+        self, supercell: PhonopyAtoms, dataset: DisplacementDataset
     ) -> list[PhonopyAtoms]:
         supercells = []
         positions = supercell.positions
@@ -2748,7 +2783,7 @@ class Phono3py:
 
         return supercells
 
-    def _build_supercells_with_displacements(self):
+    def _build_supercells_with_displacements(self) -> None:
         assert self._dataset is not None
 
         magmoms = self._supercell.magnetic_moments
@@ -2760,13 +2795,14 @@ class Phono3py:
         supercells = cast(
             List[Optional[PhonopyAtoms]],  # For < python3.10
             self._build_phonon_supercells_with_displacements(
-                self._supercell, self._dataset
+                self._supercell,
+                self._dataset,  # type: ignore[arg-type]
             ),
         )
 
         # Two displacement supercells
-        if "first_atoms" in self._dataset:
-            for disp1 in self._dataset["first_atoms"]:
+        if "first_atoms" in self._dataset:  # type: ignore[typeddict-item]
+            for disp1 in self._dataset["first_atoms"]:  # type: ignore[typeddict-item]
                 disp_cart1 = disp1["displacement"]
                 for disp2 in disp1["second_atoms"]:
                     if "included" in disp2:
@@ -2792,7 +2828,10 @@ class Phono3py:
         self._supercells_with_displacements = supercells
 
     def _get_primitive_cell(
-        self, supercell, supercell_matrix, primitive_matrix
+        self,
+        supercell: Supercell,
+        supercell_matrix: NDArray[np.int64],
+        primitive_matrix: NDArray[np.double] | None,
     ) -> Primitive:
         inv_supercell_matrix = np.linalg.inv(supercell_matrix)
         if primitive_matrix is None:
@@ -2804,13 +2843,12 @@ class Phono3py:
 
     def _set_mesh_numbers(
         self,
-        mesh: float | ArrayLike,
-    ):
-        # initialization related to mesh
+        mesh: float | NDArray[np.int64] | Sequence[int],
+    ) -> None:
         self._interaction = None
 
         try:
-            self._bz_grid = BZGrid(  # type: ignore[assignment]
+            self._bz_grid = BZGrid(
                 mesh,
                 lattice=self._primitive.cell,
                 symmetry_dataset=self._primitive_symmetry.dataset,
@@ -2822,7 +2860,7 @@ class Phono3py:
             )
         except RuntimeError as e:
             if "Grid symmetry is broken." in str(e) and isinstance(mesh, (float, int)):
-                self._bz_grid = BZGrid(  # type: ignore[assignment]
+                self._bz_grid = BZGrid(
                     mesh,
                     lattice=self._primitive.cell,
                     symmetry_dataset=self._primitive_symmetry.dataset,
@@ -2839,7 +2877,7 @@ class Phono3py:
                 )
                 raise RuntimeError(msg) from e
 
-    def _init_dynamical_matrix(self):
+    def _init_dynamical_matrix(self) -> None:
         if self._interaction is None:
             msg = (
                 "Phono3py.init_phph_interaction has to be called "
@@ -2847,6 +2885,7 @@ class Phono3py:
             )
             raise RuntimeError(msg)
 
+        assert self._fc2 is not None
         self._interaction.init_dynamical_matrix(
             self._fc2,
             self._phonon_supercell,
@@ -2870,7 +2909,7 @@ class Phono3py:
 
     def _get_forces_energies(
         self, target: Literal["forces", "supercell_energies"]
-    ) -> NDArray | None:
+    ) -> NDArray[np.double] | None:
         """Return fc3 forces and supercell energies.
 
         Return None if tagert data is not found rather than raising exception.
@@ -2878,14 +2917,14 @@ class Phono3py:
         """
         if self._dataset is None:
             return None
-        if not forces_in_dataset(self._dataset):
+        if not forces_in_dataset(self._dataset):  # type: ignore[arg-type]
             return None
 
-        if target in self._dataset:  # type-2
-            return self._dataset[target]
-        elif "first_atoms" in self._dataset:  # type-1
-            num_scells = len(self._dataset["first_atoms"])
-            for disp1 in self._dataset["first_atoms"]:
+        if target in self._dataset:  # type: ignore[operator]  # type-2
+            return self._dataset[target]  # type: ignore[literal-required, typeddict-item]
+        elif "first_atoms" in self._dataset:  # type: ignore[typeddict-item]  # type-1
+            num_scells = len(self._dataset["first_atoms"])  # type: ignore[typeddict-item]
+            for disp1 in self._dataset["first_atoms"]:  # type: ignore[typeddict-item]
                 num_scells += len(disp1["second_atoms"])
             if target == "forces":
                 values = np.zeros(
@@ -2898,58 +2937,65 @@ class Phono3py:
                 values = np.zeros(num_scells, dtype="double")  # type: ignore[assignment]
                 type1_target = "supercell_energy"
             count = 0
-            for disp1 in self._dataset["first_atoms"]:
-                values[count] = disp1[type1_target]
+            for disp1 in self._dataset["first_atoms"]:  # type: ignore[typeddict-item]
+                values[count] = disp1[type1_target]  # type: ignore[literal-required]
                 count += 1
-            for disp1 in self._dataset["first_atoms"]:
+            for disp1 in self._dataset["first_atoms"]:  # type: ignore[typeddict-item]
                 for disp2 in disp1["second_atoms"]:
-                    values[count] = disp2[type1_target]
+                    values[count] = disp2[type1_target]  # type: ignore[literal-required]
                     count += 1
             return values
         return None
 
     def _set_forces_energies(
-        self, values, target: Literal["forces", "supercell_energies"]
-    ):
+        self,
+        values: NDArray[np.double]
+        | Sequence[float]
+        | Sequence[NDArray[np.double]]
+        | Sequence[Sequence[Sequence[float]]],
+        target: Literal["forces", "supercell_energies"],
+    ) -> None:
         if self._dataset is None:
             raise RuntimeError("Dataset is not available.")
 
-        if "first_atoms" in self._dataset:  # type-1
+        if "first_atoms" in self._dataset:  # type: ignore[typeddict-item]  # type-1
             count = 0
-            for disp1 in self._dataset["first_atoms"]:
+            for disp1 in self._dataset["first_atoms"]:  # type: ignore[typeddict-item]
                 if target == "forces":
                     disp1[target] = np.array(values[count], dtype="double", order="C")
                 elif target == "supercell_energies":
-                    disp1["supercell_energy"] = float(values[count])
+                    v = values[count]
+                    assert isinstance(v, (float, np.floating))
+                    disp1["supercell_energy"] = float(v)
                 count += 1
-            for disp1 in self._dataset["first_atoms"]:
+            for disp1 in self._dataset["first_atoms"]:  # type: ignore[typeddict-item]
                 for disp2 in disp1["second_atoms"]:
                     if target == "forces":
                         disp2[target] = np.array(
                             values[count], dtype="double", order="C"
                         )
                     elif target == "supercell_energies":
-                        disp2["supercell_energy"] = float(values[count])
+                        v = values[count]
+                        assert isinstance(v, (float, np.floating))
+                        disp2["supercell_energy"] = float(v)
                     count += 1
         elif "displacements" in self._dataset or "forces" in self._dataset:  # type-2
-            self._dataset[target] = np.array(values, dtype="double", order="C")
+            self._dataset[target] = np.array(values, dtype="double", order="C")  # type: ignore[literal-required]
         else:
             raise RuntimeError("Set of FC3 displacements is not available.")
 
     def _get_phonon_forces_energies(
         self, target: Literal["forces", "supercell_energies"]
-    ) -> NDArray | None:
+    ) -> NDArray[np.double] | None:
         """Return fc2 forces and supercell energies.
 
         Return None if tagert data is not found rather than raising exception.
 
         """
         if self._phonon_dataset is None:
-            raise RuntimeError("Dataset for fc2does not exist.")
+            raise RuntimeError("Dataset for fc2 does not exist.")
 
-        if target in self._phonon_dataset:  # type-2
-            return self._phonon_dataset[target]
-        elif "first_atoms" in self._phonon_dataset:  # type-1
+        if "first_atoms" in self._phonon_dataset:  # type-1
             values = []
             for disp in self._phonon_dataset["first_atoms"]:
                 if target == "forces":
@@ -2960,11 +3006,20 @@ class Phono3py:
                         values.append(disp["supercell_energy"])
             if values:
                 return np.array(values, dtype="double", order="C")
+        else:
+            if target in self._phonon_dataset:  # type-2
+                return self._phonon_dataset[target]  # type: ignore
+
         return None
 
     def _set_phonon_forces_energies(
-        self, values, target: Literal["forces", "supercell_energies"]
-    ):
+        self,
+        values: NDArray[np.double]
+        | Sequence[float]
+        | Sequence[NDArray[np.double]]
+        | Sequence[Sequence[Sequence[float]]],
+        target: Literal["forces", "supercell_energies"],
+    ) -> None:
         if self._phonon_dataset is None:
             raise RuntimeError("Dataset for fc2 does not exist.")
 
@@ -2975,6 +3030,7 @@ class Phono3py:
                 if target == "forces":
                     disp[target] = np.array(v, dtype="double", order="C")
                 elif target == "supercell_energies":
+                    assert isinstance(v, (float, np.floating))
                     disp["supercell_energy"] = float(v)
         elif "displacements" in self._phonon_dataset:
             _values = np.array(values, dtype="double", order="C")
@@ -2999,7 +3055,7 @@ class Phono3py:
         is_plusminus: bool = False,
         random_seed: int | None = None,
         max_distance: float | None = None,
-    ) -> dict:
+    ) -> Type2DisplacementDataset:
         if random_seed is not None and random_seed >= 0 and random_seed < 2**32:
             _random_seed = random_seed
         else:
@@ -3013,19 +3069,22 @@ class Phono3py:
             max_distance=max_distance,
         )
         if _random_seed is None:
-            dataset = {"displacements": d}
+            dataset: Type2DisplacementDataset = {"displacements": d}
         else:
-            dataset = {"random_seed": _random_seed, "displacements": d}  # type: ignore[dict-item]
+            dataset: Type2DisplacementDataset = {
+                "random_seed": _random_seed,
+                "displacements": d,
+            }
         return dataset
 
-    def _check_mlp_dataset(self, mlp_dataset: dict):
+    def _check_mlp_dataset(self, mlp_dataset: Type2DisplacementDataset) -> None:
         if not isinstance(mlp_dataset, dict):
             raise TypeError("mlp_dataset has to be a dictionary.")
         if "displacements" not in mlp_dataset:
             raise RuntimeError("Displacements have to be given.")
         if "forces" not in mlp_dataset:
             raise RuntimeError("Forces have to be given.")
-        if "supercell_energy" in mlp_dataset:
+        if "supercell_energies" not in mlp_dataset:
             raise RuntimeError("Supercell energies have to be given.")
         if len(mlp_dataset["displacements"]) != len(mlp_dataset["forces"]):
             raise RuntimeError("Length of displacements and forces are different.")

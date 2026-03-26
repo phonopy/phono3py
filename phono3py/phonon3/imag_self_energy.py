@@ -679,9 +679,7 @@ def get_imag_self_energy(
     return_gamma_detail: bool = False,
     output_filename: str | None = None,
     log_level: int = 0,
-) -> tuple[
-    NDArray[np.double] | None, NDArray[np.double], list[NDArray[np.double] | None]
-]:
+) -> tuple[NDArray[np.double] | None, NDArray[np.double], list[NDArray[np.double]]]:
     """Imaginary-part of self-energy at frequency points.
 
     Band indices to be calculated at are found in Interaction instance.
@@ -810,7 +808,7 @@ def get_imag_self_energy(
             order="C",
         )
 
-    detailed_gamma: list[NDArray[np.double] | None] = []
+    detailed_gamma: list[NDArray[np.double]] = []
 
     ise = ImagSelfEnergy(
         interaction, with_detail=(write_gamma_detail or return_gamma_detail)
@@ -869,7 +867,7 @@ def get_imag_self_energy(
 
 def _get_imag_self_energy_at_gp(
     gamma: NDArray[np.double],
-    detailed_gamma: list[NDArray[np.double] | None],
+    detailed_gamma: list[NDArray[np.double]],
     i: int,
     gp: int,
     sigmas: Sequence[float | None],
@@ -1077,10 +1075,10 @@ def _sample_frequency_points(
 def write_imag_self_energy(
     imag_self_energy: NDArray[np.double],
     mesh: NDArray[np.int64],
-    grid_points: Sequence[int],
+    grid_points: Sequence[int] | NDArray[np.int64],
     band_indices: Sequence[NDArray[np.int64]],
     frequency_points: NDArray[np.double] | None,
-    temperatures: Sequence[float],
+    temperatures: Sequence[float] | NDArray[np.double],
     sigmas: Sequence[float | None],
     scattering_event_class: Literal[1, 2] | None = None,
     output_filename: str | None = None,

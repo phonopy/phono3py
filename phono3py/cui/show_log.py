@@ -37,9 +37,10 @@
 from __future__ import annotations
 
 import sys
-from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.structure.cells import print_cell
 
 from phono3py import Phono3py
@@ -52,7 +53,7 @@ def show_general_settings(
     phono3py: Phono3py,
     cell_filename: str,
     interface_mode: str | None,
-):
+) -> None:
     """Show general setting information."""
     is_primitive_axes_auto = (
         isinstance(phono3py.primitive_matrix, str)
@@ -92,9 +93,9 @@ def show_general_settings(
 
 
 def print_supercell_matrix(
-    supercell_matrix: Sequence | np.ndarray,
-    phonon_supercell_matrix: Sequence | np.ndarray | None = None,
-):
+    supercell_matrix: NDArray[np.int64],
+    phonon_supercell_matrix: NDArray[np.int64] | None = None,
+) -> None:
     """Print supercell matrix."""
     if (np.diag(np.diag(supercell_matrix)) - supercell_matrix).any():
         print("Supercell matrix (dim):")
@@ -111,7 +112,7 @@ def print_supercell_matrix(
             print("Phonon supercell (dim-fc2): %s" % np.diag(phonon_supercell_matrix))
 
 
-def show_phono3py_cells(phono3py: Phono3py):
+def show_phono3py_cells(phono3py: Phono3py) -> None:
     """Show crystal structures."""
     primitive = phono3py.primitive
     supercell = phono3py.supercell
@@ -130,7 +131,7 @@ def show_phono3py_cells(phono3py: Phono3py):
     print("-" * 76, flush=True)
 
 
-def show_phono3py_force_constants_settings(settings: Phono3pySettings):
+def show_phono3py_force_constants_settings(settings: Phono3pySettings) -> None:
     """Show force constants settings."""
     read_fc3 = settings.read_fc3
     read_fc2 = settings.read_fc2
@@ -160,7 +161,12 @@ def show_phono3py_force_constants_settings(settings: Phono3pySettings):
         print("FC3 cutoff distance: %s" % settings.cutoff_fc3_distance)
 
 
-def show_phono3py_settings(phono3py, settings, updated_settings, log_level):
+def show_phono3py_settings(
+    phono3py: Phono3py,
+    settings: Phono3pySettings,
+    updated_settings: dict[str, Any],
+    log_level: int,
+) -> None:
     """Show general calculation settings."""
     sigmas = updated_settings["sigmas"]
     temperatures = updated_settings["temperatures"]
@@ -242,7 +248,7 @@ def show_phono3py_settings(phono3py, settings, updated_settings, log_level):
 
     if settings.mesh_numbers is not None:
         try:
-            mesh_length = float(settings.mesh_numbers)
+            mesh_length = float(settings.mesh_numbers)  # type: ignore[arg-type]
             print(f"Length for sampling mesh generation: {mesh_length:.2f}")
         except TypeError:
             mesh_numbers = tuple(np.ravel(settings.mesh_numbers))
@@ -252,7 +258,7 @@ def show_phono3py_settings(phono3py, settings, updated_settings, log_level):
     sys.stdout.flush()
 
 
-def show_grid_points(grid_points):
+def show_grid_points(grid_points: NDArray[np.int64]) -> None:
     """Show grid point list."""
     text = "Grid point to be calculated: "
     if len(grid_points) > 8:
