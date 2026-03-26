@@ -89,8 +89,8 @@ class ConductivityRTA(ConductivityRTABase):
             both directions in reciprocal space. The default value will be 1e-5.
 
         """
-        self._kappa = None
-        self._mode_kappa = None
+        self._kappa: NDArray[np.double] | None = None
+        self._mode_kappa: NDArray[np.double] | None = None
 
         super().__init__(
             interaction,
@@ -141,15 +141,15 @@ class ConductivityRTA(ConductivityRTABase):
         """Return gv_by_gv at grid points where mode kappa are calculated."""
         return self._conductivity_components.gv_by_gv
 
-    def _set_cv(self, i_gp, i_data):
+    def _set_cv(self, i_gp: int, i_data: int) -> None:
         """Set cv for conductivity components."""
         self._conductivity_components.set_heat_capacities(i_gp, i_data)
 
-    def _set_velocities(self, i_gp, i_data):
+    def _set_velocities(self, i_gp: int, i_data: int) -> None:
         """Set velocities for conductivity components."""
         self._conductivity_components.set_velocities(i_gp, i_data)
 
-    def set_kappa_at_sigmas(self):
+    def set_kappa_at_sigmas(self) -> None:
         """Calculate kappa from ph-ph interaction results."""
         if not self._pp.phonon_all_done:
             raise RuntimeError(
@@ -232,7 +232,7 @@ class ConductivityRTA(ConductivityRTABase):
 
         return contribution
 
-    def _allocate_values(self):
+    def _allocate_values(self) -> None:
         if self._temperatures is None:
             raise RuntimeError(
                 "Temperatures have not been set yet. "

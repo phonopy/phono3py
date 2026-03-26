@@ -1240,7 +1240,7 @@ def write_pp_to_hdf5(
     triplet_all: NDArray[np.int64] | None = None,
     sigma: float | None = None,
     sigma_cutoff: float | None = None,
-    filename: str | None = None,
+    filename: str | os.PathLike | None = None,
     verbose: bool = True,
     check_consistency: bool = False,
     compression: Literal["gzip", "lzf"] | int | None = "gzip",
@@ -1251,7 +1251,7 @@ def write_pp_to_hdf5(
         grid_point=grid_point,
         sigma=sigma,
         sigma_cutoff=sigma_cutoff,
-        middle_filename=filename,
+        middle_filename=str(filename) if filename is not None else None,
     )
     full_filename = "pp" + suffix + ".hdf5"
 

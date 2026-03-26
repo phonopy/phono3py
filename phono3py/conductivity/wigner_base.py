@@ -50,7 +50,7 @@ from phono3py.phonon.velocity_operator import VelocityOperator
 from phono3py.phonon3.interaction import Interaction
 
 
-def get_conversion_factor_WTE(volume):
+def get_conversion_factor_WTE(volume: float) -> float:
     """Return conversion factor of thermal conductivity."""
     return (
         (get_physical_units().THz * get_physical_units().Angstrom)
@@ -113,7 +113,7 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
             self._allocate_values()
 
     @property
-    def velocity_operator(self):
+    def velocity_operator(self) -> NDArray[np.cdouble]:
         """Return velocity operator at grid points.
 
         Grid points are those at mode kappa are calculated.
@@ -122,16 +122,16 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
         return self._gv_operator
 
     @property
-    def gv_by_gv_operator(self):
+    def gv_by_gv_operator(self) -> NDArray[np.cdouble]:
         """Return gv_by_gv operator at grid points where mode kappa are calculated."""
         return self._gv_operator_sum2
 
-    def set_velocities(self, i_gp, i_data):
+    def set_velocities(self, i_gp: int, i_data: int) -> None:
         """Set velocities at a grid point."""
         self._set_gv_operator(i_gp, i_data)
         self._set_gv_by_gv_operator(i_gp, i_data)
 
-    def set_heat_capacities(self, i_gp: int, i_data: int):
+    def set_heat_capacities(self, i_gp: int, i_data: int) -> None:
         """Set heat capacity at grid point and at data location."""
         if self._temperatures is None:
             raise RuntimeError(
@@ -142,7 +142,7 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
         cv = get_heat_capacities(self._grid_points[i_gp], self._pp, self._temperatures)
         self._cv[:, i_data, :] = cv
 
-    def _set_gv_operator(self, i_irgp, i_data):
+    def _set_gv_operator(self, i_irgp: int, i_data: int) -> None:
         """Set velocity operator."""
         irgp = self._grid_points[i_irgp]
         frequencies, _, _ = self._pp.get_phonons()
@@ -171,7 +171,7 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
         #
         self._gv[i_data] = gv[self._pp.band_indices, :]
 
-    def _set_gv_by_gv_operator(self, i_irgp, i_data):
+    def _set_gv_by_gv_operator(self, i_irgp: int, i_data: int) -> None:
         """Outer product of group velocities.
 
         (v x v) [num_k*, num_freqs, 3, 3]
@@ -194,7 +194,9 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
             ]
             # self._gv_by_gv[i_data, :, j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
 
-    def _get_gv_by_gv_operator(self, i_irgp, i_data):
+    def _get_gv_by_gv_operator(
+        self, i_irgp: int, i_data: int
+    ) -> tuple[NDArray[np.cdouble], int]:
         irgp = int(self._grid_points[i_irgp])
         if self._is_kappa_star:
             rotation_map = get_grid_points_by_rotations(irgp, self._pp.bz_grid)
@@ -269,12 +271,12 @@ class ConductivityWignerComponents(ConductivityComponentsBase):
                         # note np.conj(gvs_rot_operator[s,s_p,j]) =
                         # gvs_rot_operator[s_p,s,j] since Vel op. is hermitian
 
-    def _allocate_values(self):
+    def _allocate_values(self) -> None:
         super()._allocate_values()
 
         num_band0 = len(self._pp.band_indices)
         if self._is_reducible_collision_matrix:
-            num_grid_points = np.prod(self._pp.mesh_numbers)
+            num_grid_points = int(np.prod(self._pp.mesh_numbers))
         else:
             num_grid_points = len(self._grid_points)
         num_band = len(self._pp.primitive) * 3
