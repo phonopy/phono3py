@@ -59,7 +59,7 @@ class ReciprocalToNormal:
         eigenvectors: NDArray[np.cdouble],
         band_indices: Sequence[int] | NDArray[np.int64],
         cutoff_frequency: float = 0,
-    ):
+    ) -> None:
         """Init method."""
         self._primitive = primitive
         self._frequencies = frequencies
