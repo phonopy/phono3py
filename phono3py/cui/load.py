@@ -44,6 +44,7 @@ import numpy as np
 import phonopy.cui.load_helper as load_helper
 from numpy.typing import NDArray
 from phonopy.file_IO import get_supported_file_extensions_for_compression
+from phonopy.harmonic.displacement import DisplacementDataset
 from phonopy.harmonic.force_constants import show_drift_force_constants
 from phonopy.interface.calculator import get_calculator_physical_units
 from phonopy.physical_units import get_physical_units
@@ -63,6 +64,7 @@ from phono3py.interface.fc_calculator import (
 )
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon3.dataset import forces_in_dataset
+from phono3py.phonon3.displacement_fc3 import Fc3DisplacementDataset
 from phono3py.phonon3.fc3 import show_drift_fc3
 
 
@@ -596,7 +598,6 @@ def select_and_load_phonon_dataset(
             ph3py,
             ph3py_yaml,
             None,
-            "phonon_fc2",
             calculator,
             log_level,
         )
@@ -610,7 +611,6 @@ def select_and_load_phonon_dataset(
             ph3py,
             ph3py_yaml,
             force_filename,
-            "phonon_fc2",
             calculator,
             log_level,
         )
@@ -623,7 +623,6 @@ def select_and_load_phonon_dataset(
             ph3py,
             ph3py_yaml,
             None,
-            "phonon_fc2",
             calculator,
             log_level,
         )
@@ -640,7 +639,7 @@ def _get_dataset_for_fc3(
     cutoff_pair_distance: float | None,
     calculator: str | None,
     log_level: int,
-) -> dict:
+) -> Fc3DisplacementDataset | DisplacementDataset:
     dataset = parse_forces(
         ph3py,
         ph3py_yaml=ph3py_yaml,
@@ -658,15 +657,14 @@ def _get_dataset_for_fc2(
     ph3py: Phono3py,
     ph3py_yaml: Phono3pyYaml | None,
     force_filename: str | os.PathLike | None,
-    fc_type: Literal["fc3", "phonon_fc2"],
     calculator: str | None,
     log_level: int,
-) -> dict:
+) -> DisplacementDataset:
     dataset = parse_forces(
         ph3py,
         ph3py_yaml=ph3py_yaml,
         force_filename=force_filename,  # type: ignore[arg-type]
-        fc_type=fc_type,
+        fc_type="phonon_fc2",
         calculator=calculator,
         log_level=log_level,
     )

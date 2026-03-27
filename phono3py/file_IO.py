@@ -55,9 +55,14 @@ from phonopy.file_IO import (
     get_io_module_to_decompress,
     write_FORCE_SETS,
 )
+from phonopy.harmonic.displacement import DisplacementDataset, Type1DisplacementDataset
 from phonopy.structure.atoms import PhonopyAtoms
 
 from phono3py.phonon.grid import BZGrid
+from phono3py.phonon3.displacement_fc3 import (
+    Fc3DisplacementDataset,
+    Fc3Type1DisplacementDataset,
+)
 from phono3py.version import __version__
 
 
@@ -203,8 +208,11 @@ def write_disp_fc2_yaml(
 
 
 def write_FORCES_FC2(
-    disp_dataset: dict,
-    forces_fc2: Sequence | NDArray[np.double] | None = None,
+    disp_dataset: DisplacementDataset,
+    forces_fc2: Sequence[Sequence[Sequence[float]]]
+    | Sequence[NDArray[np.double]]
+    | NDArray[np.double]
+    | None = None,
     fp: TextIO | None = None,
     filename: str | os.PathLike = "FORCES_FC2",
 ) -> None:
@@ -246,8 +254,11 @@ def write_FORCES_FC2(
 
 
 def write_FORCES_FC3(
-    disp_dataset: dict,
-    forces_fc3: Sequence | NDArray[np.double] | None = None,
+    disp_dataset: Fc3DisplacementDataset,
+    forces_fc3: Sequence[Sequence[Sequence[float]]]
+    | Sequence[NDArray[np.double]]
+    | NDArray[np.double]
+    | None = None,
     fp: TextIO | None = None,
     filename: str | os.PathLike = "FORCES_FC3",
 ) -> None:
@@ -1652,7 +1663,7 @@ def parse_disp_fc3_yaml(
 
 
 def parse_FORCES_FC2(
-    disp_dataset: dict,
+    disp_dataset: Type1DisplacementDataset,
     filename: str | os.PathLike = "FORCES_FC2",
     unit_conversion_factor: float | None = None,
 ) -> list | None:
@@ -1678,7 +1689,7 @@ def parse_FORCES_FC2(
 
 
 def parse_FORCES_FC3(
-    disp_dataset: dict,
+    disp_dataset: Fc3Type1DisplacementDataset,
     filename: str | os.PathLike = "FORCES_FC3",
     use_loadtxt: bool = True,
     unit_conversion_factor: float | None = None,

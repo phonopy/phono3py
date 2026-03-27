@@ -38,9 +38,9 @@ from __future__ import annotations
 
 import copy
 import sys
-from typing import Optional
 
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.cui.create_force_sets import (
     check_agreement_of_supercell_positions,
     check_agreements_of_displacements,
@@ -49,6 +49,7 @@ from phonopy.cui.create_force_sets import (
 from phonopy.cui.load_helper import get_nac_params
 from phonopy.cui.phonopy_script import file_exists, files_exist, print_error
 from phonopy.file_IO import is_file_phonopy_yaml, parse_FORCE_SETS, write_FORCE_SETS
+from phonopy.harmonic.displacement import DisplacementDataset
 from phonopy.interface.calculator import get_calc_dataset
 from phonopy.structure.atoms import PhonopyAtoms
 
@@ -65,13 +66,14 @@ from phono3py.interface.phono3py_yaml import (
 )
 from phono3py.interface.wien2k import get_fc3_calc_dataset_wien2k
 from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
+from phono3py.phonon3.displacement_fc3 import Fc3DisplacementDataset
 
 
 def create_FORCES_FC3_and_FORCES_FC2(
     settings: Phono3pySettings,
-    cell_filename: Optional[str],
+    cell_filename: str | None,
     log_level: int = 0,
-):
+) -> None:
     """Create FORCES_FC3 and FORCES_FC2 or phono3py_params.yaml from files.
 
     With settings.save_params=True, phono3py_params.yaml is created instead of
@@ -115,16 +117,18 @@ def create_FORCES_FC3_and_FORCES_FC2(
     if settings.create_forces_fc3 or settings.create_forces_fc3_file:
         assert ph3py_yaml.dataset is not None
         assert ph3py_yaml.supercell is not None
-        calc_dataset_fc3 = _get_force_sets_fc3(
-            settings,
-            ph3py_yaml.dataset,  # type: ignore[arg-type]
-            ph3py_yaml.supercell,
-            disp_filename,
-            interface_mode,
-            log_level,
-        )
-        if not calc_dataset_fc3["forces"]:
+        try:
+            calc_dataset_fc3 = _get_force_sets_fc3(
+                settings,
+                ph3py_yaml.dataset,
+                ph3py_yaml.supercell,
+                disp_filename,
+                interface_mode,
+                log_level,
+            )
+        except RuntimeError as e:
             if log_level:
+                print(str(e))
                 print('"FORCES_FC3" could not be created.')
                 print_error()
             sys.exit(1)
@@ -132,16 +136,18 @@ def create_FORCES_FC3_and_FORCES_FC2(
     if settings.create_forces_fc2:
         assert ph3py_yaml.phonon_dataset is not None
         assert ph3py_yaml.phonon_supercell is not None
-        calc_dataset_fc2 = _get_force_sets_fc2(
-            settings,
-            ph3py_yaml.phonon_dataset,
-            ph3py_yaml.phonon_supercell,
-            disp_filename,
-            interface_mode,
-            log_level,
-        )
-        if not calc_dataset_fc2["forces"]:
+        try:
+            calc_dataset_fc2 = _get_force_sets_fc2(
+                settings,
+                ph3py_yaml.phonon_dataset,
+                ph3py_yaml.phonon_supercell,
+                disp_filename,
+                interface_mode,
+                log_level,
+            )
+        except RuntimeError as e:
             if log_level:
+                print(str(e))
                 print('"FORCES_FC2" could not be created.')
                 print_error()
             sys.exit(1)
@@ -190,7 +196,7 @@ def create_FORCES_FC3_and_FORCES_FC2(
                 print('"FORCES_FC2" has been created.')
 
 
-def create_FORCES_FC2_from_FORCE_SETS(log_level):
+def create_FORCES_FC2_from_FORCE_SETS(log_level: int) -> None:
     """Convert FORCE_SETS to FORCES_FC2."""
     filename = "FORCE_SETS"
     file_exists(filename, log_level=log_level)
@@ -204,12 +210,14 @@ def create_FORCES_FC2_from_FORCE_SETS(log_level):
         print("phono3py_disp.yaml made with --dim-fc2=dim_of_FORCE_SETS.")
 
         print("")
-        print("\n".join(displacements_yaml_lines_type1(disp_dataset)))
+        print("\n".join(displacements_yaml_lines_type1(disp_dataset)))  # type: ignore[arg-type]
 
 
 def create_FORCE_SETS_from_FORCES_FCx(
-    phonon_smat, cell_filename: Optional[str], log_level
-):
+    phonon_smat: NDArray[np.int64] | None,
+    cell_filename: str | None,
+    log_level: int,
+) -> None:
     """Convert FORCES_FC3 or FORCES_FC2 to FORCE_SETS."""
     if cell_filename is not None and is_file_phonopy_yaml(
         cell_filename, keyword="phono3py"
@@ -268,13 +276,22 @@ def create_FORCE_SETS_from_FORCES_FCx(
 
 def _get_force_sets_fc2(
     settings: Phono3pySettings,
-    disp_dataset: dict,
+    disp_dataset: DisplacementDataset,
     supercell: PhonopyAtoms,
     disp_filename: str,
-    interface_mode: Optional[str],
+    interface_mode: str | None,
     log_level: int,
 ) -> dict:
-    interface_mode = settings.calculator
+    """Return data retrieved from calculator output files for fc2.
+
+    Returns
+    -------
+    dict:
+        "forces": List of forces in supercells.
+        "supercell_energies": List of supercell energies, optional.
+        "points": List of points in the supercells with displacements, optional.
+
+    """
     if log_level:
         print(f'FC2 displacement dataset was read from "{disp_filename}".')
 
@@ -354,12 +371,22 @@ def _get_force_sets_fc2(
 
 def _get_force_sets_fc3(
     settings: Phono3pySettings,
-    disp_dataset: dict,
+    disp_dataset: Fc3DisplacementDataset,
     supercell: PhonopyAtoms,
     disp_filename: str,
-    interface_mode: Optional[str],
+    interface_mode: str | None,
     log_level: int,
 ) -> dict:
+    """Return data retrieved from calculator output files for fc3.
+
+    Returns
+    -------
+    dict:
+        "forces": List of forces in supercells.
+        "supercell_energies": List of supercell energies, optional.
+        "points": List of points in the supercells with displacements, optional.
+
+    """
     if log_level:
         print(f'FC3 Displacement dataset was read from "{disp_filename}".')
 
@@ -402,7 +429,9 @@ def _get_force_sets_fc3(
         disp_filename,
         log_level=log_level,  # type: ignore[arg-type]
     ):
-        calc_dataset: dict = {"forces": []}
+        raise RuntimeError(
+            "Number of supercell files doesn't match number of displacements."
+        )
     else:
         if interface_mode == "wien2k":
             calc_dataset = get_fc3_calc_dataset_wien2k(
@@ -423,11 +452,11 @@ def _get_force_sets_fc3(
         force_sets = calc_dataset["forces"]
         displacements, _ = get_displacements_and_forces_fc3(disp_dataset)
         if "points" in calc_dataset:
-            if filename := check_agreements_of_displacements(  # type: ignore[assignment]
+            if filename := check_agreements_of_displacements(
                 supercell,
                 {"displacements": displacements},
                 calc_dataset["points"],
-                force_filenames,  # type: ignore[arg-type]
+                force_filenames,
             ):
                 raise RuntimeError(
                     f'Displacements don\'t match with atomic positions in "{filename}".'
@@ -474,15 +503,16 @@ def _get_force_sets_fc3(
 
 def _set_forces_and_nac_params(
     ph3py_yaml: Phono3pyYaml,
-    settings,
+    settings: Phono3pySettings,
     calc_dataset_fc3: dict,
-    calc_dataset_fc2: Optional[dict],
-):
+    calc_dataset_fc2: dict | None,
+) -> None:
     """Set forces, energies and nac_params to phono3py_yaml."""
     assert ph3py_yaml.dataset is not None
+    assert "forces" in calc_dataset_fc3
     if "first_atoms" in ph3py_yaml.dataset:
-        count = len(ph3py_yaml.dataset["first_atoms"])  # type: ignore[typeddict-item]
-        for i, d1 in enumerate(ph3py_yaml.dataset["first_atoms"]):  # type: ignore[typeddict-item]
+        count = len(ph3py_yaml.dataset["first_atoms"])
+        for i, d1 in enumerate(ph3py_yaml.dataset["first_atoms"]):
             d1["forces"] = calc_dataset_fc3["forces"][i]
             if "supercell_energies" in calc_dataset_fc3:
                 d1["supercell_energy"] = float(
@@ -513,6 +543,7 @@ def _set_forces_and_nac_params(
 
     if settings.create_forces_fc2 and calc_dataset_fc2:
         assert ph3py_yaml.phonon_dataset is not None
+        assert "forces" in calc_dataset_fc2
         if "first_atoms" in ph3py_yaml.phonon_dataset:
             for i, d in enumerate(ph3py_yaml.phonon_dataset["first_atoms"]):
                 d["forces"] = calc_dataset_fc2["forces"][i]

@@ -48,6 +48,11 @@ from phonopy.cui.load_helper import (
     develop_or_load_pypolymlp as develop_or_load_pypolymlp_phonopy,
 )
 from phonopy.file_IO import get_dataset_type2, get_io_module_to_decompress
+from phonopy.harmonic.displacement import (
+    DisplacementDataset,
+    Type1DisplacementDataset,
+    Type2DisplacementDataset,
+)
 from phonopy.interface.calculator import get_calculator_physical_units
 from phonopy.interface.pypolymlp import PypolymlpParams, parse_mlp_params
 
@@ -60,6 +65,10 @@ from phono3py.file_IO import (
 from phono3py.interface.fc_calculator import determine_cutoff_pair_distance
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon3.dataset import forces_in_dataset
+from phono3py.phonon3.displacement_fc3 import (
+    Fc3DisplacementDataset,
+    Fc3Type1DisplacementDataset,
+)
 
 
 def parse_forces(
@@ -71,7 +80,7 @@ def parse_forces(
     fc_type: Literal["fc3", "phonon_fc2"] = "fc3",
     calculator: str | None = None,
     log_level: int = 0,
-) -> dict:
+) -> Fc3DisplacementDataset | DisplacementDataset:
     """Read displacements and forces.
 
     Physical units of displacements and forces are converted following the
@@ -81,8 +90,8 @@ def parse_forces(
     without writing calculator name in it.
 
     """
-    filename_read_from = None
-    dataset = None
+    dataset_filename_read_from = None
+    dataset: Fc3DisplacementDataset | DisplacementDataset | None = None
 
     if phono3py.phonon_supercell is None or fc_type == "fc3":
         natom = len(phono3py.supercell)
@@ -93,23 +102,54 @@ def parse_forces(
     # physical_units can be overwritten if calculator is found in ph3py_yaml.
     if ph3py_yaml:
         dataset = _extract_dataset_from_ph3py_yaml(ph3py_yaml, fc_type)
-        if dataset:
-            filename_read_from = phono3py_yaml_filename
-
-    physical_units = get_calculator_physical_units(calculator)
+        if dataset is not None:
+            dataset_filename_read_from = phono3py_yaml_filename
 
     # Forces are not yet found in dataset. Then try to read from FORCES_FC3 or
     # FORCES_FC2.
     if force_filename is not None and pathlib.Path(force_filename).is_file():
-        if dataset is None or (dataset is not None and not forces_in_dataset(dataset)):
-            dataset, force_sets_type = _read_FORCES_FC3_or_FC2(
-                natom, dataset, fc_type, filename=force_filename, log_level=log_level
+        if not forces_in_dataset(dataset):
+            # Try reading type2 dataset with forces.
+            type2_dataset = _read_type2_dataset_from_FORCES_FC3_or_FC2(
+                natom, filename=force_filename, log_level=log_level
             )
-            if force_sets_type == 2:
-                filename_read_from = force_filename
+            if type2_dataset is not None:
+                dataset = type2_dataset
+                dataset_filename_read_from = force_filename
+
+        assert dataset is not None
+
+        # Try reading forces with type1 dataset.
+        if not forces_in_dataset(dataset):
+            if fc_type == "fc3":
+                parse_FORCES_FC3(
+                    cast(Fc3Type1DisplacementDataset, dataset), force_filename
+                )
+            else:
+                parse_FORCES_FC2(
+                    cast(Type1DisplacementDataset, dataset), force_filename
+                )
+            if log_level:
+                print(
+                    f'Sets of supercell forces were read from "{force_filename}".',
+                    flush=True,
+                )
 
     if dataset is None:
         raise RuntimeError("Dataset is not found.")
+
+    physical_units = get_calculator_physical_units(calculator)
+
+    # Overwrite dataset['cutoff_distance'] when necessary.
+    # The distance unit is assumed Angstrom.
+    if fc_type == "fc3" and cutoff_pair_distance:
+        if "cutoff_distance" not in dataset or (
+            "cutoff_distance" in dataset
+            and cutoff_pair_distance < dataset["cutoff_distance"]
+        ):
+            dataset["cutoff_distance"] = cutoff_pair_distance
+            if log_level:
+                print("Cutoff-pair-distance: %f" % cutoff_pair_distance)
 
     # Units of displacements and forces are converted. If forces don't
     # exist, the conversion will not be performed for forces.
@@ -123,12 +163,13 @@ def parse_forces(
     if "natom" in dataset and dataset["natom"] != natom:
         raise RuntimeError(
             "Number of atoms in supercell is not consistent with "
-            f'"{filename_read_from}".'
+            f'"{dataset_filename_read_from}".'
         )
 
-    if log_level and filename_read_from is not None:
+    if log_level and dataset_filename_read_from is not None:
         print(
-            f'Displacement dataset for {fc_type} was read from "{filename_read_from}".'
+            f"Displacement dataset for {fc_type} was read from "
+            f'"{dataset_filename_read_from}".'
         )
 
     if calculator is not None and log_level:
@@ -137,31 +178,14 @@ def parse_forces(
             "unit to A and eV/A."
         )
 
-    # Overwrite dataset['cutoff_distance'] when necessary.
-    if fc_type == "fc3" and cutoff_pair_distance:
-        if "cutoff_distance" not in dataset or (
-            "cutoff_distance" in dataset
-            and cutoff_pair_distance < dataset["cutoff_distance"]
-        ):
-            dataset["cutoff_distance"] = cutoff_pair_distance
-            if log_level:
-                print("Cutoff-pair-distance: %f" % cutoff_pair_distance)
-
     return dataset
 
 
-def _read_FORCES_FC3_or_FC2(
+def _read_type2_dataset_from_FORCES_FC3_or_FC2(
     natom: int,
-    dataset: dict | None,
-    fc_type: str,
     filename: str | os.PathLike = "FORCES_FC3",
     log_level: int = 0,
-) -> tuple[dict, Literal[1, 2]]:
-    """Read FORCES_FC3 or FORCES_FC2.
-
-    Read the first line of forces file to determine the type of the file.
-
-    """
+) -> Type2DisplacementDataset | None:
     myio = get_io_module_to_decompress(filename)
     with myio.open(filename, "rt") as f:
         len_first_line = get_length_of_first_line(f)
@@ -170,21 +194,8 @@ def _read_FORCES_FC3_or_FC2(
             if log_level:
                 n_disp = len(_dataset["displacements"])
                 print(f'{n_disp} snapshots were found in "{filename}".')
-            return _dataset, 2
-
-    # Try reading type-1 dataset
-    if dataset is None:
-        raise RuntimeError("Type-1 displacement dataset is not given.")
-    if fc_type == "fc3":
-        parse_FORCES_FC3(dataset, filename)
-    else:
-        parse_FORCES_FC2(dataset, filename)
-    if log_level:
-        print(
-            f'Sets of supercell forces were read from "{filename}".',
-            flush=True,
-        )
-    return dataset, 1
+            return _dataset
+    return None
 
 
 def develop_or_load_pypolymlp(
@@ -326,7 +337,7 @@ def run_pypolymlp_to_compute_phonon_forces(
 
 
 def _convert_unit_in_dataset(
-    dataset: dict,
+    dataset: Fc3DisplacementDataset | DisplacementDataset,
     distance_to_A: float | None = None,
     force_to_eVperA: float | None = None,
 ) -> None:
@@ -334,40 +345,52 @@ def _convert_unit_in_dataset(
 
     dataset is overwritten.
 
+    cutoff_distance in dataset is also converted.
+
     """
     if "first_atoms" in dataset:
         for d1 in dataset["first_atoms"]:
             if distance_to_A is not None:
-                disp = _to_ndarray(d1["displacement"])
-                d1["displacement"] = disp * distance_to_A
+                d1["displacement"] = (
+                    np.asarray(d1["displacement"], dtype="double", order="C")
+                    * distance_to_A
+                )
             if force_to_eVperA is not None and "forces" in d1:
-                forces = _to_ndarray(d1["forces"])
-                d1["forces"] = forces * force_to_eVperA
+                d1["forces"] = (
+                    np.asarray(d1["forces"], dtype="double", order="C")
+                    * force_to_eVperA
+                )
             if "second_atoms" in d1:
                 for d2 in d1["second_atoms"]:
                     if distance_to_A is not None:
-                        disp = _to_ndarray(d2["displacement"])
-                        d2["displacement"] = disp * distance_to_A
+                        d2["displacement"] = (
+                            np.asarray(d2["displacement"], dtype="double", order="C")
+                            * distance_to_A
+                        )
                     if force_to_eVperA is not None and "forces" in d2:
-                        forces = _to_ndarray(d2["forces"])
-                        d2["forces"] = forces * force_to_eVperA
+                        d2["forces"] = (
+                            np.asarray(d2["forces"], dtype="double", order="C")
+                            * force_to_eVperA
+                        )
     else:
         if distance_to_A is not None and "displacements" in dataset:
-            disp = _to_ndarray(dataset["displacements"])
-            dataset["displacements"] = disp * distance_to_A
+            dataset["displacements"] = (
+                np.asarray(dataset["displacements"], dtype="double", order="C")
+                * distance_to_A
+            )
         if force_to_eVperA is not None and "forces" in dataset:
-            forces = _to_ndarray(dataset["forces"])
-            dataset["forces"] = forces * force_to_eVperA
+            dataset["forces"] = (
+                np.asarray(dataset["forces"], dtype="double", order="C")
+                * force_to_eVperA
+            )
+
+    if distance_to_A is not None and "cutoff_distance" in dataset:
+        dataset["cutoff_distance"] = dataset["cutoff_distance"] * distance_to_A
 
 
-def _to_ndarray(array, dtype="double"):
-    if type(array) is not np.ndarray:
-        return np.array(array, dtype=dtype, order="C")
-    else:
-        return array
-
-
-def _extract_dataset_from_ph3py_yaml(ph3py_yaml: Phono3pyYaml, fc_type) -> dict | None:
+def _extract_dataset_from_ph3py_yaml(
+    ph3py_yaml: Phono3pyYaml, fc_type
+) -> Fc3DisplacementDataset | DisplacementDataset | None:
     if ph3py_yaml.phonon_supercell is None or fc_type == "fc3":
         if ph3py_yaml.dataset is not None:
             return copy.deepcopy(ph3py_yaml.dataset)  # type: ignore[return-value]
