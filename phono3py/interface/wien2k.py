@@ -37,18 +37,20 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Sequence
 
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.structure.atoms import PhonopyAtoms
 
 from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
+from phono3py.phonon3.displacement_fc3 import Fc3DisplacementDataset
 
 
 def get_fc3_calc_dataset_wien2k(
-    force_filenames: list[str | os.PathLike],
+    force_filenames: Sequence[str | os.PathLike],
     supercell: PhonopyAtoms,
-    disp_dataset: dict,
+    disp_dataset: Fc3DisplacementDataset,
     wien2k_P1_mode: bool = False,
     symmetry_tolerance: float | None = None,
     verbose: bool = False,

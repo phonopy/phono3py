@@ -76,7 +76,7 @@ class Phono3pySettings(Settings):
         self.is_kappa_star: bool = True
         self.is_lbte: bool = False
         self.is_N_U: bool = False
-        self.is_plusminus_displacement_fc2: bool | str = "auto"
+        self.is_plusminus_displacement_fc2: bool | Literal["auto"] = "auto"
         self.is_real_self_energy: bool = False
         self.is_reducible_collision_matrix: bool = False
         self.is_spectral_function: bool = False
@@ -101,7 +101,7 @@ class Phono3pySettings(Settings):
         self.pinv_solver: int = 0
         self.pinv_method: int = 0
         self.pp_conversion_factor: float | None = None
-        self.random_displacements_fc2: int | str | None = None
+        self.random_displacements_fc2: int | Literal["auto"] | None = None
         self.scattering_event_class: int | None = None  # scattering event class 1 or 2
         self.sigma_cutoff_width: float | None = None
         self.solve_collective_phonon: bool = False
@@ -608,7 +608,7 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
                         self._set_parameter("phonon_supercell_dimension", _matrix)
 
             if conf_key == "grid_addresses":
-                vals: list[int] = [
+                vals = [
                     int(x) for x in confs["grid_addresses"].replace(",", " ").split()
                 ]
                 if len(vals) % 3 == 0 and len(vals) > 0:

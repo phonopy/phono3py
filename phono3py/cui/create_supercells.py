@@ -107,9 +107,9 @@ def create_phono3py_supercells(
     cell_info: Phono3pyCellInfoResult,
     settings: Phono3pySettings,
     symprec: float,
-    interface_mode: str | None = "vasp",
+    interface_mode: str | None = None,
     log_level: int = 1,
-):
+) -> Phono3py:
     """Create displacements and supercells.
 
     Distance unit used is that for the calculator interface.
