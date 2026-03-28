@@ -62,7 +62,7 @@ class Phono3pySettings(Settings):
         self.cutoff_fc3_distance: float | None = None
         self.cutoff_pair_distance: float | None = None
         self.grid_addresses: NDArray[np.int64] | None = None
-        self.grid_points: list[int] | None = None
+        self.grid_points: NDArray[np.int64] | None = None
         self.grid_matrix: NDArray[np.int64] | None = None
         self.ion_clamped: bool = False
         self.is_bterta: bool = False
@@ -620,7 +620,7 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
 
             if conf_key == "grid_points":
                 vals = [int(x) for x in confs["grid_points"].replace(",", " ").split()]
-                self._set_parameter("grid_points", vals)
+                self._set_parameter("grid_points", np.array(vals, dtype="int64"))
 
             if conf_key == "grid_matrix":
                 vals = [int(x) for x in confs["grid_matrix"].replace(",", " ").split()]

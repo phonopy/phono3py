@@ -204,10 +204,15 @@ def run_phonon_solver_py(
     grid_address: NDArray[np.int64],
     QDinv: NDArray[np.double],
     dynamical_matrix: DynamicalMatrix,
-    frequency_conversion_factor: float,
-    lapack_zheev_uplo: Literal["L", "U"],
+    frequency_conversion_factor: float | None = None,
+    lapack_zheev_uplo: Literal["L", "U"] = "L",
 ) -> None:
     """Build and solve dynamical matrices on grid in python."""
+    if frequency_conversion_factor is None:
+        _frequency_conversion_factor = get_physical_units().DefaultToTHz
+    else:
+        _frequency_conversion_factor = frequency_conversion_factor
+
     gp = grid_point
     if phonon_done[gp] == 0:
         phonon_done[gp] = 1
@@ -218,7 +223,7 @@ def run_phonon_solver_py(
         eigvals, eigvecs = np.linalg.eigh(dm, UPLO=lapack_zheev_uplo)
         eigvals = eigvals.real  # type: ignore[no-untyped-call]
         frequencies[gp] = (
-            np.sqrt(np.abs(eigvals)) * np.sign(eigvals) * frequency_conversion_factor
+            np.sqrt(np.abs(eigvals)) * np.sign(eigvals) * _frequency_conversion_factor
         )
         eigenvectors[gp] = eigvecs
 

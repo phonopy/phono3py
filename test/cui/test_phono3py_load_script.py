@@ -147,11 +147,11 @@ def test_phono3py_load_generates_kappa_hdf5_contents():
                 assert "kappa" in f
                 assert "temperature" in f
                 assert "mesh" in f
-                assert f["kappa"].shape == (1, 6)
-                assert f["temperature"][0] == pytest.approx(300.0)
-                assert np.all(f["mesh"][:] == np.array([5, 5, 5]))
-                assert np.all(np.isfinite(f["kappa"][0]))
-                assert f["kappa"][0, 0] > 0
+                assert f["kappa"].shape == (1, 6)  # type: ignore
+                assert f["temperature"][0] == pytest.approx(300.0)  # type: ignore
+                assert np.all(f["mesh"][:] == np.array([5, 5, 5]))  # type: ignore
+                assert np.all(np.isfinite(f["kappa"][0]))  # type: ignore
+                assert f["kappa"][0, 0] > 0  # type: ignore
 
             for created_filename in (
                 "phono3py.yaml",

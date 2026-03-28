@@ -262,6 +262,11 @@ class Phono3py:
         if frequency_factor_to_THz is None:
             self._frequency_factor_to_THz = get_physical_units().DefaultToTHz
         else:
+            warnings.warn(
+                "frequency_factor_to_THz parameter is deprecated.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             self._frequency_factor_to_THz = frequency_factor_to_THz
         self._is_symmetry = is_symmetry
         self._is_mesh_symmetry = is_mesh_symmetry
@@ -903,7 +908,11 @@ class Phono3py:
 
     @mesh_numbers.setter
     def mesh_numbers(
-        self, mesh_numbers: float | NDArray[np.int64] | Sequence[int]
+        self,
+        mesh_numbers: float
+        | NDArray[np.int64]
+        | Sequence[int]
+        | Sequence[Sequence[int]],
     ) -> None:
         self._set_mesh_numbers(mesh_numbers)
 
@@ -2844,7 +2853,7 @@ class Phono3py:
 
     def _set_mesh_numbers(
         self,
-        mesh: float | NDArray[np.int64] | Sequence[int],
+        mesh: float | NDArray[np.int64] | Sequence[int] | Sequence[Sequence[int]],
     ) -> None:
         self._interaction = None
 

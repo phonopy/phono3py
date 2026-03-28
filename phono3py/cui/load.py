@@ -37,8 +37,9 @@ from __future__ import annotations
 
 import os
 import pathlib
+import warnings
 from collections.abc import Sequence
-from typing import Literal
+from typing import Literal, cast
 
 import numpy as np
 import phonopy.cui.load_helper as load_helper
@@ -47,7 +48,6 @@ from phonopy.file_IO import get_supported_file_extensions_for_compression
 from phonopy.harmonic.displacement import DisplacementDataset
 from phonopy.harmonic.force_constants import show_drift_force_constants
 from phonopy.interface.calculator import get_calculator_physical_units
-from phonopy.physical_units import get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import determinant
 
@@ -98,7 +98,7 @@ def load(
     fc2_filename: str | os.PathLike | None = None,
     fc_calculator: str | None = None,
     fc_calculator_options: str | None = None,
-    factor: float | None = None,
+    factor: float | None = None,  # deprecated
     produce_fc: bool = True,
     is_symmetry: bool = True,
     symmetrize_fc: bool = True,
@@ -234,8 +234,7 @@ def load(
         fc-calculator. For alm, each parameter is split by comma ',', and
         each set of key and value pair is written in 'key = value'.
     factor : float, optional
-        Phonon frequency unit conversion factor. Unless specified, default unit
-        conversion factor for each calculator is used.
+        Deprecated.
     produce_fc : bool, optional
         Setting False, force constants are not calculated from displacements and
         forces. Default is True.
@@ -330,16 +329,11 @@ def load(
     assert cell is not None
     cell.cell = cell.cell * factor_to_A
 
-    if factor is None:
-        _factor = get_physical_units().DefaultToTHz
-    else:
-        _factor = factor
     ph3py = Phono3py(
         cell,
         smat,
         primitive_matrix=pmat,
         phonon_supercell_matrix=ph_smat,
-        frequency_factor_to_THz=_factor,
         symprec=symprec,
         is_symmetry=is_symmetry,
         is_mesh_symmetry=is_mesh_symmetry,
@@ -347,6 +341,13 @@ def load(
         make_r0_average=make_r0_average,
         log_level=log_level,
     )
+    if factor is not None:
+        warnings.warn(
+            "factor parameter is deprecated.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        ph3py._frequency_factor_to_THz = factor
 
     # NAC params
     if born_filename is not None or _nac_params is not None or is_nac:
@@ -511,7 +512,7 @@ def select_and_load_dataset(
     cutoff_pair_distance: float | None = None,
     calculator: str | None = None,
     log_level: int = 0,
-) -> dict | None:
+) -> Fc3DisplacementDataset | None:
     """Select and load dataset for fc3."""
     # displacements and forces are in phono3py-yaml-like file
     if ph3py_yaml is not None and forces_in_dataset(ph3py_yaml.dataset):  # type: ignore[arg-type]
@@ -588,7 +589,7 @@ def select_and_load_phonon_dataset(
     forces_fc2_filename: str | os.PathLike | None = None,
     calculator: str | None = None,
     log_level: int = 0,
-) -> dict | None:
+) -> DisplacementDataset | None:
     """Select and load phonon dataset for fc2."""
     if ph3py.phonon_supercell_matrix is None:
         return None
@@ -639,7 +640,7 @@ def _get_dataset_for_fc3(
     cutoff_pair_distance: float | None,
     calculator: str | None,
     log_level: int,
-) -> Fc3DisplacementDataset | DisplacementDataset:
+) -> Fc3DisplacementDataset:
     dataset = parse_forces(
         ph3py,
         ph3py_yaml=ph3py_yaml,
@@ -650,7 +651,7 @@ def _get_dataset_for_fc3(
         calculator=calculator,
         log_level=log_level,
     )
-    return dataset
+    return cast(Fc3DisplacementDataset, dataset)
 
 
 def _get_dataset_for_fc2(
@@ -668,7 +669,7 @@ def _get_dataset_for_fc2(
         calculator=calculator,
         log_level=log_level,
     )
-    return dataset
+    return cast(DisplacementDataset, dataset)
 
 
 def _check_fc2_shape(

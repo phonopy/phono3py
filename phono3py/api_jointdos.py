@@ -37,6 +37,7 @@
 from __future__ import annotations
 
 import os
+import warnings
 from collections.abc import Sequence
 from typing import Literal
 
@@ -64,7 +65,11 @@ class Phono3pyJointDos:
         supercell: Supercell,
         primitive: Primitive,
         fc2: NDArray[np.double],
-        mesh: int | Sequence[int] | NDArray[np.int64] | None = None,
+        mesh: float
+        | Sequence[int]
+        | Sequence[Sequence[int]]
+        | NDArray[np.int64]
+        | None = None,
         nac_params: dict | None = None,
         nac_q_direction: NDArray[np.double] | None = None,
         sigmas: Sequence[float | None] | None = None,
@@ -101,6 +106,11 @@ class Phono3pyJointDos:
         if frequency_factor_to_THz is None:
             self._frequency_factor_to_THz: float = get_physical_units().DefaultToTHz
         else:
+            warnings.warn(
+                "frequency_factor_to_THz parameter is deprecated.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             self._frequency_factor_to_THz = frequency_factor_to_THz
         self._frequency_scale_factor = frequency_scale_factor
         self._is_mesh_symmetry = is_mesh_symmetry
@@ -125,7 +135,6 @@ class Phono3pyJointDos:
         )
 
         if mesh is not None:
-            self.mesh_numbers = mesh
             self.initialize(mesh)
 
     @property
@@ -163,7 +172,11 @@ class Phono3pyJointDos:
 
     @mesh_numbers.setter
     def mesh_numbers(
-        self, mesh_numbers: float | Sequence[int] | NDArray[np.int64]
+        self,
+        mesh_numbers: float
+        | Sequence[int]
+        | Sequence[Sequence[int]]
+        | NDArray[np.int64],
     ) -> None:
         self._bz_grid = BZGrid(
             mesh_numbers,
@@ -177,9 +190,10 @@ class Phono3pyJointDos:
         )
 
     def initialize(
-        self, mesh_numbers: float | Sequence[int] | NDArray[np.int64]
+        self, mesh: float | Sequence[int] | Sequence[Sequence[int]] | NDArray[np.int64]
     ) -> None:
         """Initialize JointDos."""
+        self.mesh_numbers = mesh
         assert self._bz_grid is not None
         self._jdos = JointDos(
             self._primitive,
@@ -197,8 +211,6 @@ class Phono3pyJointDos:
         )
         if self._log_level:
             print("Generating grid system ... ", end="", flush=True)
-
-        self.mesh_numbers = mesh_numbers
 
         if self._log_level:
             assert self._bz_grid is not None

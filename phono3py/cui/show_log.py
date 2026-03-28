@@ -36,6 +36,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from typing import Any
 
@@ -51,7 +52,7 @@ def show_general_settings(
     settings: Phono3pySettings,
     run_mode: str,
     phono3py: Phono3py,
-    cell_filename: str,
+    cell_filename: str | os.PathLike,
     interface_mode: str | None,
 ) -> None:
     """Show general setting information."""
@@ -172,7 +173,6 @@ def show_phono3py_settings(
     temperatures = updated_settings["temperatures"]
     temperature_points = updated_settings["temperature_points"]
     cutoff_frequency = updated_settings["cutoff_frequency"]
-    frequency_factor_to_THz = updated_settings["frequency_factor_to_THz"]
     frequency_scale_factor = updated_settings["frequency_scale_factor"]
     frequency_step = updated_settings["frequency_step"]
     num_frequency_points = updated_settings["num_frequency_points"]
@@ -231,7 +231,11 @@ def show_phono3py_settings(
     if const_ave_pp is not None and (settings.is_bterta or settings.is_lbte):
         print("Constant ph-ph interaction: %6.3e" % const_ave_pp)
 
-    print("Frequency conversion factor to THz: %9.5f" % frequency_factor_to_THz)
+    if settings.frequency_conversion_factor is not None:
+        print(
+            "Frequency conversion factor to THz: %9.5f"
+            % settings.frequency_conversion_factor
+        )
     if frequency_scale_factor is not None:
         print("Frequency scale factor: %8.5f" % frequency_scale_factor)
 

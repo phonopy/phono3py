@@ -72,11 +72,74 @@ def test_convert_unit_type2_displacement_and_forces():
     np.testing.assert_allclose(dataset["forces"], np.ones((3, 2, 3)) * 1.0)
 
 
+def test_convert_unit_type1_energy():
+    """supercell_energy is scaled in a type-1 dataset for first and second atoms."""
+    dataset = {
+        "natom": 2,
+        "first_atoms": [
+            {
+                "displacement": [1.0, 0.0, 0.0],
+                "supercell_energy": 10.0,
+                "second_atoms": [
+                    {
+                        "displacement": [0.0, 1.0, 0.0],
+                        "supercell_energy": 20.0,
+                    }
+                ],
+            }
+        ],
+    }
+    _convert_unit_in_dataset(dataset, energy_to_eV=0.5)
+    assert dataset["first_atoms"][0]["supercell_energy"] == pytest.approx(5.0)
+    assert dataset["first_atoms"][0]["second_atoms"][0][
+        "supercell_energy"
+    ] == pytest.approx(10.0)
+
+
+def test_convert_unit_type1_energy_none():
+    """supercell_energy is not modified when energy_to_eV is None."""
+    dataset = {
+        "natom": 1,
+        "first_atoms": [
+            {
+                "displacement": [1.0, 0.0, 0.0],
+                "supercell_energy": 10.0,
+                "second_atoms": [],
+            }
+        ],
+    }
+    _convert_unit_in_dataset(dataset, energy_to_eV=None)
+    assert dataset["first_atoms"][0]["supercell_energy"] == pytest.approx(10.0)
+
+
+def test_convert_unit_type2_energy():
+    """supercell_energies is scaled in a type-2 dataset."""
+    dataset = {
+        "displacements": np.ones((3, 2, 3)),
+        "supercell_energies": np.array([10.0, 20.0, 30.0]),
+    }
+    _convert_unit_in_dataset(dataset, energy_to_eV=2.0)
+    np.testing.assert_allclose(dataset["supercell_energies"], [20.0, 40.0, 60.0])
+
+
+def test_convert_unit_type2_energy_none():
+    """supercell_energies is not modified when energy_to_eV is None."""
+    energies = np.array([10.0, 20.0, 30.0])
+    dataset = {
+        "displacements": np.ones((3, 2, 3)),
+        "supercell_energies": energies.copy(),
+    }
+    _convert_unit_in_dataset(dataset, energy_to_eV=None)
+    np.testing.assert_allclose(dataset["supercell_energies"], energies)
+
+
 def test_convert_unit_no_op():
-    """No conversion is applied when both factors are None."""
+    """No conversion is applied when all factors are None."""
     disp = np.array([[1.0, 0.0, 0.0]])
     dataset = {"displacements": disp.copy(), "forces": disp.copy() * 2}
-    _convert_unit_in_dataset(dataset, distance_to_A=None, force_to_eVperA=None)
+    _convert_unit_in_dataset(
+        dataset, distance_to_A=None, force_to_eVperA=None, energy_to_eV=None
+    )
     np.testing.assert_allclose(dataset["displacements"], disp)
     np.testing.assert_allclose(dataset["forces"], disp * 2)
 

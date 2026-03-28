@@ -50,7 +50,13 @@ from phonopy.harmonic.dynamical_matrix import (
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive
-from phonopy.structure.grid_points import get_qpoints
+from phonopy.structure.symmetry import Symmetry
+
+from phono3py.phonon.grid import (
+    BZGrid,
+    get_ir_grid_points,
+    get_qpoints_from_bz_grid_points,
+)
 
 
 def run_gruneisen_parameters(
@@ -59,9 +65,9 @@ def run_gruneisen_parameters(
     supercell: PhonopyAtoms,
     primitive: Primitive,
     band_paths: list[NDArray[np.double]] | None,
-    mesh: NDArray[np.int64] | None,
-    rotations: NDArray[np.int64] | None,
-    qpoints: NDArray[np.double] | None,
+    mesh: float | Sequence[int] | Sequence[Sequence[int]] | NDArray[np.int64] | None,
+    primitive_symmetry: Symmetry,
+    qpoints: Sequence[Sequence[float]] | NDArray[np.double] | None,
     nac_params: dict | None = None,
     nac_q_direction: NDArray[np.double] | None = None,
     ion_clamped: bool = False,
@@ -75,22 +81,6 @@ def run_gruneisen_parameters(
     The results is written into files.
 
     """
-    if log_level:
-        print("-" * 23 + " Phonon Gruneisen parameter " + "-" * 23)
-        if mesh is not None:
-            print("Mesh sampling: [ %d %d %d ]" % tuple(mesh))
-        elif band_paths is not None:
-            print("Paths in reciprocal reduced coordinates:")
-            for path in band_paths:
-                print(
-                    "[%5.2f %5.2f %5.2f] --> [%5.2f %5.2f %5.2f]"
-                    % (tuple(path[0]) + tuple(path[-1]))
-                )
-        if ion_clamped:
-            print("To be calculated with ion clamped.")
-
-        sys.stdout.flush()
-
     gruneisen = Gruneisen(
         fc2,
         fc3,
@@ -109,14 +99,30 @@ def run_gruneisen_parameters(
             dm.show_nac_message()
 
     if mesh is not None:
-        gruneisen.set_sampling_mesh(mesh, rotations=rotations, is_gamma_center=True)
+        gruneisen.set_sampling_mesh(mesh, primitive_symmetry=primitive_symmetry)
         filename_ext = ".hdf5"
     elif band_paths is not None:
         gruneisen.set_band_structure(band_paths)
         filename_ext = ".yaml"
     elif qpoints is not None:
-        gruneisen.set_qpoints(qpoints)
+        gruneisen.set_qpoints(np.asarray(qpoints, dtype="double", order="C"))
         filename_ext = ".yaml"
+
+    if log_level:
+        print("-" * 23 + " Phonon Gruneisen parameter " + "-" * 23)
+        if mesh is not None:
+            print("Mesh sampling: [ %d %d %d ]" % tuple(gruneisen.mesh_numbers))  # type: ignore[arg-type]
+        elif band_paths is not None:
+            print("Paths in reciprocal reduced coordinates:")
+            for path in band_paths:
+                print(
+                    "[%5.2f %5.2f %5.2f] --> [%5.2f %5.2f %5.2f]"
+                    % (tuple(path[0]) + tuple(path[-1]))
+                )
+        if ion_clamped:
+            print("To be calculated with ion clamped.")
+
+        sys.stdout.flush()
 
     gruneisen.run()
 
@@ -202,6 +208,11 @@ class Gruneisen:
             sys.stderr.write("Q-points are not specified.\n")
 
     @property
+    def mesh_numbers(self) -> NDArray[np.int64] | None:
+        """Return mesh numbers."""
+        return self._mesh
+
+    @property
     def dynamical_matrix(self) -> DynamicalMatrixGL | DynamicalMatrixNAC:
         """Return DynamicalMatrix instance."""
         return self._dm  # type: ignore[return-value]
@@ -237,21 +248,23 @@ class Gruneisen:
 
     def set_sampling_mesh(
         self,
-        mesh: NDArray[np.int64],
-        rotations: NDArray[np.int64] | None = None,
-        shift: NDArray[np.double] | None = None,
-        is_gamma_center: bool = False,
+        mesh: float | Sequence[int] | Sequence[Sequence[int]] | NDArray[np.int64],
+        primitive_symmetry: Symmetry | None = None,
+        use_grg: bool = False,
     ) -> None:
         """Set sampling mesh."""
         self._run_mode = "mesh"
-        self._mesh = np.array(mesh, dtype="int64")
-        self._qpoints, self._weights = get_qpoints(  # type: ignore[assignment]
-            self._mesh,
-            np.linalg.inv(self._pcell.cell),  # type: ignore[arg-type]
-            q_mesh_shift=shift,
-            is_gamma_center=is_gamma_center,
-            rotations=rotations,
+        dataset = primitive_symmetry.dataset if primitive_symmetry is not None else None
+        bz_grid = BZGrid(
+            mesh,
+            lattice=self._pcell.cell,
+            symmetry_dataset=dataset,
+            use_grg=use_grg,
         )
+        ir_grid_points, self._weights, _ = get_ir_grid_points(bz_grid)
+        ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype="int64")
+        self._qpoints = get_qpoints_from_bz_grid_points(ir_grid_points, bz_grid)
+        self._mesh = bz_grid.D_diag
 
     def set_band_structure(self, paths: list[NDArray[np.double]]) -> None:
         """Set band structure paths."""

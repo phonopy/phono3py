@@ -43,7 +43,6 @@ import numpy as np
 from numpy.typing import NDArray
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
 from phonopy.phonon.tetrahedron_mesh import get_tetrahedra_frequencies
-from phonopy.physical_units import get_physical_units
 from phonopy.structure.atomic_data import get_atomic_data
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive
@@ -97,7 +96,7 @@ class Isotope:
 
     def __init__(
         self,
-        mesh: float | NDArray[np.int64] | Sequence[int],
+        mesh: float | NDArray[np.int64] | Sequence[int] | Sequence[Sequence[int]],
         primitive: Primitive,
         mass_variances: Sequence[float]
         | NDArray[np.double]
@@ -127,10 +126,7 @@ class Isotope:
             self._cutoff_frequency = 0.0
         else:
             self._cutoff_frequency = cutoff_frequency
-        if frequency_factor_to_THz is None:
-            self._frequency_factor_to_THz = get_physical_units().DefaultToTHz
-        else:
-            self._frequency_factor_to_THz = frequency_factor_to_THz
+        self._frequency_factor_to_THz = frequency_factor_to_THz
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
         self._nac_q_direction: NDArray[np.double] | None = None
 
@@ -156,7 +152,6 @@ class Isotope:
                 lattice=self._primitive.cell,
                 symmetry_dataset=primitive_symmetry.dataset,
                 use_grg=use_grg,
-                store_dense_gp_map=True,
             )
         else:
             self._bz_grid = bz_grid
@@ -317,6 +312,7 @@ class Isotope:
 
         """
         assert self._frequencies is not None
+        assert self._grid_points is not None
 
         unique_grid_points = get_unique_grid_points(self._grid_points, self._bz_grid)
         self._run_phonon_solver_c(unique_grid_points)

@@ -36,12 +36,14 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Sequence
 from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix
+from phonopy.physical_units import get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive
 
@@ -54,7 +56,7 @@ class Phono3pyIsotope:
 
     def __init__(
         self,
-        mesh: Sequence[int] | NDArray[np.int64],
+        mesh: float | Sequence[int] | Sequence[Sequence[int]] | NDArray[np.int64],
         primitive: Primitive,
         mass_variances: Sequence[float] | NDArray[np.double] | None = None,
         band_indices: Sequence[int] | NDArray[np.int64] | None = None,
@@ -72,12 +74,22 @@ class Phono3pyIsotope:
         else:
             self._sigmas = sigmas
 
+        if frequency_factor_to_THz is None:
+            _frequency_factor_to_THz = get_physical_units().DefaultToTHz
+        else:
+            warnings.warn(
+                "frequency_factor_to_THz parameter is deprecated.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            _frequency_factor_to_THz = frequency_factor_to_THz
+
         self._iso = Isotope(
             mesh,
             primitive,
             mass_variances=mass_variances,
             band_indices=band_indices,
-            frequency_factor_to_THz=frequency_factor_to_THz,
+            frequency_factor_to_THz=_frequency_factor_to_THz,
             use_grg=use_grg,
             symprec=symprec,
             cutoff_frequency=cutoff_frequency,
