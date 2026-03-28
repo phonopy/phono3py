@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
@@ -107,30 +108,34 @@ class KappaDOSTHM:
         self._kdos = np.zeros(
             (n_temp, len(self._frequency_points), 2, n_elem), dtype="double"
         )
+        _ir_grid_points: NDArray[np.int64]
         if ir_grid_points is None:
-            _ir_grid_points = np.arange(len(frequencies), dtype=int)
+            _ir_grid_points = np.arange(len(frequencies), dtype="int64")
         else:
             _ir_grid_points = ir_grid_points
         grid_points = bz_grid.grg2bzg[_ir_grid_points]
+        _ir_grid_map: NDArray[np.int64]
         if ir_grid_map is None:
-            _ir_grid_map = np.arange(len(frequencies), dtype=int)
+            _ir_grid_map = np.arange(len(frequencies), dtype="int64")
         else:
             _ir_grid_map = ir_grid_map
         bzgp2irgp_map = self._get_bzgp2irgp_map(
             bz_grid.bzg2grg, _ir_grid_map, _ir_grid_points
         )
+        grid_weights: NDArray[np.int64]
         if ir_grid_weights is None:
             grid_weights = np.ones(mode_kappa.shape[1], dtype="int64")
         else:
             grid_weights = ir_grid_weights
-        for j, function in enumerate(("J", "I")):
+        func: Literal["J", "I"]
+        for j, func in enumerate(("J", "I")):  # type: ignore[assignment]
             iweights = get_integration_weights(
                 self._frequency_points,
                 frequencies,
                 bz_grid,
                 grid_points=grid_points,
                 bzgp2irgp_map=bzgp2irgp_map,
-                function=function,
+                function=func,
             )
             for i, iw in enumerate(iweights):
                 self._kdos[:, :, j] += np.transpose(
@@ -267,8 +272,8 @@ class GammaDOSsmearing:
 def run_prop_dos(
     frequencies: NDArray[np.double],
     mode_prop: NDArray[np.double],
-    ir_grid_map: NDArray[np.int64],
-    ir_grid_points: NDArray[np.int64],
+    ir_grid_map: NDArray[np.int64] | None,
+    ir_grid_points: NDArray[np.int64] | None,
     num_sampling_points: int,
     bz_grid: BZGrid,
 ) -> tuple[NDArray[np.double], NDArray[np.double]]:
@@ -308,8 +313,8 @@ def run_prop_dos(
 def run_mfp_dos(
     mean_freepath: NDArray[np.double],
     mode_prop: NDArray[np.double],
-    ir_grid_map: NDArray[np.int64],
-    ir_grid_points: NDArray[np.int64],
+    ir_grid_map: NDArray[np.int64] | None,
+    ir_grid_points: NDArray[np.int64] | None,
     num_sampling_points: int,
     bz_grid: BZGrid,
 ) -> tuple[NDArray[np.double], NDArray[np.double]]:
