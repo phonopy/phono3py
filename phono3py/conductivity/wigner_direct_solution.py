@@ -154,7 +154,7 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
         return self._mode_kappa_P_RTA
 
     @property
-    def mode_kappa_C(self) -> NDArray[np.complex128] | None:
+    def mode_kappa_C(self) -> NDArray[np.cdouble] | None:
         """Return mode_kappa."""
         return self._mode_kappa_C
 
@@ -174,7 +174,7 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
         return self._mode_kappa_P_exact
 
     @property
-    def velocity_operator(self) -> NDArray[np.complex128]:
+    def velocity_operator(self) -> NDArray[np.cdouble]:
         """Return velocity operator at sampled grid points."""
         return self._conductivity_components.velocity_operator
 
@@ -231,9 +231,7 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
             dtype=complex_dtype,
         )
 
-    def _set_kappa_at_sigmas(
-        self, weights: NDArray[np.double] | NDArray[np.int64]
-    ) -> None:
+    def _set_kappa_at_sigmas(self, weights: NDArray[np.double]) -> None:
         """Calculate thermal conductivity from collision matrix."""
         self._set_kappa_at_sigmas_common(weights)
 
@@ -272,31 +270,17 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
         print("-" * 76, flush=True)
 
     def _set_kappa(
-        self,
-        i_sigma: int,
-        i_temp: int,
-        weights: NDArray[np.double] | NDArray[np.int64],
+        self, i_sigma: int, i_temp: int, weights: NDArray[np.double]
     ) -> None:
         self._set_kappa_by_collision_type(
-            self._kappa_P_exact,
-            self._mode_kappa_P_exact,
-            i_sigma,
-            i_temp,
-            weights,
+            self._kappa_P_exact, self._mode_kappa_P_exact, i_sigma, i_temp, weights
         )
 
     def _set_kappa_RTA(
-        self,
-        i_sigma: int,
-        i_temp: int,
-        weights: NDArray[np.double] | NDArray[np.int64],
+        self, i_sigma: int, i_temp: int, weights: NDArray[np.double]
     ) -> None:
         self._set_kappa_RTA_by_collision_type(
-            self._kappa_P_RTA,
-            self._mode_kappa_P_RTA,
-            i_sigma,
-            i_temp,
-            weights,
+            self._kappa_P_RTA, self._mode_kappa_P_RTA, i_sigma, i_temp, weights
         )
         if self._is_reducible_collision_matrix:
             print(
@@ -368,9 +352,9 @@ class ConductivityWignerLBTE(ConductivityLBTEBase):
         linewidth_s2: float,
         cv_s1: float,
         cv_s2: float,
-        gv_by_gv_s1s2: NDArray[np.complex128],
+        gv_by_gv_s1s2: NDArray[np.cdouble],
         THzToEv: float,
-    ) -> NDArray[np.complex128] | None:
+    ) -> NDArray[np.cdouble] | None:
         if (freq_s1 <= self._pp.cutoff_frequency) or (
             freq_s2 <= self._pp.cutoff_frequency
         ):

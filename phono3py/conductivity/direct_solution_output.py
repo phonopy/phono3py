@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import os
+from typing import Any, Literal, TypeAlias
+
+from numpy.typing import NDArray
 
 from phono3py.conductivity.base import get_unit_to_WmK
 from phono3py.conductivity.direct_solution_base import ConductivityLBTEBase
@@ -16,10 +19,12 @@ from phono3py.file_IO import (
 )
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
 
-cond_LBTE_type = ConductivityLBTEBase
+cond_LBTE_type: TypeAlias = ConductivityLBTEBase
 
 
-def _pick_sigma_item(values, sigma_index):
+def _pick_sigma_item(
+    values: NDArray[Any] | None, sigma_index: int
+) -> NDArray[Any] | None:
     """Return values at sigma index, or None when values is None."""
     if values is None:
         return None
@@ -33,11 +38,11 @@ class ConductivityLBTEWriter:
     def write_collision(
         lbte: cond_LBTE_type,
         interaction: Interaction,
-        i=None,
-        is_reducible_collision_matrix=False,
-        is_one_gp_colmat=False,
-        filename=None,
-    ):
+        i: int | None = None,
+        is_reducible_collision_matrix: bool = False,
+        is_one_gp_colmat: bool = False,
+        filename: str | os.PathLike | None = None,
+    ) -> None:
         """Write collision matrix into hdf5 file."""
         grid_points = lbte.grid_points
         temperatures = lbte.temperatures
@@ -46,6 +51,7 @@ class ConductivityLBTEWriter:
         gamma = lbte.gamma
         gamma_isotope = lbte.gamma_isotope
         collision_matrix = lbte.collision_matrix
+        assert collision_matrix is not None
         mesh = lbte.mesh_numbers
 
         if i is not None:
@@ -117,10 +123,10 @@ class ConductivityLBTEWriter:
         is_reducible_collision_matrix: bool = False,
         write_LBTE_solution: bool = False,
         pinv_solver: int | None = None,
-        compression: str = "gzip",
+        compression: Literal["gzip", "lzf"] | int | None = "gzip",
         filename: str | os.PathLike | None = None,
         log_level: int = 0,
-    ):
+    ) -> None:
         """Write kappa related properties into a hdf5 file."""
         kappa_data = get_lbte_writer_kappa_data(lbte)
         kappa = kappa_data["kappa"]
@@ -151,6 +157,7 @@ class ConductivityLBTEWriter:
         f_vector = lbte.get_f_vectors()
         mode_cv = lbte.mode_heat_capacities
         mfp = lbte.get_mean_free_path()
+        assert mfp is not None
         boundary_mfp = lbte.boundary_mfp
 
         coleigs = lbte.collision_eigenvalues
@@ -215,7 +222,7 @@ class ConductivityLBTEWriter:
                 kappa_unit_conversion=get_unit_to_WmK() / volume,
                 compression=compression,
                 filename=filename,
-                verbose=log_level,
+                verbose=log_level > 0,
             )
 
             if coleigs is not None:
@@ -226,7 +233,7 @@ class ConductivityLBTEWriter:
                     sigma=sigma,
                     sigma_cutoff=sigma_cutoff,
                     filename=filename,
-                    verbose=log_level,
+                    verbose=log_level > 0,
                 )
 
                 if write_LBTE_solution:
@@ -241,5 +248,5 @@ class ConductivityLBTEWriter:
                                 sigma_cutoff=sigma_cutoff,
                                 solver=solver,
                                 filename=filename,
-                                verbose=log_level,
+                                verbose=log_level > 0,
                             )

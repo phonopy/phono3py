@@ -34,10 +34,16 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
+from collections.abc import Sequence
+
 import numpy as np
-from phonopy.harmonic.dynamical_matrix import DynamicalMatrixGL
+from numpy.typing import NDArray
+from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, DynamicalMatrixGL
 from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.physical_units import get_physical_units
+from phonopy.structure.symmetry import Symmetry
 
 
 class VelocityOperator(GroupVelocity):
@@ -45,12 +51,12 @@ class VelocityOperator(GroupVelocity):
 
     def __init__(
         self,
-        dynamical_matrix,
-        q_length=None,
-        symmetry=None,
-        frequency_factor_to_THz=None,
-        cutoff_frequency=1e-4,
-    ):
+        dynamical_matrix: DynamicalMatrix,
+        q_length: float | None = None,
+        symmetry: Symmetry | None = None,
+        frequency_factor_to_THz: float | None = None,
+        cutoff_frequency: float = 1e-4,
+    ) -> None:
         """Init method.
 
         dynamical_matrix : DynamicalMatrix or DynamicalMatrixNAC
@@ -71,7 +77,7 @@ class VelocityOperator(GroupVelocity):
         self._dynmat = dynamical_matrix
         primitive = dynamical_matrix.primitive
         self._reciprocal_lattice_inv = primitive.cell
-        self._reciprocal_lattice = np.linalg.inv(self._reciprocal_lattice_inv)
+        self._reciprocal_lattice = np.linalg.inv(self._reciprocal_lattice_inv)  # type: ignore[assignment]
         self._q_length = q_length
         if self._q_length is None:
             self._q_length = 5e-6
@@ -101,11 +107,15 @@ class VelocityOperator(GroupVelocity):
             self._directions[0]
         )  # normalize the random direction
 
-        self._q_points = None
-        self._velocity_operators = None
-        self._perturbation = None
+        self._q_points: Sequence[Sequence[float]] | NDArray[np.double] | None = None
+        self._velocity_operators: NDArray[np.cdouble] | None = None
+        self._perturbation: Sequence[float] | NDArray[np.double] | None = None
 
-    def run(self, q_points, perturbation=None):
+    def run(
+        self,
+        q_points: Sequence[Sequence[float]] | NDArray[np.double],
+        perturbation: Sequence[float] | NDArray[np.double] | None = None,
+    ) -> None:
         """Velocity operators are computed at q-points.
 
         q_points : Array-like
@@ -129,13 +139,16 @@ class VelocityOperator(GroupVelocity):
         self._velocity_operators = np.array(gv_operator, dtype="complex", order="C")
 
     @property
-    def velocity_operators(self):
+    def velocity_operators(self) -> NDArray[np.cdouble] | None:
         """Return velocity operators."""
         return self._velocity_operators
 
-    def _calculate_velocity_operator_at_q(self, q):
+    def _calculate_velocity_operator_at_q(
+        self, q: Sequence[float] | NDArray[np.double]
+    ) -> NDArray[np.cdouble]:
         self._dynmat.run(q)
         dm = self._dynmat.dynamical_matrix
+        assert dm is not None
         eigvals, eigvecs = np.linalg.eigh(dm)
         eigvals = eigvals.real
         freqs = np.sqrt(abs(eigvals)) * np.sign(eigvals) * self._factor
@@ -162,9 +175,10 @@ class VelocityOperator(GroupVelocity):
 
         return gv_operator
 
-    def _get_dsqrtD_FD(self, q):
+    def _get_dsqrtD_FD(self, q: NDArray[np.double]) -> NDArray[np.cdouble]:
         """Compute finite difference of sqrt of dynamical matrices."""
         #
+        assert self._q_length is not None
         ddm = []
         # _q_length is a float specifying the modulus of the q-vector displacement
         # used to compute the finite differences
@@ -177,7 +191,9 @@ class VelocityOperator(GroupVelocity):
             )
         return np.array(ddm)
 
-    def _sqrt_dynamical_matrix(self, flag_gamma, dm):
+    def _sqrt_dynamical_matrix(
+        self, flag_gamma: bool, dm: NDArray[np.cdouble]
+    ) -> NDArray[np.cdouble]:
         # returns the sqrt of the dynamical matrix in the cartesian basis
         eigvals, eigvecs = np.linalg.eigh(dm)
         eigvals = eigvals.real
@@ -205,7 +221,12 @@ class VelocityOperator(GroupVelocity):
         #
         return sqrt_dm
 
-    def _delta_sqrt_dynamical_matrix(self, q, delta_q, dynmat):
+    def _delta_sqrt_dynamical_matrix(
+        self,
+        q: NDArray[np.double],
+        delta_q: NDArray[np.double],
+        dynmat: DynamicalMatrix,
+    ) -> NDArray[np.cdouble]:
         #
         flag_gamma = False
         if np.linalg.norm(q) < np.linalg.norm(delta_q):
@@ -216,18 +237,22 @@ class VelocityOperator(GroupVelocity):
                 q - delta_q, q_direction=(q - delta_q) / np.linalg.norm(q - delta_q)
             )
             dm1 = dynmat.dynamical_matrix
+            assert dm1 is not None
             sqrt_dm1 = self._sqrt_dynamical_matrix(flag_gamma, dm1)
             dynmat.run(
                 q + delta_q, q_direction=(q + delta_q) / np.linalg.norm(q + delta_q)
             )
             dm2 = dynmat.dynamical_matrix
+            assert dm2 is not None
             sqrt_dm2 = self._sqrt_dynamical_matrix(flag_gamma, dm2)
         else:
             dynmat.run(q - delta_q)
             dm1 = dynmat.dynamical_matrix
+            assert dm1 is not None
             sqrt_dm1 = self._sqrt_dynamical_matrix(flag_gamma, dm1)
             dynmat.run(q + delta_q)
             dm2 = dynmat.dynamical_matrix
+            assert dm2 is not None
             sqrt_dm2 = self._sqrt_dynamical_matrix(flag_gamma, dm2)
         #
         #

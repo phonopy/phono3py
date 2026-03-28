@@ -82,15 +82,15 @@ class ConductivityWignerRTA(ConductivityRTABase):
         log_level: int = 0,
     ):
         """Init method."""
-        self._cv = None
-        self._kappa_TOT_RTA = None
-        self._kappa_P_RTA = None
-        self._kappa_C = None
-        self._mode_kappa_P_RTA = None
-        self._mode_kappa_C = None
+        self._cv: NDArray[np.double] | None = None
+        self._kappa_TOT_RTA: NDArray[np.double] | None = None
+        self._kappa_P_RTA: NDArray[np.double] | None = None
+        self._kappa_C: NDArray[np.double] | None = None
+        self._mode_kappa_P_RTA: NDArray[np.double] | None = None
+        self._mode_kappa_C: NDArray[np.double] | None = None
 
-        self._gv_operator = None
-        self._gv_operator_sum2 = None
+        self._gv_operator: NDArray[np.cdouble] | None = None
+        self._gv_operator_sum2: NDArray[np.cdouble] | None = None
 
         super().__init__(
             interaction,
@@ -156,11 +156,11 @@ class ConductivityWignerRTA(ConductivityRTABase):
         return self._mode_kappa_C
 
     @property
-    def velocity_operator(self) -> NDArray[np.complex128]:
+    def velocity_operator(self) -> NDArray[np.cdouble]:
         """Return velocity operator at sampled grid points."""
         return self._conductivity_components.velocity_operator
 
-    def set_kappa_at_sigmas(self):
+    def set_kappa_at_sigmas(self) -> None:
         """Calculate the Wigner thermal conductivity.
 
         k_P + k_C using the scattering operator in the RTA approximation.
@@ -218,7 +218,7 @@ class ConductivityWignerRTA(ConductivityRTABase):
         k: int,
         num_band: int,
         frequencies: NDArray[np.double],
-        gv_by_gv: NDArray[np.complex128],
+        gv_by_gv: NDArray[np.cdouble],
         cv: NDArray[np.double],
         THzToEv: float,
     ) -> None:
@@ -266,7 +266,7 @@ class ConductivityWignerRTA(ConductivityRTABase):
         g_sum_s2: float,
         cv_s1: float,
         cv_s2: float,
-        gv_by_gv_s1s2: NDArray[np.complex128],
+        gv_by_gv_s1s2: NDArray[np.cdouble],
         THzToEv: float,
     ) -> tuple[NDArray[np.double], bool] | None:
         if (freq_s1 <= self._pp.cutoff_frequency) or (
@@ -299,15 +299,15 @@ class ConductivityWignerRTA(ConductivityRTABase):
 
         return contribution, is_population
 
-    def _set_cv(self, i_gp, i_data):
+    def _set_cv(self, i_gp: int, i_data: int) -> None:
         """Set cv for conductivity components."""
         self._conductivity_components.set_heat_capacities(i_gp, i_data)
 
-    def _set_velocities(self, i_gp, i_data):
+    def _set_velocities(self, i_gp: int, i_data: int) -> None:
         """Set velocities for conductivity components."""
         self._conductivity_components.set_velocities(i_gp, i_data)
 
-    def _allocate_values(self):
+    def _allocate_values(self) -> None:
         super()._allocate_values()
 
         if self._temperatures is None:

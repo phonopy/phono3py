@@ -317,7 +317,8 @@ def test_get_all_shortest(aln_lda: Phono3py):
     s_lattice = ph3.supercell.cell
     p_lattice = itr.primitive.cell
     shortests = itr._all_shortest
-    svecs, multi, _, _, _ = itr.get_primitive_and_supercell_correspondence()
+    svecs, multi = itr.primitive.get_smallest_vectors()
+
     n_satom, n_patom, _ = multi.shape
     for i, j, k in np.ndindex((n_patom, n_satom, n_satom)):
         is_found = 0

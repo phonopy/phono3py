@@ -38,10 +38,13 @@ from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
+from phonopy.harmonic.displacement import DisplacementDataset
+
+from phono3py.phonon3.displacement_fc3 import Fc3DisplacementDataset
 
 
 def get_displacements_and_forces_fc3(
-    disp_dataset: dict,
+    disp_dataset: Fc3DisplacementDataset,
 ) -> tuple[NDArray, NDArray | None]:
     """Return displacements and forces from disp_dataset.
 
@@ -51,7 +54,7 @@ def get_displacements_and_forces_fc3(
 
     Parameters
     ----------
-    disp_dataset : dict
+    disp_dataset : Fc3DisplacementDataset
         Displacement dataset.
 
     Returns
@@ -98,7 +101,7 @@ def get_displacements_and_forces_fc3(
                 count += 1
 
         if forces_count == 0:
-            forces = None
+            forces = None  # type: ignore[assignment]
         else:
             forces = np.array(forces[indices], dtype="double", order="C")
             assert forces_count == count
@@ -116,7 +119,9 @@ def get_displacements_and_forces_fc3(
         raise RuntimeError("disp_dataset doesn't contain correct information.")
 
 
-def forces_in_dataset(dataset: dict | None) -> bool:
+def forces_in_dataset(
+    dataset: Fc3DisplacementDataset | DisplacementDataset | None,
+) -> bool:
     """Return whether forces in dataset or not."""
     if dataset is None:
         return False

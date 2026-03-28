@@ -81,8 +81,8 @@ class ConductivityKuboComponents(ConductivityComponentsBase):
 
         self._complex_dtype = "c%d" % (np.dtype("double").itemsize * 2)
         self._cv_mat: NDArray[np.double]
-        self._gv_mat: NDArray[np.complex128]
-        self._gv_mat_sum2: NDArray[np.complex128]
+        self._gv_mat: NDArray[np.cdouble]
+        self._gv_mat_sum2: NDArray[np.cdouble]
 
         self._velocity_obj = GroupVelocityMatrix(
             self._pp.dynamical_matrix,
@@ -100,7 +100,7 @@ class ConductivityKuboComponents(ConductivityComponentsBase):
         return self._cv_mat
 
     @property
-    def gv_matrix_sum2(self) -> NDArray[np.complex128]:
+    def gv_matrix_sum2(self) -> NDArray[np.cdouble]:
         """Return summed products of velocity matrices over k-star."""
         return self._gv_mat_sum2
 

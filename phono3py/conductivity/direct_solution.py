@@ -191,9 +191,7 @@ class ConductivityLBTE(ConductivityLBTEBase):
             (len(self._sigmas), num_temp, num_grid_points, num_band0, 6), dtype="double"
         )
 
-    def _set_kappa_at_sigmas(
-        self, weights: NDArray[np.double] | NDArray[np.int64]
-    ) -> None:
+    def _set_kappa_at_sigmas(self, weights: NDArray[np.double]) -> None:
         """Calculate thermal conductivity from collision matrix."""
         self._set_kappa_at_sigmas_common(weights)
 
@@ -210,10 +208,7 @@ class ConductivityLBTE(ConductivityLBTEBase):
         print("-" * 76, flush=True)
 
     def _set_kappa(
-        self,
-        i_sigma: int,
-        i_temp: int,
-        weights: NDArray[np.double] | NDArray[np.int64],
+        self, i_sigma: int, i_temp: int, weights: NDArray[np.double]
     ) -> None:
         self._set_kappa_by_collision_type(
             self._kappa,
@@ -224,10 +219,7 @@ class ConductivityLBTE(ConductivityLBTEBase):
         )
 
     def _set_kappa_RTA(
-        self,
-        i_sigma: int,
-        i_temp: int,
-        weights: NDArray[np.double] | NDArray[np.int64],
+        self, i_sigma: int, i_temp: int, weights: NDArray[np.double]
     ) -> None:
         self._set_kappa_RTA_by_collision_type(
             self._kappa_RTA,

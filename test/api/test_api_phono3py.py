@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -9,9 +10,12 @@ import pytest
 from phonopy.harmonic.force_constants import get_drift_force_constants
 from phonopy.interface.pypolymlp import PypolymlpParams
 from phonopy.structure.atoms import PhonopyAtoms
+from phonopy.structure.cells import isclose
 
+import phono3py
 from phono3py import Phono3py
 from phono3py.conductivity.rta import ConductivityRTA
+from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon3.fc3 import get_drift_fc3
 
 cwd = Path(__file__).parent
@@ -272,6 +276,131 @@ def test_symmetrize_fc_traditional(si_pbesol: Phono3py, is_compact_fc: bool):
         np.testing.assert_allclose(np.abs([v1_sym, v2_sym]), 1.0e-06, atol=1e-6)
     else:
         np.testing.assert_allclose(np.abs([v1_sym, v2_sym]), 1.0e-06, atol=1e-6)
+
+
+def test_save_creates_file(si_pbesol_without_forcesets: Phono3py):
+    """Test Phono3py.save creates a file."""
+    ph3 = si_pbesol_without_forcesets
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        filepath = Path(tmp_dir) / "phono3py_params.yaml"
+        ph3.save(filepath)
+        assert filepath.exists()
+
+
+def test_save_roundtrip_structure(si_pbesol_without_forcesets: Phono3py):
+    """Test Phono3py.save preserves supercell/primitive structure and displacements.
+
+    Uses a fixture without force sets to verify displacements-only round-trip.
+
+    """
+    ph3 = si_pbesol_without_forcesets
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        filepath = Path(tmp_dir) / "phono3py_params.yaml"
+        ph3.save(filepath)
+        ph3_loaded = phono3py.load(filepath, produce_fc=False, log_level=0)
+    np.testing.assert_allclose(
+        ph3_loaded.supercell_matrix, ph3.supercell_matrix, atol=1e-8
+    )
+    np.testing.assert_allclose(
+        ph3_loaded.primitive_matrix, ph3.primitive_matrix, atol=1e-8
+    )
+    assert isclose(ph3_loaded.unitcell, ph3.unitcell)
+    assert ph3_loaded.forces is None
+    np.testing.assert_allclose(ph3_loaded.displacements, ph3.displacements, atol=1e-8)
+
+
+def test_save_roundtrip_forces(si_pbesol: Phono3py):
+    """Test Phono3py.save round-trip of forces with default settings.
+
+    force_sets=True
+
+    """
+    ph3 = si_pbesol
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        filepath = Path(tmp_dir) / "phono3py_params.yaml"
+        ph3.save(filepath)
+        ph3_loaded = phono3py.load(filepath, produce_fc=False, log_level=0)
+    assert ph3_loaded.forces is not None
+    np.testing.assert_allclose(ph3_loaded.forces, ph3.forces, atol=1e-8)
+
+
+def test_save_force_sets_false(si_pbesol: Phono3py):
+    """Test Phono3py.save with force_sets=False does not save forces."""
+    ph3 = si_pbesol
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        filepath = Path(tmp_dir) / "phono3py_params.yaml"
+        ph3.save(filepath, settings={"force_sets": False})
+        ph3_loaded = phono3py.load(filepath, produce_fc=False, log_level=0)
+    assert ph3_loaded.forces is None
+
+
+def test_save_roundtrip_force_constants(si_pbesol: Phono3py):
+    """Test Phono3py.save round-trip of fc2 with force_constants=True.
+
+    Note: force_constants=True saves fc2 (not fc3) into the YAML file.
+    fc3 is not stored in YAML format. Reading back is done via Phono3pyYaml
+    directly, since phono3py.load does not read force constants from YAML.
+
+    """
+    ph3 = si_pbesol
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        filepath = Path(tmp_dir) / "phono3py_params.yaml"
+        ph3.save(filepath, settings={"force_constants": True})
+        ph3py_yaml = Phono3pyYaml().read(filepath)
+    assert ph3.fc2 is not None
+    assert ph3py_yaml.force_constants is not None
+    np.testing.assert_allclose(ph3py_yaml.force_constants, ph3.fc2, atol=1e-8)
+
+
+def test_save_force_constants_not_saved_by_default(si_pbesol: Phono3py):
+    """Test Phono3py.save does not save force_constants by default."""
+    ph3 = si_pbesol
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        filepath = Path(tmp_dir) / "phono3py_params.yaml"
+        ph3.save(filepath)
+        ph3_loaded = phono3py.load(filepath, produce_fc=False, log_level=0)
+    assert ph3_loaded.fc3 is None
+    assert ph3_loaded.fc2 is None
+
+
+def test_save_roundtrip_born_effective_charge(nacl_pbe: Phono3py):
+    """Test Phono3py.save round-trip of Born eff. charg. and dielectric tensors."""
+    ph3 = nacl_pbe
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        filepath = Path(tmp_dir) / "phono3py_params.yaml"
+        ph3.save(filepath)
+        ph3_loaded = phono3py.load(filepath, produce_fc=False, log_level=0)
+    assert ph3.nac_params is not None
+    assert ph3_loaded.nac_params is not None
+    np.testing.assert_allclose(
+        ph3_loaded.nac_params["born"], ph3.nac_params["born"], atol=1e-8
+    )
+    np.testing.assert_allclose(
+        ph3_loaded.nac_params["dielectric"], ph3.nac_params["dielectric"], atol=1e-8
+    )
+
+
+def test_save_born_effective_charge_false(nacl_pbe: Phono3py):
+    """Test Phono3py.save with born_effective_charge=False does not save NAC params."""
+    ph3 = nacl_pbe
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        filepath = Path(tmp_dir) / "phono3py_params.yaml"
+        ph3.save(
+            filepath,
+            settings={"born_effective_charge": False, "dielectric_constant": False},
+        )
+        ph3_loaded = phono3py.load(filepath, produce_fc=False, log_level=0)
+    assert ph3_loaded.nac_params is None
+
+
+def test_save_displacements_false(si_pbesol: Phono3py):
+    """Test Phono3py.save with displacements=False does not save displacement data."""
+    ph3 = si_pbesol
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        filepath = Path(tmp_dir) / "phono3py_params.yaml"
+        ph3.save(filepath, settings={"displacements": False, "force_sets": False})
+        ph3_loaded = phono3py.load(filepath, produce_fc=False, log_level=0)
+    assert ph3_loaded.dataset is None
 
 
 @pytest.mark.parametrize("is_compact_fc", [True, False])

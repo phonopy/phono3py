@@ -1,5 +1,7 @@
 """Test for triplets.py."""
 
+from typing import Literal
+
 import numpy as np
 import pytest
 from phonopy import Phonopy
@@ -8,10 +10,14 @@ from phonopy.structure.symmetry import Symmetry
 
 from phono3py import Phono3py
 from phono3py.phonon.grid import BZGrid, get_grid_point_from_address
+from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.triplets import (
     _get_BZ_triplets_at_q,
     _get_triplets_reciprocal_mesh_at_q,
+    get_all_triplets,
+    get_nosym_triplets_at_q,
     get_triplets_at_q,
+    get_triplets_integration_weights,
 )
 
 
@@ -1817,3 +1823,173 @@ def test_get_BZ_triplets_at_q(aln_cell: PhonopyAtoms, params):
         # print("],")
         # print(len(ir_triplets))
         # print(bzgrid._reciprocal_lattice.tolist())
+
+
+def test_get_all_triplets(aln_cell: PhonopyAtoms):
+    """Test get_all_triplets returns all (unreduced) triplets."""
+    symmetry = Symmetry(aln_cell)
+    grid_point = 1
+    mesh = [3, 3, 4]
+    bz_grid = BZGrid(
+        mesh,
+        lattice=aln_cell.cell,
+        symmetry_dataset=symmetry.dataset,
+        store_dense_gp_map=False,
+    )
+    n_grid = int(np.prod(bz_grid.D_diag))
+    triplets = get_all_triplets(grid_point, bz_grid)
+
+    # Shape: all q2 points appear as triplets
+    assert triplets.shape == (n_grid, 3)
+    assert triplets.dtype == np.dtype("int64")
+    # First element of each triplet is always the fixed grid point
+    np.testing.assert_equal(triplets[:, 0], grid_point)
+
+    # Should match get_nosym_triplets_at_q result
+    nosym_triplets, _, _, _ = get_nosym_triplets_at_q(grid_point, bz_grid)
+    np.testing.assert_equal(triplets, nosym_triplets)
+
+
+def test_get_nosym_triplets_at_q(aln_cell: PhonopyAtoms):
+    """Test get_nosym_triplets_at_q produces identity mapping with unit weights."""
+    symmetry = Symmetry(aln_cell)
+    grid_point = 1
+    mesh = [3, 3, 4]
+    bz_grid = BZGrid(
+        mesh,
+        lattice=aln_cell.cell,
+        symmetry_dataset=symmetry.dataset,
+        store_dense_gp_map=False,
+    )
+    n_grid = int(np.prod(bz_grid.D_diag))
+    triplets, weights, map_triplets, map_q = get_nosym_triplets_at_q(
+        grid_point, bz_grid
+    )
+
+    # All grid points appear as independent triplets (no reduction)
+    assert len(triplets) == n_grid
+    np.testing.assert_equal(weights, np.ones(n_grid, dtype="int64"))
+    assert weights.sum() == n_grid
+    np.testing.assert_equal(map_triplets, np.arange(n_grid, dtype="int64"))
+    np.testing.assert_equal(map_q, np.arange(n_grid, dtype="int64"))
+
+    # Symmetry-reduced version has fewer or equal triplets but same weight sum
+    sym_triplets, sym_weights, _, _ = get_triplets_at_q(grid_point, bz_grid)
+    assert len(sym_triplets) <= n_grid
+    assert sym_weights.sum() == n_grid
+
+
+@pytest.mark.parametrize("lang", ["C", "Python"])
+def test_get_triplets_integration_weights_sigma(
+    si_pbesol: Phono3py, lang: Literal["C", "Python"]
+):
+    """Test get_triplets_integration_weights with Gaussian smearing."""
+    itr = _setup_interaction(si_pbesol, [4, 4, 4], grid_point=1)
+    frequencies = itr.get_phonons()[0]
+    assert frequencies is not None
+    num_band = frequencies.shape[1]
+    triplets = itr.get_triplets_at_q()[0]
+    assert triplets is not None
+    n_triplets = len(triplets)
+
+    frequency_points = np.linspace(0, 20, 11)
+    sigma = 0.1
+
+    g, g_zero = get_triplets_integration_weights(
+        itr, frequency_points, sigma=sigma, lang=lang
+    )
+
+    assert g.shape == (2, n_triplets, len(frequency_points), num_band, num_band)
+    assert np.all(g[0] >= 0)
+    # g_zero is populated only in C path
+    if lang == "C":
+        assert g_zero is not None
+        assert g_zero.shape == (n_triplets, len(frequency_points), num_band, num_band)
+    else:
+        assert g_zero is None
+
+
+def test_get_triplets_integration_weights_sigma_c_equals_python(si_pbesol: Phono3py):
+    """Test that C and Python sigma paths give the same integration weights."""
+    itr = _setup_interaction(si_pbesol, [4, 4, 4], grid_point=1)
+    frequency_points = np.linspace(0, 20, 11)
+    sigma = 0.1
+
+    g_c, _ = get_triplets_integration_weights(
+        itr, frequency_points, sigma=sigma, lang="C"
+    )
+    g_py, _ = get_triplets_integration_weights(
+        itr, frequency_points, sigma=sigma, lang="Python"
+    )
+    np.testing.assert_allclose(g_c, g_py, rtol=0, atol=1e-10)
+
+
+@pytest.mark.parametrize("lang", ["C", "Python"])
+def test_get_triplets_integration_weights_tetrahedron(
+    si_pbesol: Phono3py, lang: Literal["C", "Python"]
+):
+    """Test get_triplets_integration_weights with tetrahedron method (no sigma)."""
+    itr = _setup_interaction(si_pbesol, [4, 4, 4], grid_point=1)
+    frequencies = itr.get_phonons()[0]
+    assert frequencies is not None
+    num_band = frequencies.shape[1]
+    triplets = itr.get_triplets_at_q()[0]
+    assert triplets is not None
+    n_triplets = len(triplets)
+
+    frequency_points = np.linspace(0, 20, 11)
+
+    g, g_zero = get_triplets_integration_weights(
+        itr, frequency_points, sigma=None, lang=lang
+    )
+
+    assert g.shape == (2, n_triplets, len(frequency_points), num_band, num_band)
+    assert np.all(g[0] >= 0)
+    # g_zero is populated only in C path
+    if lang == "C":
+        assert g_zero is not None
+        assert g_zero.shape == (n_triplets, len(frequency_points), num_band, num_band)
+    else:
+        assert g_zero is None
+
+
+def test_get_triplets_integration_weights_tetrahedron_c_equals_python(
+    si_pbesol: Phono3py,
+):
+    """Test that C and Python tetrahedron paths give the same integration weights."""
+    itr = _setup_interaction(si_pbesol, [4, 4, 4], grid_point=1)
+    frequency_points = np.linspace(0, 20, 11)
+
+    g_c, _ = get_triplets_integration_weights(
+        itr, frequency_points, sigma=None, lang="C"
+    )
+    g_py, _ = get_triplets_integration_weights(
+        itr, frequency_points, sigma=None, lang="Python"
+    )
+    # C and Python tetrahedron implementations have ~1e-7 level differences
+    np.testing.assert_allclose(g_c, g_py, rtol=1e-4, atol=1e-10)
+
+
+def _setup_interaction(
+    ph3: Phono3py,
+    mesh: list,
+    grid_point: int,
+) -> Interaction:
+    """Set up Interaction with phonons solved at a given grid point."""
+    ph3.mesh_numbers = mesh
+    assert ph3.grid is not None
+    itr = Interaction(
+        ph3.primitive,
+        ph3.grid,
+        ph3.primitive_symmetry,
+        fc3=ph3.fc3,
+        cutoff_frequency=1e-4,
+    )
+    itr.init_dynamical_matrix(
+        ph3.fc2,
+        ph3.phonon_supercell,
+        ph3.phonon_primitive,
+    )
+    itr.set_grid_point(grid_point)
+    itr.run_phonon_solver()
+    return itr

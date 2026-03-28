@@ -38,10 +38,13 @@ from __future__ import annotations
 
 import logging
 import sys
+from collections.abc import Sequence
+from typing import cast
 
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.harmonic.force_constants import (
+    Type1DisplacementDataset,
     distribute_force_constants,
     get_nsym_list_and_s2pp,
     get_positions_sent_by_rot_inv,
@@ -55,6 +58,8 @@ from phonopy.structure.cells import Primitive, compute_all_sg_permutations
 from phonopy.structure.symmetry import Symmetry
 
 from phono3py.phonon3.displacement_fc3 import (
+    Fc3Type1DisplacementDataset,
+    SecondAtomDisplacementWithForces,
     get_bond_symmetry,
     get_reduced_site_symmetry,
     get_smallest_vector_of_atom_pair,
@@ -66,12 +71,12 @@ logger = logging.getLogger(__name__)
 def get_fc3(
     supercell: PhonopyAtoms,
     primitive: Primitive,
-    disp_dataset,
+    disp_dataset: Fc3Type1DisplacementDataset,
     symmetry: Symmetry,
-    is_compact_fc=False,
+    is_compact_fc: bool = False,
     pinv_solver: str = "numpy",
-    verbose=False,
-):
+    verbose: bool = False,
+) -> tuple[NDArray[np.double], NDArray[np.double]]:
     """Calculate fc3.
 
     Even when 'cutoff_distance' in dataset, all displacements are in the
@@ -89,7 +94,7 @@ def get_fc3(
     # p2s_map elements are extracted if is_compact_fc=True at the last part.
     fc2 = get_fc2(
         supercell,
-        disp_dataset,
+        cast(Type1DisplacementDataset, disp_dataset),
         primitive=primitive,
         is_compact_fc=False,
         symmetry=symmetry,
@@ -174,15 +179,15 @@ def get_fc3(
 
 
 def distribute_fc3(
-    fc3,
-    first_disp_atoms,
-    target_atoms,
-    lattice,
-    rotations,
-    permutations,
-    s2compact,
-    verbose=False,
-):
+    fc3: NDArray[np.double],
+    first_disp_atoms: Sequence[int] | NDArray[np.int64],
+    target_atoms: Sequence[int] | NDArray[np.int64],
+    lattice: NDArray[np.double],
+    rotations: NDArray[np.int64],
+    permutations: NDArray[np.int64],
+    s2compact: NDArray[np.int64],
+    verbose: bool = False,
+) -> None:
     """Distribute fc3.
 
     fc3[i, :, :, 0:3, 0:3, 0:3] where i=indices done are distributed to
@@ -236,7 +241,7 @@ def distribute_fc3(
             sys.stdout.flush()
 
         try:
-            import phono3py._phono3py as phono3c
+            import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
             phono3c.distribute_fc3(
                 fc3, s2compact[i_target], s2compact[i_done], atom_mapping, rot_cart_inv
@@ -252,10 +257,10 @@ def distribute_fc3(
                     )
 
 
-def set_permutation_symmetry_fc3(fc3):
+def set_permutation_symmetry_fc3(fc3: NDArray[np.double]) -> None:
     """Enforce permutation symmetry to full fc3."""
     try:
-        import phono3py._phono3py as phono3c
+        import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
         phono3c.permutation_symmetry_fc3(fc3)
     except ImportError:
@@ -268,10 +273,12 @@ def set_permutation_symmetry_fc3(fc3):
                     _copy_permutation_symmetry_fc3_elem(fc3, fc3_elem, i, j, k)
 
 
-def set_permutation_symmetry_compact_fc3(fc3, primitive):
+def set_permutation_symmetry_compact_fc3(
+    fc3: NDArray[np.double], primitive: Primitive
+) -> None:
     """Enforce permulation symmetry to compact fc3."""
     try:
-        import phono3py._phono3py as phono3c
+        import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
         s2p_map = primitive.s2p_map
         p2s_map = primitive.p2s_map
@@ -293,7 +300,9 @@ def set_permutation_symmetry_compact_fc3(fc3, primitive):
         raise RuntimeError(text) from exc
 
 
-def _copy_permutation_symmetry_fc3_elem(fc3, fc3_elem, a, b, c):
+def _copy_permutation_symmetry_fc3_elem(
+    fc3: NDArray[np.double], fc3_elem: NDArray[np.double], a: int, b: int, c: int
+) -> None:
     for i, j, k in list(np.ndindex(3, 3, 3)):
         fc3[a, b, c, i, j, k] = fc3_elem[i, j, k]
         fc3[c, a, b, k, i, j] = fc3_elem[i, j, k]
@@ -303,7 +312,9 @@ def _copy_permutation_symmetry_fc3_elem(fc3, fc3_elem, a, b, c):
         fc3[c, b, a, k, j, i] = fc3_elem[i, j, k]
 
 
-def _set_permutation_symmetry_fc3_elem(fc3, a, b, c, divisor=6):
+def _set_permutation_symmetry_fc3_elem(
+    fc3: NDArray[np.double], a: int, b: int, c: int, divisor: int = 6
+) -> NDArray[np.double]:
     tensor3 = np.zeros((3, 3, 3), dtype="double")
     for i, j, k in list(np.ndindex(3, 3, 3)):
         tensor3[i, j, k] = (
@@ -317,16 +328,18 @@ def _set_permutation_symmetry_fc3_elem(fc3, a, b, c, divisor=6):
     return tensor3
 
 
-def set_translational_invariance_fc3(fc3):
+def set_translational_invariance_fc3(fc3: NDArray[np.double]) -> None:
     """Enforce translational symmetry to fc3."""
     for i in range(3):
         _set_translational_invariance_fc3_per_index(fc3, index=i)
 
 
-def set_translational_invariance_compact_fc3(fc3, primitive: Primitive):
+def set_translational_invariance_compact_fc3(
+    fc3: NDArray[np.double], primitive: Primitive
+) -> None:
     """Enforce translational symmetry to compact fc3."""
     try:
-        import phono3py._phono3py as phono3c
+        import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
         s2p_map = primitive.s2p_map
         p2s_map = primitive.p2s_map
@@ -351,7 +364,9 @@ def set_translational_invariance_compact_fc3(fc3, primitive: Primitive):
         raise RuntimeError(text) from exc
 
 
-def _set_translational_invariance_fc3_per_index(fc3, index=0):
+def _set_translational_invariance_fc3_per_index(
+    fc3: NDArray[np.double], index: int = 0
+) -> None:
     for i in range(fc3.shape[(1 + index) % 3]):
         for j in range(fc3.shape[(2 + index) % 3]):
             for k, ll, m in list(np.ndindex(3, 3, 3)):
@@ -369,7 +384,9 @@ def _set_translational_invariance_fc3_per_index(fc3, index=0):
                     )
 
 
-def _third_rank_tensor_rotation(rot_cart, tensor):
+def _third_rank_tensor_rotation(
+    rot_cart: NDArray[np.double], tensor: NDArray[np.double]
+) -> NDArray[np.double]:
     rot_tensor = np.zeros((3, 3, 3), dtype="double")
     for i in (0, 1, 2):
         for j in (0, 1, 2):
@@ -381,8 +398,14 @@ def _third_rank_tensor_rotation(rot_cart, tensor):
 
 
 def _get_delta_fc2(
-    dataset_second_atoms, atom1, forces1, fc2, supercell, reduced_site_sym, symprec
-):
+    dataset_second_atoms: list[SecondAtomDisplacementWithForces],
+    atom1: int,
+    forces1: NDArray[np.double],
+    fc2: NDArray[np.double],
+    supercell: PhonopyAtoms,
+    reduced_site_sym: NDArray[np.int64],
+    symprec: float,
+) -> NDArray[np.double]:
     logger.debug("get_delta_fc2")
     disp_fc2 = _get_constrained_fc2(
         supercell, dataset_second_atoms, atom1, forces1, reduced_site_sym, symprec
@@ -392,12 +415,12 @@ def _get_delta_fc2(
 
 def _get_constrained_fc2(
     supercell: PhonopyAtoms,
-    dataset_second_atoms,
-    atom1,
-    forces1,
-    reduced_site_sym,
-    symprec,
-):
+    dataset_second_atoms: list[SecondAtomDisplacementWithForces],
+    atom1: int,
+    forces1: NDArray[np.double],
+    reduced_site_sym: NDArray[np.int64],
+    symprec: float,
+) -> NDArray[np.double]:
     """Return fc2 under reduced (broken) site symmetry by first displacement.
 
     dataset_second_atoms: [{'number': 7,
@@ -422,6 +445,7 @@ def _get_constrained_fc2(
             )
 
             disps2.append(disps_second["displacement"])
+            assert "forces" in disps_second
             sets_of_forces.append(disps_second["forces"] - forces1)
 
         solve_force_constants(
@@ -441,22 +465,22 @@ def _get_constrained_fc2(
 
 
 def _solve_fc3(
-    first_atom_num,
-    supercell,
-    site_symmetry,
-    displacements_first,
-    delta_fc2s,
-    symprec,
-    pinv_solver="numpy",
-    verbose=False,
-):
+    first_atom_num: int,
+    supercell: PhonopyAtoms,
+    site_symmetry: NDArray[np.int64],
+    displacements_first: list[NDArray[np.double]],
+    delta_fc2s: NDArray[np.double],
+    symprec: float,
+    pinv_solver: str = "numpy",
+    verbose: bool = False,
+) -> NDArray[np.double]:
     logger.debug("solve_fc3")
 
     if pinv_solver == "numpy":
         solver = "numpy.linalg.pinv"
     else:
         try:
-            import phono3py._phono3py as phono3c
+            import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
             solver = "lapacke-dgesvd"
         except ImportError:
@@ -497,7 +521,7 @@ def _solve_fc3(
         lattice, positions, site_symmetry, symprec
     )
     rot_map_syms = np.array(rot_map_syms, dtype="int64", order="C")
-    rot_disps = get_rotated_displacement(displacements_first, site_sym_cart)
+    rot_disps = get_rotated_displacement(displacements_first, site_sym_cart)  # type: ignore[arg-type]
 
     logger.debug("pinv")
 
@@ -514,7 +538,7 @@ def _solve_fc3(
     logger.debug("rotate_delta_fc2s")
 
     try:
-        import phono3py._phono3py as phono3c
+        import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
         phono3c.rotate_delta_fc2s(fc3, delta_fc2s, inv_U, site_sym_cart, rot_map_syms)
     except ImportError:
@@ -526,7 +550,13 @@ def _solve_fc3(
     return fc3
 
 
-def _cutoff_fc3_for_cutoff_pairs(fc3, supercell, disp_dataset, symmetry, verbose=False):
+def _cutoff_fc3_for_cutoff_pairs(
+    fc3: NDArray[np.double],
+    supercell: PhonopyAtoms,
+    disp_dataset: Fc3Type1DisplacementDataset,
+    symmetry: Symmetry,
+    verbose: bool = False,
+) -> None:
     if verbose:
         print("Building atom mapping table...")
     fc3_done = _get_fc3_done(supercell, disp_dataset, symmetry, fc3.shape[:3])
@@ -543,7 +573,13 @@ def _cutoff_fc3_for_cutoff_pairs(fc3, supercell, disp_dataset, symmetry, verbose
                 _copy_permutation_symmetry_fc3_elem(fc3, ave_fc3, i, j, k)
 
 
-def cutoff_fc3_by_zero(fc3, supercell, cutoff_distance, p2s_map=None, symprec=1e-5):
+def cutoff_fc3_by_zero(
+    fc3: NDArray[np.double],
+    supercell: PhonopyAtoms,
+    cutoff_distance: float,
+    p2s_map: NDArray[np.int64] | None = None,
+    symprec: float = 1e-5,
+) -> None:
     """Set zero in fc3 elements where pair distances are larger than cutoff."""
     num_atom = len(supercell)
     lattice = supercell.cell.T
@@ -556,8 +592,9 @@ def cutoff_fc3_by_zero(fc3, supercell, cutoff_distance, p2s_map=None, symprec=1e
                 )
             )
 
+    _p2s_map: NDArray[np.int64]
     if fc3.shape[0] == fc3.shape[1]:
-        _p2s_map = np.arange(num_atom)
+        _p2s_map = np.arange(num_atom, dtype="int64")
     elif p2s_map is None or len(p2s_map) != fc3.shape[0]:
         raise RuntimeError("Array shape of fc3 is incorrect.")
     else:
@@ -565,15 +602,18 @@ def cutoff_fc3_by_zero(fc3, supercell, cutoff_distance, p2s_map=None, symprec=1e
 
     for i_index, i in enumerate(_p2s_map):
         for j, k in np.ndindex(num_atom, num_atom):
-            for pair in ((i, j), (j, k), (k, i)):
+            for pair in ((int(i), j), (j, k), (k, int(i))):
                 if min_distances[pair] > cutoff_distance:
                     fc3[i_index, j, k] = 0
                     break
 
 
 def show_drift_fc3(
-    fc3: NDArray, primitive: Primitive | None = None, name: str = "fc3", digit: int = 8
-):
+    fc3: NDArray[np.double],
+    primitive: Primitive | None = None,
+    name: str = "fc3",
+    digit: int = 8,
+) -> None:
     """Show max drift of fc3."""
     maxval1, maxval2, maxval3, xyz1, xyz2, xyz3 = get_drift_fc3(
         fc3, primitive=primitive
@@ -586,7 +626,7 @@ def show_drift_fc3(
 
 
 def get_drift_fc3(
-    fc3: NDArray, primitive: Primitive | None = None
+    fc3: NDArray[np.double], primitive: Primitive | None = None
 ) -> tuple[float, float, float, list[int], list[int], list[int]]:
     """Return max drift of fc3."""
     if fc3.shape[0] == fc3.shape[1]:
@@ -616,7 +656,7 @@ def get_drift_fc3(
                 "Primitive cell is required to get drift of compact fc3."
             )
         try:
-            import phono3py._phono3py as phono3c
+            import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
             s2p_map = primitive.s2p_map
             p2s_map = primitive.p2s_map
@@ -661,7 +701,9 @@ def get_drift_fc3(
     return maxval1, maxval2, maxval3, xyz1, xyz2, xyz3
 
 
-def _set_permutation_symmetry_fc3_elem_with_cutoff(fc3, fc3_done, a, b, c):
+def _set_permutation_symmetry_fc3_elem_with_cutoff(
+    fc3: NDArray[np.double], fc3_done: NDArray[np.byte], a: int, b: int, c: int
+) -> NDArray[np.double]:
     sum_done = (
         fc3_done[a, b, c]
         + fc3_done[c, a, b]
@@ -688,13 +730,13 @@ def _set_permutation_symmetry_fc3_elem_with_cutoff(fc3, fc3_done, a, b, c):
 def _get_fc3_least_atoms(
     supercell: PhonopyAtoms,
     primitive: Primitive,
-    disp_dataset,
-    fc2,
+    disp_dataset: Fc3Type1DisplacementDataset,
+    fc2: NDArray[np.double],
     symmetry: Symmetry,
     is_compact_fc: bool = False,
-    pinv_solver="numpy",
+    pinv_solver: str = "numpy",
     verbose: bool = True,
-):
+) -> NDArray[np.double]:
     symprec = symmetry.tolerance
     num_satom = len(supercell)
     unique_first_atom_nums = np.unique(
@@ -705,7 +747,7 @@ def _get_fc3_least_atoms(
         num_patom = len(primitive)
         s2p_map = primitive.s2p_map
         p2p_map = primitive.p2p_map
-        first_atom_nums = []
+        first_atom_nums: list[int] = []
         for i in unique_first_atom_nums:
             if i != s2p_map[i]:
                 print("Something wrong in displacement dataset.")
@@ -716,7 +758,7 @@ def _get_fc3_least_atoms(
             (num_patom, num_satom, num_satom, 3, 3, 3), dtype="double", order="C"
         )
     else:
-        first_atom_nums = unique_first_atom_nums
+        first_atom_nums = unique_first_atom_nums  # type: ignore[assignment]
         fc3 = np.zeros(
             (num_satom, num_satom, num_satom, 3, 3, 3), dtype="double", order="C"
         )
@@ -740,6 +782,7 @@ def _get_fc3_least_atoms(
                 reduced_site_sym = get_reduced_site_symmetry(
                     site_symmetry, direction, symprec
                 )
+                assert "forces" in dataset_first_atom
                 delta_fc2s.append(
                     _get_delta_fc2(
                         dataset_first_atom["second_atoms"],
@@ -770,7 +813,13 @@ def _get_fc3_least_atoms(
     return fc3
 
 
-def _get_rotated_fc2s(i, j, fc2s, rot_map_syms, site_sym_cart):
+def _get_rotated_fc2s(
+    i: int,
+    j: int,
+    fc2s: NDArray[np.double],
+    rot_map_syms: NDArray[np.int64],
+    site_sym_cart: NDArray[np.double],
+) -> NDArray[np.double]:
     rotated_fc2s = []
     for fc2 in fc2s:
         for sym, map_sym in zip(site_sym_cart, rot_map_syms, strict=True):
@@ -779,7 +828,13 @@ def _get_rotated_fc2s(i, j, fc2s, rot_map_syms, site_sym_cart):
     return np.reshape(rotated_fc2s, (-1, 9))
 
 
-def _third_rank_tensor_rotation_elem(rot, tensor, ll, m, n):
+def _third_rank_tensor_rotation_elem(
+    rot: NDArray[np.double],
+    tensor: NDArray[np.double],
+    ll: int,
+    m: int,
+    n: int,
+) -> float:
     sum_elems = 0.0
     for i in (0, 1, 2):
         for j in (0, 1, 2):
@@ -789,8 +844,11 @@ def _third_rank_tensor_rotation_elem(rot, tensor, ll, m, n):
 
 
 def _get_fc3_done(
-    supercell: PhonopyAtoms, disp_dataset, symmetry: Symmetry, array_shape
-):
+    supercell: PhonopyAtoms,
+    disp_dataset: Fc3Type1DisplacementDataset,
+    symmetry: Symmetry,
+    array_shape: tuple[int, ...],
+) -> NDArray[np.byte]:
     num_atom = len(supercell)
     fc3_done = np.zeros(array_shape, dtype="byte")
     symprec = symmetry.tolerance
@@ -814,7 +872,7 @@ def _get_fc3_done(
             dataset_first_atom["displacement"], np.linalg.inv(supercell.cell)
         )
         reduced_site_sym = get_reduced_site_symmetry(site_symmetry, direction, symprec)
-        least_second_atom_nums = []
+        least_second_atom_nums: list[int] = []
         for second_atoms in dataset_first_atom["second_atoms"]:
             if "included" in second_atoms:
                 if second_atoms["included"]:
@@ -830,8 +888,9 @@ def _get_fc3_done(
                     least_second_atom_nums.append(second_atoms["number"])
 
         positions_shifted = positions - positions[first_atom_num]
-        least_second_atom_nums = np.unique(least_second_atom_nums)
+        least_second_atom_nums = np.unique(least_second_atom_nums)  # type: ignore[assignment]
 
+        second_atom_nums: list | NDArray
         for red_rot in reduced_site_sym:
             second_atom_nums = [
                 _get_atom_by_symmetry(
@@ -854,7 +913,14 @@ def _get_fc3_done(
     return fc3_done
 
 
-def _get_atom_by_symmetry(lattice, positions, rotation, trans, atom_number, symprec):
+def _get_atom_by_symmetry(
+    lattice: NDArray[np.double],
+    positions: NDArray[np.double],
+    rotation: NDArray[np.int64],
+    trans: NDArray[np.double],
+    atom_number: int,
+    symprec: float,
+) -> int:
     rot_pos = np.dot(positions[atom_number], rotation.T) + trans
     diffs = positions - rot_pos
     diffs -= np.rint(diffs)

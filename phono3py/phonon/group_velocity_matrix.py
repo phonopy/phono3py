@@ -34,9 +34,17 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
+from collections.abc import Sequence
+
 import numpy as np
+from numpy.typing import NDArray
+from phonopy.harmonic.derivative_dynmat import DerivativeOfDynamicalMatrix
+from phonopy.harmonic.dynamical_matrix import DynamicalMatrix
 from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.phonon.group_velocity import GroupVelocity
+from phonopy.structure.symmetry import Symmetry
 from phonopy.utils import similarity_transformation
 
 
@@ -53,27 +61,26 @@ class GroupVelocityMatrix(GroupVelocity):
 
     def __init__(
         self,
-        dynamical_matrix,
-        q_length=None,
-        symmetry=None,
-        frequency_factor_to_THz=None,
-        cutoff_frequency=1e-4,
-    ):
+        dynamical_matrix: DynamicalMatrix,
+        q_length: float | None = None,
+        symmetry: Symmetry | None = None,
+        frequency_factor_to_THz: float | None = None,
+        cutoff_frequency: float = 1e-4,
+    ) -> None:
         """Init method.
 
         See details of parameters at phonopy `GroupVelocity` class.
 
         """
-        self._dynmat = None
-        self._reciprocal_lattice = None
-        self._q_length = None
-        self._ddm = None
-        self._symmetry = None
-        self._factor = None
-        self._cutoff_frequency = None
-        self._directions = None
-        self._q_points = None
-        self._perturbation = None
+        self._dynmat: DynamicalMatrix
+        self._reciprocal_lattice: NDArray[np.double]
+        self._q_length: float | None = None
+        self._ddm: DerivativeOfDynamicalMatrix | None
+        self._symmetry: Symmetry | None = None
+        self._factor: float
+        self._cutoff_frequency: float
+        self._directions: NDArray[np.double]
+        self._perturbation: NDArray[np.double] | None = None
 
         GroupVelocity.__init__(
             self,
@@ -85,9 +92,12 @@ class GroupVelocityMatrix(GroupVelocity):
         )
 
         self._group_velocity_matrices = None
-        self._complex_dtype = "c%d" % (np.dtype("double").itemsize * 2)
 
-    def run(self, q_points, perturbation=None):
+    def run(
+        self,
+        q_points: Sequence[Sequence[float]] | NDArray[np.double],
+        perturbation: Sequence[float] | NDArray[np.double] | None = None,
+    ) -> None:
         """Run group velocity matrix calculate at q-points.
 
         Calculated group velocities are stored in
@@ -101,22 +111,21 @@ class GroupVelocityMatrix(GroupVelocity):
             Direction in fractional coordinates of reciprocal space.
 
         """
-        self._q_points = q_points
-        self._perturbation = perturbation
+        self._perturbation = perturbation  # type: ignore[assignment]
         if perturbation is None:
             # Give an random direction to break symmetry
             self._directions[0] = np.array([1, 2, 3])
         else:
             self._directions[0] = np.dot(self._reciprocal_lattice, perturbation)
         self._directions[0] /= np.linalg.norm(self._directions[0])
-
-        gvm = [self._calculate_group_velocity_matrix_at_q(q) for q in self._q_points]
-        self._group_velocity_matrices = np.array(
-            gvm, dtype=self._complex_dtype, order="C"
-        )
+        gvm = [
+            self._calculate_group_velocity_matrix_at_q(q)
+            for q in np.asarray(q_points, dtype="double")
+        ]
+        self._group_velocity_matrices = np.array(gvm, dtype="cdouble", order="C")
 
     @property
-    def group_velocity_matrices(self):
+    def group_velocity_matrices(self) -> NDArray[np.cdouble] | None:
         """Return group velocity matrices.
 
         Returns
@@ -128,11 +137,14 @@ class GroupVelocityMatrix(GroupVelocity):
         """
         return self._group_velocity_matrices
 
-    def _calculate_group_velocity_matrix_at_q(self, q):
+    def _calculate_group_velocity_matrix_at_q(
+        self, q: NDArray[np.double]
+    ) -> NDArray[np.cdouble]:
         self._dynmat.run(q)
         dm = self._dynmat.dynamical_matrix
+        assert dm is not None
         eigvals, eigvecs = np.linalg.eigh(dm)
-        eigvals = eigvals.real
+        eigvals = eigvals.real  # type: ignore
         freqs = np.sqrt(abs(eigvals)) * np.sign(eigvals) * self._factor
         deg_sets = degenerate_sets(freqs)
         ddms = self._get_dD(np.array(q))
@@ -144,7 +156,7 @@ class GroupVelocityMatrix(GroupVelocity):
         freqs = np.where(condition, freqs, 1)
         rot_eigvecs = rot_eigvecs * np.where(condition, 1 / np.sqrt(2 * freqs), 0)
 
-        gvm = np.zeros((3,) + eigvecs.shape, dtype=self._complex_dtype)
+        gvm = np.zeros((3,) + eigvecs.shape, dtype="cdouble")
         for i, ddm in enumerate(ddms[1:]):
             ddm = ddm * (self._factor**2)
             gvm[i] = np.dot(rot_eigvecs.T.conj(), np.dot(ddm, rot_eigvecs))
@@ -157,7 +169,9 @@ class GroupVelocityMatrix(GroupVelocity):
         else:
             return gvm
 
-    def _symmetrize_group_velocity_matrix(self, gvm, q):
+    def _symmetrize_group_velocity_matrix(
+        self, gvm: NDArray[np.cdouble], q: NDArray[np.double]
+    ) -> NDArray[np.cdouble]:
         """Symmetrize obtained group velocity matrices.
 
         The following symmetries are applied:
@@ -165,6 +179,7 @@ class GroupVelocityMatrix(GroupVelocity):
             2. band hermicity
 
         """
+        assert self._symmetry is not None
         # site symmetries
         rotations = []
         for r in self._symmetry.reciprocal_operations:
@@ -175,7 +190,7 @@ class GroupVelocityMatrix(GroupVelocity):
 
         gvm_sym = np.zeros_like(gvm)
         for r in rotations:
-            r_cart = similarity_transformation(self._reciprocal_lattice, r)
+            r_cart = similarity_transformation(self._reciprocal_lattice, r)  # type: ignore[arg-type]
             gvm_sym += np.einsum("ij,jkl->ikl", r_cart, gvm)
         gvm_sym = gvm_sym / len(rotations)
 
@@ -184,7 +199,9 @@ class GroupVelocityMatrix(GroupVelocity):
 
         return gvm_sym
 
-    def _rot_eigsets(self, ddms, eigsets):
+    def _rot_eigsets(
+        self, ddms: NDArray[np.cdouble], eigsets: NDArray[np.cdouble]
+    ) -> NDArray[np.cdouble]:
         """Treat degeneracy.
 
         Eigenvectors of degenerates bands in eigsets are rotated to make

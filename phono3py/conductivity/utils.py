@@ -34,6 +34,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
+import os
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
 
 from phono3py.file_IO import write_pp_to_hdf5
@@ -57,7 +60,7 @@ def build_options(_options_type: type[_TOptions], **kwargs: Any) -> _TOptions:
     return cast(_TOptions, kwargs)
 
 
-def select_colmat_solver(pinv_solver):
+def select_colmat_solver(pinv_solver: int) -> int:
     """Return collision matrix solver id."""
     try:
         import phono3py._phono3py as phono3c
@@ -96,12 +99,12 @@ def select_colmat_solver(pinv_solver):
 
 
 def write_pp_interaction(
-    conductivity: "ConductivityBase",
+    conductivity: ConductivityBase,
     pp: Interaction,
-    i,
-    filename=None,
+    i: int,
+    filename: str | os.PathLike | None = None,
     compression: Literal["gzip", "lzf"] | int | None = "gzip",
-):
+) -> None:
     """Write ph-ph interaction strength in hdf5 file."""
     grid_point = conductivity.grid_points[i]
     sigmas = conductivity.sigmas

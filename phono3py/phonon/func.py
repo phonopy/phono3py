@@ -34,16 +34,19 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
 
 
-def gaussian(x, sigma):
+def gaussian(x: NDArray[np.double], sigma: float) -> NDArray[np.double]:
     """Return normal distribution."""
     return 1.0 / np.sqrt(2 * np.pi) / sigma * np.exp(-(x**2) / 2 / sigma**2)
 
 
-def bose_einstein(x, T):
+def bose_einstein(x: NDArray[np.double], T: float) -> NDArray[np.double]:
     """Return Bose-Einstein distribution.
 
     Note
@@ -67,7 +70,7 @@ def bose_einstein(x, T):
     )
 
 
-def sigma_squared(x, T):
+def sigma_squared(x: NDArray[np.double], T: float) -> NDArray[np.double]:
     """Return mode length.
 
     sigma^2 = (0.5 + n) hbar / omega

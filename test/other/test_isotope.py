@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from phono3py import Phono3pyIsotope
+from phono3py.other.isotope import get_mass_variances
 
 si_pbesol_iso = [
     [
@@ -51,7 +52,39 @@ si_pbesol_grg_iso_sigma = [
 ]
 
 
-@pytest.mark.parametrize("lang", ["C", "Py"])
+def test_get_mass_variances_from_primitive(si_pbesol):
+    """get_mass_variances returns correct shape and regression value from primitive."""
+    mv = get_mass_variances(primitive=si_pbesol.phonon_primitive)
+    num_atoms = len(si_pbesol.phonon_primitive)
+    assert mv.shape == (num_atoms,)
+    # Both Si atoms in primitive have the same variance
+    np.testing.assert_allclose(mv[0], mv[-1])
+    np.testing.assert_allclose(mv[0], 2.0070046e-04, rtol=1e-5)
+
+
+def test_get_mass_variances_from_symbols():
+    """get_mass_variances from symbols returns correct regression values."""
+    mv_sym = get_mass_variances(symbols=["Si", "Si"])
+    assert mv_sym.shape == (2,)
+    assert mv_sym.dtype == np.double
+    np.testing.assert_allclose(mv_sym, [2.0070046e-04, 2.0070046e-04], rtol=1e-5)
+
+
+def test_get_mass_variances_custom_isotope_data():
+    """get_mass_variances with custom isotope_data overrides default."""
+    # Pure Si-28 (no isotope spread) should give variance ~0
+    custom = {"Si": [(14, 28.0, 1.0)]}  # single isotope, variance = 0
+    mv = get_mass_variances(symbols=["Si"], isotope_data=custom)
+    np.testing.assert_allclose(mv, [0.0], atol=1e-10)
+
+
+def test_get_mass_variances_no_args_raises():
+    """get_mass_variances raises RuntimeError with no primitive or symbols."""
+    with pytest.raises(RuntimeError):
+        get_mass_variances()
+
+
+@pytest.mark.parametrize("lang", ["C", "Python"])
 def test_Phono3pyIsotope(si_pbesol, lang):
     """Phono3pyIsotope with tetrahedron method."""
     si_pbesol.mesh_numbers = [21, 21, 21]
@@ -71,7 +104,7 @@ def test_Phono3pyIsotope(si_pbesol, lang):
     np.testing.assert_allclose(si_pbesol_iso, iso.gamma[0], atol=3e-4)
 
 
-@pytest.mark.parametrize("lang", ["C", "Py"])
+@pytest.mark.parametrize("lang", ["C", "Python"])
 def test_Phono3pyIsotope_with_sigma(si_pbesol, lang):
     """Phono3pyIsotope with smearing method."""
     si_pbesol.mesh_numbers = [21, 21, 21]
@@ -94,7 +127,7 @@ def test_Phono3pyIsotope_with_sigma(si_pbesol, lang):
     np.testing.assert_allclose(si_pbesol_iso_sigma, iso.gamma[0], atol=3e-4)
 
 
-@pytest.mark.parametrize("lang", ["C", "Py"])
+@pytest.mark.parametrize("lang", ["C", "Python"])
 def test_Phono3pyIsotope_grg(si_pbesol_grg, lang):
     """Phono3pyIsotope with tetrahedron method and GR-grid."""
     ph3 = si_pbesol_grg
@@ -117,7 +150,7 @@ def test_Phono3pyIsotope_grg(si_pbesol_grg, lang):
     np.testing.assert_allclose(si_pbesol_grg_iso, iso.gamma[0], atol=3e-3)
 
 
-@pytest.mark.parametrize("lang", ["C", "Py"])
+@pytest.mark.parametrize("lang", ["C", "Python"])
 def test_Phono3pyIsotope_grg_with_sigma(si_pbesol_grg, lang):
     """Phono3pyIsotope with smearing method and GR-grid."""
     ph3 = si_pbesol_grg
