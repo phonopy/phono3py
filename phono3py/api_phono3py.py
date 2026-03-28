@@ -41,6 +41,7 @@ import os
 import warnings
 from collections.abc import Sequence
 from typing import (  # List and Optional are for < python3.10
+    Any,
     List,
     Literal,
     Optional,
@@ -178,15 +179,15 @@ class Phono3py:
         unitcell: PhonopyAtoms,
         supercell_matrix: Sequence[int]
         | Sequence[Sequence[int]]
-        | NDArray
+        | NDArray[np.int64]
         | None = None,
         primitive_matrix: Literal["P", "F", "I", "A", "C", "R", "auto"]
         | Sequence[Sequence[float]]
-        | NDArray
+        | NDArray[np.double]
         | None = None,
         phonon_supercell_matrix: Sequence[int]
         | Sequence[Sequence[int]]
-        | NDArray
+        | NDArray[np.int64]
         | None = None,
         cutoff_frequency: float = 1e-4,
         frequency_factor_to_THz: float | None = None,
@@ -441,7 +442,7 @@ class Phono3py:
         return self.fc2
 
     @property
-    def sigmas(self) -> list:
+    def sigmas(self) -> list[float | None]:
         """Setter and getter of smearing widths.
 
         list
@@ -488,7 +489,7 @@ class Phono3py:
         self._sigma_cutoff = sigma_cutoff
 
     @property
-    def nac_params(self) -> dict | None:
+    def nac_params(self) -> dict[str, Any] | None:
         """Setter and getter of parameters for non-analytical term correction.
 
         dict
@@ -506,7 +507,7 @@ class Phono3py:
         return self._nac_params
 
     @nac_params.setter
-    def nac_params(self, nac_params: dict | None) -> None:
+    def nac_params(self, nac_params: dict[str, Any] | None) -> None:
         self._nac_params = nac_params
         if self._interaction is not None:
             self._init_dynamical_matrix()
@@ -695,7 +696,7 @@ class Phono3py:
         return self._dataset
 
     @dataset.setter
-    def dataset(self, dataset: Fc3DisplacementDataset | None):
+    def dataset(self, dataset: Fc3DisplacementDataset | None) -> None:
         if dataset is None:
             self._dataset = None
         elif "first_atoms" in dataset:

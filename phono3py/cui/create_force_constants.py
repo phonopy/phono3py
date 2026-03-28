@@ -203,7 +203,7 @@ def develop_or_load_pypolymlp(
     mlp_params: str | dict | PypolymlpParams | None = None,
     mlp_filename: str | os.PathLike | None = None,
     log_level: int = 0,
-):
+) -> None:
     """Run pypolymlp to compute forces."""
     develop_or_load_pypolymlp_phonopy(
         cast(Phonopy, ph3py),
@@ -224,7 +224,7 @@ def generate_displacements_and_evaluate_pypolymlp(
     cutoff_pair_distance: float | None = None,
     symfc_memory_size: float | None = None,
     log_level: int = 0,
-):
+) -> None:
     """Generate displacements and evaluate forces by pypolymlp."""
     if displacement_distance is None:
         _displacement_distance = 0.01
@@ -286,7 +286,7 @@ def run_pypolymlp_to_compute_phonon_forces(
     number_of_snapshots: int | None = None,
     random_seed: int | None = None,
     log_level: int = 0,
-):
+) -> None:
     """Run pypolymlp to compute phonon forces."""
     if ph3py.phonon_mlp_dataset is not None:
         if log_level:
@@ -389,7 +389,7 @@ def _convert_unit_in_dataset(
 
 
 def _extract_dataset_from_ph3py_yaml(
-    ph3py_yaml: Phono3pyYaml, fc_type
+    ph3py_yaml: Phono3pyYaml, fc_type: Literal["fc3", "phonon_fc2"]
 ) -> Fc3DisplacementDataset | DisplacementDataset | None:
     if ph3py_yaml.phonon_supercell is None or fc_type == "fc3":
         if ph3py_yaml.dataset is not None:

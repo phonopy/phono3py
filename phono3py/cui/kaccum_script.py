@@ -1,11 +1,16 @@
 """Phono3py kaccum command line script."""
 
-import argparse
-import sys
-from typing import Optional
+from __future__ import annotations
 
-import h5py
+import argparse
+import dataclasses
+import os
+import sys
+from collections.abc import Sequence
+
+import h5py  # type: ignore[import-untyped]
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.cui.collect_cell_info import collect_cell_info
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.symmetry import Symmetry
@@ -17,7 +22,34 @@ from phono3py.phonon.grid import BZGrid, get_ir_grid_points
 epsilon = 1.0e-8
 
 
-def _show_tensor(kdos, temperatures, sampling_points, args):
+@dataclasses.dataclass
+class KaccumMockArgs:
+    """Mock args of ArgumentParser."""
+
+    filenames: Sequence[str | os.PathLike] = ()
+    gv: bool = False
+    pqj: bool = False
+    cv: bool = False
+    tau: bool = False
+    dos: bool = False
+    gamma: bool = False
+    gruneisen: bool = False
+    gv_norm: bool = False
+    mfp: bool = False
+    temperature: float | None = None
+    num_sampling_points: int = 100
+    average: bool = False
+    trace: bool = False
+    smearing: bool = False
+    no_gridsym: bool = False
+
+
+def _show_tensor(
+    kdos: NDArray[np.double],
+    temperatures: NDArray[np.double],
+    sampling_points: NDArray[np.double],
+    args: KaccumMockArgs | argparse.Namespace,
+) -> None:
     """Show 2nd rank tensors."""
     for i, kdos_t in enumerate(kdos):
         if not args.gv:
@@ -35,7 +67,12 @@ def _show_tensor(kdos, temperatures, sampling_points, args):
         print("")
 
 
-def _show_scalar(gdos, temperatures, sampling_points, args):
+def _show_scalar(
+    gdos: NDArray[np.double],
+    temperatures: NDArray[np.double],
+    sampling_points: NDArray[np.double],
+    args: KaccumMockArgs | argparse.Namespace,
+) -> None:
     """Show scalar values."""
     if args.pqj or args.gruneisen or args.gv_norm:
         for f, g in zip(sampling_points, gdos[0], strict=True):
@@ -49,25 +86,22 @@ def _show_scalar(gdos, temperatures, sampling_points, args):
             print("")
 
 
-def _set_T_target(temperatures, mode_prop, T_target, mean_freepath=None):
-    """Extract property at specified temperature."""
+def _get_T_target_index(
+    temperatures: NDArray[np.double],
+    T_target: float,
+):
     for i, t in enumerate(temperatures):
         if np.abs(t - T_target) < epsilon:
-            temperatures = temperatures[i : i + 1]
-            mode_prop = mode_prop[i : i + 1, :, :]
-            if mean_freepath is not None:
-                mean_freepath = mean_freepath[i : i + 1]
-                return temperatures, mode_prop, mean_freepath
-            else:
-                return temperatures, mode_prop
+            return i
+    raise RuntimeError(f"Temperature {T_target} K not found in dataset.")
 
 
 def _get_ir_grid_info(
     bz_grid: BZGrid,
-    weights: np.ndarray,
-    qpoints: Optional[np.ndarray] = None,
-    ir_grid_points: Optional[np.ndarray] = None,
-) -> tuple[np.ndarray, np.ndarray]:
+    weights: NDArray[np.int64],
+    qpoints: NDArray[np.double] | None = None,
+    ir_grid_points: NDArray[np.int64] | None = None,
+) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
     """Return ir-grid point information.
 
     Parameters
@@ -90,7 +124,7 @@ def _get_ir_grid_info(
         Mapping table to ir-grid point indices in GR-grid.
 
     """
-    (ir_grid_points_ref, weights_ref, ir_grid_map) = get_ir_grid_points(bz_grid)
+    ir_grid_points_ref, weights_ref, ir_grid_map = get_ir_grid_points(bz_grid)
     ir_grid_points_ref = bz_grid.grg2bzg[ir_grid_points_ref]
     _assert_grid_in_hdf5(
         weights, qpoints, ir_grid_points, weights_ref, ir_grid_points_ref, bz_grid
@@ -100,13 +134,13 @@ def _get_ir_grid_info(
 
 
 def _assert_grid_in_hdf5(
-    weights,
-    qpoints,
-    ir_grid_points,
-    weights_for_check,
-    ir_grid_points_ref,
+    weights: NDArray[np.int64],
+    qpoints: NDArray[np.double] | None,
+    ir_grid_points: NDArray[np.int64] | None,
+    weights_for_check: NDArray[np.int64],
+    ir_grid_points_ref: NDArray[np.int64],
     bz_grid: BZGrid,
-):
+) -> None:
     try:
         np.testing.assert_equal(weights, weights_for_check)
     except AssertionError:
@@ -126,7 +160,9 @@ def _assert_grid_in_hdf5(
         np.testing.assert_allclose(diff_q, 0, atol=1e-5)
 
 
-def _get_mode_property(args, f_kappa):
+def _get_mode_property(
+    args: KaccumMockArgs | argparse.Namespace, f_kappa: h5py.File
+) -> NDArray[np.double]:
     """Read property data from hdf5 file object."""
     if args.pqj:
         mode_prop = f_kappa["ave_pp"][:].reshape((1,) + f_kappa["ave_pp"].shape)
@@ -153,7 +189,7 @@ def _get_mode_property(args, f_kappa):
     return mode_prop
 
 
-def _get_parser():
+def _get_parser() -> argparse.Namespace:
     """Return args of ArgumentParser."""
     parser = argparse.ArgumentParser(description="Show unit cell volume")
     parser.add_argument(
@@ -221,10 +257,12 @@ def _get_parser():
     )
     parser.add_argument("filenames", nargs="*")
     args = parser.parse_args()
-    return args
+    return args  # type: ignore[return-value]
 
 
-def _read_files(args: argparse.Namespace) -> tuple[h5py.File, PhonopyAtoms | None]:
+def _read_files(
+    args: KaccumMockArgs | argparse.Namespace,
+) -> tuple[h5py.File, PhonopyAtoms]:
     primitive = None
     cell_info = collect_cell_info(
         supercell_matrix=np.eye(3, dtype=int),
@@ -239,19 +277,25 @@ def _read_files(args: argparse.Namespace) -> tuple[h5py.File, PhonopyAtoms | Non
         primitive = phpy_yaml.primitive
         if primitive is None:
             primitive = cell
+    if primitive is None:
+        raise RuntimeError(
+            "Primitive cell could not be determined from crystal structure."
+        )
     f_kappa = h5py.File(args.filenames[0], "r")
     return f_kappa, primitive
 
 
 def _collect_data(
-    f_kappa: h5py.File, primitive: PhonopyAtoms, args: argparse.Namespace
+    f_kappa: h5py.File,
+    primitive: PhonopyAtoms,
+    args: KaccumMockArgs | argparse.Namespace,
 ) -> tuple[
-    Optional[np.ndarray],
-    Optional[np.ndarray],
-    np.ndarray,
+    NDArray[np.int64] | None,
+    NDArray[np.int64] | None,
+    NDArray[np.int64],
     BZGrid,
-    np.ndarray,
-    np.ndarray,
+    NDArray[np.double],
+    NDArray[np.double],
 ]:
     # bz_grid
     if "grid_matrix" in f_kappa:
@@ -273,6 +317,8 @@ def _collect_data(
         temperatures = np.zeros(1, dtype="double")
 
     # frequencies, ir_weights
+    qpoints: NDArray[np.double] | None = None
+    ir_grid_points_BZ: NDArray[np.int64] | None = None
     if "weight" in f_kappa:
         # This is to read "kappa-xxx.hdf5".
         # ir_grid_points_BZ in BZ-grid index will be transformed to GR-grid index.
@@ -317,23 +363,24 @@ def _collect_data(
 
 
 def _run_scalar(
-    args: argparse.Namespace,
+    args: KaccumMockArgs | argparse.Namespace,
     f_kappa: h5py.File,
-    temperatures: np.ndarray,
-    frequencies: np.ndarray,
-    ir_weights: np.ndarray,
-    ir_grid_map: Optional[np.ndarray],
-    ir_grid_points: Optional[np.ndarray],
+    temperatures: NDArray[np.double],
+    frequencies: NDArray[np.double],
+    ir_weights: NDArray[np.int64],
+    ir_grid_map: NDArray[np.int64] | None,
+    ir_grid_points: NDArray[np.int64] | None,
     bz_grid: BZGrid,
-):
+) -> None:
     mode_prop = _get_mode_property(args, f_kappa)
 
     if args.temperature is not None and not (
         args.gv_norm or args.pqj or args.gruneisen or args.dos
     ):
-        temperatures, mode_prop = _set_T_target(
-            temperatures, mode_prop, args.temperature
-        )
+        index = _get_T_target_index(temperatures, args.temperature)
+        temperatures = temperatures[index : index + 1]
+        mode_prop = mode_prop[index : index + 1, :, :]
+
     if args.smearing:
         mode_prop_dos = GammaDOSsmearing(
             mode_prop,
@@ -359,15 +406,15 @@ def _run_scalar(
 
 
 def _run_tensor(
-    args: argparse.Namespace,
+    args: KaccumMockArgs | argparse.Namespace,
     f_kappa: h5py.File,
-    temperatures: np.ndarray,
-    frequencies: np.ndarray,
-    ir_grid_map: Optional[np.ndarray],
-    ir_grid_points: Optional[np.ndarray],
+    temperatures: NDArray[np.double],
+    frequencies: NDArray[np.double],
+    ir_grid_map: NDArray[np.int64] | None,
+    ir_grid_points: NDArray[np.int64] | None,
     bz_grid: BZGrid,
     primitive: PhonopyAtoms,
-):
+) -> None:
     if args.gv:
         gv_sum2 = f_kappa["gv_by_gv"][:]
         # gv x gv is divied by primitive cell volume.
@@ -387,12 +434,10 @@ def _run_tensor(
         else:
             mean_freepath = get_mfp(f_kappa["gamma"][:], f_kappa["group_velocity"][:])
         if args.temperature is not None:
-            (temperatures, mode_prop, mean_freepath) = _set_T_target(
-                temperatures,
-                mode_prop,
-                args.temperature,
-                mean_freepath=mean_freepath,
-            )
+            index = _get_T_target_index(temperatures, args.temperature)
+            temperatures = temperatures[index : index + 1]
+            mode_prop = mode_prop[index : index + 1, :, :]
+            mean_freepath = mean_freepath[index : index + 1]
 
         kdos, sampling_points = run_mfp_dos(
             mean_freepath,
@@ -405,9 +450,10 @@ def _run_tensor(
         _show_tensor(kdos, temperatures, sampling_points, args)
     else:
         if args.temperature is not None and not args.gv:
-            temperatures, mode_prop = _set_T_target(
-                temperatures, mode_prop, args.temperature
-            )
+            index = _get_T_target_index(temperatures, args.temperature)
+            temperatures = temperatures[index : index + 1]
+            mode_prop = mode_prop[index : index + 1, :, :]
+
         kdos, sampling_points = run_prop_dos(
             frequencies,
             mode_prop,
@@ -419,7 +465,7 @@ def _run_tensor(
         _show_tensor(kdos, temperatures, sampling_points, args)
 
 
-def main():
+def main(**argparse_control: KaccumMockArgs) -> None:
     """Calculate kappa spectrum.
 
     Usage
@@ -438,7 +484,11 @@ def main():
     ```
 
     """
-    args = _get_parser()
+    args: KaccumMockArgs | argparse.Namespace
+    if argparse_control:
+        args = argparse_control["args"]
+    else:
+        args = _get_parser()
     if len(args.filenames) > 1:
         raise RuntimeError(
             'Use of "phono3py-kaccum CRYSTAL_STRUCTURE_FILE" is not supported.'
