@@ -41,87 +41,86 @@ import os
 from typing import Literal
 
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.cui.settings import ConfParser, Settings, fracval
 
 
 class Phono3pySettings(Settings):
     """Setting parameter container."""
 
-    def __init__(self, load_phono3py_yaml: bool = False):
+    def __init__(self, load_phono3py_yaml: bool = False) -> None:
         """Init method."""
         super().__init__(load_phonopy_yaml=load_phono3py_yaml)
-        self.boundary_mfp = 1.0e6  # In micrometer. Value is for avoiding divergence.
-        self.conductivity_type = None
-        self.constant_averaged_pp_interaction = None
+        self.boundary_mfp: float = (
+            1.0e6  # In micrometer. Value is for avoiding divergence.
+        )
+        self.conductivity_type: str | None = None
+        self.constant_averaged_pp_interaction: float | None = None
         self.create_forces_fc2: list[str] | None = None
         self.create_forces_fc3: list[str] | None = None
-        self.create_forces_fc3_file = None
-        self.cutoff_fc3_distance = None
-        self.cutoff_pair_distance = None
-        self.grid_addresses = None
-        self.grid_points = None
-        self.grid_matrix = None
-        self.ion_clamped = False
-        self.is_bterta = False
-        self.is_compact_fc = False
-        self.is_fc3_r0_average = True
-        self.is_full_pp = False
-        self.is_gruneisen = False
-        self.is_imag_self_energy = False
-        self.is_isotope = False
-        self.is_joint_dos = False
-        self.is_kappa_star = True
-        self.is_lbte = False
-        self.is_N_U = False
-        self.is_plusminus_displacement_fc2 = "auto"
-        self.is_real_self_energy = False
-        self.is_reducible_collision_matrix = False
-        self.is_spectral_function = False
-        self.is_symmetrize_fc2 = False
-        self.is_symmetrize_fc3_q = False
-        self.is_symmetrize_fc3_r = False
-        self.is_tetrahedron_method = False
+        self.create_forces_fc3_file: str | os.PathLike | None = None
+        self.cutoff_fc3_distance: float | None = None
+        self.cutoff_pair_distance: float | None = None
+        self.grid_addresses: NDArray[np.int64] | None = None
+        self.grid_points: NDArray[np.int64] | None = None
+        self.grid_matrix: NDArray[np.int64] | None = None
+        self.ion_clamped: bool = False
+        self.is_bterta: bool = False
+        self.is_compact_fc: bool = False
+        self.is_fc3_r0_average: bool = True
+        self.is_full_pp: bool = False
+        self.is_gruneisen: bool = False
+        self.is_imag_self_energy: bool = False
+        self.is_isotope: bool = False
+        self.is_joint_dos: bool = False
+        self.is_kappa_star: bool = True
+        self.is_lbte: bool = False
+        self.is_N_U: bool = False
+        self.is_plusminus_displacement_fc2: bool | Literal["auto"] = "auto"
+        self.is_real_self_energy: bool = False
+        self.is_reducible_collision_matrix: bool = False
+        self.is_spectral_function: bool = False
+        self.is_symmetrize_fc2: bool = False
+        self.is_symmetrize_fc3_q: bool = False
+        self.is_symmetrize_fc3_r: bool = False
+        self.is_tetrahedron_method: bool = False
         self.lapack_zheev_uplo: Literal["L", "U"] = "L"
-        self.mass_variances = None
-        self.max_freepath = None
-        self.num_points_in_batch = None
-        self.read_collision = None
-        if load_phono3py_yaml:
-            self.read_fc2 = True
-            self.read_fc3 = True
-        else:
-            self.read_fc2 = False
-            self.read_fc3 = False
-        self.read_elph = None
-        self.read_gamma = False
-        self.read_phonon = False
-        self.read_pp = False
-        self.output_yaml_filename = None
-        self.phonon_supercell_matrix = None
-        self.pinv_cutoff = 1.0e-8
-        self.pinv_solver = 0
-        self.pinv_method = 0
-        self.pp_conversion_factor = None
-        self.random_displacements_fc2 = None
-        self.scattering_event_class = None  # scattering event class 1 or 2
-        self.sigma_cutoff_width = None
-        self.solve_collective_phonon = False
-        self.show_symfc_memory_usage = False
-        self.symfc_memory_size = None
-        self.subtract_forces = None
-        self.subtract_forces_fc2 = None
-        self.temperatures = None
-        self.use_ave_pp = False
-        self.use_grg = False
-        self.write_collision = False
-        self.write_gamma_detail = False
-        self.write_gamma = False
-        self.write_phonon = False
-        self.write_pp = False
-        self.write_LBTE_solution = False
+        self.mass_variances: list[float] | None = None
+        self.max_freepath: float | None = None
+        self.num_points_in_batch: int | None = None
+        self.read_collision: str | list[int] | None = None
+        self.read_fc2: bool = load_phono3py_yaml
+        self.read_fc3: bool = load_phono3py_yaml
+        self.read_elph: int | None = None
+        self.read_gamma: bool = False
+        self.read_phonon: bool = False
+        self.read_pp: bool = False
+        self.output_yaml_filename: str | os.PathLike | None = None
+        self.phonon_supercell_matrix: NDArray[np.int64] | None = None
+        self.pinv_cutoff: float = 1.0e-8
+        self.pinv_solver: int = 0
+        self.pinv_method: int = 0
+        self.pp_conversion_factor: float | None = None
+        self.random_displacements_fc2: int | Literal["auto"] | None = None
+        self.scattering_event_class: int | None = None  # scattering event class 1 or 2
+        self.sigma_cutoff_width: float | None = None
+        self.solve_collective_phonon: bool = False
+        self.show_symfc_memory_usage: bool = False
+        self.symfc_memory_size: float | None = None
+        self.subtract_forces: str | None = None
+        self.subtract_forces_fc2: str | None = None
+        self.temperatures: list[float] | None = None
+        self.use_ave_pp: bool = False
+        self.use_grg: bool = False
+        self.write_collision: bool = False
+        self.write_gamma_detail: bool = False
+        self.write_gamma: bool = False
+        self.write_phonon: bool = False
+        self.write_pp: bool = False
+        self.write_LBTE_solution: bool = False
 
 
-class Phono3pyConfParser(ConfParser):
+class Phono3pyConfParser(ConfParser[Phono3pySettings]):
     """Phonopy conf parser.
 
     Attributes
@@ -138,7 +137,7 @@ class Phono3pyConfParser(ConfParser):
         filename: str | os.PathLike | None = None,
         args: argparse.Namespace | None = None,
         load_phono3py_yaml: bool = False,
-    ):
+    ) -> None:
         """Init method."""
         super().__init__()
         if filename is not None:
@@ -149,354 +148,357 @@ class Phono3pyConfParser(ConfParser):
         self.settings = Phono3pySettings(load_phono3py_yaml=load_phono3py_yaml)
         self._set_settings(self.settings)
 
-    def _read_options(self, args: argparse.Namespace):
+    def _read_options(self, args: argparse.Namespace) -> None:
         super()._read_options(args)  # store data in self._confs
-        if "phonon_supercell_dimension" in args:
-            dim_fc2 = args.phonon_supercell_dimension
-            if dim_fc2 is not None:
-                self._confs["dim_fc2"] = " ".join(dim_fc2)
+        arg_list = vars(args)
+        if "phonon_supercell_dimension" in arg_list:
+            phonon_supercell_dimension = args.phonon_supercell_dimension
+            if phonon_supercell_dimension is not None:
+                self._confs["phonon_supercell_dimension"] = " ".join(
+                    phonon_supercell_dimension
+                )
 
-        if "boundary_mfp" in args:
+        if "boundary_mfp" in arg_list:
             if args.boundary_mfp is not None:
                 self._confs["boundary_mfp"] = args.boundary_mfp
 
-        if "const_ave_pp" in args:
+        if "const_ave_pp" in arg_list:
             const_ave_pp = args.const_ave_pp
             if const_ave_pp is not None:
                 self._confs["const_ave_pp"] = const_ave_pp
 
-        if "create_forces_fc2" in args:
+        if "create_forces_fc2" in arg_list:
             if args.create_forces_fc2:
                 self._confs["create_forces_fc2"] = args.create_forces_fc2
 
-        if "create_forces_fc3" in args:
+        if "create_forces_fc3" in arg_list:
             if args.create_forces_fc3:
                 self._confs["create_forces_fc3"] = args.create_forces_fc3
 
-        if "create_forces_fc3_file" in args:
+        if "create_forces_fc3_file" in arg_list:
             if args.create_forces_fc3_file:
                 cfc3_file = args.create_forces_fc3_file
                 self._confs["create_forces_fc3_file"] = cfc3_file
 
-        if "cutoff_fc3_distance" in args:
+        if "cutoff_fc3_distance" in arg_list:
             cutoff_fc3 = args.cutoff_fc3_distance
             if cutoff_fc3 is not None:
                 self._confs["cutoff_fc3_distance"] = cutoff_fc3
 
-        if "cutoff_pair_distance" in args:
+        if "cutoff_pair_distance" in arg_list:
             cutoff_pair = args.cutoff_pair_distance
             if cutoff_pair is not None:
                 self._confs["cutoff_pair_distance"] = cutoff_pair
 
-        if "grid_addresses" in args:
+        if "grid_addresses" in arg_list:
             grid_adrs = args.grid_addresses
             if grid_adrs is not None:
                 self._confs["grid_addresses"] = " ".join(grid_adrs)
 
-        if "grid_points" in args:
+        if "grid_points" in arg_list:
             if args.grid_points is not None:
                 self._confs["grid_points"] = " ".join(args.grid_points)
 
-        if "grid_matrix" in args:
+        if "grid_matrix" in arg_list:
             if args.grid_matrix is not None:
                 self._confs["grid_matrix"] = " ".join(args.grid_matrix)
 
-        if "ion_clamped" in args:
+        if "ion_clamped" in arg_list:
             if args.ion_clamped:
                 self._confs["ion_clamped"] = ".true."
             elif args.ion_clamped is False:
                 self._confs["ion_clamped"] = ".false."
 
-        if "is_bterta" in args:
+        if "is_bterta" in arg_list:
             if args.is_bterta:
                 self._confs["bterta"] = ".true."
             elif args.is_bterta is False:
                 self._confs["bterta"] = ".false."
 
-        if "is_compact_fc" in args:
+        if "is_compact_fc" in arg_list:
             if args.is_compact_fc:
                 self._confs["compact_fc"] = ".true."
             elif args.is_compact_fc is False:
                 self._confs["compact_fc"] = ".false."
 
-        if "is_gruneisen" in args:
+        if "is_gruneisen" in arg_list:
             if args.is_gruneisen:
                 self._confs["gruneisen"] = ".true."
             elif args.is_gruneisen is False:
                 self._confs["gruneisen"] = ".false."
 
-        if "is_fc3_r0_average" in args:
+        if "is_fc3_r0_average" in arg_list:
             if args.is_fc3_r0_average:
                 self._confs["fc3_r0_average"] = ".true."
             elif args.is_fc3_r0_average is False:
                 self._confs["fc3_r0_average"] = ".false."
 
-        if "is_full_pp" in args:
+        if "is_full_pp" in arg_list:
             if args.is_full_pp:
                 self._confs["full_pp"] = ".true."
             elif args.is_full_pp is False:
                 self._confs["full_pp"] = ".false."
 
-        if "is_imag_self_energy" in args:
+        if "is_imag_self_energy" in arg_list:
             if args.is_imag_self_energy:
                 self._confs["imag_self_energy"] = ".true."
             elif args.is_imag_self_energy is False:
                 self._confs["imag_self_energy"] = ".false."
 
-        if "is_isotope" in args:
+        if "is_isotope" in arg_list:
             if args.is_isotope:
                 self._confs["isotope"] = ".true."
             elif args.is_isotope is False:
                 self._confs["isotope"] = ".false."
 
-        if "is_joint_dos" in args:
+        if "is_joint_dos" in arg_list:
             if args.is_joint_dos:
                 self._confs["joint_dos"] = ".true."
             elif args.is_joint_dos is False:
                 self._confs["joint_dos"] = ".false."
 
-        if "no_kappa_star" in args:
+        if "kappa_star" in arg_list:
             if args.kappa_star:
                 self._confs["kappa_star"] = ".true."
             elif args.kappa_star is False:
                 self._confs["kappa_star"] = ".false."
 
-        if "is_lbte" in args:
+        if "is_lbte" in arg_list:
             if args.is_lbte:
                 self._confs["lbte"] = ".true."
             elif args.is_lbte is False:
                 self._confs["lbte"] = ".false."
 
-        if "is_N_U" in args:
+        if "is_N_U" in arg_list:
             if args.is_N_U:
                 self._confs["N_U"] = ".true."
             elif args.is_N_U is False:
                 self._confs["N_U"] = ".false."
 
-        if "is_plusminus_displacements_fc2" in args:
+        if "is_plusminus_displacements_fc2" in arg_list:
             if args.is_plusminus_displacements_fc2:
                 self._confs["pm_fc2"] = ".true."
             elif args.is_plusminus_displacements_fc2 is False:
                 self._confs["pm_fc2"] = ".false."
 
-        if "is_real_self_energy" in args:
+        if "is_real_self_energy" in arg_list:
             if args.is_real_self_energy:
                 self._confs["real_self_energy"] = ".true."
             elif args.is_real_self_energy is False:
                 self._confs["real_self_energy"] = ".false."
 
-        if "is_reducible_collision_matrix" in args:
+        if "is_reducible_collision_matrix" in arg_list:
             if args.is_reducible_collision_matrix:
                 self._confs["reducible_collision_matrix"] = ".true."
             elif args.is_reducible_collision_matrix is False:
                 self._confs["reducible_collision_matrix"] = ".false."
 
-        if "is_spectral_function" in args:
+        if "is_spectral_function" in arg_list:
             if args.is_spectral_function:
                 self._confs["spectral_function"] = ".true."
             elif args.is_spectral_function is False:
                 self._confs["spectral_function"] = ".false."
 
-        if "is_symmetrize_fc2" in args:
+        if "is_symmetrize_fc2" in arg_list:
             if args.is_symmetrize_fc2:
                 self._confs["symmetrize_fc2"] = ".true."
             elif args.is_symmetrize_fc2 is False:
                 self._confs["symmetrize_fc2"] = ".false."
 
-        if "is_symmetrize_fc3_q" in args:
+        if "is_symmetrize_fc3_q" in arg_list:
             if args.is_symmetrize_fc3_q:
                 self._confs["symmetrize_fc3_q"] = ".true."
             elif args.is_symmetrize_fc3_q is False:
                 self._confs["symmetrize_fc3_q"] = ".false."
 
-        if "is_symmetrize_fc3_r" in args:
+        if "is_symmetrize_fc3_r" in arg_list:
             if args.is_symmetrize_fc3_r:
                 self._confs["symmetrize_fc3_r"] = ".true."
             elif args.is_symmetrize_fc3_r is False:
                 self._confs["symmetrize_fc3_r"] = ".false."
 
-        if "is_tetrahedron_method" in args:
+        if "is_tetrahedron_method" in arg_list:
             if args.is_tetrahedron_method:
                 self._confs["tetrahedron"] = ".true."
             elif args.is_tetrahedron_method is False:
                 self._confs["tetrahedron"] = ".false."
 
-        if "is_wigner_kappa" in args:
+        if "is_wigner_kappa" in arg_list:
             if args.is_wigner_kappa:
                 self._confs["conductivity_type"] = "wigner"
 
-        if "is_kubo_kappa" in args:
+        if "is_kubo_kappa" in arg_list:
             if args.is_kubo_kappa:
                 self._confs["conductivity_type"] = "kubo"
 
-        if "lapack_zheev_uplo" in args:
+        if "lapack_zheev_uplo" in arg_list:
             if args.lapack_zheev_uplo is not None:
                 self._confs["lapack_zheev_uplo"] = args.lapack_zheev_uplo
 
-        if "mass_variances" in args:
+        if "mass_variances" in arg_list:
             mass_variances = args.mass_variances
             if mass_variances is not None:
                 self._confs["mass_variances"] = " ".join(mass_variances)
 
-        if "max_freepath" in args:
+        if "max_freepath" in arg_list:
             if args.max_freepath is not None:
                 self._confs["max_freepath"] = args.max_freepath
 
-        if "num_points_in_batch" in args:
+        if "num_points_in_batch" in arg_list:
             num_points_in_batch = args.num_points_in_batch
             if num_points_in_batch is not None:
                 self._confs["num_points_in_batch"] = num_points_in_batch
 
-        if "output_yaml_filename" in args:
+        if "output_yaml_filename" in arg_list:
             if args.output_yaml_filename is not None:
                 self._confs["output_yaml_filename"] = args.output_yaml_filename
 
-        if "pinv_cutoff" in args:
+        if "pinv_cutoff" in arg_list:
             if args.pinv_cutoff is not None:
                 self._confs["pinv_cutoff"] = args.pinv_cutoff
 
-        if "pinv_method" in args:
+        if "pinv_method" in arg_list:
             if args.pinv_method is not None:
                 self._confs["pinv_method"] = args.pinv_method
 
-        if "pinv_solver" in args:
+        if "pinv_solver" in arg_list:
             if args.pinv_solver is not None:
                 self._confs["pinv_solver"] = args.pinv_solver
 
-        if "pp_conversion_factor" in args:
+        if "pp_conversion_factor" in arg_list:
             pp_conv_factor = args.pp_conversion_factor
             if pp_conv_factor is not None:
                 self._confs["pp_conversion_factor"] = pp_conv_factor
 
-        if "random_displacements_fc2" in args:
+        if "random_displacements_fc2" in arg_list:
             rd_fc2 = args.random_displacements_fc2
             if rd_fc2 is not None:
                 self._confs["random_displacements_fc2"] = rd_fc2
 
-        if "read_elph" in args:
+        if "read_elph" in arg_list:
             if args.read_elph is not None:
                 self._confs["read_elph"] = args.read_elph
 
-        if "read_fc2" in args:
+        if "read_fc2" in arg_list:
             if args.read_fc2:
                 self._confs["read_fc2"] = ".true."
             elif args.read_fc2 is False:
                 self._confs["read_fc2"] = ".false."
 
-        if "read_fc3" in args:
+        if "read_fc3" in arg_list:
             if args.read_fc3:
                 self._confs["read_fc3"] = ".true."
             elif args.read_fc3 is False:
                 self._confs["read_fc3"] = ".false."
 
-        if "read_gamma" in args:
+        if "read_gamma" in arg_list:
             if args.read_gamma:
                 self._confs["read_gamma"] = ".true."
             elif args.read_gamma is False:
                 self._confs["read_gamma"] = ".false."
 
-        if "read_phonon" in args:
+        if "read_phonon" in arg_list:
             if args.read_phonon:
                 self._confs["read_phonon"] = ".true."
             elif args.read_phonon is False:
                 self._confs["read_phonon"] = ".false."
 
-        if "read_pp" in args:
+        if "read_pp" in arg_list:
             if args.read_pp:
                 self._confs["read_pp"] = ".true."
             elif args.read_pp is False:
                 self._confs["read_pp"] = ".false."
 
-        if "read_collision" in args:
+        if "read_collision" in arg_list:
             if args.read_collision is not None:
                 self._confs["read_collision"] = args.read_collision
 
-        if "scattering_event_class" in args:
+        if "scattering_event_class" in arg_list:
             scatt_class = args.scattering_event_class
             if scatt_class is not None:
                 self._confs["scattering_event_class"] = scatt_class
 
-        if "sigma_cutoff_width" in args:
+        if "sigma_cutoff_width" in arg_list:
             if args.sigma_cutoff_width is not None:
                 self._confs["sigma_cutoff_width"] = args.sigma_cutoff_width
 
-        if "solve_collective_phonon" in args:
+        if "solve_collective_phonon" in arg_list:
             if args.solve_collective_phonon:
                 self._confs["collective_phonon"] = ".true."
             elif args.solve_collective_phonon is False:
                 self._confs["collective_phonon"] = ".false."
 
-        if "show_symfc_memory_usage" in args:
+        if "show_symfc_memory_usage" in arg_list:
             if args.show_symfc_memory_usage:
                 self._confs["show_symfc_memory_usage"] = ".true."
             elif args.show_symfc_memory_usage is False:
                 self._confs["show_symfc_memory_usage"] = ".false."
 
-        if "subtract_forces" in args:
+        if "subtract_forces" in arg_list:
             if args.subtract_forces:
                 self._confs["subtract_forces"] = args.subtract_forces
 
-        if "subtract_forces_fc2" in args:
+        if "subtract_forces_fc2" in arg_list:
             if args.subtract_forces_fc2:
                 self._confs["subtract_forces_fc2"] = args.subtract_forces_fc2
 
-        if "symfc_memory_size" in args:
+        if "symfc_memory_size" in arg_list:
             if args.symfc_memory_size is not None:
                 self._confs["symfc_memory_size"] = args.symfc_memory_size
 
-        if "temperatures" in args:
+        if "temperatures" in arg_list:
             if args.temperatures is not None:
                 self._confs["temperatures"] = " ".join(args.temperatures)
 
-        if "use_ave_pp" in args:
+        if "use_ave_pp" in arg_list:
             if args.use_ave_pp:
                 self._confs["use_ave_pp"] = ".true."
             elif args.use_ave_pp is False:
                 self._confs["use_ave_pp"] = ".false."
 
-        if "use_grg" in args:
+        if "use_grg" in arg_list:
             if args.use_grg:
                 self._confs["use_grg"] = ".true."
             elif args.use_grg is False:
                 self._confs["use_grg"] = ".false."
 
-        if "write_gamma_detail" in args:
+        if "write_gamma_detail" in arg_list:
             if args.write_gamma_detail:
                 self._confs["write_gamma_detail"] = ".true."
             elif args.write_gamma_detail is False:
                 self._confs["write_gamma_detail"] = ".false."
 
-        if "write_gamma" in args:
+        if "write_gamma" in arg_list:
             if args.write_gamma:
                 self._confs["write_gamma"] = ".true."
             elif args.write_gamma is False:
                 self._confs["write_gamma"] = ".false."
 
-        if "write_collision" in args:
+        if "write_collision" in arg_list:
             if args.write_collision:
                 self._confs["write_collision"] = ".true."
             elif args.write_collision is False:
                 self._confs["write_collision"] = ".false."
 
-        if "write_phonon" in args:
+        if "write_phonon" in arg_list:
             if args.write_phonon:
                 self._confs["write_phonon"] = ".true."
             elif args.write_phonon is False:
                 self._confs["write_phonon"] = ".false."
 
-        if "write_pp" in args:
+        if "write_pp" in arg_list:
             if args.write_pp:
                 self._confs["write_pp"] = ".true."
             elif args.write_pp is False:
                 self._confs["write_pp"] = ".false."
 
-        if "write_LBTE_solution" in args:
+        if "write_LBTE_solution" in arg_list:
             if args.write_LBTE_solution:
                 self._confs["write_LBTE_solution"] = ".true."
             elif args.write_LBTE_solution is False:
                 self._confs["write_LBTE_solution"] = ".false."
 
-    def _parse_conf(self):
+    def _parse_conf(self) -> None:
         super()._parse_conf()
         confs = self._confs
 
@@ -584,37 +586,41 @@ class Phono3pyConfParser(ConfParser):
                     fnames = confs[conf_key]
                 self._set_parameter(conf_key, fnames)
 
-            if conf_key == "dim_fc2":
-                matrix = [int(x) for x in confs["dim_fc2"].split()]
+            if conf_key == "phonon_supercell_dimension":
+                matrix: list[int] = [
+                    int(x) for x in confs["phonon_supercell_dimension"].split()
+                ]
                 if len(matrix) == 9:
-                    matrix = np.array(matrix).reshape(3, 3)
+                    _matrix = np.array(matrix, dtype="int64").reshape(3, 3)
                 elif len(matrix) == 3:
-                    matrix = np.diag(matrix)
+                    _matrix = np.array(np.diag(matrix), dtype="int64", order="C")
                 else:
                     self.setting_error(
                         "Number of elements of dim-fc2 has to be 3 or 9."
                     )
 
-                if matrix.shape == (3, 3):
-                    if np.linalg.det(matrix) < 1:
+                if _matrix.shape == (3, 3):
+                    if np.linalg.det(_matrix) < 1:
                         self.setting_error(
                             "Determinant of supercell matrix has " + "to be positive."
                         )
                     else:
-                        self._set_parameter("dim_fc2", matrix)
+                        self._set_parameter("phonon_supercell_dimension", _matrix)
 
             if conf_key == "grid_addresses":
                 vals = [
                     int(x) for x in confs["grid_addresses"].replace(",", " ").split()
                 ]
                 if len(vals) % 3 == 0 and len(vals) > 0:
-                    self._set_parameter("grid_addresses", np.reshape(vals, (-1, 3)))
+                    self._set_parameter(
+                        "grid_addresses", np.array(vals, dtype="int64").reshape(-1, 3)
+                    )
                 else:
                     self.setting_error("Grid addresses are incorrectly set.")
 
             if conf_key == "grid_points":
                 vals = [int(x) for x in confs["grid_points"].replace(",", " ").split()]
-                self._set_parameter("grid_points", vals)
+                self._set_parameter("grid_points", np.array(vals, dtype="int64"))
 
             if conf_key == "grid_matrix":
                 vals = [int(x) for x in confs["grid_matrix"].replace(",", " ").split()]
@@ -666,13 +672,13 @@ class Phono3pyConfParser(ConfParser):
                 elif confs["pm_fc2"].lower() == ".true.":
                     self._set_parameter("pm_fc2", True)
 
-    def _set_settings(self, settings: Phono3pySettings):
+    def _set_settings(self, settings: Phono3pySettings) -> None:
         super()._set_settings(settings)
         params = self._parameters
 
         # Supercell dimension for fc2
-        if "dim_fc2" in params:
-            settings.phonon_supercell_matrix = params["dim_fc2"]
+        if "phonon_supercell_dimension" in params:
+            settings.phonon_supercell_matrix = params["phonon_supercell_dimension"]
 
         # Boundary mean free path for thermal conductivity calculation
         if "boundary_mfp" in params:

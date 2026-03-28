@@ -37,10 +37,11 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Sequence
 from typing import Literal
 
 import numpy as np
-from numpy.typing import ArrayLike
+from numpy.typing import NDArray
 from phonopy.structure.atoms import PhonopyAtoms
 
 from phono3py.file_IO import write_grid_address_to_hdf5, write_ir_grid_points
@@ -51,14 +52,14 @@ from phono3py.phonon3.triplets import get_triplets_at_q
 def write_grid_points(
     primitive: PhonopyAtoms,
     bz_grid: BZGrid,
-    band_indices: ArrayLike | None = None,
-    sigmas: ArrayLike | None = None,
-    temperatures: ArrayLike | None = None,
+    sigmas: Sequence[float | None],
+    band_indices: NDArray[np.int64] | Sequence[int] | None = None,
+    temperatures: NDArray[np.double] | Sequence[float] | None = None,
     is_kappa_star: bool = True,
     is_lbte: bool = False,
     compression: Literal["gzip", "lzf"] | int | None = "gzip",
     filename: str | os.PathLike | None = None,
-):
+) -> None:
     """Write grid points into files."""
     ir_grid_points, ir_grid_weights = _get_ir_grid_points(
         bz_grid, is_kappa_star=is_kappa_star
@@ -70,7 +71,7 @@ def write_grid_points(
         bz_grid.addresses,
         bz_grid.D_diag,
         bz_grid.gp_map,
-        compression=compression,
+        compression=compression,  # type: ignore[arg-type]
         filename=filename,
     )
 
@@ -112,10 +113,10 @@ def write_grid_points(
 def show_num_triplets(
     primitive: PhonopyAtoms,
     bz_grid: BZGrid,
-    band_indices: ArrayLike | None = None,
-    grid_points: ArrayLike | None = None,
+    band_indices: NDArray[np.int64] | Sequence[int] | None = None,
+    grid_points: NDArray[np.int64] | Sequence[int] | None = None,
     is_kappa_star: bool = True,
-):
+) -> None:
     """Show numbers of triplets at grid points."""
     tp_nums = _TripletsNumbers(bz_grid, is_kappa_star=is_kappa_star)
     num_band = len(primitive) * 3
@@ -124,6 +125,7 @@ def show_num_triplets(
     else:
         num_band0 = len(band_indices)
 
+    _grid_points: NDArray[np.int64] | Sequence[int]
     if grid_points:
         _grid_points = grid_points
     else:
@@ -142,19 +144,21 @@ def show_num_triplets(
 
 
 class _TripletsNumbers:
-    def __init__(self, bz_grid: BZGrid, is_kappa_star: bool = True):
+    def __init__(self, bz_grid: BZGrid, is_kappa_star: bool = True) -> None:
         self._bz_grid = bz_grid
         (
             self.ir_grid_points,
             _,
         ) = _get_ir_grid_points(self._bz_grid, is_kappa_star=is_kappa_star)
 
-    def get_number_of_triplets(self, gp):
+    def get_number_of_triplets(self, gp: int) -> int:
         num_triplets = _get_number_of_triplets(self._bz_grid, gp, swappable=True)
         return num_triplets
 
 
-def _get_ir_grid_points(bz_grid: BZGrid, is_kappa_star: bool = True):
+def _get_ir_grid_points(
+    bz_grid: BZGrid, is_kappa_star: bool = True
+) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
     if is_kappa_star:
         ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(bz_grid)
         ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype="int64")
@@ -167,6 +171,8 @@ def _get_ir_grid_points(bz_grid: BZGrid, is_kappa_star: bool = True):
     return ir_grid_points, ir_grid_weights
 
 
-def _get_number_of_triplets(bz_grid: BZGrid, grid_point: int, swappable: bool = True):
+def _get_number_of_triplets(
+    bz_grid: BZGrid, grid_point: int, swappable: bool = True
+) -> int:
     triplets_at_q = get_triplets_at_q(grid_point, bz_grid, swappable=swappable)[0]
     return len(triplets_at_q)

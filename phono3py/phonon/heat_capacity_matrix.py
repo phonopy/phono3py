@@ -34,12 +34,19 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.phonon.thermal_properties import mode_cv
 from phonopy.physical_units import get_physical_units
 
 
-def mode_cv_matrix(temp, freqs, cutoff=1e-4):
+def mode_cv_matrix(
+    temp: float,
+    freqs: NDArray[np.double],
+    cutoff: float = 1e-4,
+) -> NDArray[np.double]:
     r"""Calculate mode heat capacity matrix, Cqjj'.
 
     C_{\mathbf{q}jj'} = K_B \frac{e^{x_{\mathbf{q}j} - x_{\mathbf{q}j'}} - 1}

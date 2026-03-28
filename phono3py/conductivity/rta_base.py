@@ -88,12 +88,12 @@ class ConductivityRTABase(ConductivityBase):
         self._is_gamma_detail = is_gamma_detail
         self._is_frequency_shift_by_bubble = is_frequency_shift_by_bubble
 
-        self._gamma_N = None
-        self._gamma_U = None
-        self._gamma_detail_at_q = None
+        self._gamma_N: NDArray[np.double] | None = None
+        self._gamma_U: NDArray[np.double] | None = None
+        self._gamma_detail_at_q: NDArray[np.double] | None = None
         self._use_ave_pp = use_ave_pp
-        self._use_const_ave_pp = None
-        self._num_ignored_phonon_modes = None
+        self._use_const_ave_pp: bool = False
+        self._num_ignored_phonon_modes: NDArray[np.int64] | None = None
 
         super().__init__(
             interaction,
@@ -109,7 +109,7 @@ class ConductivityRTABase(ConductivityBase):
             log_level=log_level,
         )
 
-        self._use_const_ave_pp = self._pp.constant_averaged_interaction
+        self._use_const_ave_pp = self._pp.constant_averaged_interaction is not None
         self._read_pp = read_pp
         self._store_pp = store_pp
         self._pp_filename = pp_filename
@@ -121,20 +121,26 @@ class ConductivityRTABase(ConductivityBase):
             self._pp, with_detail=(self._is_gamma_detail or self._is_N_U)
         )
 
-    def get_gamma_N_U(self):
+    def get_gamma_N_U(
+        self,
+    ) -> tuple[NDArray[np.double] | None, NDArray[np.double] | None]:
         """Return N and U parts of gamma."""
         return (self._gamma_N, self._gamma_U)
 
-    def set_gamma_N_U(self, gamma_N, gamma_U):
+    def set_gamma_N_U(
+        self,
+        gamma_N: NDArray[np.double],
+        gamma_U: NDArray[np.double],
+    ) -> None:
         """Set N and U parts of gamma."""
         self._gamma_N = gamma_N
         self._gamma_U = gamma_U
 
-    def get_gamma_detail_at_q(self):
+    def get_gamma_detail_at_q(self) -> NDArray[np.double] | None:
         """Return contribution of each triplet to gamma at current q-point."""
         return self._gamma_detail_at_q
 
-    def get_number_of_ignored_phonon_modes(self):
+    def get_number_of_ignored_phonon_modes(self) -> NDArray[np.int64] | None:
         """Return number of ignored phonon modes."""
         warnings.warn(
             "Use attribute, number_of_ignored_phonon_modes",
@@ -144,20 +150,20 @@ class ConductivityRTABase(ConductivityBase):
         return self.number_of_ignored_phonon_modes
 
     @property
-    def number_of_ignored_phonon_modes(self):
+    def number_of_ignored_phonon_modes(self) -> NDArray[np.int64] | None:
         """Return number of ignored phonon modes."""
         return self._num_ignored_phonon_modes
 
-    def set_averaged_pp_interaction(self, ave_pp):
+    def set_averaged_pp_interaction(self, ave_pp: NDArray[np.double]) -> None:
         """Set averaged ph-ph interaction."""
         self._averaged_pp_interaction = ave_pp
 
     @abstractmethod
-    def set_kappa_at_sigmas(self):
+    def set_kappa_at_sigmas(self) -> None:
         """Must be implemented in the inherited class."""
         raise NotImplementedError()
 
-    def _allocate_values(self):
+    def _allocate_values(self) -> None:
         if self._temperatures is None:
             raise RuntimeError(
                 "Temperatures have not been set yet. "
@@ -191,7 +197,7 @@ class ConductivityRTABase(ConductivityBase):
             (len(self._sigmas), num_temp), order="C", dtype="int64"
         )
 
-    def _run_at_grid_point(self):
+    def _run_at_grid_point(self) -> None:
         i_gp = self._grid_point_count
         self._show_log_header(i_gp)
         grid_point = self._grid_points[i_gp]
@@ -212,10 +218,9 @@ class ConductivityRTABase(ConductivityBase):
 
         self._collision.set_grid_point(grid_point)
         if self._log_level:
-            print(
-                "Number of triplets: %d" % len(self._pp.get_triplets_at_q()[0]),
-                flush=True,
-            )
+            triplets_at_q = self._pp.get_triplets_at_q()[0]
+            assert triplets_at_q is not None
+            print("Number of triplets: %d" % len(triplets_at_q), flush=True)
 
         if self._requires_full_gamma_path():
             self._set_gamma_at_sigmas(i_gp)
@@ -232,16 +237,17 @@ class ConductivityRTABase(ConductivityBase):
             or self._is_gamma_detail
         )
 
-    def _set_local_properties_at_grid_point(self, i_gp: int):
+    def _set_local_properties_at_grid_point(self, i_gp: int) -> None:
         self._set_cv(i_gp, i_gp)
         self._set_velocities(i_gp, i_gp)
 
-    def _set_isotope_gamma_at_grid_point(self, i_gp: int):
+    def _set_isotope_gamma_at_grid_point(self, i_gp: int) -> None:
         if self._is_isotope and not self._read_gamma_iso:
             gamma_iso = self._get_gamma_isotope_at_sigmas(i_gp)
+            assert self._gamma_iso is not None
             self._gamma_iso[:, i_gp, :] = gamma_iso[:, self._pp.band_indices]
 
-    def _set_gamma_at_sigmas(self, i):
+    def _set_gamma_at_sigmas(self, i: int) -> None:
         for j, sigma in enumerate(self._sigmas):
             self._run_sigma_at_grid_point(i, j, sigma)
 
@@ -254,7 +260,7 @@ class ConductivityRTABase(ConductivityBase):
         self._allocate_gamma_detail_at_q_if_needed()
         self._run_collisions_at_temperatures(i_gp, i_sigma)
 
-    def _show_gamma_sigma_log(self, sigma):
+    def _show_gamma_sigma_log(self, sigma: float | None) -> None:
         if not self._log_level:
             return
 
@@ -269,20 +275,25 @@ class ConductivityRTABase(ConductivityBase):
                 text += "(%4.2f SD)." % self._sigma_cutoff
         print(text)
 
-    def _set_interaction_strength_at_sigma(self, i_gp, i_sigma, sigma):
+    def _set_interaction_strength_at_sigma(
+        self, i_gp: int, i_sigma: int, sigma: float | None
+    ) -> None:
         if self._read_pp:
             self._set_interaction_strength_from_file(i_gp, sigma)
         elif self._use_ave_pp:
+            assert self._averaged_pp_interaction is not None
             self._collision.set_averaged_pp_interaction(
                 self._averaged_pp_interaction[i_gp]
             )
         elif self._use_const_ave_pp:
             if self._log_level:
+                assert self._pp.constant_averaged_interaction is not None
                 print(
                     "Constant ph-ph interaction of %6.3e is used."
                     % self._pp.constant_averaged_interaction
                 )
             self._collision.run_interaction()
+            assert self._averaged_pp_interaction is not None
             self._averaged_pp_interaction[i_gp] = self._pp.averaged_interaction
         elif i_sigma != 0 and (self._is_full_pp or self._sigma_cutoff is None):
             if self._log_level:
@@ -292,9 +303,12 @@ class ConductivityRTABase(ConductivityBase):
                 print("Calculating ph-ph interaction...")
             self._collision.run_interaction(is_full_pp=self._is_full_pp)
             if self._is_full_pp:
+                assert self._averaged_pp_interaction is not None
                 self._averaged_pp_interaction[i_gp] = self._pp.averaged_interaction
 
-    def _set_interaction_strength_from_file(self, i_gp, sigma):
+    def _set_interaction_strength_from_file(
+        self, i_gp: int, sigma: float | None
+    ) -> None:
         pp, _g_zero = read_pp_from_hdf5(
             self._pp.mesh_numbers,
             grid_point=self._grid_points[i_gp],
@@ -313,12 +327,14 @@ class ConductivityRTABase(ConductivityBase):
             raise ValueError("Inconsistency found in g_zero.")
         self._collision.set_interaction_strength(pp)
 
-    def _allocate_gamma_detail_at_q_if_needed(self):
+    def _allocate_gamma_detail_at_q_if_needed(self) -> None:
         # Number of triplets depends on q-point.
         # So this is allocated each time.
         if not self._is_gamma_detail:
             return
 
+        assert self._temperatures is not None
+        assert self._pp.interaction_strength is not None
         num_temp = len(self._temperatures)
         self._gamma_detail_at_q = np.empty(
             ((num_temp,) + self._pp.interaction_strength.shape),
@@ -327,21 +343,25 @@ class ConductivityRTABase(ConductivityBase):
         )
         self._gamma_detail_at_q[:] = 0
 
-    def _run_collisions_at_temperatures(self, i_gp, i_sigma):
+    def _run_collisions_at_temperatures(self, i_gp: int, i_sigma: int) -> None:
         if self._log_level:
             print("Calculating collisions at temperatures...")
+        assert self._temperatures is not None
         for k, t in enumerate(self._temperatures):
             self._collision.temperature = t
             self._collision.run()
             self._gamma[i_sigma, k, i_gp] = self._collision.imag_self_energy
             if self._is_N_U or self._is_gamma_detail:
                 g_N, g_U = self._collision.get_imag_self_energy_N_and_U()
+                assert self._gamma_N is not None
+                assert self._gamma_U is not None
                 self._gamma_N[i_sigma, k, i_gp] = g_N
                 self._gamma_U[i_sigma, k, i_gp] = g_U
             if self._is_gamma_detail:
+                assert self._gamma_detail_at_q is not None
                 self._gamma_detail_at_q[k] = self._collision.detailed_imag_self_energy
 
-    def _set_gamma_at_sigmas_lowmem(self, i):
+    def _set_gamma_at_sigmas_lowmem(self, i: int) -> None:
         """Calculate gamma without storing ph-ph interaction strength.
 
         `svecs` and `multi` below must not be simply replaced by
@@ -353,14 +373,14 @@ class ConductivityRTABase(ConductivityBase):
         """
         num_band = len(self._pp.primitive) * 3
         band_indices = self._pp.band_indices
-        (
-            svecs,
-            multi,
-            p2s,
-            s2p,
-            masses,
-        ) = self._pp.get_primitive_and_supercell_correspondence()
+        svecs, multi = self._pp.primitive.get_smallest_vectors()
+        p2s = self._pp.primitive.p2s_map
+        s2p = self._pp.primitive.s2p_map
+        masses = self._pp.primitive.masses
         triplets_at_q, weights_at_q, _, _ = self._pp.get_triplets_at_q()
+        assert triplets_at_q is not None
+        assert weights_at_q is not None
+        assert self._frequencies is not None
 
         if None in self._sigmas:
             tetrahedra = get_tetrahedra_relative_grid_address(
@@ -368,6 +388,7 @@ class ConductivityRTABase(ConductivityBase):
             )
 
         # It is assumed that self._sigmas = [None].
+        assert self._temperatures is not None
         temperatures_THz = np.array(
             self._temperatures * get_physical_units().KB / get_physical_units().THzToEv,
             dtype="double",
@@ -433,9 +454,9 @@ class ConductivityRTABase(ConductivityBase):
                 )
             else:
                 if self._sigma_cutoff is None:
-                    sigma_cutoff = -1
+                    sigma_cutoff: float = -1.0
                 else:
-                    sigma_cutoff = float(self._sigma_cutoff)
+                    sigma_cutoff = self._sigma_cutoff
                 phono3c.pp_collision_with_sigma(
                     collisions,
                     sigma,
@@ -478,6 +499,8 @@ class ConductivityRTABase(ConductivityBase):
                     self._frequencies[self._grid_points[i]],
                 )
                 if self._is_N_U:
+                    assert self._gamma_N is not None
+                    assert self._gamma_U is not None
                     self._gamma_N[j, k, i, :] = average_by_degeneracy(
                         col_N[k] * col_unit_conv * pp_unit_conv,
                         band_indices,
@@ -489,9 +512,10 @@ class ConductivityRTABase(ConductivityBase):
                         self._frequencies[self._grid_points[i]],
                     )
 
-    def _show_log(self, i_gp):
+    def _show_log(self, i_gp: int) -> None:
         q = get_qpoints_from_bz_grid_points(i_gp, self._pp.bz_grid)
         gp = self._grid_points[i_gp]
+        assert self._frequencies is not None
         frequencies = self._frequencies[gp][self._pp.band_indices]
         gv = self._conductivity_components.group_velocities[i_gp]
 
@@ -508,8 +532,14 @@ class ConductivityRTABase(ConductivityBase):
 
         print("", end="", flush=True)
 
-    def _show_log_values(self, frequencies, gv, ave_pp):
+    def _show_log_values(
+        self,
+        frequencies: NDArray[np.double],
+        gv: NDArray[np.double],
+        ave_pp: NDArray[np.double] | None,
+    ) -> None:
         if self._is_full_pp or self._use_ave_pp or self._use_const_ave_pp:
+            assert ave_pp is not None
             for f, v, pp in zip(frequencies, gv, ave_pp, strict=True):
                 print(
                     "%8.3f   (%8.3f %8.3f %8.3f) %8.3f %11.3e"
@@ -522,7 +552,14 @@ class ConductivityRTABase(ConductivityBase):
                     % (f, v[0], v[1], v[2], np.linalg.norm(v))
                 )
 
-    def _show_log_values_on_kstar(self, frequencies, gv, ave_pp, gp, q):
+    def _show_log_values_on_kstar(
+        self,
+        frequencies: NDArray[np.double],
+        gv: NDArray[np.double],
+        ave_pp: NDArray[np.double] | None,
+        gp: int,
+        q: NDArray[np.double],
+    ) -> None:
         rotation_map = get_grid_points_by_rotations(gp, self._pp.bz_grid)
         for i, j in enumerate(np.unique(rotation_map)):
             for k, (rot, rot_c) in enumerate(
@@ -535,6 +572,7 @@ class ConductivityRTABase(ConductivityBase):
                     " k*%-2d (%5.2f %5.2f %5.2f)" % ((i + 1,) + tuple(np.dot(rot, q)))
                 )
                 if self._is_full_pp or self._use_ave_pp or self._use_const_ave_pp:
+                    assert ave_pp is not None
                     for f, v, pp in zip(
                         frequencies, np.dot(rot_c, gv.T).T, ave_pp, strict=True
                     ):
@@ -550,7 +588,7 @@ class ConductivityRTABase(ConductivityBase):
                         )
         print("")
 
-    def _show_log_value_names(self):
+    def _show_log_value_names(self) -> None:
         if self._is_full_pp or self._use_ave_pp or self._use_const_ave_pp:
             text = "Frequency     group velocity (x, y, z)     |gv|       Pqj"
         else:

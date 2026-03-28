@@ -36,6 +36,7 @@
 
 from __future__ import annotations
 
+import argparse
 import dataclasses
 import os
 import sys
@@ -44,10 +45,11 @@ from collections.abc import Sequence
 from phonopy.cui.phonopy_argparse import fix_deprecated_option_names
 
 
-def get_parser(load_phono3py_yaml: bool = False):
+def get_parser(
+    load_phono3py_yaml: bool = False,
+) -> tuple[argparse.ArgumentParser, list[str]]:
     """Return ArgumentParser instance."""
     deprecated = fix_deprecated_option_names(sys.argv)
-    import argparse
 
     from phonopy.interface.calculator import add_arguments_of_calculators
 
@@ -978,8 +980,8 @@ class Phono3pyMockArgs:
     filename: Sequence[str | os.PathLike] | None = None
     force_sets_mode: bool | None = None
     force_sets_to_forces_fc2_mode: bool | None = None
-    input_filename = None
-    input_output_filename = None
+    input_filename: None = None
+    input_output_filename: None = None
     log_level: int | None = None
     is_bterta: bool | None = None
     is_displacement: bool | None = None
@@ -988,29 +990,21 @@ class Phono3pyMockArgs:
     is_N_U: bool | None = None
     is_lbte: bool | None = None
     is_wigner_kappa: bool | None = None
-    mesh_numbers: Sequence | None = None
+    mesh_numbers: Sequence[str] | None = None
     mlp_params: str | None = None
-    phonon_supercell_dimension: Sequence | None = None
+    phonon_supercell_dimension: Sequence[str] | None = None
     rd_number_estimation_factor: float | None = None
     read_elph: bool | None = None
     read_gamma: bool | None = None
-    output_filename = None
+    output_filename: None = None
     output_yaml_filename: str | os.PathLike | None = None
     random_displacements: int | str | None = None
     save_params: bool | None = None
     show_num_triplets: bool | None = None
-    supercell_dimension: Sequence | None = None
-    temperatures: Sequence | None = None
+    supercell_dimension: Sequence[str] | None = None
+    temperatures: Sequence[str] | None = None
     use_pypolymlp: bool | None = None
     write_gamma: bool | None = None
     write_gamma_detail: bool | None = None
     write_grid_points: bool | None = None
     write_phonon: bool | None = None
-
-    def __iter__(self):
-        """Make self iterable to support in."""
-        return (getattr(self, field.name) for field in dataclasses.fields(self))
-
-    def __contains__(self, item):
-        """Implement in operator."""
-        return item in (field.name for field in dataclasses.fields(self))

@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Mar-29-2026: Version 3.29.0
+
+- Refactoring along with type hints coverage improvement.
+
 ## Mar-10-2026: Version 3.28.0
 
 - Update following changes in phonopy to fix writing supercells to files for

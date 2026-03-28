@@ -14,11 +14,11 @@ from phono3py.phonon.grid import (
     BZGrid,
     GridMatrix,
     _can_use_std_lattice,
+    _check_grid_symmetry,
     _get_grid_points_by_bz_rotations_c,
     _get_grid_points_by_bz_rotations_py,
     _get_grid_points_by_rotations,
     _relocate_BZ_grid_address,
-    check_grid_symmetry,
     get_grid_point_from_address,
     get_grid_point_from_address_py,
     get_ir_grid_points,
@@ -58,7 +58,7 @@ def test_GRGrid_agno2(agno2_cell: PhonopyAtoms):
         use_grg=True,
         is_time_reversal=False,
     )
-    rotations = check_grid_symmetry(
+    rotations = _check_grid_symmetry(
         ph3.primitive_symmetry.dataset.rotations, bzgrid.D_diag, bzgrid.Q
     )
     for r_ref in bzgrid.rotations:
@@ -228,18 +228,6 @@ def test_BZGrid_SNF_with_tmat(si_pbesol_111: Phono3py):
     _test_BZGrid_SNF(bzgrid1)
 
 
-def test_BZGrid_SNF_with_no_tmat_and_dataset(si_pbesol_111: Phono3py):
-    """Test of SNF in BZGrid with transformation matrix."""
-    lat = si_pbesol_111.primitive.cell
-    mesh = 10
-    with pytest.raises(RuntimeError):
-        BZGrid(
-            mesh,
-            lattice=lat,
-            use_grg=True,
-        )
-
-
 def test_BZGrid_SNF_with_negative_tmat(si_pbesol_111: Phono3py):
     """Test of SNF in BZGrid with negative transformation matrix."""
     lat = si_pbesol_111.primitive.cell
@@ -395,7 +383,7 @@ def _test_BZGrid_SNF(bzgrid: BZGrid):
         ((np.reshape(ref, (-1, 3)) - gr_addresses) % bzgrid.D_diag).ravel() == 0
     ).all()
 
-    if bzgrid.symmetry_dataset is not None:
+    if len(bzgrid.grid_symmetry_dataset.rotations) > 1:
         ref_rots = [
             1,
             0,

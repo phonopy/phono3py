@@ -34,10 +34,12 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 from collections.abc import Sequence
-from typing import Optional, Union
 
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.structure.atoms import PhonopyAtoms
 
 
@@ -53,11 +55,11 @@ class ReciprocalToNormal:
     def __init__(
         self,
         primitive: PhonopyAtoms,
-        frequencies: np.ndarray,
-        eigenvectors: np.ndarray,
-        band_indices: Union[Sequence[int], np.ndarray],
+        frequencies: NDArray[np.double],
+        eigenvectors: NDArray[np.cdouble],
+        band_indices: Sequence[int] | NDArray[np.int64],
         cutoff_frequency: float = 0,
-    ):
+    ) -> None:
         """Init method."""
         self._primitive = primitive
         self._frequencies = frequencies
@@ -65,10 +67,14 @@ class ReciprocalToNormal:
         self._band_indices = band_indices
         self._cutoff_frequency = cutoff_frequency
 
-        self._fc3_normal: np.ndarray
-        self._fc3_reciprocal: np.ndarray
+        self._fc3_normal: NDArray[np.cdouble]
+        self._fc3_reciprocal: NDArray[np.cdouble]
 
-    def run(self, fc3_reciprocal, grid_triplet):
+    def run(
+        self,
+        fc3_reciprocal: NDArray[np.cdouble],
+        grid_triplet: NDArray[np.int64],
+    ) -> None:
         """Calculate fc3 in phonon coordinates."""
         num_band = len(self._primitive) * 3
         self._fc3_reciprocal = fc3_reciprocal
@@ -78,23 +84,27 @@ class ReciprocalToNormal:
         )
         self._reciprocal_to_normal(grid_triplet)
 
-    def get_reciprocal_to_normal(self) -> Optional[np.ndarray]:
+    def get_reciprocal_to_normal(self) -> NDArray[np.cdouble] | None:
         """Return fc3 in phonon coordinates."""
         return self._fc3_normal
 
-    def _reciprocal_to_normal(self, grid_triplet):
+    def _reciprocal_to_normal(self, grid_triplet: NDArray[np.int64]) -> None:
         e1, e2, e3 = self._eigenvectors[grid_triplet]
         f1, f2, f3 = self._frequencies[grid_triplet]
         num_band = len(f1)
         cutoff = self._cutoff_frequency
         for i, j, k in list(np.ndindex(len(self._band_indices), num_band, num_band)):
-            bi = self._band_indices[i]
+            bi = int(self._band_indices[i])
             if f1[bi] > cutoff and f2[j] > cutoff and f3[k] > cutoff:
                 fc3_elem = self._sum_in_atoms((bi, j, k), (e1, e2, e3))
                 fff = np.sqrt(f1[bi] * f2[j] * f3[k])
                 self._fc3_normal[i, j, k] = fc3_elem / fff
 
-    def _sum_in_atoms(self, band_indices, eigvecs):
+    def _sum_in_atoms(
+        self,
+        band_indices: tuple[int, int, int],
+        eigvecs: tuple[NDArray[np.cdouble], NDArray[np.cdouble], NDArray[np.cdouble]],
+    ) -> complex:
         num_atom = len(self._primitive)
         (e1, e2, e3) = eigvecs
         (b1, b2, b3) = band_indices

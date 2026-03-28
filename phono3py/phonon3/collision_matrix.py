@@ -34,9 +34,12 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from typing import Optional
+from __future__ import annotations
+
+from typing import Literal
 
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
 
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy
@@ -54,39 +57,21 @@ class CollisionMatrix(ImagSelfEnergy):
     def __init__(
         self,
         interaction: Interaction,
-        rotations_cartesian=None,
-        num_ir_grid_points=Optional[int],
-        rot_grid_points=None,
-        is_reducible_collision_matrix=False,
-        log_level=0,
-        lang="C",
-    ):
+        rotations_cartesian: NDArray[np.double] | None = None,
+        num_ir_grid_points: int | None = None,
+        rot_grid_points: NDArray[np.int64] | None = None,
+        is_reducible_collision_matrix: bool = False,
+        log_level: int = 0,
+        lang: Literal["C", "Python"] = "C",
+    ) -> None:
         """Init method."""
-        self._pp: Interaction
-        self._is_collision_matrix: bool
-        self._sigma = None
-        self._frequency_points = None
-        self._temperature = None
-        self._grid_point = None
-        self._lang = None
-        self._imag_self_energy = None
-        self._collision_matrix = None
-        self._pp_strength = None
-        self._frequencies = None
-        self._triplets_at_q = None
-        self._triplets_map_at_q = None
-        self._weights_at_q = None
-        self._band_indices = None
-        self._unit_conversion = None
-        self._cutoff_frequency = None
-        self._g = None
-        self._unit_conversion = None
         self._log_level = log_level
 
         super().__init__(interaction, lang=lang)
 
         self._is_reducible_collision_matrix = is_reducible_collision_matrix
         self._is_collision_matrix = True
+        self._collision_matrix: NDArray[np.double] | None = None
 
         if not self._is_reducible_collision_matrix:
             self._num_ir_grid_points = num_ir_grid_points
@@ -95,10 +80,11 @@ class CollisionMatrix(ImagSelfEnergy):
             )
             self._rotations_cartesian = rotations_cartesian
 
-    def run(self):
+    def run(self) -> None:
         """Calculate collision matrix at a grid point."""
         if self._pp_strength is None:
             self.run_interaction()
+        assert self._pp_strength is not None
 
         num_band0 = self._pp_strength.shape[1]
         num_band = self._pp_strength.shape[2]
@@ -110,6 +96,7 @@ class CollisionMatrix(ImagSelfEnergy):
                 (num_band0, num_mesh_points, num_band), dtype="double", order="C"
             )
         else:
+            assert self._num_ir_grid_points is not None
             self._collision_matrix = np.zeros(
                 (num_band0, 3, self._num_ir_grid_points, num_band, 3),
                 dtype="double",
@@ -118,11 +105,11 @@ class CollisionMatrix(ImagSelfEnergy):
         self._run_with_band_indices()
         self._run_collision_matrix()
 
-    def get_collision_matrix(self):
+    def get_collision_matrix(self) -> NDArray[np.double] | None:
         """Return collision matrix at a grid point."""
         return self._collision_matrix
 
-    def set_grid_point(self, grid_point=None):
+    def set_grid_point(self, grid_point: int | None = None) -> None:
         """Set a grid point and prepare for collision matrix calculation."""
         if grid_point is None:
             self._grid_point = None
@@ -138,7 +125,8 @@ class CollisionMatrix(ImagSelfEnergy):
             self._grid_point = grid_point
             self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
 
-    def _run_collision_matrix(self):
+    def _run_collision_matrix(self) -> None:
+        assert self._temperature is not None
         if self._temperature > 0:
             if self._lang == "C":
                 if self._is_reducible_collision_matrix:
@@ -151,9 +139,10 @@ class CollisionMatrix(ImagSelfEnergy):
                 else:
                     self._run_py_collision_matrix()
 
-    def _run_c_collision_matrix(self):
-        import phono3py._phono3py as phono3c
+    def _run_c_collision_matrix(self) -> None:
+        import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
+        assert self._temperature is not None
         phono3c.collision_matrix(
             self._collision_matrix,
             self._pp_strength,
@@ -169,9 +158,10 @@ class CollisionMatrix(ImagSelfEnergy):
             self._cutoff_frequency,
         )
 
-    def _run_c_reducible_collision_matrix(self):
-        import phono3py._phono3py as phono3c
+    def _run_c_reducible_collision_matrix(self) -> None:
+        import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
+        assert self._temperature is not None
         phono3c.reducible_collision_matrix(
             self._collision_matrix,
             self._pp_strength,
@@ -185,7 +175,7 @@ class CollisionMatrix(ImagSelfEnergy):
             self._cutoff_frequency,
         )
 
-    def _run_py_collision_matrix(self):
+    def _run_py_collision_matrix(self) -> None:
         r"""Sum over rotations, and q-points and bands for third phonons.
 
         \Omega' = \sum_R' R' \Omega_{kp,R'k'p'}
@@ -193,13 +183,18 @@ class CollisionMatrix(ImagSelfEnergy):
         pp_strength.shape = (num_triplets, num_band0, num_band, num_band)
 
         """
+        assert self._pp_strength is not None
+        assert self._g is not None
+        assert self._num_ir_grid_points is not None
+        assert self._rotations_cartesian is not None
+        assert self._collision_matrix is not None
         num_band0 = self._pp_strength.shape[1]
         num_band = self._pp_strength.shape[2]
         gp2tp, tp2s, swapped = self._get_gp2tp_map()
         for i in range(self._num_ir_grid_points):
             r_gps = self._rot_grid_points[i]
             for r, r_gp in zip(self._rotations_cartesian, r_gps, strict=True):
-                inv_sinh = self._get_inv_sinh(tp2s[r_gp])
+                inv_sinh = self._get_inv_sinh(int(tp2s[r_gp]))
                 ti = gp2tp[r_gp]
                 for j, k in np.ndindex((num_band0, num_band)):
                     if swapped[r_gp]:
@@ -217,7 +212,7 @@ class CollisionMatrix(ImagSelfEnergy):
                     collision *= self._unit_conversion
                     self._collision_matrix[j, :, i, k, :] += collision * r
 
-    def _run_py_reducible_collision_matrix(self):
+    def _run_py_reducible_collision_matrix(self) -> None:
         r"""Sum over q-points and bands of third phonons.
 
         This corresponds to the second term of right hand side of
@@ -226,6 +221,9 @@ class CollisionMatrix(ImagSelfEnergy):
         pp_strength.shape = (num_triplets, num_band0, num_band, num_band)
 
         """
+        assert self._pp_strength is not None
+        assert self._g is not None
+        assert self._collision_matrix is not None
         num_mesh_points = np.prod(self._pp.mesh_numbers)
         num_band0 = self._pp_strength.shape[1]
         num_band = self._pp_strength.shape[2]
@@ -247,7 +245,9 @@ class CollisionMatrix(ImagSelfEnergy):
                 collision *= self._unit_conversion
                 self._collision_matrix[j, gp1, k] += collision
 
-    def _get_gp2tp_map(self):
+    def _get_gp2tp_map(
+        self,
+    ) -> tuple[NDArray[np.int64], NDArray[np.int64], NDArray[np.byte]]:
         """Return mapping table from grid point index to triplet index.
 
         triplets_map_at_q contains index mapping of q1 in (q0, q1, q2) to
@@ -269,11 +269,14 @@ class CollisionMatrix(ImagSelfEnergy):
                                       map_triplets[gp1] == map_q[gp2]
 
         """
+        assert self._triplets_map_at_q is not None
+        assert self._ir_map_at_q is not None
+        assert self._triplets_at_q is not None
         map_triplets = self._triplets_map_at_q
         map_q = self._ir_map_at_q
         gp2tp = -np.ones(len(map_triplets), dtype="int64")
         tp2s = -np.ones(len(map_triplets), dtype="int64")
-        swapped = np.zeros(len(map_triplets), dtype="bytes")
+        swapped = np.zeros(len(map_triplets), dtype="byte")
         num_tps = 0
 
         bzg2grg = self._pp.bz_grid.bzg2grg
@@ -306,8 +309,10 @@ class CollisionMatrix(ImagSelfEnergy):
 
         return gp2tp, tp2s, swapped
 
-    def _get_inv_sinh(self, gp):
+    def _get_inv_sinh(self, gp: int) -> NDArray[np.double]:
         """Return sinh term for bands at a q-point."""
+        assert self._frequencies is not None
+        assert self._temperature is not None
         freqs = self._frequencies[gp]
         sinh = np.where(
             freqs > self._cutoff_frequency,

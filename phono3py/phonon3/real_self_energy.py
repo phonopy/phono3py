@@ -34,9 +34,15 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
+import os
 import sys
+from collections.abc import Sequence
+from typing import Literal
 
 import numpy as np
+from numpy.typing import NDArray
 from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.physical_units import get_physical_units
 
@@ -74,11 +80,11 @@ class RealSelfEnergy:
     def __init__(
         self,
         interaction: Interaction,
-        grid_point=None,
-        temperature=None,
-        epsilon=None,
-        lang="C",
-    ):
+        grid_point: int | None = None,
+        temperature: float | None = None,
+        epsilon: float | None = None,
+        lang: Literal["C", "Python"] = "C",
+    ) -> None:
         """Init method.
 
         Parameters
@@ -94,7 +100,7 @@ class RealSelfEnergy:
             Parameter explained above. The unit is consisered as THz.
 
         """
-        self._pp = interaction
+        self._pp: Interaction = interaction
         self.epsilon = epsilon
         if temperature is None:
             self.temperature = 300.0
@@ -102,52 +108,64 @@ class RealSelfEnergy:
             self.temperature = temperature
         self.grid_point = grid_point
 
-        self._lang = lang
-        self._frequency_ = None
-        self._pp_strength = None
-        self._frequencies = None
-        self._triplets_at_q = None
-        self._weights_at_q = None
-        self._band_indices = None
-        self._unit_conversion = None
-        self._cutoff_frequency = interaction.cutoff_frequency
-        self._frequency_points = None
-        self._real_self_energies = None
+        self._lang: Literal["C", "Python"] = lang
+        self._frequency_: None = None
+        self._pp_strength: NDArray[np.double] | None = None
+        self._frequencies: NDArray[np.double] | None = None
+        self._eigenvectors: NDArray[np.cdouble] | None = None
+        self._triplets_at_q: NDArray[np.int64] | None = None
+        self._weights_at_q: NDArray[np.int64] | None = None
+        self._band_indices: NDArray[np.int64] | None = None
+        self._cutoff_frequency: float = interaction.cutoff_frequency
+        self._frequency_points: NDArray[np.double] | None = None
+        self._real_self_energies: NDArray[np.double] | None = None
 
         # Unit to THz of Delta
-        self._unit_conversion = (
+        self._unit_conversion: float = (
             18
             / (get_physical_units().Hbar * get_physical_units().EV) ** 2
             / (2 * np.pi * get_physical_units().THz) ** 2
             * get_physical_units().EV ** 2
         )
 
-    def run(self):
+    def run(self) -> None:
         """Calculate real-part of self-energies."""
         if self._pp_strength is None:
             self.run_interaction()
 
+        assert self._pp_strength is not None
+        assert self._frequencies is not None
+        assert self._triplets_at_q is not None
+        assert self._weights_at_q is not None
+        assert self._band_indices is not None
+        assert self._temperature is not None
+
         num_band0 = len(self._pp.band_indices)
         if self._frequency_points is None:
-            self._real_self_energies = np.zeros(num_band0, dtype="double")
+            self._real_self_energies = np.zeros(  # type: ignore[call-overload]
+                num_band0, dtype="double"
+            )
             self._run_with_band_indices()
         else:
-            self._real_self_energies = np.zeros(
+            self._real_self_energies = np.zeros(  # type: ignore[call-overload]
                 (len(self._frequency_points), num_band0), dtype="double"
             )
             self._run_with_frequency_points()
 
-    def run_interaction(self):
+    def run_interaction(self) -> None:
         """Calculate ph-ph interaction strength."""
         self._pp.run(lang=self._lang)
         self._pp_strength = self._pp.interaction_strength
-        (self._frequencies, self._eigenvectors) = self._pp.get_phonons()[:2]
-        (self._triplets_at_q, self._weights_at_q) = self._pp.get_triplets_at_q()[:2]
+        self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
+        self._triplets_at_q, self._weights_at_q, _, _ = self._pp.get_triplets_at_q()
         self._band_indices = self._pp.band_indices
 
     @property
-    def real_self_energy(self):
+    def real_self_energy(self) -> NDArray[np.double]:
         """Return calculated real-part of self-energies."""
+        assert self._real_self_energies is not None
+        assert self._frequencies is not None
+        assert self._band_indices is not None
         if self._cutoff_frequency is None:
             return self._real_self_energies
         else:  # Averaging frequency shifts by degenerate bands
@@ -172,22 +190,23 @@ class RealSelfEnergy:
             return shifts
 
     @property
-    def grid_point(self):
+    def grid_point(self) -> int | None:
         """Setter and getter of a grid point."""
         return self._grid_point
 
     @grid_point.setter
-    def grid_point(self, grid_point=None):
+    def grid_point(self, grid_point: int | None = None) -> None:
         if grid_point is None:
-            self._grid_point = None
+            self._grid_point: int | None = None
         else:
             self._pp.set_grid_point(grid_point)
             self._pp_strength = None
             (self._triplets_at_q, self._weights_at_q) = self._pp.get_triplets_at_q()[:2]
+            assert self._triplets_at_q is not None
             self._grid_point = self._triplets_at_q[0, 0]
 
     @property
-    def epsilon(self):
+    def epsilon(self) -> float:
         """Setter and getter of epsilon.
 
         See the detail about epsilon at docstring of this class.
@@ -196,48 +215,55 @@ class RealSelfEnergy:
         return self._epsilon
 
     @epsilon.setter
-    def epsilon(self, epsilon):
+    def epsilon(self, epsilon: float | None) -> None:
         if epsilon is None:
-            self._epsilon = self.default_epsilon
+            self._epsilon: float = self.default_epsilon
         else:
             self._epsilon = float(epsilon)
 
     @property
-    def temperature(self):
+    def temperature(self) -> float | None:
         """Setter and getter of a temperature point."""
         return self._temperature
 
     @temperature.setter
-    def temperature(self, temperature):
+    def temperature(self, temperature: float | None) -> None:
         if temperature is None:
             self._temperature = None
         else:
             self._temperature = float(temperature)
 
     @property
-    def frequency_points(self):
+    def frequency_points(self) -> NDArray[np.double] | None:
         """Setter and getter of frequency points."""
         return self._frequency_points
 
     @frequency_points.setter
-    def frequency_points(self, frequency_points):
+    def frequency_points(self, frequency_points: NDArray[np.double]) -> None:
         self._frequency_points = np.array(frequency_points, dtype="double")
 
-    def _run_with_band_indices(self):
+    def _run_with_band_indices(self) -> None:
         if self._lang == "C":
             self._run_c_with_band_indices()
         else:
             self._run_py_with_band_indices()
 
-    def _run_with_frequency_points(self):
+    def _run_with_frequency_points(self) -> None:
         if self._lang == "C":
             self._run_c_with_frequency_points()
         else:
             self._run_py_with_frequency_points()
 
-    def _run_c_with_band_indices(self):
-        import phono3py._phono3py as phono3c
+    def _run_c_with_band_indices(self) -> None:
+        import phono3py._phono3py as phono3c  # type: ignore
 
+        assert self._real_self_energies is not None
+        assert self._pp_strength is not None
+        assert self._triplets_at_q is not None
+        assert self._weights_at_q is not None
+        assert self._frequencies is not None
+        assert self._band_indices is not None
+        assert self._temperature is not None
         phono3c.real_self_energy_at_bands(
             self._real_self_energies,
             self._pp_strength,
@@ -251,7 +277,14 @@ class RealSelfEnergy:
             self._cutoff_frequency,
         )
 
-    def _run_py_with_band_indices(self):
+    def _run_py_with_band_indices(self) -> None:
+        assert self._triplets_at_q is not None
+        assert self._weights_at_q is not None
+        assert self._pp_strength is not None
+        assert self._frequencies is not None
+        assert self._band_indices is not None
+        assert self._real_self_energies is not None
+        assert self._temperature is not None
         for triplet, w, interaction in zip(
             self._triplets_at_q, self._weights_at_q, self._pp_strength, strict=True
         ):
@@ -269,9 +302,17 @@ class RealSelfEnergy:
 
         self._real_self_energies *= self._unit_conversion
 
-    def _run_c_with_frequency_points(self):
-        import phono3py._phono3py as phono3c
+    def _run_c_with_frequency_points(self) -> None:
+        import phono3py._phono3py as phono3c  # type: ignore
 
+        assert self._frequency_points is not None
+        assert self._real_self_energies is not None
+        assert self._pp_strength is not None
+        assert self._triplets_at_q is not None
+        assert self._weights_at_q is not None
+        assert self._frequencies is not None
+        assert self._band_indices is not None
+        assert self._temperature is not None
         for i, fpoint in enumerate(self._frequency_points):
             shifts = np.zeros(self._real_self_energies.shape[1], dtype="double")
             phono3c.real_self_energy_at_frequency_point(
@@ -291,7 +332,15 @@ class RealSelfEnergy:
             )
             self._real_self_energies[i][:] = shifts
 
-    def _run_py_with_frequency_points(self):
+    def _run_py_with_frequency_points(self) -> None:
+        assert self._frequency_points is not None
+        assert self._real_self_energies is not None
+        assert self._triplets_at_q is not None
+        assert self._weights_at_q is not None
+        assert self._pp_strength is not None
+        assert self._frequencies is not None
+        assert self._band_indices is not None
+        assert self._temperature is not None
         for k, fpoint in enumerate(self._frequency_points):
             for triplet, w, interaction in zip(
                 self._triplets_at_q, self._weights_at_q, self._pp_strength, strict=True
@@ -313,7 +362,14 @@ class RealSelfEnergy:
 
         self._real_self_energies *= self._unit_conversion
 
-    def _real_self_energies_at_bands(self, i, fpoint, freqs, interaction, weight):
+    def _real_self_energies_at_bands(
+        self,
+        i: int,
+        fpoint: float,
+        freqs: NDArray[np.double],
+        interaction: NDArray[np.double],
+        weight: int,
+    ) -> float:
         if fpoint < self._cutoff_frequency:
             return 0
 
@@ -327,6 +383,7 @@ class RealSelfEnergy:
                 and freqs[2, k] > self._cutoff_frequency
             ):
                 d = 0.0
+                assert self._temperature is not None
                 n2 = bose_einstein(freqs[1, j], self._temperature)
                 n3 = bose_einstein(freqs[2, k], self._temperature)
                 f1 = fpoint + freqs[1, j] + freqs[2, k]
@@ -350,7 +407,14 @@ class RealSelfEnergy:
                 sum_d += d * interaction[i, j, k] * weight
         return sum_d
 
-    def _real_self_energies_at_bands_0K(self, i, fpoint, freqs, interaction, weight):
+    def _real_self_energies_at_bands_0K(
+        self,
+        i: int,
+        fpoint: float,
+        freqs: NDArray[np.double],
+        interaction: NDArray[np.double],
+        weight: int,
+    ) -> float:
         if fpoint < self._cutoff_frequency:
             return 0
 
@@ -378,7 +442,12 @@ class RealSelfEnergy:
 class ImagToReal:
     """Calculate real part of self-energy using Kramers-Kronig relation."""
 
-    def __init__(self, im_part, frequency_points, diagram="bubble"):
+    def __init__(
+        self,
+        im_part: NDArray[np.double],
+        frequency_points: NDArray[np.double],
+        diagram: str = "bubble",
+    ) -> None:
         """Init method.
 
         Parameters
@@ -404,20 +473,20 @@ class ImagToReal:
         else:
             raise RuntimeError("Only daigram='bubble' is implemented.")
 
-        self._re_part = None
-        self._frequency_points = None
+        self._re_part: NDArray[np.double] | None = None
+        self._frequency_points: NDArray[np.double] | None = None
 
     @property
-    def re_part(self):
+    def re_part(self) -> NDArray[np.double] | None:
         """Return real part."""
         return self._re_part
 
     @property
-    def frequency_points(self):
+    def frequency_points(self) -> NDArray[np.double] | None:
         """Return frequency points."""
         return self._frequency_points
 
-    def run(self, method="pick_one"):
+    def run(self, method: Literal["pick_one", "half_shift"] = "pick_one") -> None:
         """Calculate real part."""
         if method == "pick_one":
             self._re_part, self._frequency_points = self._pick_one()
@@ -426,7 +495,7 @@ class ImagToReal:
         else:
             raise RuntimeError("No method is found.")
 
-    def _pick_one(self):
+    def _pick_one(self) -> tuple[NDArray[np.double], NDArray[np.double]]:
         """Calculate real-part with same frequency points excluding one point."""
         re_part = []
         fpoints = []
@@ -441,9 +510,9 @@ class ImagToReal:
             val = ((self._im_part / freqs).sum() - im_part_at_i) * coef
             re_part.append(val)
             fpoints.append(fpoint)
-        return (np.array(re_part, dtype="double"), np.array(fpoints, dtype="double"))
+        return np.array(re_part, dtype="double"), np.array(fpoints, dtype="double")
 
-    def _half_shift(self):
+    def _half_shift(self) -> tuple[NDArray[np.double], NDArray[np.double]]:
         """Calculate real-part with half-shifted frequency points."""
         re_part = []
         fpoints = []
@@ -457,9 +526,13 @@ class ImagToReal:
             val = (self._im_part / freqs).sum() * coef
             re_part.append(val)
             fpoints.append(fpoint)
-        return (np.array(re_part, dtype="double"), np.array(fpoints, dtype="double"))
+        return np.array(re_part, dtype="double"), np.array(fpoints, dtype="double")
 
-    def _expand_bubble_im_part(self, im_part, frequency_points):
+    def _expand_bubble_im_part(
+        self,
+        im_part: NDArray[np.double],
+        frequency_points: NDArray[np.double],
+    ) -> tuple[NDArray[np.double], NDArray[np.double], np.floating]:
         if (np.abs(frequency_points[0]) > 1e-8).any():
             raise RuntimeError("The first element of frequency_points is not zero.")
 
@@ -478,17 +551,17 @@ class ImagToReal:
 
 def get_real_self_energy(
     interaction: Interaction,
-    grid_points,
-    temperatures,
-    epsilons=None,
-    frequency_points=None,
-    frequency_step=None,
-    num_frequency_points=None,
-    frequency_points_at_bands=False,
-    write_hdf5=True,
-    output_filename=None,
-    log_level=0,
-):
+    grid_points: Sequence[int] | NDArray[np.int64],
+    temperatures: Sequence[float] | NDArray[np.double],
+    epsilons: Sequence[float | None] | None = None,
+    frequency_points: Sequence[float] | NDArray[np.double] | None = None,
+    frequency_step: float | None = None,
+    num_frequency_points: int | None = None,
+    frequency_points_at_bands: bool = False,
+    write_hdf5: bool = True,
+    output_filename: str | os.PathLike | None = None,
+    log_level: int = 0,
+) -> tuple[NDArray[np.double] | None, NDArray[np.double]]:
     """Real part of self energy at frequency points.
 
     Band indices to be calculated at are kept in Interaction instance.
@@ -548,15 +621,15 @@ def get_real_self_energy(
 
     """
     if epsilons is None:
-        _epsilons = [
+        _epsilons: Sequence[float | None] = [
             None,
         ]
     else:
         _epsilons = epsilons
 
-    _temperatures = np.array(temperatures, dtype="double")
+    _temperatures = np.asarray(temperatures, dtype="double")
 
-    if (interaction.get_phonons()[2] == 0).any():
+    if (interaction.get_phonons()[2] == 0).any():  # type: ignore[union-attr]
         if log_level:
             print("Running harmonic phonon calculations...")
         interaction.run_phonon_solver()
@@ -567,14 +640,15 @@ def get_real_self_energy(
 
     # Set phonon at Gamma without NAC for finding max_phonon_freq.
     interaction.run_phonon_solver_at_gamma()
-    max_phonon_freq = np.amax(interaction.get_phonons()[0])
+    max_phonon_freq = np.amax(interaction.get_phonons()[0])  # type: ignore[arg-type]
     interaction.run_phonon_solver_at_gamma(is_nac=True)
 
     band_indices = interaction.band_indices
 
+    _frequency_points: NDArray[np.double] | None
     if frequency_points_at_bands:
         _frequency_points = None
-        all_deltas = np.zeros(
+        all_deltas = np.zeros(  # type: ignore[call-overload]
             (len(_epsilons), len(_temperatures), len(grid_points), len(band_indices)),
             dtype="double",
             order="C",
@@ -587,7 +661,7 @@ def get_real_self_energy(
             frequency_step=frequency_step,
             num_frequency_points=num_frequency_points,
         )
-        all_deltas = np.zeros(
+        all_deltas = np.zeros(  # type: ignore[call-overload]
             (
                 len(_epsilons),
                 len(_temperatures),
@@ -604,6 +678,7 @@ def get_real_self_energy(
         fst.grid_point = gp
         if log_level:
             weights = interaction.get_triplets_at_q()[1]
+            assert weights is not None
             if len(grid_points) > 1:
                 print(
                     "------------------- Real part of self energy -o- (%d/%d) "
@@ -618,7 +693,7 @@ def get_real_self_energy(
             print("Number of ir-triplets: %d / %d" % (len(weights), weights.sum()))
 
         fst.run_interaction()
-        frequencies = interaction.get_phonons()[0][gp]
+        frequencies = interaction.get_phonons()[0][gp]  # type: ignore[index]
 
         if log_level:
             bz_grid = interaction.bz_grid
@@ -676,20 +751,20 @@ def get_real_self_energy(
 
 
 def write_real_self_energy(
-    real_self_energy,
-    mesh,
-    grid_points,
-    band_indices,
-    frequency_points,
-    temperatures,
-    epsilons,
-    output_filename=None,
-    is_mesh_symmetry=True,
-    log_level=0,
-):
+    real_self_energy: NDArray[np.double],
+    mesh: NDArray[np.int64],
+    grid_points: Sequence[int] | NDArray[np.int64],
+    band_indices: Sequence[NDArray[np.int64]],
+    frequency_points: NDArray[np.double] | None,
+    temperatures: Sequence[float] | NDArray[np.double],
+    epsilons: Sequence[float | None] | None = None,
+    output_filename: str | os.PathLike | None = None,
+    is_mesh_symmetry: bool = True,
+    log_level: int = 0,
+) -> None:
     """Write real-part of self-energies into files."""
     if epsilons is None:
-        _epsilons = [
+        _epsilons: Sequence[float] = [
             RealSelfEnergy.default_epsilon,
         ]
     else:
@@ -720,8 +795,12 @@ def write_real_self_energy(
                         )
 
 
-def imag_to_real(im_part, frequency_points):
+def imag_to_real(
+    im_part: NDArray[np.double], frequency_points: NDArray[np.double]
+) -> tuple[NDArray[np.double], NDArray[np.double]]:
     """Calculate real-part of self-energy from the imaginary-part."""
     i2r = ImagToReal(im_part, frequency_points)
     i2r.run()
+    assert i2r.re_part is not None
+    assert i2r.frequency_points is not None
     return i2r.re_part, i2r.frequency_points

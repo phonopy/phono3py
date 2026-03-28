@@ -37,16 +37,17 @@ from __future__ import annotations
 
 import os
 import pathlib
+import warnings
 from collections.abc import Sequence
-from typing import Literal
+from typing import Literal, cast
 
 import numpy as np
 import phonopy.cui.load_helper as load_helper
 from numpy.typing import NDArray
 from phonopy.file_IO import get_supported_file_extensions_for_compression
+from phonopy.harmonic.displacement import DisplacementDataset
 from phonopy.harmonic.force_constants import show_drift_force_constants
 from phonopy.interface.calculator import get_calculator_physical_units
-from phonopy.physical_units import get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import determinant
 
@@ -63,6 +64,7 @@ from phono3py.interface.fc_calculator import (
 )
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon3.dataset import forces_in_dataset
+from phono3py.phonon3.displacement_fc3 import Fc3DisplacementDataset
 from phono3py.phonon3.fc3 import show_drift_fc3
 
 
@@ -70,9 +72,18 @@ def load(
     phono3py_yaml: str
     | os.PathLike
     | None = None,  # phono3py.yaml-like must be the first argument.
-    supercell_matrix: Sequence | NDArray | None = None,
-    primitive_matrix: Sequence | NDArray | None = None,
-    phonon_supercell_matrix: Sequence | NDArray | None = None,
+    supercell_matrix: Sequence[int]
+    | Sequence[Sequence[int]]
+    | NDArray[np.int64]
+    | None = None,
+    primitive_matrix: Literal["P", "F", "I", "A", "C", "R", "auto"]
+    | Sequence[Sequence[float]]
+    | NDArray[np.double]
+    | None = None,
+    phonon_supercell_matrix: Sequence[int]
+    | Sequence[Sequence[int]]
+    | NDArray[np.int64]
+    | None = None,
     is_nac: bool = True,
     calculator: str | None = None,
     unitcell: PhonopyAtoms | None = None,
@@ -87,7 +98,7 @@ def load(
     fc2_filename: str | os.PathLike | None = None,
     fc_calculator: str | None = None,
     fc_calculator_options: str | None = None,
-    factor: float | None = None,
+    factor: float | None = None,  # deprecated
     produce_fc: bool = True,
     is_symmetry: bool = True,
     symmetrize_fc: bool = True,
@@ -223,8 +234,7 @@ def load(
         fc-calculator. For alm, each parameter is split by comma ',', and
         each set of key and value pair is written in 'key = value'.
     factor : float, optional
-        Phonon frequency unit conversion factor. Unless specified, default unit
-        conversion factor for each calculator is used.
+        Deprecated.
     produce_fc : bool, optional
         Setting False, force constants are not calculated from displacements and
         forces. Default is True.
@@ -319,16 +329,11 @@ def load(
     assert cell is not None
     cell.cell = cell.cell * factor_to_A
 
-    if factor is None:
-        _factor = get_physical_units().DefaultToTHz
-    else:
-        _factor = factor
     ph3py = Phono3py(
         cell,
         smat,
         primitive_matrix=pmat,
         phonon_supercell_matrix=ph_smat,
-        frequency_factor_to_THz=_factor,
         symprec=symprec,
         is_symmetry=is_symmetry,
         is_mesh_symmetry=is_mesh_symmetry,
@@ -336,6 +341,13 @@ def load(
         make_r0_average=make_r0_average,
         log_level=log_level,
     )
+    if factor is not None:
+        warnings.warn(
+            "factor parameter is deprecated.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        ph3py._frequency_factor_to_THz = factor
 
     # NAC params
     if born_filename is not None or _nac_params is not None or is_nac:
@@ -352,7 +364,7 @@ def load(
         ph3py, fc3_filename=fc3_filename, fc2_filename=fc2_filename, log_level=log_level
     )
 
-    ph3py.dataset = select_and_load_dataset(
+    ph3py.dataset = select_and_load_dataset(  # type: ignore[assignment]
         ph3py,
         ph3py_yaml=ph3py_yaml,
         forces_fc3_filename=forces_fc3_filename,
@@ -361,7 +373,7 @@ def load(
         log_level=log_level,
     )
 
-    ph3py.phonon_dataset = select_and_load_phonon_dataset(
+    ph3py.phonon_dataset = select_and_load_phonon_dataset(  # type: ignore[assignment]
         ph3py,
         ph3py_yaml=ph3py_yaml,
         forces_fc2_filename=forces_fc2_filename,
@@ -369,9 +381,9 @@ def load(
         log_level=log_level,
     )
 
-    if use_pypolymlp and ph3py.fc3 is None and forces_in_dataset(ph3py.dataset):
+    if use_pypolymlp and ph3py.fc3 is None and forces_in_dataset(ph3py.dataset):  # type: ignore[arg-type]
         assert ph3py.dataset is not None
-        ph3py.mlp_dataset = ph3py.dataset
+        ph3py.mlp_dataset = ph3py.dataset  # type: ignore[assignment]
         ph3py.dataset = None
 
     if produce_fc:
@@ -403,7 +415,7 @@ def load_fc2_and_fc3(
     read_fc3: bool = True,
     read_fc2: bool = True,
     log_level: int = 0,
-):
+) -> None:
     """Set force constants."""
     if read_fc3 and (fc3_filename is not None or pathlib.Path("fc3.hdf5").exists()):
         _load_fc3(ph3py, fc3_filename=fc3_filename, log_level=log_level)
@@ -420,7 +432,7 @@ def compute_force_constants_from_datasets(
     symmetrize_fc: bool = True,
     is_compact_fc: bool = True,
     load_phono3py_yaml: bool = False,
-):
+) -> None:
     """Compute force constants from datasets.
 
     Parameters
@@ -440,7 +452,7 @@ def compute_force_constants_from_datasets(
         fc3_calc_opts, cutoff_pair_distance
     )
     fc2_calc_opts = extract_fc2_fc3_calculators_options(fc_calculator_options, 2)
-    if ph3py.fc3 is None and forces_in_dataset(ph3py.dataset):
+    if ph3py.fc3 is None and forces_in_dataset(ph3py.dataset):  # type: ignore[arg-type]
         ph3py.produce_fc3(
             symmetrize_fc3r=symmetrize_fc,
             is_compact_fc=is_compact_fc,
@@ -451,10 +463,10 @@ def compute_force_constants_from_datasets(
 
     if ph3py.fc2 is None or fc3_calculator != fc2_calculator:
         if (
-            ph3py.phonon_supercell_matrix is None and forces_in_dataset(ph3py.dataset)
+            ph3py.phonon_supercell_matrix is None and forces_in_dataset(ph3py.dataset)  # type: ignore[arg-type]
         ) or (
             ph3py.phonon_supercell_matrix is not None
-            and forces_in_dataset(ph3py.phonon_dataset)
+            and forces_in_dataset(ph3py.phonon_dataset)  # type: ignore[arg-type]
         ):
             ph3py.produce_fc2(
                 symmetrize_fc2=symmetrize_fc,
@@ -469,12 +481,12 @@ def _load_fc3(
     ph3py: Phono3py,
     fc3_filename: str | os.PathLike | None = None,
     log_level: int = 0,
-):
+) -> None:
     p2s_map = ph3py.primitive.p2s_map
     if fc3_filename is None:
         _fc3_filename = "fc3.hdf5"
     else:
-        _fc3_filename = fc3_filename
+        _fc3_filename = fc3_filename  # type: ignore[assignment]
     fc3 = read_fc3_from_hdf5(filename=_fc3_filename, p2s_map=p2s_map)
     if isinstance(fc3, dict):
         # fc3 is read from a file with type-1 format.
@@ -495,15 +507,15 @@ def _load_fc3(
 def select_and_load_dataset(
     ph3py: Phono3py,
     ph3py_yaml: Phono3pyYaml | None = None,
-    forces_fc3_filename: str | os.PathLike | Sequence | None = None,
+    forces_fc3_filename: str | os.PathLike | None = None,
     phono3py_yaml_filename: str | os.PathLike | None = None,
     cutoff_pair_distance: float | None = None,
     calculator: str | None = None,
     log_level: int = 0,
-) -> dict | None:
+) -> Fc3DisplacementDataset | None:
     """Select and load dataset for fc3."""
     # displacements and forces are in phono3py-yaml-like file
-    if ph3py_yaml is not None and forces_in_dataset(ph3py_yaml.dataset):
+    if ph3py_yaml is not None and forces_in_dataset(ph3py_yaml.dataset):  # type: ignore[arg-type]
         dataset = _get_dataset_for_fc3(
             ph3py,
             ph3py_yaml,
@@ -518,7 +530,7 @@ def select_and_load_dataset(
     # displacements and forces are in FORCES_FC3-like file
     force_filename = _get_filename_with_extension("FORCES_FC3")
     if forces_fc3_filename is not None:
-        force_filename = forces_fc3_filename
+        force_filename = forces_fc3_filename  # type: ignore[assignment]
     if force_filename is not None:
         dataset = _get_dataset_for_fc3(
             ph3py,
@@ -558,12 +570,12 @@ def _get_filename_with_extension(filename: str | os.PathLike) -> os.PathLike | N
 
 def _load_fc2(
     ph3py: Phono3py, fc2_filename: str | os.PathLike | None = None, log_level: int = 0
-):
+) -> None:
     phonon_p2s_map = ph3py.phonon_primitive.p2s_map
     if fc2_filename is None:
         _fc2_filename = "fc2.hdf5"
     else:
-        _fc2_filename = fc2_filename
+        _fc2_filename = fc2_filename  # type: ignore[assignment]
     fc2 = read_fc2_from_hdf5(filename=_fc2_filename, p2s_map=phonon_p2s_map)
     _check_fc2_shape(ph3py, fc2, filename=_fc2_filename)
     if log_level:
@@ -574,10 +586,10 @@ def _load_fc2(
 def select_and_load_phonon_dataset(
     ph3py: Phono3py,
     ph3py_yaml: Phono3pyYaml | None = None,
-    forces_fc2_filename: str | os.PathLike | Sequence | None = None,
+    forces_fc2_filename: str | os.PathLike | None = None,
     calculator: str | None = None,
     log_level: int = 0,
-) -> dict | None:
+) -> DisplacementDataset | None:
     """Select and load phonon dataset for fc2."""
     if ph3py.phonon_supercell_matrix is None:
         return None
@@ -587,7 +599,6 @@ def select_and_load_phonon_dataset(
             ph3py,
             ph3py_yaml,
             None,
-            "phonon_fc2",
             calculator,
             log_level,
         )
@@ -595,13 +606,12 @@ def select_and_load_phonon_dataset(
 
     force_filename = _get_filename_with_extension("FORCES_FC2")
     if forces_fc2_filename is not None:
-        force_filename = forces_fc2_filename
+        force_filename = forces_fc2_filename  # type: ignore[assignment]
     if force_filename is not None:
         phonon_dataset = _get_dataset_for_fc2(
             ph3py,
             ph3py_yaml,
             force_filename,
-            "phonon_fc2",
             calculator,
             log_level,
         )
@@ -614,7 +624,6 @@ def select_and_load_phonon_dataset(
             ph3py,
             ph3py_yaml,
             None,
-            "phonon_fc2",
             calculator,
             log_level,
         )
@@ -626,45 +635,48 @@ def select_and_load_phonon_dataset(
 def _get_dataset_for_fc3(
     ph3py: Phono3py,
     ph3py_yaml: Phono3pyYaml | None,
-    force_filename,
-    phono3py_yaml_filename,
-    cutoff_pair_distance,
-    calculator,
-    log_level,
-) -> dict:
+    force_filename: str | os.PathLike | None,
+    phono3py_yaml_filename: str | os.PathLike | None,
+    cutoff_pair_distance: float | None,
+    calculator: str | None,
+    log_level: int,
+) -> Fc3DisplacementDataset:
     dataset = parse_forces(
         ph3py,
         ph3py_yaml=ph3py_yaml,
         cutoff_pair_distance=cutoff_pair_distance,
-        force_filename=force_filename,
+        force_filename=force_filename,  # type: ignore[arg-type]
         phono3py_yaml_filename=phono3py_yaml_filename,
         fc_type="fc3",
         calculator=calculator,
         log_level=log_level,
     )
-    return dataset
+    return cast(Fc3DisplacementDataset, dataset)
 
 
 def _get_dataset_for_fc2(
     ph3py: Phono3py,
     ph3py_yaml: Phono3pyYaml | None,
-    force_filename,
-    fc_type,
-    calculator,
-    log_level,
-):
+    force_filename: str | os.PathLike | None,
+    calculator: str | None,
+    log_level: int,
+) -> DisplacementDataset:
     dataset = parse_forces(
         ph3py,
         ph3py_yaml=ph3py_yaml,
-        force_filename=force_filename,
-        fc_type=fc_type,
+        force_filename=force_filename,  # type: ignore[arg-type]
+        fc_type="phonon_fc2",
         calculator=calculator,
         log_level=log_level,
     )
-    return dataset
+    return cast(DisplacementDataset, dataset)
 
 
-def _check_fc2_shape(ph3py: Phono3py, fc2, filename: str | os.PathLike = "fc2.hdf5"):
+def _check_fc2_shape(
+    ph3py: Phono3py,
+    fc2: NDArray[np.double],
+    filename: str | os.PathLike = "fc2.hdf5",
+) -> None:
     if ph3py.phonon_supercell_matrix is None:
         smat = ph3py.supercell_matrix
     else:
@@ -673,13 +685,20 @@ def _check_fc2_shape(ph3py: Phono3py, fc2, filename: str | os.PathLike = "fc2.hd
 
 
 def _check_fc3_shape(
-    ph3py: Phono3py, fc3: NDArray, filename: str | os.PathLike = "fc3.hdf5"
-):
+    ph3py: Phono3py,
+    fc3: NDArray[np.double],
+    filename: str | os.PathLike = "fc3.hdf5",
+) -> None:
     smat = ph3py.supercell_matrix
     _check_fc_shape(ph3py, fc3, smat, filename)
 
 
-def _check_fc_shape(ph3py: Phono3py, fc, smat, filename):
+def _check_fc_shape(
+    ph3py: Phono3py,
+    fc: NDArray[np.double],
+    smat: NDArray[np.int64],
+    filename: str | os.PathLike,
+) -> None:
     if len(ph3py.unitcell) * determinant(smat) != fc.shape[1]:
         msg = (
             f'Supercell size mismatch between "{filename}" and supercell matrix {smat}.'

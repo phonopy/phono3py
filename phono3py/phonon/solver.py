@@ -36,6 +36,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from typing import Literal
+
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.harmonic.dynamical_matrix import (
@@ -44,21 +47,22 @@ from phonopy.harmonic.dynamical_matrix import (
     DynamicalMatrixNAC,
 )
 from phonopy.physical_units import get_physical_units
-from phonopy.structure.cells import sparse_to_dense_svecs
 
 
 def run_phonon_solver_c(
-    dm,
-    frequencies,
-    eigenvectors,
-    phonon_done,
-    grid_points,
-    grid_address,
-    QDinv,
-    frequency_conversion_factor=None,
-    nac_q_direction=None,  # in reduced coordinates
-    lapack_zheev_uplo="L",
-):
+    dm: DynamicalMatrix,
+    frequencies: NDArray[np.double],
+    eigenvectors: NDArray[np.cdouble],
+    phonon_done: NDArray[np.byte],
+    grid_points: Sequence[int] | NDArray[np.int64],
+    grid_address: NDArray[np.int64],
+    QDinv: NDArray[np.double],
+    frequency_conversion_factor: float | None = None,
+    nac_q_direction: Sequence[float]
+    | NDArray[np.double]
+    | None = None,  # in reduced coordinates
+    lapack_zheev_uplo: Literal["L", "U"] = "L",
+) -> None:
     """Build and solve dynamical matrices on grid in C-API.
 
     Note
@@ -125,7 +129,7 @@ def run_phonon_solver_c(
     else:
         use_GL_NAC = False
         positions = np.zeros(3)  # dummy variable
-        dd_q0 = np.zeros(2)  # dummy variable
+        dd_q0 = np.zeros(2)  # type: ignore[assignment]  # dummy variable
         G_list = np.zeros(3)  # dummy variable
         Lambda = 0  # dummy variable
         if not isinstance(dm, DynamicalMatrixNAC):
@@ -135,15 +139,11 @@ def run_phonon_solver_c(
 
     if nac_q_direction is None:
         is_nac_q_zero = False
-        _nac_q_direction = np.zeros(3)
+        _nac_q_direction = np.zeros(3)  # dummy variable
     else:
         is_nac_q_zero = True
         _nac_q_direction = np.array(nac_q_direction, dtype="double")
 
-    assert grid_points.dtype == np.dtype("int64")
-    assert grid_points.flags.c_contiguous
-    assert QDinv.dtype == np.dtype("double")
-    assert QDinv.flags.c_contiguous
     assert lapack_zheev_uplo in ("L", "U")
 
     if not phono3c.include_lapacke():
@@ -157,9 +157,9 @@ def run_phonon_solver_c(
         frequencies,
         eigenvectors,
         phonon_done,
-        grid_points,
-        grid_address,
-        QDinv,
+        np.asarray(grid_points, dtype="int64"),
+        np.asarray(grid_address, dtype="int64", order="C"),
+        np.asarray(QDinv, dtype="double", order="C"),
         fc,
         svecs,
         multi,
@@ -197,42 +197,57 @@ def run_phonon_solver_c(
 
 
 def run_phonon_solver_py(
-    grid_point,
-    phonon_done,
-    frequencies,
-    eigenvectors,
-    grid_address,
-    QDinv,
-    dynamical_matrix,
-    frequency_conversion_factor,
-    lapack_zheev_uplo,
-):
+    grid_point: int,
+    phonon_done: NDArray[np.byte],
+    frequencies: NDArray[np.double],
+    eigenvectors: NDArray[np.cdouble],
+    grid_address: NDArray[np.int64],
+    QDinv: NDArray[np.double],
+    dynamical_matrix: DynamicalMatrix,
+    frequency_conversion_factor: float | None = None,
+    lapack_zheev_uplo: Literal["L", "U"] = "L",
+) -> None:
     """Build and solve dynamical matrices on grid in python."""
+    if frequency_conversion_factor is None:
+        _frequency_conversion_factor = get_physical_units().DefaultToTHz
+    else:
+        _frequency_conversion_factor = frequency_conversion_factor
+
     gp = grid_point
     if phonon_done[gp] == 0:
         phonon_done[gp] = 1
         q = np.dot(grid_address[gp], QDinv.T)
         dynamical_matrix.run(q)
         dm = dynamical_matrix.dynamical_matrix
+        assert dm is not None
         eigvals, eigvecs = np.linalg.eigh(dm, UPLO=lapack_zheev_uplo)
         eigvals = eigvals.real  # type: ignore[no-untyped-call]
         frequencies[gp] = (
-            np.sqrt(np.abs(eigvals)) * np.sign(eigvals) * frequency_conversion_factor
+            np.sqrt(np.abs(eigvals)) * np.sign(eigvals) * _frequency_conversion_factor
         )
         eigenvectors[gp] = eigvecs
 
 
-def _extract_params(dm: DynamicalMatrix | DynamicalMatrixNAC):
+def _extract_params(
+    dm: DynamicalMatrix | DynamicalMatrixNAC,
+) -> tuple[
+    NDArray[np.double],
+    NDArray[np.int64],
+    NDArray[np.double],
+    NDArray[np.double],
+    NDArray[np.double],
+    NDArray[np.double] | None,
+    float,
+    NDArray[np.double] | None,
+]:
     svecs, multi = dm.primitive.get_smallest_vectors()
-    if dm.primitive.store_dense_svecs:
-        _svecs = svecs
-        _multi = multi
-    else:
-        _svecs, _multi = sparse_to_dense_svecs(svecs, multi)
+    assert dm.primitive.store_dense_svecs
 
-    masses = np.array(dm.primitive.masses, dtype="double")
-    rec_lattice = np.array(np.linalg.inv(dm.primitive.cell), dtype="double", order="C")
-    positions = np.array(dm.primitive.positions, dtype="double", order="C")
+    masses = np.asarray(dm.primitive.masses, dtype="double")
+    rec_lattice = np.asarray(
+        np.linalg.inv(dm.primitive.cell), dtype="double", order="C"
+    )
+    positions = np.asarray(dm.primitive.positions, dtype="double", order="C")
     if isinstance(dm, DynamicalMatrixNAC):
         born = dm.born
         nac_factor = dm.nac_factor
@@ -243,8 +258,8 @@ def _extract_params(dm: DynamicalMatrix | DynamicalMatrixNAC):
         dielectric = None
 
     return (
-        _svecs,
-        _multi,
+        svecs,
+        multi,
         masses,
         rec_lattice,
         positions,
@@ -254,7 +269,9 @@ def _extract_params(dm: DynamicalMatrix | DynamicalMatrixNAC):
     )
 
 
-def _get_fc_elements_mapping(dm: DynamicalMatrix, fc: NDArray[np.double]):
+def _get_fc_elements_mapping(
+    dm: DynamicalMatrix, fc: NDArray[np.double]
+) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
     p2s_map = dm.primitive.p2s_map
     s2p_map = dm.primitive.s2p_map
     if fc.shape[0] == fc.shape[1]:  # full fc

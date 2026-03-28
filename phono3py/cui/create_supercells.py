@@ -78,7 +78,7 @@ def get_cell_info(
     load_phonopy_yaml: bool = True,
 ) -> Phono3pyCellInfoResult:
     """Return calculator interface and crystal structure information."""
-    cell_info = phonopy_get_cell_info(
+    _raw = phonopy_get_cell_info(
         settings,
         cell_filename,
         log_level=log_level,
@@ -86,10 +86,13 @@ def get_cell_info(
         phonopy_yaml_cls=Phono3pyYaml,
     )
 
-    cell_info_dict = dataclasses.asdict(cell_info)
-    cell_info_dict["phono3py_yaml"] = cell_info_dict.pop("phonopy_yaml")
     cell_info = Phono3pyCellInfoResult(
-        **cell_info_dict,
+        unitcell=_raw.unitcell,
+        optional_structure_info=_raw.optional_structure_info,
+        supercell_matrix=_raw.supercell_matrix,
+        primitive_matrix=_raw.primitive_matrix,
+        interface_mode=_raw.interface_mode,
+        phono3py_yaml=_raw.phonopy_yaml,  # type: ignore[arg-type]
         phonon_supercell_matrix=settings.phonon_supercell_matrix,
     )
 
@@ -104,9 +107,9 @@ def create_phono3py_supercells(
     cell_info: Phono3pyCellInfoResult,
     settings: Phono3pySettings,
     symprec: float,
-    interface_mode: str | None = "vasp",
+    interface_mode: str | None = None,
     log_level: int = 1,
-):
+) -> Phono3py:
     """Create displacements and supercells.
 
     Distance unit used is that for the calculator interface.
@@ -131,7 +134,9 @@ def create_phono3py_supercells(
 
     if log_level:
         print("")
-        print('Unit cell was read from "%s".' % optional_structure_info[0])
+        print(
+            'Unit cell was read from "%s".' % optional_structure_info.unitcell_filename
+        )
         print("-" * 32 + " unit cell " + "-" * 33)  # 32 + 11 + 33 = 76
         print_cell(ph3.unitcell)
         print("-" * 76)
