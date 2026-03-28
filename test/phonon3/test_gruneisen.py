@@ -53,11 +53,13 @@ def test_gruneisen_qpoints(gruneisen):
     np.testing.assert_allclose(trace_gamma_opt, [3.06562808] * 3, rtol=1e-5)
 
 
-def test_gruneisen_mesh(si_pbesol_111):
+def test_gruneisen_mesh(si_pbesol_111: Phono3py):
     """Test Gruneisen calculation on sampling mesh."""
     ph3 = si_pbesol_111
+    assert ph3.fc2 is not None
+    assert ph3.fc3 is not None
     g = Gruneisen(ph3.fc2, ph3.fc3, ph3.supercell, ph3.primitive)
-    g.set_sampling_mesh(np.array([4, 4, 4], dtype="int64"), is_gamma_center=True)
+    g.set_sampling_mesh(np.array([4, 4, 4], dtype="int64"))
     g.run()
 
     gp = g.gruneisen_parameters
@@ -71,6 +73,27 @@ def test_gruneisen_mesh(si_pbesol_111):
     # Average Gruneisen parameter (trace/3 averaged over all q and bands)
     trace = gp[:, :, 0, 0] + gp[:, :, 1, 1] + gp[:, :, 2, 2]
     np.testing.assert_allclose(trace.mean(), 0.5679428, rtol=1e-5)
+
+
+def test_gruneisen_mesh_with_symmetry(si_pbesol_111: Phono3py):
+    """Test Gruneisen calculation on sampling mesh with primitive_symmetry."""
+    ph3 = si_pbesol_111
+    assert ph3.fc2 is not None
+    assert ph3.fc3 is not None
+    g = Gruneisen(ph3.fc2, ph3.fc3, ph3.supercell, ph3.primitive)
+    g.set_sampling_mesh(np.array([4, 4, 4], dtype="int64"), ph3.primitive_symmetry)
+    g.run()
+
+    gp = g.gruneisen_parameters
+    assert gp is not None
+    assert isinstance(gp, np.ndarray)
+    assert gp.shape == (8, 6, 3, 3)
+    assert g.frequencies is not None
+    assert isinstance(g.frequencies, np.ndarray)
+    assert g.frequencies.shape == (8, 6)
+
+    trace = gp[:, :, 0, 0] + gp[:, :, 1, 1] + gp[:, :, 2, 2]
+    np.testing.assert_allclose(trace.mean(), 0.5799835, rtol=1e-5)
 
 
 def test_gruneisen_band(si_pbesol_111: Phono3py):
@@ -174,7 +197,7 @@ def test_gruneisen_write_mesh(si_pbesol_111: Phono3py, tmp_path: Path):
     assert ph3.fc2 is not None
     assert ph3.fc3 is not None
     g = Gruneisen(ph3.fc2, ph3.fc3, ph3.supercell, ph3.primitive)
-    g.set_sampling_mesh(np.array([4, 4, 4], dtype="int64"), is_gamma_center=True)
+    g.set_sampling_mesh(np.array([4, 4, 4], dtype="int64"))
     g.run()
     g.write(filename=str(tmp_path / "gruneisen"))
 

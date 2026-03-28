@@ -340,6 +340,7 @@ def _convert_unit_in_dataset(
     dataset: Fc3DisplacementDataset | DisplacementDataset,
     distance_to_A: float | None = None,
     force_to_eVperA: float | None = None,
+    energy_to_eV: float | None = None,
 ) -> None:
     """Convert physical units of displacements and forces in dataset.
 
@@ -360,6 +361,8 @@ def _convert_unit_in_dataset(
                     np.asarray(d1["forces"], dtype="double", order="C")
                     * force_to_eVperA
                 )
+            if energy_to_eV is not None and "supercell_energy" in d1:
+                d1["supercell_energy"] = d1["supercell_energy"] * energy_to_eV
             if "second_atoms" in d1:
                 for d2 in d1["second_atoms"]:
                     if distance_to_A is not None:
@@ -372,6 +375,8 @@ def _convert_unit_in_dataset(
                             np.asarray(d2["forces"], dtype="double", order="C")
                             * force_to_eVperA
                         )
+                    if energy_to_eV is not None and "supercell_energy" in d2:
+                        d2["supercell_energy"] = d2["supercell_energy"] * energy_to_eV
     else:
         if distance_to_A is not None and "displacements" in dataset:
             dataset["displacements"] = (
@@ -382,6 +387,11 @@ def _convert_unit_in_dataset(
             dataset["forces"] = (
                 np.asarray(dataset["forces"], dtype="double", order="C")
                 * force_to_eVperA
+            )
+        if energy_to_eV is not None and "supercell_energies" in dataset:
+            dataset["supercell_energies"] = (
+                np.asarray(dataset["supercell_energies"], dtype="double", order="C")
+                * energy_to_eV
             )
 
     if distance_to_A is not None and "cutoff_distance" in dataset:

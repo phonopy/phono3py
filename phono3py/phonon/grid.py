@@ -151,7 +151,11 @@ class BZGrid:
 
     def __init__(
         self,
-        mesh: float | np.number | Sequence[int] | NDArray[np.int64],
+        mesh: float
+        | np.number
+        | Sequence[int]
+        | Sequence[Sequence[int]]
+        | NDArray[np.int64],
         reciprocal_lattice: Sequence[Sequence[float]]
         | NDArray[np.double]
         | None = None,
@@ -555,7 +559,11 @@ class GridMatrix:
 
     def __init__(
         self,
-        mesh: float | np.number | Sequence[int] | NDArray[np.int64],
+        mesh: float
+        | np.number
+        | Sequence[int]
+        | Sequence[Sequence[int]]
+        | NDArray[np.int64],
         lattice: Sequence[Sequence[float]] | NDArray[np.double],
         symmetry_dataset: SpglibDataset
         | SpglibMagneticDataset
@@ -672,7 +680,11 @@ class GridMatrix:
 
     def _set_mesh_numbers(
         self,
-        mesh: float | np.number | Sequence[int] | NDArray[np.int64],
+        mesh: float
+        | np.number
+        | Sequence[int]
+        | Sequence[Sequence[int]]
+        | NDArray[np.int64],
         use_grg: bool = False,
         force_SNF: bool = False,
         coordinates: Literal["reciprocal", "direct"] = "reciprocal",
