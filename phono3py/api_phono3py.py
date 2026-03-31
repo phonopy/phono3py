@@ -89,9 +89,11 @@ from phonopy.structure.cells import (
 )
 from phonopy.structure.symmetry import Symmetry
 
-from phono3py.conductivity.base import ConductivityBase
-from phono3py.conductivity.direct_solution_init import get_thermal_conductivity_LBTE
+from phono3py.conductivity.lbte_calculator import LBTECalculator
+from phono3py.conductivity.lbte_init import get_thermal_conductivity_LBTE
+from phono3py.conductivity.rta_calculator import ConductivityCalculator
 from phono3py.conductivity.rta_init import get_thermal_conductivity_RTA
+from phono3py.conductivity.wigner.lbte_calculator import WignerLBTECalculator
 from phono3py.interface.fc_calculator import (
     FC3Solver,
     extract_fc2_fc3_calculators_options,
@@ -326,8 +328,11 @@ class Phono3py:
         self._phonon_supercells_with_displacements: list[PhonopyAtoms] | None = None
 
         # Thermal conductivity
-        # conductivity_RTA or conductivity_LBTE class instance
-        self._thermal_conductivity: ConductivityBase | None = None
+        # ConductivityCalculator (RTA), LBTECalculator (standard LBTE),
+        # or WignerLBTECalculator (wigner LBTE)
+        self._thermal_conductivity: (
+            ConductivityCalculator | LBTECalculator | WignerLBTECalculator | None
+        ) = None
 
         # Imaginary part of self energy at frequency points
         self._ise_params: ImagSelfEnergyValues | None = None
@@ -917,7 +922,9 @@ class Phono3py:
         self._set_mesh_numbers(mesh_numbers)
 
     @property
-    def thermal_conductivity(self) -> ConductivityBase | None:
+    def thermal_conductivity(
+        self,
+    ) -> ConductivityCalculator | LBTECalculator | WignerLBTECalculator | None:
         """Return thermal conductivity class instance."""
         return self._thermal_conductivity
 
@@ -2334,11 +2341,11 @@ class Phono3py:
                 2. Lapacke dsyevd: Larger memory consumption than dsyev, but
                    faster. This is not recommended because sometimes a wrong
                    result is obtained.
-                3. Numpy’s dsyevd (linalg.eigh). This is not recommended
+                3. Numpy's dsyevd (linalg.eigh). This is not recommended
                    because sometimes a wrong result is obtained.
-                4. Scipy’s dsyev: This is the default solver when scipy is
+                4. Scipy's dsyev: This is the default solver when scipy is
                    installed and MKL LAPACKE is not integrated.
-                5. Scipy’s dsyevd. This is not recommended because sometimes
+                5. Scipy's dsyevd. This is not recommended because sometimes
                    a wrong result is obtained.
             The solver choices other than --pinv-solver=1 and
             --pinv-solver=4 are dangerous and not recommend.

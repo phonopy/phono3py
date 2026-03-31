@@ -3,27 +3,17 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Callable
 from typing import Any, Literal, TypeAlias, cast
 
 from numpy.typing import NDArray
 
-from phono3py.conductivity.base import get_unit_to_WmK
-from phono3py.conductivity.rta import ConductivityRTA
-from phono3py.conductivity.rta_base import ConductivityRTABase
-from phono3py.conductivity.type_dispatch import (
-    get_rta_progress_mode,
-    get_rta_writer_grid_data,
-    get_rta_writer_kappa_data,
-)
-from phono3py.conductivity.wigner_rta import ConductivityWignerRTA
+from phono3py.conductivity.rta_calculator import ConductivityCalculator
+from phono3py.conductivity.utils import get_unit_to_WmK
 from phono3py.file_IO import write_gamma_detail_to_hdf5, write_kappa_to_hdf5
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
 from phono3py.phonon3.triplets import get_all_triplets
 
-cond_RTA_type: TypeAlias = ConductivityRTABase
-_RTAProgressMode: TypeAlias = Literal["default", "wigner"]
-_RTAProgressHandler: TypeAlias = Callable[[cond_RTA_type, int], None]
+cond_RTA_type: TypeAlias = ConductivityCalculator
 
 
 def _require_ndarray_not_none(value: NDArray[Any] | None, name: str) -> NDArray[Any]:
@@ -32,28 +22,9 @@ def _require_ndarray_not_none(value: NDArray[Any] | None, name: str) -> NDArray[
     return value
 
 
-def show_rta_progress(
-    br: cond_RTA_type,
-    conductivity_type: Literal["wigner", "kubo"] | None,
-    log_level: int,
-) -> None:
-    """Show progress for selected conductivity type in RTA run."""
-    mode = cast(_RTAProgressMode, get_rta_progress_mode(conductivity_type))
-    _RTA_PROGRESS_HANDLERS[mode](br, log_level)
-
-
-def _show_rta_progress_default(br: cond_RTA_type, log_level: int) -> None:
-    ShowCalcProgress.kappa_RTA(cast(ConductivityRTA, br), log_level)
-
-
-def _show_rta_progress_wigner(br: cond_RTA_type, log_level: int) -> None:
-    ShowCalcProgress.kappa_Wigner_RTA(cast(ConductivityWignerRTA, br), log_level)
-
-
-_RTA_PROGRESS_HANDLERS: dict[_RTAProgressMode, _RTAProgressHandler] = {
-    "default": _show_rta_progress_default,
-    "wigner": _show_rta_progress_wigner,
-}
+def show_rta_progress(br: cond_RTA_type, log_level: int) -> None:
+    """Show progress for the RTA conductivity calculation."""
+    ShowCalcProgress.kappa_RTA(br, log_level)
 
 
 def _pick_sigma_item(values, sigma_index):
@@ -74,8 +45,16 @@ class ShowCalcProgress:
     """Show calculation progress."""
 
     @staticmethod
-    def kappa_RTA(br: ConductivityRTA, log_level: int) -> None:
-        """Show RTA calculation progress."""
+    def kappa_RTA(br: ConductivityCalculator, log_level: int) -> None:
+        """Show RTA calculation progress.
+
+        Delegates to ``br.show_rta_progress(log_level)`` for variant-specific
+        display (e.g. Wigner).  Falls back to the standard display when the
+        accumulator does not override it.
+
+        """
+        if br.show_rta_progress(log_level):
+            return
         temperatures = _require_ndarray_not_none(br.temperatures, "br.temperatures")
         sigmas = br.sigmas
         kappa = _require_ndarray_not_none(br.kappa, "br.kappa")
@@ -116,88 +95,6 @@ class ShowCalcProgress:
                     print(("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
             print("", flush=True)
 
-    @staticmethod
-    def kappa_Wigner_RTA(br: ConductivityWignerRTA, log_level: int) -> None:
-        """Show Wigner-RTA calculation progress."""
-        temperatures = _require_ndarray_not_none(br.temperatures, "br.temperatures")
-        sigmas = br.sigmas
-        kappa_TOT_RTA = _require_ndarray_not_none(br.kappa_TOT_RTA, "br.kappa_TOT_RTA")
-        kappa_P_RTA = _require_ndarray_not_none(br.kappa_P_RTA, "br.kappa_P_RTA")
-        kappa_C = _require_ndarray_not_none(br.kappa_C, "br.kappa_C")
-        num_ignored_phonon_modes = _require_ndarray_not_none(
-            br.number_of_ignored_phonon_modes,
-            "br.number_of_ignored_phonon_modes",
-        )
-        num_band = br.frequencies.shape[1]
-        num_phonon_modes = br.number_of_sampling_grid_points * num_band
-        for i, sigma in enumerate(sigmas):
-            kappa_p_rta_i = _require_ndarray_not_none(kappa_P_RTA[i], "kappa_P_RTA[i]")
-            kappa_c_i = _require_ndarray_not_none(kappa_C[i], "kappa_C[i]")
-            kappa_tot_rta_i = _require_ndarray_not_none(
-                kappa_TOT_RTA[i], "kappa_TOT_RTA[i]"
-            )
-            text = "----------- Thermal conductivity (W/m-k) "
-            if sigma:
-                text += "for sigma=%s -----------" % sigma
-            else:
-                text += "with tetrahedron method -----------"
-            print(text)
-            if log_level > 1:
-                print(
-                    ("#%6s       " + " %-10s" * 6 + "#ipm")
-                    % ("      \t   T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
-                )
-                for j, (t, k) in enumerate(
-                    zip(temperatures, kappa_p_rta_i, strict=True)
-                ):
-                    print(
-                        "K_P\t"
-                        + ("%7.1f" + " %10.3f" * 6 + " %d/%d")
-                        % (
-                            (t,)
-                            + tuple(k)
-                            + (num_ignored_phonon_modes[i, j], num_phonon_modes)
-                        )
-                    )
-                print(" ")
-                for j, (t, k) in enumerate(zip(temperatures, kappa_c_i, strict=True)):
-                    print(
-                        "K_C\t"
-                        + ("%7.1f" + " %10.3f" * 6 + " %d/%d")
-                        % (
-                            (t,)
-                            + tuple(k)
-                            + (num_ignored_phonon_modes[i, j], num_phonon_modes)
-                        )
-                    )
-                print(" ")
-                for j, (t, k) in enumerate(
-                    zip(temperatures, kappa_tot_rta_i, strict=True)
-                ):
-                    print(
-                        "K_T\t"
-                        + ("%7.1f" + " %10.3f" * 6 + " %d/%d")
-                        % (
-                            (t,)
-                            + tuple(k)
-                            + (num_ignored_phonon_modes[i, j], num_phonon_modes)
-                        )
-                    )
-            else:
-                print(
-                    ("#%6s       " + " %-10s" * 6)
-                    % ("      \t   T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
-                )
-                for t, k in zip(temperatures, kappa_p_rta_i, strict=True):
-                    print("K_P\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
-                print(" ")
-                for t, k in zip(temperatures, kappa_c_i, strict=True):
-                    print("K_C\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
-                print(" ")
-                for t, k in zip(temperatures, kappa_tot_rta_i, strict=True):
-                    print("K_T\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
-            print("", flush=True)
-
 
 class ConductivityRTAWriter:
     """Collection of result writers."""
@@ -213,11 +110,13 @@ class ConductivityRTAWriter:
     ) -> None:
         """Write mode kappa related properties into a hdf5 file."""
         grid_points = br.grid_points
-        grid_data = get_rta_writer_grid_data(br, i)
-        group_velocities_i = grid_data["group_velocities_i"]
-        gv_by_gv_i = grid_data["gv_by_gv_i"]
-        velocity_operator_i = grid_data["velocity_operator_i"]
-        mode_heat_capacities = grid_data["mode_heat_capacities"]
+        gv = getattr(br, "group_velocities", None)
+        gvgv = getattr(br, "gv_by_gv", None)
+        group_velocities_i = gv[i] if gv is not None and gvgv is not None else None
+        gv_by_gv_i = gvgv[i] if gv is not None and gvgv is not None else None
+        vel_op = getattr(br, "velocity_operator", None)
+        velocity_operator_i = vel_op[i] if vel_op is not None else None
+        mode_heat_capacities = getattr(br, "mode_heat_capacities", None)
         ave_pp = br.averaged_pp_interaction
         mesh = br.mesh_numbers
         bz_grid = br.bz_grid
@@ -245,6 +144,11 @@ class ConductivityRTAWriter:
                 gamma_N_at_sigma = _pick_optional_item(gamma_N, j, slice(None), i)
                 gamma_U_at_sigma = _pick_optional_item(gamma_U, j, slice(None), i)
 
+                extra_gp: dict[str, Any] | None = (
+                    {"velocity_operator": velocity_operator_i}
+                    if velocity_operator_i is not None
+                    else None
+                )
                 write_kappa_to_hdf5(
                     temperatures,
                     mesh,
@@ -252,8 +156,8 @@ class ConductivityRTAWriter:
                     frequency=frequencies,
                     group_velocity=group_velocities_i,
                     gv_by_gv=gv_by_gv_i,
-                    velocity_operator=velocity_operator_i,
                     heat_capacity=mode_heat_capacities[:, i],
+                    extra_datasets=extra_gp,
                     gamma=gamma[j, :, i],
                     gamma_isotope=gamma_isotope_at_sigma,
                     gamma_N=gamma_N_at_sigma,
@@ -282,6 +186,11 @@ class ConductivityRTAWriter:
                     gamma_U_at_sigma = _pick_optional_item(
                         gamma_U, j, slice(None), i, k
                     )
+                    extra_gp_band: dict[str, Any] | None = (
+                        {"velocity_operator": velocity_operator_ik}
+                        if velocity_operator_ik is not None
+                        else None
+                    )
                     write_kappa_to_hdf5(
                         temperatures,
                         mesh,
@@ -289,8 +198,8 @@ class ConductivityRTAWriter:
                         frequency=frequencies,
                         group_velocity=group_velocities_ik,
                         gv_by_gv=gv_by_gv_ik,
-                        velocity_operator=velocity_operator_ik,
                         heat_capacity=mode_heat_capacities[:, i, k],
+                        extra_datasets=extra_gp_band,
                         gamma=gamma[j, :, i, k],
                         gamma_isotope=gamma_isotope_at_sigma,
                         gamma_N=gamma_N_at_sigma,
@@ -325,35 +234,28 @@ class ConductivityRTAWriter:
         mesh = br.mesh_numbers
         bz_grid = br.bz_grid
         frequencies = br.frequencies
-        kappa_data = get_rta_writer_kappa_data(br)
-        kappa = kappa_data["kappa"]
-        mode_kappa = kappa_data["mode_kappa"]
-        gv = kappa_data["group_velocities"]
-        gv_by_gv = kappa_data["gv_by_gv"]
-        kappa_TOT_RTA = kappa_data["kappa_TOT_RTA"]
-        kappa_P_RTA = kappa_data["kappa_P_RTA"]
-        kappa_C = kappa_data["kappa_C"]
-        mode_kappa_P_RTA = kappa_data["mode_kappa_P_RTA"]
-        mode_kappa_C = kappa_data["mode_kappa_C"]
-        mode_cv = kappa_data["mode_heat_capacities"]
+        kappa = getattr(br, "kappa", None)
+        mode_kappa = getattr(br, "mode_kappa", None)
+        gv = getattr(br, "group_velocities", None)
+        gv_by_gv = getattr(br, "gv_by_gv", None)
+        mode_cv = getattr(br, "mode_heat_capacities", None)
         ave_pp = br.averaged_pp_interaction
         qpoints = br.qpoints
         grid_points = br.grid_points
         weights = br.grid_weights
         boundary_mfp = br.boundary_mfp
+        extra_full: dict[str, Any] | None = br.get_extra_kappa_output()
 
         for i, sigma in enumerate(sigmas):
-            kappa_at_sigma = _pick_sigma_item(kappa, i)
-            mode_kappa_at_sigma = _pick_sigma_item(mode_kappa, i)
-            kappa_TOT_RTA_at_sigma = _pick_sigma_item(kappa_TOT_RTA, i)
-            kappa_P_RTA_at_sigma = _pick_sigma_item(kappa_P_RTA, i)
-            kappa_C_at_sigma = _pick_sigma_item(kappa_C, i)
-            mode_kappa_P_RTA_at_sigma = _pick_sigma_item(mode_kappa_P_RTA, i)
-            mode_kappa_C_at_sigma = _pick_sigma_item(mode_kappa_C, i)
             gamma_isotope_at_sigma = _pick_sigma_item(gamma_isotope, i)
             gamma_N_at_sigma = _pick_sigma_item(gamma_N, i)
             gamma_U_at_sigma = _pick_sigma_item(gamma_U, i)
             gamma_elph = _pick_optional_item(gamma_elph)
+            extra_at_sigma: dict[str, Any] | None = (
+                {k: _pick_sigma_item(v, i) for k, v in extra_full.items()}
+                if extra_full is not None
+                else None
+            )
 
             write_kappa_to_hdf5(
                 temperatures,
@@ -364,13 +266,9 @@ class ConductivityRTAWriter:
                 group_velocity=gv,
                 gv_by_gv=gv_by_gv,
                 heat_capacity=mode_cv,
-                kappa=kappa_at_sigma,
-                mode_kappa=mode_kappa_at_sigma,
-                kappa_TOT_RTA=kappa_TOT_RTA_at_sigma,
-                kappa_P_RTA=kappa_P_RTA_at_sigma,
-                kappa_C=kappa_C_at_sigma,
-                mode_kappa_P_RTA=mode_kappa_P_RTA_at_sigma,
-                mode_kappa_C=mode_kappa_C_at_sigma,
+                kappa=_pick_sigma_item(kappa, i),
+                mode_kappa=_pick_sigma_item(mode_kappa, i),
+                extra_datasets=extra_at_sigma,
                 gamma=gamma[i],
                 gamma_isotope=gamma_isotope_at_sigma,
                 gamma_N=gamma_N_at_sigma,
