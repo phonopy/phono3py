@@ -7,6 +7,7 @@ from numpy.typing import NDArray
 from phonopy.phonon.degeneracy import degenerate_sets
 
 from phono3py.conductivity.grid_point_data import GridPointInput, GridPointResult
+from phono3py.conductivity.utils import VOIGT_INDEX_PAIRS
 from phono3py.conductivity.wigner.velocity_operator import VelocityOperator
 from phono3py.phonon.grid import (
     get_grid_points_by_rotations,
@@ -107,6 +108,8 @@ class VelocityOperatorProvider:
         gv_by_gv_op, kstar_order = self._get_gv_by_gv_operator(gp, gv_op)
         result.velocity_product = gv_by_gv_op
         result.num_sampling_grid_points = kstar_order
+        # Store raw velocity operator for HDF5 output.
+        result.extra["velocity_operator"] = gv_op
         return result
 
     # ------------------------------------------------------------------
@@ -177,8 +180,7 @@ class VelocityOperatorProvider:
         for r in self._rotations_cartesian:
             # gv_rot[s, s', i] = sum_j gv_op[s, s', j] * r.T[j, i]
             gv_rot = np.dot(gv_op, r.T)  # (num_band0, nat3, 3)
-            voigt = [[0, 0], [1, 1], [2, 2], [1, 2], [0, 2], [0, 1]]
-            for j, (a, b) in enumerate(voigt):
+            for j, (a, b) in enumerate(VOIGT_INDEX_PAIRS):
                 gv_by_gv_op[:, :, j] += gv_rot[:, :, a] * np.conj(gv_rot[:, :, b])
 
         # Divide by site multiplicity (number of rotations per k-star arm)

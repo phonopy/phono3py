@@ -15,11 +15,13 @@ from typing import Any, Literal
 import numpy as np
 from numpy.typing import NDArray
 
-from phono3py.conductivity.calculator_factory import build_lbte_base_components
+from phono3py.conductivity.calculator_factory import (
+    build_lbte_base_components,
+    build_rta_base_components,
+)
 from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
 from phono3py.conductivity.lbte_calculator import LBTECalculator
 from phono3py.conductivity.rta_calculator import ConductivityCalculator
-from phono3py.conductivity.scattering_providers import RTAScatteringProvider
 from phono3py.conductivity.wigner.kappa_accumulators import (
     WignerKappaAccumulator,
     WignerLBTEAccumulator,
@@ -106,38 +108,12 @@ def make_wigner_rta_calculator(
     ConductivityCalculator
 
     """
-    _sigmas: list[float | None] = [] if sigmas is None else list(sigmas)
-    _temperatures: NDArray[np.double] | None = (
-        np.asarray(temperatures, dtype="double") if temperatures is not None else None
-    )
-
-    if is_kappa_star:
-        point_ops = interaction.bz_grid.reciprocal_operations
-        rot_cart: NDArray[np.double] = interaction.bz_grid.rotations_cartesian
-    else:
-        point_ops = np.eye(3, dtype="int64", order="C").reshape(1, 3, 3)
-        rot_cart = np.eye(3, dtype="double", order="C").reshape(1, 3, 3)
-
-    velocity_provider = VelocityOperatorProvider(
+    base = build_rta_base_components(
         interaction,
-        point_operations=point_ops,
-        rotations_cartesian=rot_cart,
-        is_kappa_star=is_kappa_star,
-        gv_delta_q=gv_delta_q,
-        log_level=log_level,
-    )
-
-    cv_provider = ModeHeatCapacityProvider(interaction)
-
-    scattering_provider = RTAScatteringProvider(
-        interaction,
-        sigmas=_sigmas,
-        temperatures=(
-            _temperatures
-            if _temperatures is not None
-            else np.arange(0, 1001, 10, dtype="double")
-        ),
+        sigmas=sigmas,
         sigma_cutoff=sigma_cutoff,
+        temperatures=temperatures,
+        is_kappa_star=is_kappa_star,
         is_full_pp=is_full_pp,
         use_ave_pp=use_ave_pp,
         read_pp=read_pp,
@@ -147,6 +123,17 @@ def make_wigner_rta_calculator(
         is_gamma_detail=is_gamma_detail,
         log_level=log_level,
     )
+
+    velocity_provider = VelocityOperatorProvider(
+        interaction,
+        point_operations=base.point_ops,
+        rotations_cartesian=base.rot_cart,
+        is_kappa_star=is_kappa_star,
+        gv_delta_q=gv_delta_q,
+        log_level=log_level,
+    )
+
+    cv_provider = ModeHeatCapacityProvider(interaction)
 
     kappa_formula = WignerKappaFormula(
         cutoff_frequency=interaction.cutoff_frequency,
@@ -158,11 +145,11 @@ def make_wigner_rta_calculator(
         interaction,
         velocity_provider=velocity_provider,
         cv_provider=cv_provider,
-        scattering_provider=scattering_provider,
+        scattering_provider=base.scattering_provider,
         accumulator=accumulator,
         grid_points=grid_points,
         temperatures=temperatures,
-        sigmas=_sigmas,
+        sigmas=base.sigmas,
         sigma_cutoff=sigma_cutoff,
         is_isotope=is_isotope,
         mass_variances=mass_variances,

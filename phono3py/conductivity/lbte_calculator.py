@@ -515,9 +515,10 @@ class LBTECalculator:
             )
 
         # Accumulate into global arrays.
-        self._accumulator.accumulate(
-            i_gp, collision_result, gv, cv, vel_result.velocity_product
-        )
+        extra = vel_result.extra
+        if vel_result.velocity_product is not None:
+            extra["velocity_product"] = vel_result.velocity_product
+        self._accumulator.accumulate(i_gp, collision_result, gv, cv, extra or None)
 
         if self._log_level:
             self._show_log(i_gp, gv)

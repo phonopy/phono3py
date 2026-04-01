@@ -6,6 +6,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from phono3py.conductivity.grid_point_data import GridPointInput, GridPointResult
+from phono3py.conductivity.utils import VOIGT_INDEX_PAIRS
 from phono3py.conductivity.velocity_providers import (
     get_kstar_order,
     get_multiplicity_at_q,
@@ -167,10 +168,9 @@ class VelocityMatrixProvider:
         num_band0 = len(gp.band_indices)
         gvm_by_gvm = np.zeros((num_band0, nat3, 6), dtype="complex128")
 
-        voigt = [[0, 0], [1, 1], [2, 2], [1, 2], [0, 2], [0, 1]]
         for gvm in self._velocity_obj.group_velocity_matrices:
             # gvm: (3, nat3, nat3) complex at one rotated q-point
-            for i_pair, (a, b) in enumerate(voigt):
+            for i_pair, (a, b) in enumerate(VOIGT_INDEX_PAIRS):
                 # V^a_{s s'} * conj(V^b_{s s'}) for selected band0 vs all bands
                 gvm_by_gvm[:, :, i_pair] += gvm[a][gp.band_indices, :] * np.conj(
                     gvm[b][gp.band_indices, :]

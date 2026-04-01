@@ -27,20 +27,6 @@ def show_rta_progress(br: cond_RTA_type, log_level: int) -> None:
     ShowCalcProgress.kappa_RTA(br, log_level)
 
 
-def _pick_sigma_item(values, sigma_index):
-    """Return values at sigma index, or None when values is None."""
-    if values is None:
-        return None
-    return values[sigma_index]
-
-
-def _pick_optional_item(values, *indices):
-    """Return indexed values, or None when values is None."""
-    if values is None:
-        return None
-    return values[indices]
-
-
 class ShowCalcProgress:
     """Show calculation progress."""
 
@@ -110,13 +96,10 @@ class ConductivityRTAWriter:
     ) -> None:
         """Write mode kappa related properties into a hdf5 file."""
         grid_points = br.grid_points
-        gv = getattr(br, "group_velocities", None)
-        gvgv = getattr(br, "gv_by_gv", None)
-        group_velocities_i = gv[i] if gv is not None and gvgv is not None else None
-        gv_by_gv_i = gvgv[i] if gv is not None and gvgv is not None else None
-        vel_op = getattr(br, "velocity_operator", None)
-        velocity_operator_i = vel_op[i] if vel_op is not None else None
-        mode_heat_capacities = getattr(br, "mode_heat_capacities", None)
+        group_velocities_i = br.group_velocities[i]
+        gv_by_gv_i = br.gv_by_gv[i]
+        extra_gp_data = br.get_extra_grid_point_output(i)
+        mode_heat_capacities = br.mode_heat_capacities
         ave_pp = br.averaged_pp_interaction
         mesh = br.mesh_numbers
         bz_grid = br.bz_grid
@@ -132,23 +115,16 @@ class ConductivityRTAWriter:
         phonons = _require_ndarray_not_none(
             interaction.get_phonons()[0], "interaction phonons"
         )
-        mode_heat_capacities = _require_ndarray_not_none(
-            mode_heat_capacities,
-            "mode_heat_capacities",
-        )
         if all_bands_exist(interaction):
-            ave_pp_i = _pick_optional_item(ave_pp, i)
+            ave_pp_i = ave_pp[i] if ave_pp is not None else None
             frequencies = phonons[gp]
             for j, sigma in enumerate(sigmas):
-                gamma_isotope_at_sigma = _pick_optional_item(gamma_isotope, j, i)
-                gamma_N_at_sigma = _pick_optional_item(gamma_N, j, slice(None), i)
-                gamma_U_at_sigma = _pick_optional_item(gamma_U, j, slice(None), i)
-
-                extra_gp: dict[str, Any] | None = (
-                    {"velocity_operator": velocity_operator_i}
-                    if velocity_operator_i is not None
-                    else None
+                gamma_isotope_at_sigma = (
+                    gamma_isotope[j, i] if gamma_isotope is not None else None
                 )
+                gamma_N_at_sigma = gamma_N[j, :, i] if gamma_N is not None else None
+                gamma_U_at_sigma = gamma_U[j, :, i] if gamma_U is not None else None
+
                 write_kappa_to_hdf5(
                     temperatures,
                     mesh,
@@ -157,7 +133,7 @@ class ConductivityRTAWriter:
                     group_velocity=group_velocities_i,
                     gv_by_gv=gv_by_gv_i,
                     heat_capacity=mode_heat_capacities[:, i],
-                    extra_datasets=extra_gp,
+                    extra_datasets=extra_gp_data,
                     gamma=gamma[j, :, i],
                     gamma_isotope=gamma_isotope_at_sigma,
                     gamma_N=gamma_N_at_sigma,
@@ -174,21 +150,22 @@ class ConductivityRTAWriter:
         else:
             for j, sigma in enumerate(sigmas):
                 for k, bi in enumerate(interaction.band_indices):
-                    group_velocities_ik = _pick_optional_item(group_velocities_i, k)
-                    velocity_operator_ik = _pick_optional_item(velocity_operator_i, k)
-                    gv_by_gv_ik = _pick_optional_item(gv_by_gv_i, k)
-                    ave_pp_ik = _pick_optional_item(ave_pp, i, k)
+                    group_velocities_ik = group_velocities_i[k]
+                    gv_by_gv_ik = gv_by_gv_i[k]
+                    ave_pp_ik = ave_pp[i, k] if ave_pp is not None else None
                     frequencies = phonons[gp, bi]
-                    gamma_isotope_at_sigma = _pick_optional_item(gamma_isotope, j, i, k)
-                    gamma_N_at_sigma = _pick_optional_item(
-                        gamma_N, j, slice(None), i, k
+                    gamma_isotope_at_sigma = (
+                        gamma_isotope[j, i, k] if gamma_isotope is not None else None
                     )
-                    gamma_U_at_sigma = _pick_optional_item(
-                        gamma_U, j, slice(None), i, k
+                    gamma_N_at_sigma = (
+                        gamma_N[j, :, i, k] if gamma_N is not None else None
+                    )
+                    gamma_U_at_sigma = (
+                        gamma_U[j, :, i, k] if gamma_U is not None else None
                     )
                     extra_gp_band: dict[str, Any] | None = (
-                        {"velocity_operator": velocity_operator_ik}
-                        if velocity_operator_ik is not None
+                        {key: val[k] for key, val in extra_gp_data.items()}
+                        if extra_gp_data is not None
                         else None
                     )
                     write_kappa_to_hdf5(
@@ -234,25 +211,30 @@ class ConductivityRTAWriter:
         mesh = br.mesh_numbers
         bz_grid = br.bz_grid
         frequencies = br.frequencies
-        kappa = getattr(br, "kappa", None)
-        mode_kappa = getattr(br, "mode_kappa", None)
-        gv = getattr(br, "group_velocities", None)
-        gv_by_gv = getattr(br, "gv_by_gv", None)
-        mode_cv = getattr(br, "mode_heat_capacities", None)
+        kappa = br.kappa
+        mode_kappa = br.mode_kappa
+        gv = br.group_velocities
+        gv_by_gv = br.gv_by_gv
+        mode_cv = br.mode_heat_capacities
         ave_pp = br.averaged_pp_interaction
         qpoints = br.qpoints
         grid_points = br.grid_points
         weights = br.grid_weights
         boundary_mfp = br.boundary_mfp
         extra_full: dict[str, Any] | None = br.get_extra_kappa_output()
+        num_sigma = len(sigmas)
 
         for i, sigma in enumerate(sigmas):
-            gamma_isotope_at_sigma = _pick_sigma_item(gamma_isotope, i)
-            gamma_N_at_sigma = _pick_sigma_item(gamma_N, i)
-            gamma_U_at_sigma = _pick_sigma_item(gamma_U, i)
-            gamma_elph = _pick_optional_item(gamma_elph)
+            gamma_isotope_at_sigma = (
+                gamma_isotope[i] if gamma_isotope is not None else None
+            )
+            gamma_N_at_sigma = gamma_N[i] if gamma_N is not None else None
+            gamma_U_at_sigma = gamma_U[i] if gamma_U is not None else None
             extra_at_sigma: dict[str, Any] | None = (
-                {k: _pick_sigma_item(v, i) for k, v in extra_full.items()}
+                {
+                    k: v[i] if v is not None and len(v) == num_sigma else v
+                    for k, v in extra_full.items()
+                }
                 if extra_full is not None
                 else None
             )
@@ -266,8 +248,8 @@ class ConductivityRTAWriter:
                 group_velocity=gv,
                 gv_by_gv=gv_by_gv,
                 heat_capacity=mode_cv,
-                kappa=_pick_sigma_item(kappa, i),
-                mode_kappa=_pick_sigma_item(mode_kappa, i),
+                kappa=kappa[i],
+                mode_kappa=mode_kappa[i],
                 extra_datasets=extra_at_sigma,
                 gamma=gamma[i],
                 gamma_isotope=gamma_isotope_at_sigma,

@@ -349,6 +349,19 @@ class ConductivityCalculator:
         fn = getattr(self._accumulator, "get_extra_kappa_output", None)
         return fn() if callable(fn) else None
 
+    def get_extra_grid_point_output(self, i: int) -> dict[str, Any] | None:
+        """Return per-grid-point extra data from the accumulator.
+
+        Called by output writers to obtain plugin-defined per-grid-point
+        quantities (e.g. Wigner velocity_operator) that are written to
+        the hdf5 file via ``write_kappa_to_hdf5(extra_datasets=...)``.
+
+        Returns None when the accumulator does not implement this method.
+
+        """
+        fn = getattr(self._accumulator, "get_extra_grid_point_output", None)
+        return fn(i) if callable(fn) else None
+
     def show_rta_progress(self, log_level: int) -> bool:
         """Show variant-specific RTA kappa progress if the accumulator supports it.
 
@@ -732,6 +745,7 @@ class ConductivityCalculator:
             self._show_log(i_gp)
 
         result = self._make_grid_point_result(i_gp, gp_input)
+        result.extra.update(vel_result.extra)
         self._accumulator.accumulate(i_gp, result)
         self._count_ignored_modes(i_gp, result)
 

@@ -9,6 +9,7 @@ from numpy.typing import NDArray
 from phonopy.phonon.group_velocity import GroupVelocity
 
 from phono3py.conductivity.grid_point_data import GridPointInput, GridPointResult
+from phono3py.conductivity.utils import VOIGT_INDEX_PAIRS
 from phono3py.phonon.grid import (
     get_grid_points_by_rotations,
     get_qpoints_from_bz_grid_points,
@@ -209,6 +210,6 @@ class GroupVelocityProvider:
 
         # Convert (num_band0, 3, 3) to (num_band0, 6) Voigt notation
         gv_by_gv = np.zeros((len(gv), 6), dtype="double")
-        for j, (a, b) in enumerate([[0, 0], [1, 1], [2, 2], [1, 2], [0, 2], [0, 1]]):
+        for j, (a, b) in enumerate(VOIGT_INDEX_PAIRS):
             gv_by_gv[:, j] = gv_by_gv_3x3[:, a, b]
         return gv_by_gv, kstar_order

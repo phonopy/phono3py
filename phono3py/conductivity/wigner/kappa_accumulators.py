@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
@@ -13,6 +15,9 @@ from phono3py.conductivity.wigner.kappa_formulas import (
     DEGENERATE_FREQUENCY_THRESHOLD_THZ,
     WignerKappaFormula,
 )
+
+if TYPE_CHECKING:
+    from phono3py.conductivity.rta_calculator import ConductivityCalculator
 
 
 class WignerKappaAccumulator:
@@ -39,6 +44,7 @@ class WignerKappaAccumulator:
         self._mode_kappa_P: NDArray[np.double]
         self._kappa_C: NDArray[np.double] | None = None
         self._mode_kappa_C: NDArray[np.double] | None = None
+        self._velocity_operator: NDArray[np.cdouble] | None = None
 
     def prepare(
         self,
@@ -55,6 +61,16 @@ class WignerKappaAccumulator:
 
     def accumulate(self, i_gp: int, result: GridPointResult) -> None:
         """Compute and accumulate population and coherence kappa at ``i_gp``."""
+        # Store raw velocity operator for per-grid-point HDF5 output.
+        vel_op = result.extra.get("velocity_operator")
+        if vel_op is not None:
+            if self._velocity_operator is None:
+                num_gp = self._mode_kappa_P.shape[2]
+                self._velocity_operator = np.zeros(
+                    (num_gp,) + vel_op.shape, dtype="complex128", order="C"
+                )
+            self._velocity_operator[i_gp] = vel_op
+
         mode_kappa_P = self._formula.compute(
             result
         )  # sets result.extra["wigner_mode_kappa_C"]
@@ -126,7 +142,18 @@ class WignerKappaAccumulator:
         """
         return self._mode_kappa_C
 
-    def show_rta_progress(self, br: object, log_level: int) -> None:
+    def get_extra_grid_point_output(self, i: int) -> dict[str, Any] | None:
+        """Return per-grid-point extra data for HDF5 output.
+
+        Returns the velocity operator at grid point ``i`` as
+        ``{"velocity_operator": ...}``, or None when not available.
+
+        """
+        if self._velocity_operator is None:
+            return None
+        return {"velocity_operator": self._velocity_operator[i]}
+
+    def show_rta_progress(self, br: ConductivityCalculator, log_level: int) -> None:
         """Print K_P, K_C, K_T rows for the Wigner-RTA conductivity.
 
         Called via duck typing from ShowCalcProgress.kappa_RTA so that
@@ -135,29 +162,23 @@ class WignerKappaAccumulator:
         Parameters
         ----------
         br :
-            ConductivityCalculator instance (typed as object to avoid
-            circular imports).
+            ConductivityCalculator instance.
         log_level :
             Verbosity level.
 
         """
-
-        def _req(v: object, name: str) -> "NDArray[np.double]":
-            assert v is not None, f"{name} must not be None"
-            return v  # type: ignore[return-value]
-
-        temperatures = _req(getattr(br, "temperatures", None), "temperatures")
+        temperatures = br.temperatures
+        assert temperatures is not None
         sigmas = br.sigmas
-        kappa_tot = _req(getattr(br, "kappa", None), "kappa")
-        num_ignored = _req(
-            getattr(br, "number_of_ignored_phonon_modes", None),
-            "number_of_ignored_phonon_modes",
-        )
+        kappa_tot = br.kappa
+        num_ignored = br.number_of_ignored_phonon_modes
+        assert num_ignored is not None
         num_band = br.frequencies.shape[1]
         num_phonon_modes = br.number_of_sampling_grid_points * num_band
 
-        kappa_P_RTA = _req(self._kappa_P, "kappa_P")
-        kappa_C = _req(self._kappa_C, "kappa_C")
+        kappa_P_RTA = self._kappa_P
+        assert self._kappa_C is not None
+        kappa_C = self._kappa_C
 
         for i, sigma in enumerate(sigmas):
             kappa_p_i = kappa_P_RTA[i]
@@ -209,19 +230,12 @@ class WignerKappaAccumulator:
                     print("K_T\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
             print("", flush=True)
 
-    def get_extra_kappa_output(self) -> dict[str, NDArray[np.double] | None]:
-        """Return Wigner-specific kappa arrays keyed by HDF5 dataset name.
+    def get_extra_kappa_output(self) -> dict[str, Any]:
+        """Return Wigner-specific extra arrays keyed by HDF5 dataset name.
 
-        Each value has sigma as its first axis so that callers can slice by
-        sigma index with ``value[i_sigma]``.
-
-        Keys
-        ----
-        kappa_TOT_RTA : (num_sigma, num_temp, 6)
-        kappa_P_RTA   : (num_sigma, num_temp, 6)
-        kappa_C       : (num_sigma, num_temp, 6) or None
-        mode_kappa_P_RTA : (num_sigma, num_temp, num_gp, num_band0, 6)
-        mode_kappa_C  : (num_sigma, num_temp, num_gp, num_band0, num_band, 6) or None
+        Sigma-dependent values have sigma as their first axis; the caller
+        slices them with ``value[i_sigma]``.  Sigma-independent values
+        (e.g. velocity_operator) are written as-is for every sigma.
 
         """
         return {
@@ -230,6 +244,7 @@ class WignerKappaAccumulator:
             "kappa_C": self._kappa_C,
             "mode_kappa_P_RTA": self._mode_kappa_P,
             "mode_kappa_C": self._mode_kappa_C,
+            "velocity_operator": self._velocity_operator,
         }
 
 
@@ -288,13 +303,13 @@ class WignerLBTEAccumulator:
         self._band_indices = band_indices
         self._cutoff_frequency = cutoff_frequency
         self._conversion_factor_WTE = conversion_factor_WTE
-        self._temperatures = temperatures
         self._sigmas = sigmas
         self._is_reducible = is_reducible_collision_matrix
         self._log_level = log_level
 
         # Per-grid-point storage for the C-term (lazily allocated in accumulate()).
         self._gv_by_gv_operator: NDArray[np.cdouble] | None = None
+        self._velocity_operator: NDArray[np.cdouble] | None = None
         self._mode_cv: NDArray[np.double] | None = None
 
         # C-term output arrays (populated in finalize()).
@@ -319,7 +334,7 @@ class WignerLBTEAccumulator:
         collision_result: LBTECollisionResult,
         group_velocities: NDArray[np.double],
         heat_capacities: NDArray[np.double],
-        velocity_product: NDArray[np.cdouble] | None = None,
+        extra: dict[str, Any] | None = None,
     ) -> None:
         """Store per-grid-point Stage 1 data and delegate to the inner accumulator.
 
@@ -333,10 +348,15 @@ class WignerLBTEAccumulator:
             Group velocities, shape (num_band0, 3).
         heat_capacities : NDArray[np.double]
             Mode heat capacities, shape (num_temp, num_band0).
-        velocity_product : NDArray[np.cdouble] or None
-            Velocity operator outer product, shape (num_band0, num_band, 6).
+        extra : dict or None
+            Plugin-specific data from the velocity provider.  Expected keys:
+            ``velocity_product`` (num_band0, num_band, 6) complex,
+            ``velocity_operator`` (num_band0, nat3, 3) complex.
 
         """
+        velocity_product = extra.get("velocity_product") if extra else None
+        velocity_operator = extra.get("velocity_operator") if extra else None
+
         if velocity_product is not None and self._gv_by_gv_operator is None:
             num_ir = len(self._ir_grid_points)
             self._gv_by_gv_operator = np.zeros(
@@ -345,6 +365,13 @@ class WignerLBTEAccumulator:
             self._mode_cv = np.zeros((num_ir,) + heat_capacities.shape, dtype="double")
         if velocity_product is not None and self._gv_by_gv_operator is not None:
             self._gv_by_gv_operator[i_gp] = velocity_product
+        if velocity_operator is not None:
+            if self._velocity_operator is None:
+                num_ir = len(self._ir_grid_points)
+                self._velocity_operator = np.zeros(
+                    (num_ir,) + velocity_operator.shape, dtype="complex128"
+                )
+            self._velocity_operator[i_gp] = velocity_operator
         if self._mode_cv is not None:
             self._mode_cv[i_gp] = heat_capacities
         self._inner.accumulate(
@@ -371,111 +398,54 @@ class WignerLBTEAccumulator:
             self._log_wigner_kappa()
 
     # ------------------------------------------------------------------
-    # Properties — P-term (delegated to inner)
+    # Attribute delegation — most properties come from self._inner
+    # ------------------------------------------------------------------
+
+    def __getattr__(self, name: str) -> Any:
+        """Fall back to the inner LBTEKappaAccumulator for missing attributes.
+
+        This is only called when normal attribute lookup on self fails.
+
+        """
+        return getattr(self._inner, name)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """Route attribute assignment.
+
+        Unlike __getattr__, __setattr__ is called on every attribute
+        assignment.  gamma, collision_matrix, and temperatures are
+        forwarded to self._inner.  All other attributes are set on self
+        via object.__setattr__ (super()) to avoid infinite recursion.
+
+        """
+        if name in ("gamma", "collision_matrix", "temperatures"):
+            setattr(self._inner, name, value)
+        else:
+            super().__setattr__(name, value)
+
+    # ------------------------------------------------------------------
+    # Properties — Wigner-specific aliases
     # ------------------------------------------------------------------
 
     @property
-    def kappa(self) -> NDArray[np.double]:
-        """Return LBTE kappa (P-exact term), shape (num_sigma, num_temp, 6)."""
-        return self._inner.kappa
-
-    @property
     def kappa_P_exact(self) -> NDArray[np.double]:
-        """Return LBTE kappa (P-exact term) — Wigner-specific alias for kappa."""
+        """Return LBTE kappa (P-exact term) — alias for kappa."""
         return self._inner.kappa
-
-    @property
-    def kappa_RTA(self) -> NDArray[np.double]:
-        """Return RTA kappa (P-RTA term), shape (num_sigma, num_temp, 6)."""
-        return self._inner.kappa_RTA
 
     @property
     def kappa_P_RTA(self) -> NDArray[np.double]:
-        """Return RTA kappa (P-RTA term) — Wigner-specific alias for kappa_RTA."""
+        """Return RTA kappa (P-RTA term) — alias for kappa_RTA."""
         return self._inner.kappa_RTA
 
     @property
-    def mode_kappa(self) -> NDArray[np.double]:
-        """Return mode LBTE kappa (P-exact term)."""
-        return self._inner.mode_kappa
-
-    @property
     def mode_kappa_P_exact(self) -> NDArray[np.double]:
-        """Return mode LBTE kappa (P-exact term) — Wigner-specific alias."""
+        """Return mode LBTE kappa (P-exact term) — alias for mode_kappa."""
         return self._inner.mode_kappa
-
-    @property
-    def mode_kappa_RTA(self) -> NDArray[np.double]:
-        """Return mode RTA kappa (P-RTA term)."""
-        return self._inner.mode_kappa_RTA
 
     @property
     def mode_kappa_P_RTA(self) -> NDArray[np.double]:
-        """Return mode RTA kappa (P-RTA term) — Wigner-specific alias."""
+        """Return mode RTA kappa (P-RTA term) — alias for mode_kappa_RTA."""
         return self._inner.mode_kappa_RTA
-
-    @property
-    def gamma(self) -> NDArray[np.double]:
-        """Return ph-ph gamma."""
-        return self._inner.gamma
-
-    @gamma.setter
-    def gamma(self, value: NDArray[np.double]) -> None:
-        self._inner.gamma = value
-
-    @property
-    def gamma_iso(self) -> NDArray[np.double] | None:
-        """Return isotope gamma."""
-        return self._inner.gamma_iso
-
-    @property
-    def collision_matrix(self) -> NDArray[np.double] | None:
-        """Return assembled collision matrix."""
-        return self._inner.collision_matrix
-
-    @collision_matrix.setter
-    def collision_matrix(self, value: NDArray[np.double] | None) -> None:
-        self._inner.collision_matrix = value
-
-    @property
-    def collision_eigenvalues(self) -> NDArray[np.double] | None:
-        """Return eigenvalues of the collision matrix."""
-        return self._inner.collision_eigenvalues
-
-    @property
-    def averaged_pp_interaction(self) -> NDArray[np.double] | None:
-        """Return averaged ph-ph interaction."""
-        return self._inner.averaged_pp_interaction
-
-    @property
-    def boundary_mfp(self) -> float | None:
-        """Return boundary mean free path in micrometres."""
-        return self._inner.boundary_mfp
-
-    @property
-    def mode_heat_capacities(self) -> NDArray[np.double]:
-        """Return mode heat capacities."""
-        return self._inner.mode_heat_capacities
-
-    @property
-    def f_vectors(self) -> NDArray[np.double] | None:
-        """Return f-vectors."""
-        return self._inner.f_vectors
-
-    @property
-    def mfp(self) -> NDArray[np.double] | None:
-        """Return mean free path."""
-        return self._inner.mfp
-
-    @property
-    def temperatures(self) -> NDArray[np.double]:
-        """Return temperatures in Kelvin."""
-        return self._inner.temperatures
-
-    @temperatures.setter
-    def temperatures(self, value: NDArray[np.double]) -> None:
-        self._inner.temperatures = value
-        self._temperatures = np.asarray(value, dtype="double")
 
     # ------------------------------------------------------------------
     # Properties — C-term
@@ -526,6 +496,7 @@ class WignerLBTEAccumulator:
             "mode_kappa_P_exact": self._inner.mode_kappa,
             "mode_kappa_P_RTA": self._inner.mode_kappa_RTA,
             "mode_kappa_C": None if mode_kappa_C is None else mode_kappa_C.real,
+            "velocity_operator": self._velocity_operator,
         }
 
     # ------------------------------------------------------------------
@@ -545,7 +516,7 @@ class WignerLBTEAccumulator:
 
         THzToEv = get_physical_units().THzToEv
         num_sigma = len(self._sigmas)
-        num_temp = len(self._temperatures)
+        num_temp = len(self._inner.temperatures)
         num_ir = len(self._ir_grid_points)
         num_band0 = len(self._band_indices)
         num_band = self._frequencies.shape[1]
@@ -629,7 +600,7 @@ class WignerLBTEAccumulator:
         kappa_C = self._kappa_C
 
         for i_sigma in range(len(self._sigmas)):
-            for i_temp, t in enumerate(self._temperatures):
+            for i_temp, t in enumerate(self._inner.temperatures):
                 if t <= 0:
                     continue
                 print(

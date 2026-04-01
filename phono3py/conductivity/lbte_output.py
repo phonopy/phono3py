@@ -5,8 +5,7 @@ from __future__ import annotations
 import os
 from typing import Any, Literal, TypeAlias
 
-from numpy.typing import NDArray
-
+from phono3py.conductivity.lbte_calculator import LBTECalculator
 from phono3py.conductivity.utils import get_unit_to_WmK, select_colmat_solver
 from phono3py.file_IO import (
     write_collision_eigenvalues_to_hdf5,
@@ -16,16 +15,7 @@ from phono3py.file_IO import (
 )
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
 
-cond_LBTE_type: TypeAlias = Any
-
-
-def _pick_sigma_item(
-    values: NDArray[Any] | None, sigma_index: int
-) -> NDArray[Any] | None:
-    """Return values at sigma index, or None when values is None."""
-    if values is None:
-        return None
-    return values[sigma_index]
+cond_LBTE_type: TypeAlias = LBTECalculator
 
 
 class ConductivityLBTEWriter:
@@ -125,14 +115,12 @@ class ConductivityLBTEWriter:
         log_level: int = 0,
     ) -> None:
         """Write kappa related properties into a hdf5 file."""
-        kappa = getattr(lbte, "kappa", None)
-        mode_kappa = getattr(lbte, "mode_kappa", None)
-        kappa_RTA = getattr(lbte, "kappa_RTA", None)
-        mode_kappa_RTA = getattr(lbte, "mode_kappa_RTA", None)
-        gv = getattr(lbte, "group_velocities", None)
-        gv_by_gv = getattr(lbte, "gv_by_gv", None)
-        fn = getattr(lbte, "get_extra_kappa_output", None)
-        extra_full: dict[str, Any] | None = fn() if callable(fn) else None
+        kappa = lbte.kappa
+        mode_kappa = lbte.mode_kappa
+        kappa_RTA = lbte.kappa_RTA
+        mode_kappa_RTA = lbte.mode_kappa_RTA
+        gv = lbte.group_velocities
+        extra_full: dict[str, Any] | None = lbte.get_extra_kappa_output()
 
         temperatures = lbte.temperatures
         sigmas = lbte.sigmas
@@ -141,7 +129,6 @@ class ConductivityLBTEWriter:
         bz_grid = lbte.bz_grid
         grid_points = lbte.grid_points
         weights = lbte.grid_weights
-        frequencies = lbte.frequencies
         ave_pp = lbte.averaged_pp_interaction
         qpoints = lbte.qpoints
         gamma = lbte.gamma
@@ -160,10 +147,17 @@ class ConductivityLBTEWriter:
         else:
             frequencies = lbte.frequencies
 
+        num_sigma = len(sigmas)
+
         for i, sigma in enumerate(sigmas):
-            gamma_isotope_at_sigma = _pick_sigma_item(gamma_isotope, i)
+            gamma_isotope_at_sigma = (
+                gamma_isotope[i] if gamma_isotope is not None else None
+            )
             extra_at_sigma: dict[str, Any] | None = (
-                {k: _pick_sigma_item(v, i) for k, v in extra_full.items()}
+                {
+                    k: v[i] if v is not None and len(v) == num_sigma else v
+                    for k, v in extra_full.items()
+                }
                 if extra_full is not None
                 else None
             )
@@ -174,13 +168,12 @@ class ConductivityLBTEWriter:
                 bz_grid=bz_grid,
                 frequency=frequencies,
                 group_velocity=gv,
-                gv_by_gv=gv_by_gv,
                 mean_free_path=mfp[i],
                 heat_capacity=mode_cv,
-                kappa=_pick_sigma_item(kappa, i),
-                mode_kappa=_pick_sigma_item(mode_kappa, i),
-                kappa_RTA=_pick_sigma_item(kappa_RTA, i),
-                mode_kappa_RTA=_pick_sigma_item(mode_kappa_RTA, i),
+                kappa=kappa[i],
+                mode_kappa=mode_kappa[i],
+                kappa_RTA=kappa_RTA[i],
+                mode_kappa_RTA=mode_kappa_RTA[i],
                 extra_datasets=extra_at_sigma,
                 f_vector=f_vector,
                 gamma=gamma[i],

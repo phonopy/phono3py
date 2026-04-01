@@ -51,6 +51,17 @@ from phono3py.phonon3.triplets import get_all_triplets
 
 _TOptions = TypeVar("_TOptions")
 
+# Voigt notation index pairs for the six independent components of a
+# symmetric 3x3 tensor: xx, yy, zz, yz, xz, xy.
+VOIGT_INDEX_PAIRS: tuple[tuple[int, int], ...] = (
+    (0, 0),
+    (1, 1),
+    (2, 2),
+    (1, 2),
+    (0, 2),
+    (0, 1),
+)
+
 
 def show_grid_point_header(
     bzgp: int,

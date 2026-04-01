@@ -3,6 +3,9 @@
 These functions are registered as non-overridable entries in factory._REGISTRY
 for the ``"rta"`` and ``"lbte"`` methods.
 
+``build_rta_base_components`` is a shared helper used by ``make_rta_calculator``
+and the Wigner-RTA / Kubo-RTA factories in their respective subpackages.
+
 ``build_lbte_base_components`` is a shared helper used by both
 ``make_lbte_calculator`` and the Wigner-LBTE factory in
 ``conductivity/wigner/calculator_factory.py``.
@@ -251,6 +254,133 @@ def build_lbte_base_components(
     )
 
 
+@dataclass
+class RTABaseComponents:
+    """Shared RTA infrastructure built by build_rta_base_components().
+
+    Contains the pre-assembled building blocks that are common to standard
+    BTE-RTA, Wigner-RTA, and Kubo-RTA calculators.  Each caller substitutes
+    its own velocity provider, heat-capacity provider, and accumulator;
+    everything else is reused as-is.
+
+    Attributes
+    ----------
+    sigmas : list of float or None
+        Smearing widths (empty list selects tetrahedron method).
+    temperatures : ndarray of double or None
+        Temperatures in Kelvin, or None when not provided.
+    point_ops : ndarray of int64, shape (num_ops, 3, 3)
+        Reciprocal-space point-group operations.
+    rot_cart : ndarray of double, shape (num_ops, 3, 3)
+        Cartesian rotation matrices.
+    scattering_provider : RTAScatteringProvider
+        Pre-configured scattering provider.
+
+    """
+
+    sigmas: list[float | None]
+    temperatures: NDArray[np.double] | None
+    point_ops: NDArray[np.int64]
+    rot_cart: NDArray[np.double]
+    scattering_provider: RTAScatteringProvider
+
+
+def build_rta_base_components(
+    interaction: Interaction,
+    *,
+    sigmas: Sequence[float | None] | None = None,
+    sigma_cutoff: float | None = None,
+    temperatures: Sequence[float] | NDArray[np.double] | None = None,
+    is_kappa_star: bool = True,
+    is_full_pp: bool = False,
+    use_ave_pp: bool = False,
+    read_pp: bool = False,
+    store_pp: bool = False,
+    pp_filename: str | os.PathLike | None = None,
+    is_N_U: bool = False,
+    is_gamma_detail: bool = False,
+    log_level: int = 0,
+) -> RTABaseComponents:
+    """Build RTA infrastructure shared by standard, Wigner, and Kubo RTA.
+
+    Normalises sigmas/temperatures, extracts symmetry operations, and
+    constructs the ``RTAScatteringProvider``.  The caller is responsible
+    for constructing velocity/heat-capacity providers and the accumulator.
+
+    Parameters
+    ----------
+    interaction : Interaction
+        Interaction instance with dynamical matrix initialised.
+    sigmas : sequence or None, optional
+        Smearing widths. None selects the tetrahedron method.
+    sigma_cutoff : float or None, optional
+        Smearing cutoff in units of sigma.
+    temperatures : array-like or None, optional
+        Temperatures in Kelvin.
+    is_kappa_star : bool, optional
+        Use k-star symmetry.
+    is_full_pp : bool, optional
+        Compute full ph-ph interaction matrix.
+    use_ave_pp : bool, optional
+        Use pre-averaged ph-ph interaction.
+    read_pp : bool, optional
+        Read ph-ph interaction from file.
+    store_pp : bool, optional
+        Store ph-ph interaction to file.
+    pp_filename : str or path or None, optional
+        Filename for ph-ph interaction I/O.
+    is_N_U : bool, optional
+        Decompose gamma into Normal and Umklapp.
+    is_gamma_detail : bool, optional
+        Store per-triplet gamma.
+    log_level : int, optional
+        Verbosity.
+
+    Returns
+    -------
+    RTABaseComponents
+
+    """
+    _sigmas: list[float | None] = [] if sigmas is None else list(sigmas)
+    _temperatures: NDArray[np.double] | None = (
+        np.asarray(temperatures, dtype="double") if temperatures is not None else None
+    )
+
+    if is_kappa_star:
+        point_ops: NDArray[np.int64] = interaction.bz_grid.reciprocal_operations
+        rot_cart: NDArray[np.double] = interaction.bz_grid.rotations_cartesian
+    else:
+        point_ops = np.eye(3, dtype="int64", order="C").reshape(1, 3, 3)
+        rot_cart = np.eye(3, dtype="double", order="C").reshape(1, 3, 3)
+
+    scattering_provider = RTAScatteringProvider(
+        interaction,
+        sigmas=_sigmas,
+        temperatures=(
+            _temperatures
+            if _temperatures is not None
+            else np.arange(0, 1001, 10, dtype="double")
+        ),
+        sigma_cutoff=sigma_cutoff,
+        is_full_pp=is_full_pp,
+        use_ave_pp=use_ave_pp,
+        read_pp=read_pp,
+        store_pp=store_pp,
+        pp_filename=pp_filename,
+        is_N_U=is_N_U,
+        is_gamma_detail=is_gamma_detail,
+        log_level=log_level,
+    )
+
+    return RTABaseComponents(
+        sigmas=_sigmas,
+        temperatures=_temperatures,
+        point_ops=point_ops,
+        rot_cart=rot_cart,
+        scattering_provider=scattering_provider,
+    )
+
+
 def make_rta_calculator(
     interaction: Interaction,
     *,
@@ -321,29 +451,12 @@ def make_rta_calculator(
     ConductivityCalculator
 
     """
-    _sigmas: list[float | None] = [] if sigmas is None else list(sigmas)
-    _temperatures: NDArray[np.double] | None = (
-        np.asarray(temperatures, dtype="double") if temperatures is not None else None
-    )
-
-    if is_kappa_star:
-        point_ops = interaction.bz_grid.reciprocal_operations
-        rot_cart: NDArray[np.double] = interaction.bz_grid.rotations_cartesian
-    else:
-        point_ops = np.eye(3, dtype="int64", order="C").reshape(1, 3, 3)
-        rot_cart = np.eye(3, dtype="double", order="C").reshape(1, 3, 3)
-
-    cv_provider = ModeHeatCapacityProvider(interaction)
-
-    scattering_provider = RTAScatteringProvider(
+    base = build_rta_base_components(
         interaction,
-        sigmas=_sigmas,
-        temperatures=(
-            _temperatures
-            if _temperatures is not None
-            else np.arange(0, 1001, 10, dtype="double")
-        ),
+        sigmas=sigmas,
         sigma_cutoff=sigma_cutoff,
+        temperatures=temperatures,
+        is_kappa_star=is_kappa_star,
         is_full_pp=is_full_pp,
         use_ave_pp=use_ave_pp,
         read_pp=read_pp,
@@ -354,11 +467,13 @@ def make_rta_calculator(
         log_level=log_level,
     )
 
+    cv_provider = ModeHeatCapacityProvider(interaction)
+
     conversion_factor = get_unit_to_WmK() / interaction.primitive.volume
     velocity_provider = GroupVelocityProvider(
         interaction,
-        point_operations=point_ops,
-        rotations_cartesian=rot_cart,
+        point_operations=base.point_ops,
+        rotations_cartesian=base.rot_cart,
         is_kappa_star=is_kappa_star,
         gv_delta_q=gv_delta_q,
         log_level=log_level,
@@ -373,11 +488,11 @@ def make_rta_calculator(
         interaction,
         velocity_provider=velocity_provider,
         cv_provider=cv_provider,
-        scattering_provider=scattering_provider,
+        scattering_provider=base.scattering_provider,
         accumulator=accumulator,
         grid_points=grid_points,
         temperatures=temperatures,
-        sigmas=_sigmas,
+        sigmas=base.sigmas,
         sigma_cutoff=sigma_cutoff,
         is_isotope=is_isotope,
         mass_variances=mass_variances,

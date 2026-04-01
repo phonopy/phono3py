@@ -39,7 +39,7 @@ from __future__ import annotations
 import sys
 import time
 from collections.abc import Iterator
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 from numpy.typing import NDArray
@@ -255,7 +255,7 @@ class LBTEKappaAccumulator:
         collision_result: LBTECollisionResult,
         group_velocities: NDArray[np.double],
         heat_capacities: NDArray[np.double],
-        velocity_product: NDArray | None = None,
+        extra: dict[str, Any] | None = None,
     ) -> None:
         """Store per-grid-point Stage 1 data.
 
@@ -269,10 +269,10 @@ class LBTEKappaAccumulator:
             Group velocities at this grid point, shape (num_band0, 3).
         heat_capacities : NDArray[np.double]
             Mode heat capacities, shape (num_temp, num_band0).
-        velocity_product : NDArray or None, optional
-            Velocity outer product at this grid point.  Ignored by the
-            standard LBTE accumulator; passed for interface compatibility with
-            plugin accumulators (e.g. Wigner).
+        extra : dict or None, optional
+            Plugin-specific data from the velocity provider.  Ignored by the
+            standard LBTE accumulator; used by plugin accumulators (e.g.
+            Wigner) to extract velocity_product, velocity_operator, etc.
 
         """
         assert self._collision_matrix is not None
@@ -337,7 +337,7 @@ class LBTEKappaAccumulator:
             Total number of sampling grid points (sum of k-star orders).
         suppress_kappa_log : bool, optional
             When True, skip the per-temperature kappa table log so that the
-            caller (e.g. WignerLBTECalculator) can print its own format after
+            caller (e.g. WignerLBTEAccumulator) can print its own format after
             computing additional terms (Stage 3).  The sigma header and
             diagonalize output are still printed.  Default False.
 
@@ -429,6 +429,11 @@ class LBTEKappaAccumulator:
     def mfp(self) -> NDArray[np.double] | None:
         """Return mean free path, shape (num_sigma, num_temp, num_gp, num_band0, 3)."""
         return self._mfp
+
+    @property
+    def group_velocities(self) -> NDArray[np.double]:
+        """Return group velocities, shape (num_gp, num_band0, 3)."""
+        return self._gv
 
     @property
     def temperatures(self) -> NDArray[np.double]:

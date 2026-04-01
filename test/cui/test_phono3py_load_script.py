@@ -152,6 +152,11 @@ def test_phono3py_load_generates_kappa_hdf5_contents():
                 assert np.all(f["mesh"][:] == np.array([5, 5, 5]))  # type: ignore
                 assert np.all(np.isfinite(f["kappa"][0]))  # type: ignore
                 assert f["kappa"][0, 0] > 0  # type: ignore
+                # gv_by_gv: (num_gp, num_band0, 6)
+                assert "gv_by_gv" in f
+                assert f["gv_by_gv"].ndim == 3  # type: ignore
+                assert f["gv_by_gv"].shape[-1] == 6  # type: ignore
+                assert np.all(np.isfinite(f["gv_by_gv"][:]))  # type: ignore
 
             for created_filename in (
                 "phono3py.yaml",
@@ -824,6 +829,17 @@ def test_phono3py_load_write_gamma_contains_isotope_and_N_U():
                     0.014355506081254441, rel=0.2
                 )
                 assert np.max(np.abs(gamma - (gamma_n + gamma_u))) < 1e-10
+
+            # Per-grid-point files should contain gv_by_gv.
+            gp_files = sorted(pathlib.Path(".").glob("kappa-m999-g*.hdf5"))
+            assert gp_files, "No per-grid-point kappa files found"
+            with h5py.File(gp_files[0], "r") as f_gp:
+                assert "gv_by_gv" in f_gp
+                gv_by_gv = f_gp["gv_by_gv"][:]
+                # gv_by_gv shape: (num_band0, 6)
+                assert gv_by_gv.ndim == 2
+                assert gv_by_gv.shape[-1] == 6
+                assert np.all(np.isfinite(gv_by_gv))
 
             for created_filename in (
                 "phono3py.yaml",
