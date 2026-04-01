@@ -37,6 +37,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -100,6 +101,7 @@ class LBTECalculator:
         Compute averaged ph-ph interaction.  Default False.
     log_level : int, optional
         Verbosity level.  Default 0.
+
     """
 
     def __init__(
@@ -166,6 +168,7 @@ class LBTECalculator:
         on_grid_point : callable or None, optional
             Called with the grid-point loop index after each grid point is
             processed.  Used for per-grid-point file writes.
+
         """
         if self._log_level:
             print(
@@ -198,6 +201,7 @@ class LBTECalculator:
         Calls accumulator.finalize() using the sum of IR grid weights as the
         number of sampling grid points.  Use this instead of run() when
         gamma and collision_matrix have been loaded externally.
+
         """
         self._accumulator.finalize(int(self._grid_weights.sum()))
 
@@ -248,6 +252,7 @@ class LBTECalculator:
 
         Used by the read-from-file path to resize arrays when the temperatures
         stored in the collision file differ from the initial default.
+
         """
         self._temperatures = np.asarray(value, dtype="double")
         self._accumulator.temperatures = self._temperatures
@@ -356,6 +361,40 @@ class LBTECalculator:
     def mfp(self) -> NDArray[np.double] | None:
         """Return mean free path, shape (num_sigma, num_temp, num_gp, num_band0, 3)."""
         return self._accumulator.mfp
+
+    def __getattr__(self, name: str) -> object:
+        """Delegate unknown attribute lookups to the accumulator.
+
+        Allows plugin-specific properties (kappa_P_exact, kappa_C, etc.)
+        to be accessed directly on the calculator without hard-coding them here.
+
+        """
+        if name.startswith("_"):
+            raise AttributeError(name)
+        try:
+            acc = object.__getattribute__(self, "_accumulator")
+        except AttributeError:
+            raise AttributeError(name) from None
+        try:
+            return getattr(acc, name)
+        except AttributeError:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'"
+            ) from None
+
+    def get_extra_kappa_output(self) -> dict[str, Any] | None:
+        """Return variant-specific kappa output from the accumulator.
+
+        Called by output writers to obtain plugin-defined quantities (e.g.
+        Wigner kappa_P_exact, kappa_C) that are written to the hdf5 file via
+        write_kappa_to_hdf5(extra_datasets=...).
+
+        Returns None when the accumulator does not implement this method
+        (standard LBTE).
+
+        """
+        fn = getattr(self._accumulator, "get_extra_kappa_output", None)
+        return fn() if callable(fn) else None
 
     def get_frequencies_all(self) -> NDArray[np.double]:
         """Return phonon frequencies on the full BZ grid."""
@@ -476,7 +515,9 @@ class LBTECalculator:
             )
 
         # Accumulate into global arrays.
-        self._accumulator.accumulate(i_gp, collision_result, gv, cv)
+        self._accumulator.accumulate(
+            i_gp, collision_result, gv, cv, vel_result.velocity_product
+        )
 
         if self._log_level:
             self._show_log(i_gp, gv)

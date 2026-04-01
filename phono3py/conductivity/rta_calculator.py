@@ -233,7 +233,7 @@ class ConductivityCalculator:
                 "==================="
             )
 
-        self._compute_kappa()
+        self._accumulator.finalize(self._num_sampling_grid_points)
 
     # ------------------------------------------------------------------
     # Properties — grid / phonon metadata
@@ -344,6 +344,7 @@ class ConductivityCalculator:
 
         Returns None when the accumulator does not implement this method
         (standard RTA and Kubo).
+
         """
         fn = getattr(self._accumulator, "get_extra_kappa_output", None)
         return fn() if callable(fn) else None
@@ -359,6 +360,7 @@ class ConductivityCalculator:
         bool
             True when the accumulator handled the display; False otherwise
             (caller should fall back to the standard progress display).
+
         """
         fn = getattr(self._accumulator, "show_rta_progress", None)
         if callable(fn):
@@ -729,6 +731,10 @@ class ConductivityCalculator:
         if self._log_level:
             self._show_log(i_gp)
 
+        result = self._make_grid_point_result(i_gp, gp_input)
+        self._accumulator.accumulate(i_gp, result)
+        self._count_ignored_modes(i_gp, result)
+
     def _show_log(self, i_gp: int) -> None:
         gp = self._grid_points[i_gp]
         qpoint = get_qpoints_from_bz_grid_points(gp, self._pp.bz_grid)
@@ -740,8 +746,6 @@ class ConductivityCalculator:
             if self._averaged_pp_interaction is not None
             else None
         )
-        if self._gamma_iso is not None:
-            print("    Gamma_ph-isotope at gp %d: %s" % (gp, self._gamma_iso[0, i_gp]))
         self._show_log_value_names()
         if self._log_level > 2:
             self._show_log_values_on_kstar(frequencies, gv, ave_pp, gp, qpoint)
@@ -814,48 +818,46 @@ class ConductivityCalculator:
         print(text)
 
     # ------------------------------------------------------------------
-    # Private: kappa computation
+    # Private: kappa computation helpers
     # ------------------------------------------------------------------
 
-    def _compute_kappa(self) -> None:
-        assert self._temperatures is not None
+    def _make_grid_point_result(
+        self, i_gp: int, gp_input: GridPointInput
+    ) -> GridPointResult:
+        """Build GridPointResult for grid point i_gp from stored arrays."""
+        result = GridPointResult(input=gp_input)
+        result.group_velocities = self._gv[i_gp]
+        if self._gv_operator_sum2 is not None:
+            result.velocity_product = self._gv_operator_sum2[i_gp]
+        else:
+            result.velocity_product = self._gv_by_gv[i_gp]
+        result.heat_capacities = self._cv[:, i_gp, :]
+        if self._cv_mat is not None:
+            result.heat_capacity_matrix = self._cv_mat[:, i_gp, :, :]
+        result.gamma = self._gamma[:, :, i_gp, :]
+        if self._gamma_iso is not None:
+            result.gamma_isotope = self._gamma_iso[:, i_gp, :]
+        if self._gamma_elph is not None:
+            result.gamma_elph = self._gamma_elph[:, :, i_gp, :]
+        if self._gamma_boundary is not None:
+            result.gamma_boundary = self._gamma_boundary[i_gp]
+        return result
+
+    def _count_ignored_modes(self, i_gp: int, result: GridPointResult) -> None:
+        """Increment ignored-mode counter for modes below cutoff or negative gamma."""
         assert self._num_ignored_phonon_modes is not None
-
-        for i_gp in range(len(self._grid_points)):
-            gp_input = self._make_grid_point_input(i_gp)
-            result = GridPointResult(input=gp_input)
-            result.group_velocities = self._gv[i_gp]
-            if self._gv_operator_sum2 is not None:
-                result.velocity_product = self._gv_operator_sum2[i_gp]
-            else:
-                result.velocity_product = self._gv_by_gv[i_gp]
-            result.heat_capacities = self._cv[:, i_gp, :]
-            if self._cv_mat is not None:
-                result.heat_capacity_matrix = self._cv_mat[:, i_gp, :, :]
-            result.gamma = self._gamma[:, :, i_gp, :]
-            if self._gamma_iso is not None:
-                result.gamma_isotope = self._gamma_iso[:, i_gp, :]
-            if self._gamma_elph is not None:
-                result.gamma_elph = self._gamma_elph[:, :, i_gp, :]
-            if self._gamma_boundary is not None:
-                result.gamma_boundary = self._gamma_boundary[i_gp]
-
-            self._accumulator.accumulate(i_gp, result)
-
-            # Count ignored modes.
-            weight = int(self._grid_weights[i_gp])
-            freq = self._frequencies[self._grid_points[i_gp]]  # type: ignore
-            for j in range(len(self._sigmas)):
-                for k in range(len(self._temperatures)):
-                    g_eff = result.gamma[j, k].copy()
-                    if result.gamma_isotope is not None:
-                        g_eff += result.gamma_isotope[j]
-                    if result.gamma_elph is not None:
-                        g_eff += result.gamma_elph[j, k]
-                    if result.gamma_boundary is not None:
-                        g_eff += result.gamma_boundary
-                    for ll, f in enumerate(freq[self._pp.band_indices]):
-                        if f < self._pp.cutoff_frequency or g_eff[ll] < 0:
-                            self._num_ignored_phonon_modes[j, k] += weight
-
-        self._accumulator.finalize(self._num_sampling_grid_points)
+        assert self._temperatures is not None
+        weight = int(self._grid_weights[i_gp])
+        freq = self._frequencies[self._grid_points[i_gp]]  # type: ignore
+        for j in range(len(self._sigmas)):
+            for k in range(len(self._temperatures)):
+                g_eff = result.gamma[j, k].copy()
+                if result.gamma_isotope is not None:
+                    g_eff += result.gamma_isotope[j]
+                if result.gamma_elph is not None:
+                    g_eff += result.gamma_elph[j, k]
+                if result.gamma_boundary is not None:
+                    g_eff += result.gamma_boundary
+                for ll, f in enumerate(freq[self._pp.band_indices]):
+                    if f < self._pp.cutoff_frequency or g_eff[ll] < 0:
+                        self._num_ignored_phonon_modes[j, k] += weight

@@ -49,6 +49,7 @@ class VelocityOperatorProvider:
         Finite-difference step for velocity operator. Default None.
     log_level : int, optional
         Verbosity level. Default 0.
+
     """
 
     def __init__(
@@ -90,6 +91,7 @@ class VelocityOperatorProvider:
             ``group_velocities`` (num_band0, 3), ``velocity_product``
             (num_band0, num_band, 6) complex, and
             ``num_sampling_grid_points`` are set.
+
         """
         result = GridPointResult(input=gp)
 
@@ -122,6 +124,7 @@ class VelocityOperatorProvider:
         degenerate subspace is diagonalised so that the group velocities are
         well-defined.  This follows the same procedure as
         ``ConductivityWignerComponents._set_gv_operator``.
+
         """
         nat3 = gv_op_full.shape[0]
         # Diagonal of operator gives standard group velocities
@@ -157,6 +160,7 @@ class VelocityOperatorProvider:
             Symmetry-averaged outer product packed in Voigt order.
         kstar_order : int
             Number of arms in the k-star.
+
         """
         if self._is_kappa_star:
             rotation_map = get_grid_points_by_rotations(gp.grid_point, self._pp.bz_grid)

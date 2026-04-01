@@ -93,7 +93,6 @@ from phono3py.conductivity.lbte_calculator import LBTECalculator
 from phono3py.conductivity.lbte_init import get_thermal_conductivity_LBTE
 from phono3py.conductivity.rta_calculator import ConductivityCalculator
 from phono3py.conductivity.rta_init import get_thermal_conductivity_RTA
-from phono3py.conductivity.wigner.lbte_calculator import WignerLBTECalculator
 from phono3py.interface.fc_calculator import (
     FC3Solver,
     extract_fc2_fc3_calculators_options,
@@ -328,11 +327,10 @@ class Phono3py:
         self._phonon_supercells_with_displacements: list[PhonopyAtoms] | None = None
 
         # Thermal conductivity
-        # ConductivityCalculator (RTA), LBTECalculator (standard LBTE),
-        # or WignerLBTECalculator (wigner LBTE)
-        self._thermal_conductivity: (
-            ConductivityCalculator | LBTECalculator | WignerLBTECalculator | None
-        ) = None
+        # ConductivityCalculator (RTA) or LBTECalculator (standard/Wigner LBTE).
+        self._thermal_conductivity: ConductivityCalculator | LBTECalculator | None = (
+            None
+        )
 
         # Imaginary part of self energy at frequency points
         self._ise_params: ImagSelfEnergyValues | None = None
@@ -924,7 +922,7 @@ class Phono3py:
     @property
     def thermal_conductivity(
         self,
-    ) -> ConductivityCalculator | LBTECalculator | WignerLBTECalculator | None:
+    ) -> ConductivityCalculator | LBTECalculator | None:
         """Return thermal conductivity class instance."""
         return self._thermal_conductivity
 
@@ -2258,7 +2256,7 @@ class Phono3py:
         write_gamma: bool = False,
         read_gamma: bool = False,
         is_N_U: bool = False,
-        conductivity_type: Literal["wigner", "kubo"] | None = None,
+        conductivity_type: str | None = None,
         write_kappa: bool = False,
         write_gamma_detail: bool = False,
         write_collision: bool = False,

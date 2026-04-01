@@ -3,6 +3,7 @@
 This function is registered as a built-in entry in factory._REGISTRY and
 serves as a reference implementation for the plugin API.  External code can
 override it by calling register_calculator() with the same method name.
+
 """
 
 from __future__ import annotations
@@ -14,13 +15,15 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from phono3py.conductivity.heat_capacity_providers import HeatCapacityMatrixProvider
-from phono3py.conductivity.kappa_accumulators import KuboKappaAccumulator
-from phono3py.conductivity.kappa_formulas import KuboKappaFormula
+from phono3py.conductivity.kubo.heat_capacity_providers import (
+    HeatCapacityMatrixProvider,
+)
+from phono3py.conductivity.kubo.kappa_accumulators import KuboKappaAccumulator
+from phono3py.conductivity.kubo.kappa_formulas import KuboKappaFormula
+from phono3py.conductivity.kubo.velocity_providers import VelocityMatrixProvider
 from phono3py.conductivity.rta_calculator import ConductivityCalculator
 from phono3py.conductivity.scattering_providers import RTAScatteringProvider
 from phono3py.conductivity.utils import get_unit_to_WmK
-from phono3py.conductivity.velocity_providers import VelocityMatrixProvider
 from phono3py.phonon3.interaction import Interaction
 
 
@@ -92,6 +95,7 @@ def make_kubo_rta_calculator(
     Returns
     -------
     ConductivityCalculator
+
     """
     _sigmas: list[float | None] = [] if sigmas is None else list(sigmas)
     _temperatures: NDArray[np.double] | None = (

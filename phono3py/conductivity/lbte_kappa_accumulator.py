@@ -255,6 +255,7 @@ class LBTEKappaAccumulator:
         collision_result: LBTECollisionResult,
         group_velocities: NDArray[np.double],
         heat_capacities: NDArray[np.double],
+        velocity_product: NDArray | None = None,
     ) -> None:
         """Store per-grid-point Stage 1 data.
 
@@ -268,6 +269,11 @@ class LBTEKappaAccumulator:
             Group velocities at this grid point, shape (num_band0, 3).
         heat_capacities : NDArray[np.double]
             Mode heat capacities, shape (num_temp, num_band0).
+        velocity_product : NDArray or None, optional
+            Velocity outer product at this grid point.  Ignored by the
+            standard LBTE accumulator; passed for interface compatibility with
+            plugin accumulators (e.g. Wigner).
+
         """
         assert self._collision_matrix is not None
 
@@ -296,6 +302,7 @@ class LBTEKappaAccumulator:
             Loop index over ir_grid_points (0-based).
         gamma_iso : NDArray[np.double]
             Isotope scattering rates, shape (num_sigma, num_band0).
+
         """
         if self._gamma_iso is None:
             num_sigma = len(self._sigmas)
@@ -333,6 +340,7 @@ class LBTEKappaAccumulator:
             caller (e.g. WignerLBTECalculator) can print its own format after
             computing additional terms (Stage 3).  The sigma header and
             diagonalize output are still printed.  Default False.
+
         """
         assert self._collision_matrix is not None
         if self._log_level:
@@ -546,6 +554,7 @@ class LBTEKappaAccumulator:
             Sigma index.
         i_temp : int
             Temperature index.
+
         """
         return self._get_main_diagonal(i_gp, i_sigma, i_temp)
 
@@ -560,6 +569,7 @@ class LBTEKappaAccumulator:
             Sigma index.
         k : int
             Temperature index.
+
         """
         main_diagonal = self._gamma[j, k, i].copy()
         if self._gamma_iso is not None:
@@ -1187,6 +1197,7 @@ class LBTEKappaAccumulator:
 
         Collision matrix is half of that in Chaput's paper, so Y is
         divided by 2.
+
         """
         assert self._f_vectors is not None
         num_band = len(self._pp.primitive) * 3
@@ -1232,6 +1243,7 @@ class LBTEKappaAccumulator:
 
         Collision matrix is defined as half of that in Chaput's paper,
         so the factor of 2 is not needed here.
+
         """
         num_band = len(self._pp.primitive) * 3
         for i, (v_gp, f_gp) in enumerate(

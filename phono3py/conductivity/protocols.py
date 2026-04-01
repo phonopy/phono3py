@@ -23,6 +23,7 @@ Data containers
 GridPointInput and GridPointResult are defined in
 ``phono3py.conductivity.grid_point_data`` and re-exported here for
 convenience.
+
 """
 
 from __future__ import annotations
@@ -55,6 +56,7 @@ class VelocityProvider(Protocol):
         Full velocity operator and its outer product (Wigner).
     VelocityMatrixProvider
         Off-diagonal velocity matrix and its outer product (Kubo).
+
     """
 
     def compute(self, gp: GridPointInput) -> GridPointResult:
@@ -63,6 +65,7 @@ class VelocityProvider(Protocol):
         The returned GridPointResult must have at minimum
         ``group_velocities``, ``velocity_product``, and
         ``num_sampling_grid_points`` set.
+
         """
         ...
 
@@ -76,6 +79,7 @@ class HeatCapacityProvider(Protocol):
         Scalar mode heat capacity Cv (all variants).
     HeatCapacityMatrixProvider
         Heat-capacity matrix Cv_mat (Kubo).
+
     """
 
     def compute(
@@ -87,6 +91,7 @@ class HeatCapacityProvider(Protocol):
 
         The returned GridPointResult must have at minimum
         ``heat_capacities`` set (and optionally ``heat_capacity_matrix``).
+
         """
         ...
 
@@ -104,6 +109,7 @@ class ScatteringProvider(Protocol):
     Isotope and boundary scattering are separate diagonal-only contributions
     handled by IsotopeScatteringProvider and BoundaryScatteringProvider.
     They set ``gamma_isotope`` and ``gamma_boundary`` in GridPointResult.
+
     """
 
     def compute_gamma(
@@ -114,6 +120,7 @@ class ScatteringProvider(Protocol):
 
         The returned GridPointResult must have at minimum
         ``gamma`` of shape (num_sigma, num_temp, num_band0) set.
+
         """
         ...
 
@@ -132,6 +139,7 @@ class KappaFormula(Protocol):
         Wigner transport equation including off-diagonal coherence terms.
     KuboKappaFormula
         Green-Kubo formula using velocity matrix and heat-capacity matrix.
+
     """
 
     def compute(self, result: GridPointResult) -> NDArray[np.double]:
@@ -142,5 +150,6 @@ class KappaFormula(Protocol):
         kappa : ndarray, shape (num_sigma, num_temp, num_band0, 6)
             Six independent components of the symmetric kappa tensor:
             xx, yy, zz, yz, xz, xy.
+
         """
         ...

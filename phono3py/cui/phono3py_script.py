@@ -1536,9 +1536,7 @@ def main(**argparse_control: Any) -> None:
             read_gamma=settings.read_gamma,
             write_kappa=True,
             is_N_U=settings.is_N_U,
-            conductivity_type=cast(
-                Literal["wigner", "kubo"] | None, settings.conductivity_type
-            ),
+            conductivity_type=settings.conductivity_type,
             write_gamma_detail=settings.write_gamma_detail,
             write_collision=settings.write_collision,
             read_collision=settings.read_collision,

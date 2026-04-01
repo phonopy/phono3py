@@ -188,7 +188,7 @@ def get_thermal_conductivity_RTA(
     gv_delta_q: float | None = None,
     is_full_pp: bool = False,
     is_N_U: bool = False,
-    conductivity_type: Literal["wigner", "kubo"] | None = None,
+    conductivity_type: str | None = None,
     write_gamma: bool = False,
     read_gamma: bool = False,
     write_kappa: bool = False,
@@ -210,13 +210,7 @@ def get_thermal_conductivity_RTA(
             "--------------------"
         )
 
-    method: Literal["rta", "wigner-rta", "kubo-rta"] = (
-        "wigner-rta"
-        if conductivity_type == "wigner"
-        else "kubo-rta"
-        if conductivity_type == "kubo"
-        else "rta"
-    )
+    method = f"{conductivity_type}-rta" if conductivity_type else "rta"
     return _run_standard_rta(
         interaction,
         method=method,
@@ -249,7 +243,7 @@ def get_thermal_conductivity_RTA(
 def _run_standard_rta(
     interaction: Interaction,
     *,
-    method: Literal["rta", "wigner-rta", "kubo-rta"] = "rta",
+    method: str = "rta",
     temperatures: Sequence[float] | NDArray[np.double],
     sigmas: Sequence[float | None] | None,
     sigma_cutoff: float | None,

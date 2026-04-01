@@ -3,6 +3,7 @@
 These functions are registered as built-in entries in factory._REGISTRY and
 serve as reference implementations for the plugin API.  External code can
 override them by calling register_calculator() with the same method name.
+
 """
 
 from __future__ import annotations
@@ -14,21 +15,20 @@ from typing import Any, Literal
 import numpy as np
 from numpy.typing import NDArray
 
+from phono3py.conductivity.calculator_factory import build_lbte_base_components
 from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
-from phono3py.conductivity.lbte_collision_provider import LBTECollisionProvider
-from phono3py.conductivity.lbte_kappa_accumulator import LBTEKappaAccumulator
+from phono3py.conductivity.lbte_calculator import LBTECalculator
 from phono3py.conductivity.rta_calculator import ConductivityCalculator
 from phono3py.conductivity.scattering_providers import RTAScatteringProvider
-from phono3py.conductivity.utils import get_unit_to_WmK
-from phono3py.conductivity.wigner.accumulators import WignerKappaAccumulator
-from phono3py.conductivity.wigner.formulas import (
+from phono3py.conductivity.wigner.kappa_accumulators import (
+    WignerKappaAccumulator,
+    WignerLBTEAccumulator,
+)
+from phono3py.conductivity.wigner.kappa_formulas import (
     WignerKappaFormula,
     get_conversion_factor_WTE,
 )
-from phono3py.conductivity.wigner.lbte_calculator import WignerLBTECalculator
-from phono3py.conductivity.wigner.providers import VelocityOperatorProvider
-from phono3py.phonon.grid import get_grid_points_by_rotations, get_ir_grid_points
-from phono3py.phonon3.collision_matrix import CollisionMatrix
+from phono3py.conductivity.wigner.velocity_providers import VelocityOperatorProvider
 from phono3py.phonon3.interaction import Interaction
 
 
@@ -104,6 +104,7 @@ def make_wigner_rta_calculator(
     Returns
     -------
     ConductivityCalculator
+
     """
     _sigmas: list[float | None] = [] if sigmas is None else list(sigmas)
     _temperatures: NDArray[np.double] | None = (
@@ -195,8 +196,8 @@ def make_wigner_lbte_calculator(
     gv_delta_q: float | None = None,
     log_level: int = 0,
     **_ignored: Any,
-) -> WignerLBTECalculator:
-    """Build a WignerLBTECalculator.
+) -> LBTECalculator:
+    """Build an LBTECalculator with a WignerLBTEAccumulator.
 
     Implements the Wigner transport equation via direct LBTE solution,
     adding the coherence (C) term on top of the LBTE population (P) terms.
@@ -246,113 +247,34 @@ def make_wigner_lbte_calculator(
 
     Returns
     -------
-    WignerLBTECalculator
+    LBTECalculator
+        Configured with a WignerLBTEAccumulator that computes both the P-term
+        (via standard LBTE) and the C-term (Wigner coherence).
+
     """
-    _sigmas: list[float | None] = [] if sigmas is None else list(sigmas)
-    _temps: NDArray[np.double] = (
-        np.array([300.0], dtype="double")
-        if temperatures is None
-        else np.asarray(temperatures, dtype="double")
-    )
-
-    if is_kappa_star:
-        rot_cart: NDArray[np.double] = interaction.bz_grid.rotations_cartesian
-    else:
-        rot_cart = np.eye(3, dtype="double", order="C").reshape(1, 3, 3)
-
-    # Ensure phonons at gamma are solved (idempotent).
-    interaction.nac_q_direction = None
-    interaction.run_phonon_solver_at_gamma()
-    if not interaction.phonon_all_done:
-        interaction.run_phonon_solver()
-    frequencies, _, _ = interaction.get_phonons()
-
-    # IR grid points in BZ-grid format.
-    ir_grg, _, _ = get_ir_grid_points(interaction.bz_grid)
-    ir_gps_bzg = np.array(interaction.bz_grid.grg2bzg[ir_grg], dtype="int64")
-
-    # rot_grid_points in BZ-grid format: shape (num_ir_gp, num_ops).
-    rot_grid_points: NDArray[np.int64] | None
-    if is_reducible_collision_matrix:
-        rot_grid_points = None
-    else:
-        if is_kappa_star:
-            reciprocal_rotations = interaction.bz_grid.rotations
-        else:
-            reciprocal_rotations = np.eye(3, dtype="int64").reshape(1, 3, 3)
-        num_ir_gp = len(ir_gps_bzg)
-        num_ops = len(reciprocal_rotations)
-        rot_grid_points = np.zeros((num_ir_gp, num_ops), dtype="int64")
-        for i, ir_gp in enumerate(ir_gps_bzg):
-            rot_grid_points[i] = get_grid_points_by_rotations(
-                ir_gp,
-                interaction.bz_grid,
-                reciprocal_rotations=reciprocal_rotations,
-            )
-
-    # Build CollisionMatrix (pre-initialized with global grid structure).
-    if is_reducible_collision_matrix:
-        collision_matrix_obj = CollisionMatrix(
-            interaction,
-            is_reducible_collision_matrix=True,
-            log_level=log_level,
-            lang=lang,
-        )
-    else:
-        assert rot_grid_points is not None
-        collision_matrix_obj = CollisionMatrix(
-            interaction,
-            rotations_cartesian=rot_cart,
-            num_ir_grid_points=len(ir_gps_bzg),
-            rot_grid_points=rot_grid_points,
-            log_level=log_level,
-            lang=lang,
-        )
-
-    collision_provider = LBTECollisionProvider(
+    base = build_lbte_base_components(
         interaction,
-        collision_matrix_obj,
-        sigmas=_sigmas,
+        sigmas=sigmas,
         sigma_cutoff=sigma_cutoff,
-        temperatures=_temps,
+        temperatures=temperatures,
+        is_kappa_star=is_kappa_star,
+        is_reducible_collision_matrix=is_reducible_collision_matrix,
+        solve_collective_phonon=solve_collective_phonon,
         is_full_pp=is_full_pp,
         read_pp=read_pp,
         pp_filename=pp_filename,
-        log_level=log_level,
-    )
-
-    conversion_factor = get_unit_to_WmK() / interaction.primitive.volume
-
-    accumulator = LBTEKappaAccumulator(
-        interaction,
-        ir_grid_points=ir_gps_bzg,
-        rot_grid_points=rot_grid_points,
-        rotations_cartesian=rot_cart,
-        frequencies=frequencies,
-        sigmas=_sigmas,
-        temperatures=_temps,
-        conversion_factor=conversion_factor,
-        is_reducible_collision_matrix=is_reducible_collision_matrix,
-        is_kappa_star=is_kappa_star,
-        solve_collective_phonon=solve_collective_phonon,
-        boundary_mfp=boundary_mfp,
         pinv_cutoff=pinv_cutoff,
         pinv_solver=pinv_solver,
         pinv_method=pinv_method,
         lang=lang,
+        boundary_mfp=boundary_mfp,
         log_level=log_level,
-    )
-
-    point_ops = (
-        interaction.bz_grid.reciprocal_operations
-        if is_kappa_star
-        else np.eye(3, dtype="int64", order="C").reshape(1, 3, 3)
     )
 
     velocity_provider = VelocityOperatorProvider(
         interaction,
-        point_operations=point_ops,
-        rotations_cartesian=rot_cart,
+        point_operations=base.point_ops,
+        rotations_cartesian=base.rot_cart,
         is_kappa_star=is_kappa_star,
         gv_delta_q=gv_delta_q,
         log_level=log_level,
@@ -360,18 +282,29 @@ def make_wigner_lbte_calculator(
 
     cv_provider = ModeHeatCapacityProvider(interaction)
 
-    return WignerLBTECalculator(
-        interaction,
-        velocity_provider=velocity_provider,
-        cv_provider=cv_provider,
-        collision_provider=collision_provider,
-        accumulator=accumulator,
-        temperatures=_temps,
-        sigmas=_sigmas,
+    wigner_accumulator = WignerLBTEAccumulator(
+        inner=base.accumulator,
+        ir_grid_points=base.ir_grid_points,
+        frequencies=base.frequencies,
+        band_indices=np.asarray(interaction.band_indices, dtype="int64"),
+        cutoff_frequency=interaction.cutoff_frequency,
         conversion_factor_WTE=get_conversion_factor_WTE(interaction.primitive.volume),
+        temperatures=base.temperatures,
+        sigmas=base.sigmas,
+        is_reducible_collision_matrix=is_reducible_collision_matrix,
+        log_level=log_level,
+    )
+
+    return LBTECalculator(
+        interaction,
+        velocity_provider=velocity_provider,  # type: ignore[arg-type]
+        cv_provider=cv_provider,
+        collision_provider=base.collision_provider,
+        accumulator=wigner_accumulator,  # type: ignore[arg-type]
+        temperatures=base.temperatures,
+        sigmas=base.sigmas,
         is_isotope=is_isotope,
         mass_variances=mass_variances,
-        is_reducible_collision_matrix=is_reducible_collision_matrix,
         is_full_pp=is_full_pp,
         log_level=log_level,
     )
