@@ -57,6 +57,6 @@ def _get_kappa(ph3: Phono3py, mesh, is_isotope: bool = False):
     ph3.run_thermal_conductivity(
         temperatures=[300],
         is_isotope=is_isotope,
-        conductivity_type="kubo",
+        transport_type="kubo",
     )
     return ph3.thermal_conductivity.kappa

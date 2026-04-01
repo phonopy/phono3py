@@ -336,7 +336,7 @@ def _get_kappa(
     is_isotope=False,
     is_full_pp=False,
     openmp_per_triplets=None,
-    conductivity_type=None,
+    transport_type=None,
 ):
     ph3.mesh_numbers = mesh
     ph3.init_phph_interaction(openmp_per_triplets=openmp_per_triplets)
@@ -346,6 +346,6 @@ def _get_kappa(
         ],
         is_isotope=is_isotope,
         is_full_pp=is_full_pp,
-        conductivity_type=conductivity_type,
+        transport_type=transport_type,
     )
     return ph3.thermal_conductivity.kappa

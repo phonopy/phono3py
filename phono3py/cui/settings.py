@@ -54,7 +54,6 @@ class Phono3pySettings(Settings):
         self.boundary_mfp: float = (
             1.0e6  # In micrometer. Value is for avoiding divergence.
         )
-        self.conductivity_type: str | None = None
         self.constant_averaged_pp_interaction: float | None = None
         self.create_forces_fc2: list[str] | None = None
         self.create_forces_fc3: list[str] | None = None
@@ -110,6 +109,7 @@ class Phono3pySettings(Settings):
         self.subtract_forces: str | None = None
         self.subtract_forces_fc2: str | None = None
         self.temperatures: list[float] | None = None
+        self.transport_type: str | None = None
         self.use_ave_pp: bool = False
         self.use_grg: bool = False
         self.write_collision: bool = False
@@ -323,13 +323,14 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
             elif args.is_tetrahedron_method is False:
                 self._confs["tetrahedron"] = ".false."
 
+        # M. Simoncelli, N. Marzari, F. Mauri; Nat. Phys. 15, 809 (2019)
         if "is_wigner_kappa" in arg_list:
             if args.is_wigner_kappa:
-                self._confs["conductivity_type"] = "wigner"
+                self._confs["transport_type"] = "SMM19"
 
-        if "is_kubo_kappa" in arg_list:
-            if args.is_kubo_kappa:
-                self._confs["conductivity_type"] = "kubo"
+        if "transport_type" in arg_list:
+            if args.transport_type:
+                self._confs["transport_type"] = args.transport_type
 
         if "lapack_zheev_uplo" in arg_list:
             if args.lapack_zheev_uplo is not None:
@@ -570,7 +571,7 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
 
             # string
             if conf_key in (
-                "conductivity_type",
+                "transport_type",
                 "create_forces_fc3_file",
                 "output_yaml_filename",
                 "subtract_forces",
@@ -689,8 +690,8 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
             settings.is_bterta = params["bterta"]
 
         # Choice of thermal conductivity type
-        if "conductivity_type" in params:
-            settings.conductivity_type = params["conductivity_type"]
+        if "transport_type" in params:
+            settings.transport_type = params["transport_type"]
 
         # Solve collective phonons
         if "collective_phonon" in params:

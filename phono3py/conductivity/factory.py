@@ -6,9 +6,9 @@ Built-in methods
     Standard BTE in the relaxation time approximation.
 "lbte"
     Standard BTE via direct LBTE solution.
-"wigner-rta"
+"SMM19-rta"
     Wigner transport equation in RTA (registered plugin, can be overridden).
-"wigner-lbte"
+"SMM19-lbte"
     Wigner transport equation via LBTE (registered plugin, can be overridden).
 "kubo-rta"
     Green-Kubo formula in RTA (registered plugin, can be overridden).
@@ -101,7 +101,7 @@ def register_calculator(method: str, factory: CalculatorFactory) -> None:
             f"'{method}' is a built-in method and cannot be overridden. "
             f"Built-in methods: {sorted(_BUILTIN_METHODS)}."
         )
-    _REGISTRY[method] = factory
+    _REGISTRY[method.lower()] = factory
 
 
 def make_conductivity_calculator(
@@ -138,8 +138,8 @@ def make_conductivity_calculator(
     interaction : Interaction
         Interaction instance.  init_dynamical_matrix must have been called.
     method : str, optional
-        Calculation method.  Built-in: "rta", "lbte", "wigner-rta",
-        "wigner-lbte", "kubo-rta".  Default "rta".
+        Calculation method.  Built-in: "rta", "lbte", "SMM19-rta",
+        "SMM19-lbte", "kubo-rta".  Default "rta".
     grid_points : array-like or None, optional
         BZ grid point indices.  None uses irreducible grid points.  Default None.
     temperatures : array-like or None, optional
@@ -194,7 +194,7 @@ def make_conductivity_calculator(
         registered factory.
 
     """
-    if method not in _REGISTRY:
+    if method.lower() not in _REGISTRY:
         raise NotImplementedError(
             f"method='{method}' is not implemented. "
             f"Built-in methods: {sorted(_BUILTIN_METHODS)}. "
@@ -203,7 +203,7 @@ def make_conductivity_calculator(
             "Use register_calculator() to add custom methods."
         )
 
-    return _REGISTRY[method](
+    return _REGISTRY[method.lower()](
         interaction,
         grid_points=grid_points,
         temperatures=temperatures,
@@ -234,7 +234,7 @@ def make_conductivity_calculator(
 # ---------------------------------------------------------------------------
 # Register all built-in factories.
 # "rta" and "lbte" are protected by _BUILTIN_METHODS.
-# "wigner-*" and "kubo-*" can be overridden by external plugins.
+# "SMM19-*" and "kubo-*" can be overridden by external plugins.
 # The try/except allows each to be installed as a standalone package via
 # namespace packages; if absent, the method is simply not available.
 # ---------------------------------------------------------------------------

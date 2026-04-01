@@ -188,7 +188,7 @@ def get_thermal_conductivity_RTA(
     gv_delta_q: float | None = None,
     is_full_pp: bool = False,
     is_N_U: bool = False,
-    conductivity_type: str | None = None,
+    transport_type: str | None = None,
     write_gamma: bool = False,
     read_gamma: bool = False,
     write_kappa: bool = False,
@@ -210,7 +210,7 @@ def get_thermal_conductivity_RTA(
             "--------------------"
         )
 
-    method = f"{conductivity_type}-rta" if conductivity_type else "rta"
+    method = f"{transport_type}-rta" if transport_type else "rta"
     return _run_standard_rta(
         interaction,
         method=method,

@@ -172,7 +172,7 @@ def get_thermal_conductivity_LBTE(
     is_kappa_star: bool = True,
     gv_delta_q: float | None = None,
     is_full_pp: bool = False,
-    conductivity_type: str | None = None,
+    transport_type: str | None = None,
     pinv_cutoff: float = 1.0e-8,
     pinv_solver: int = 0,  # default: dsyev in lapacke
     pinv_method: int = 0,  # default: abs(eig) < cutoff
@@ -197,7 +197,7 @@ def get_thermal_conductivity_LBTE(
             "Cutoff frequency of pseudo inversion of collision matrix: %s" % pinv_cutoff
         )
 
-    method = f"{conductivity_type}-lbte" if conductivity_type else "lbte"
+    method = f"{transport_type}-lbte" if transport_type else "lbte"
     return _run_standard_lbte(
         interaction,
         method=method,

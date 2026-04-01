@@ -2256,7 +2256,7 @@ class Phono3py:
         write_gamma: bool = False,
         read_gamma: bool = False,
         is_N_U: bool = False,
-        conductivity_type: str | None = None,
+        transport_type: str | None = None,
         write_kappa: bool = False,
         write_gamma_detail: bool = False,
         write_collision: bool = False,
@@ -2360,8 +2360,8 @@ class Phono3py:
             RTA only (`is_LBTE=False`). With True, categorization of normal
             and Umklapp scattering is made and imaginary parts of self energy
             for them are separated.
-        conductivity_type : str, optional
-            "wigner", "kubo", or None. Default is None.
+        transport_type : str, optional
+            "SMM19", "kubo", or None. Default is None.
         write_kappa : bool, optional, default is False
             With True, thermal conductivity and related properties are
             written into a file. With multiple `sigmas`, respective files
@@ -2449,7 +2449,7 @@ class Phono3py:
                 is_kappa_star=is_kappa_star,
                 gv_delta_q=gv_delta_q,
                 is_full_pp=is_full_pp,
-                conductivity_type=conductivity_type,
+                transport_type=transport_type,
                 pinv_cutoff=pinv_cutoff,
                 pinv_solver=pinv_solver,
                 pinv_method=pinv_method,
@@ -2483,7 +2483,7 @@ class Phono3py:
                 gv_delta_q=gv_delta_q,
                 is_full_pp=is_full_pp,
                 is_N_U=is_N_U,
-                conductivity_type=conductivity_type,
+                transport_type=transport_type,
                 write_gamma=write_gamma,
                 read_gamma=read_gamma,
                 write_kappa=write_kappa,
