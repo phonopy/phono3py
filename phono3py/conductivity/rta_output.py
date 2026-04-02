@@ -1,4 +1,4 @@
-"""RTA output helpers (progress display and file writers)."""
+"""RTA output helpers (file writers)."""
 
 from __future__ import annotations
 
@@ -20,66 +20,6 @@ def _require_ndarray_not_none(value: NDArray[Any] | None, name: str) -> NDArray[
     """Return non-None ndarray, otherwise fail fast with assertion."""
     assert value is not None, f"{name} must not be None"
     return value
-
-
-def show_rta_progress(br: cond_RTA_type, log_level: int) -> None:
-    """Show progress for the RTA conductivity calculation."""
-    ShowCalcProgress.kappa_RTA(br, log_level)
-
-
-class ShowCalcProgress:
-    """Show calculation progress."""
-
-    @staticmethod
-    def kappa_RTA(br: ConductivityCalculator, log_level: int) -> None:
-        """Show RTA calculation progress.
-
-        Delegates to ``br.show_rta_progress(log_level)`` for variant-specific
-        display (e.g. Wigner).  Falls back to the standard display when the
-        accumulator does not override it.
-
-        """
-        if br.show_rta_progress(log_level):
-            return
-        temperatures = _require_ndarray_not_none(br.temperatures, "br.temperatures")
-        sigmas = br.sigmas
-        kappa = _require_ndarray_not_none(br.kappa, "br.kappa")
-        num_ignored_phonon_modes = _require_ndarray_not_none(
-            br.number_of_ignored_phonon_modes,
-            "br.number_of_ignored_phonon_modes",
-        )
-        num_band = br.frequencies.shape[1]
-        num_phonon_modes = br.number_of_sampling_grid_points * num_band
-        for i, sigma in enumerate(sigmas):
-            kappa_i = _require_ndarray_not_none(kappa[i], "kappa[i]")
-            text = "----------- Thermal conductivity (W/m-k) "
-            if sigma:
-                text += "for sigma=%s -----------" % sigma
-            else:
-                text += "with tetrahedron method -----------"
-            print(text)
-            if log_level > 1:
-                print(
-                    ("#%6s       " + " %-10s" * 6 + "#ipm")
-                    % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
-                )
-                for j, (t, k) in enumerate(zip(temperatures, kappa_i, strict=True)):
-                    print(
-                        ("%7.1f" + " %10.3f" * 6 + " %d/%d")
-                        % (
-                            (t,)
-                            + tuple(k)
-                            + (num_ignored_phonon_modes[i, j], num_phonon_modes)
-                        )
-                    )
-            else:
-                print(
-                    ("#%6s       " + " %-10s" * 6)
-                    % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
-                )
-                for t, k in zip(temperatures, kappa_i, strict=True):
-                    print(("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
-            print("", flush=True)
 
 
 class ConductivityRTAWriter:

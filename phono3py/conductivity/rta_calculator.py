@@ -362,24 +362,20 @@ class ConductivityCalculator:
         fn = getattr(self._accumulator, "get_extra_grid_point_output", None)
         return fn(i) if callable(fn) else None
 
-    def show_rta_progress(self, log_level: int) -> bool:
-        """Show variant-specific RTA kappa progress if the accumulator supports it.
+    def log_kappa(self) -> None:
+        """Delegate kappa logging to the accumulator.
 
-        Delegates to ``accumulator.show_rta_progress(self, log_level)`` when
-        available (e.g. WignerKappaAccumulator).
-
-        Returns
-        -------
-        bool
-            True when the accumulator handled the display; False otherwise
-            (caller should fall back to the standard progress display).
+        Called by rta_init after run() when full kappa is available.
 
         """
-        fn = getattr(self._accumulator, "show_rta_progress", None)
+        fn = getattr(self._accumulator, "log_kappa", None)
         if callable(fn):
-            fn(self, log_level)
-            return True
-        return False
+            num_band = self._frequencies.shape[1]
+            num_phonon_modes = self._num_sampling_grid_points * num_band
+            fn(
+                num_ignored_phonon_modes=self._num_ignored_phonon_modes,
+                num_phonon_modes=num_phonon_modes,
+            )
 
     @property
     def kappa(self) -> NDArray[np.double]:

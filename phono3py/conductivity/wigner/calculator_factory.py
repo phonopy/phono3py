@@ -23,8 +23,8 @@ from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvid
 from phono3py.conductivity.lbte_calculator import LBTECalculator
 from phono3py.conductivity.rta_calculator import ConductivityCalculator
 from phono3py.conductivity.wigner.kappa_accumulators import (
-    WignerKappaAccumulator,
-    WignerLBTEAccumulator,
+    WignerRTAKappaAccumulator,
+    WignerLBTEKappaAccumulator,
 )
 from phono3py.conductivity.wigner.kappa_formulas import (
     WignerKappaFormula,
@@ -139,7 +139,12 @@ def make_wigner_rta_calculator(
         cutoff_frequency=interaction.cutoff_frequency,
         conversion_factor_WTE=get_conversion_factor_WTE(interaction.primitive.volume),
     )
-    accumulator = WignerKappaAccumulator(kappa_formula)
+    accumulator = WignerRTAKappaAccumulator(
+        kappa_formula,
+        temperatures=temperatures,
+        sigmas=base.sigmas,
+        log_level=log_level,
+    )
 
     return ConductivityCalculator(
         interaction,
@@ -184,7 +189,7 @@ def make_wigner_lbte_calculator(
     log_level: int = 0,
     **_ignored: Any,
 ) -> LBTECalculator:
-    """Build an LBTECalculator with a WignerLBTEAccumulator.
+    """Build an LBTECalculator with a WignerLBTEKappaAccumulator.
 
     Implements the Wigner transport equation via direct LBTE solution,
     adding the coherence (C) term on top of the LBTE population (P) terms.
@@ -235,7 +240,7 @@ def make_wigner_lbte_calculator(
     Returns
     -------
     LBTECalculator
-        Configured with a WignerLBTEAccumulator that computes both the P-term
+        Configured with a WignerLBTEKappaAccumulator that computes both the P-term
         (via standard LBTE) and the C-term (Wigner coherence).
 
     """
@@ -269,7 +274,7 @@ def make_wigner_lbte_calculator(
 
     cv_provider = ModeHeatCapacityProvider(interaction)
 
-    wigner_accumulator = WignerLBTEAccumulator(
+    wigner_accumulator = WignerLBTEKappaAccumulator(
         inner=base.accumulator,
         ir_grid_points=base.ir_grid_points,
         frequencies=base.frequencies,

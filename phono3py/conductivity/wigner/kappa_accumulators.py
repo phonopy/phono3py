@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
 
 from phono3py.conductivity.grid_point_data import GridPointResult
+from phono3py.conductivity.kappa_accumulators import _log_kappa_header, _log_kappa_row
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionResult
 from phono3py.conductivity.lbte_kappa_accumulator import LBTEKappaAccumulator
 from phono3py.conductivity.wigner.kappa_formulas import (
@@ -16,11 +18,8 @@ from phono3py.conductivity.wigner.kappa_formulas import (
     WignerKappaFormula,
 )
 
-if TYPE_CHECKING:
-    from phono3py.conductivity.rta_calculator import ConductivityCalculator
 
-
-class WignerKappaAccumulator:
+class WignerRTAKappaAccumulator:
     """Kappa accumulator for the Wigner transport equation (WTE).
 
     Decomposes kappa into a population term (kappa_P_RTA) and a coherence
@@ -34,12 +33,27 @@ class WignerKappaAccumulator:
     ----------
     formula : WignerKappaFormula
         Formula instance used to compute mode kappa at each grid point.
+    temperatures : array-like or None
+        Temperature values in Kelvin.
+    sigmas : sequence or None
+        Smearing widths (None for tetrahedron method).
+    log_level : int
+        Verbosity level.
 
     """
 
-    def __init__(self, formula: WignerKappaFormula) -> None:
+    def __init__(
+        self,
+        formula: WignerKappaFormula,
+        temperatures: Sequence[float] | NDArray[np.double] | None = None,
+        sigmas: Sequence[float | None] | None = None,
+        log_level: int = 0,
+    ) -> None:
         """Init method."""
         self._formula = formula
+        self._temperatures = temperatures
+        self._sigmas: list[float | None] = [] if sigmas is None else list(sigmas)
+        self._log_level = log_level
         self._kappa_P: NDArray[np.double]
         self._mode_kappa_P: NDArray[np.double]
         self._kappa_C: NDArray[np.double] | None = None
@@ -153,81 +167,54 @@ class WignerKappaAccumulator:
             return None
         return {"velocity_operator": self._velocity_operator[i]}
 
-    def show_rta_progress(self, br: ConductivityCalculator, log_level: int) -> None:
-        """Print K_P, K_C, K_T rows for the Wigner-RTA conductivity.
+    def log_kappa(
+        self,
+        num_ignored_phonon_modes: NDArray[np.int64] | None = None,
+        num_phonon_modes: int | None = None,
+    ) -> None:
+        """Print K_P, K_C, K_T rows for the Wigner-RTA conductivity."""
+        if not self._log_level or self._temperatures is None:
+            return
 
-        Called via duck typing from ShowCalcProgress.kappa_RTA so that
-        all Wigner-specific display logic stays in this subpackage.
+        kappa_tot = self.kappa
+        show_ipm = (
+            self._log_level > 1
+            and num_ignored_phonon_modes is not None
+            and num_phonon_modes is not None
+        )
 
-        Parameters
-        ----------
-        br :
-            ConductivityCalculator instance.
-        log_level :
-            Verbosity level.
-
-        """
-        temperatures = br.temperatures
-        assert temperatures is not None
-        sigmas = br.sigmas
-        kappa_tot = br.kappa
-        num_ignored = br.number_of_ignored_phonon_modes
-        assert num_ignored is not None
-        num_band = br.frequencies.shape[1]
-        num_phonon_modes = br.number_of_sampling_grid_points * num_band
-
-        kappa_P_RTA = self._kappa_P
         assert self._kappa_C is not None
-        kappa_C = self._kappa_C
-
-        for i, sigma in enumerate(sigmas):
-            kappa_p_i = kappa_P_RTA[i]
-            kappa_c_i = kappa_C[i]
-            kappa_tot_i = kappa_tot[i]
-            text = "----------- Thermal conductivity (W/m-k) "
-            if sigma:
-                text += "for sigma=%s -----------" % sigma
-            else:
-                text += "with tetrahedron method -----------"
-            print(text)
-            if log_level > 1:
-                print(
-                    ("#%6s       " + " %-10s" * 6 + "#ipm")
-                    % ("      \t   T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
+        for i, sigma in enumerate(self._sigmas):
+            _log_kappa_header(sigma, show_ipm=show_ipm)
+            for j, t in enumerate(self._temperatures):
+                ipm = (
+                    int(num_ignored_phonon_modes[i, j])
+                    if show_ipm and num_ignored_phonon_modes is not None
+                    else None
                 )
-                for j, (t, k) in enumerate(zip(temperatures, kappa_p_i, strict=True)):
-                    print(
-                        "K_P\t"
-                        + ("%7.1f" + " %10.3f" * 6 + " %d/%d")
-                        % ((t,) + tuple(k) + (num_ignored[i, j], num_phonon_modes))
-                    )
-                print(" ")
-                for j, (t, k) in enumerate(zip(temperatures, kappa_c_i, strict=True)):
-                    print(
-                        "K_C\t"
-                        + ("%7.1f" + " %10.3f" * 6 + " %d/%d")
-                        % ((t,) + tuple(k) + (num_ignored[i, j], num_phonon_modes))
-                    )
-                print(" ")
-                for j, (t, k) in enumerate(zip(temperatures, kappa_tot_i, strict=True)):
-                    print(
-                        "K_T\t"
-                        + ("%7.1f" + " %10.3f" * 6 + " %d/%d")
-                        % ((t,) + tuple(k) + (num_ignored[i, j], num_phonon_modes))
-                    )
-            else:
-                print(
-                    ("#%6s       " + " %-10s" * 6)
-                    % ("      \t   T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
+                _log_kappa_row(
+                    "K_P\t", t, self._kappa_P[i, j], ipm, num_phonon_modes
                 )
-                for t, k in zip(temperatures, kappa_p_i, strict=True):
-                    print("K_P\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
-                print(" ")
-                for t, k in zip(temperatures, kappa_c_i, strict=True):
-                    print("K_C\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
-                print(" ")
-                for t, k in zip(temperatures, kappa_tot_i, strict=True):
-                    print("K_T\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
+            print(" ")
+            for j, t in enumerate(self._temperatures):
+                ipm = (
+                    int(num_ignored_phonon_modes[i, j])
+                    if show_ipm and num_ignored_phonon_modes is not None
+                    else None
+                )
+                _log_kappa_row(
+                    "K_C\t", t, self._kappa_C[i, j], ipm, num_phonon_modes
+                )
+            print(" ")
+            for j, t in enumerate(self._temperatures):
+                ipm = (
+                    int(num_ignored_phonon_modes[i, j])
+                    if show_ipm and num_ignored_phonon_modes is not None
+                    else None
+                )
+                _log_kappa_row(
+                    "K_T\t", t, kappa_tot[i, j], ipm, num_phonon_modes
+                )
             print("", flush=True)
 
     def get_extra_kappa_output(self) -> dict[str, Any]:
@@ -248,7 +235,7 @@ class WignerKappaAccumulator:
         }
 
 
-class WignerLBTEAccumulator:
+class WignerLBTEKappaAccumulator:
     """Wraps LBTEKappaAccumulator and adds the Wigner coherence (C) term.
 
     Stage 1 (per-grid-point): accumulate() stores the velocity operator outer

@@ -11,7 +11,7 @@ from phono3py.conductivity.grid_point_data import (
 )
 
 
-class BTEKappaFormula:
+class KappaFormula:
     """Compute mode-kappa contribution at a single grid point (standard BTE).
 
     This formula implements the ``KappaFormula`` protocol for the standard

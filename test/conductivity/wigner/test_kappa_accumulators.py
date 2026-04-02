@@ -1,4 +1,4 @@
-"""Unit tests for WignerKappaAccumulator."""
+"""Unit tests for WignerRTAKappaAccumulator."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 import numpy as np
 
 from phono3py.conductivity.grid_point_data import GridPointInput, GridPointResult
-from phono3py.conductivity.wigner.kappa_accumulators import WignerKappaAccumulator
+from phono3py.conductivity.wigner.kappa_accumulators import WignerRTAKappaAccumulator
 
 
 def _make_result_with_velocity_operator(
@@ -42,7 +42,7 @@ def test_get_extra_grid_point_output_stores_velocity_operator():
     # formula.compute returns mode_kappa_P shaped (num_sigma, num_temp, num_band0, 6)
     formula.compute.return_value = np.zeros((1, 2, 3, 6), dtype="double")
 
-    acc = WignerKappaAccumulator(formula)
+    acc = WignerRTAKappaAccumulator(formula)
     acc.prepare(num_sigma=1, num_temp=2, num_gp=2, num_band0=3)
 
     result0 = _make_result_with_velocity_operator()
@@ -71,7 +71,7 @@ def test_get_extra_grid_point_output_returns_none_without_velocity_operator():
     formula = MagicMock()
     formula.compute.return_value = np.zeros((1, 2, 3, 6), dtype="double")
 
-    acc = WignerKappaAccumulator(formula)
+    acc = WignerRTAKappaAccumulator(formula)
     acc.prepare(num_sigma=1, num_temp=2, num_gp=1, num_band0=3)
 
     # Result without velocity_operator in extra

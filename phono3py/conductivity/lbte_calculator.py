@@ -518,6 +518,8 @@ class LBTECalculator:
         extra = vel_result.extra
         if vel_result.velocity_product is not None:
             extra["velocity_product"] = vel_result.velocity_product
+        if cv_result.heat_capacity_matrix is not None:
+            extra["heat_capacity_matrix"] = cv_result.heat_capacity_matrix
         self._accumulator.accumulate(i_gp, collision_result, gv, cv, extra or None)
 
         if self._log_level:

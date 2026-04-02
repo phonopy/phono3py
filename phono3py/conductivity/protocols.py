@@ -133,7 +133,7 @@ class KappaFormula(Protocol):
 
     Built-in implementations
     ------------------------
-    BTEKappaFormula
+    KappaFormula
         Standard diagonal BTE formula: kappa = sum Cv * (v x v) * tau.
     WignerKappaFormula
         Wigner transport equation including off-diagonal coherence terms.

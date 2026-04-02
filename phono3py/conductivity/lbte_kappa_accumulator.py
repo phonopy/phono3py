@@ -337,7 +337,7 @@ class LBTEKappaAccumulator:
             Total number of sampling grid points (sum of k-star orders).
         suppress_kappa_log : bool, optional
             When True, skip the per-temperature kappa table log so that the
-            caller (e.g. WignerLBTEAccumulator) can print its own format after
+            caller (e.g. WignerLBTEKappaAccumulator) can print its own format after
             computing additional terms (Stage 3).  The sigma header and
             diagonalize output are still printed.  Default False.
 

@@ -46,7 +46,7 @@ from numpy.typing import NDArray
 
 from phono3py.conductivity.factory import make_conductivity_calculator
 from phono3py.conductivity.rta_calculator import ConductivityCalculator
-from phono3py.conductivity.rta_output import ConductivityRTAWriter, show_rta_progress
+from phono3py.conductivity.rta_output import ConductivityRTAWriter
 from phono3py.conductivity.utils import build_options, write_pp_interaction
 from phono3py.file_IO import read_gamma_from_hdf5
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
@@ -335,8 +335,7 @@ def _run_standard_rta(
     calc.run(on_grid_point=_on_grid_point)
 
     if grid_points is None and all_bands_exist(interaction):
-        if log_level:
-            show_rta_progress(calc, log_level)
+        calc.log_kappa()
         if write_kappa:
             ConductivityRTAWriter.write_kappa(
                 calc,

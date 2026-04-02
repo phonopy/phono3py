@@ -23,8 +23,8 @@ import numpy as np
 from numpy.typing import NDArray
 
 from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
-from phono3py.conductivity.kappa_accumulators import StandardKappaAccumulator
-from phono3py.conductivity.kappa_formulas import BTEKappaFormula
+from phono3py.conductivity.kappa_accumulators import RTAKappaAccumulator
+from phono3py.conductivity.kappa_formulas import KappaFormula
 from phono3py.conductivity.lbte_calculator import LBTECalculator
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionProvider
 from phono3py.conductivity.lbte_kappa_accumulator import LBTEKappaAccumulator
@@ -43,7 +43,7 @@ class LBTEBaseComponents:
 
     Contains the pre-assembled building blocks that are common to both the
     standard LBTE and Wigner-LBTE calculators.  Wigner-LBTE wraps
-    ``accumulator`` in ``WignerLBTEAccumulator`` and substitutes a different
+    ``accumulator`` in ``WignerLBTEKappaAccumulator`` and substitutes a different
     velocity provider; everything else is reused as-is.
 
     Attributes
@@ -478,11 +478,16 @@ def make_rta_calculator(
         gv_delta_q=gv_delta_q,
         log_level=log_level,
     )
-    kappa_formula = BTEKappaFormula(
+    kappa_formula = KappaFormula(
         cutoff_frequency=interaction.cutoff_frequency,
         conversion_factor=conversion_factor,
     )
-    accumulator = StandardKappaAccumulator(kappa_formula)
+    accumulator = RTAKappaAccumulator(
+        kappa_formula,
+        temperatures=temperatures,
+        sigmas=base.sigmas,
+        log_level=log_level,
+    )
 
     return ConductivityCalculator(
         interaction,
