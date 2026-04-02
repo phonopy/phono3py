@@ -18,8 +18,10 @@ from typing import Protocol, runtime_checkable
 import numpy as np
 from numpy.typing import NDArray
 
-from phono3py.conductivity.grid_point_data import GridPointResult
-from phono3py.conductivity.kappa_formulas import KappaFormula
+from phono3py.conductivity.grid_point_data import (
+    GridPointResult,
+    compute_effective_gamma,
+)
 
 
 @runtime_checkable
@@ -120,10 +122,20 @@ def _log_kappa_row(
 class RTAKappaAccumulator:
     """Kappa accumulator for the standard BTE diagonal formula.
 
+    Computes mode kappa using the standard Boltzmann transport equation:
+
+        kappa_mode = Cv * (v x v) * tau / 2
+                   = Cv * gv_by_gv / (2 * gamma_eff) * unit_conversion
+
+    where gamma_eff is the total effective linewidth (phonon-phonon + isotope
+    + electron-phonon + boundary scattering).
+
     Parameters
     ----------
-    formula : KappaFormula
-        Formula instance used to compute mode kappa at each grid point.
+    cutoff_frequency : float
+        Modes with frequency below this value (in THz) are skipped.
+    conversion_factor : float
+        Unit conversion factor to W/(m*K).
     temperatures : array-like
         Temperature values in Kelvin.
     sigmas : sequence
@@ -135,13 +147,15 @@ class RTAKappaAccumulator:
 
     def __init__(
         self,
-        formula: KappaFormula,
+        cutoff_frequency: float,
+        conversion_factor: float,
         temperatures: NDArray[np.double] | Sequence[float] | None = None,
         sigmas: Sequence[float | None] | None = None,
         log_level: int = 0,
     ) -> None:
         """Init method."""
-        self._formula = formula
+        self._cutoff_frequency = cutoff_frequency
+        self._conversion_factor = conversion_factor
         self._temperatures = temperatures
         self._sigmas: list[float | None] = [] if sigmas is None else list(sigmas)
         self._log_level = log_level
@@ -163,7 +177,51 @@ class RTAKappaAccumulator:
 
     def accumulate(self, i_gp: int, result: GridPointResult) -> None:
         """Compute and accumulate mode kappa at grid point ``i_gp``."""
-        mode_kappa = self._formula.compute(result)
+        assert result.velocity_product is not None
+        assert result.heat_capacities is not None
+        assert result.gamma is not None
+
+        gv_by_gv = result.velocity_product  # (num_band0, 6)
+        cv = result.heat_capacities  # (num_temp, num_band0)
+        frequencies = result.input.frequencies[result.input.band_indices]
+
+        gamma = compute_effective_gamma(result)  # (num_sigma, num_temp, num_band0)
+        num_sigma, num_temp, num_band0 = gamma.shape
+        mode_kappa = np.zeros((num_sigma, num_temp, num_band0, 6), dtype="double")
+
+        for ll in range(num_band0):
+            if frequencies[ll] < self._cutoff_frequency:
+                continue
+            for j in range(num_sigma):
+                for k in range(num_temp):
+                    g = gamma[j, k, ll]
+                    old_settings = np.seterr(all="raise")
+                    try:
+                        mode_kappa[j, k, ll] = (
+                            gv_by_gv[ll] * cv[k, ll] / (g * 2) * self._conversion_factor
+                        )
+                    except FloatingPointError:
+                        # g ~ 0 and |gv| = 0: contribution is zero
+                        pass
+                    except Exception:
+                        print("=" * 26 + " Warning " + "=" * 26)
+                        print(
+                            " Unexpected physical condition of ph-ph "
+                            "interaction calculation was found."
+                        )
+                        print(
+                            " g=%f at gp=%d, band=%d, freq=%f"
+                            % (
+                                g,
+                                result.input.grid_point,
+                                ll + 1,
+                                frequencies[ll],
+                            )
+                        )
+                        print("=" * 61)
+                    finally:
+                        np.seterr(**old_settings)
+
         self._mode_kappa[:, :, i_gp, :, :] = mode_kappa
         # gv_by_gv already encodes the k-star order (sum over rotations
         # divided by site multiplicity). Do NOT multiply by grid_weight;

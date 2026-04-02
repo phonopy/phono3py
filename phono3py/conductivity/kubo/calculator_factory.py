@@ -23,10 +23,9 @@ from phono3py.conductivity.kubo.heat_capacity_providers import (
     HeatCapacityMatrixProvider,
 )
 from phono3py.conductivity.kubo.kappa_accumulators import (
-    KuboRTAKappaAccumulator,
     KuboLBTEKappaAccumulator,
+    KuboRTAKappaAccumulator,
 )
-from phono3py.conductivity.kubo.kappa_formulas import KuboKappaFormula
 from phono3py.conductivity.kubo.velocity_providers import VelocityMatrixProvider
 from phono3py.conductivity.lbte_calculator import LBTECalculator
 from phono3py.conductivity.rta_calculator import ConductivityCalculator
@@ -131,12 +130,9 @@ def make_kubo_rta_calculator(
     )
 
     conversion_factor = get_unit_to_WmK() / interaction.primitive.volume
-    kappa_formula = KuboKappaFormula(
+    accumulator = KuboRTAKappaAccumulator(
         cutoff_frequency=interaction.cutoff_frequency,
         conversion_factor=conversion_factor,
-    )
-    accumulator = KuboRTAKappaAccumulator(
-        kappa_formula,
         temperatures=temperatures,
         sigmas=base.sigmas,
         log_level=log_level,

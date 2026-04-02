@@ -4,9 +4,8 @@ This module defines GridPointInput and GridPointResult, the core data
 structures passed between building blocks in the conductivity calculation.
 
 Protocol interfaces (VelocityProvider, HeatCapacityProvider,
-ScatteringProvider, KappaFormula) are defined in
-``phono3py.conductivity.protocols`` and re-exported here for backward
-compatibility.
+ScatteringProvider) are defined in ``phono3py.conductivity.protocols``
+and re-exported here for backward compatibility.
 """
 
 from __future__ import annotations
@@ -237,7 +236,6 @@ def make_grid_point_input(
 
 from phono3py.conductivity.protocols import (  # noqa: E402
     HeatCapacityProvider,
-    KappaFormula,
     ScatteringProvider,
     VelocityProvider,
 )
@@ -250,5 +248,4 @@ __all__ = [
     "VelocityProvider",
     "HeatCapacityProvider",
     "ScatteringProvider",
-    "KappaFormula",
 ]

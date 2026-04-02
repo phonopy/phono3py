@@ -8,7 +8,6 @@ from phono3py.conductivity.grid_point_data import (
     GridPointInput,
     GridPointResult,
     HeatCapacityProvider,
-    KappaFormula,
     ScatteringProvider,
     VelocityProvider,
 )
@@ -138,11 +137,6 @@ class _DummyScatteringProvider:
         return result
 
 
-class _DummyKappaFormula:
-    def compute(self, result: GridPointResult) -> np.ndarray:
-        return np.zeros((NUM_TEMP, 6), dtype="double")
-
-
 def test_velocity_provider_protocol_satisfied():
     """A class with the right signature is accepted as VelocityProvider."""
     provider: VelocityProvider = _DummyVelocityProvider()
@@ -169,12 +163,3 @@ def test_scattering_provider_protocol_satisfied():
     result = provider.compute_gamma(gp)
     assert result.gamma is not None
     assert result.gamma.shape == (1, NUM_TEMP, NUM_BAND0)
-
-
-def test_kappa_formula_protocol_satisfied():
-    """Test KappaFormula protocol with a dummy implementation."""
-    formula: KappaFormula = _DummyKappaFormula()
-    gp = make_gp_input()
-    result = GridPointResult(input=gp)
-    kappa = formula.compute(result)
-    assert kappa.shape == (NUM_TEMP, 6)

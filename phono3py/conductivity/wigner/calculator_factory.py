@@ -23,13 +23,10 @@ from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvid
 from phono3py.conductivity.lbte_calculator import LBTECalculator
 from phono3py.conductivity.rta_calculator import ConductivityCalculator
 from phono3py.conductivity.wigner.kappa_accumulators import (
-    WignerRTAKappaAccumulator,
     WignerLBTEKappaAccumulator,
+    WignerRTAKappaAccumulator,
 )
-from phono3py.conductivity.wigner.kappa_formulas import (
-    WignerKappaFormula,
-    get_conversion_factor_WTE,
-)
+from phono3py.conductivity.wigner.kappa_formulas import get_conversion_factor_WTE
 from phono3py.conductivity.wigner.velocity_providers import VelocityOperatorProvider
 from phono3py.phonon3.interaction import Interaction
 
@@ -135,12 +132,9 @@ def make_wigner_rta_calculator(
 
     cv_provider = ModeHeatCapacityProvider(interaction)
 
-    kappa_formula = WignerKappaFormula(
+    accumulator = WignerRTAKappaAccumulator(
         cutoff_frequency=interaction.cutoff_frequency,
         conversion_factor_WTE=get_conversion_factor_WTE(interaction.primitive.volume),
-    )
-    accumulator = WignerRTAKappaAccumulator(
-        kappa_formula,
         temperatures=temperatures,
         sigmas=base.sigmas,
         log_level=log_level,

@@ -9,13 +9,15 @@ import numpy as np
 from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
 
-from phono3py.conductivity.grid_point_data import GridPointResult
+from phono3py.conductivity.grid_point_data import (
+    GridPointResult,
+    compute_effective_gamma,
+)
 from phono3py.conductivity.kappa_accumulators import _log_kappa_header, _log_kappa_row
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionResult
 from phono3py.conductivity.lbte_kappa_accumulator import LBTEKappaAccumulator
 from phono3py.conductivity.wigner.kappa_formulas import (
     DEGENERATE_FREQUENCY_THRESHOLD_THZ,
-    WignerKappaFormula,
 )
 
 
@@ -27,12 +29,14 @@ class WignerRTAKappaAccumulator:
 
     The P arrays are pre-allocated in ``prepare()``.  The C arrays are
     allocated lazily on the first grid point because their shape depends on
-    ``num_band`` (nat3), which is not known until the first formula call.
+    ``num_band`` (nat3), which is not known at prepare time.
 
     Parameters
     ----------
-    formula : WignerKappaFormula
-        Formula instance used to compute mode kappa at each grid point.
+    cutoff_frequency : float
+        Modes with frequency below this value (in THz) are skipped.
+    conversion_factor_WTE : float
+        Unit conversion factor to W/(m*K) for the WTE formula.
     temperatures : array-like or None
         Temperature values in Kelvin.
     sigmas : sequence or None
@@ -44,13 +48,15 @@ class WignerRTAKappaAccumulator:
 
     def __init__(
         self,
-        formula: WignerKappaFormula,
+        cutoff_frequency: float,
+        conversion_factor_WTE: float,
         temperatures: Sequence[float] | NDArray[np.double] | None = None,
         sigmas: Sequence[float | None] | None = None,
         log_level: int = 0,
     ) -> None:
         """Init method."""
-        self._formula = formula
+        self._cutoff_frequency = cutoff_frequency
+        self._conversion_factor_WTE = conversion_factor_WTE
         self._temperatures = temperatures
         self._sigmas: list[float | None] = [] if sigmas is None else list(sigmas)
         self._log_level = log_level
@@ -85,25 +91,125 @@ class WignerRTAKappaAccumulator:
                 )
             self._velocity_operator[i_gp] = vel_op
 
-        mode_kappa_P = self._formula.compute(
-            result
-        )  # sets result.extra["wigner_mode_kappa_C"]
+        # Compute population and coherence mode kappa (inlined from
+        # WignerKappaFormula).
+        assert result.velocity_product is not None
+        assert result.heat_capacities is not None
+        assert result.gamma is not None
+
+        frequencies = result.input.frequencies  # (num_band,) all bands
+        gv_by_gv = result.velocity_product  # (num_band0, num_band, 6) complex
+        cv = result.heat_capacities  # (num_temp, num_band0)
+
+        gamma = compute_effective_gamma(result)  # (num_sigma, num_temp, num_band0)
+        num_sigma, num_temp, num_band0 = gamma.shape
+        num_band = len(frequencies)
+        THzToEv = get_physical_units().THzToEv
+
+        mode_kappa_P = np.zeros((num_sigma, num_temp, num_band0, 6), dtype="double")
+        mode_kappa_C = np.zeros(
+            (num_sigma, num_temp, num_band0, num_band, 6), dtype="double"
+        )
+
+        for j in range(num_sigma):
+            for k in range(num_temp):
+                g = gamma[j, k]  # (num_band0,)
+                cv_k = cv[k]  # (num_band0,)
+                for s1 in range(num_band0):
+                    freq_s1 = frequencies[s1]
+                    if freq_s1 <= self._cutoff_frequency:
+                        continue
+                    for s2 in range(num_band):
+                        freq_s2 = frequencies[s2]
+                        if freq_s2 <= self._cutoff_frequency:
+                            continue
+                        pair = self._get_pair_contribution(
+                            freq_s1=freq_s1,
+                            freq_s2=freq_s2,
+                            g_s1=g[s1],
+                            g_s2=g[s2],
+                            cv_s1=cv_k[s1],
+                            cv_s2=cv_k[s2],
+                            gv_by_gv_s1s2=gv_by_gv[s1, s2],
+                            THzToEv=THzToEv,
+                        )
+                        if pair is None:
+                            continue
+                        contribution, is_population = pair
+                        if is_population:
+                            mode_kappa_P[j, k, s1] += 0.5 * contribution
+                            mode_kappa_P[j, k, s2] += 0.5 * contribution
+                        else:
+                            mode_kappa_C[j, k, s1, s2] += contribution
+
         self._mode_kappa_P[:, :, i_gp, :, :] = mode_kappa_P
         self._kappa_P += np.sum(mode_kappa_P, axis=2)
 
-        mode_kappa_C = result.extra.get("wigner_mode_kappa_C")
-        if mode_kappa_C is not None:
-            if self._mode_kappa_C is None:
-                # Lazy allocation: shape depends on num_band (nat3).
-                ns, nt, nb0, nb, _ = mode_kappa_C.shape
-                num_gp = self._mode_kappa_P.shape[2]
-                self._mode_kappa_C = np.zeros(
-                    (ns, nt, num_gp, nb0, nb, 6), dtype="double", order="C"
-                )
-                self._kappa_C = np.zeros((ns, nt, 6), dtype="double", order="C")
-            self._mode_kappa_C[:, :, i_gp, :, :, :] = mode_kappa_C
-            assert self._kappa_C is not None
-            self._kappa_C += np.sum(mode_kappa_C, axis=(2, 3))
+        if self._mode_kappa_C is None:
+            # Lazy allocation: shape depends on num_band (nat3).
+            num_gp = self._mode_kappa_P.shape[2]
+            self._mode_kappa_C = np.zeros(
+                (num_sigma, num_temp, num_gp, num_band0, num_band, 6),
+                dtype="double",
+                order="C",
+            )
+            self._kappa_C = np.zeros(
+                (num_sigma, num_temp, 6), dtype="double", order="C"
+            )
+        self._mode_kappa_C[:, :, i_gp, :, :, :] = mode_kappa_C
+        assert self._kappa_C is not None
+        self._kappa_C += np.sum(mode_kappa_C, axis=(2, 3))
+
+    def _get_pair_contribution(
+        self,
+        *,
+        freq_s1: float,
+        freq_s2: float,
+        g_s1: float,
+        g_s2: float,
+        cv_s1: float,
+        cv_s2: float,
+        gv_by_gv_s1s2: NDArray[np.cdouble],
+        THzToEv: float,
+    ) -> tuple[NDArray[np.double], bool] | None:
+        """Return the kappa contribution of a (s1, s2) mode pair.
+
+        Returns None when the contribution is identically zero.
+
+        Returns
+        -------
+        (contribution, is_population) or None
+            contribution : (6,) real array
+            is_population : True when the pair is treated as a population
+                            term (|freq_s1 - freq_s2| <
+                            DEGENERATE_FREQUENCY_THRESHOLD_THZ).
+
+        """
+        hbar_omega_s1 = freq_s1 * THzToEv
+        hbar_omega_s2 = freq_s2 * THzToEv
+        hbar_gamma_s1 = 2.0 * g_s1 * THzToEv
+        hbar_gamma_s2 = 2.0 * g_s2 * THzToEv
+
+        gamma_sum = hbar_gamma_s1 + hbar_gamma_s2
+        delta_omega = hbar_omega_s1 - hbar_omega_s2
+        denominator = delta_omega**2 + 0.25 * gamma_sum**2
+        if denominator == 0.0:
+            return None
+        lorentzian_div_hbar = (0.5 * gamma_sum) / denominator
+
+        prefactor = (
+            0.25
+            * (hbar_omega_s1 + hbar_omega_s2)
+            * (cv_s1 / hbar_omega_s1 + cv_s2 / hbar_omega_s2)
+        )
+        contribution = (
+            gv_by_gv_s1s2
+            * prefactor
+            * lorentzian_div_hbar
+            * self._conversion_factor_WTE
+        ).real
+        is_population = abs(freq_s1 - freq_s2) < DEGENERATE_FREQUENCY_THRESHOLD_THZ
+        return contribution, is_population
 
     def finalize(self, num_sampling_grid_points: int) -> None:
         """Normalise both population and coherence terms."""
@@ -192,9 +298,7 @@ class WignerRTAKappaAccumulator:
                     if show_ipm and num_ignored_phonon_modes is not None
                     else None
                 )
-                _log_kappa_row(
-                    "K_P\t", t, self._kappa_P[i, j], ipm, num_phonon_modes
-                )
+                _log_kappa_row("K_P\t", t, self._kappa_P[i, j], ipm, num_phonon_modes)
             print(" ")
             for j, t in enumerate(self._temperatures):
                 ipm = (
@@ -202,9 +306,7 @@ class WignerRTAKappaAccumulator:
                     if show_ipm and num_ignored_phonon_modes is not None
                     else None
                 )
-                _log_kappa_row(
-                    "K_C\t", t, self._kappa_C[i, j], ipm, num_phonon_modes
-                )
+                _log_kappa_row("K_C\t", t, self._kappa_C[i, j], ipm, num_phonon_modes)
             print(" ")
             for j, t in enumerate(self._temperatures):
                 ipm = (
@@ -212,9 +314,7 @@ class WignerRTAKappaAccumulator:
                     if show_ipm and num_ignored_phonon_modes is not None
                     else None
                 )
-                _log_kappa_row(
-                    "K_T\t", t, kappa_tot[i, j], ipm, num_phonon_modes
-                )
+                _log_kappa_row("K_T\t", t, kappa_tot[i, j], ipm, num_phonon_modes)
             print("", flush=True)
 
     def get_extra_kappa_output(self) -> dict[str, Any]:

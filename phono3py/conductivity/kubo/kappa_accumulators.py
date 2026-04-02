@@ -8,12 +8,12 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from phono3py.conductivity.grid_point_data import GridPointResult
-from phono3py.conductivity.kappa_accumulators import _log_kappa_header, _log_kappa_row
-from phono3py.conductivity.kubo.kappa_formulas import (
-    KuboKappaFormula,
-    compute_kubo_mode_kappa_mat,
+from phono3py.conductivity.grid_point_data import (
+    GridPointResult,
+    compute_effective_gamma,
 )
+from phono3py.conductivity.kappa_accumulators import _log_kappa_header, _log_kappa_row
+from phono3py.conductivity.kubo.kappa_formulas import compute_kubo_mode_kappa_mat
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionResult
 from phono3py.conductivity.lbte_kappa_accumulator import LBTEKappaAccumulator
 
@@ -21,13 +21,21 @@ from phono3py.conductivity.lbte_kappa_accumulator import LBTEKappaAccumulator
 class KuboRTAKappaAccumulator:
     """Kappa accumulator for the Green-Kubo formula.
 
-    Accumulates the full band-pair kappa matrix ``mode_kappa_inter`` returned by
-    ``KuboKappaFormula``.  The ``kappa`` property sums over all band pairs.
+    Accumulates the full band-pair kappa matrix ``mode_kappa_inter``.
+    The ``kappa`` property sums over all band pairs.
+
+    The Green-Kubo formula for each band pair (s, s'):
+
+        kappa_mat[s, s'] = C_{s s'} * GVM_{s s'} * g / ((w_s' - w_s)^2 + g^2)
+
+    where g = gamma_s + gamma_s' is the sum of half-linewidths.
 
     Parameters
     ----------
-    formula : KuboKappaFormula
-        Formula instance used to compute mode kappa at each grid point.
+    cutoff_frequency : float
+        Modes with frequency below this value (in THz) are skipped.
+    conversion_factor : float
+        Unit conversion factor to W/(m*K).
     temperatures : array-like or None
         Temperature values in Kelvin.
     sigmas : sequence or None
@@ -39,13 +47,15 @@ class KuboRTAKappaAccumulator:
 
     def __init__(
         self,
-        formula: KuboKappaFormula,
+        cutoff_frequency: float,
+        conversion_factor: float,
         temperatures: Sequence[float] | NDArray[np.double] | None = None,
         sigmas: Sequence[float | None] | None = None,
         log_level: int = 0,
     ) -> None:
         """Init method."""
-        self._formula = formula
+        self._cutoff_frequency = cutoff_frequency
+        self._conversion_factor = conversion_factor
         self._temperatures = temperatures
         self._sigmas: list[float | None] = [] if sigmas is None else list(sigmas)
         self._log_level = log_level
@@ -69,7 +79,27 @@ class KuboRTAKappaAccumulator:
 
     def accumulate(self, i_gp: int, result: GridPointResult) -> None:
         """Compute and accumulate Kubo mode-kappa at grid point ``i_gp``."""
-        mkm = self._formula.compute(result)
+        assert result.velocity_product is not None
+        assert result.heat_capacity_matrix is not None
+        assert result.gamma is not None
+
+        gamma = compute_effective_gamma(result)  # (num_sigma, num_temp, num_band0)
+        num_band0 = gamma.shape[2]
+        num_band = result.velocity_product.shape[1]
+        assert num_band0 == num_band, (
+            "KuboRTAKappaAccumulator requires num_band0 == num_band "
+            f"(got {num_band0} vs {num_band})."
+        )
+
+        mkm = compute_kubo_mode_kappa_mat(
+            frequencies=result.input.frequencies,
+            gamma=gamma,
+            heat_capacity_matrix=result.heat_capacity_matrix,
+            velocity_product=result.velocity_product,
+            cutoff_frequency=self._cutoff_frequency,
+            conversion_factor=self._conversion_factor,
+            grid_point=result.input.grid_point,
+        )
         # mkm: (num_sigma, num_temp, num_band0, num_band, 6)
         if self._mode_kappa_inter is None:
             self._mode_kappa_inter = np.zeros(
@@ -170,9 +200,7 @@ class KuboRTAKappaAccumulator:
                     if show_ipm and num_ignored_phonon_modes is not None
                     else None
                 )
-                _log_kappa_row(
-                    "K_inter", t, kappa_inter[i, j], ipm, num_phonon_modes
-                )
+                _log_kappa_row("K_inter", t, kappa_inter[i, j], ipm, num_phonon_modes)
             print(" ")
             for j, t in enumerate(self._temperatures):
                 ipm = (
@@ -180,9 +208,7 @@ class KuboRTAKappaAccumulator:
                     if show_ipm and num_ignored_phonon_modes is not None
                     else None
                 )
-                _log_kappa_row(
-                    "K_TOT", t, self._kappa[i, j], ipm, num_phonon_modes
-                )
+                _log_kappa_row("K_TOT", t, self._kappa[i, j], ipm, num_phonon_modes)
             print("", flush=True)
 
 

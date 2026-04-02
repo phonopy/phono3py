@@ -8,7 +8,6 @@ from phono3py.conductivity import (
     GridPointInput,
     GridPointResult,
     HeatCapacityProvider,
-    KappaFormula,
     ScatteringProvider,
     VelocityProvider,
     register_calculator,
@@ -107,7 +106,6 @@ def test_public_api_exports_protocols():
         VelocityProvider,
         HeatCapacityProvider,
         ScatteringProvider,
-        KappaFormula,
     ):
         assert hasattr(cls, "__protocol_attrs__") or hasattr(cls, "_is_protocol")
 

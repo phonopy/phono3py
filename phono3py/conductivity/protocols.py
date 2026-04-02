@@ -15,8 +15,6 @@ HeatCapacityProvider
     Computes heat capacity at a single BZ grid point.
 ScatteringProvider
     Computes phonon linewidths at a single BZ grid point.
-KappaFormula
-    Converts per-grid-point results into a kappa tensor contribution.
 
 Data containers
 ---------------
@@ -39,7 +37,6 @@ __all__ = [
     "VelocityProvider",
     "HeatCapacityProvider",
     "ScatteringProvider",
-    "KappaFormula",
     "GridPointInput",
     "GridPointResult",
 ]
@@ -120,36 +117,6 @@ class ScatteringProvider(Protocol):
 
         The returned GridPointResult must have at minimum
         ``gamma`` of shape (num_sigma, num_temp, num_band0) set.
-
-        """
-        ...
-
-
-class KappaFormula(Protocol):
-    """Protocol for computing the kappa contribution at a single grid point.
-
-    The formula combines velocity, heat-capacity, and scattering data
-    from a GridPointResult into a kappa tensor contribution.
-
-    Built-in implementations
-    ------------------------
-    KappaFormula
-        Standard diagonal BTE formula: kappa = sum Cv * (v x v) * tau.
-    WignerKappaFormula
-        Wigner transport equation including off-diagonal coherence terms.
-    KuboKappaFormula
-        Green-Kubo formula using velocity matrix and heat-capacity matrix.
-
-    """
-
-    def compute(self, result: GridPointResult) -> NDArray[np.double]:
-        """Return the kappa contribution for this grid point.
-
-        Returns
-        -------
-        kappa : ndarray, shape (num_sigma, num_temp, num_band0, 6)
-            Six independent components of the symmetric kappa tensor:
-            xx, yy, zz, yz, xz, xy.
 
         """
         ...

@@ -1,14 +1,9 @@
-"""Kappa formula for the Green-Kubo method."""
+"""Shared helpers for the Green-Kubo method."""
 
 from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
-
-from phono3py.conductivity.grid_point_data import (
-    GridPointResult,
-    compute_effective_gamma,
-)
 
 
 def compute_kubo_mode_kappa_mat(
@@ -22,7 +17,7 @@ def compute_kubo_mode_kappa_mat(
 ) -> NDArray[np.double]:
     """Compute Kubo mode-kappa matrix for one grid point.
 
-    Core band-pair loop shared by RTA (KuboKappaFormula) and LBTE
+    Core band-pair loop shared by RTA (KuboRTAKappaAccumulator) and LBTE
     (KuboLBTEKappaAccumulator).
 
     The Green-Kubo formula for each band pair (s, s'):
@@ -113,77 +108,3 @@ def compute_kubo_mode_kappa_mat(
                         mode_kappa_mat[j, k, i_band, j_band] = contribution
 
     return mode_kappa_mat
-
-
-class KuboKappaFormula:
-    """Compute mode-kappa contribution at a single grid point (Green-Kubo formula).
-
-    The Green-Kubo formula for each band pair (s, s'):
-
-        kappa_mat[s, s'] = C_{s s'} * GVM_{s s'} * g / ((omega_s' - omega_s)^2 + g^2)
-
-    where g = gamma_s + gamma_s' is the sum of half-linewidths and all
-    frequencies are in THz.
-
-    Parameters
-    ----------
-    cutoff_frequency : float
-        Modes with frequency below this value (in THz) are skipped.
-    conversion_factor : float
-        Unit conversion factor to W/(m*K).
-
-    Notes
-    -----
-    Assumes ``num_band0 == num_band`` (all phonon branches selected), which is
-    required so that ``gamma[:, :, j_band]`` can index any band.
-
-    The effective linewidth combines all diagonal scattering contributions:
-
-        gamma_eff[s] = gamma[s] + gamma_isotope[s] + gamma_boundary[s] + gamma_elph[s]
-
-    """
-
-    def __init__(self, cutoff_frequency: float, conversion_factor: float):
-        """Init method."""
-        self._cutoff_frequency = cutoff_frequency
-        self._conversion_factor = conversion_factor
-
-    def compute(self, result: GridPointResult) -> NDArray[np.double]:
-        """Compute Kubo mode-kappa at this grid point.
-
-        Parameters
-        ----------
-        result : GridPointResult
-            Must have ``velocity_product`` (num_band0, num_band, 6) complex,
-            ``heat_capacity_matrix`` (num_temp, num_band0, num_band), and
-            ``gamma`` (num_sigma, num_temp, num_band0) populated.
-            Requires ``num_band0 == num_band``.
-
-        Returns
-        -------
-        mode_kappa_mat : ndarray of double,
-            shape (num_sigma, num_temp, num_band0, num_band, 6)
-            Per-(sigma, temp, i_band, j_band) kappa contribution in Voigt order.
-
-        """
-        assert result.velocity_product is not None
-        assert result.heat_capacity_matrix is not None
-        assert result.gamma is not None
-
-        gamma = compute_effective_gamma(result)  # (num_sigma, num_temp, num_band0)
-        num_band0 = gamma.shape[2]
-        num_band = result.velocity_product.shape[1]
-        assert num_band0 == num_band, (
-            "KuboKappaFormula requires num_band0 == num_band "
-            f"(got {num_band0} vs {num_band})."
-        )
-
-        return compute_kubo_mode_kappa_mat(
-            frequencies=result.input.frequencies,
-            gamma=gamma,
-            heat_capacity_matrix=result.heat_capacity_matrix,
-            velocity_product=result.velocity_product,
-            cutoff_frequency=self._cutoff_frequency,
-            conversion_factor=self._conversion_factor,
-            grid_point=result.input.grid_point,
-        )
