@@ -22,7 +22,7 @@ class HeatCapacityMatrixProvider:
 
     The returned ``GridPointResult`` fields:
     - ``heat_capacities`` (num_temp, num_band0): diagonal (standard) mode heat
-      capacities; set for compatibility with ``ConductivityCalculator``.
+      capacities; set for compatibility with ``RTACalculator``.
     - ``heat_capacity_matrix`` (num_temp, num_band0, num_band): full heat
       capacity matrix for selected bands (rows) vs all bands (columns).
 
@@ -61,7 +61,7 @@ class HeatCapacityMatrixProvider:
         """
         result = GridPointResult(input=gp)
 
-        # Scalar heat capacities (diagonal) for ConductivityCalculator storage.
+        # Scalar heat capacities (diagonal) for RTACalculator storage.
         result.heat_capacities = get_heat_capacities(
             gp.grid_point, self._pp, temperatures
         )

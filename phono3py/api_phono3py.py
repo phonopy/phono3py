@@ -91,7 +91,7 @@ from phonopy.structure.symmetry import Symmetry
 
 from phono3py.conductivity.lbte_calculator import LBTECalculator
 from phono3py.conductivity.lbte_init import get_thermal_conductivity_LBTE
-from phono3py.conductivity.rta_calculator import ConductivityCalculator
+from phono3py.conductivity.rta_calculator import RTACalculator
 from phono3py.conductivity.rta_init import get_thermal_conductivity_RTA
 from phono3py.interface.fc_calculator import (
     FC3Solver,
@@ -327,10 +327,8 @@ class Phono3py:
         self._phonon_supercells_with_displacements: list[PhonopyAtoms] | None = None
 
         # Thermal conductivity
-        # ConductivityCalculator (RTA) or LBTECalculator (standard/Wigner LBTE).
-        self._thermal_conductivity: ConductivityCalculator | LBTECalculator | None = (
-            None
-        )
+        # RTACalculator (RTA) or LBTECalculator (standard/Wigner LBTE).
+        self._thermal_conductivity: RTACalculator | LBTECalculator | None = None
 
         # Imaginary part of self energy at frequency points
         self._ise_params: ImagSelfEnergyValues | None = None
@@ -922,7 +920,7 @@ class Phono3py:
     @property
     def thermal_conductivity(
         self,
-    ) -> ConductivityCalculator | LBTECalculator | None:
+    ) -> RTACalculator | LBTECalculator | None:
         """Return thermal conductivity class instance."""
         return self._thermal_conductivity
 

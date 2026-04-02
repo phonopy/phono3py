@@ -28,7 +28,7 @@ from phono3py.conductivity.kubo.kappa_accumulators import (
 )
 from phono3py.conductivity.kubo.velocity_providers import VelocityMatrixProvider
 from phono3py.conductivity.lbte_calculator import LBTECalculator
-from phono3py.conductivity.rta_calculator import ConductivityCalculator
+from phono3py.conductivity.rta_calculator import RTACalculator
 from phono3py.conductivity.utils import get_unit_to_WmK
 from phono3py.phonon3.interaction import Interaction
 
@@ -54,8 +54,8 @@ def make_kubo_rta_calculator(
     is_gamma_detail: bool = False,
     log_level: int = 0,
     **_ignored: Any,
-) -> ConductivityCalculator:
-    """Build a ConductivityCalculator for the Green-Kubo RTA method.
+) -> RTACalculator:
+    """Build a RTACalculator for the Green-Kubo RTA method.
 
     Parameters
     ----------
@@ -100,7 +100,7 @@ def make_kubo_rta_calculator(
 
     Returns
     -------
-    ConductivityCalculator
+    RTACalculator
 
     """
     base = build_rta_base_components(
@@ -138,12 +138,12 @@ def make_kubo_rta_calculator(
         log_level=log_level,
     )
 
-    return ConductivityCalculator(
+    return RTACalculator(
         interaction,
-        velocity_provider=velocity_provider,
-        cv_provider=cv_provider,
+        velocity_provider=velocity_provider,  # type: ignore[arg-type]
+        cv_provider=cv_provider,  # type: ignore[arg-type]
         scattering_provider=base.scattering_provider,
-        accumulator=accumulator,
+        accumulator=accumulator,  # type: ignore[arg-type]
         grid_points=grid_points,
         temperatures=temperatures,
         sigmas=base.sigmas,

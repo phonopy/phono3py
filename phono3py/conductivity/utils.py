@@ -137,6 +137,47 @@ def show_grid_point_frequencies_gv(
     print("", end="", flush=True)
 
 
+def log_kappa_header(
+    sigma: float | None,
+    show_ipm: bool = False,
+) -> None:
+    """Print the kappa table header line for a given sigma."""
+    text = "----------- Thermal conductivity (W/m-k) "
+    if sigma:
+        text += "for sigma=%s -----------" % sigma
+    else:
+        text += "with tetrahedron method -----------"
+    print(text)
+    if show_ipm:
+        print(
+            ("#%6s       " + " %-10s" * 6 + "#ipm")
+            % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
+        )
+    else:
+        print(
+            ("#%6s       " + " %-10s" * 6)
+            % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
+        )
+
+
+def log_kappa_row(
+    label: str,
+    temperature: float,
+    kappa_row: NDArray[np.double],
+    num_ignored: int | None = None,
+    num_phonon_modes: int | None = None,
+) -> None:
+    """Print one row of the kappa table."""
+    if num_ignored is not None and num_phonon_modes is not None:
+        print(
+            label
+            + ("%7.1f" + " %10.3f" * 6 + " %d/%d")
+            % ((temperature,) + tuple(kappa_row) + (num_ignored, num_phonon_modes))
+        )
+    else:
+        print(label + ("%7.1f " + " %10.3f" * 6) % ((temperature,) + tuple(kappa_row)))
+
+
 def get_unit_to_WmK() -> float:
     """Return conversion factor to WmK."""
     unit_to_WmK = (

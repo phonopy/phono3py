@@ -45,7 +45,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from phono3py.conductivity.factory import make_conductivity_calculator
-from phono3py.conductivity.rta_calculator import ConductivityCalculator
+from phono3py.conductivity.rta_calculator import RTACalculator
 from phono3py.conductivity.rta_output import ConductivityRTAWriter
 from phono3py.conductivity.utils import build_options, write_pp_interaction
 from phono3py.file_IO import read_gamma_from_hdf5
@@ -158,7 +158,7 @@ def _build_gamma_read_context(
 
 
 def _apply_loaded_gamma_results(
-    br: ConductivityCalculator,
+    br: RTACalculator,
     *,
     gamma: NDArray[np.double],
     gamma_N: NDArray[np.double],
@@ -200,7 +200,7 @@ def get_thermal_conductivity_RTA(
     input_filename: str | None = None,
     output_filename: str | None = None,
     log_level: int = 0,
-) -> ConductivityCalculator:
+) -> RTACalculator:
     """Run RTA thermal conductivity calculation."""
     _temperatures = _normalize_rta_temperatures(temperatures)
 
@@ -267,8 +267,8 @@ def _run_standard_rta(
     input_filename: str | None,
     output_filename: str | None,
     log_level: int,
-) -> ConductivityCalculator:
-    """Run RTA (standard or Wigner) using ConductivityCalculator."""
+) -> RTACalculator:
+    """Run RTA (standard or Wigner) using RTACalculator."""
     calc = make_conductivity_calculator(
         interaction,
         method=method,
@@ -357,7 +357,7 @@ def _normalize_rta_temperatures(
 
 
 def _set_gamma_elph_from_file(
-    br: ConductivityCalculator, read_elph: int, verbose: bool = False
+    br: RTACalculator, read_elph: int, verbose: bool = False
 ) -> None:
     if br.temperatures is None:
         raise RuntimeError(
@@ -592,7 +592,7 @@ def _load_gamma_for_sigma(
 
 
 def _set_gamma_from_file(
-    br: ConductivityCalculator, filename: str | None = None, verbose: bool = False
+    br: RTACalculator, filename: str | None = None, verbose: bool = False
 ):
     """Read kappa-*.hdf5 files for thermal conductivity calculation.
 
@@ -601,7 +601,7 @@ def _set_gamma_from_file(
     kappa-m*-gp*-b*.hdf5 files at grid points and bands are searched. If any
     of those files are not found, it fails.
 
-    br : ConductivityCalculator
+    br : RTACalculator
         RTA lattice thermal conductivity calculator instance.
     filename : str, optional
         This string is inserted in the filename as kappa-m*.{filename}.hdf5.

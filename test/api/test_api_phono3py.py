@@ -14,7 +14,7 @@ from phonopy.structure.cells import isclose
 
 import phono3py
 from phono3py import Phono3py
-from phono3py.conductivity.rta_calculator import ConductivityCalculator
+from phono3py.conductivity.rta_calculator import RTACalculator
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon3.fc3 import get_drift_fc3
 
@@ -237,7 +237,7 @@ def test_use_pypolymlp_mgo(mgo_222rd_444rd: Phono3py):
     ph3.init_phph_interaction()
     ph3.run_thermal_conductivity(temperatures=[300])
     assert ph3.thermal_conductivity is not None
-    assert isinstance(ph3.thermal_conductivity, ConductivityCalculator)
+    assert isinstance(ph3.thermal_conductivity, RTACalculator)
     assert ph3.thermal_conductivity.kappa is not None
     assert pytest.approx(63.547, abs=1e-1) == ph3.thermal_conductivity.kappa[0, 0, 0]
 

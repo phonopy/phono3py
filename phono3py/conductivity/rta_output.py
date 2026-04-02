@@ -7,13 +7,13 @@ from typing import Any, Literal, TypeAlias, cast
 
 from numpy.typing import NDArray
 
-from phono3py.conductivity.rta_calculator import ConductivityCalculator
+from phono3py.conductivity.rta_calculator import RTACalculator
 from phono3py.conductivity.utils import get_unit_to_WmK
 from phono3py.file_IO import write_gamma_detail_to_hdf5, write_kappa_to_hdf5
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
 from phono3py.phonon3.triplets import get_all_triplets
 
-cond_RTA_type: TypeAlias = ConductivityCalculator
+cond_RTA_type: TypeAlias = RTACalculator
 
 
 def _require_ndarray_not_none(value: NDArray[Any] | None, name: str) -> NDArray[Any]:

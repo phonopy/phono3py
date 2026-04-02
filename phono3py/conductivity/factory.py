@@ -40,7 +40,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from phono3py.conductivity.lbte_calculator import LBTECalculator
-from phono3py.conductivity.rta_calculator import ConductivityCalculator
+from phono3py.conductivity.rta_calculator import RTACalculator
 from phono3py.phonon3.interaction import Interaction
 
 # ---------------------------------------------------------------------------
@@ -130,7 +130,7 @@ def make_conductivity_calculator(
     pinv_method: int = 0,
     lang: Literal["C", "Python"] = "C",
     log_level: int = 0,
-) -> ConductivityCalculator | LBTECalculator:
+) -> RTACalculator | LBTECalculator:
     """Create a conductivity calculator with the appropriate building blocks.
 
     Parameters
@@ -189,7 +189,7 @@ def make_conductivity_calculator(
 
     Returns
     -------
-    ConductivityCalculator or LBTECalculator
+    RTACalculator or LBTECalculator
         For plugin-registered methods the return type is determined by the
         registered factory.
 

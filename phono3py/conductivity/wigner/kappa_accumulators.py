@@ -13,9 +13,9 @@ from phono3py.conductivity.grid_point_data import (
     GridPointResult,
     compute_effective_gamma,
 )
-from phono3py.conductivity.kappa_accumulators import _log_kappa_header, _log_kappa_row
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionResult
 from phono3py.conductivity.lbte_kappa_accumulator import LBTEKappaAccumulator
+from phono3py.conductivity.utils import log_kappa_header, log_kappa_row
 from phono3py.conductivity.wigner.kappa_formulas import (
     DEGENERATE_FREQUENCY_THRESHOLD_THZ,
 )
@@ -60,6 +60,16 @@ class WignerRTAKappaAccumulator:
         self._temperatures = temperatures
         self._sigmas: list[float | None] = [] if sigmas is None else list(sigmas)
         self._log_level = log_level
+
+        # Per-grid-point arrays (allocated in prepare()).
+        self._gv: NDArray[np.double]
+        self._gv_by_gv: NDArray[np.double]
+        self._cv: NDArray[np.double]
+        self._gamma: NDArray[np.double]
+        self._gamma_iso: NDArray[np.double] | None = None
+        self._averaged_pp_interaction: NDArray[np.double] | None = None
+
+        # Kappa arrays.
         self._kappa_P: NDArray[np.double]
         self._mode_kappa_P: NDArray[np.double]
         self._kappa_C: NDArray[np.double] | None = None
@@ -72,15 +82,55 @@ class WignerRTAKappaAccumulator:
         num_temp: int,
         num_gp: int,
         num_band0: int,
+        *,
+        is_full_pp: bool = False,
     ) -> None:
-        """Allocate population-term arrays; coherence arrays are lazy."""
+        """Allocate per-grid-point and kappa arrays."""
+        self._gv = np.zeros((num_gp, num_band0, 3), dtype="double", order="C")
+        self._gv_by_gv = np.zeros((num_gp, num_band0, 6), dtype="double", order="C")
+        self._cv = np.zeros((num_temp, num_gp, num_band0), dtype="double", order="C")
+        self._gamma = np.zeros(
+            (num_sigma, num_temp, num_gp, num_band0), dtype="double", order="C"
+        )
+        if is_full_pp:
+            self._averaged_pp_interaction = np.zeros(
+                (num_gp, num_band0), dtype="double", order="C"
+            )
         self._kappa_P = np.zeros((num_sigma, num_temp, 6), dtype="double", order="C")
         self._mode_kappa_P = np.zeros(
             (num_sigma, num_temp, num_gp, num_band0, 6), dtype="double", order="C"
         )
 
     def accumulate(self, i_gp: int, result: GridPointResult) -> None:
-        """Compute and accumulate population and coherence kappa at ``i_gp``."""
+        """Store per-grid-point data and compute mode kappa at ``i_gp``."""
+        assert result.group_velocities is not None
+        assert result.velocity_product is not None
+        assert result.heat_capacities is not None
+        assert result.gamma is not None
+
+        # Store per-grid-point data.
+        self._gv[i_gp] = result.group_velocities
+        # Extract diagonal of the (num_band0, num_band, 6) velocity product
+        # as the standard (num_band0, 6) gv_by_gv for output compatibility.
+        vp = result.velocity_product
+        num_band0 = vp.shape[0]
+        self._gv_by_gv[i_gp] = np.real(vp[np.arange(num_band0), np.arange(num_band0)])
+        self._cv[:, i_gp, :] = result.heat_capacities
+        self._gamma[:, :, i_gp, :] = result.gamma
+        if result.gamma_isotope is not None:
+            if self._gamma_iso is None:
+                ns = result.gamma_isotope.shape[0]
+                nb = self._gv.shape[1]
+                self._gamma_iso = np.zeros(
+                    (ns, self._gv.shape[0], nb), dtype="double", order="C"
+                )
+            self._gamma_iso[:, i_gp, :] = result.gamma_isotope
+        if (
+            result.averaged_pp_interaction is not None
+            and self._averaged_pp_interaction is not None
+        ):
+            self._averaged_pp_interaction[i_gp] = result.averaged_pp_interaction
+
         # Store raw velocity operator for per-grid-point HDF5 output.
         vel_op = result.extra.get("velocity_operator")
         if vel_op is not None:
@@ -90,12 +140,6 @@ class WignerRTAKappaAccumulator:
                     (num_gp,) + vel_op.shape, dtype="complex128", order="C"
                 )
             self._velocity_operator[i_gp] = vel_op
-
-        # Compute population and coherence mode kappa (inlined from
-        # WignerKappaFormula).
-        assert result.velocity_product is not None
-        assert result.heat_capacities is not None
-        assert result.gamma is not None
 
         frequencies = result.input.frequencies  # (num_band,) all bands
         gv_by_gv = result.velocity_product  # (num_band0, num_band, 6) complex
@@ -262,6 +306,52 @@ class WignerRTAKappaAccumulator:
         """
         return self._mode_kappa_C
 
+    # ------------------------------------------------------------------
+    # Properties — per-grid-point data
+    # ------------------------------------------------------------------
+
+    @property
+    def group_velocities(self) -> NDArray[np.double]:
+        """Return group velocities, shape (num_gp, num_band0, 3)."""
+        return self._gv
+
+    @property
+    def gv_by_gv(self) -> NDArray[np.double]:
+        """Return symmetrised v-outer-v, shape (num_gp, num_band0, 6)."""
+        return self._gv_by_gv
+
+    @property
+    def mode_heat_capacities(self) -> NDArray[np.double]:
+        """Return mode heat capacities, shape (num_temp, num_gp, num_band0)."""
+        return self._cv
+
+    @property
+    def gamma(self) -> NDArray[np.double]:
+        """Return ph-ph gamma, shape (num_sigma, num_temp, num_gp, num_band0)."""
+        return self._gamma
+
+    @gamma.setter
+    def gamma(self, value: NDArray[np.double]) -> None:
+        self._gamma = value
+
+    @property
+    def gamma_isotope(self) -> NDArray[np.double] | None:
+        """Return isotope gamma, shape (num_sigma, num_gp, num_band0)."""
+        return self._gamma_iso
+
+    @gamma_isotope.setter
+    def gamma_isotope(self, value: NDArray[np.double] | None) -> None:
+        self._gamma_iso = value
+
+    @property
+    def averaged_pp_interaction(self) -> NDArray[np.double] | None:
+        """Return averaged ph-ph interaction, shape (num_gp, num_band0)."""
+        return self._averaged_pp_interaction
+
+    @averaged_pp_interaction.setter
+    def averaged_pp_interaction(self, value: NDArray[np.double] | None) -> None:
+        self._averaged_pp_interaction = value
+
     def get_extra_grid_point_output(self, i: int) -> dict[str, Any] | None:
         """Return per-grid-point extra data for HDF5 output.
 
@@ -291,14 +381,14 @@ class WignerRTAKappaAccumulator:
 
         assert self._kappa_C is not None
         for i, sigma in enumerate(self._sigmas):
-            _log_kappa_header(sigma, show_ipm=show_ipm)
+            log_kappa_header(sigma, show_ipm=show_ipm)
             for j, t in enumerate(self._temperatures):
                 ipm = (
                     int(num_ignored_phonon_modes[i, j])
                     if show_ipm and num_ignored_phonon_modes is not None
                     else None
                 )
-                _log_kappa_row("K_P\t", t, self._kappa_P[i, j], ipm, num_phonon_modes)
+                log_kappa_row("K_P\t", t, self._kappa_P[i, j], ipm, num_phonon_modes)
             print(" ")
             for j, t in enumerate(self._temperatures):
                 ipm = (
@@ -306,7 +396,7 @@ class WignerRTAKappaAccumulator:
                     if show_ipm and num_ignored_phonon_modes is not None
                     else None
                 )
-                _log_kappa_row("K_C\t", t, self._kappa_C[i, j], ipm, num_phonon_modes)
+                log_kappa_row("K_C\t", t, self._kappa_C[i, j], ipm, num_phonon_modes)
             print(" ")
             for j, t in enumerate(self._temperatures):
                 ipm = (
@@ -314,7 +404,7 @@ class WignerRTAKappaAccumulator:
                     if show_ipm and num_ignored_phonon_modes is not None
                     else None
                 )
-                _log_kappa_row("K_T\t", t, kappa_tot[i, j], ipm, num_phonon_modes)
+                log_kappa_row("K_T\t", t, kappa_tot[i, j], ipm, num_phonon_modes)
             print("", flush=True)
 
     def get_extra_kappa_output(self) -> dict[str, Any]:

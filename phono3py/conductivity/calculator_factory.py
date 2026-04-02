@@ -23,11 +23,11 @@ import numpy as np
 from numpy.typing import NDArray
 
 from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
-from phono3py.conductivity.kappa_accumulators import RTAKappaAccumulator
 from phono3py.conductivity.lbte_calculator import LBTECalculator
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionProvider
 from phono3py.conductivity.lbte_kappa_accumulator import LBTEKappaAccumulator
-from phono3py.conductivity.rta_calculator import ConductivityCalculator
+from phono3py.conductivity.rta_calculator import RTACalculator
+from phono3py.conductivity.rta_kappa_accumulator import RTAKappaAccumulator
 from phono3py.conductivity.scattering_providers import RTAScatteringProvider
 from phono3py.conductivity.utils import get_unit_to_WmK
 from phono3py.conductivity.velocity_providers import GroupVelocityProvider
@@ -401,8 +401,8 @@ def make_rta_calculator(
     is_gamma_detail: bool = False,
     log_level: int = 0,
     **_ignored: Any,
-) -> ConductivityCalculator:
-    """Build a ConductivityCalculator for the standard BTE-RTA method.
+) -> RTACalculator:
+    """Build a RTACalculator for the standard BTE-RTA method.
 
     Parameters
     ----------
@@ -447,7 +447,7 @@ def make_rta_calculator(
 
     Returns
     -------
-    ConductivityCalculator
+    RTACalculator
 
     """
     base = build_rta_base_components(
@@ -485,7 +485,7 @@ def make_rta_calculator(
         log_level=log_level,
     )
 
-    return ConductivityCalculator(
+    return RTACalculator(
         interaction,
         velocity_provider=velocity_provider,
         cv_provider=cv_provider,

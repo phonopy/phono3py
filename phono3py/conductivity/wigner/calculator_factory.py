@@ -21,7 +21,7 @@ from phono3py.conductivity.calculator_factory import (
 )
 from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
 from phono3py.conductivity.lbte_calculator import LBTECalculator
-from phono3py.conductivity.rta_calculator import ConductivityCalculator
+from phono3py.conductivity.rta_calculator import RTACalculator
 from phono3py.conductivity.wigner.kappa_accumulators import (
     WignerLBTEKappaAccumulator,
     WignerRTAKappaAccumulator,
@@ -52,8 +52,8 @@ def make_wigner_rta_calculator(
     is_gamma_detail: bool = False,
     log_level: int = 0,
     **_ignored: Any,
-) -> ConductivityCalculator:
-    """Build a ConductivityCalculator for the Wigner-RTA method.
+) -> RTACalculator:
+    """Build a RTACalculator for the Wigner-RTA method.
 
     Implements the Wigner transport equation in the RTA, adding the
     off-diagonal coherence contribution (C-term) to the standard
@@ -102,7 +102,7 @@ def make_wigner_rta_calculator(
 
     Returns
     -------
-    ConductivityCalculator
+    RTACalculator
 
     """
     base = build_rta_base_components(
@@ -140,12 +140,12 @@ def make_wigner_rta_calculator(
         log_level=log_level,
     )
 
-    return ConductivityCalculator(
+    return RTACalculator(
         interaction,
-        velocity_provider=velocity_provider,
+        velocity_provider=velocity_provider,  # type: ignore[arg-type]
         cv_provider=cv_provider,
         scattering_provider=base.scattering_provider,
-        accumulator=accumulator,
+        accumulator=accumulator,  # type: ignore[arg-type]
         grid_points=grid_points,
         temperatures=temperatures,
         sigmas=base.sigmas,
