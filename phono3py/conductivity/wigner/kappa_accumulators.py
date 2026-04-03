@@ -256,14 +256,14 @@ class WignerRTAKappaAccumulator:
     # Properties — per-grid-point data
     # ------------------------------------------------------------------
 
-    def get_extra_grid_point_output(self, i: int) -> dict[str, Any]:
-        """Return per-grid-point extra data for HDF5 output.
+    def get_extra_grid_point_output(self) -> dict[str, Any]:
+        """Return per-grid-point extra arrays for HDF5 output.
 
-        Returns the velocity operator at grid point ``i`` as
-        ``{"velocity_operator": ...}``.
+        Returns the full velocity operator array. The caller is responsible
+        for slicing by grid-point index.
 
         """
-        return {"velocity_operator": self._velocity_operator[i]}
+        return {"velocity_operator": self._velocity_operator}
 
     def log_kappa(
         self,
@@ -438,55 +438,19 @@ class WignerLBTEKappaAccumulator:
     # ------------------------------------------------------------------
 
     @property
+    def solver(self) -> CollisionMatrixSolver:
+        """Return the underlying CollisionMatrixSolver."""
+        return self._solver
+
+    @property
     def kappa(self) -> NDArray[np.double]:
         """Return LBTE thermal conductivity, shape (num_sigma, num_temp, 6)."""
         return self._solver.kappa
 
     @property
-    def kappa_RTA(self) -> NDArray[np.double]:
-        """Return RTA thermal conductivity, shape (num_sigma, num_temp, 6)."""
-        return self._solver.kappa_RTA
-
-    @property
     def mode_kappa(self) -> NDArray[np.double]:
         """Return mode LBTE kappa."""
         return self._solver.mode_kappa
-
-    @property
-    def mode_kappa_RTA(self) -> NDArray[np.double]:
-        """Return mode RTA kappa."""
-        return self._solver.mode_kappa_RTA
-
-    @property
-    def collision_matrix(self) -> NDArray[np.double] | None:
-        """Return assembled collision matrix."""
-        return self._solver.collision_matrix
-
-    @collision_matrix.setter
-    def collision_matrix(self, value: NDArray[np.double] | None) -> None:
-        """Set collision matrix (used when reading from file)."""
-        self._solver.collision_matrix = value
-
-    @property
-    def collision_eigenvalues(self) -> NDArray[np.double] | None:
-        """Return eigenvalues of collision matrix."""
-        return self._solver.collision_eigenvalues
-
-    @property
-    def f_vectors(self) -> NDArray[np.double] | None:
-        """Return f-vectors, shape (num_gp, num_band0, 3)."""
-        return self._solver.f_vectors
-
-    @property
-    def mfp(self) -> NDArray[np.double] | None:
-        """Return mean free path."""
-        return self._solver.mfp
-
-    def get_main_diagonal(
-        self, i_gp: int, i_sigma: int, i_temp: int
-    ) -> NDArray[np.double]:
-        """Return total scattering rate at a grid point."""
-        return self._solver.get_main_diagonal(i_gp, i_sigma, i_temp)
 
     # ------------------------------------------------------------------
     # Properties — Wigner-specific aliases

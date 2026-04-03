@@ -119,27 +119,6 @@ class LBTEKappaAccumulator:
         """
         self._solver.solve(aggregates, suppress_kappa_log=suppress_kappa_log)
 
-    def get_main_diagonal(
-        self, i_gp: int, i_sigma: int, i_temp: int
-    ) -> NDArray[np.double]:
-        """Return total scattering rate at a grid point.
-
-        Returns the sum of ph-ph gamma, isotope gamma (if present), and
-        boundary scattering (if present) at grid point i_gp for sigma i_sigma
-        and temperature i_temp.  Shape is (num_band0,).
-
-        Parameters
-        ----------
-        i_gp : int
-            Grid point index (IR grid or reducible mesh index).
-        i_sigma : int
-            Sigma index.
-        i_temp : int
-            Temperature index.
-
-        """
-        return self._solver.get_main_diagonal(i_gp, i_sigma, i_temp)
-
     # ------------------------------------------------------------------
     # Properties
     # ------------------------------------------------------------------
@@ -153,43 +132,3 @@ class LBTEKappaAccumulator:
     def kappa(self) -> NDArray[np.double]:
         """Return LBTE thermal conductivity, shape (num_sigma, num_temp, 6)."""
         return self._solver.kappa
-
-    @property
-    def kappa_RTA(self) -> NDArray[np.double]:
-        """Return RTA thermal conductivity, shape (num_sigma, num_temp, 6)."""
-        return self._solver.kappa_RTA
-
-    @property
-    def mode_kappa(self) -> NDArray[np.double]:
-        """Return mode LBTE kappa, shape (num_sigma, num_temp, num_gp, num_band0, 6)."""
-        return self._solver.mode_kappa
-
-    @property
-    def mode_kappa_RTA(self) -> NDArray[np.double]:
-        """Return mode RTA kappa, shape (num_sigma, num_temp, num_gp, num_band0, 6)."""
-        return self._solver.mode_kappa_RTA
-
-    @property
-    def collision_matrix(self) -> NDArray[np.double] | None:
-        """Return assembled collision matrix."""
-        return self._solver.collision_matrix
-
-    @collision_matrix.setter
-    def collision_matrix(self, value: NDArray[np.double] | None) -> None:
-        """Set collision matrix (used when reading from file)."""
-        self._solver.collision_matrix = value
-
-    @property
-    def collision_eigenvalues(self) -> NDArray[np.double] | None:
-        """Return eigenvalues of collision matrix."""
-        return self._solver.collision_eigenvalues
-
-    @property
-    def f_vectors(self) -> NDArray[np.double] | None:
-        """Return f-vectors (experimental), shape (num_gp, num_band0, 3)."""
-        return self._solver.f_vectors
-
-    @property
-    def mfp(self) -> NDArray[np.double] | None:
-        """Return mean free path, shape (num_sigma, num_temp, num_gp, num_band0, 3)."""
-        return self._solver.mfp

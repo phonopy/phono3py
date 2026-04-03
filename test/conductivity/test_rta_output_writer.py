@@ -118,7 +118,8 @@ def test_write_gamma_passes_extra_grid_point_output(monkeypatch):
         _fake_write_kappa_to_hdf5,
     )
 
-    vel_op = np.ones((3, 6, 3), dtype="complex128")
+    # Shape: (num_gp=1, num_band0=3, nat3=6, 3)
+    vel_op = np.ones((1, 3, 6, 3), dtype="complex128")
     extra_data = {"velocity_operator": vel_op}
 
     interaction = SimpleNamespace(
@@ -133,7 +134,7 @@ def test_write_gamma_passes_extra_grid_point_output(monkeypatch):
         grid_points=np.array([0], dtype="int64"),
         group_velocities=np.zeros((1, 3, 3), dtype="double"),
         gv_by_gv=np.zeros((1, 3, 6), dtype="double"),
-        get_extra_grid_point_output=lambda i: extra_data,
+        get_extra_grid_point_output=lambda: extra_data,
         mode_heat_capacities=np.zeros((2, 1, 3), dtype="double"),
         averaged_pp_interaction=None,
         mesh_numbers=np.array([2, 2, 2], dtype="int64"),
@@ -150,8 +151,9 @@ def test_write_gamma_passes_extra_grid_point_output(monkeypatch):
     ConductivityRTAWriter.write_gamma(br, interaction, i=0)
 
     assert len(calls) == 1
-    assert calls[0]["extra_datasets"] is extra_data
-    assert calls[0]["extra_datasets"]["velocity_operator"] is vel_op
+    np.testing.assert_array_equal(
+        calls[0]["extra_datasets"]["velocity_operator"], vel_op[0]
+    )
 
 
 def test_write_gamma_no_extra_grid_point_output(monkeypatch):
@@ -178,7 +180,7 @@ def test_write_gamma_no_extra_grid_point_output(monkeypatch):
         grid_points=np.array([0], dtype="int64"),
         group_velocities=np.zeros((1, 3, 3), dtype="double"),
         gv_by_gv=np.zeros((1, 3, 6), dtype="double"),
-        get_extra_grid_point_output=lambda i: None,
+        get_extra_grid_point_output=lambda: None,
         mode_heat_capacities=np.zeros((2, 1, 3), dtype="double"),
         averaged_pp_interaction=None,
         mesh_numbers=np.array([2, 2, 2], dtype="int64"),
@@ -213,8 +215,8 @@ def test_write_gamma_band_resolved_slices_extra_data(monkeypatch):
         _fake_write_kappa_to_hdf5,
     )
 
-    # velocity_operator shape: (num_band0=2, nat3=6, 3)
-    vel_op = np.arange(2 * 6 * 3, dtype="complex128").reshape(2, 6, 3)
+    # velocity_operator shape: (num_gp=1, num_band0=2, nat3=6, 3)
+    vel_op = np.arange(2 * 6 * 3, dtype="complex128").reshape(1, 2, 6, 3)
     extra_data = {"velocity_operator": vel_op}
 
     interaction = SimpleNamespace(
@@ -227,7 +229,7 @@ def test_write_gamma_band_resolved_slices_extra_data(monkeypatch):
         grid_points=np.array([0], dtype="int64"),
         group_velocities=np.zeros((1, 2, 3), dtype="double"),
         gv_by_gv=np.zeros((1, 2, 6), dtype="double"),
-        get_extra_grid_point_output=lambda i: extra_data,
+        get_extra_grid_point_output=lambda: extra_data,
         mode_heat_capacities=np.zeros((1, 1, 2), dtype="double"),
         averaged_pp_interaction=None,
         mesh_numbers=np.array([2, 2, 2], dtype="int64"),
@@ -244,11 +246,11 @@ def test_write_gamma_band_resolved_slices_extra_data(monkeypatch):
     ConductivityRTAWriter.write_gamma(br, interaction, i=0)
 
     assert len(calls) == 2
-    # First band (k=0): velocity_operator[0]
+    # First band (k=0): velocity_operator[gp=0][band=0]
     np.testing.assert_array_equal(
-        calls[0]["extra_datasets"]["velocity_operator"], vel_op[0]
+        calls[0]["extra_datasets"]["velocity_operator"], vel_op[0, 0]
     )
-    # Second band (k=1): velocity_operator[1]
+    # Second band (k=1): velocity_operator[gp=0][band=1]
     np.testing.assert_array_equal(
-        calls[1]["extra_datasets"]["velocity_operator"], vel_op[1]
+        calls[1]["extra_datasets"]["velocity_operator"], vel_op[0, 1]
     )

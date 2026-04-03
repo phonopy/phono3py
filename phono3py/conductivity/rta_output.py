@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Literal, TypeAlias, cast
+from typing import Any, Literal, cast
 
 from numpy.typing import NDArray
 
@@ -12,8 +12,6 @@ from phono3py.conductivity.utils import get_unit_to_WmK
 from phono3py.file_IO import write_gamma_detail_to_hdf5, write_kappa_to_hdf5
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
 from phono3py.phonon3.triplets import get_all_triplets
-
-cond_RTA_type: TypeAlias = RTACalculator
 
 
 def _require_ndarray_not_none(value: NDArray[Any] | None, name: str) -> NDArray[Any]:
@@ -27,7 +25,7 @@ class ConductivityRTAWriter:
 
     @staticmethod
     def write_gamma(
-        br: cond_RTA_type,
+        br: RTACalculator,
         interaction: Interaction,
         i: int,
         compression: Literal["gzip", "lzf"] | int | None = "gzip",
@@ -38,7 +36,12 @@ class ConductivityRTAWriter:
         grid_points = br.grid_points
         group_velocities_i = br.group_velocities[i]
         gv_by_gv_i = br.gv_by_gv[i]
-        extra_gp_data = br.get_extra_grid_point_output(i)
+        extra_gp_full = br.get_extra_grid_point_output()
+        extra_gp_data: dict[str, Any] | None = (
+            {k: v[i] for k, v in extra_gp_full.items()}
+            if extra_gp_full is not None
+            else None
+        )
         mode_heat_capacities = br.mode_heat_capacities
         ave_pp = br.averaged_pp_interaction
         mesh = br.mesh_numbers
@@ -134,7 +137,7 @@ class ConductivityRTAWriter:
 
     @staticmethod
     def write_kappa(
-        br: cond_RTA_type,
+        br: RTACalculator,
         volume: float,
         compression: Literal["gzip", "lzf"] | int | None,
         filename: str | None = None,
@@ -210,7 +213,7 @@ class ConductivityRTAWriter:
 
     @staticmethod
     def write_gamma_detail(
-        br: cond_RTA_type,
+        br: RTACalculator,
         interaction: Interaction,
         i: int,
         compression: Literal["gzip", "lzf"] | int | None = "gzip",

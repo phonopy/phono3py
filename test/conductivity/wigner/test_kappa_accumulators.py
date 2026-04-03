@@ -76,17 +76,15 @@ def test_get_extra_grid_point_output_stores_velocity_operator():
     acc.accumulate(0, result0)
     acc.accumulate(1, result1)
 
-    extra0 = acc.get_extra_grid_point_output(0)
-    extra1 = acc.get_extra_grid_point_output(1)
+    extra = acc.get_extra_grid_point_output()
 
-    assert extra0 is not None
-    assert extra1 is not None
+    assert extra is not None
     np.testing.assert_array_equal(
-        extra0["velocity_operator"],
+        extra["velocity_operator"][0],
         result0.extra["velocity_operator"],
     )
     np.testing.assert_array_equal(
-        extra1["velocity_operator"],
+        extra["velocity_operator"][1],
         result1.extra["velocity_operator"],
     )
 
@@ -116,6 +114,6 @@ def test_get_extra_grid_point_output_zeros_without_velocity_operator():
 
     acc.accumulate(0, result)
 
-    extra = acc.get_extra_grid_point_output(0)
+    extra = acc.get_extra_grid_point_output()
     assert extra is not None
-    np.testing.assert_array_equal(extra["velocity_operator"], 0.0)
+    np.testing.assert_array_equal(extra["velocity_operator"][0], 0.0)

@@ -304,17 +304,17 @@ class LBTECalculator:
     @property
     def kappa_RTA(self) -> NDArray[np.double]:
         """Return RTA thermal conductivity, shape (num_sigma, num_temp, 6)."""
-        return self._accumulator.kappa_RTA
+        return self._accumulator.solver.kappa_RTA
 
     @property
     def mode_kappa(self) -> NDArray[np.double]:
         """Return mode LBTE kappa, shape (num_sigma, num_temp, num_gp, num_band0, 6)."""
-        return self._accumulator.mode_kappa
+        return self._accumulator.solver.mode_kappa
 
     @property
     def mode_kappa_RTA(self) -> NDArray[np.double]:
         """Return mode RTA kappa, shape (num_sigma, num_temp, num_gp, num_band0, 6)."""
-        return self._accumulator.mode_kappa_RTA
+        return self._accumulator.solver.mode_kappa_RTA
 
     @property
     def gamma(self) -> NDArray[np.double]:
@@ -335,17 +335,17 @@ class LBTECalculator:
     @property
     def collision_matrix(self) -> NDArray[np.double] | None:
         """Return assembled collision matrix."""
-        return self._accumulator.collision_matrix
+        return self._accumulator.solver.collision_matrix
 
     @collision_matrix.setter
     def collision_matrix(self, value: NDArray[np.double] | None) -> None:
         """Set collision matrix (for loading from file)."""
-        self._accumulator.collision_matrix = value
+        self._accumulator.solver.collision_matrix = value
 
     @property
     def collision_eigenvalues(self) -> NDArray[np.double] | None:
         """Return eigenvalues of collision matrix."""
-        return self._accumulator.collision_eigenvalues
+        return self._accumulator.solver.collision_eigenvalues
 
     @property
     def averaged_pp_interaction(self) -> NDArray[np.double] | None:
@@ -372,12 +372,12 @@ class LBTECalculator:
     @property
     def f_vectors(self) -> NDArray[np.double] | None:
         """Return f-vectors, shape (num_gp, num_band0, 3)."""
-        return self._accumulator.f_vectors
+        return self._accumulator.solver.f_vectors
 
     @property
     def mfp(self) -> NDArray[np.double] | None:
         """Return mean free path, shape (num_sigma, num_temp, num_gp, num_band0, 3)."""
-        return self._accumulator.mfp
+        return self._accumulator.solver.mfp
 
     def __getattr__(self, name: str) -> object:
         """Delegate unknown attribute lookups to the accumulator.

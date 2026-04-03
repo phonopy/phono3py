@@ -321,18 +321,19 @@ class RTACalculator:
         fn = getattr(self._accumulator, "get_extra_kappa_output", None)
         return fn() if callable(fn) else None
 
-    def get_extra_grid_point_output(self, i: int) -> dict[str, Any] | None:
-        """Return per-grid-point extra data from the accumulator.
+    def get_extra_grid_point_output(self) -> dict[str, Any] | None:
+        """Return per-grid-point extra arrays from the accumulator.
 
         Called by output writers to obtain plugin-defined per-grid-point
-        quantities (e.g. Wigner velocity_operator) that are written to
+        arrays (e.g. Wigner velocity_operator) that are written to
         the hdf5 file via ``write_kappa_to_hdf5(extra_datasets=...)``.
+        The caller is responsible for slicing by grid-point index.
 
         Returns None when the accumulator does not implement this method.
 
         """
         fn = getattr(self._accumulator, "get_extra_grid_point_output", None)
-        return fn(i) if callable(fn) else None
+        return fn() if callable(fn) else None
 
     def log_kappa(self) -> None:
         """Delegate kappa logging to the accumulator.
