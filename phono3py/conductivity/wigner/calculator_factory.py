@@ -107,9 +107,11 @@ def make_wigner_rta_calculator(
     """
     base = build_rta_base_components(
         interaction,
+        grid_points=grid_points,
         sigmas=sigmas,
         sigma_cutoff=sigma_cutoff,
         temperatures=temperatures,
+        boundary_mfp=boundary_mfp,
         is_kappa_star=is_kappa_star,
         is_full_pp=is_full_pp,
         use_ave_pp=use_ave_pp,
@@ -133,10 +135,8 @@ def make_wigner_rta_calculator(
     cv_provider = ModeHeatCapacityProvider(interaction)
 
     accumulator = WignerRTAKappaAccumulator(
-        cutoff_frequency=interaction.cutoff_frequency,
+        context=base.context,
         conversion_factor_WTE=get_conversion_factor_WTE(interaction.primitive.volume),
-        temperatures=temperatures,
-        sigmas=base.sigmas,
         log_level=log_level,
     )
 
@@ -146,14 +146,9 @@ def make_wigner_rta_calculator(
         cv_provider=cv_provider,
         scattering_provider=base.scattering_provider,
         accumulator=accumulator,  # type: ignore[arg-type]
-        grid_points=grid_points,
-        temperatures=temperatures,
-        sigmas=base.sigmas,
-        sigma_cutoff=sigma_cutoff,
+        context=base.context,
         is_isotope=is_isotope,
         mass_variances=mass_variances,
-        boundary_mfp=boundary_mfp,
-        is_kappa_star=is_kappa_star,
         is_N_U=is_N_U,
         is_gamma_detail=is_gamma_detail,
         log_level=log_level,
@@ -269,14 +264,9 @@ def make_wigner_lbte_calculator(
     cv_provider = ModeHeatCapacityProvider(interaction)
 
     wigner_accumulator = WignerLBTEKappaAccumulator(
-        inner=base.accumulator,
-        ir_grid_points=base.ir_grid_points,
-        frequencies=base.frequencies,
-        band_indices=np.asarray(interaction.band_indices, dtype="int64"),
-        cutoff_frequency=interaction.cutoff_frequency,
+        solver=base.solver,
+        context=base.context,
         conversion_factor_WTE=get_conversion_factor_WTE(interaction.primitive.volume),
-        temperatures=base.temperatures,
-        sigmas=base.sigmas,
         is_reducible_collision_matrix=is_reducible_collision_matrix,
         log_level=log_level,
     )
@@ -287,8 +277,7 @@ def make_wigner_lbte_calculator(
         cv_provider=cv_provider,
         collision_provider=base.collision_provider,
         accumulator=wigner_accumulator,  # type: ignore[arg-type]
-        temperatures=base.temperatures,
-        sigmas=base.sigmas,
+        context=base.context,
         is_isotope=is_isotope,
         mass_variances=mass_variances,
         is_full_pp=is_full_pp,

@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
 
+from phono3py.conductivity.collision_matrix_solver import CollisionMatrixSolver
+from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.grid_point_data import (
     GridPointResult,
     compute_effective_gamma,
 )
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionResult
-from phono3py.conductivity.lbte_kappa_accumulator import LBTEKappaAccumulator
 from phono3py.conductivity.utils import log_kappa_header, log_kappa_row
 from phono3py.conductivity.wigner.kappa_formulas import (
     DEGENERATE_FREQUENCY_THRESHOLD_THZ,
@@ -33,14 +33,10 @@ class WignerRTAKappaAccumulator:
 
     Parameters
     ----------
-    cutoff_frequency : float
-        Modes with frequency below this value (in THz) are skipped.
+    context : ConductivityContext
+        Shared computation metadata (grid, phonon, symmetry, configuration).
     conversion_factor_WTE : float
         Unit conversion factor to W/(m*K) for the WTE formula.
-    temperatures : array-like or None
-        Temperature values in Kelvin.
-    sigmas : sequence or None
-        Smearing widths (None for tetrahedron method).
     log_level : int
         Verbosity level.
 
@@ -48,26 +44,14 @@ class WignerRTAKappaAccumulator:
 
     def __init__(
         self,
-        cutoff_frequency: float,
+        context: ConductivityContext,
         conversion_factor_WTE: float,
-        temperatures: Sequence[float] | NDArray[np.double] | None = None,
-        sigmas: Sequence[float | None] | None = None,
         log_level: int = 0,
     ) -> None:
         """Init method."""
-        self._cutoff_frequency = cutoff_frequency
+        self._context = context
         self._conversion_factor_WTE = conversion_factor_WTE
-        self._temperatures = temperatures
-        self._sigmas: list[float | None] = [] if sigmas is None else list(sigmas)
         self._log_level = log_level
-
-        # Per-grid-point arrays (allocated in prepare()).
-        self._gv: NDArray[np.double]
-        self._gv_by_gv: NDArray[np.double]
-        self._cv: NDArray[np.double]
-        self._gamma: NDArray[np.double]
-        self._gamma_iso: NDArray[np.double] | None = None
-        self._averaged_pp_interaction: NDArray[np.double] | None = None
 
         # Kappa arrays (allocated in prepare()).
         self._kappa_P: NDArray[np.double]
@@ -84,21 +68,10 @@ class WignerRTAKappaAccumulator:
         num_band0: int,
         *,
         num_band: int | None = None,
-        is_full_pp: bool = False,
     ) -> None:
         """Allocate per-grid-point and kappa arrays."""
         if num_band is None:
             num_band = num_band0
-        self._gv = np.zeros((num_gp, num_band0, 3), dtype="double", order="C")
-        self._gv_by_gv = np.zeros((num_gp, num_band0, 6), dtype="double", order="C")
-        self._cv = np.zeros((num_temp, num_gp, num_band0), dtype="double", order="C")
-        self._gamma = np.zeros(
-            (num_sigma, num_temp, num_gp, num_band0), dtype="double", order="C"
-        )
-        if is_full_pp:
-            self._averaged_pp_interaction = np.zeros(
-                (num_gp, num_band0), dtype="double", order="C"
-            )
         self._kappa_P = np.zeros((num_sigma, num_temp, 6), dtype="double", order="C")
         self._mode_kappa_P = np.zeros(
             (num_sigma, num_temp, num_gp, num_band0, 6), dtype="double", order="C"
@@ -120,25 +93,6 @@ class WignerRTAKappaAccumulator:
         assert result.heat_capacities is not None
         assert result.gamma is not None
 
-        # Store per-grid-point data.
-        self._gv[i_gp] = result.group_velocities
-        self._gv_by_gv[i_gp] = result.gv_by_gv
-        self._cv[:, i_gp, :] = result.heat_capacities
-        self._gamma[:, :, i_gp, :] = result.gamma
-        if result.gamma_isotope is not None:
-            if self._gamma_iso is None:
-                ns = result.gamma_isotope.shape[0]
-                nb = self._gv.shape[1]
-                self._gamma_iso = np.zeros(
-                    (ns, self._gv.shape[0], nb), dtype="double", order="C"
-                )
-            self._gamma_iso[:, i_gp, :] = result.gamma_isotope
-        if (
-            result.averaged_pp_interaction is not None
-            and self._averaged_pp_interaction is not None
-        ):
-            self._averaged_pp_interaction[i_gp] = result.averaged_pp_interaction
-
         # Store raw velocity operator for per-grid-point HDF5 output.
         vel_op = result.extra.get("velocity_operator")
         if vel_op is not None:
@@ -148,7 +102,12 @@ class WignerRTAKappaAccumulator:
         vm_by_vm = result.vm_by_vm  # (num_band0, num_band, 6) complex
         cv = result.heat_capacities  # (num_temp, num_band0)
 
-        gamma = compute_effective_gamma(result)  # (num_sigma, num_temp, num_band0)
+        gamma = compute_effective_gamma(
+            result.gamma,
+            gamma_isotope=result.gamma_isotope,
+            gamma_boundary=result.gamma_boundary,
+            gamma_elph=result.gamma_elph,
+        )  # (num_sigma, num_temp, num_band0)
         num_sigma, num_temp, num_band0 = gamma.shape
         num_band = len(frequencies)
         THzToEv = get_physical_units().THzToEv
@@ -164,11 +123,11 @@ class WignerRTAKappaAccumulator:
                 cv_k = cv[k]  # (num_band0,)
                 for s1 in range(num_band0):
                     freq_s1 = frequencies[s1]
-                    if freq_s1 <= self._cutoff_frequency:
+                    if freq_s1 <= self._context.cutoff_frequency:
                         continue
                     for s2 in range(num_band):
                         freq_s2 = frequencies[s2]
-                        if freq_s2 <= self._cutoff_frequency:
+                        if freq_s2 <= self._context.cutoff_frequency:
                             continue
                         pair = self._get_pair_contribution(
                             freq_s1=freq_s1,
@@ -243,8 +202,9 @@ class WignerRTAKappaAccumulator:
         is_population = abs(freq_s1 - freq_s2) < DEGENERATE_FREQUENCY_THRESHOLD_THZ
         return contribution, is_population
 
-    def finalize(self, num_sampling_grid_points: int) -> None:
+    def finalize(self, grid_point_data: dict[str, Any]) -> None:
         """Compute kappa_P and kappa_C from mode_kappa arrays."""
+        num_sampling_grid_points = grid_point_data["num_sampling_grid_points"]
         if num_sampling_grid_points > 0:
             self._kappa_P = (
                 np.sum(self._mode_kappa_P, axis=(2, 3)) / num_sampling_grid_points
@@ -295,48 +255,6 @@ class WignerRTAKappaAccumulator:
     # Properties — per-grid-point data
     # ------------------------------------------------------------------
 
-    @property
-    def group_velocities(self) -> NDArray[np.double]:
-        """Return group velocities, shape (num_gp, num_band0, 3)."""
-        return self._gv
-
-    @property
-    def gv_by_gv(self) -> NDArray[np.double]:
-        """Return symmetrised v-outer-v, shape (num_gp, num_band0, 6)."""
-        return self._gv_by_gv
-
-    @property
-    def mode_heat_capacities(self) -> NDArray[np.double]:
-        """Return mode heat capacities, shape (num_temp, num_gp, num_band0)."""
-        return self._cv
-
-    @property
-    def gamma(self) -> NDArray[np.double]:
-        """Return ph-ph gamma, shape (num_sigma, num_temp, num_gp, num_band0)."""
-        return self._gamma
-
-    @gamma.setter
-    def gamma(self, value: NDArray[np.double]) -> None:
-        self._gamma = value
-
-    @property
-    def gamma_isotope(self) -> NDArray[np.double] | None:
-        """Return isotope gamma, shape (num_sigma, num_gp, num_band0)."""
-        return self._gamma_iso
-
-    @gamma_isotope.setter
-    def gamma_isotope(self, value: NDArray[np.double] | None) -> None:
-        self._gamma_iso = value
-
-    @property
-    def averaged_pp_interaction(self) -> NDArray[np.double] | None:
-        """Return averaged ph-ph interaction, shape (num_gp, num_band0)."""
-        return self._averaged_pp_interaction
-
-    @averaged_pp_interaction.setter
-    def averaged_pp_interaction(self, value: NDArray[np.double] | None) -> None:
-        self._averaged_pp_interaction = value
-
     def get_extra_grid_point_output(self, i: int) -> dict[str, Any]:
         """Return per-grid-point extra data for HDF5 output.
 
@@ -352,7 +270,7 @@ class WignerRTAKappaAccumulator:
         num_phonon_modes: int | None = None,
     ) -> None:
         """Print K_P, K_C, K_T rows for the Wigner-RTA conductivity."""
-        if not self._log_level or self._temperatures is None:
+        if not self._log_level:
             return
 
         kappa_tot = self.kappa
@@ -362,9 +280,9 @@ class WignerRTAKappaAccumulator:
             and num_phonon_modes is not None
         )
 
-        for i, sigma in enumerate(self._sigmas):
+        for i, sigma in enumerate(self._context.sigmas):
             log_kappa_header(sigma, show_ipm=show_ipm)
-            for j, t in enumerate(self._temperatures):
+            for j, t in enumerate(self._context.temperatures):
                 ipm = (
                     int(num_ignored_phonon_modes[i, j])
                     if show_ipm and num_ignored_phonon_modes is not None
@@ -372,7 +290,7 @@ class WignerRTAKappaAccumulator:
                 )
                 log_kappa_row("K_P\t", t, self._kappa_P[i, j], ipm, num_phonon_modes)
             print(" ")
-            for j, t in enumerate(self._temperatures):
+            for j, t in enumerate(self._context.temperatures):
                 ipm = (
                     int(num_ignored_phonon_modes[i, j])
                     if show_ipm and num_ignored_phonon_modes is not None
@@ -380,7 +298,7 @@ class WignerRTAKappaAccumulator:
                 )
                 log_kappa_row("K_C\t", t, self._kappa_C[i, j], ipm, num_phonon_modes)
             print(" ")
-            for j, t in enumerate(self._temperatures):
+            for j, t in enumerate(self._context.temperatures):
                 ipm = (
                     int(num_ignored_phonon_modes[i, j])
                     if show_ipm and num_ignored_phonon_modes is not None
@@ -408,33 +326,26 @@ class WignerRTAKappaAccumulator:
 
 
 class WignerLBTEKappaAccumulator:
-    """Wraps LBTEKappaAccumulator and adds the Wigner coherence (C) term.
+    """LBTE accumulator with added Wigner coherence (C) term.
+
+    Composes a CollisionMatrixSolver for the standard LBTE solve (P-term) and
+    adds the coherence (C) term from the stored velocity operator outer
+    products and linewidths.
 
     Stage 1 (per-grid-point): accumulate() stores the velocity operator outer
-    product and heat capacities in addition to delegating to the inner
-    LBTEKappaAccumulator.
+    product and heat capacities, then delegates collision data to the solver.
 
-    Stage 2 (global): finalize() calls inner.finalize() for the P-term kappa,
+    Stage 2 (global): finalize() calls solver.solve() for the P-term kappa,
     then computes the C-term from the stored outer products and linewidths.
 
     Parameters
     ----------
-    inner : LBTEKappaAccumulator
-        Inner accumulator for the P-term (standard LBTE).
-    ir_grid_points : NDArray[np.int64]
-        BZ grid point indices of the irreducible grid points, shape (num_ir,).
-    frequencies : NDArray[np.double]
-        Phonon frequencies on the full BZ grid, shape (n_bz, n_band).
-    band_indices : NDArray[np.int64]
-        Band indices used for the calculation, shape (num_band0,).
-    cutoff_frequency : float
-        Cutoff frequency in THz.
+    solver : CollisionMatrixSolver
+        Shared solver for the P-term (standard LBTE).
+    context : ConductivityContext
+        Shared computation metadata (grid, phonon, symmetry, configuration).
     conversion_factor_WTE : float
         Unit conversion factor for the coherence term.
-    temperatures : NDArray[np.double]
-        Temperatures in Kelvin, shape (num_temp,).
-    sigmas : list of float or None
-        Smearing widths.
     is_reducible_collision_matrix : bool, optional
         When True the C-term is not computed (not implemented).  Default False.
     log_level : int, optional
@@ -444,58 +355,41 @@ class WignerLBTEKappaAccumulator:
 
     def __init__(
         self,
-        inner: LBTEKappaAccumulator,
-        ir_grid_points: NDArray[np.int64],
-        frequencies: NDArray[np.double],
-        band_indices: NDArray[np.int64],
-        cutoff_frequency: float,
+        solver: CollisionMatrixSolver,
+        context: ConductivityContext,
         conversion_factor_WTE: float,
-        temperatures: NDArray[np.double],
-        sigmas: list[float | None],
         is_reducible_collision_matrix: bool = False,
         log_level: int = 0,
     ) -> None:
         """Init method."""
-        self._inner = inner
-        self._ir_grid_points = ir_grid_points
-        self._frequencies = frequencies
-        self._band_indices = band_indices
-        self._cutoff_frequency = cutoff_frequency
+        self._solver = solver
+        self._context = context
         self._conversion_factor_WTE = conversion_factor_WTE
-        self._sigmas = sigmas
         self._is_reducible = is_reducible_collision_matrix
         self._log_level = log_level
 
-        # Per-grid-point storage for the C-term (lazily allocated in accumulate()).
-        self._gv_by_gv_operator: NDArray[np.cdouble] | None = None
+        # Per-grid-point storage (lazily allocated in accumulate()).
         self._velocity_operator: NDArray[np.cdouble] | None = None
-        self._mode_cv: NDArray[np.double] | None = None
 
         # C-term output arrays (populated in finalize()).
         self._kappa_C: NDArray[np.double] | None = None
         self._mode_kappa_C: NDArray[np.cdouble] | None = None
 
     # ------------------------------------------------------------------
-    # Interface delegated to inner LBTEKappaAccumulator
+    # Public interface
     # ------------------------------------------------------------------
 
-    def prepare(self, is_full_pp: bool = False) -> None:
+    def prepare(self) -> None:
         """Allocate accumulator arrays."""
-        self._inner.prepare(is_full_pp=is_full_pp)
-
-    def store_gamma_iso(self, i_gp: int, gamma_iso: NDArray[np.double]) -> None:
-        """Store isotope scattering rate for grid point i_gp."""
-        self._inner.store_gamma_iso(i_gp, gamma_iso)
+        self._solver.prepare()
 
     def accumulate(
         self,
         i_gp: int,
         collision_result: LBTECollisionResult,
-        group_velocities: NDArray[np.double],
-        heat_capacities: NDArray[np.double],
         extra: dict[str, Any] | None = None,
     ) -> None:
-        """Store per-grid-point Stage 1 data and delegate to the inner accumulator.
+        """Store per-grid-point Stage 1 data and delegate to the solver.
 
         Parameters
         ----------
@@ -503,84 +397,96 @@ class WignerLBTEKappaAccumulator:
             Loop index over ir_grid_points (0-based).
         collision_result : LBTECollisionResult
             Result from LBTECollisionProvider.compute().
-        group_velocities : NDArray[np.double]
-            Group velocities, shape (num_band0, 3).
-        heat_capacities : NDArray[np.double]
-            Mode heat capacities, shape (num_temp, num_band0).
         extra : dict or None
             Plugin-specific data from the velocity provider.  Expected keys:
-            ``vm_by_vm`` (num_band0, num_band, 6) complex,
             ``velocity_operator`` (num_band0, nat3, 3) complex.
 
         """
-        vm_by_vm = extra.get("vm_by_vm") if extra else None
         velocity_operator = extra.get("velocity_operator") if extra else None
 
-        if vm_by_vm is not None and self._gv_by_gv_operator is None:
-            num_ir = len(self._ir_grid_points)
-            self._gv_by_gv_operator = np.zeros(
-                (num_ir,) + vm_by_vm.shape, dtype="complex128"
-            )
-            self._mode_cv = np.zeros((num_ir,) + heat_capacities.shape, dtype="double")
-        if vm_by_vm is not None and self._gv_by_gv_operator is not None:
-            self._gv_by_gv_operator[i_gp] = vm_by_vm
         if velocity_operator is not None:
             if self._velocity_operator is None:
-                num_ir = len(self._ir_grid_points)
+                num_ir = len(self._context.ir_grid_points)
                 self._velocity_operator = np.zeros(
                     (num_ir,) + velocity_operator.shape, dtype="complex128"
                 )
             self._velocity_operator[i_gp] = velocity_operator
-        if self._mode_cv is not None:
-            self._mode_cv[i_gp] = heat_capacities
-        self._inner.accumulate(
-            i_gp, collision_result, group_velocities, heat_capacities
-        )
+        self._solver.store(i_gp, collision_result)
 
     def finalize(
         self,
-        num_sampling_grid_points: int,
+        grid_point_data: dict[str, Any],
         suppress_kappa_log: bool = False,
     ) -> None:
-        """Finalize P-term via inner accumulator, then compute C-term.
+        """Finalize P-term via solver, then compute C-term.
 
         The standard LBTE kappa table is suppressed (replaced by the Wigner
         table printed at the end of this method) when log_level > 0.
 
         """
-        self._inner.finalize(
-            num_sampling_grid_points,
+        self._solver.solve(
+            grid_point_data,
             suppress_kappa_log=bool(self._log_level),
         )
-        self._compute_coherence_kappa(num_sampling_grid_points)
+        num_sampling_grid_points = grid_point_data["num_sampling_grid_points"]
+        self._compute_coherence_kappa(grid_point_data, num_sampling_grid_points)
         if self._log_level:
             self._log_wigner_kappa()
 
     # ------------------------------------------------------------------
-    # Attribute delegation — most properties come from self._inner
+    # Properties — delegated to solver (LBTE P-term results)
     # ------------------------------------------------------------------
 
-    def __getattr__(self, name: str) -> Any:
-        """Fall back to the inner LBTEKappaAccumulator for missing attributes.
+    @property
+    def kappa(self) -> NDArray[np.double]:
+        """Return LBTE thermal conductivity, shape (num_sigma, num_temp, 6)."""
+        return self._solver.kappa
 
-        This is only called when normal attribute lookup on self fails.
+    @property
+    def kappa_RTA(self) -> NDArray[np.double]:
+        """Return RTA thermal conductivity, shape (num_sigma, num_temp, 6)."""
+        return self._solver.kappa_RTA
 
-        """
-        return getattr(self._inner, name)
+    @property
+    def mode_kappa(self) -> NDArray[np.double]:
+        """Return mode LBTE kappa."""
+        return self._solver.mode_kappa
 
-    def __setattr__(self, name: str, value: Any) -> None:
-        """Route attribute assignment.
+    @property
+    def mode_kappa_RTA(self) -> NDArray[np.double]:
+        """Return mode RTA kappa."""
+        return self._solver.mode_kappa_RTA
 
-        Unlike __getattr__, __setattr__ is called on every attribute
-        assignment.  gamma, collision_matrix, and temperatures are
-        forwarded to self._inner.  All other attributes are set on self
-        via object.__setattr__ (super()) to avoid infinite recursion.
+    @property
+    def collision_matrix(self) -> NDArray[np.double] | None:
+        """Return assembled collision matrix."""
+        return self._solver.collision_matrix
 
-        """
-        if name in ("gamma", "collision_matrix", "temperatures"):
-            setattr(self._inner, name, value)
-        else:
-            super().__setattr__(name, value)
+    @collision_matrix.setter
+    def collision_matrix(self, value: NDArray[np.double] | None) -> None:
+        """Set collision matrix (used when reading from file)."""
+        self._solver.collision_matrix = value
+
+    @property
+    def collision_eigenvalues(self) -> NDArray[np.double] | None:
+        """Return eigenvalues of collision matrix."""
+        return self._solver.collision_eigenvalues
+
+    @property
+    def f_vectors(self) -> NDArray[np.double] | None:
+        """Return f-vectors, shape (num_gp, num_band0, 3)."""
+        return self._solver.f_vectors
+
+    @property
+    def mfp(self) -> NDArray[np.double] | None:
+        """Return mean free path."""
+        return self._solver.mfp
+
+    def get_main_diagonal(
+        self, i_gp: int, i_sigma: int, i_temp: int
+    ) -> NDArray[np.double]:
+        """Return total scattering rate at a grid point."""
+        return self._solver.get_main_diagonal(i_gp, i_sigma, i_temp)
 
     # ------------------------------------------------------------------
     # Properties — Wigner-specific aliases
@@ -589,22 +495,22 @@ class WignerLBTEKappaAccumulator:
     @property
     def kappa_P_exact(self) -> NDArray[np.double]:
         """Return LBTE kappa (P-exact term) — alias for kappa."""
-        return self._inner.kappa
+        return self._solver.kappa
 
     @property
     def kappa_P_RTA(self) -> NDArray[np.double]:
         """Return RTA kappa (P-RTA term) — alias for kappa_RTA."""
-        return self._inner.kappa_RTA
+        return self._solver.kappa_RTA
 
     @property
     def mode_kappa_P_exact(self) -> NDArray[np.double]:
         """Return mode LBTE kappa (P-exact term) — alias for mode_kappa."""
-        return self._inner.mode_kappa
+        return self._solver.mode_kappa
 
     @property
     def mode_kappa_P_RTA(self) -> NDArray[np.double]:
         """Return mode RTA kappa (P-RTA term) — alias for mode_kappa_RTA."""
-        return self._inner.mode_kappa_RTA
+        return self._solver.mode_kappa_RTA
 
     # ------------------------------------------------------------------
     # Properties — C-term
@@ -636,8 +542,8 @@ class WignerLBTEKappaAccumulator:
                             or None
 
         """
-        kappa_P_exact = self._inner.kappa
-        kappa_P_RTA = self._inner.kappa_RTA
+        kappa_P_exact = self._solver.kappa
+        kappa_P_RTA = self._solver.kappa_RTA
         kappa_C = self._kappa_C
         if kappa_C is not None:
             kappa_TOT_exact: NDArray[np.double] | None = kappa_P_exact + kappa_C
@@ -652,8 +558,8 @@ class WignerLBTEKappaAccumulator:
             "kappa_P_exact": kappa_P_exact,
             "kappa_P_RTA": kappa_P_RTA,
             "kappa_C": kappa_C,
-            "mode_kappa_P_exact": self._inner.mode_kappa,
-            "mode_kappa_P_RTA": self._inner.mode_kappa_RTA,
+            "mode_kappa_P_exact": self._solver.mode_kappa,
+            "mode_kappa_P_RTA": self._solver.mode_kappa_RTA,
             "mode_kappa_C": None if mode_kappa_C is None else mode_kappa_C.real,
             "velocity_operator": self._velocity_operator,
         }
@@ -662,7 +568,9 @@ class WignerLBTEKappaAccumulator:
     # Private: C-term computation
     # ------------------------------------------------------------------
 
-    def _compute_coherence_kappa(self, num_sampling_grid_points: int) -> None:
+    def _compute_coherence_kappa(
+        self, grid_point_data: dict[str, Any], num_sampling_grid_points: int
+    ) -> None:
         """Compute the Wigner coherence (C) term of thermal conductivity."""
         if self._is_reducible:
             print(
@@ -670,15 +578,17 @@ class WignerLBTEKappaAccumulator:
                 "is_reducible_collision_matrix=True"
             )
             return
-        if self._gv_by_gv_operator is None or self._mode_cv is None:
+        vm_by_vm = grid_point_data.get("vm_by_vm")
+        mode_cv = grid_point_data.get("mode_heat_capacities")
+        if vm_by_vm is None or mode_cv is None:
             return
 
         THzToEv = get_physical_units().THzToEv
-        num_sigma = len(self._sigmas)
-        num_temp = len(self._inner.temperatures)
-        num_ir = len(self._ir_grid_points)
-        num_band0 = len(self._band_indices)
-        num_band = self._frequencies.shape[1]
+        num_sigma = len(self._context.sigmas)
+        num_temp = len(self._context.temperatures)
+        num_ir = len(self._context.ir_grid_points)
+        num_band0 = len(self._context.band_indices)
+        num_band = self._context.frequencies.shape[1]
 
         mode_kappa_C = np.zeros(
             (num_sigma, num_temp, num_ir, num_band0, num_band, 6), dtype="complex128"
@@ -687,11 +597,11 @@ class WignerLBTEKappaAccumulator:
         for i_sigma in range(num_sigma):
             for i_temp in range(num_temp):
                 for i_gp in range(num_ir):
-                    gp = int(self._ir_grid_points[i_gp])
-                    g = self._inner.get_main_diagonal(i_gp, i_sigma, i_temp) * 2.0
-                    frequencies = self._frequencies[gp]
-                    cv = self._mode_cv[i_gp, i_temp, :]
-                    gv_by_gv_op = self._gv_by_gv_operator[i_gp]
+                    gp = int(self._context.ir_grid_points[i_gp])
+                    g = self._solver.get_main_diagonal(i_gp, i_sigma, i_temp) * 2.0
+                    frequencies = self._context.frequencies[gp]
+                    cv = mode_cv[i_temp, i_gp, :]
+                    gv_by_gv_op = vm_by_vm[i_gp]
 
                     for s1 in range(num_band0):
                         for s2 in range(num_band):
@@ -731,7 +641,8 @@ class WignerLBTEKappaAccumulator:
         Returns None when the pair is degenerate or below the cutoff frequency.
 
         """
-        if freq_s1 <= self._cutoff_frequency or freq_s2 <= self._cutoff_frequency:
+        cutoff = self._context.cutoff_frequency
+        if freq_s1 <= cutoff or freq_s2 <= cutoff:
             return None
         if np.abs(freq_s1 - freq_s2) <= DEGENERATE_FREQUENCY_THRESHOLD_THZ:
             return None
@@ -743,7 +654,8 @@ class WignerLBTEKappaAccumulator:
 
         gamma_sum = hbar_gamma_s1 + hbar_gamma_s2
         delta_omega = hbar_omega_s1 - hbar_omega_s2
-        lorentzian_div_hbar = (0.5 * gamma_sum) / (delta_omega**2 + 0.25 * gamma_sum**2)
+        denominator = delta_omega**2 + 0.25 * gamma_sum**2
+        lorentzian_div_hbar = (0.5 * gamma_sum) / denominator
         prefactor = (
             0.25
             * (hbar_omega_s1 + hbar_omega_s2)
@@ -754,12 +666,12 @@ class WignerLBTEKappaAccumulator:
 
     def _log_wigner_kappa(self) -> None:
         """Print Wigner LBTE kappa table (K_P_exact, K_P_RTA, K_C, K_TOT)."""
-        kappa_P_exact = self._inner.kappa
-        kappa_P_RTA = self._inner.kappa_RTA
+        kappa_P_exact = self._solver.kappa
+        kappa_P_RTA = self._solver.kappa_RTA
         kappa_C = self._kappa_C
 
-        for i_sigma in range(len(self._sigmas)):
-            for i_temp, t in enumerate(self._inner.temperatures):
+        for i_sigma in range(len(self._context.sigmas)):
+            for i_temp, t in enumerate(self._context.temperatures):
                 if t <= 0:
                     continue
                 print(

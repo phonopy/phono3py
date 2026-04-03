@@ -105,9 +105,11 @@ def make_kubo_rta_calculator(
     """
     base = build_rta_base_components(
         interaction,
+        grid_points=grid_points,
         sigmas=sigmas,
         sigma_cutoff=sigma_cutoff,
         temperatures=temperatures,
+        boundary_mfp=boundary_mfp,
         is_kappa_star=is_kappa_star,
         is_full_pp=is_full_pp,
         use_ave_pp=use_ave_pp,
@@ -130,13 +132,9 @@ def make_kubo_rta_calculator(
     )
 
     conversion_factor = get_unit_to_WmK() / interaction.primitive.volume
-    assert temperatures is not None
     accumulator = KuboRTAKappaAccumulator(
-        temperatures=temperatures,
-        sigmas=base.sigmas,
-        cutoff_frequency=interaction.cutoff_frequency,
+        context=base.context,
         conversion_factor=conversion_factor,
-        is_isotope=is_isotope,
         log_level=log_level,
     )
 
@@ -146,14 +144,9 @@ def make_kubo_rta_calculator(
         cv_provider=cv_provider,  # type: ignore[arg-type]
         scattering_provider=base.scattering_provider,
         accumulator=accumulator,  # type: ignore[arg-type]
-        grid_points=grid_points,
-        temperatures=temperatures,
-        sigmas=base.sigmas,
-        sigma_cutoff=sigma_cutoff,
+        context=base.context,
         is_isotope=is_isotope,
         mass_variances=mass_variances,
-        boundary_mfp=boundary_mfp,
-        is_kappa_star=is_kappa_star,
         is_N_U=is_N_U,
         is_gamma_detail=is_gamma_detail,
         log_level=log_level,
@@ -271,12 +264,9 @@ def make_kubo_lbte_calculator(
 
     conversion_factor = get_unit_to_WmK() / interaction.primitive.volume
     kubo_accumulator = KuboLBTEKappaAccumulator(
-        inner=base.accumulator,
-        ir_grid_points=base.ir_grid_points,
-        frequencies=base.frequencies,
-        cutoff_frequency=interaction.cutoff_frequency,
+        solver=base.solver,
+        context=base.context,
         conversion_factor=conversion_factor,
-        sigmas=base.sigmas,
         log_level=log_level,
     )
 
@@ -286,8 +276,7 @@ def make_kubo_lbte_calculator(
         cv_provider=cv_provider,  # type: ignore[arg-type]
         collision_provider=base.collision_provider,
         accumulator=kubo_accumulator,  # type: ignore[arg-type]
-        temperatures=base.temperatures,
-        sigmas=base.sigmas,
+        context=base.context,
         is_isotope=is_isotope,
         mass_variances=mass_variances,
         is_full_pp=is_full_pp,

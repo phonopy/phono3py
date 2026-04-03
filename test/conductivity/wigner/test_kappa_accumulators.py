@@ -2,10 +2,35 @@
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock
+
 import numpy as np
 
+from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.grid_point_data import GridPointInput, GridPointResult
 from phono3py.conductivity.wigner.kappa_accumulators import WignerRTAKappaAccumulator
+
+
+def _make_dummy_context() -> ConductivityContext:
+    """Create a minimal ConductivityContext for unit tests."""
+    bz_grid = MagicMock()
+    return ConductivityContext(
+        grid_points=np.zeros(1, dtype="int64"),
+        ir_grid_points=np.zeros(1, dtype="int64"),
+        grid_weights=np.ones(1, dtype="int64"),
+        bz_grid=bz_grid,
+        mesh_numbers=np.array([1, 1, 1], dtype="int64"),
+        frequencies=np.ones((1, 6), dtype="double"),
+        eigenvectors=np.eye(6, dtype="complex128").reshape(1, 6, 6),
+        point_operations=np.eye(3, dtype="int64").reshape(1, 3, 3),
+        rotations_cartesian=np.eye(3, dtype="double").reshape(1, 3, 3),
+        temperatures=np.array([300.0], dtype="double"),
+        sigmas=[None],
+        sigma_cutoff_width=None,
+        boundary_mfp=None,
+        band_indices=np.arange(6, dtype="int64"),
+        cutoff_frequency=0.0,
+    )
 
 
 def _make_result_with_velocity_operator(
@@ -41,7 +66,8 @@ def _make_result_with_velocity_operator(
 
 def test_get_extra_grid_point_output_stores_velocity_operator():
     """Velocity operator is stored per grid point and returned."""
-    acc = WignerRTAKappaAccumulator(cutoff_frequency=0.0, conversion_factor_WTE=1.0)
+    ctx = _make_dummy_context()
+    acc = WignerRTAKappaAccumulator(context=ctx, conversion_factor_WTE=1.0)
     acc.prepare(num_sigma=1, num_temp=2, num_gp=2, num_band0=6)
 
     result0 = _make_result_with_velocity_operator()
@@ -67,7 +93,8 @@ def test_get_extra_grid_point_output_stores_velocity_operator():
 
 def test_get_extra_grid_point_output_zeros_without_velocity_operator():
     """Velocity operator is zero when not stored via result.extra."""
-    acc = WignerRTAKappaAccumulator(cutoff_frequency=0.0, conversion_factor_WTE=1.0)
+    ctx = _make_dummy_context()
+    acc = WignerRTAKappaAccumulator(context=ctx, conversion_factor_WTE=1.0)
     acc.prepare(num_sigma=1, num_temp=2, num_gp=1, num_band0=6)
 
     # Result without velocity_operator in extra
