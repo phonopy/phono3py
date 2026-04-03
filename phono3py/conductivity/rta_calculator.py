@@ -124,8 +124,14 @@ class RTACalculator:
         self._read_gamma_iso = False
 
         # Declare arrays; allocated lazily when temperatures are set.
-        # gv, gv_by_gv, cv, gamma, gamma_iso, averaged_pp_interaction
-        # are owned by the accumulator (allocated in accumulator.prepare()).
+        self._gamma: NDArray[np.double] | None = None
+        self._gv: NDArray[np.double] | None = None
+        self._gv_by_gv: NDArray[np.double] | None = None
+        self._cv: NDArray[np.double] | None = None
+        self._vm_by_vm: NDArray[np.cdouble] | None = None
+        self._heat_capacity_matrix: NDArray[np.double] | None = None
+        self._gamma_iso: NDArray[np.double] | None = None
+        self._averaged_pp_interaction: NDArray[np.double] | None = None
         self._gamma_N: NDArray[np.double] | None = None
         self._gamma_U: NDArray[np.double] | None = None
         self._gamma_elph: NDArray[np.double] | None = None
@@ -180,7 +186,17 @@ class RTACalculator:
                 "==================="
             )
 
-        self._accumulator.finalize(self._num_sampling_grid_points)
+        grid_point_data: dict[str, Any] = {
+            "num_sampling_grid_points": self._num_sampling_grid_points,
+            "group_velocities": self._gv,
+            "gv_by_gv": self._gv_by_gv,
+            "mode_heat_capacities": self._cv,
+        }
+        if self._vm_by_vm is not None:
+            grid_point_data["vm_by_vm"] = self._vm_by_vm
+        if self._heat_capacity_matrix is not None:
+            grid_point_data["heat_capacity_matrix"] = self._heat_capacity_matrix
+        self._accumulator.finalize(grid_point_data)
 
     # ------------------------------------------------------------------
     # Properties -- context access
@@ -342,29 +358,45 @@ class RTACalculator:
     # ------------------------------------------------------------------
     # Properties -- scattering arrays (with setters for file reads)
     # ------------------------------------------------------------------
-    # gamma, gamma_isotope, averaged_pp_interaction, group_velocities,
-    # gv_by_gv, mode_heat_capacities, kappa, mode_kappa are owned by the
-    # accumulator and accessed via __getattr__ delegation.  Only setters
-    # that carry calculator-side flags need explicit definitions here.
+    # kappa, mode_kappa are owned by the accumulator and accessed via
+    # __getattr__ delegation.  All per-grid-point arrays (gamma,
+    # group_velocities, gv_by_gv, mode_heat_capacities, gamma_isotope,
+    # averaged_pp_interaction, vm_by_vm, heat_capacity_matrix) are
+    # owned by the calculator.
 
     @property
-    def gamma(self) -> NDArray[np.double]:
+    def gamma(self) -> NDArray[np.double] | None:
         """Return ph-ph gamma, shape (num_sigma, num_temp, num_gp, num_band0)."""
-        return self._accumulator.gamma
+        return self._gamma
 
     @gamma.setter
     def gamma(self, gamma: NDArray[np.double]) -> None:
-        self._accumulator.gamma = gamma
+        self._gamma = gamma
         self._read_gamma = True
+
+    @property
+    def group_velocities(self) -> NDArray[np.double] | None:
+        """Return group velocities, shape (num_gp, num_band0, 3)."""
+        return self._gv
+
+    @property
+    def gv_by_gv(self) -> NDArray[np.double] | None:
+        """Return symmetrised v-outer-v, shape (num_gp, num_band0, 6)."""
+        return self._gv_by_gv
+
+    @property
+    def mode_heat_capacities(self) -> NDArray[np.double] | None:
+        """Return mode heat capacities, shape (num_temp, num_gp, num_band0)."""
+        return self._cv
 
     @property
     def gamma_isotope(self) -> NDArray[np.double] | None:
         """Return isotope gamma, shape (num_sigma, num_gp, num_band0)."""
-        return self._accumulator.gamma_isotope
+        return self._gamma_iso
 
     @gamma_isotope.setter
     def gamma_isotope(self, gamma_iso: NDArray[np.double] | None) -> None:
-        self._accumulator.gamma_isotope = gamma_iso
+        self._gamma_iso = gamma_iso
         self._read_gamma_iso = gamma_iso is not None
 
     @property
@@ -376,9 +408,14 @@ class RTACalculator:
     def gamma_elph(self, gamma_elph: NDArray[np.double] | None) -> None:
         self._gamma_elph = gamma_elph
 
+    @property
+    def averaged_pp_interaction(self) -> NDArray[np.double] | None:
+        """Return averaged ph-ph interaction, shape (num_gp, num_band0)."""
+        return self._averaged_pp_interaction
+
     def set_averaged_pp_interaction(self, ave_pp: NDArray[np.double]) -> None:
         """Set averaged ph-ph interaction from outside."""
-        self._accumulator.averaged_pp_interaction = ave_pp
+        self._averaged_pp_interaction = ave_pp
 
     def get_gamma_N_U(
         self,
@@ -410,6 +447,12 @@ class RTACalculator:
         num_gp = len(self._context.grid_points)
         num_band0 = len(self._context.band_indices)
 
+        self._gamma = np.zeros(
+            (num_sigma, num_temp, num_gp, num_band0), order="C", dtype="double"
+        )
+        self._gv = np.zeros((num_gp, num_band0, 3), order="C", dtype="double")
+        self._gv_by_gv = np.zeros((num_gp, num_band0, 6), order="C", dtype="double")
+        self._cv = np.zeros((num_temp, num_gp, num_band0), order="C", dtype="double")
         if not self._read_gamma:
             if self._is_N_U or self._is_gamma_detail:
                 shape = (num_sigma, num_temp, num_gp, num_band0)
@@ -426,7 +469,6 @@ class RTACalculator:
             num_gp,
             num_band0,
             num_band=num_band,
-            is_full_pp=self._scattering_provider.is_full_pp,
         )
         self._num_ignored_phonon_modes = np.zeros(
             (num_sigma, num_temp), order="C", dtype="int64"
@@ -526,7 +568,7 @@ class RTACalculator:
                     self._gamma_U[:, :, i_gp, :] = g_U
             self._gamma_detail_at_q = self._scattering_provider.gamma_detail_at_q
         else:
-            gamma = self._accumulator.gamma[:, :, i_gp, :]
+            gamma = self._gamma[:, :, i_gp, :]
             ave_pp = None
             if self._log_level:
                 print("  Gamma is read from file.")
@@ -552,6 +594,49 @@ class RTACalculator:
         if self._log_level:
             self._show_log(i_gp, vel_result.group_velocities, ave_pp)
 
+        # Store per-grid-point output data in calculator.
+        self._gamma[:, :, i_gp, :] = gamma
+        self._gv[i_gp] = vel_result.group_velocities
+        self._gv_by_gv[i_gp] = vel_result.gv_by_gv
+        self._cv[:, i_gp, :] = cv_result.heat_capacities
+        if vel_result.vm_by_vm is not None:
+            if self._vm_by_vm is None:
+                self._vm_by_vm = np.zeros(
+                    (len(self._context.grid_points),) + vel_result.vm_by_vm.shape,
+                    dtype="complex128",
+                    order="C",
+                )
+            self._vm_by_vm[i_gp] = vel_result.vm_by_vm
+        if cv_result.heat_capacity_matrix is not None:
+            if self._heat_capacity_matrix is None:
+                shape = cv_result.heat_capacity_matrix.shape
+                self._heat_capacity_matrix = np.zeros(
+                    (shape[0], len(self._context.grid_points)) + shape[1:],
+                    dtype="double",
+                    order="C",
+                )
+            self._heat_capacity_matrix[:, i_gp] = cv_result.heat_capacity_matrix
+        if ave_pp is not None:
+            if self._averaged_pp_interaction is None:
+                self._averaged_pp_interaction = np.zeros(
+                    (len(self._context.grid_points), len(self._context.band_indices)),
+                    dtype="double",
+                    order="C",
+                )
+            self._averaged_pp_interaction[i_gp] = ave_pp
+        if gamma_iso is not None:
+            if self._gamma_iso is None:
+                self._gamma_iso = np.zeros(
+                    (
+                        gamma_iso.shape[0],
+                        len(self._context.grid_points),
+                        gamma_iso.shape[-1],
+                    ),
+                    dtype="double",
+                    order="C",
+                )
+            self._gamma_iso[:, i_gp, :] = gamma_iso
+
         # Build GridPointResult from provider outputs.
         result = GridPointResult(input=gp_input)
         result.group_velocities = vel_result.group_velocities
@@ -561,11 +646,10 @@ class RTACalculator:
         result.heat_capacity_matrix = cv_result.heat_capacity_matrix
 
         result.gamma = gamma
-        result.averaged_pp_interaction = ave_pp
         if gamma_iso is not None:
             result.gamma_isotope = gamma_iso
-        elif self._read_gamma_iso and self._accumulator.gamma_isotope is not None:
-            result.gamma_isotope = self._accumulator.gamma_isotope[:, i_gp, :]
+        elif self._read_gamma_iso and self._gamma_iso is not None:
+            result.gamma_isotope = self._gamma_iso[:, i_gp, :]
         if self._gamma_elph is not None:
             result.gamma_elph = self._gamma_elph[:, :, i_gp, :]
         if gamma_boundary is not None:

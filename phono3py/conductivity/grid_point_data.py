@@ -150,7 +150,12 @@ class GridPointResult:
 # ---------------------------------------------------------------------------
 
 
-def compute_effective_gamma(result: GridPointResult) -> NDArray[np.double]:
+def compute_effective_gamma(
+    gamma: NDArray[np.double],
+    gamma_isotope: NDArray[np.double] | None = None,
+    gamma_boundary: NDArray[np.double] | None = None,
+    gamma_elph: NDArray[np.double] | None = None,
+) -> NDArray[np.double]:
     """Return effective linewidth combining all diagonal scattering contributions.
 
     Sums ph-ph, isotope, boundary, and electron-phonon linewidths:
@@ -161,26 +166,29 @@ def compute_effective_gamma(result: GridPointResult) -> NDArray[np.double]:
 
     Parameters
     ----------
-    result : GridPointResult
-        Must have ``gamma`` (num_sigma, num_temp, num_band0) set.
-        Optional contributions: ``gamma_isotope`` (num_sigma, num_band0),
-        ``gamma_boundary`` (num_band0,), ``gamma_elph``
-        (num_sigma, num_temp, num_band0).
+    gamma : ndarray of double
+        Ph-ph linewidth, shape (num_sigma, num_temp, num_band0).
+    gamma_isotope : ndarray of double or None, optional
+        Isotope scattering, shape (num_sigma, num_band0).
+    gamma_boundary : ndarray of double or None, optional
+        Boundary scattering, shape (num_band0,).
+    gamma_elph : ndarray of double or None, optional
+        Electron-phonon scattering, shape (num_sigma, num_temp, num_band0).
 
     Returns
     -------
     ndarray of double, shape (num_sigma, num_temp, num_band0)
         Effective linewidth.
+
     """
-    assert result.gamma is not None
-    gamma = result.gamma.copy()
-    if result.gamma_isotope is not None:
-        gamma += result.gamma_isotope[:, np.newaxis, :]
-    if result.gamma_boundary is not None:
-        gamma += result.gamma_boundary[np.newaxis, np.newaxis, :]
-    if result.gamma_elph is not None:
-        gamma += result.gamma_elph
-    return gamma
+    out = gamma.copy()
+    if gamma_isotope is not None:
+        out += gamma_isotope[:, np.newaxis, :]
+    if gamma_boundary is not None:
+        out += gamma_boundary[np.newaxis, np.newaxis, :]
+    if gamma_elph is not None:
+        out += gamma_elph
+    return out
 
 
 def make_grid_point_input(

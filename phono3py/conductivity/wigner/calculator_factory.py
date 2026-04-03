@@ -135,10 +135,8 @@ def make_wigner_rta_calculator(
     cv_provider = ModeHeatCapacityProvider(interaction)
 
     accumulator = WignerRTAKappaAccumulator(
-        cutoff_frequency=interaction.cutoff_frequency,
+        context=base.context,
         conversion_factor_WTE=get_conversion_factor_WTE(interaction.primitive.volume),
-        temperatures=temperatures,
-        sigmas=base.sigmas,
         log_level=log_level,
     )
 
@@ -266,7 +264,7 @@ def make_wigner_lbte_calculator(
     cv_provider = ModeHeatCapacityProvider(interaction)
 
     wigner_accumulator = WignerLBTEKappaAccumulator(
-        inner=base.accumulator,
+        solver=base.solver,
         context=base.context,
         conversion_factor_WTE=get_conversion_factor_WTE(interaction.primitive.volume),
         is_reducible_collision_matrix=is_reducible_collision_matrix,

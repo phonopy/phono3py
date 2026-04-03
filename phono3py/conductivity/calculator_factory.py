@@ -22,6 +22,7 @@ from typing import Any, Literal
 import numpy as np
 from numpy.typing import NDArray
 
+from phono3py.conductivity.collision_matrix_solver import CollisionMatrixSolver
 from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
 from phono3py.conductivity.lbte_calculator import LBTECalculator
@@ -45,9 +46,9 @@ from phono3py.phonon3.interaction import Interaction
 class LBTEBaseComponents:
     """Shared LBTE infrastructure built by build_lbte_base_components().
 
-    Contains the pre-assembled building blocks that are common to both the
-    standard LBTE and Wigner-LBTE calculators.  Wigner-LBTE wraps
-    ``accumulator`` in ``WignerLBTEKappaAccumulator`` and substitutes a different
+    Contains the pre-assembled building blocks that are common to the
+    standard LBTE, Wigner-LBTE, and Kubo-LBTE calculators.  Each caller
+    wraps the solver in its own accumulator and substitutes its own
     velocity provider; everything else is reused as-is.
 
     Attributes
@@ -68,8 +69,8 @@ class LBTEBaseComponents:
         Rotated grid point indices (None for reducible collision matrix).
     collision_provider : LBTECollisionProvider
         Pre-configured collision matrix provider.
-    accumulator : LBTEKappaAccumulator
-        Pre-configured LBTE kappa accumulator.
+    solver : CollisionMatrixSolver
+        Pre-configured collision matrix solver.
 
     """
 
@@ -81,7 +82,7 @@ class LBTEBaseComponents:
     ir_grid_points: NDArray[np.int64]
     rot_grid_points: NDArray[np.int64] | None
     collision_provider: LBTECollisionProvider
-    accumulator: LBTEKappaAccumulator
+    solver: CollisionMatrixSolver
     context: ConductivityContext
 
 
@@ -245,7 +246,7 @@ def build_lbte_base_components(
         rot_grid_points=rot_grid_points,
     )
 
-    accumulator = LBTEKappaAccumulator(
+    solver = CollisionMatrixSolver(
         context,
         conversion_factor=conversion_factor,
         is_reducible_collision_matrix=is_reducible_collision_matrix,
@@ -267,7 +268,7 @@ def build_lbte_base_components(
         ir_grid_points=ir_gps_bzg,
         rot_grid_points=rot_grid_points,
         collision_provider=collision_provider,
-        accumulator=accumulator,
+        solver=solver,
         context=context,
     )
 
@@ -576,10 +577,8 @@ def make_rta_calculator(
         log_level=log_level,
     )
     accumulator = RTAKappaAccumulator(
-        cutoff_frequency=interaction.cutoff_frequency,
+        context=base.context,
         conversion_factor=conversion_factor,
-        temperatures=temperatures,
-        sigmas=base.sigmas,
         log_level=log_level,
     )
 
@@ -701,12 +700,14 @@ def make_lbte_calculator(
 
     cv_provider = ModeHeatCapacityProvider(interaction)
 
+    accumulator = LBTEKappaAccumulator(base.solver)
+
     return LBTECalculator(
         interaction,
         velocity_provider=velocity_provider,
         cv_provider=cv_provider,
         collision_provider=base.collision_provider,
-        accumulator=base.accumulator,
+        accumulator=accumulator,
         context=base.context,
         is_isotope=is_isotope,
         mass_variances=mass_variances,

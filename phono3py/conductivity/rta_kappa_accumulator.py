@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
 
+from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.grid_point_data import (
     GridPointResult,
     compute_effective_gamma,
@@ -27,14 +28,10 @@ class RTAKappaAccumulator:
 
     Parameters
     ----------
-    cutoff_frequency : float
-        Modes with frequency below this value (in THz) are skipped.
+    context : ConductivityContext
+        Shared computation metadata (grid, phonon, symmetry, configuration).
     conversion_factor : float
         Unit conversion factor to W/(m*K).
-    temperatures : array-like
-        Temperature values in Kelvin.
-    sigmas : sequence
-        Smearing widths (None for tetrahedron method).
     log_level : int
         Verbosity level.
 
@@ -42,26 +39,16 @@ class RTAKappaAccumulator:
 
     def __init__(
         self,
-        cutoff_frequency: float,
+        context: ConductivityContext,
         conversion_factor: float,
-        temperatures: NDArray[np.double] | Sequence[float] | None = None,
-        sigmas: Sequence[float | None] | None = None,
         log_level: int = 0,
     ) -> None:
         """Init method."""
-        self._cutoff_frequency = cutoff_frequency
+        self._context = context
         self._conversion_factor = conversion_factor
-        self._temperatures = temperatures
-        self._sigmas: list[float | None] = [] if sigmas is None else list(sigmas)
         self._log_level = log_level
 
         # Allocated in prepare().
-        self._gv: NDArray[np.double]
-        self._gv_by_gv: NDArray[np.double]
-        self._cv: NDArray[np.double]
-        self._gamma: NDArray[np.double]
-        self._gamma_iso: NDArray[np.double] | None = None
-        self._averaged_pp_interaction: NDArray[np.double] | None = None
         self._kappa: NDArray[np.double]
         self._mode_kappa: NDArray[np.double]
 
@@ -73,19 +60,8 @@ class RTAKappaAccumulator:
         num_band0: int,
         *,
         num_band: int | None = None,
-        is_full_pp: bool = False,
     ) -> None:
         """Allocate per-grid-point and kappa arrays."""
-        self._gv = np.zeros((num_gp, num_band0, 3), dtype="double", order="C")
-        self._gv_by_gv = np.zeros((num_gp, num_band0, 6), dtype="double", order="C")
-        self._cv = np.zeros((num_temp, num_gp, num_band0), dtype="double", order="C")
-        self._gamma = np.zeros(
-            (num_sigma, num_temp, num_gp, num_band0), dtype="double", order="C"
-        )
-        if is_full_pp:
-            self._averaged_pp_interaction = np.zeros(
-                (num_gp, num_band0), dtype="double", order="C"
-            )
         self._kappa = np.zeros((num_sigma, num_temp, 6), dtype="double", order="C")
         self._mode_kappa = np.zeros(
             (num_sigma, num_temp, num_gp, num_band0, 6), dtype="double", order="C"
@@ -98,39 +74,22 @@ class RTAKappaAccumulator:
         assert result.heat_capacities is not None
         assert result.gamma is not None
 
-        # Store per-grid-point data.
-        self._gv[i_gp] = result.group_velocities
-        self._gv_by_gv[i_gp] = result.gv_by_gv  # (num_band0, 6)
-        self._cv[:, i_gp, :] = result.heat_capacities
-        self._gamma[:, :, i_gp, :] = result.gamma
-        if result.gamma_isotope is not None:
-            if self._gamma_iso is None:
-                ns, _, nb = (
-                    result.gamma_isotope.shape[0],
-                    self._gv.shape[0],
-                    self._gv.shape[1],
-                )
-                self._gamma_iso = np.zeros(
-                    (ns, self._gv.shape[0], nb), dtype="double", order="C"
-                )
-            self._gamma_iso[:, i_gp, :] = result.gamma_isotope
-        if (
-            result.averaged_pp_interaction is not None
-            and self._averaged_pp_interaction is not None
-        ):
-            self._averaged_pp_interaction[i_gp] = result.averaged_pp_interaction
-
         # Compute mode kappa.
         gv_by_gv = result.gv_by_gv
         cv = result.heat_capacities  # (num_temp, num_band0)
         frequencies = result.input.frequencies[result.input.band_indices]
 
-        gamma = compute_effective_gamma(result)  # (num_sigma, num_temp, num_band0)
+        gamma = compute_effective_gamma(
+            result.gamma,
+            gamma_isotope=result.gamma_isotope,
+            gamma_boundary=result.gamma_boundary,
+            gamma_elph=result.gamma_elph,
+        )  # (num_sigma, num_temp, num_band0)
         num_sigma, num_temp, num_band0 = gamma.shape
         mode_kappa = np.zeros((num_sigma, num_temp, num_band0, 6), dtype="double")
 
         for ll in range(num_band0):
-            if frequencies[ll] < self._cutoff_frequency:
+            if frequencies[ll] < self._context.cutoff_frequency:
                 continue
             for j in range(num_sigma):
                 for k in range(num_temp):
@@ -164,8 +123,9 @@ class RTAKappaAccumulator:
 
         self._mode_kappa[:, :, i_gp, :, :] = mode_kappa
 
-    def finalize(self, num_sampling_grid_points: int) -> None:
+    def finalize(self, grid_point_data: dict[str, Any]) -> None:
         """Compute kappa from mode_kappa."""
+        num_sampling_grid_points = grid_point_data["num_sampling_grid_points"]
         if num_sampling_grid_points > 0:
             self._kappa = (
                 np.sum(self._mode_kappa, axis=(2, 3)) / num_sampling_grid_points
@@ -177,16 +137,16 @@ class RTAKappaAccumulator:
         num_phonon_modes: int | None = None,
     ) -> None:
         """Print kappa table after finalization."""
-        if not self._log_level or self._temperatures is None:
+        if not self._log_level:
             return
         show_ipm = (
             self._log_level > 1
             and num_ignored_phonon_modes is not None
             and num_phonon_modes is not None
         )
-        for i, sigma in enumerate(self._sigmas):
+        for i, sigma in enumerate(self._context.sigmas):
             log_kappa_header(sigma, show_ipm=show_ipm)
-            for j, t in enumerate(self._temperatures):
+            for j, t in enumerate(self._context.temperatures):
                 ipm = (
                     int(num_ignored_phonon_modes[i, j])
                     if show_ipm and num_ignored_phonon_modes is not None
@@ -198,48 +158,6 @@ class RTAKappaAccumulator:
     # ------------------------------------------------------------------
     # Properties
     # ------------------------------------------------------------------
-
-    @property
-    def group_velocities(self) -> NDArray[np.double]:
-        """Return group velocities, shape (num_gp, num_band0, 3)."""
-        return self._gv
-
-    @property
-    def gv_by_gv(self) -> NDArray[np.double]:
-        """Return symmetrised v-outer-v, shape (num_gp, num_band0, 6)."""
-        return self._gv_by_gv
-
-    @property
-    def mode_heat_capacities(self) -> NDArray[np.double]:
-        """Return mode heat capacities, shape (num_temp, num_gp, num_band0)."""
-        return self._cv
-
-    @property
-    def gamma(self) -> NDArray[np.double]:
-        """Return ph-ph gamma, shape (num_sigma, num_temp, num_gp, num_band0)."""
-        return self._gamma
-
-    @gamma.setter
-    def gamma(self, value: NDArray[np.double]) -> None:
-        self._gamma = value
-
-    @property
-    def gamma_isotope(self) -> NDArray[np.double] | None:
-        """Return isotope gamma, shape (num_sigma, num_gp, num_band0)."""
-        return self._gamma_iso
-
-    @gamma_isotope.setter
-    def gamma_isotope(self, value: NDArray[np.double] | None) -> None:
-        self._gamma_iso = value
-
-    @property
-    def averaged_pp_interaction(self) -> NDArray[np.double] | None:
-        """Return averaged ph-ph interaction, shape (num_gp, num_band0)."""
-        return self._averaged_pp_interaction
-
-    @averaged_pp_interaction.setter
-    def averaged_pp_interaction(self, value: NDArray[np.double] | None) -> None:
-        self._averaged_pp_interaction = value
 
     @property
     def kappa(self) -> NDArray[np.double]:
