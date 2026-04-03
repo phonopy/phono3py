@@ -10,6 +10,7 @@ from numpy.typing import NDArray
 
 from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.grid_point_data import (
+    GridPointAggregates,
     GridPointInput,
     GridPointResult,
     make_grid_point_input,
@@ -186,17 +187,15 @@ class RTACalculator:
                 "==================="
             )
 
-        grid_point_data: dict[str, Any] = {
-            "num_sampling_grid_points": self._num_sampling_grid_points,
-            "group_velocities": self._gv,
-            "gv_by_gv": self._gv_by_gv,
-            "mode_heat_capacities": self._cv,
-        }
-        if self._vm_by_vm is not None:
-            grid_point_data["vm_by_vm"] = self._vm_by_vm
-        if self._heat_capacity_matrix is not None:
-            grid_point_data["heat_capacity_matrix"] = self._heat_capacity_matrix
-        self._accumulator.finalize(grid_point_data)
+        aggregates = GridPointAggregates(
+            num_sampling_grid_points=self._num_sampling_grid_points,
+            group_velocities=self._gv,
+            mode_heat_capacities=self._cv,
+            gv_by_gv=self._gv_by_gv,
+            vm_by_vm=self._vm_by_vm,
+            heat_capacity_matrix=self._heat_capacity_matrix,
+        )
+        self._accumulator.finalize(aggregates)
 
     # ------------------------------------------------------------------
     # Properties -- context access

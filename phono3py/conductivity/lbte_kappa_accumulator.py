@@ -42,6 +42,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from phono3py.conductivity.collision_matrix_solver import CollisionMatrixSolver
+from phono3py.conductivity.grid_point_data import GridPointAggregates
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionResult
 
 
@@ -98,7 +99,7 @@ class LBTEKappaAccumulator:
 
     def finalize(
         self,
-        grid_point_data: dict[str, Any],
+        aggregates: GridPointAggregates,
         *,
         suppress_kappa_log: bool = False,
     ) -> None:
@@ -108,18 +109,15 @@ class LBTEKappaAccumulator:
 
         Parameters
         ----------
-        grid_point_data : dict
-            Per-grid-point data from the calculator. Required keys:
-            ``num_sampling_grid_points``, ``gamma``, ``group_velocities``,
-            ``mode_heat_capacities``.
-            Optional: ``gamma_isotope``.
+        aggregates : GridPointAggregates
+            Aggregated per-grid-point data from the calculator.
         suppress_kappa_log : bool, optional
             When True, skip the per-temperature kappa table log so that the
             caller (e.g. WignerLBTEKappaAccumulator) can print its own format
             after computing additional terms (Stage 3).  Default False.
 
         """
-        self._solver.solve(grid_point_data, suppress_kappa_log=suppress_kappa_log)
+        self._solver.solve(aggregates, suppress_kappa_log=suppress_kappa_log)
 
     def get_main_diagonal(
         self, i_gp: int, i_sigma: int, i_temp: int

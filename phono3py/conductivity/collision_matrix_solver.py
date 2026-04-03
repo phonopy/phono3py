@@ -47,7 +47,7 @@ import sys
 import time
 from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
@@ -55,6 +55,7 @@ from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.physical_units import get_physical_units
 
 from phono3py.conductivity.context import ConductivityContext
+from phono3py.conductivity.grid_point_data import GridPointAggregates
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionResult
 from phono3py.conductivity.utils import (
     diagonalize_collision_matrix,
@@ -277,7 +278,7 @@ class CollisionMatrixSolver:
 
     def solve(
         self,
-        grid_point_data: dict[str, Any],
+        aggregates: GridPointAggregates,
         *,
         suppress_kappa_log: bool = False,
     ) -> LBTESolveResult:
@@ -288,10 +289,8 @@ class CollisionMatrixSolver:
 
         Parameters
         ----------
-        grid_point_data : dict
-            Per-grid-point data from the calculator. Required keys:
-            ``num_sampling_grid_points``, ``gamma``, ``group_velocities``.
-            Optional: ``gamma_isotope``.
+        aggregates : GridPointAggregates
+            Aggregated per-grid-point data from the calculator.
         suppress_kappa_log : bool, optional
             When True, skip the per-temperature kappa table log so that the
             caller (e.g. WignerLBTEKappaAccumulator) can print its own format
@@ -303,15 +302,15 @@ class CollisionMatrixSolver:
         LBTESolveResult
 
         """
-        num_sampling_grid_points = grid_point_data["num_sampling_grid_points"]
+        num_sampling_grid_points = aggregates.num_sampling_grid_points
         if self._is_reducible_collision_matrix:
-            self._setup_reducible_data(grid_point_data)
+            self._setup_reducible_data(aggregates)
         else:
             # Set references to calculator-owned data (no copy).
-            self._gamma = grid_point_data["gamma"]
-            self._gamma_iso = grid_point_data.get("gamma_isotope")
-            self._gv = grid_point_data["group_velocities"]
-            self._cv = grid_point_data.get("mode_heat_capacities")
+            self._gamma = aggregates.gamma
+            self._gamma_iso = aggregates.gamma_isotope
+            self._gv = aggregates.group_velocities
+            self._cv = aggregates.mode_heat_capacities
 
         assert self._collision_matrix is not None
         if self._log_level:
@@ -355,7 +354,7 @@ class CollisionMatrixSolver:
         """
         return self._get_main_diagonal(i_gp, i_sigma, i_temp)
 
-    def _setup_reducible_data(self, grid_point_data: dict[str, Any]) -> None:
+    def _setup_reducible_data(self, aggregates: GridPointAggregates) -> None:
         """Allocate full-mesh arrays and copy IR data for reducible case.
 
         When is_reducible_collision_matrix is True, _expand_local_values
@@ -364,10 +363,10 @@ class CollisionMatrixSolver:
 
         """
         num_mesh = int(np.prod(self._context.mesh_numbers))
-        gamma_ir = grid_point_data["gamma"]
-        gv_ir = grid_point_data["group_velocities"]
-        cv_ir = grid_point_data.get("mode_heat_capacities")
-        gamma_iso_ir = grid_point_data.get("gamma_isotope")
+        gamma_ir = aggregates.gamma
+        gv_ir = aggregates.group_velocities
+        cv_ir = aggregates.mode_heat_capacities
+        gamma_iso_ir = aggregates.gamma_isotope
 
         num_sigma, num_temp, _, num_band0 = gamma_ir.shape
 

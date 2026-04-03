@@ -43,7 +43,11 @@ import numpy as np
 from numpy.typing import NDArray
 
 from phono3py.conductivity.context import ConductivityContext
-from phono3py.conductivity.grid_point_data import GridPointInput, make_grid_point_input
+from phono3py.conductivity.grid_point_data import (
+    GridPointAggregates,
+    GridPointInput,
+    make_grid_point_input,
+)
 from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionProvider
 from phono3py.conductivity.lbte_kappa_accumulator import LBTEKappaAccumulator
@@ -184,7 +188,7 @@ class LBTECalculator:
                 "==================="
             )
 
-        self._accumulator.finalize(self._build_grid_point_data())
+        self._accumulator.finalize(self._build_grid_point_aggregates())
 
     def set_kappa_at_sigmas(self) -> None:
         """Finalize kappa from a pre-loaded collision matrix (read-from-file path).
@@ -194,11 +198,9 @@ class LBTECalculator:
         gamma and collision_matrix have been loaded externally.
 
         """
-        grid_point_data = self._build_grid_point_data()
-        grid_point_data["num_sampling_grid_points"] = int(
-            self._context.grid_weights.sum()
-        )
-        self._accumulator.finalize(grid_point_data)
+        aggregates = self._build_grid_point_aggregates()
+        aggregates.num_sampling_grid_points = int(self._context.grid_weights.sum())
+        self._accumulator.finalize(aggregates)
 
     def delete_gp_collision_and_pp(self) -> None:
         """No-op: memory management compatibility method."""
@@ -501,21 +503,17 @@ class LBTECalculator:
         self._gv = np.zeros((num_gp, num_band0, 3), order="C", dtype="double")
         self._cv = np.zeros((num_temp, num_gp, num_band0), order="C", dtype="double")
 
-    def _build_grid_point_data(self) -> dict[str, Any]:
-        """Build grid_point_data dict for accumulator.finalize()."""
-        grid_point_data: dict[str, Any] = {
-            "num_sampling_grid_points": self._num_sampling_grid_points,
-            "gamma": self._gamma,
-            "group_velocities": self._gv,
-            "mode_heat_capacities": self._cv,
-        }
-        if self._gamma_iso is not None:
-            grid_point_data["gamma_isotope"] = self._gamma_iso
-        if self._vm_by_vm is not None:
-            grid_point_data["vm_by_vm"] = self._vm_by_vm
-        if self._heat_capacity_matrix is not None:
-            grid_point_data["heat_capacity_matrix"] = self._heat_capacity_matrix
-        return grid_point_data
+    def _build_grid_point_aggregates(self) -> GridPointAggregates:
+        """Build GridPointAggregates for accumulator.finalize()."""
+        return GridPointAggregates(
+            num_sampling_grid_points=self._num_sampling_grid_points,
+            group_velocities=self._gv,
+            mode_heat_capacities=self._cv,
+            gamma=self._gamma,
+            gamma_isotope=self._gamma_iso,
+            vm_by_vm=self._vm_by_vm,
+            heat_capacity_matrix=self._heat_capacity_matrix,
+        )
 
     def _run_at_grid_point(self, i_gp: int) -> None:
         self._show_log_header(i_gp)

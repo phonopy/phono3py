@@ -33,8 +33,8 @@ and all keyword arguments that were passed to make_conductivity_calculator().
 from __future__ import annotations
 
 import os
-from collections.abc import Sequence
-from typing import Any, Callable, Literal, TypeAlias
+from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING, Any, Literal, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
@@ -43,9 +43,16 @@ from phono3py.conductivity.lbte_calculator import LBTECalculator
 from phono3py.conductivity.rta_calculator import RTACalculator
 from phono3py.phonon3.interaction import Interaction
 
+if TYPE_CHECKING:
+    from phono3py.conductivity.calculator_factory import VariantBuildContext
+
 # ---------------------------------------------------------------------------
 # Plugin registry
 # ---------------------------------------------------------------------------
+
+# Internal registry: all entries are (interaction, config) -> Calculator.
+# Old-style kwargs factories registered via register_calculator() are wrapped.
+_InternalFactory: TypeAlias = Callable[["Interaction", "CalculatorConfig"], Any]
 
 CalculatorFactory: TypeAlias = Callable[..., Any]
 
@@ -55,8 +62,8 @@ CalculatorFactory: TypeAlias = Callable[..., Any]
 _BUILTIN_METHODS: frozenset[str] = frozenset({"rta", "lbte"})
 
 # Populated at module load with all built-in factories.
-# External plugins are added via register_calculator().
-_REGISTRY: dict[str, CalculatorFactory] = {}
+# External plugins are added via register_calculator() or register_variant().
+_REGISTRY: dict[str, _InternalFactory] = {}
 
 
 def register_calculator(method: str, factory: CalculatorFactory) -> None:
@@ -101,7 +108,169 @@ def register_calculator(method: str, factory: CalculatorFactory) -> None:
             f"'{method}' is a built-in method and cannot be overridden. "
             f"Built-in methods: {sorted(_BUILTIN_METHODS)}."
         )
-    _REGISTRY[method.lower()] = factory
+
+    def _wrapped(interaction: Interaction, config: CalculatorConfig) -> Any:
+        from dataclasses import fields as dc_fields
+
+        kwargs = {f.name: getattr(config, f.name) for f in dc_fields(config)}
+        return factory(interaction, **kwargs)
+
+    _REGISTRY[method.lower()] = _wrapped
+
+
+def register_variant(
+    name: str,
+    *,
+    make_velocity_provider: Callable[[VariantBuildContext], Any],
+    make_rta_accumulator: Callable[[VariantBuildContext], Any],
+    make_cv_provider: Callable[[VariantBuildContext], Any] | None = None,
+    make_lbte_accumulator: Callable[[VariantBuildContext], Any] | None = None,
+) -> None:
+    """Register a conductivity variant with RTA and optionally LBTE methods.
+
+    This is the declarative alternative to ``register_calculator()``.
+    Instead of writing full factory functions, plugin authors provide small
+    component factories that receive a ``VariantBuildContext``.  The
+    framework handles base-component construction, Calculator assembly, and
+    all keyword argument routing.
+
+    Two method names are registered automatically: ``"{name}-rta"`` and
+    (if ``make_lbte_accumulator`` is provided) ``"{name}-lbte"``.
+
+    Parameters
+    ----------
+    name : str
+        Variant name (e.g. ``"SMM19"``, ``"kubo"``).  Becomes the prefix
+        of the registered method names.
+    make_velocity_provider : callable
+        ``(ctx: VariantBuildContext) -> VelocityProvider``.
+    make_rta_accumulator : callable
+        ``(ctx: VariantBuildContext) -> accumulator`` for RTA.
+    make_cv_provider : callable or None, optional
+        ``(ctx: VariantBuildContext) -> HeatCapacityProvider``.
+        Defaults to ``ModeHeatCapacityProvider(ctx.interaction)``.
+    make_lbte_accumulator : callable or None, optional
+        ``(ctx: VariantBuildContext) -> accumulator`` for LBTE.
+        When None, only the RTA method is registered.
+
+    Examples
+    --------
+    ::
+
+        from phono3py.conductivity import register_variant
+
+        register_variant(
+            "my-variant",
+            make_velocity_provider=lambda ctx: MyVelocityProvider(
+                ctx.interaction,
+                point_operations=ctx.point_operations,
+                log_level=ctx.log_level,
+            ),
+            make_rta_accumulator=lambda ctx: MyRTAAccumulator(
+                context=ctx.context,
+                conversion_factor=ctx.conversion_factor,
+                log_level=ctx.log_level,
+            ),
+        )
+
+    """
+    from phono3py.conductivity.calculator_factory import (
+        VariantBuildContext,
+        build_lbte_base_components,
+        build_rta_base_components,
+    )
+    from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
+    from phono3py.conductivity.utils import get_unit_to_WmK
+
+    def _rta_factory(
+        interaction: Interaction,
+        config: CalculatorConfig,
+    ) -> RTACalculator:
+        base = build_rta_base_components(interaction, config)
+        ctx = VariantBuildContext(
+            interaction=interaction,
+            context=base.context,
+            point_operations=base.point_ops,
+            rotations_cartesian=base.rot_cart,
+            conversion_factor=get_unit_to_WmK() / interaction.primitive.volume,
+            is_kappa_star=config.is_kappa_star,
+            gv_delta_q=config.gv_delta_q,
+            is_reducible_collision_matrix=False,
+            log_level=config.log_level,
+        )
+        velocity_provider = make_velocity_provider(ctx)
+        cv_provider = (
+            make_cv_provider(ctx)
+            if make_cv_provider is not None
+            else ModeHeatCapacityProvider(interaction)
+        )
+        accumulator = make_rta_accumulator(ctx)
+
+        return RTACalculator(
+            interaction,
+            velocity_provider=velocity_provider,
+            cv_provider=cv_provider,
+            scattering_provider=base.scattering_provider,
+            accumulator=accumulator,
+            context=base.context,
+            is_isotope=config.is_isotope,
+            mass_variances=config.mass_variances,
+            is_N_U=config.is_N_U,
+            is_gamma_detail=config.is_gamma_detail,
+            log_level=config.log_level,
+        )
+
+    rta_key = f"{name}-rta".lower()
+    if rta_key in _BUILTIN_METHODS:
+        raise ValueError(f"'{rta_key}' is a built-in method and cannot be overridden.")
+    _REGISTRY[rta_key] = _rta_factory
+
+    if make_lbte_accumulator is not None:
+
+        def _lbte_factory(
+            interaction: Interaction,
+            config: CalculatorConfig,
+        ) -> LBTECalculator:
+            base = build_lbte_base_components(interaction, config)
+            ctx = VariantBuildContext(
+                interaction=interaction,
+                context=base.context,
+                point_operations=base.point_ops,
+                rotations_cartesian=base.rot_cart,
+                conversion_factor=get_unit_to_WmK() / interaction.primitive.volume,
+                is_kappa_star=config.is_kappa_star,
+                gv_delta_q=config.gv_delta_q,
+                is_reducible_collision_matrix=config.is_reducible_collision_matrix,
+                log_level=config.log_level,
+                solver=base.solver,
+            )
+            velocity_provider = make_velocity_provider(ctx)
+            cv_provider = (
+                make_cv_provider(ctx)
+                if make_cv_provider is not None
+                else ModeHeatCapacityProvider(interaction)
+            )
+            accumulator = make_lbte_accumulator(ctx)
+
+            return LBTECalculator(
+                interaction,
+                velocity_provider=velocity_provider,
+                cv_provider=cv_provider,
+                collision_provider=base.collision_provider,
+                accumulator=accumulator,
+                context=base.context,
+                is_isotope=config.is_isotope,
+                mass_variances=config.mass_variances,
+                is_full_pp=config.is_full_pp,
+                log_level=config.log_level,
+            )
+
+        lbte_key = f"{name}-lbte".lower()
+        if lbte_key in _BUILTIN_METHODS:
+            raise ValueError(
+                f"'{lbte_key}' is a built-in method and cannot be overridden."
+            )
+        _REGISTRY[lbte_key] = _lbte_factory
 
 
 def make_conductivity_calculator(
@@ -203,8 +372,7 @@ def make_conductivity_calculator(
             "Use register_calculator() to add custom methods."
         )
 
-    return _REGISTRY[method.lower()](
-        interaction,
+    config = CalculatorConfig(
         grid_points=grid_points,
         temperatures=temperatures,
         sigmas=sigmas,
@@ -230,6 +398,8 @@ def make_conductivity_calculator(
         log_level=log_level,
     )
 
+    return _REGISTRY[method.lower()](interaction, config)
+
 
 # ---------------------------------------------------------------------------
 # Register all built-in factories.
@@ -240,6 +410,7 @@ def make_conductivity_calculator(
 # ---------------------------------------------------------------------------
 
 from phono3py.conductivity.calculator_factory import (  # noqa: E402
+    CalculatorConfig,
     make_lbte_calculator,
     make_rta_calculator,
 )

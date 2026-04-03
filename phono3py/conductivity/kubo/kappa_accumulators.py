@@ -10,6 +10,7 @@ from numpy.typing import NDArray
 from phono3py.conductivity.collision_matrix_solver import CollisionMatrixSolver
 from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.grid_point_data import (
+    GridPointAggregates,
     GridPointResult,
     compute_effective_gamma,
 )
@@ -89,8 +90,6 @@ class KuboRTAKappaAccumulator:
 
     def accumulate(self, i_gp: int, result: GridPointResult) -> None:
         """Store per-grid-point data and compute Kubo mode-kappa at ``i_gp``."""
-        assert result.vm_by_vm is not None
-        assert result.heat_capacity_matrix is not None
         assert result.gamma is not None
 
         self._gamma_total[:, :, i_gp, :] = compute_effective_gamma(
@@ -100,13 +99,13 @@ class KuboRTAKappaAccumulator:
             gamma_elph=result.gamma_elph,
         )
 
-    def finalize(self, grid_point_data: dict[str, Any]) -> None:
+    def finalize(self, aggregates: GridPointAggregates) -> None:
         """Compute kappa and kappa_intra from mode_kappa_inter."""
         assert self._mode_kappa_matrix.shape[3] == self._mode_kappa_matrix.shape[4]
 
-        num_sampling_grid_points = grid_point_data["num_sampling_grid_points"]
-        vm_by_vm = grid_point_data["vm_by_vm"]
-        heat_capacity_matrix = grid_point_data["heat_capacity_matrix"]
+        num_sampling_grid_points = aggregates.num_sampling_grid_points
+        vm_by_vm = aggregates.vm_by_vm
+        heat_capacity_matrix = aggregates.heat_capacity_matrix
 
         for i_gp, gp in enumerate(self._context.grid_points):
             # (num_sigma, num_temp, num_band, num_band, 6)
@@ -299,15 +298,15 @@ class KuboLBTEKappaAccumulator:
 
     def finalize(
         self,
-        grid_point_data: dict[str, Any],
+        aggregates: GridPointAggregates,
         suppress_kappa_log: bool = False,
     ) -> None:
         """Finalize LBTE solve, then compute Kubo kappa with LBTE linewidths."""
         self._solver.solve(
-            grid_point_data,
+            aggregates,
             suppress_kappa_log=bool(self._log_level),
         )
-        self._compute_kubo_kappa(grid_point_data)
+        self._compute_kubo_kappa(aggregates)
         if self._log_level:
             self._log_kubo_kappa()
 
@@ -448,11 +447,11 @@ class KuboLBTEKappaAccumulator:
     # Private: Kubo kappa computation
     # ------------------------------------------------------------------
 
-    def _compute_kubo_kappa(self, grid_point_data: dict[str, Any]) -> None:
+    def _compute_kubo_kappa(self, aggregates: GridPointAggregates) -> None:
         """Compute inter-band kappa using LBTE collision matrix diagonal."""
-        vm_by_vm = grid_point_data.get("vm_by_vm")
-        heat_capacity_matrix = grid_point_data.get("heat_capacity_matrix")
-        num_sampling_grid_points = grid_point_data["num_sampling_grid_points"]
+        vm_by_vm = aggregates.vm_by_vm
+        heat_capacity_matrix = aggregates.heat_capacity_matrix
+        num_sampling_grid_points = aggregates.num_sampling_grid_points
         if vm_by_vm is None or heat_capacity_matrix is None:
             return
 

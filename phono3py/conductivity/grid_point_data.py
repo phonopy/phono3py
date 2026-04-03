@@ -122,27 +122,81 @@ class GridPointResult:
     input: GridPointInput
 
     # --- velocity ---
-    group_velocities: NDArray[np.double] | None = field(default=None)
-    gv_by_gv: NDArray[np.double] | None = field(default=None)
-    vm_by_vm: NDArray[np.cdouble] | None = field(default=None)
+    group_velocities: NDArray[np.double] | None = None
+    gv_by_gv: NDArray[np.double] | None = None
+    vm_by_vm: NDArray[np.cdouble] | None = None
 
     # --- heat capacity ---
-    heat_capacities: NDArray[np.double] | None = field(default=None)
-    heat_capacity_matrix: NDArray[np.double] | None = field(default=None)
+    heat_capacities: NDArray[np.double] | None = None
+    heat_capacity_matrix: NDArray[np.double] | None = None
 
     # --- scattering ---
-    gamma: NDArray[np.double] | None = field(default=None)
-    gamma_isotope: NDArray[np.double] | None = field(default=None)
-    gamma_boundary: NDArray[np.double] | None = field(default=None)
-    gamma_elph: NDArray[np.double] | None = field(default=None)
+    gamma: NDArray[np.double] | None = None
+    gamma_isotope: NDArray[np.double] | None = None
+    gamma_boundary: NDArray[np.double] | None = None
+    gamma_elph: NDArray[np.double] | None = None
 
     # --- auxiliary output ---
-    averaged_pp_interaction: NDArray[np.double] | None = field(default=None)
+    averaged_pp_interaction: NDArray[np.double] | None = None
     # Plugin-specific data; keys are plugin-defined strings.
     extra: dict[str, Any] = field(default_factory=dict)
 
     # --- BZ summation helper ---
     num_sampling_grid_points: int = 0
+
+
+# ---------------------------------------------------------------------------
+# Aggregated per-grid-point data (Calculator -> Accumulator.finalize())
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class GridPointAggregates:
+    """Aggregated per-grid-point data passed from Calculator to Accumulator.
+
+    Built by the Calculator after the grid-point loop and passed to
+    ``accumulator.finalize()``.  Replaces the former untyped
+    ``grid_point_data: dict[str, Any]``.
+
+    Always present
+    ~~~~~~~~~~~~~~
+    num_sampling_grid_points : int
+        Total number of BZ grid points represented by the sampled
+        irreducible grid points.
+    group_velocities : (num_gp, num_band0, 3), real
+        Group velocities at each irreducible grid point.
+    mode_heat_capacities : (num_temp, num_gp, num_band0), real
+        Mode heat capacities.
+
+    RTA only
+    ~~~~~~~~
+    gv_by_gv : (num_gp, num_band0, 6), real
+        Symmetrised outer product v x v in Voigt notation.
+
+    LBTE only
+    ~~~~~~~~~
+    gamma : (num_sigma, num_temp, num_gp, num_band0), real
+        Ph-ph linewidths.
+
+    Optional (plugin-specific)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~
+    gamma_isotope : (num_sigma, num_gp, num_band0), real
+        Isotope scattering linewidths (LBTE).
+    vm_by_vm : (num_gp, num_band0, num_band, 6), complex
+        Off-diagonal velocity operator outer product (Wigner/Kubo).
+    heat_capacity_matrix : (num_temp, num_gp, num_band0, num_band), real
+        Heat-capacity matrix (Kubo).
+
+    """
+
+    num_sampling_grid_points: int
+    group_velocities: NDArray[np.double]
+    mode_heat_capacities: NDArray[np.double]
+    gv_by_gv: NDArray[np.double] | None = None
+    gamma: NDArray[np.double] | None = None
+    gamma_isotope: NDArray[np.double] | None = None
+    vm_by_vm: NDArray[np.cdouble] | None = None
+    heat_capacity_matrix: NDArray[np.double] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -250,6 +304,7 @@ from phono3py.conductivity.protocols import (  # noqa: E402
 )
 
 __all__ = [
+    "GridPointAggregates",
     "GridPointInput",
     "GridPointResult",
     "compute_effective_gamma",

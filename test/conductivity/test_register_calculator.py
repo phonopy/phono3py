@@ -40,7 +40,8 @@ def test_register_calculator_stores_factory():
     """Registered factory is stored under the given method name."""
     try:
         register_calculator("test-method-store", _dummy_factory)
-        assert _REGISTRY["test-method-store"] is _dummy_factory
+        assert "test-method-store" in _REGISTRY
+        assert callable(_REGISTRY["test-method-store"])
     finally:
         _REGISTRY.pop("test-method-store", None)
 

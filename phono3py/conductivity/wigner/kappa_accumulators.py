@@ -11,6 +11,7 @@ from phonopy.physical_units import get_physical_units
 from phono3py.conductivity.collision_matrix_solver import CollisionMatrixSolver
 from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.grid_point_data import (
+    GridPointAggregates,
     GridPointResult,
     compute_effective_gamma,
 )
@@ -202,9 +203,9 @@ class WignerRTAKappaAccumulator:
         is_population = abs(freq_s1 - freq_s2) < DEGENERATE_FREQUENCY_THRESHOLD_THZ
         return contribution, is_population
 
-    def finalize(self, grid_point_data: dict[str, Any]) -> None:
+    def finalize(self, aggregates: GridPointAggregates) -> None:
         """Compute kappa_P and kappa_C from mode_kappa arrays."""
-        num_sampling_grid_points = grid_point_data["num_sampling_grid_points"]
+        num_sampling_grid_points = aggregates.num_sampling_grid_points
         if num_sampling_grid_points > 0:
             self._kappa_P = (
                 np.sum(self._mode_kappa_P, axis=(2, 3)) / num_sampling_grid_points
@@ -415,7 +416,7 @@ class WignerLBTEKappaAccumulator:
 
     def finalize(
         self,
-        grid_point_data: dict[str, Any],
+        aggregates: GridPointAggregates,
         suppress_kappa_log: bool = False,
     ) -> None:
         """Finalize P-term via solver, then compute C-term.
@@ -425,11 +426,10 @@ class WignerLBTEKappaAccumulator:
 
         """
         self._solver.solve(
-            grid_point_data,
+            aggregates,
             suppress_kappa_log=bool(self._log_level),
         )
-        num_sampling_grid_points = grid_point_data["num_sampling_grid_points"]
-        self._compute_coherence_kappa(grid_point_data, num_sampling_grid_points)
+        self._compute_coherence_kappa(aggregates)
         if self._log_level:
             self._log_wigner_kappa()
 
@@ -568,9 +568,7 @@ class WignerLBTEKappaAccumulator:
     # Private: C-term computation
     # ------------------------------------------------------------------
 
-    def _compute_coherence_kappa(
-        self, grid_point_data: dict[str, Any], num_sampling_grid_points: int
-    ) -> None:
+    def _compute_coherence_kappa(self, aggregates: GridPointAggregates) -> None:
         """Compute the Wigner coherence (C) term of thermal conductivity."""
         if self._is_reducible:
             print(
@@ -578,8 +576,8 @@ class WignerLBTEKappaAccumulator:
                 "is_reducible_collision_matrix=True"
             )
             return
-        vm_by_vm = grid_point_data.get("vm_by_vm")
-        mode_cv = grid_point_data.get("mode_heat_capacities")
+        vm_by_vm = aggregates.vm_by_vm
+        mode_cv = aggregates.mode_heat_capacities
         if vm_by_vm is None or mode_cv is None:
             return
 
@@ -621,7 +619,7 @@ class WignerLBTEKappaAccumulator:
 
         self._mode_kappa_C = mode_kappa_C
         self._kappa_C = (
-            mode_kappa_C.sum(axis=(2, 3, 4)) / num_sampling_grid_points
+            mode_kappa_C.sum(axis=(2, 3, 4)) / aggregates.num_sampling_grid_points
         ).real
 
     def _compute_pair_contribution(

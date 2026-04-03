@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import numpy as np
 from numpy.typing import NDArray
 
 from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.grid_point_data import (
+    GridPointAggregates,
     GridPointResult,
     compute_effective_gamma,
 )
@@ -123,9 +122,9 @@ class RTAKappaAccumulator:
 
         self._mode_kappa[:, :, i_gp, :, :] = mode_kappa
 
-    def finalize(self, grid_point_data: dict[str, Any]) -> None:
+    def finalize(self, aggregates: GridPointAggregates) -> None:
         """Compute kappa from mode_kappa."""
-        num_sampling_grid_points = grid_point_data["num_sampling_grid_points"]
+        num_sampling_grid_points = aggregates.num_sampling_grid_points
         if num_sampling_grid_points > 0:
             self._kappa = (
                 np.sum(self._mode_kappa, axis=(2, 3)) / num_sampling_grid_points
