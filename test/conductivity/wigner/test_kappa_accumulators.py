@@ -67,7 +67,7 @@ def _make_result_with_velocity_operator(
 def test_get_extra_grid_point_output_stores_velocity_operator():
     """Velocity operator is stored per grid point and returned."""
     ctx = _make_dummy_context()
-    acc = WignerRTAKappaAccumulator(context=ctx, conversion_factor_WTE=1.0)
+    acc = WignerRTAKappaAccumulator(context=ctx, volume=1.0)
     acc.prepare(num_sigma=1, num_temp=2, num_gp=2, num_band0=6)
 
     result0 = _make_result_with_velocity_operator()
@@ -92,7 +92,7 @@ def test_get_extra_grid_point_output_stores_velocity_operator():
 def test_get_extra_grid_point_output_zeros_without_velocity_operator():
     """Velocity operator is zero when not stored via result.extra."""
     ctx = _make_dummy_context()
-    acc = WignerRTAKappaAccumulator(context=ctx, conversion_factor_WTE=1.0)
+    acc = WignerRTAKappaAccumulator(context=ctx, volume=1.0)
     acc.prepare(num_sigma=1, num_temp=2, num_gp=1, num_band0=6)
 
     # Result without velocity_operator in extra

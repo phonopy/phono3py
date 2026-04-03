@@ -14,9 +14,79 @@ from phono3py.conductivity.grid_point_data import (
     GridPointResult,
     compute_effective_gamma,
 )
-from phono3py.conductivity.kubo.kappa_formulas import compute_kubo_mode_kappa_matrix
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionResult
 from phono3py.conductivity.utils import log_kappa_header, log_kappa_row
+
+_FLOATINGPOINTERROR_THRESHOLD = 1e-12
+
+
+def _compute_kubo_mode_kappa_matrix(
+    frequencies: NDArray[np.double],
+    gamma: NDArray[np.double],
+    heat_capacity_matrix: NDArray[np.double],
+    vm_by_vm: NDArray[np.cdouble],
+    cutoff_frequency: float,
+    conversion_factor: float,
+) -> NDArray[np.double]:
+    """Compute Kubo mode-kappa matrix for one grid point.
+
+    The Green-Kubo formula for each band pair (s, s'):
+
+        kappa_mat[s, s'] = C[s,s'] * V[s,s']*V*[s,s'] * g / (dw^2 + g^2)
+
+    where g = gamma_s + gamma_s' is the sum of half-linewidths and all
+    frequencies are in THz.
+
+    Parameters
+    ----------
+    frequencies : ndarray of double, shape (num_band,)
+        Phonon frequencies at this grid point in THz.
+    gamma : ndarray of double, shape (num_sigma, num_temp, num_band)
+        Effective scattering half-linewidths.
+    heat_capacity_matrix : ndarray of double, shape (num_temp, num_band0, num_band)
+        Off-diagonal heat capacity matrix C_{ss'}.
+    vm_by_vm : ndarray of complex, shape (num_band0, num_band, 6)
+        k-star-averaged velocity outer product in Voigt order.
+    cutoff_frequency : float
+        Modes with frequency below this value (in THz) are skipped.
+    conversion_factor : float
+        Unit conversion factor to W/(m*K).
+
+    Returns
+    -------
+    mode_kappa_mat : ndarray of double,
+        shape (num_sigma, num_temp, num_band0, num_band, 6)
+
+    """
+    num_sigma, num_temp, num_band = gamma.shape
+
+    mode_kappa_mat = np.zeros(
+        (num_sigma, num_temp, num_band, num_band, 6), dtype="double"
+    )
+
+    for j in range(num_sigma):
+        for k in range(num_temp):
+            g_sum = np.add.outer(gamma[j, k], gamma[j, k])
+            delta_omega = np.subtract.outer(frequencies, frequencies)
+            freqs_condisions = frequencies > cutoff_frequency
+            denom = delta_omega**2 + g_sum**2
+            condition_matrix = (
+                np.outer(freqs_condisions, freqs_condisions) * denom
+                > _FLOATINGPOINTERROR_THRESHOLD
+            )
+            denom = np.where(condition_matrix, denom, 1.0)
+            contribution_matrix = np.where(
+                condition_matrix,
+                heat_capacity_matrix[k, :, :, None]
+                * vm_by_vm.real
+                * g_sum[:, :, None]
+                / denom[:, :, None]
+                * conversion_factor,
+                0,
+            )
+            mode_kappa_mat[j, k] = contribution_matrix[:, :, :]
+
+    return mode_kappa_mat
 
 
 class KuboRTAKappaAccumulator:
@@ -109,7 +179,7 @@ class KuboRTAKappaAccumulator:
 
         for i_gp, gp in enumerate(self._context.grid_points):
             # (num_sigma, num_temp, num_band, num_band, 6)
-            mode_kappa_matrix = compute_kubo_mode_kappa_matrix(
+            mode_kappa_matrix = _compute_kubo_mode_kappa_matrix(
                 frequencies=self._context.frequencies[gp],
                 gamma=self._gamma_total[:, :, i_gp, :],
                 heat_capacity_matrix=heat_capacity_matrix[:, i_gp, :, :],
@@ -442,7 +512,7 @@ class KuboLBTEKappaAccumulator:
             # Diagonal (intra-band) and off-diagonal (inter-band) More
             # precisely, when frequency differences are small, heat capacity
             # matrix elements are calculated as usual mode heat capacity.
-            mode_kappa_matrix = compute_kubo_mode_kappa_matrix(
+            mode_kappa_matrix = _compute_kubo_mode_kappa_matrix(
                 frequencies=frequencies,
                 gamma=gamma,
                 heat_capacity_matrix=heat_capacity_matrix[i_gp],

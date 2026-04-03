@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Literal, TypeAlias
+from typing import Any, Literal
 
 from phono3py.conductivity.lbte_calculator import LBTECalculator
 from phono3py.conductivity.utils import get_unit_to_WmK, select_colmat_solver
@@ -15,15 +15,13 @@ from phono3py.file_IO import (
 )
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
 
-cond_LBTE_type: TypeAlias = LBTECalculator
-
 
 class ConductivityLBTEWriter:
     """Collection of result writers."""
 
     @staticmethod
     def write_collision(
-        lbte: cond_LBTE_type,
+        lbte: LBTECalculator,
         interaction: Interaction,
         i: int | None = None,
         is_reducible_collision_matrix: bool = False,
@@ -105,7 +103,7 @@ class ConductivityLBTEWriter:
 
     @staticmethod
     def write_kappa(
-        lbte: cond_LBTE_type,
+        lbte: LBTECalculator,
         volume: float,
         is_reducible_collision_matrix: bool = False,
         write_LBTE_solution: bool = False,

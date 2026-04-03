@@ -17,9 +17,32 @@ from phono3py.conductivity.grid_point_data import (
 )
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionResult
 from phono3py.conductivity.utils import log_kappa_header, log_kappa_row
-from phono3py.conductivity.wigner.kappa_formulas import (
-    DEGENERATE_FREQUENCY_THRESHOLD_THZ,
-)
+# Threshold in THz below which two modes are considered degenerate and treated
+# as a population (diagonal) term instead of a coherence (off-diagonal) term.
+DEGENERATE_FREQUENCY_THRESHOLD_THZ = 1e-4
+
+
+def _get_conversion_factor_WTE(volume: float) -> float:
+    """Return unit conversion factor for Wigner transport equation kappa.
+
+    Parameters
+    ----------
+    volume : float
+        Primitive-cell volume in Angstrom^3.
+
+    Returns
+    -------
+    float
+        Conversion factor in W/(m*K).
+
+    """
+    u = get_physical_units()
+    return (
+        (u.THz * u.Angstrom) ** 2
+        * u.EV
+        * u.Hbar
+        / (volume * u.Angstrom**3)
+    )
 
 
 class WignerRTAKappaAccumulator:
@@ -36,8 +59,8 @@ class WignerRTAKappaAccumulator:
     ----------
     context : ConductivityContext
         Shared computation metadata (grid, phonon, symmetry, configuration).
-    conversion_factor_WTE : float
-        Unit conversion factor to W/(m*K) for the WTE formula.
+    volume : float
+        Primitive-cell volume in Angstrom^3.
     log_level : int
         Verbosity level.
 
@@ -46,12 +69,12 @@ class WignerRTAKappaAccumulator:
     def __init__(
         self,
         context: ConductivityContext,
-        conversion_factor_WTE: float,
+        volume: float,
         log_level: int = 0,
     ) -> None:
         """Init method."""
         self._context = context
-        self._conversion_factor_WTE = conversion_factor_WTE
+        self._conversion_factor_WTE = _get_conversion_factor_WTE(volume)
         self._log_level = log_level
 
         # Kappa arrays (allocated in prepare()).
@@ -345,8 +368,8 @@ class WignerLBTEKappaAccumulator:
         Shared solver for the P-term (standard LBTE).
     context : ConductivityContext
         Shared computation metadata (grid, phonon, symmetry, configuration).
-    conversion_factor_WTE : float
-        Unit conversion factor for the coherence term.
+    volume : float
+        Primitive-cell volume in Angstrom^3.
     is_reducible_collision_matrix : bool, optional
         When True the C-term is not computed (not implemented).  Default False.
     log_level : int, optional
@@ -358,14 +381,14 @@ class WignerLBTEKappaAccumulator:
         self,
         solver: CollisionMatrixSolver,
         context: ConductivityContext,
-        conversion_factor_WTE: float,
+        volume: float,
         is_reducible_collision_matrix: bool = False,
         log_level: int = 0,
     ) -> None:
         """Init method."""
         self._solver = solver
         self._context = context
-        self._conversion_factor_WTE = conversion_factor_WTE
+        self._conversion_factor_WTE = _get_conversion_factor_WTE(volume)
         self._is_reducible = is_reducible_collision_matrix
         self._log_level = log_level
 

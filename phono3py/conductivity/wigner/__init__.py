@@ -15,7 +15,6 @@ from phono3py.conductivity.wigner.kappa_accumulators import (
     WignerLBTEKappaAccumulator,
     WignerRTAKappaAccumulator,
 )
-from phono3py.conductivity.wigner.kappa_formulas import get_conversion_factor_WTE
 from phono3py.conductivity.wigner.velocity_providers import VelocityOperatorProvider
 
 
@@ -33,9 +32,7 @@ def _make_velocity_provider(ctx):
 def _make_rta_accumulator(ctx):
     return WignerRTAKappaAccumulator(
         context=ctx.context,
-        conversion_factor_WTE=get_conversion_factor_WTE(
-            ctx.interaction.primitive.volume
-        ),
+        volume=ctx.interaction.primitive.volume,
         log_level=ctx.log_level,
     )
 
@@ -44,9 +41,7 @@ def _make_lbte_accumulator(ctx):
     return WignerLBTEKappaAccumulator(
         solver=ctx.solver,
         context=ctx.context,
-        conversion_factor_WTE=get_conversion_factor_WTE(
-            ctx.interaction.primitive.volume
-        ),
+        volume=ctx.interaction.primitive.volume,
         is_reducible_collision_matrix=ctx.is_reducible_collision_matrix,
         log_level=ctx.log_level,
     )
