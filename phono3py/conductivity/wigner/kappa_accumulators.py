@@ -9,6 +9,7 @@ import numpy as np
 from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
 
+from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.grid_point_data import (
     GridPointResult,
     compute_effective_gamma,
@@ -421,20 +422,10 @@ class WignerLBTEKappaAccumulator:
     ----------
     inner : LBTEKappaAccumulator
         Inner accumulator for the P-term (standard LBTE).
-    ir_grid_points : NDArray[np.int64]
-        BZ grid point indices of the irreducible grid points, shape (num_ir,).
-    frequencies : NDArray[np.double]
-        Phonon frequencies on the full BZ grid, shape (n_bz, n_band).
-    band_indices : NDArray[np.int64]
-        Band indices used for the calculation, shape (num_band0,).
-    cutoff_frequency : float
-        Cutoff frequency in THz.
+    context : ConductivityContext
+        Shared computation metadata (grid, phonon, symmetry, configuration).
     conversion_factor_WTE : float
         Unit conversion factor for the coherence term.
-    temperatures : NDArray[np.double]
-        Temperatures in Kelvin, shape (num_temp,).
-    sigmas : list of float or None
-        Smearing widths.
     is_reducible_collision_matrix : bool, optional
         When True the C-term is not computed (not implemented).  Default False.
     log_level : int, optional
@@ -445,24 +436,15 @@ class WignerLBTEKappaAccumulator:
     def __init__(
         self,
         inner: LBTEKappaAccumulator,
-        ir_grid_points: NDArray[np.int64],
-        frequencies: NDArray[np.double],
-        band_indices: NDArray[np.int64],
-        cutoff_frequency: float,
+        context: ConductivityContext,
         conversion_factor_WTE: float,
-        temperatures: NDArray[np.double],
-        sigmas: list[float | None],
         is_reducible_collision_matrix: bool = False,
         log_level: int = 0,
     ) -> None:
         """Init method."""
         self._inner = inner
-        self._ir_grid_points = ir_grid_points
-        self._frequencies = frequencies
-        self._band_indices = band_indices
-        self._cutoff_frequency = cutoff_frequency
+        self._context = context
         self._conversion_factor_WTE = conversion_factor_WTE
-        self._sigmas = sigmas
         self._is_reducible = is_reducible_collision_matrix
         self._log_level = log_level
 
@@ -517,7 +499,7 @@ class WignerLBTEKappaAccumulator:
         velocity_operator = extra.get("velocity_operator") if extra else None
 
         if vm_by_vm is not None and self._gv_by_gv_operator is None:
-            num_ir = len(self._ir_grid_points)
+            num_ir = len(self._context.ir_grid_points)
             self._gv_by_gv_operator = np.zeros(
                 (num_ir,) + vm_by_vm.shape, dtype="complex128"
             )
@@ -526,7 +508,7 @@ class WignerLBTEKappaAccumulator:
             self._gv_by_gv_operator[i_gp] = vm_by_vm
         if velocity_operator is not None:
             if self._velocity_operator is None:
-                num_ir = len(self._ir_grid_points)
+                num_ir = len(self._context.ir_grid_points)
                 self._velocity_operator = np.zeros(
                     (num_ir,) + velocity_operator.shape, dtype="complex128"
                 )
@@ -674,11 +656,11 @@ class WignerLBTEKappaAccumulator:
             return
 
         THzToEv = get_physical_units().THzToEv
-        num_sigma = len(self._sigmas)
+        num_sigma = len(self._context.sigmas)
         num_temp = len(self._inner.temperatures)
-        num_ir = len(self._ir_grid_points)
-        num_band0 = len(self._band_indices)
-        num_band = self._frequencies.shape[1]
+        num_ir = len(self._context.ir_grid_points)
+        num_band0 = len(self._context.band_indices)
+        num_band = self._context.frequencies.shape[1]
 
         mode_kappa_C = np.zeros(
             (num_sigma, num_temp, num_ir, num_band0, num_band, 6), dtype="complex128"
@@ -687,9 +669,9 @@ class WignerLBTEKappaAccumulator:
         for i_sigma in range(num_sigma):
             for i_temp in range(num_temp):
                 for i_gp in range(num_ir):
-                    gp = int(self._ir_grid_points[i_gp])
+                    gp = int(self._context.ir_grid_points[i_gp])
                     g = self._inner.get_main_diagonal(i_gp, i_sigma, i_temp) * 2.0
-                    frequencies = self._frequencies[gp]
+                    frequencies = self._context.frequencies[gp]
                     cv = self._mode_cv[i_gp, i_temp, :]
                     gv_by_gv_op = self._gv_by_gv_operator[i_gp]
 
@@ -731,7 +713,8 @@ class WignerLBTEKappaAccumulator:
         Returns None when the pair is degenerate or below the cutoff frequency.
 
         """
-        if freq_s1 <= self._cutoff_frequency or freq_s2 <= self._cutoff_frequency:
+        cutoff = self._context.cutoff_frequency
+        if freq_s1 <= cutoff or freq_s2 <= cutoff:
             return None
         if np.abs(freq_s1 - freq_s2) <= DEGENERATE_FREQUENCY_THRESHOLD_THZ:
             return None
@@ -758,7 +741,7 @@ class WignerLBTEKappaAccumulator:
         kappa_P_RTA = self._inner.kappa_RTA
         kappa_C = self._kappa_C
 
-        for i_sigma in range(len(self._sigmas)):
+        for i_sigma in range(len(self._context.sigmas)):
             for i_temp, t in enumerate(self._inner.temperatures):
                 if t <= 0:
                     continue

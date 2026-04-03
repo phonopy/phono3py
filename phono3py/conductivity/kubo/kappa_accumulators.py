@@ -8,6 +8,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.grid_point_data import (
     GridPointResult,
     compute_effective_gamma,
@@ -301,16 +302,10 @@ class KuboLBTEKappaAccumulator:
     ----------
     inner : LBTEKappaAccumulator
         Inner accumulator for the standard LBTE solve.
-    ir_grid_points : NDArray[np.int64]
-        BZ grid point indices of the irreducible grid points, shape (num_ir,).
-    frequencies : NDArray[np.double]
-        Phonon frequencies on the full BZ grid, shape (n_bz, n_band).
-    cutoff_frequency : float
-        Cutoff frequency in THz.
+    context : ConductivityContext
+        Shared computation metadata (grid, phonon, symmetry, configuration).
     conversion_factor : float
         Unit conversion factor to W/(m*K).
-    sigmas : list of float or None
-        Smearing widths.
     log_level : int, optional
         Verbosity level. Default 0.
 
@@ -319,20 +314,14 @@ class KuboLBTEKappaAccumulator:
     def __init__(
         self,
         inner: LBTEKappaAccumulator,
-        ir_grid_points: NDArray[np.int64],
-        frequencies: NDArray[np.double],
-        cutoff_frequency: float,
+        context: ConductivityContext,
         conversion_factor: float,
-        sigmas: list[float | None],
         log_level: int = 0,
     ) -> None:
         """Init method."""
         self._inner = inner
-        self._ir_grid_points = ir_grid_points
-        self._frequencies = frequencies
-        self._cutoff_frequency = cutoff_frequency
+        self._context = context
         self._conversion_factor = conversion_factor
-        self._sigmas = sigmas
         self._log_level = log_level
 
         # Per-grid-point storage (lazily allocated in accumulate).
@@ -384,7 +373,7 @@ class KuboLBTEKappaAccumulator:
         vm_by_vm = extra.get("vm_by_vm") if extra else None
         heat_capacity_matrix = extra.get("heat_capacity_matrix") if extra else None
 
-        num_ir = len(self._ir_grid_points)
+        num_ir = len(self._context.ir_grid_points)
 
         if vm_by_vm is not None:
             if self._vm_by_vm is None:
@@ -535,16 +524,16 @@ class KuboLBTEKappaAccumulator:
         if self._vm_by_vm is None or self._heat_capacity_matrix is None:
             return
 
-        num_sigma = len(self._sigmas)
+        num_sigma = len(self._context.sigmas)
         num_temp = len(self._inner.temperatures)
-        num_ir = len(self._ir_grid_points)
+        num_ir = len(self._context.ir_grid_points)
 
         kappa_inter = np.zeros((num_sigma, num_temp, 6), dtype="double")
         mode_kappa_inter_list: list[NDArray[np.double]] = []
 
         for i_gp in range(num_ir):
-            gp = int(self._ir_grid_points[i_gp])
-            frequencies = self._frequencies[gp]
+            gp = int(self._context.ir_grid_points[i_gp])
+            frequencies = self._context.frequencies[gp]
             num_band = len(frequencies)
 
             # Build gamma from LBTE collision matrix diagonal.
@@ -563,7 +552,7 @@ class KuboLBTEKappaAccumulator:
                 gamma=gamma,
                 heat_capacity_matrix=self._heat_capacity_matrix[i_gp],
                 vm_by_vm=self._vm_by_vm[i_gp],
-                cutoff_frequency=self._cutoff_frequency,
+                cutoff_frequency=self._context.cutoff_frequency,
                 conversion_factor=self._conversion_factor,
             )
             # mkm: (num_sigma, num_temp, num_band0, num_band, 6)
@@ -588,7 +577,7 @@ class KuboLBTEKappaAccumulator:
         kappa_intra_RTA = self._inner.kappa_RTA
         kappa_inter = self._kappa_inter
 
-        for i_sigma in range(len(self._sigmas)):
+        for i_sigma in range(len(self._context.sigmas)):
             for i_temp, t in enumerate(self._inner.temperatures):
                 if t <= 0:
                     continue

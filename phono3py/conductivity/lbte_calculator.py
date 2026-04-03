@@ -42,6 +42,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.grid_point_data import GridPointInput, make_grid_point_input
 from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionProvider
@@ -53,11 +54,7 @@ from phono3py.conductivity.utils import (
 )
 from phono3py.conductivity.velocity_providers import GroupVelocityProvider
 from phono3py.other.isotope import Isotope
-from phono3py.phonon.grid import (
-    BZGrid,
-    get_ir_grid_points,
-    get_qpoints_from_bz_grid_points,
-)
+from phono3py.phonon.grid import BZGrid, get_qpoints_from_bz_grid_points
 from phono3py.phonon3.interaction import Interaction
 
 
@@ -89,10 +86,8 @@ class LBTECalculator:
         Computes gamma and one collision matrix row per grid point.
     accumulator : LBTEKappaAccumulator
         Owns the global collision matrix and solves for kappa at Stage 2.
-    temperatures : NDArray[np.double]
-        Temperatures in Kelvin, shape (num_temp,).
-    sigmas : list of float or None
-        Smearing widths.  Empty list selects the tetrahedron method.
+    context : ConductivityContext
+        Shared computation metadata (grid, phonon, symmetry, configuration).
     is_isotope : bool, optional
         Include isotope scattering.  Default False.
     mass_variances : array-like or None, optional
@@ -111,8 +106,8 @@ class LBTECalculator:
         cv_provider: ModeHeatCapacityProvider,
         collision_provider: LBTECollisionProvider,
         accumulator: LBTEKappaAccumulator,
-        temperatures: NDArray[np.double],
-        sigmas: list[float | None],
+        context: ConductivityContext,
+        *,
         is_isotope: bool = False,
         mass_variances: Sequence[float] | NDArray[np.double] | None = None,
         is_full_pp: bool = False,
@@ -124,23 +119,9 @@ class LBTECalculator:
         self._cv_provider = cv_provider
         self._collision_provider = collision_provider
         self._accumulator = accumulator
-        self._temperatures = np.asarray(temperatures, dtype="double")
-        self._sigmas = sigmas
+        self._context = context
         self._is_full_pp = is_full_pp
         self._log_level = log_level
-
-        # Solve phonons at all grid points.
-        self._pp.nac_q_direction = None
-        self._pp.run_phonon_solver_at_gamma()
-        self._frequencies, self._eigenvectors, self._phonon_done = (
-            self._pp.get_phonons()
-        )
-        if not self._pp.phonon_all_done:
-            self._pp.run_phonon_solver()
-
-        # Build IR grid point list.
-        ir_gps, self._grid_weights = self._get_ir_grid_points()
-        self._ir_grid_points = np.array(self._pp.bz_grid.grg2bzg[ir_gps], dtype="int64")
 
         # Isotope provider (optional).
         self._isotope_provider: IsotopeScatteringProvider | None = None
@@ -181,7 +162,7 @@ class LBTECalculator:
         self._num_sampling_grid_points = 0
         self._grid_point_count = 0
 
-        for i_gp in range(len(self._ir_grid_points)):
+        for i_gp in range(len(self._context.ir_grid_points)):
             self._run_at_grid_point(i_gp)
             self._grid_point_count = i_gp + 1
             if on_grid_point is not None:
@@ -203,10 +184,19 @@ class LBTECalculator:
         gamma and collision_matrix have been loaded externally.
 
         """
-        self._accumulator.finalize(int(self._grid_weights.sum()))
+        self._accumulator.finalize(int(self._context.grid_weights.sum()))
 
     def delete_gp_collision_and_pp(self) -> None:
         """No-op: memory management compatibility method."""
+
+    # ------------------------------------------------------------------
+    # Properties — context
+    # ------------------------------------------------------------------
+
+    @property
+    def context(self) -> ConductivityContext:
+        """Return computation context."""
+        return self._context
 
     # ------------------------------------------------------------------
     # Properties — grid / phonon metadata
@@ -215,23 +205,25 @@ class LBTECalculator:
     @property
     def mesh_numbers(self) -> NDArray[np.int64]:
         """Return BZ mesh numbers."""
-        return self._pp.mesh_numbers
+        return self._context.mesh_numbers
 
     @property
     def bz_grid(self) -> BZGrid:
         """Return BZ grid object."""
-        return self._pp.bz_grid
+        return self._context.bz_grid
 
     @property
     def grid_points(self) -> NDArray[np.int64]:
         """Return irreducible BZ grid point indices."""
-        return self._ir_grid_points
+        return self._context.ir_grid_points
 
     @property
     def qpoints(self) -> NDArray[np.double]:
         """Return q-point coordinates of the irreducible grid points."""
         return np.array(
-            get_qpoints_from_bz_grid_points(self._ir_grid_points, self._pp.bz_grid),
+            get_qpoints_from_bz_grid_points(
+                self._context.ir_grid_points, self._context.bz_grid
+            ),
             dtype="double",
             order="C",
         )
@@ -239,12 +231,13 @@ class LBTECalculator:
     @property
     def grid_weights(self) -> NDArray[np.int64]:
         """Return symmetry weights of the irreducible grid points."""
-        return self._grid_weights
+        return self._context.grid_weights
 
     @property
     def temperatures(self) -> NDArray[np.double]:
         """Return temperatures in Kelvin."""
-        return self._temperatures
+        assert self._context.temperatures is not None
+        return self._context.temperatures
 
     @temperatures.setter
     def temperatures(self, value: Sequence[float] | NDArray[np.double]) -> None:
@@ -254,24 +247,23 @@ class LBTECalculator:
         stored in the collision file differ from the initial default.
 
         """
-        self._temperatures = np.asarray(value, dtype="double")
-        self._accumulator.temperatures = self._temperatures
+        self._context.temperatures = np.asarray(value, dtype="double")
+        self._accumulator.temperatures = self._context.temperatures
 
     @property
     def sigmas(self) -> list[float | None]:
         """Return smearing widths."""
-        return self._sigmas
+        return self._context.sigmas
 
     @property
     def sigma_cutoff_width(self) -> float | None:
-        """Return smearing cutoff width (from collision provider)."""
-        return self._collision_provider._sigma_cutoff
+        """Return smearing cutoff width."""
+        return self._context.sigma_cutoff_width
 
     @property
     def frequencies(self) -> NDArray[np.double]:
         """Return phonon frequencies at the irreducible grid points."""
-        assert self._frequencies is not None
-        return self._frequencies[self._ir_grid_points]
+        return self._context.frequencies[self._context.ir_grid_points]
 
     @property
     def grid_point_count(self) -> int:
@@ -345,7 +337,7 @@ class LBTECalculator:
     @property
     def boundary_mfp(self) -> float | None:
         """Return boundary mean free path in micrometres."""
-        return self._accumulator.boundary_mfp
+        return self._context.boundary_mfp
 
     @property
     def mode_heat_capacities(self) -> NDArray[np.double]:
@@ -398,16 +390,7 @@ class LBTECalculator:
 
     def get_frequencies_all(self) -> NDArray[np.double]:
         """Return phonon frequencies on the full BZ grid."""
-        assert self._frequencies is not None
-        return self._frequencies[self._pp.bz_grid.grg2bzg]
-
-    # ------------------------------------------------------------------
-    # Private: grid
-    # ------------------------------------------------------------------
-
-    def _get_ir_grid_points(self) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
-        ir_gps, ir_weights, _ = get_ir_grid_points(self._pp.bz_grid)
-        return np.array(ir_gps, dtype="int64"), np.array(ir_weights, dtype="int64")
+        return self._context.frequencies[self._context.bz_grid.grg2bzg]
 
     # ------------------------------------------------------------------
     # Private: isotope
@@ -428,19 +411,17 @@ class LBTECalculator:
             lapack_zheev_uplo=self._pp.lapack_zheev_uplo,
         )
         return IsotopeScatteringProvider(
-            isotope, self._sigmas, log_level=self._log_level
+            isotope, self._context.sigmas, log_level=self._log_level
         )
 
     def _prepare_isotope_phonons(self) -> None:
         if self._isotope_provider is None:
             return
-        assert self._frequencies is not None
-        assert self._eigenvectors is not None
-        assert self._phonon_done is not None
+        frequencies, eigenvectors, phonon_done = self._pp.get_phonons()
         self._isotope_provider.isotope.set_phonons(
-            self._frequencies,
-            self._eigenvectors,
-            self._phonon_done,
+            frequencies,
+            eigenvectors,
+            phonon_done,
             dm=self._pp.dynamical_matrix,
         )
 
@@ -449,15 +430,13 @@ class LBTECalculator:
     # ------------------------------------------------------------------
 
     def _make_grid_point_input(self, i_gp: int) -> GridPointInput:
-        assert self._frequencies is not None
-        assert self._eigenvectors is not None
         return make_grid_point_input(
-            grid_point=int(self._ir_grid_points[i_gp]),
-            grid_weight=int(self._grid_weights[i_gp]),
-            frequencies=self._frequencies,
-            eigenvectors=self._eigenvectors,
-            bz_grid=self._pp.bz_grid,
-            band_indices=np.asarray(self._pp.band_indices, dtype="int64"),
+            grid_point=int(self._context.ir_grid_points[i_gp]),
+            grid_weight=int(self._context.grid_weights[i_gp]),
+            frequencies=self._context.frequencies,
+            eigenvectors=self._context.eigenvectors,
+            bz_grid=self._context.bz_grid,
+            band_indices=self._context.band_indices,
         )
 
     def _show_log_header(self, i_gp: int) -> None:
@@ -469,18 +448,17 @@ class LBTECalculator:
             else None
         )
         show_grid_point_header(
-            bzgp=self._ir_grid_points[i_gp],
+            bzgp=self._context.ir_grid_points[i_gp],
             i_gp=i_gp,
-            num_gps=len(self._ir_grid_points),
-            bz_grid=self._pp.bz_grid,
-            boundary_mfp=self._accumulator.boundary_mfp,
+            num_gps=len(self._context.ir_grid_points),
+            bz_grid=self._context.bz_grid,
+            boundary_mfp=self._context.boundary_mfp,
             mass_variances=mass_variances,
         )
 
     def _show_log(self, i_gp: int, gv: NDArray[np.double]) -> None:
-        bz_gp = self._ir_grid_points[i_gp]
-        assert self._frequencies is not None
-        frequencies = self._frequencies[bz_gp][self._pp.band_indices]
+        bz_gp = self._context.ir_grid_points[i_gp]
+        frequencies = self._context.frequencies[bz_gp][self._context.band_indices]
         show_grid_point_frequencies_gv(
             frequencies,
             gv,
@@ -498,7 +476,7 @@ class LBTECalculator:
         self._num_sampling_grid_points += vel_result.num_sampling_grid_points
 
         # Mode heat capacities.
-        cv_result = self._cv_provider.compute(gp_input, self._temperatures)
+        cv_result = self._cv_provider.compute(gp_input, self._context.temperatures)
         assert cv_result.heat_capacities is not None
         cv = cv_result.heat_capacities  # (num_temp, num_band0)
 
@@ -511,7 +489,7 @@ class LBTECalculator:
             assert iso_result.gamma_isotope is not None
             self._accumulator.store_gamma_iso(
                 i_gp,
-                iso_result.gamma_isotope[:, self._pp.band_indices],
+                iso_result.gamma_isotope[:, self._context.band_indices],
             )
 
         # Accumulate into global arrays.

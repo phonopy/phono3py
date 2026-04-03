@@ -8,6 +8,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.grid_point_data import (
     GridPointInput,
     GridPointResult,
@@ -26,7 +27,6 @@ from phono3py.other.isotope import Isotope
 from phono3py.phonon.grid import (
     BZGrid,
     get_grid_points_by_rotations,
-    get_ir_grid_points,
     get_qpoints_from_bz_grid_points,
 )
 from phono3py.phonon3.interaction import Interaction
@@ -48,7 +48,7 @@ class RTACalculator:
     -----
     Create via ``make_conductivity_calculator`` (recommended) or directly::
 
-        calc = RTACalculator(pp, vel, cv, scat, accumulator, ...)
+        calc = RTACalculator(pp, vel, cv, scat, accumulator, context, ...)
         calc.run(on_grid_point=lambda i: writer.write_gamma(calc, i))
         # results available via calc.kappa, calc.mode_kappa, etc.
 
@@ -65,23 +65,12 @@ class RTACalculator:
     accumulator
         Owns the kappa computation and BZ-summation arrays; exposes ``kappa``,
         ``mode_kappa``, and any variant-specific output properties.
-    grid_points : array-like or None, optional
-        BZ grid point indices to iterate over. None uses irreducible grid
-        points. Default None.
-    temperatures : array-like or None, optional
-        Temperatures in Kelvin. Default None.
-    sigmas : sequence or None, optional
-        Smearing widths. None selects the tetrahedron method.
-    sigma_cutoff : float or None, optional
-        Smearing cutoff in units of sigma. Default None.
+    context : ConductivityContext
+        Shared computation metadata (grid, phonon, symmetry, configuration).
     is_isotope : bool, optional
         Include isotope scattering. Default False.
     mass_variances : array-like or None, optional
         Mass variances for isotope scattering. Default None.
-    boundary_mfp : float or None, optional
-        Boundary mean free path in micrometres. Default None.
-    is_kappa_star : bool, optional
-        Use k-star symmetry. Default True.
     is_N_U : bool, optional
         Decompose gamma into Normal and Umklapp. Default False.
     is_gamma_detail : bool, optional
@@ -98,14 +87,10 @@ class RTACalculator:
         cv_provider: ModeHeatCapacityProvider,
         scattering_provider: RTAScatteringProvider,
         accumulator: RTAKappaAccumulator,
-        grid_points: Sequence[int] | NDArray[np.int64] | None = None,
-        temperatures: Sequence[float] | NDArray[np.double] | None = None,
-        sigmas: Sequence[float | None] | None = None,
-        sigma_cutoff: float | None = None,
+        context: ConductivityContext,
+        *,
         is_isotope: bool = False,
         mass_variances: Sequence[float] | NDArray[np.double] | None = None,
-        boundary_mfp: float | None = None,
-        is_kappa_star: bool = True,
         is_N_U: bool = False,
         is_gamma_detail: bool = False,
         log_level: int = 0,
@@ -116,37 +101,12 @@ class RTACalculator:
         self._cv_provider = cv_provider
         self._scattering_provider = scattering_provider
         self._accumulator = accumulator
-        self._sigmas: list[float | None] = [] if sigmas is None else list(sigmas)
-        self._sigma_cutoff = sigma_cutoff
-        self._boundary_mfp = boundary_mfp
-        self._is_kappa_star = is_kappa_star
+        self._context = context
         self._is_N_U = is_N_U
         self._is_gamma_detail = is_gamma_detail
         self._log_level = log_level
 
-        # Ensure phonons are solved.
-        self._pp.nac_q_direction = None
-        self._pp.run_phonon_solver_at_gamma()
-        self._frequencies, self._eigenvectors, self._phonon_done = (
-            self._pp.get_phonons()
-        )
-        if not self._pp.phonon_all_done:
-            self._pp.run_phonon_solver()
-
-        # Grid setup.
-        self._point_operations, self._rotations_cartesian = (
-            self._build_point_operations()
-        )
-        self._grid_points, self._ir_grid_points, self._grid_weights = (
-            self._build_grid_info(grid_points)
-        )
         self._grid_point_count = 0
-
-        self._temperatures: NDArray[np.double] | None = (
-            np.asarray(temperatures, dtype="double")
-            if temperatures is not None
-            else None
-        )
 
         # Isotope and boundary providers.
         self._is_isotope = is_isotope or (mass_variances is not None)
@@ -154,8 +114,8 @@ class RTACalculator:
         if self._is_isotope:
             self._isotope_provider = self._build_isotope_provider(mass_variances)
         self._boundary_provider: BoundaryScatteringProvider | None = (
-            BoundaryScatteringProvider(boundary_mfp)
-            if boundary_mfp is not None
+            BoundaryScatteringProvider(context.boundary_mfp)
+            if context.boundary_mfp is not None
             else None
         )
 
@@ -174,7 +134,7 @@ class RTACalculator:
         self._num_ignored_phonon_modes: NDArray[np.int64] | None = None
         self._gamma_detail_at_q: NDArray[np.double] | None = None
 
-        if self._temperatures is not None:
+        if self._context.temperatures is not None:
             self._allocate_values()
 
     # ------------------------------------------------------------------
@@ -194,7 +154,7 @@ class RTACalculator:
             point is processed. Used for per-grid-point file writes.
 
         """
-        if self._temperatures is None:
+        if self._context.temperatures is None:
             raise RuntimeError("Set temperatures before calling run().")
 
         if self._log_level:
@@ -208,7 +168,7 @@ class RTACalculator:
         self._num_sampling_grid_points = 0
         self._grid_point_count = 0
 
-        for i_gp in range(len(self._grid_points)):
+        for i_gp in range(len(self._context.grid_points)):
             self._run_at_grid_point(i_gp)
             self._grid_point_count = i_gp + 1
             if on_grid_point is not None:
@@ -223,30 +183,40 @@ class RTACalculator:
         self._accumulator.finalize(self._num_sampling_grid_points)
 
     # ------------------------------------------------------------------
-    # Properties — grid / phonon metadata
+    # Properties -- context access
+    # ------------------------------------------------------------------
+
+    @property
+    def context(self) -> ConductivityContext:
+        """Return the computation context."""
+        return self._context
+
+    # ------------------------------------------------------------------
+    # Properties -- grid / phonon metadata
     # ------------------------------------------------------------------
 
     @property
     def mesh_numbers(self) -> NDArray[np.int64]:
         """Return BZ mesh numbers."""
-        return self._pp.mesh_numbers
+        return self._context.mesh_numbers
 
     @property
     def bz_grid(self) -> BZGrid:
         """Return BZ grid object."""
-        return self._pp.bz_grid
+        return self._context.bz_grid
 
     @property
     def frequencies(self) -> NDArray[np.double]:
         """Return phonon frequencies at the iterated grid points."""
-        assert self._frequencies is not None
-        return self._frequencies[self._grid_points]
+        return self._context.frequencies[self._context.grid_points]
 
     @property
     def qpoints(self) -> NDArray[np.double]:
         """Return q-point coordinates of the iterated grid points."""
         return np.array(
-            get_qpoints_from_bz_grid_points(self._grid_points, self._pp.bz_grid),
+            get_qpoints_from_bz_grid_points(
+                self._context.grid_points, self._context.bz_grid
+            ),
             dtype="double",
             order="C",
         )
@@ -254,37 +224,37 @@ class RTACalculator:
     @property
     def grid_points(self) -> NDArray[np.int64]:
         """Return BZ grid point indices that were iterated."""
-        return self._grid_points
+        return self._context.grid_points
 
     @property
     def grid_weights(self) -> NDArray[np.int64]:
         """Return symmetry weights of the iterated grid points."""
-        return self._grid_weights
+        return self._context.grid_weights
 
     @property
     def temperatures(self) -> NDArray[np.double] | None:
         """Return temperatures in Kelvin."""
-        return self._temperatures
+        return self._context.temperatures
 
     @temperatures.setter
     def temperatures(self, temperatures: Sequence[float] | NDArray[np.double]) -> None:
-        self._temperatures = np.asarray(temperatures, dtype="double")
+        self._context.temperatures = np.asarray(temperatures, dtype="double")
         self._allocate_values()
 
     @property
     def sigmas(self) -> list[float | None]:
         """Return smearing widths."""
-        return self._sigmas
+        return self._context.sigmas
 
     @property
     def sigma_cutoff_width(self) -> float | None:
         """Return smearing cutoff width."""
-        return self._sigma_cutoff
+        return self._context.sigma_cutoff_width
 
     @property
     def boundary_mfp(self) -> float | None:
         """Return boundary mean free path in micrometres."""
-        return self._boundary_mfp
+        return self._context.boundary_mfp
 
     @property
     def grid_point_count(self) -> int:
@@ -297,7 +267,7 @@ class RTACalculator:
         return self._num_sampling_grid_points
 
     # ------------------------------------------------------------------
-    # Properties — computed physical quantities
+    # Properties -- computed physical quantities
     # ------------------------------------------------------------------
 
     def __getattr__(self, name: str) -> object:
@@ -357,7 +327,7 @@ class RTACalculator:
         """
         fn = getattr(self._accumulator, "log_kappa", None)
         if callable(fn):
-            num_band = self._frequencies.shape[1]
+            num_band = self._context.frequencies.shape[1]
             num_phonon_modes = self._num_sampling_grid_points * num_band
             fn(
                 num_ignored_phonon_modes=self._num_ignored_phonon_modes,
@@ -370,7 +340,7 @@ class RTACalculator:
         return self._num_ignored_phonon_modes
 
     # ------------------------------------------------------------------
-    # Properties — scattering arrays (with setters for file reads)
+    # Properties -- scattering arrays (with setters for file reads)
     # ------------------------------------------------------------------
     # gamma, gamma_isotope, averaged_pp_interaction, group_velocities,
     # gv_by_gv, mode_heat_capacities, kappa, mode_kappa are owned by the
@@ -430,66 +400,22 @@ class RTACalculator:
         return self._gamma_detail_at_q
 
     # ------------------------------------------------------------------
-    # Private: grid setup
-    # ------------------------------------------------------------------
-
-    def _build_point_operations(
-        self,
-    ) -> tuple[NDArray[np.int64], NDArray[np.double]]:
-        if not self._is_kappa_star:
-            point_ops = np.eye(3, dtype="int64", order="C").reshape(1, 3, 3)
-            rot_cart = np.eye(3, dtype="double", order="C").reshape(1, 3, 3)
-        else:
-            point_ops = self._pp.bz_grid.reciprocal_operations
-            rot_cart = self._pp.bz_grid.rotations_cartesian
-        return point_ops, rot_cart
-
-    def _build_grid_info(
-        self,
-        grid_points: Sequence[int] | NDArray[np.int64] | None,
-    ) -> tuple[NDArray[np.int64], NDArray[np.int64], NDArray[np.int64]]:
-        ir_gps, ir_weights = self._get_ir_grid_points(grid_points)
-        if grid_points is not None:
-            gps = np.array(grid_points, dtype="int64")
-            return gps, ir_gps, ir_weights
-        if not self._is_kappa_star:
-            all_gps = self._pp.bz_grid.grg2bzg
-            return all_gps, all_gps, np.ones(len(all_gps), dtype="int64")
-        return ir_gps, ir_gps, ir_weights
-
-    def _get_ir_grid_points(
-        self,
-        grid_points: Sequence[int] | NDArray[np.int64] | None,
-    ) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
-        ir_gps, ir_weights, ir_map = get_ir_grid_points(self._pp.bz_grid)
-        ir_gps = np.array(self._pp.bz_grid.grg2bzg[ir_gps], dtype="int64")
-        if grid_points is None:
-            return ir_gps, ir_weights
-        weights = np.zeros_like(ir_map)
-        for gp in ir_map:
-            weights[gp] += 1
-        gp_weights = np.array(
-            weights[ir_map[self._pp.bz_grid.bzg2grg[grid_points]]], dtype="int64"
-        )
-        return ir_gps, gp_weights
-
-    # ------------------------------------------------------------------
     # Private: array allocation
     # ------------------------------------------------------------------
 
     def _allocate_values(self) -> None:
-        assert self._temperatures is not None
-        num_sigma = len(self._sigmas)
-        num_temp = len(self._temperatures)
-        num_gp = len(self._grid_points)
-        num_band0 = len(self._pp.band_indices)
+        assert self._context.temperatures is not None
+        num_sigma = len(self._context.sigmas)
+        num_temp = len(self._context.temperatures)
+        num_gp = len(self._context.grid_points)
+        num_band0 = len(self._context.band_indices)
 
         if not self._read_gamma:
             if self._is_N_U or self._is_gamma_detail:
                 shape = (num_sigma, num_temp, num_gp, num_band0)
                 self._gamma_N = np.zeros(shape, order="C", dtype="double")
                 self._gamma_U = np.zeros(shape, order="C", dtype="double")
-        if self._boundary_mfp is not None:
+        if self._context.boundary_mfp is not None:
             self._gamma_boundary = np.zeros(
                 (num_gp, num_band0), order="C", dtype="double"
             )
@@ -515,29 +441,27 @@ class RTACalculator:
         mass_variances: Sequence[float] | NDArray[np.double] | None,
     ) -> IsotopeScatteringProvider:
         isotope = Isotope(
-            self._pp.mesh_numbers,
+            self._context.mesh_numbers,
             self._pp.primitive,
             mass_variances=mass_variances,
-            bz_grid=self._pp.bz_grid,
+            bz_grid=self._context.bz_grid,
             frequency_factor_to_THz=self._pp.frequency_factor_to_THz,
             symprec=self._pp.primitive_symmetry.tolerance,
-            cutoff_frequency=self._pp.cutoff_frequency,
+            cutoff_frequency=self._context.cutoff_frequency,
             lapack_zheev_uplo=self._pp.lapack_zheev_uplo,
         )
         return IsotopeScatteringProvider(
-            isotope, self._sigmas, log_level=self._log_level
+            isotope, self._context.sigmas, log_level=self._log_level
         )
 
     def _prepare_isotope_phonons(self) -> None:
         if self._isotope_provider is None:
             return
-        assert self._frequencies is not None
-        assert self._eigenvectors is not None
-        assert self._phonon_done is not None
+        frequencies, eigenvectors, phonon_done = self._pp.get_phonons()
         self._isotope_provider.isotope.set_phonons(
-            self._frequencies,
-            self._eigenvectors,
-            self._phonon_done,
+            frequencies,
+            eigenvectors,
+            phonon_done,
             dm=self._pp.dynamical_matrix,
         )
 
@@ -546,15 +470,13 @@ class RTACalculator:
     # ------------------------------------------------------------------
 
     def _make_grid_point_input(self, i_gp: int) -> GridPointInput:
-        assert self._frequencies is not None
-        assert self._eigenvectors is not None
         return make_grid_point_input(
-            grid_point=int(self._grid_points[i_gp]),
-            grid_weight=int(self._grid_weights[i_gp]),
-            frequencies=self._frequencies,
-            eigenvectors=self._eigenvectors,
-            bz_grid=self._pp.bz_grid,
-            band_indices=np.asarray(self._pp.band_indices, dtype="int64"),
+            grid_point=int(self._context.grid_points[i_gp]),
+            grid_weight=int(self._context.grid_weights[i_gp]),
+            frequencies=self._context.frequencies,
+            eigenvectors=self._context.eigenvectors,
+            bz_grid=self._context.bz_grid,
+            band_indices=self._context.band_indices,
         )
 
     def _show_log_header(self, i_gp: int) -> None:
@@ -566,11 +488,11 @@ class RTACalculator:
             else None
         )
         show_grid_point_header(
-            bzgp=self._grid_points[i_gp],
+            bzgp=self._context.grid_points[i_gp],
             i_gp=i_gp,
-            num_gps=len(self._grid_points),
-            bz_grid=self._pp.bz_grid,
-            boundary_mfp=self._boundary_mfp,
+            num_gps=len(self._context.grid_points),
+            bz_grid=self._context.bz_grid,
+            boundary_mfp=self._context.boundary_mfp,
             mass_variances=mass_variances,
         )
 
@@ -585,8 +507,8 @@ class RTACalculator:
         self._num_sampling_grid_points += vel_result.num_sampling_grid_points
 
         # Heat capacity.
-        assert self._temperatures is not None
-        cv_result = self._cv_provider.compute(gp_input, self._temperatures)
+        assert self._context.temperatures is not None
+        cv_result = self._cv_provider.compute(gp_input, self._context.temperatures)
         assert cv_result.heat_capacities is not None
 
         # ph-ph scattering.
@@ -615,7 +537,7 @@ class RTACalculator:
             assert self._isotope_provider is not None
             iso_result = self._isotope_provider.compute_gamma_isotope(gp_input)
             assert iso_result.gamma_isotope is not None
-            gamma_iso = iso_result.gamma_isotope[:, self._pp.band_indices]
+            gamma_iso = iso_result.gamma_isotope[:, self._context.band_indices]
 
         # Boundary scattering (needs group velocities computed above).
         gamma_boundary: NDArray[np.double] | None = None
@@ -659,10 +581,9 @@ class RTACalculator:
         gv: NDArray[np.double],
         ave_pp: NDArray[np.double] | None,
     ) -> None:
-        gp = self._grid_points[i_gp]
-        qpoint = get_qpoints_from_bz_grid_points(gp, self._pp.bz_grid)
-        assert self._frequencies is not None
-        frequencies = self._frequencies[gp][self._pp.band_indices]
+        gp = self._context.grid_points[i_gp]
+        qpoint = get_qpoints_from_bz_grid_points(gp, self._context.bz_grid)
+        frequencies = self._context.frequencies[gp][self._context.band_indices]
         self._show_log_value_names()
         if self._log_level > 2:
             self._show_log_values_on_kstar(frequencies, gv, ave_pp, gp, qpoint)
@@ -698,10 +619,14 @@ class RTACalculator:
         gp: int,
         q: NDArray[np.double],
     ) -> None:
-        rotation_map = get_grid_points_by_rotations(gp, self._pp.bz_grid)
+        rotation_map = get_grid_points_by_rotations(gp, self._context.bz_grid)
         for i, j in enumerate(np.unique(rotation_map)):
             for k, (rot, rot_c) in enumerate(
-                zip(self._point_operations, self._rotations_cartesian, strict=True)
+                zip(
+                    self._context.point_operations,
+                    self._context.rotations_cartesian,
+                    strict=True,
+                )
             ):
                 if rotation_map[k] != j:
                     continue
@@ -737,11 +662,11 @@ class RTACalculator:
     def _count_ignored_modes(self, i_gp: int, result: GridPointResult) -> None:
         """Increment ignored-mode counter for modes below cutoff or negative gamma."""
         assert self._num_ignored_phonon_modes is not None
-        assert self._temperatures is not None
-        weight = int(self._grid_weights[i_gp])
-        freq = self._frequencies[self._grid_points[i_gp]]  # type: ignore
-        for j in range(len(self._sigmas)):
-            for k in range(len(self._temperatures)):
+        assert self._context.temperatures is not None
+        weight = int(self._context.grid_weights[i_gp])
+        freq = self._context.frequencies[self._context.grid_points[i_gp]]
+        for j in range(len(self._context.sigmas)):
+            for k in range(len(self._context.temperatures)):
                 g_eff = result.gamma[j, k].copy()
                 if result.gamma_isotope is not None:
                     g_eff += result.gamma_isotope[j]
@@ -749,6 +674,6 @@ class RTACalculator:
                     g_eff += result.gamma_elph[j, k]
                 if result.gamma_boundary is not None:
                     g_eff += result.gamma_boundary
-                for ll, f in enumerate(freq[self._pp.band_indices]):
-                    if f < self._pp.cutoff_frequency or g_eff[ll] < 0:
+                for ll, f in enumerate(freq[self._context.band_indices]):
+                    if f < self._context.cutoff_frequency or g_eff[ll] < 0:
                         self._num_ignored_phonon_modes[j, k] += weight
