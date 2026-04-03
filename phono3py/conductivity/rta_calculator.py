@@ -636,8 +636,8 @@ class RTACalculator:
         result.gv_by_gv = vel_result.gv_by_gv
         result.vm_by_vm = vel_result.vm_by_vm
         result.heat_capacities = cv_result.heat_capacities
-        if cv_result.heat_capacity_matrix is not None:
-            result.heat_capacity_matrix = cv_result.heat_capacity_matrix
+        result.heat_capacity_matrix = cv_result.heat_capacity_matrix
+
         result.gamma = gamma
         result.averaged_pp_interaction = ave_pp
         if gamma_iso is not None:

@@ -2427,15 +2427,9 @@ class Phono3py:
             _log_level = log_level
 
         if is_LBTE:
-            if temperatures is None:
-                _temperatures = [
-                    300,
-                ]
-            else:
-                _temperatures = temperatures
             self._thermal_conductivity = get_thermal_conductivity_LBTE(
                 self._interaction,
-                temperatures=_temperatures,
+                temperatures=temperatures,
                 sigmas=self._sigmas,
                 sigma_cutoff=self._sigma_cutoff,
                 is_isotope=is_isotope,
@@ -2463,13 +2457,9 @@ class Phono3py:
                 log_level=_log_level,
             )
         else:
-            if temperatures is None:
-                _temperatures = np.arange(0, 1001, 10, dtype="double")
-            else:
-                _temperatures = temperatures
             self._thermal_conductivity = get_thermal_conductivity_RTA(
                 self._interaction,
-                temperatures=_temperatures,
+                temperatures=temperatures,
                 sigmas=self._sigmas,
                 sigma_cutoff=self._sigma_cutoff,
                 is_isotope=is_isotope,

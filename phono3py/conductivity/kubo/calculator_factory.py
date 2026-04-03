@@ -130,11 +130,13 @@ def make_kubo_rta_calculator(
     )
 
     conversion_factor = get_unit_to_WmK() / interaction.primitive.volume
+    assert temperatures is not None
     accumulator = KuboRTAKappaAccumulator(
-        cutoff_frequency=interaction.cutoff_frequency,
-        conversion_factor=conversion_factor,
         temperatures=temperatures,
         sigmas=base.sigmas,
+        cutoff_frequency=interaction.cutoff_frequency,
+        conversion_factor=conversion_factor,
+        is_isotope=is_isotope,
         log_level=log_level,
     )
 

@@ -102,7 +102,7 @@ class VelocityMatrixProvider:
         gvm_full = self._velocity_obj.group_velocity_matrices[0]
 
         result.group_velocities = self._get_group_velocities(gp, gvm_full)
-        vm_by_vm, kstar_order = self._get_gvm_by_gvm(gp)
+        vm_by_vm, kstar_order = self._get_vm_by_vm(gp)
         num_band0 = vm_by_vm.shape[0]
         result.gv_by_gv = np.real(vm_by_vm[np.arange(num_band0), np.arange(num_band0)])
         result.vm_by_vm = vm_by_vm
@@ -137,7 +137,7 @@ class VelocityMatrixProvider:
             gv[:, i] = np.diag(gvm_full[i]).real
         return gv[gp.band_indices, :]
 
-    def _get_gvm_by_gvm(
+    def _get_vm_by_vm(
         self,
         gp: GridPointInput,
     ) -> tuple[NDArray[np.cdouble], int]:
@@ -169,18 +169,18 @@ class VelocityMatrixProvider:
         self._velocity_obj.run(qpoints)
         assert self._velocity_obj.group_velocity_matrices is not None
 
-        nat3 = len(self._pp.primitive) * 3
+        num_band = len(self._pp.primitive) * 3
         num_band0 = len(gp.band_indices)
-        gvm_by_gvm = np.zeros((num_band0, nat3, 6), dtype="complex128")
+        vm_by_vm = np.zeros((num_band0, num_band, 6), dtype="complex128")
 
         for gvm in self._velocity_obj.group_velocity_matrices:
             # gvm: (3, nat3, nat3) complex at one rotated q-point
             for i_pair, (a, b) in enumerate(VOIGT_INDEX_PAIRS):
                 # V^a_{s s'} * conj(V^b_{s s'}) for selected band0 vs all bands
-                gvm_by_gvm[:, :, i_pair] += gvm[a][gp.band_indices, :] * np.conj(
+                vm_by_vm[:, :, i_pair] += gvm[a][gp.band_indices, :] * np.conj(
                     gvm[b][gp.band_indices, :]
                 )
-        gvm_by_gvm /= multi
+        vm_by_vm /= multi
 
         kstar_order = get_kstar_order(
             gp.grid_weight,
@@ -188,4 +188,4 @@ class VelocityMatrixProvider:
             self._point_operations,
             verbose=self._log_level > 0,
         )
-        return gvm_by_gvm, kstar_order
+        return vm_by_vm, kstar_order

@@ -47,25 +47,25 @@ class KuboRTAKappaAccumulator:
 
     def __init__(
         self,
+        temperatures: NDArray[np.double],
+        sigmas: Sequence[float | None],
         cutoff_frequency: float,
         conversion_factor: float,
-        temperatures: NDArray[np.double] | None = None,
-        sigmas: Sequence[float | None] | None = None,
+        is_isotope: bool = False,
         log_level: int = 0,
     ) -> None:
         """Init method."""
+        self._temperatures = temperatures
+        self._sigmas: Sequence[float | None] = sigmas
         self._cutoff_frequency = cutoff_frequency
         self._conversion_factor = conversion_factor
-        self._temperatures = temperatures
-        self._sigmas: list[float | None] = [] if sigmas is None else list(sigmas)
+        self._is_isotope = is_isotope
         self._log_level = log_level
 
         # Per-grid-point arrays (allocated in prepare()).
-        self._gv: NDArray[np.double]
-        self._gv_by_gv: NDArray[np.double]
-        self._cv: NDArray[np.double]
         self._gamma: NDArray[np.double]
         self._gamma_iso: NDArray[np.double] | None = None
+        self._gamma_total: NDArray[np.double]
         self._averaged_pp_interaction: NDArray[np.double] | None = None
 
         # Kappa arrays (allocated in prepare()).
@@ -85,77 +85,74 @@ class KuboRTAKappaAccumulator:
         """Allocate per-grid-point and kappa arrays."""
         if num_band is None:
             num_band = num_band0
-        self._gv = np.zeros((num_gp, num_band0, 3), dtype="double", order="C")
-        self._gv_by_gv = np.zeros((num_gp, num_band0, 6), dtype="double", order="C")
-        self._cv = np.zeros((num_temp, num_gp, num_band0), dtype="double", order="C")
         self._gamma = np.zeros(
             (num_sigma, num_temp, num_gp, num_band0), dtype="double", order="C"
         )
+        if self._is_isotope:
+            self._gamma_iso = np.zeros(
+                (num_sigma, num_gp, num_band0), dtype="double", order="C"
+            )
+        self._gamma_total = np.zeros(
+            (num_sigma, num_temp, num_gp, num_band0), dtype="double", order="C"
+        )
+        self._vm_by_vm = np.zeros(
+            (num_gp, num_band0, num_band, 6), dtype="complex128", order="C"
+        )
+        self._heat_capacity_matrix = np.zeros(
+            (num_temp, num_gp, num_band0, num_band), dtype="double", order="C"
+        )
+        self._frequencies = np.zeros((num_gp, num_band0), dtype="double", order="C")
+
         if is_full_pp:
             self._averaged_pp_interaction = np.zeros(
                 (num_gp, num_band0), dtype="double", order="C"
             )
+
         self._kappa = np.zeros((num_sigma, num_temp, 6), dtype="double", order="C")
         self._kappa_intra = np.zeros(
             (num_sigma, num_temp, 6), dtype="double", order="C"
         )
         self._mode_kappa_matrix = np.zeros(
-            (num_sigma, num_temp, num_gp, num_band0, num_band, 6),
+            (num_sigma, num_temp, num_gp, num_band, num_band, 6),
             dtype="double",
             order="C",
         )
 
     def accumulate(self, i_gp: int, result: GridPointResult) -> None:
         """Store per-grid-point data and compute Kubo mode-kappa at ``i_gp``."""
-        assert result.group_velocities is not None
-        assert result.gv_by_gv is not None
         assert result.vm_by_vm is not None
         assert result.heat_capacity_matrix is not None
         assert result.gamma is not None
 
-        # Store per-grid-point data.
-        self._gv[i_gp] = result.group_velocities
-        self._gv_by_gv[i_gp] = result.gv_by_gv
-        if result.heat_capacities is not None:
-            self._cv[:, i_gp, :] = result.heat_capacities
         self._gamma[:, :, i_gp, :] = result.gamma
         if result.gamma_isotope is not None:
-            if self._gamma_iso is None:
-                ns = result.gamma_isotope.shape[0]
-                nb = self._gv.shape[1]
-                self._gamma_iso = np.zeros(
-                    (ns, self._gv.shape[0], nb), dtype="double", order="C"
-                )
             self._gamma_iso[:, i_gp, :] = result.gamma_isotope
         if (
             result.averaged_pp_interaction is not None
             and self._averaged_pp_interaction is not None
         ):
             self._averaged_pp_interaction[i_gp] = result.averaged_pp_interaction
-
-        gamma = compute_effective_gamma(result)  # (num_sigma, num_temp, num_band0)
-        num_band0 = gamma.shape[2]
-        num_band = result.vm_by_vm.shape[1]
-        assert num_band0 == num_band, (
-            "KuboRTAKappaAccumulator requires num_band0 == num_band "
-            f"(got {num_band0} vs {num_band})."
-        )
-
-        # (num_sigma, num_temp, num_band0, num_band, 6)
-        mode_kappa_matrix = compute_kubo_mode_kappa_matrix(
-            frequencies=result.input.frequencies,
-            gamma=gamma,
-            heat_capacity_matrix=result.heat_capacity_matrix,
-            vm_by_vm=result.vm_by_vm,
-            cutoff_frequency=self._cutoff_frequency,
-            conversion_factor=self._conversion_factor,
-            grid_point=result.input.grid_point,
-        )
-        self._mode_kappa_matrix[:, :, i_gp, :, :, :] = mode_kappa_matrix
+        self._vm_by_vm[i_gp] = result.vm_by_vm
+        self._heat_capacity_matrix[:, i_gp, :, :] = result.heat_capacity_matrix
+        self._frequencies[i_gp] = result.input.frequencies
+        self._gamma_total[:, :, i_gp, :] = compute_effective_gamma(result)
 
     def finalize(self, num_sampling_grid_points: int) -> None:
         """Compute kappa and kappa_intra from mode_kappa_inter."""
         assert self._mode_kappa_matrix.shape[3] == self._mode_kappa_matrix.shape[4]
+
+        for i_gp, frequencies in enumerate(self._frequencies):
+            # (num_sigma, num_temp, num_band, num_band, 6)
+            mode_kappa_matrix = compute_kubo_mode_kappa_matrix(
+                frequencies=frequencies,
+                gamma=self._gamma_total[:, :, i_gp, :],
+                heat_capacity_matrix=self._heat_capacity_matrix[:, i_gp, :, :],
+                vm_by_vm=self._vm_by_vm[i_gp],
+                cutoff_frequency=self._cutoff_frequency,
+                conversion_factor=self._conversion_factor,
+            )
+            self._mode_kappa_matrix[:, :, i_gp, :, :, :] = mode_kappa_matrix
+
         if num_sampling_grid_points > 0:
             # Sum over gp, band0, band axes -> (num_sigma, num_temp, 6)
             self._kappa = (
@@ -217,21 +214,6 @@ class KuboRTAKappaAccumulator:
     # ------------------------------------------------------------------
 
     @property
-    def group_velocities(self) -> NDArray[np.double]:
-        """Return group velocities, shape (num_gp, num_band0, 3)."""
-        return self._gv
-
-    @property
-    def gv_by_gv(self) -> NDArray[np.double]:
-        """Return symmetrised v-outer-v, shape (num_gp, num_band0, 6)."""
-        return self._gv_by_gv
-
-    @property
-    def mode_heat_capacities(self) -> NDArray[np.double]:
-        """Return mode heat capacities, shape (num_temp, num_gp, num_band0)."""
-        return self._cv
-
-    @property
     def gamma(self) -> NDArray[np.double]:
         """Return ph-ph gamma, shape (num_sigma, num_temp, num_gp, num_band0)."""
         return self._gamma
@@ -246,7 +228,7 @@ class KuboRTAKappaAccumulator:
         return self._gamma_iso
 
     @gamma_isotope.setter
-    def gamma_isotope(self, value: NDArray[np.double] | None) -> None:
+    def gamma_isotope(self, value: NDArray[np.double]) -> None:
         self._gamma_iso = value
 
     @property
@@ -583,7 +565,6 @@ class KuboLBTEKappaAccumulator:
                 vm_by_vm=self._vm_by_vm[i_gp],
                 cutoff_frequency=self._cutoff_frequency,
                 conversion_factor=self._conversion_factor,
-                grid_point=gp,
             )
             # mkm: (num_sigma, num_temp, num_band0, num_band, 6)
             mode_kappa_inter_list.append(mode_kappa_matrix)

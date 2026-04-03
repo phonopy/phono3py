@@ -5,6 +5,8 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
+FLOATINGPOINTERROR_THRESHOLD = 1e-12
+
 
 def compute_kubo_mode_kappa_matrix(
     frequencies: NDArray[np.double],
@@ -13,7 +15,6 @@ def compute_kubo_mode_kappa_matrix(
     vm_by_vm: NDArray[np.cdouble],
     cutoff_frequency: float,
     conversion_factor: float,
-    grid_point: int = -1,
 ) -> NDArray[np.double]:
     """Compute Kubo mode-kappa matrix for one grid point.
 
@@ -52,59 +53,32 @@ def compute_kubo_mode_kappa_matrix(
         shape (num_sigma, num_temp, num_band0, num_band, 6)
 
     """
-    num_sigma, num_temp, num_band0 = gamma.shape
-    num_band = vm_by_vm.shape[1]
+    num_sigma, num_temp, num_band = gamma.shape
 
     mode_kappa_mat = np.zeros(
-        (num_sigma, num_temp, num_band0, num_band, 6), dtype="double"
+        (num_sigma, num_temp, num_band, num_band, 6), dtype="double"
     )
 
     for j in range(num_sigma):
         for k in range(num_temp):
-            for i_band in range(num_band0):
-                if frequencies[i_band] < cutoff_frequency:
-                    continue
-                g_i = gamma[j, k, i_band]
-                for j_band in range(num_band):
-                    if frequencies[j_band] < cutoff_frequency:
-                        break
-                    g = g_i + gamma[j, k, j_band]
-                    delta_omega = frequencies[j_band] - frequencies[i_band]
-                    denom = delta_omega**2 + g**2
-                    old_settings = np.seterr(all="raise")
-                    try:
-                        contribution = (
-                            heat_capacity_matrix[k, i_band, j_band]
-                            * vm_by_vm[i_band, j_band]
-                            * g
-                            / denom
-                            * conversion_factor
-                        ).real
-                    except FloatingPointError:
-                        contribution = None
-                    except Exception:
-                        print("=" * 26 + " Warning " + "=" * 26)
-                        print(
-                            " Unexpected physical condition of ph-ph "
-                            "interaction calculation was found."
-                        )
-                        print(
-                            " g=%f at gp=%d, band=%d, freq=%f, band=%d, freq=%f"
-                            % (
-                                g_i,
-                                grid_point,
-                                i_band + 1,
-                                frequencies[i_band],
-                                j_band + 1,
-                                frequencies[j_band],
-                            )
-                        )
-                        print("=" * 61)
-                        contribution = None
-                    finally:
-                        np.seterr(**old_settings)
-
-                    if contribution is not None:
-                        mode_kappa_mat[j, k, i_band, j_band] = contribution
+            g_sum = np.add.outer(gamma[j, k], gamma[j, k])
+            delta_omega = np.subtract.outer(frequencies, frequencies)
+            freqs_condisions = frequencies > cutoff_frequency
+            denom = delta_omega**2 + g_sum**2
+            condition_matrix = (
+                np.outer(freqs_condisions, freqs_condisions) * denom
+                > FLOATINGPOINTERROR_THRESHOLD
+            )
+            denom = np.where(condition_matrix, denom, 1.0)
+            contribution_matrix = np.where(
+                condition_matrix,
+                heat_capacity_matrix[k, :, :, None]
+                * vm_by_vm.real
+                * g_sum[:, :, None]
+                / denom[:, :, None]
+                * conversion_factor,
+                0,
+            )
+            mode_kappa_mat[j, k] = contribution_matrix[:, :, :]
 
     return mode_kappa_mat
