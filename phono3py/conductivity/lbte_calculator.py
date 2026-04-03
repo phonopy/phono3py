@@ -516,8 +516,8 @@ class LBTECalculator:
 
         # Accumulate into global arrays.
         extra = vel_result.extra
-        if vel_result.velocity_product is not None:
-            extra["velocity_product"] = vel_result.velocity_product
+        if vel_result.vm_by_vm is not None:
+            extra["vm_by_vm"] = vel_result.vm_by_vm
         if cv_result.heat_capacity_matrix is not None:
             extra["heat_capacity_matrix"] = cv_result.heat_capacity_matrix
         self._accumulator.accumulate(i_gp, collision_result, gv, cv, extra or None)

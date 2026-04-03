@@ -26,7 +26,9 @@ class VelocityOperatorProvider:
     The returned ``GridPointResult`` fields:
     - ``group_velocities`` (num_band0, 3): diagonal (standard) group velocities,
       with degenerate-subspace diagonalisation applied.
-    - ``velocity_product`` (num_band0, num_band, 6): complex k-star-averaged outer
+    - ``gv_by_gv`` (num_band0, 6): real diagonal of the outer product (standard
+      BTE-compatible).
+    - ``vm_by_vm`` (num_band0, num_band, 6): complex k-star-averaged outer
       product  V(s,s') x V*(s,s') packed into 6 Voigt components (xx, yy, zz,
       yz, xz, xy).
     - ``num_sampling_grid_points``: k-star order for this irreducible point.
@@ -89,7 +91,8 @@ class VelocityOperatorProvider:
         Returns
         -------
         GridPointResult
-            ``group_velocities`` (num_band0, 3), ``velocity_product``
+            ``group_velocities`` (num_band0, 3), ``gv_by_gv``
+            (num_band0, 6) real, ``vm_by_vm``
             (num_band0, num_band, 6) complex, and
             ``num_sampling_grid_points`` are set.
 
@@ -105,8 +108,10 @@ class VelocityOperatorProvider:
         gv_op = gv_op_full[gp.band_indices, :, :]
 
         result.group_velocities = self._get_group_velocities(gp, gv_op_full)
-        gv_by_gv_op, kstar_order = self._get_gv_by_gv_operator(gp, gv_op)
-        result.velocity_product = gv_by_gv_op
+        vm_by_vm, kstar_order = self._get_gv_by_gv_operator(gp, gv_op)
+        num_band0 = vm_by_vm.shape[0]
+        result.gv_by_gv = np.real(vm_by_vm[np.arange(num_band0), np.arange(num_band0)])
+        result.vm_by_vm = vm_by_vm
         result.num_sampling_grid_points = kstar_order
         # Store raw velocity operator for HDF5 output.
         result.extra["velocity_operator"] = gv_op

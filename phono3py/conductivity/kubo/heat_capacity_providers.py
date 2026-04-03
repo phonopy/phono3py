@@ -7,9 +7,14 @@ from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
 
 from phono3py.conductivity.grid_point_data import GridPointInput, GridPointResult
-from phono3py.conductivity.heat_capacity_providers import get_heat_capacities
+from phono3py.conductivity.heat_capacity_providers import (
+    get_heat_capacities,
+    get_temperature_condition,
+)
 from phono3py.phonon.heat_capacity_matrix import mode_cv_matrix
 from phono3py.phonon3.interaction import Interaction
+
+DIV_BY_ZERO_THRESHOLD_EV = 1e-10
 
 
 class HeatCapacityMatrixProvider:
@@ -68,7 +73,6 @@ class HeatCapacityMatrixProvider:
 
         frequencies, _, _ = self._pp.get_phonons()
         freqs_ev = frequencies[gp.grid_point] * get_physical_units().THzToEv
-        cutoff_ev = self._pp.cutoff_frequency * get_physical_units().THzToEv
 
         num_temp = len(temperatures)
         num_band0 = len(gp.band_indices)
@@ -78,10 +82,9 @@ class HeatCapacityMatrixProvider:
         for i_temp, temp in enumerate(temperatures):
             if temp == 0.0:
                 continue
-            # Skip temperature if any x = freq/(KB*T) > 100 (overflow guard).
-            if (freqs_ev / (temp * get_physical_units().KB) > 100).any():
+            if not get_temperature_condition(freqs_ev, temp):
                 continue
-            cvm = mode_cv_matrix(temp, freqs_ev, cutoff=cutoff_ev)
+            cvm = mode_cv_matrix(temp, freqs_ev, cutoff=DIV_BY_ZERO_THRESHOLD_EV)
             cv_mat[i_temp] = cvm[gp.band_indices, :]
 
         result.heat_capacity_matrix = cv_mat

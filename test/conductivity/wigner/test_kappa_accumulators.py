@@ -29,7 +29,8 @@ def _make_result_with_velocity_operator(
     )
     result = GridPointResult(input=gp_input)
     result.group_velocities = np.zeros((nat3, 3), dtype="double")
-    result.velocity_product = np.zeros((nat3, nat3, 6), dtype="complex128")
+    result.gv_by_gv = np.zeros((nat3, 6), dtype="double")
+    result.vm_by_vm = np.zeros((nat3, nat3, 6), dtype="complex128")
     result.heat_capacities = np.ones((num_temp, nat3), dtype="double")
     result.gamma = np.ones((num_sigma, num_temp, nat3), dtype="double") * 0.1
     result.extra["velocity_operator"] = (
@@ -64,8 +65,8 @@ def test_get_extra_grid_point_output_stores_velocity_operator():
     )
 
 
-def test_get_extra_grid_point_output_returns_none_without_velocity_operator():
-    """Returns None when no velocity operator was stored."""
+def test_get_extra_grid_point_output_zeros_without_velocity_operator():
+    """Velocity operator is zero when not stored via result.extra."""
     acc = WignerRTAKappaAccumulator(cutoff_frequency=0.0, conversion_factor_WTE=1.0)
     acc.prepare(num_sigma=1, num_temp=2, num_gp=1, num_band0=6)
 
@@ -81,10 +82,13 @@ def test_get_extra_grid_point_output_returns_none_without_velocity_operator():
     )
     result = GridPointResult(input=gp_input)
     result.group_velocities = np.zeros((nat3, 3), dtype="double")
-    result.velocity_product = np.zeros((nat3, nat3, 6), dtype="complex128")
+    result.gv_by_gv = np.zeros((nat3, 6), dtype="double")
+    result.vm_by_vm = np.zeros((nat3, nat3, 6), dtype="complex128")
     result.heat_capacities = np.ones((2, nat3), dtype="double")
     result.gamma = np.ones((1, 2, nat3), dtype="double") * 0.1
 
     acc.accumulate(0, result)
 
-    assert acc.get_extra_grid_point_output(0) is None
+    extra = acc.get_extra_grid_point_output(0)
+    assert extra is not None
+    np.testing.assert_array_equal(extra["velocity_operator"], 0.0)

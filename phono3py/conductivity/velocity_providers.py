@@ -75,8 +75,8 @@ class GroupVelocityProvider:
     ``ConductivityComponents``.
 
     The returned ``GridPointResult`` fields
-    ``group_velocities`` (num_band0, 3) and ``velocity_product`` (num_band0, 6)
-    contain the standard-BTE velocity quantities.  ``velocity_product`` stores
+    ``group_velocities`` (num_band0, 3) and ``gv_by_gv`` (num_band0, 6)
+    contain the standard-BTE velocity quantities.  ``gv_by_gv`` stores
     the six independent components of the symmetry-averaged outer product
     ``v x v``: xx, yy, zz, yz, xz, xy.
 
@@ -144,14 +144,14 @@ class GroupVelocityProvider:
         Returns
         -------
         GridPointResult
-            ``group_velocities`` (num_band0, 3), ``velocity_product``
+            ``group_velocities`` (num_band0, 3), ``gv_by_gv``
             (num_band0, 6), and ``num_sampling_grid_points`` are set.
         """
         result = GridPointResult(input=gp)
         gv = self._get_gv(gp)
         gv_by_gv, kstar_order = self._get_gv_by_gv(gp, gv)
         result.group_velocities = gv
-        result.velocity_product = gv_by_gv
+        result.gv_by_gv = gv_by_gv
         result.num_sampling_grid_points = kstar_order
         return result
 

@@ -203,6 +203,14 @@ def get_thermal_conductivity_RTA(
 ) -> RTACalculator:
     """Run RTA thermal conductivity calculation."""
     _temperatures = _normalize_rta_temperatures(temperatures)
+    _mass_variances = (
+        np.asarray(mass_variances, dtype="double")
+        if mass_variances is not None
+        else None
+    )
+    _grid_points = (
+        np.asarray(grid_points, dtype="int64") if grid_points is not None else None
+    )
 
     if log_level:
         print(
@@ -217,8 +225,8 @@ def get_thermal_conductivity_RTA(
         temperatures=_temperatures,
         sigmas=sigmas,
         sigma_cutoff=sigma_cutoff,
-        mass_variances=mass_variances,
-        grid_points=grid_points,
+        mass_variances=_mass_variances,
+        grid_points=_grid_points,
         is_isotope=is_isotope,
         boundary_mfp=boundary_mfp,
         use_ave_pp=use_ave_pp,
@@ -244,11 +252,11 @@ def _run_standard_rta(
     interaction: Interaction,
     *,
     method: str = "rta",
-    temperatures: Sequence[float] | NDArray[np.double],
+    temperatures: NDArray[np.double],
     sigmas: Sequence[float | None] | None,
     sigma_cutoff: float | None,
-    mass_variances: Sequence[float] | NDArray[np.double] | None,
-    grid_points: Sequence[int] | NDArray[np.int64] | None,
+    mass_variances: NDArray[np.double] | None,
+    grid_points: NDArray[np.int64] | None,
     is_isotope: bool,
     boundary_mfp: float | None,
     use_ave_pp: bool,
@@ -350,10 +358,10 @@ def _run_standard_rta(
 
 def _normalize_rta_temperatures(
     temperatures: Sequence[float] | NDArray[np.double] | None,
-) -> Sequence[float] | NDArray[np.double]:
+) -> NDArray[np.double]:
     if temperatures is None:
         return np.arange(0, 1001, 10, dtype="double")
-    return temperatures
+    return np.asarray(temperatures, dtype="double")
 
 
 def _set_gamma_elph_from_file(

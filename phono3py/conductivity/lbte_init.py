@@ -189,6 +189,15 @@ def get_thermal_conductivity_LBTE(
 ) -> LBTECalculator:
     """Calculate lattice thermal conductivity by direct solution."""
     _temperatures = _normalize_lbte_temperatures(temperatures)
+    _mass_variances = (
+        np.asarray(mass_variances, dtype="double")
+        if mass_variances is not None
+        else None
+    )
+    _grid_points = (
+        np.asarray(grid_points, dtype="int64") if grid_points is not None else None
+    )
+
     if sigmas is None:
         sigmas = []
     if log_level:
@@ -205,8 +214,8 @@ def get_thermal_conductivity_LBTE(
         sigmas=sigmas,
         sigma_cutoff=sigma_cutoff,
         is_isotope=is_isotope,
-        mass_variances=mass_variances,
-        grid_points=grid_points,
+        mass_variances=_mass_variances,
+        grid_points=_grid_points,
         boundary_mfp=boundary_mfp,
         solve_collective_phonon=solve_collective_phonon,
         is_reducible_collision_matrix=is_reducible_collision_matrix,
@@ -233,12 +242,12 @@ def _run_standard_lbte(
     interaction: Interaction,
     *,
     method: str = "lbte",
-    temperatures: Sequence[float] | NDArray[np.double],
+    temperatures: NDArray[np.double],
     sigmas: Sequence[float | None],
     sigma_cutoff: float | None,
     is_isotope: bool,
-    mass_variances: Sequence[float] | NDArray[np.double] | None,
-    grid_points: Sequence[int] | NDArray[np.int64] | None,
+    mass_variances: NDArray[np.double] | None,
+    grid_points: NDArray[np.int64] | None,
     boundary_mfp: float | None,
     solve_collective_phonon: bool,
     is_reducible_collision_matrix: bool,
@@ -260,14 +269,14 @@ def _run_standard_lbte(
     log_level: int,
 ) -> LBTECalculator:
     """Build and run an LBTECalculator."""
-    temps = _get_lbte_initial_temperatures(temperatures, read_collision)
+    _temperatures = _get_lbte_initial_temperatures(temperatures, read_collision)
 
     lbte = cast(
         LBTECalculator,
         make_conductivity_calculator(
             interaction,
             method=method,
-            temperatures=temps,
+            temperatures=_temperatures,
             sigmas=sigmas,
             sigma_cutoff=sigma_cutoff,
             is_isotope=is_isotope,
@@ -359,14 +368,14 @@ def _run_standard_lbte(
 
 def _normalize_lbte_temperatures(
     temperatures: Sequence[float] | NDArray | None,
-) -> Sequence[float] | NDArray:
+) -> NDArray[np.double]:
     if temperatures is None:
-        return [300]
-    return temperatures
+        return np.array([300.0], dtype="double")
+    return np.asarray(temperatures, dtype="double")
 
 
 def _format_lbte_temperatures_log(
-    temperatures: Sequence[float] | NDArray[np.double],
+    temperatures: NDArray[np.double],
 ) -> str:
     if len(temperatures) > 5:
         text = (" %.1f " * 5 + "...") % tuple(temperatures[:5])
@@ -405,11 +414,12 @@ def _read_lbte_collision_if_requested(
 
 
 def _get_lbte_initial_temperatures(
-    _temperatures: Sequence[float] | NDArray, read_collision: str | Sequence[int] | None
-) -> Sequence[float] | NDArray | None:
+    temperatures: NDArray[np.double],
+    read_collision: str | Sequence[int] | None,
+) -> NDArray[np.double] | None:
     if read_collision is not None:
         return None
-    return _temperatures
+    return temperatures
 
 
 def _write_full_collision_if_requested(
@@ -419,7 +429,7 @@ def _write_full_collision_if_requested(
     write_LBTE_solution: bool,
     read_collision: str | Sequence[int] | None,
     read_from: _CollisionReadSource | None,
-    grid_points: Sequence[int] | NDArray[np.int64] | None,
+    grid_points: NDArray[np.int64] | None,
     output_filename: str | os.PathLike | None,
 ) -> None:
     # Write full collision matrix
@@ -557,7 +567,7 @@ def _set_collision_from_full_matrix_if_available(
 
 def _allocate_collision(
     for_gps: bool,
-    grid_points: Sequence[int] | NDArray[np.int64],
+    grid_points: NDArray[np.int64],
     context: _CollisionReadContext,
 ) -> _AllocatedCollisionData | Literal[False]:
     if for_gps:
@@ -581,7 +591,7 @@ def _allocate_collision(
 
 
 def _allocate_collision_with_fallback(
-    grid_points: Sequence[int] | NDArray[np.int64],
+    grid_points: NDArray[np.int64],
     context: _CollisionReadContext,
     log_level: int,
 ) -> _AllocatedCollisionData | Literal[False]:

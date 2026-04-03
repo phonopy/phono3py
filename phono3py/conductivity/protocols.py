@@ -60,7 +60,7 @@ class VelocityProvider(Protocol):
         """Compute velocity quantities and return a partially filled result.
 
         The returned GridPointResult must have at minimum
-        ``group_velocities``, ``velocity_product``, and
+        ``group_velocities``, ``gv_by_gv``, and
         ``num_sampling_grid_points`` set.
 
         """

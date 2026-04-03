@@ -493,11 +493,13 @@ class RTACalculator:
             self._gamma_boundary = np.zeros(
                 (num_gp, num_band0), order="C", dtype="double"
             )
+        num_band = len(self._pp.primitive) * 3
         self._accumulator.prepare(
             num_sigma,
             num_temp,
             num_gp,
             num_band0,
+            num_band=num_band,
             is_full_pp=self._scattering_provider.is_full_pp,
         )
         self._num_ignored_phonon_modes = np.zeros(
@@ -579,7 +581,7 @@ class RTACalculator:
         # Velocity.
         vel_result = self._velocity_provider.compute(gp_input)
         assert vel_result.group_velocities is not None
-        assert vel_result.velocity_product is not None
+        assert vel_result.gv_by_gv is not None
         self._num_sampling_grid_points += vel_result.num_sampling_grid_points
 
         # Heat capacity.
@@ -631,7 +633,8 @@ class RTACalculator:
         # Build GridPointResult from provider outputs.
         result = GridPointResult(input=gp_input)
         result.group_velocities = vel_result.group_velocities
-        result.velocity_product = vel_result.velocity_product
+        result.gv_by_gv = vel_result.gv_by_gv
+        result.vm_by_vm = vel_result.vm_by_vm
         result.heat_capacities = cv_result.heat_capacities
         if cv_result.heat_capacity_matrix is not None:
             result.heat_capacity_matrix = cv_result.heat_capacity_matrix

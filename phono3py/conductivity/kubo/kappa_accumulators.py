@@ -12,7 +12,7 @@ from phono3py.conductivity.grid_point_data import (
     GridPointResult,
     compute_effective_gamma,
 )
-from phono3py.conductivity.kubo.kappa_formulas import compute_kubo_mode_kappa_mat
+from phono3py.conductivity.kubo.kappa_formulas import compute_kubo_mode_kappa_matrix
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionResult
 from phono3py.conductivity.lbte_kappa_accumulator import LBTEKappaAccumulator
 from phono3py.conductivity.utils import log_kappa_header, log_kappa_row
@@ -49,7 +49,7 @@ class KuboRTAKappaAccumulator:
         self,
         cutoff_frequency: float,
         conversion_factor: float,
-        temperatures: Sequence[float] | NDArray[np.double] | None = None,
+        temperatures: NDArray[np.double] | None = None,
         sigmas: Sequence[float | None] | None = None,
         log_level: int = 0,
     ) -> None:
@@ -68,10 +68,9 @@ class KuboRTAKappaAccumulator:
         self._gamma_iso: NDArray[np.double] | None = None
         self._averaged_pp_interaction: NDArray[np.double] | None = None
 
-        # Kappa arrays.
+        # Kappa arrays (allocated in prepare()).
         self._kappa: NDArray[np.double]
-        # Full band-pair matrix; allocated lazily on first accumulate().
-        self._mode_kappa_inter: NDArray[np.double] | None = None
+        self._mode_kappa_matrix: NDArray[np.double]
 
     def prepare(
         self,
@@ -80,9 +79,12 @@ class KuboRTAKappaAccumulator:
         num_gp: int,
         num_band0: int,
         *,
+        num_band: int | None = None,
         is_full_pp: bool = False,
     ) -> None:
         """Allocate per-grid-point and kappa arrays."""
+        if num_band is None:
+            num_band = num_band0
         self._gv = np.zeros((num_gp, num_band0, 3), dtype="double", order="C")
         self._gv_by_gv = np.zeros((num_gp, num_band0, 6), dtype="double", order="C")
         self._cv = np.zeros((num_temp, num_gp, num_band0), dtype="double", order="C")
@@ -97,22 +99,23 @@ class KuboRTAKappaAccumulator:
         self._kappa_intra = np.zeros(
             (num_sigma, num_temp, 6), dtype="double", order="C"
         )
-        self._num_gp = num_gp
+        self._mode_kappa_matrix = np.zeros(
+            (num_sigma, num_temp, num_gp, num_band0, num_band, 6),
+            dtype="double",
+            order="C",
+        )
 
     def accumulate(self, i_gp: int, result: GridPointResult) -> None:
         """Store per-grid-point data and compute Kubo mode-kappa at ``i_gp``."""
         assert result.group_velocities is not None
-        assert result.velocity_product is not None
+        assert result.gv_by_gv is not None
+        assert result.vm_by_vm is not None
         assert result.heat_capacity_matrix is not None
         assert result.gamma is not None
 
         # Store per-grid-point data.
         self._gv[i_gp] = result.group_velocities
-        # Extract diagonal of the (num_band0, num_band, 6) velocity product
-        # as the standard (num_band0, 6) gv_by_gv for output compatibility.
-        vp = result.velocity_product
-        num_band0 = vp.shape[0]
-        self._gv_by_gv[i_gp] = np.real(vp[np.arange(num_band0), np.arange(num_band0)])
+        self._gv_by_gv[i_gp] = result.gv_by_gv
         if result.heat_capacities is not None:
             self._cv[:, i_gp, :] = result.heat_capacities
         self._gamma[:, :, i_gp, :] = result.gamma
@@ -132,38 +135,36 @@ class KuboRTAKappaAccumulator:
 
         gamma = compute_effective_gamma(result)  # (num_sigma, num_temp, num_band0)
         num_band0 = gamma.shape[2]
-        num_band = result.velocity_product.shape[1]
+        num_band = result.vm_by_vm.shape[1]
         assert num_band0 == num_band, (
             "KuboRTAKappaAccumulator requires num_band0 == num_band "
             f"(got {num_band0} vs {num_band})."
         )
 
-        mkm = compute_kubo_mode_kappa_mat(
+        # (num_sigma, num_temp, num_band0, num_band, 6)
+        mode_kappa_matrix = compute_kubo_mode_kappa_matrix(
             frequencies=result.input.frequencies,
             gamma=gamma,
             heat_capacity_matrix=result.heat_capacity_matrix,
-            velocity_product=result.velocity_product,
+            vm_by_vm=result.vm_by_vm,
             cutoff_frequency=self._cutoff_frequency,
             conversion_factor=self._conversion_factor,
             grid_point=result.input.grid_point,
         )
-        # mkm: (num_sigma, num_temp, num_band0, num_band, 6)
-        if self._mode_kappa_inter is None:
-            self._mode_kappa_inter = np.zeros(
-                (self._num_gp,) + mkm.shape, dtype="double", order="C"
-            )
-        self._mode_kappa_inter[i_gp] = mkm
-        # Sum over both band indices to accumulate kappa.
-        self._kappa += mkm.sum(axis=(2, 3))
-        # Diagonal (intra-band) sum: mkm[:, :, i, i, :] for all i.
-        diag = np.diagonal(mkm, axis1=2, axis2=3)  # (num_sigma, num_temp, 6, num_band)
-        self._kappa_intra += diag.sum(axis=-1)
+        self._mode_kappa_matrix[:, :, i_gp, :, :, :] = mode_kappa_matrix
 
     def finalize(self, num_sampling_grid_points: int) -> None:
-        """Normalise accumulated kappa by the total number of sampling points."""
+        """Compute kappa and kappa_intra from mode_kappa_inter."""
+        assert self._mode_kappa_matrix.shape[3] == self._mode_kappa_matrix.shape[4]
         if num_sampling_grid_points > 0:
-            self._kappa /= num_sampling_grid_points
-            self._kappa_intra /= num_sampling_grid_points
+            # Sum over gp, band0, band axes -> (num_sigma, num_temp, 6)
+            self._kappa = (
+                self._mode_kappa_matrix.sum(axis=(2, 3, 4)) / num_sampling_grid_points
+            )
+            self._kappa_intra = (
+                np.einsum("abijjc->abc", self._mode_kappa_matrix)
+                / num_sampling_grid_points
+            )
 
     @property
     def kappa(self) -> NDArray[np.double]:
@@ -199,19 +200,17 @@ class KuboRTAKappaAccumulator:
         Shape: (num_sigma, num_temp, num_gp, num_band0, 6).
 
         """
-        if self._mode_kappa_inter is None:
-            raise RuntimeError("mode_kappa_inter has not been computed yet.")
         # Sum over j_band axis (axis=-2 of the per-gp array, axis=4 in stored array).
-        return self._mode_kappa_inter.sum(axis=4)
+        return self._mode_kappa_matrix.sum(axis=4)
 
     @property
-    def mode_kappa_inter(self) -> NDArray[np.double] | None:
+    def mode_kappa_matrix(self) -> NDArray[np.double]:
         """Return full band-pair kappa matrix.
 
         Shape: (num_gp, num_sigma, num_temp, num_band0, num_band, 6).
 
         """
-        return self._mode_kappa_inter
+        return self._mode_kappa_matrix
 
     # ------------------------------------------------------------------
     # Properties -- per-grid-point data
@@ -355,12 +354,12 @@ class KuboLBTEKappaAccumulator:
         self._log_level = log_level
 
         # Per-grid-point storage (lazily allocated in accumulate).
-        self._velocity_product: NDArray[np.cdouble] | None = None
+        self._vm_by_vm: NDArray[np.cdouble] | None = None
         self._heat_capacity_matrix: NDArray[np.double] | None = None
 
         # Output arrays (populated in finalize).
         self._kappa_inter: NDArray[np.double] | None = None
-        self._mode_kappa_inter: NDArray[np.double] | None = None
+        self._mode_kappa_matrix: NDArray[np.double] | None = None
 
     # ------------------------------------------------------------------
     # Interface delegated to inner LBTEKappaAccumulator
@@ -396,21 +395,21 @@ class KuboLBTEKappaAccumulator:
             Mode heat capacities, shape (num_temp, num_band0).
         extra : dict or None
             Plugin-specific data. Expected keys:
-            ``velocity_product`` (num_band0, num_band, 6) complex,
+            ``vm_by_vm`` (num_band0, num_band, 6) complex,
             ``heat_capacity_matrix`` (num_temp, num_band0, num_band).
 
         """
-        velocity_product = extra.get("velocity_product") if extra else None
+        vm_by_vm = extra.get("vm_by_vm") if extra else None
         heat_capacity_matrix = extra.get("heat_capacity_matrix") if extra else None
 
         num_ir = len(self._ir_grid_points)
 
-        if velocity_product is not None:
-            if self._velocity_product is None:
-                self._velocity_product = np.zeros(
-                    (num_ir,) + velocity_product.shape, dtype="complex128"
+        if vm_by_vm is not None:
+            if self._vm_by_vm is None:
+                self._vm_by_vm = np.zeros(
+                    (num_ir,) + vm_by_vm.shape, dtype="complex128"
                 )
-            self._velocity_product[i_gp] = velocity_product
+            self._vm_by_vm[i_gp] = vm_by_vm
 
         if heat_capacity_matrix is not None:
             if self._heat_capacity_matrix is None:
@@ -527,13 +526,13 @@ class KuboLBTEKappaAccumulator:
         return self._inner.mode_kappa
 
     @property
-    def mode_kappa_inter(self) -> NDArray[np.double] | None:
+    def mode_kappa_matrix(self) -> NDArray[np.double] | None:
         """Return full band-pair Kubo kappa matrix.
 
         Shape: (num_gp, num_sigma, num_temp, num_band0, num_band, 6).
 
         """
-        return self._mode_kappa_inter
+        return self._mode_kappa_matrix
 
     def get_extra_kappa_output(self) -> dict[str, NDArray[np.double] | None]:
         """Return Kubo LBTE kappa arrays keyed by HDF5 dataset name."""
@@ -551,7 +550,7 @@ class KuboLBTEKappaAccumulator:
 
     def _compute_kubo_kappa(self, num_sampling_grid_points: int) -> None:
         """Compute inter-band kappa using LBTE collision matrix diagonal."""
-        if self._velocity_product is None or self._heat_capacity_matrix is None:
+        if self._vm_by_vm is None or self._heat_capacity_matrix is None:
             return
 
         num_sigma = len(self._sigmas)
@@ -574,28 +573,33 @@ class KuboLBTEKappaAccumulator:
                         i_gp, i_sigma, i_temp
                     )
 
-            mkm = compute_kubo_mode_kappa_mat(
+            # Diagonal (intra-band) and off-diagonal (inter-band) More
+            # precisely, when frequency differences are small, heat capacity
+            # matrix elements are calculated as usual mode heat capacity.
+            mode_kappa_matrix = compute_kubo_mode_kappa_matrix(
                 frequencies=frequencies,
                 gamma=gamma,
                 heat_capacity_matrix=self._heat_capacity_matrix[i_gp],
-                velocity_product=self._velocity_product[i_gp],
+                vm_by_vm=self._vm_by_vm[i_gp],
                 cutoff_frequency=self._cutoff_frequency,
                 conversion_factor=self._conversion_factor,
                 grid_point=gp,
             )
             # mkm: (num_sigma, num_temp, num_band0, num_band, 6)
-            mode_kappa_inter_list.append(mkm)
+            mode_kappa_inter_list.append(mode_kappa_matrix)
 
             # Off-diagonal (inter-band) sum only.
-            all_sum = mkm.sum(axis=(2, 3))
-            diag = np.diagonal(mkm, axis1=2, axis2=3)  # (..., 6, num_band)
+            all_sum = mode_kappa_matrix.sum(axis=(2, 3))
+            diag = np.diagonal(
+                mode_kappa_matrix, axis1=2, axis2=3
+            )  # (..., 6, num_band)
             kappa_inter += all_sum - diag.sum(axis=-1)
 
         if num_sampling_grid_points > 0:
             kappa_inter /= num_sampling_grid_points
 
         self._kappa_inter = kappa_inter
-        self._mode_kappa_inter = np.array(mode_kappa_inter_list)
+        self._mode_kappa_matrix = np.array(mode_kappa_inter_list)
 
     def _log_kubo_kappa(self) -> None:
         """Print Kubo LBTE kappa table."""

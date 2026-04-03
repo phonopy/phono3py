@@ -6,11 +6,11 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-def compute_kubo_mode_kappa_mat(
+def compute_kubo_mode_kappa_matrix(
     frequencies: NDArray[np.double],
     gamma: NDArray[np.double],
     heat_capacity_matrix: NDArray[np.double],
-    velocity_product: NDArray[np.cdouble],
+    vm_by_vm: NDArray[np.cdouble],
     cutoff_frequency: float,
     conversion_factor: float,
     grid_point: int = -1,
@@ -37,7 +37,7 @@ def compute_kubo_mode_kappa_mat(
         For LBTE this comes from the collision matrix diagonal.
     heat_capacity_matrix : ndarray of double, shape (num_temp, num_band0, num_band)
         Off-diagonal heat capacity matrix C_{ss'}.
-    velocity_product : ndarray of complex, shape (num_band0, num_band, 6)
+    vm_by_vm : ndarray of complex, shape (num_band0, num_band, 6)
         k-star-averaged velocity outer product in Voigt order.
     cutoff_frequency : float
         Modes with frequency below this value (in THz) are skipped.
@@ -53,7 +53,7 @@ def compute_kubo_mode_kappa_mat(
 
     """
     num_sigma, num_temp, num_band0 = gamma.shape
-    num_band = velocity_product.shape[1]
+    num_band = vm_by_vm.shape[1]
 
     mode_kappa_mat = np.zeros(
         (num_sigma, num_temp, num_band0, num_band, 6), dtype="double"
@@ -75,7 +75,7 @@ def compute_kubo_mode_kappa_mat(
                     try:
                         contribution = (
                             heat_capacity_matrix[k, i_band, j_band]
-                            * velocity_product[i_band, j_band]
+                            * vm_by_vm[i_band, j_band]
                             * g
                             / denom
                             * conversion_factor

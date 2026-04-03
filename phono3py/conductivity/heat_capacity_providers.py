@@ -11,6 +11,22 @@ from phono3py.conductivity.grid_point_data import GridPointInput, GridPointResul
 from phono3py.phonon3.interaction import Interaction
 
 
+def get_temperature_condition(
+    freqs: NDArray[np.double] | float, temperatures: NDArray[np.double] | float
+) -> bool:
+    """Return condition for computing mode heat capacity.
+
+    One of arguments has to be float.
+
+    freqs:
+        Phonon frequencies in eV.
+    temperatures:
+        Temperatures in K.
+
+    """
+    return bool((freqs < 100 * temperatures * get_physical_units().KB).any())
+
+
 def get_heat_capacities(
     grid_point: int,
     pp: Interaction,
@@ -41,12 +57,10 @@ def get_heat_capacities(
     # Otherwise just set 0.
     for i, f in enumerate(freqs):
         if f > cutoff:
-            condition = f < 100 * temperatures * get_physical_units().KB
-            cv[:, i] = np.where(
-                condition,
-                mode_cv(np.where(condition, temperatures, 10000), f),  # type: ignore
-                0,
-            )
+            condition = get_temperature_condition(f, temperatures)
+            # To avoid numpy warning
+            _temperatures = np.where(condition, temperatures, 10000)
+            cv[:, i] = np.where(condition, mode_cv(_temperatures, f), 0.0)  # type: ignore
     return cv
 
 

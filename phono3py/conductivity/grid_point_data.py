@@ -72,10 +72,12 @@ class GridPointResult:
     ~~~~~~~~~~~~~~~
     group_velocities : (num_band0, 3), real
         Diagonal (standard) group velocities; filled by all velocity providers.
-    velocity_product : shape varies by variant
-        - Standard BTE : (num_band0, 6), real  — symmetrised outer product v x v
-        - Wigner        : (num_band0, num_band, 6), complex — operator outer product
-        - Kubo          : (num_band0, num_band, 6), complex — matrix outer product
+    gv_by_gv : (num_band0, 6), real
+        Symmetrised outer product v x v (Voigt notation).
+        Filled by all velocity providers.
+    vm_by_vm : (num_band0, num_band, 6), complex, optional
+        Off-diagonal velocity operator/matrix outer product.
+        Only set by Wigner and Kubo velocity providers.
 
     Heat-capacity fields
     ~~~~~~~~~~~~~~~~~~~~
@@ -121,9 +123,8 @@ class GridPointResult:
 
     # --- velocity ---
     group_velocities: NDArray[np.double] | None = field(default=None)
-    velocity_product: NDArray[np.double] | NDArray[np.cdouble] | None = field(
-        default=None
-    )
+    gv_by_gv: NDArray[np.double] | None = field(default=None)
+    vm_by_vm: NDArray[np.cdouble] | None = field(default=None)
 
     # --- heat capacity ---
     heat_capacities: NDArray[np.double] | None = field(default=None)

@@ -69,12 +69,12 @@ class WignerRTAKappaAccumulator:
         self._gamma_iso: NDArray[np.double] | None = None
         self._averaged_pp_interaction: NDArray[np.double] | None = None
 
-        # Kappa arrays.
+        # Kappa arrays (allocated in prepare()).
         self._kappa_P: NDArray[np.double]
         self._mode_kappa_P: NDArray[np.double]
-        self._kappa_C: NDArray[np.double] | None = None
-        self._mode_kappa_C: NDArray[np.double] | None = None
-        self._velocity_operator: NDArray[np.cdouble] | None = None
+        self._kappa_C: NDArray[np.double]
+        self._mode_kappa_C: NDArray[np.double]
+        self._velocity_operator: NDArray[np.cdouble]
 
     def prepare(
         self,
@@ -83,9 +83,12 @@ class WignerRTAKappaAccumulator:
         num_gp: int,
         num_band0: int,
         *,
+        num_band: int | None = None,
         is_full_pp: bool = False,
     ) -> None:
         """Allocate per-grid-point and kappa arrays."""
+        if num_band is None:
+            num_band = num_band0
         self._gv = np.zeros((num_gp, num_band0, 3), dtype="double", order="C")
         self._gv_by_gv = np.zeros((num_gp, num_band0, 6), dtype="double", order="C")
         self._cv = np.zeros((num_temp, num_gp, num_band0), dtype="double", order="C")
@@ -100,21 +103,26 @@ class WignerRTAKappaAccumulator:
         self._mode_kappa_P = np.zeros(
             (num_sigma, num_temp, num_gp, num_band0, 6), dtype="double", order="C"
         )
+        self._mode_kappa_C = np.zeros(
+            (num_sigma, num_temp, num_gp, num_band0, num_band, 6),
+            dtype="double",
+            order="C",
+        )
+        self._velocity_operator = np.zeros(
+            (num_gp, num_band0, num_band, 3), dtype="complex128", order="C"
+        )
 
     def accumulate(self, i_gp: int, result: GridPointResult) -> None:
         """Store per-grid-point data and compute mode kappa at ``i_gp``."""
         assert result.group_velocities is not None
-        assert result.velocity_product is not None
+        assert result.gv_by_gv is not None
+        assert result.vm_by_vm is not None
         assert result.heat_capacities is not None
         assert result.gamma is not None
 
         # Store per-grid-point data.
         self._gv[i_gp] = result.group_velocities
-        # Extract diagonal of the (num_band0, num_band, 6) velocity product
-        # as the standard (num_band0, 6) gv_by_gv for output compatibility.
-        vp = result.velocity_product
-        num_band0 = vp.shape[0]
-        self._gv_by_gv[i_gp] = np.real(vp[np.arange(num_band0), np.arange(num_band0)])
+        self._gv_by_gv[i_gp] = result.gv_by_gv
         self._cv[:, i_gp, :] = result.heat_capacities
         self._gamma[:, :, i_gp, :] = result.gamma
         if result.gamma_isotope is not None:
@@ -134,15 +142,10 @@ class WignerRTAKappaAccumulator:
         # Store raw velocity operator for per-grid-point HDF5 output.
         vel_op = result.extra.get("velocity_operator")
         if vel_op is not None:
-            if self._velocity_operator is None:
-                num_gp = self._mode_kappa_P.shape[2]
-                self._velocity_operator = np.zeros(
-                    (num_gp,) + vel_op.shape, dtype="complex128", order="C"
-                )
             self._velocity_operator[i_gp] = vel_op
 
         frequencies = result.input.frequencies  # (num_band,) all bands
-        gv_by_gv = result.velocity_product  # (num_band0, num_band, 6) complex
+        vm_by_vm = result.vm_by_vm  # (num_band0, num_band, 6) complex
         cv = result.heat_capacities  # (num_temp, num_band0)
 
         gamma = compute_effective_gamma(result)  # (num_sigma, num_temp, num_band0)
@@ -174,7 +177,7 @@ class WignerRTAKappaAccumulator:
                             g_s2=g[s2],
                             cv_s1=cv_k[s1],
                             cv_s2=cv_k[s2],
-                            gv_by_gv_s1s2=gv_by_gv[s1, s2],
+                            gv_by_gv_s1s2=vm_by_vm[s1, s2],
                             THzToEv=THzToEv,
                         )
                         if pair is None:
@@ -187,22 +190,7 @@ class WignerRTAKappaAccumulator:
                             mode_kappa_C[j, k, s1, s2] += contribution
 
         self._mode_kappa_P[:, :, i_gp, :, :] = mode_kappa_P
-        self._kappa_P += np.sum(mode_kappa_P, axis=2)
-
-        if self._mode_kappa_C is None:
-            # Lazy allocation: shape depends on num_band (nat3).
-            num_gp = self._mode_kappa_P.shape[2]
-            self._mode_kappa_C = np.zeros(
-                (num_sigma, num_temp, num_gp, num_band0, num_band, 6),
-                dtype="double",
-                order="C",
-            )
-            self._kappa_C = np.zeros(
-                (num_sigma, num_temp, 6), dtype="double", order="C"
-            )
         self._mode_kappa_C[:, :, i_gp, :, :, :] = mode_kappa_C
-        assert self._kappa_C is not None
-        self._kappa_C += np.sum(mode_kappa_C, axis=(2, 3))
 
     def _get_pair_contribution(
         self,
@@ -256,18 +244,19 @@ class WignerRTAKappaAccumulator:
         return contribution, is_population
 
     def finalize(self, num_sampling_grid_points: int) -> None:
-        """Normalise both population and coherence terms."""
+        """Compute kappa_P and kappa_C from mode_kappa arrays."""
         if num_sampling_grid_points > 0:
-            self._kappa_P /= num_sampling_grid_points
-            if self._kappa_C is not None:
-                self._kappa_C /= num_sampling_grid_points
+            self._kappa_P = (
+                np.sum(self._mode_kappa_P, axis=(2, 3)) / num_sampling_grid_points
+            )
+            self._kappa_C = (
+                np.sum(self._mode_kappa_C, axis=(2, 3, 4)) / num_sampling_grid_points
+            )
 
     @property
     def kappa(self) -> NDArray[np.double]:
         """Return total Wigner kappa (kappa_P + kappa_C)."""
-        if self._kappa_C is not None:
-            return self._kappa_P + self._kappa_C
-        return self._kappa_P
+        return self._kappa_P + self._kappa_C
 
     @property
     def kappa_TOT_RTA(self) -> NDArray[np.double]:
@@ -280,12 +269,8 @@ class WignerRTAKappaAccumulator:
         return self._kappa_P
 
     @property
-    def kappa_C(self) -> NDArray[np.double] | None:
-        """Return coherence kappa, shape (num_sigma, num_temp, 6).
-
-        None if not computed.
-
-        """
+    def kappa_C(self) -> NDArray[np.double]:
+        """Return coherence kappa, shape (num_sigma, num_temp, 6)."""
         return self._kappa_C
 
     @property
@@ -298,8 +283,8 @@ class WignerRTAKappaAccumulator:
         return self._mode_kappa_P
 
     @property
-    def mode_kappa_C(self) -> NDArray[np.double] | None:
-        """Return coherence mode kappa; None if not computed.
+    def mode_kappa_C(self) -> NDArray[np.double]:
+        """Return coherence mode kappa.
 
         Shape: (num_sigma, num_temp, num_gp, num_band0, num_band, 6).
 
@@ -352,15 +337,13 @@ class WignerRTAKappaAccumulator:
     def averaged_pp_interaction(self, value: NDArray[np.double] | None) -> None:
         self._averaged_pp_interaction = value
 
-    def get_extra_grid_point_output(self, i: int) -> dict[str, Any] | None:
+    def get_extra_grid_point_output(self, i: int) -> dict[str, Any]:
         """Return per-grid-point extra data for HDF5 output.
 
         Returns the velocity operator at grid point ``i`` as
-        ``{"velocity_operator": ...}``, or None when not available.
+        ``{"velocity_operator": ...}``.
 
         """
-        if self._velocity_operator is None:
-            return None
         return {"velocity_operator": self._velocity_operator[i]}
 
     def log_kappa(
@@ -379,7 +362,6 @@ class WignerRTAKappaAccumulator:
             and num_phonon_modes is not None
         )
 
-        assert self._kappa_C is not None
         for i, sigma in enumerate(self._sigmas):
             log_kappa_header(sigma, show_ipm=show_ipm)
             for j, t in enumerate(self._temperatures):
@@ -527,21 +509,21 @@ class WignerLBTEKappaAccumulator:
             Mode heat capacities, shape (num_temp, num_band0).
         extra : dict or None
             Plugin-specific data from the velocity provider.  Expected keys:
-            ``velocity_product`` (num_band0, num_band, 6) complex,
+            ``vm_by_vm`` (num_band0, num_band, 6) complex,
             ``velocity_operator`` (num_band0, nat3, 3) complex.
 
         """
-        velocity_product = extra.get("velocity_product") if extra else None
+        vm_by_vm = extra.get("vm_by_vm") if extra else None
         velocity_operator = extra.get("velocity_operator") if extra else None
 
-        if velocity_product is not None and self._gv_by_gv_operator is None:
+        if vm_by_vm is not None and self._gv_by_gv_operator is None:
             num_ir = len(self._ir_grid_points)
             self._gv_by_gv_operator = np.zeros(
-                (num_ir,) + velocity_product.shape, dtype="complex128"
+                (num_ir,) + vm_by_vm.shape, dtype="complex128"
             )
             self._mode_cv = np.zeros((num_ir,) + heat_capacities.shape, dtype="double")
-        if velocity_product is not None and self._gv_by_gv_operator is not None:
-            self._gv_by_gv_operator[i_gp] = velocity_product
+        if vm_by_vm is not None and self._gv_by_gv_operator is not None:
+            self._gv_by_gv_operator[i_gp] = vm_by_vm
         if velocity_operator is not None:
             if self._velocity_operator is None:
                 num_ir = len(self._ir_grid_points)

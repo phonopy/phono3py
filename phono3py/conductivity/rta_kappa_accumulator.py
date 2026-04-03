@@ -72,6 +72,7 @@ class RTAKappaAccumulator:
         num_gp: int,
         num_band0: int,
         *,
+        num_band: int | None = None,
         is_full_pp: bool = False,
     ) -> None:
         """Allocate per-grid-point and kappa arrays."""
@@ -93,13 +94,13 @@ class RTAKappaAccumulator:
     def accumulate(self, i_gp: int, result: GridPointResult) -> None:
         """Store per-grid-point data and compute mode kappa at ``i_gp``."""
         assert result.group_velocities is not None
-        assert result.velocity_product is not None
+        assert result.gv_by_gv is not None
         assert result.heat_capacities is not None
         assert result.gamma is not None
 
         # Store per-grid-point data.
         self._gv[i_gp] = result.group_velocities
-        self._gv_by_gv[i_gp] = result.velocity_product  # (num_band0, 6)
+        self._gv_by_gv[i_gp] = result.gv_by_gv  # (num_band0, 6)
         self._cv[:, i_gp, :] = result.heat_capacities
         self._gamma[:, :, i_gp, :] = result.gamma
         if result.gamma_isotope is not None:
@@ -120,7 +121,7 @@ class RTAKappaAccumulator:
             self._averaged_pp_interaction[i_gp] = result.averaged_pp_interaction
 
         # Compute mode kappa.
-        gv_by_gv = result.velocity_product
+        gv_by_gv = result.gv_by_gv
         cv = result.heat_capacities  # (num_temp, num_band0)
         frequencies = result.input.frequencies[result.input.band_indices]
 

@@ -272,7 +272,7 @@ class LBTEKappaAccumulator:
         extra : dict or None, optional
             Plugin-specific data from the velocity provider.  Ignored by the
             standard LBTE accumulator; used by plugin accumulators (e.g.
-            Wigner) to extract velocity_product, velocity_operator, etc.
+            Wigner) to extract vm_by_vm, velocity_operator, etc.
 
         """
         assert self._collision_matrix is not None

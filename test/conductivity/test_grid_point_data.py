@@ -59,7 +59,8 @@ def test_grid_point_result_defaults():
     gp = make_gp_input()
     result = GridPointResult(input=gp)
     assert result.group_velocities is None
-    assert result.velocity_product is None
+    assert result.gv_by_gv is None
+    assert result.vm_by_vm is None
     assert result.heat_capacities is None
     assert result.heat_capacity_matrix is None
     assert result.gamma is None
@@ -71,24 +72,24 @@ def test_grid_point_result_can_set_fields():
     gp = make_gp_input()
     result = GridPointResult(input=gp)
     result.group_velocities = np.zeros((NUM_BAND0, 3), dtype="double")
-    result.velocity_product = np.zeros((NUM_BAND0, 6), dtype="double")
+    result.gv_by_gv = np.zeros((NUM_BAND0, 6), dtype="double")
     result.heat_capacities = np.zeros((NUM_TEMP, NUM_BAND0), dtype="double")
     result.gamma = np.zeros((1, NUM_TEMP, NUM_BAND0), dtype="double")
     result.num_sampling_grid_points = 4
     assert result.group_velocities.shape == (NUM_BAND0, 3)
-    assert result.velocity_product.shape == (NUM_BAND0, 6)
+    assert result.gv_by_gv.shape == (NUM_BAND0, 6)
     assert result.heat_capacities.shape == (NUM_TEMP, NUM_BAND0)
     assert result.gamma.shape == (1, NUM_TEMP, NUM_BAND0)
     assert result.num_sampling_grid_points == 4
 
 
-def test_grid_point_result_wigner_velocity_product_shape():
-    """Wigner variant: velocity_product is complex (num_band0, num_band, 6)."""
+def test_grid_point_result_vm_by_vm_shape():
+    """Wigner/Kubo variant: vm_by_vm is complex (num_band0, num_band, 6)."""
     gp = make_gp_input()
     result = GridPointResult(input=gp)
-    result.velocity_product = np.zeros((NUM_BAND0, NUM_BAND, 6), dtype="complex128")
-    assert result.velocity_product.shape == (NUM_BAND0, NUM_BAND, 6)
-    assert result.velocity_product.dtype == np.dtype("complex128")
+    result.vm_by_vm = np.zeros((NUM_BAND0, NUM_BAND, 6), dtype="complex128")
+    assert result.vm_by_vm.shape == (NUM_BAND0, NUM_BAND, 6)
+    assert result.vm_by_vm.dtype == np.dtype("complex128")
 
 
 def test_grid_point_result_kubo_heat_capacity_matrix_shape():
@@ -112,7 +113,7 @@ class _DummyVelocityProvider:
     def compute(self, gp: GridPointInput) -> GridPointResult:
         result = GridPointResult(input=gp)
         result.group_velocities = np.zeros((NUM_BAND0, 3), dtype="double")
-        result.velocity_product = np.zeros((NUM_BAND0, 6), dtype="double")
+        result.gv_by_gv = np.zeros((NUM_BAND0, 6), dtype="double")
         result.num_sampling_grid_points = gp.grid_weight
         return result
 

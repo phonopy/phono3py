@@ -26,7 +26,9 @@ class VelocityMatrixProvider:
     The returned ``GridPointResult`` fields:
     - ``group_velocities`` (num_band0, 3): diagonal (standard) group velocities,
       real part of the velocity matrix diagonal.
-    - ``velocity_product`` (num_band0, num_band, 6): complex k-star-averaged outer
+    - ``gv_by_gv`` (num_band0, 6): real diagonal of the outer product (standard
+      BTE-compatible).
+    - ``vm_by_vm`` (num_band0, num_band, 6): complex k-star-averaged outer
       product  V(s,s') * V*(s,s') packed into 6 Voigt components (xx, yy, zz,
       yz, xz, xy).
     - ``num_sampling_grid_points``: k-star order for this irreducible point.
@@ -85,7 +87,8 @@ class VelocityMatrixProvider:
         Returns
         -------
         GridPointResult
-            ``group_velocities`` (num_band0, 3), ``velocity_product``
+            ``group_velocities`` (num_band0, 3), ``gv_by_gv``
+            (num_band0, 6) real, ``vm_by_vm``
             (num_band0, num_band, 6) complex, and
             ``num_sampling_grid_points`` are set.
 
@@ -99,8 +102,10 @@ class VelocityMatrixProvider:
         gvm_full = self._velocity_obj.group_velocity_matrices[0]
 
         result.group_velocities = self._get_group_velocities(gp, gvm_full)
-        gvm_by_gvm, kstar_order = self._get_gvm_by_gvm(gp)
-        result.velocity_product = gvm_by_gvm
+        vm_by_vm, kstar_order = self._get_gvm_by_gvm(gp)
+        num_band0 = vm_by_vm.shape[0]
+        result.gv_by_gv = np.real(vm_by_vm[np.arange(num_band0), np.arange(num_band0)])
+        result.vm_by_vm = vm_by_vm
         result.num_sampling_grid_points = kstar_order
         return result
 
