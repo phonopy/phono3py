@@ -70,23 +70,14 @@ class LBTEKappaAccumulator:
     # Public interface
     # ------------------------------------------------------------------
 
-    def prepare(self, is_full_pp: bool = False) -> None:
-        """Allocate global arrays before the grid-point accumulation loop.
-
-        Parameters
-        ----------
-        is_full_pp : bool, optional
-            Allocate averaged_pp_interaction array.  Default False.
-
-        """
-        self._solver.prepare(is_full_pp=is_full_pp)
+    def prepare(self) -> None:
+        """Allocate global arrays before the grid-point accumulation loop."""
+        self._solver.prepare()
 
     def accumulate(
         self,
         i_gp: int,
         collision_result: LBTECollisionResult,
-        group_velocities: NDArray[np.double],
-        heat_capacities: NDArray[np.double],
         extra: dict[str, Any] | None = None,
     ) -> None:
         """Store per-grid-point Stage 1 data.
@@ -97,34 +88,17 @@ class LBTEKappaAccumulator:
             Loop index over ir_grid_points (0-based).
         collision_result : LBTECollisionResult
             Result from LBTECollisionProvider.compute().
-        group_velocities : NDArray[np.double]
-            Group velocities at this grid point, shape (num_band0, 3).
-        heat_capacities : NDArray[np.double]
-            Mode heat capacities, shape (num_temp, num_band0).
         extra : dict or None, optional
             Plugin-specific data from the velocity provider.  Ignored by the
             standard LBTE accumulator; used by plugin accumulators (e.g.
             Wigner) to extract vm_by_vm, velocity_operator, etc.
 
         """
-        self._solver.store(i_gp, collision_result, group_velocities, heat_capacities)
-
-    def store_gamma_iso(self, i_gp: int, gamma_iso: NDArray[np.double]) -> None:
-        """Store isotope scattering rate for one irreducible grid point.
-
-        Parameters
-        ----------
-        i_gp : int
-            Loop index over ir_grid_points (0-based).
-        gamma_iso : NDArray[np.double]
-            Isotope scattering rates, shape (num_sigma, num_band0).
-
-        """
-        self._solver.store_gamma_iso(i_gp, gamma_iso)
+        self._solver.store(i_gp, collision_result)
 
     def finalize(
         self,
-        num_sampling_grid_points: int,
+        grid_point_data: dict[str, Any],
         *,
         suppress_kappa_log: bool = False,
     ) -> None:
@@ -134,17 +108,18 @@ class LBTEKappaAccumulator:
 
         Parameters
         ----------
-        num_sampling_grid_points : int
-            Total number of sampling grid points (sum of k-star orders).
+        grid_point_data : dict
+            Per-grid-point data from the calculator. Required keys:
+            ``num_sampling_grid_points``, ``gamma``, ``group_velocities``,
+            ``mode_heat_capacities``.
+            Optional: ``gamma_isotope``.
         suppress_kappa_log : bool, optional
             When True, skip the per-temperature kappa table log so that the
             caller (e.g. WignerLBTEKappaAccumulator) can print its own format
             after computing additional terms (Stage 3).  Default False.
 
         """
-        self._solver.solve(
-            num_sampling_grid_points, suppress_kappa_log=suppress_kappa_log
-        )
+        self._solver.solve(grid_point_data, suppress_kappa_log=suppress_kappa_log)
 
     def get_main_diagonal(
         self, i_gp: int, i_sigma: int, i_temp: int
@@ -212,36 +187,6 @@ class LBTEKappaAccumulator:
         return self._solver.collision_eigenvalues
 
     @property
-    def gamma(self) -> NDArray[np.double]:
-        """Return gamma, shape (num_sigma, num_temp, num_gp, num_band0)."""
-        return self._solver.gamma
-
-    @gamma.setter
-    def gamma(self, value: NDArray[np.double]) -> None:
-        """Set gamma (used when reading from file)."""
-        self._solver.gamma = value
-
-    @property
-    def gamma_iso(self) -> NDArray[np.double] | None:
-        """Return isotope gamma, shape (num_sigma, num_gp, num_band0)."""
-        return self._solver.gamma_iso
-
-    @property
-    def averaged_pp_interaction(self) -> NDArray[np.double] | None:
-        """Return averaged ph-ph interaction, shape (num_gp, num_band0)."""
-        return self._solver.averaged_pp_interaction
-
-    @property
-    def boundary_mfp(self) -> float | None:
-        """Return boundary mean free path in micrometres."""
-        return self._solver.boundary_mfp
-
-    @property
-    def mode_heat_capacities(self) -> NDArray[np.double]:
-        """Return mode heat capacities, shape (num_temp, num_gp, num_band0)."""
-        return self._solver.mode_heat_capacities
-
-    @property
     def f_vectors(self) -> NDArray[np.double] | None:
         """Return f-vectors (experimental), shape (num_gp, num_band0, 3)."""
         return self._solver.f_vectors
@@ -250,18 +195,3 @@ class LBTEKappaAccumulator:
     def mfp(self) -> NDArray[np.double] | None:
         """Return mean free path, shape (num_sigma, num_temp, num_gp, num_band0, 3)."""
         return self._solver.mfp
-
-    @property
-    def group_velocities(self) -> NDArray[np.double]:
-        """Return group velocities, shape (num_gp, num_band0, 3)."""
-        return self._solver.group_velocities
-
-    @property
-    def temperatures(self) -> NDArray[np.double]:
-        """Return temperatures in Kelvin."""
-        return self._solver.temperatures
-
-    @temperatures.setter
-    def temperatures(self, value: NDArray[np.double]) -> None:
-        """Set temperatures and re-allocate all arrays via prepare()."""
-        self._solver.temperatures = value

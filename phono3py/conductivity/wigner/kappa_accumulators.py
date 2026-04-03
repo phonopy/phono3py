@@ -368,10 +368,8 @@ class WignerLBTEKappaAccumulator:
         self._is_reducible = is_reducible_collision_matrix
         self._log_level = log_level
 
-        # Per-grid-point storage for the C-term (lazily allocated in accumulate()).
-        self._gv_by_gv_operator: NDArray[np.cdouble] | None = None
+        # Per-grid-point storage (lazily allocated in accumulate()).
         self._velocity_operator: NDArray[np.cdouble] | None = None
-        self._mode_cv: NDArray[np.double] | None = None
 
         # C-term output arrays (populated in finalize()).
         self._kappa_C: NDArray[np.double] | None = None
@@ -381,20 +379,14 @@ class WignerLBTEKappaAccumulator:
     # Public interface
     # ------------------------------------------------------------------
 
-    def prepare(self, is_full_pp: bool = False) -> None:
+    def prepare(self) -> None:
         """Allocate accumulator arrays."""
-        self._solver.prepare(is_full_pp=is_full_pp)
-
-    def store_gamma_iso(self, i_gp: int, gamma_iso: NDArray[np.double]) -> None:
-        """Store isotope scattering rate for grid point i_gp."""
-        self._solver.store_gamma_iso(i_gp, gamma_iso)
+        self._solver.prepare()
 
     def accumulate(
         self,
         i_gp: int,
         collision_result: LBTECollisionResult,
-        group_velocities: NDArray[np.double],
-        heat_capacities: NDArray[np.double],
         extra: dict[str, Any] | None = None,
     ) -> None:
         """Store per-grid-point Stage 1 data and delegate to the solver.
@@ -405,27 +397,13 @@ class WignerLBTEKappaAccumulator:
             Loop index over ir_grid_points (0-based).
         collision_result : LBTECollisionResult
             Result from LBTECollisionProvider.compute().
-        group_velocities : NDArray[np.double]
-            Group velocities, shape (num_band0, 3).
-        heat_capacities : NDArray[np.double]
-            Mode heat capacities, shape (num_temp, num_band0).
         extra : dict or None
             Plugin-specific data from the velocity provider.  Expected keys:
-            ``vm_by_vm`` (num_band0, num_band, 6) complex,
             ``velocity_operator`` (num_band0, nat3, 3) complex.
 
         """
-        vm_by_vm = extra.get("vm_by_vm") if extra else None
         velocity_operator = extra.get("velocity_operator") if extra else None
 
-        if vm_by_vm is not None and self._gv_by_gv_operator is None:
-            num_ir = len(self._context.ir_grid_points)
-            self._gv_by_gv_operator = np.zeros(
-                (num_ir,) + vm_by_vm.shape, dtype="complex128"
-            )
-            self._mode_cv = np.zeros((num_ir,) + heat_capacities.shape, dtype="double")
-        if vm_by_vm is not None and self._gv_by_gv_operator is not None:
-            self._gv_by_gv_operator[i_gp] = vm_by_vm
         if velocity_operator is not None:
             if self._velocity_operator is None:
                 num_ir = len(self._context.ir_grid_points)
@@ -433,13 +411,11 @@ class WignerLBTEKappaAccumulator:
                     (num_ir,) + velocity_operator.shape, dtype="complex128"
                 )
             self._velocity_operator[i_gp] = velocity_operator
-        if self._mode_cv is not None:
-            self._mode_cv[i_gp] = heat_capacities
-        self._solver.store(i_gp, collision_result, group_velocities, heat_capacities)
+        self._solver.store(i_gp, collision_result)
 
     def finalize(
         self,
-        num_sampling_grid_points: int,
+        grid_point_data: dict[str, Any],
         suppress_kappa_log: bool = False,
     ) -> None:
         """Finalize P-term via solver, then compute C-term.
@@ -449,10 +425,11 @@ class WignerLBTEKappaAccumulator:
 
         """
         self._solver.solve(
-            num_sampling_grid_points,
+            grid_point_data,
             suppress_kappa_log=bool(self._log_level),
         )
-        self._compute_coherence_kappa(num_sampling_grid_points)
+        num_sampling_grid_points = grid_point_data["num_sampling_grid_points"]
+        self._compute_coherence_kappa(grid_point_data, num_sampling_grid_points)
         if self._log_level:
             self._log_wigner_kappa()
 
@@ -496,36 +473,6 @@ class WignerLBTEKappaAccumulator:
         return self._solver.collision_eigenvalues
 
     @property
-    def gamma(self) -> NDArray[np.double]:
-        """Return gamma, shape (num_sigma, num_temp, num_gp, num_band0)."""
-        return self._solver.gamma
-
-    @gamma.setter
-    def gamma(self, value: NDArray[np.double]) -> None:
-        """Set gamma (used when reading from file)."""
-        self._solver.gamma = value
-
-    @property
-    def gamma_iso(self) -> NDArray[np.double] | None:
-        """Return isotope gamma, shape (num_sigma, num_gp, num_band0)."""
-        return self._solver.gamma_iso
-
-    @property
-    def averaged_pp_interaction(self) -> NDArray[np.double] | None:
-        """Return averaged ph-ph interaction, shape (num_gp, num_band0)."""
-        return self._solver.averaged_pp_interaction
-
-    @property
-    def boundary_mfp(self) -> float | None:
-        """Return boundary mean free path in micrometres."""
-        return self._solver.boundary_mfp
-
-    @property
-    def mode_heat_capacities(self) -> NDArray[np.double]:
-        """Return mode heat capacities, shape (num_temp, num_gp, num_band0)."""
-        return self._solver.mode_heat_capacities
-
-    @property
     def f_vectors(self) -> NDArray[np.double] | None:
         """Return f-vectors, shape (num_gp, num_band0, 3)."""
         return self._solver.f_vectors
@@ -534,21 +481,6 @@ class WignerLBTEKappaAccumulator:
     def mfp(self) -> NDArray[np.double] | None:
         """Return mean free path."""
         return self._solver.mfp
-
-    @property
-    def group_velocities(self) -> NDArray[np.double]:
-        """Return group velocities, shape (num_gp, num_band0, 3)."""
-        return self._solver.group_velocities
-
-    @property
-    def temperatures(self) -> NDArray[np.double]:
-        """Return temperatures in Kelvin."""
-        return self._solver.temperatures
-
-    @temperatures.setter
-    def temperatures(self, value: NDArray[np.double]) -> None:
-        """Set temperatures and re-allocate all arrays via prepare()."""
-        self._solver.temperatures = value
 
     def get_main_diagonal(
         self, i_gp: int, i_sigma: int, i_temp: int
@@ -636,7 +568,9 @@ class WignerLBTEKappaAccumulator:
     # Private: C-term computation
     # ------------------------------------------------------------------
 
-    def _compute_coherence_kappa(self, num_sampling_grid_points: int) -> None:
+    def _compute_coherence_kappa(
+        self, grid_point_data: dict[str, Any], num_sampling_grid_points: int
+    ) -> None:
         """Compute the Wigner coherence (C) term of thermal conductivity."""
         if self._is_reducible:
             print(
@@ -644,12 +578,14 @@ class WignerLBTEKappaAccumulator:
                 "is_reducible_collision_matrix=True"
             )
             return
-        if self._gv_by_gv_operator is None or self._mode_cv is None:
+        vm_by_vm = grid_point_data.get("vm_by_vm")
+        mode_cv = grid_point_data.get("mode_heat_capacities")
+        if vm_by_vm is None or mode_cv is None:
             return
 
         THzToEv = get_physical_units().THzToEv
         num_sigma = len(self._context.sigmas)
-        num_temp = len(self._solver.temperatures)
+        num_temp = len(self._context.temperatures)
         num_ir = len(self._context.ir_grid_points)
         num_band0 = len(self._context.band_indices)
         num_band = self._context.frequencies.shape[1]
@@ -664,8 +600,8 @@ class WignerLBTEKappaAccumulator:
                     gp = int(self._context.ir_grid_points[i_gp])
                     g = self._solver.get_main_diagonal(i_gp, i_sigma, i_temp) * 2.0
                     frequencies = self._context.frequencies[gp]
-                    cv = self._mode_cv[i_gp, i_temp, :]
-                    gv_by_gv_op = self._gv_by_gv_operator[i_gp]
+                    cv = mode_cv[i_temp, i_gp, :]
+                    gv_by_gv_op = vm_by_vm[i_gp]
 
                     for s1 in range(num_band0):
                         for s2 in range(num_band):
@@ -735,7 +671,7 @@ class WignerLBTEKappaAccumulator:
         kappa_C = self._kappa_C
 
         for i_sigma in range(len(self._context.sigmas)):
-            for i_temp, t in enumerate(self._solver.temperatures):
+            for i_temp, t in enumerate(self._context.temperatures):
                 if t <= 0:
                     continue
                 print(

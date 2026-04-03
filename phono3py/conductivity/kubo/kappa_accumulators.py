@@ -265,10 +265,6 @@ class KuboLBTEKappaAccumulator:
         self._conversion_factor = conversion_factor
         self._log_level = log_level
 
-        # Per-grid-point storage (lazily allocated in accumulate).
-        self._vm_by_vm: NDArray[np.cdouble] | None = None
-        self._heat_capacity_matrix: NDArray[np.double] | None = None
-
         # Output arrays (populated in finalize).
         self._kappa_inter: NDArray[np.double] | None = None
         self._mode_kappa_matrix: NDArray[np.double] | None = None
@@ -277,23 +273,17 @@ class KuboLBTEKappaAccumulator:
     # Public interface
     # ------------------------------------------------------------------
 
-    def prepare(self, is_full_pp: bool = False) -> None:
+    def prepare(self) -> None:
         """Allocate accumulator arrays."""
-        self._solver.prepare(is_full_pp=is_full_pp)
-
-    def store_gamma_iso(self, i_gp: int, gamma_iso: NDArray[np.double]) -> None:
-        """Store isotope scattering rate for grid point i_gp."""
-        self._solver.store_gamma_iso(i_gp, gamma_iso)
+        self._solver.prepare()
 
     def accumulate(
         self,
         i_gp: int,
         collision_result: LBTECollisionResult,
-        group_velocities: NDArray[np.double],
-        heat_capacities: NDArray[np.double],
         extra: dict[str, Any] | None = None,
     ) -> None:
-        """Store per-grid-point data and delegate to the solver.
+        """Store collision matrix row for this grid point.
 
         Parameters
         ----------
@@ -301,48 +291,23 @@ class KuboLBTEKappaAccumulator:
             Loop index over ir_grid_points (0-based).
         collision_result : LBTECollisionResult
             Result from LBTECollisionProvider.compute().
-        group_velocities : NDArray[np.double]
-            Group velocities, shape (num_band0, 3).
-        heat_capacities : NDArray[np.double]
-            Mode heat capacities, shape (num_temp, num_band0).
         extra : dict or None
-            Plugin-specific data. Expected keys:
-            ``vm_by_vm`` (num_band0, num_band, 6) complex,
-            ``heat_capacity_matrix`` (num_temp, num_band0, num_band).
+            Plugin-specific data.  Ignored by KuboLBTEKappaAccumulator.
 
         """
-        vm_by_vm = extra.get("vm_by_vm") if extra else None
-        heat_capacity_matrix = extra.get("heat_capacity_matrix") if extra else None
-
-        num_ir = len(self._context.ir_grid_points)
-
-        if vm_by_vm is not None:
-            if self._vm_by_vm is None:
-                self._vm_by_vm = np.zeros(
-                    (num_ir,) + vm_by_vm.shape, dtype="complex128"
-                )
-            self._vm_by_vm[i_gp] = vm_by_vm
-
-        if heat_capacity_matrix is not None:
-            if self._heat_capacity_matrix is None:
-                self._heat_capacity_matrix = np.zeros(
-                    (num_ir,) + heat_capacity_matrix.shape, dtype="double"
-                )
-            self._heat_capacity_matrix[i_gp] = heat_capacity_matrix
-
-        self._solver.store(i_gp, collision_result, group_velocities, heat_capacities)
+        self._solver.store(i_gp, collision_result)
 
     def finalize(
         self,
-        num_sampling_grid_points: int,
+        grid_point_data: dict[str, Any],
         suppress_kappa_log: bool = False,
     ) -> None:
         """Finalize LBTE solve, then compute Kubo kappa with LBTE linewidths."""
         self._solver.solve(
-            num_sampling_grid_points,
+            grid_point_data,
             suppress_kappa_log=bool(self._log_level),
         )
-        self._compute_kubo_kappa(num_sampling_grid_points)
+        self._compute_kubo_kappa(grid_point_data)
         if self._log_level:
             self._log_kubo_kappa()
 
@@ -376,36 +341,6 @@ class KuboLBTEKappaAccumulator:
         return self._solver.collision_eigenvalues
 
     @property
-    def gamma(self) -> NDArray[np.double]:
-        """Return gamma, shape (num_sigma, num_temp, num_gp, num_band0)."""
-        return self._solver.gamma
-
-    @gamma.setter
-    def gamma(self, value: NDArray[np.double]) -> None:
-        """Set gamma (used when reading from file)."""
-        self._solver.gamma = value
-
-    @property
-    def gamma_iso(self) -> NDArray[np.double] | None:
-        """Return isotope gamma, shape (num_sigma, num_gp, num_band0)."""
-        return self._solver.gamma_iso
-
-    @property
-    def averaged_pp_interaction(self) -> NDArray[np.double] | None:
-        """Return averaged ph-ph interaction, shape (num_gp, num_band0)."""
-        return self._solver.averaged_pp_interaction
-
-    @property
-    def boundary_mfp(self) -> float | None:
-        """Return boundary mean free path in micrometres."""
-        return self._solver.boundary_mfp
-
-    @property
-    def mode_heat_capacities(self) -> NDArray[np.double]:
-        """Return mode heat capacities, shape (num_temp, num_gp, num_band0)."""
-        return self._solver.mode_heat_capacities
-
-    @property
     def f_vectors(self) -> NDArray[np.double] | None:
         """Return f-vectors, shape (num_gp, num_band0, 3)."""
         return self._solver.f_vectors
@@ -414,21 +349,6 @@ class KuboLBTEKappaAccumulator:
     def mfp(self) -> NDArray[np.double] | None:
         """Return mean free path."""
         return self._solver.mfp
-
-    @property
-    def group_velocities(self) -> NDArray[np.double]:
-        """Return group velocities, shape (num_gp, num_band0, 3)."""
-        return self._solver.group_velocities
-
-    @property
-    def temperatures(self) -> NDArray[np.double]:
-        """Return temperatures in Kelvin."""
-        return self._solver.temperatures
-
-    @temperatures.setter
-    def temperatures(self, value: NDArray[np.double]) -> None:
-        """Set temperatures and re-allocate all arrays via prepare()."""
-        self._solver.temperatures = value
 
     def get_main_diagonal(
         self, i_gp: int, i_sigma: int, i_temp: int
@@ -528,13 +448,16 @@ class KuboLBTEKappaAccumulator:
     # Private: Kubo kappa computation
     # ------------------------------------------------------------------
 
-    def _compute_kubo_kappa(self, num_sampling_grid_points: int) -> None:
+    def _compute_kubo_kappa(self, grid_point_data: dict[str, Any]) -> None:
         """Compute inter-band kappa using LBTE collision matrix diagonal."""
-        if self._vm_by_vm is None or self._heat_capacity_matrix is None:
+        vm_by_vm = grid_point_data.get("vm_by_vm")
+        heat_capacity_matrix = grid_point_data.get("heat_capacity_matrix")
+        num_sampling_grid_points = grid_point_data["num_sampling_grid_points"]
+        if vm_by_vm is None or heat_capacity_matrix is None:
             return
 
         num_sigma = len(self._context.sigmas)
-        num_temp = len(self._solver.temperatures)
+        num_temp = len(self._context.temperatures)
         num_ir = len(self._context.ir_grid_points)
 
         kappa_inter = np.zeros((num_sigma, num_temp, 6), dtype="double")
@@ -559,8 +482,8 @@ class KuboLBTEKappaAccumulator:
             mode_kappa_matrix = compute_kubo_mode_kappa_matrix(
                 frequencies=frequencies,
                 gamma=gamma,
-                heat_capacity_matrix=self._heat_capacity_matrix[i_gp],
-                vm_by_vm=self._vm_by_vm[i_gp],
+                heat_capacity_matrix=heat_capacity_matrix[i_gp],
+                vm_by_vm=vm_by_vm[i_gp],
                 cutoff_frequency=self._context.cutoff_frequency,
                 conversion_factor=self._conversion_factor,
             )
@@ -587,7 +510,7 @@ class KuboLBTEKappaAccumulator:
         kappa_inter = self._kappa_inter
 
         for i_sigma in range(len(self._context.sigmas)):
-            for i_temp, t in enumerate(self._solver.temperatures):
+            for i_temp, t in enumerate(self._context.temperatures):
                 if t <= 0:
                     continue
                 print(

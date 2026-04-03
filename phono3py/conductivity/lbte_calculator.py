@@ -131,8 +131,18 @@ class LBTECalculator:
         self._num_sampling_grid_points = 0
         self._grid_point_count = 0
 
-        # Allocate accumulator arrays.
-        self._accumulator.prepare(is_full_pp=self._is_full_pp)
+        # Per-grid-point data (allocated in _allocate_values).
+        self._gamma: NDArray[np.double] | None = None
+        self._gv: NDArray[np.double] | None = None
+        self._cv: NDArray[np.double] | None = None
+        self._gamma_iso: NDArray[np.double] | None = None
+        self._averaged_pp_interaction: NDArray[np.double] | None = None
+        self._vm_by_vm: NDArray[np.cdouble] | None = None
+        self._heat_capacity_matrix: NDArray[np.double] | None = None
+
+        # Allocate arrays.
+        self._allocate_values()
+        self._accumulator.prepare()
 
     # ------------------------------------------------------------------
     # Public interface
@@ -174,7 +184,7 @@ class LBTECalculator:
                 "==================="
             )
 
-        self._accumulator.finalize(self._num_sampling_grid_points)
+        self._accumulator.finalize(self._build_grid_point_data())
 
     def set_kappa_at_sigmas(self) -> None:
         """Finalize kappa from a pre-loaded collision matrix (read-from-file path).
@@ -184,7 +194,11 @@ class LBTECalculator:
         gamma and collision_matrix have been loaded externally.
 
         """
-        self._accumulator.finalize(int(self._context.grid_weights.sum()))
+        grid_point_data = self._build_grid_point_data()
+        grid_point_data["num_sampling_grid_points"] = int(
+            self._context.grid_weights.sum()
+        )
+        self._accumulator.finalize(grid_point_data)
 
     def delete_gp_collision_and_pp(self) -> None:
         """No-op: memory management compatibility method."""
@@ -241,14 +255,15 @@ class LBTECalculator:
 
     @temperatures.setter
     def temperatures(self, value: Sequence[float] | NDArray[np.double]) -> None:
-        """Set temperatures and re-allocate accumulator arrays.
+        """Set temperatures and re-allocate arrays.
 
         Used by the read-from-file path to resize arrays when the temperatures
         stored in the collision file differ from the initial default.
 
         """
         self._context.temperatures = np.asarray(value, dtype="double")
-        self._accumulator.temperatures = self._context.temperatures
+        self._allocate_values()
+        self._accumulator.prepare()
 
     @property
     def sigmas(self) -> list[float | None]:
@@ -302,17 +317,18 @@ class LBTECalculator:
     @property
     def gamma(self) -> NDArray[np.double]:
         """Return ph-ph gamma, shape (num_sigma, num_temp, num_gp, num_band0)."""
-        return self._accumulator.gamma
+        assert self._gamma is not None
+        return self._gamma
 
     @gamma.setter
     def gamma(self, value: NDArray[np.double]) -> None:
         """Set gamma (for loading from file)."""
-        self._accumulator.gamma = value
+        self._gamma = value
 
     @property
     def gamma_isotope(self) -> NDArray[np.double] | None:
         """Return isotope gamma, shape (num_sigma, num_gp, num_band0)."""
-        return self._accumulator.gamma_iso
+        return self._gamma_iso
 
     @property
     def collision_matrix(self) -> NDArray[np.double] | None:
@@ -332,7 +348,7 @@ class LBTECalculator:
     @property
     def averaged_pp_interaction(self) -> NDArray[np.double] | None:
         """Return averaged ph-ph interaction, shape (num_gp, num_band0)."""
-        return self._accumulator.averaged_pp_interaction
+        return self._averaged_pp_interaction
 
     @property
     def boundary_mfp(self) -> float | None:
@@ -340,9 +356,16 @@ class LBTECalculator:
         return self._context.boundary_mfp
 
     @property
+    def group_velocities(self) -> NDArray[np.double]:
+        """Return group velocities, shape (num_gp, num_band0, 3)."""
+        assert self._gv is not None
+        return self._gv
+
+    @property
     def mode_heat_capacities(self) -> NDArray[np.double]:
         """Return mode heat capacities, shape (num_temp, num_gp, num_band0)."""
-        return self._accumulator.mode_heat_capacities
+        assert self._cv is not None
+        return self._cv
 
     @property
     def f_vectors(self) -> NDArray[np.double] | None:
@@ -465,6 +488,35 @@ class LBTECalculator:
             gv_delta_q=getattr(self._velocity_provider, "gv_delta_q", None),
         )
 
+    def _allocate_values(self) -> None:
+        """Allocate per-grid-point arrays."""
+        num_sigma = len(self._context.sigmas)
+        num_temp = len(self._context.temperatures)
+        num_gp = len(self._context.ir_grid_points)
+        num_band0 = len(self._context.band_indices)
+
+        self._gamma = np.zeros(
+            (num_sigma, num_temp, num_gp, num_band0), order="C", dtype="double"
+        )
+        self._gv = np.zeros((num_gp, num_band0, 3), order="C", dtype="double")
+        self._cv = np.zeros((num_temp, num_gp, num_band0), order="C", dtype="double")
+
+    def _build_grid_point_data(self) -> dict[str, Any]:
+        """Build grid_point_data dict for accumulator.finalize()."""
+        grid_point_data: dict[str, Any] = {
+            "num_sampling_grid_points": self._num_sampling_grid_points,
+            "gamma": self._gamma,
+            "group_velocities": self._gv,
+            "mode_heat_capacities": self._cv,
+        }
+        if self._gamma_iso is not None:
+            grid_point_data["gamma_isotope"] = self._gamma_iso
+        if self._vm_by_vm is not None:
+            grid_point_data["vm_by_vm"] = self._vm_by_vm
+        if self._heat_capacity_matrix is not None:
+            grid_point_data["heat_capacity_matrix"] = self._heat_capacity_matrix
+        return grid_point_data
+
     def _run_at_grid_point(self, i_gp: int) -> None:
         self._show_log_header(i_gp)
         gp_input = self._make_grid_point_input(i_gp)
@@ -483,22 +535,63 @@ class LBTECalculator:
         # Collision matrix row + gamma (Stage 1).
         collision_result = self._collision_provider.compute(gp_input)
 
-        # Isotope scattering (optional diagonal contribution).
+        # Store per-grid-point data in calculator.
+        assert self._gamma is not None
+        assert self._gv is not None
+        assert self._cv is not None
+        self._gamma[:, :, i_gp, :] = collision_result.gamma
+        self._gv[i_gp] = gv
+        self._cv[:, i_gp, :] = cv
+
+        # Isotope scattering (optional).
         if self._isotope_provider is not None:
             iso_result = self._isotope_provider.compute_gamma_isotope(gp_input)
             assert iso_result.gamma_isotope is not None
-            self._accumulator.store_gamma_iso(
-                i_gp,
-                iso_result.gamma_isotope[:, self._context.band_indices],
-            )
+            gamma_iso = iso_result.gamma_isotope[:, self._context.band_indices]
+            if self._gamma_iso is None:
+                self._gamma_iso = np.zeros(
+                    (len(self._context.sigmas),)
+                    + (len(self._context.ir_grid_points),)
+                    + gamma_iso.shape[1:],
+                    order="C",
+                    dtype="double",
+                )
+            self._gamma_iso[:, i_gp, :] = gamma_iso
 
-        # Accumulate into global arrays.
+        # Averaged pp interaction (optional).
+        if self._is_full_pp and collision_result.averaged_pp is not None:
+            ave_pp = collision_result.averaged_pp
+            if self._averaged_pp_interaction is None:
+                self._averaged_pp_interaction = np.zeros(
+                    (len(self._context.ir_grid_points),) + ave_pp.shape,
+                    order="C",
+                    dtype="double",
+                )
+            self._averaged_pp_interaction[i_gp] = ave_pp
+
+        # Store vm_by_vm and heat_capacity_matrix (for Wigner/Kubo).
+        if vel_result.vm_by_vm is not None:
+            if self._vm_by_vm is None:
+                num_ir = len(self._context.ir_grid_points)
+                self._vm_by_vm = np.zeros(
+                    (num_ir,) + vel_result.vm_by_vm.shape, dtype="complex128"
+                )
+            self._vm_by_vm[i_gp] = vel_result.vm_by_vm
+        if cv_result.heat_capacity_matrix is not None:
+            if self._heat_capacity_matrix is None:
+                num_ir = len(self._context.ir_grid_points)
+                self._heat_capacity_matrix = np.zeros(
+                    (num_ir,) + cv_result.heat_capacity_matrix.shape, dtype="double"
+                )
+            self._heat_capacity_matrix[i_gp] = cv_result.heat_capacity_matrix
+
+        # Accumulate collision matrix row.
         extra = vel_result.extra
         if vel_result.vm_by_vm is not None:
             extra["vm_by_vm"] = vel_result.vm_by_vm
         if cv_result.heat_capacity_matrix is not None:
             extra["heat_capacity_matrix"] = cv_result.heat_capacity_matrix
-        self._accumulator.accumulate(i_gp, collision_result, gv, cv, extra or None)
+        self._accumulator.accumulate(i_gp, collision_result, extra or None)
 
         if self._log_level:
             self._show_log(i_gp, gv)

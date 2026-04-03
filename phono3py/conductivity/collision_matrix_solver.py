@@ -47,7 +47,7 @@ import sys
 import time
 from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 from numpy.typing import NDArray
@@ -156,15 +156,13 @@ class CollisionMatrixSolver:
         self._lang: Literal["C", "Python"] = lang
         self._log_level = log_level
 
-        # Set in prepare().
-        self._is_full_pp: bool
+        # Set by solve() from grid_point_data (references, not copies).
+        self._gamma: NDArray[np.double] | None = None
+        self._gamma_iso: NDArray[np.double] | None = None
+        self._gv: NDArray[np.double] | None = None
+        self._cv: NDArray[np.double] | None = None
 
         # Allocated in prepare().
-        self._gamma: NDArray[np.double]
-        self._gamma_iso: NDArray[np.double] | None = None
-        self._gv: NDArray[np.double]
-        self._cv: NDArray[np.double]
-        self._averaged_pp_interaction: NDArray[np.double] | None = None
         self._collision_matrix: NDArray[np.double] | None = None
         self._collision_eigenvalues: NDArray[np.double] | None = None
         self._f_vectors: NDArray[np.double] | None = None
@@ -180,16 +178,8 @@ class CollisionMatrixSolver:
     # Public interface
     # ------------------------------------------------------------------
 
-    def prepare(self, is_full_pp: bool = False) -> None:
-        """Allocate global arrays before the grid-point accumulation loop.
-
-        Parameters
-        ----------
-        is_full_pp : bool, optional
-            Allocate averaged_pp_interaction array.  Default False.
-
-        """
-        self._is_full_pp = is_full_pp
+    def prepare(self) -> None:
+        """Allocate collision matrix and output arrays."""
         num_sigma = len(self._context.sigmas)
         num_temp = len(self._context.temperatures)
         num_band0 = len(self._context.band_indices)
@@ -201,11 +191,6 @@ class CollisionMatrixSolver:
         else:
             num_gp = num_ir_gp
 
-        self._gamma = np.zeros(
-            (num_sigma, num_temp, num_gp, num_band0), dtype="double", order="C"
-        )
-        self._gv = np.zeros((num_gp, num_band0, 3), dtype="double", order="C")
-        self._cv = np.zeros((num_temp, num_gp, num_band0), dtype="double", order="C")
         self._f_vectors = np.zeros((num_gp, num_band0, 3), dtype="double", order="C")
         self._mfp = np.zeros(
             (num_sigma, num_temp, num_gp, num_band0, 3),
@@ -225,11 +210,6 @@ class CollisionMatrixSolver:
             dtype="double",
             order="C",
         )
-
-        if is_full_pp:
-            self._averaged_pp_interaction = np.zeros(
-                (num_gp, num_band0), dtype="double", order="C"
-            )
 
         if self._is_reducible_collision_matrix:
             self._collision_matrix = np.zeros(
@@ -274,10 +254,8 @@ class CollisionMatrixSolver:
         self,
         i_gp: int,
         collision_result: LBTECollisionResult,
-        group_velocities: NDArray[np.double],
-        heat_capacities: NDArray[np.double],
     ) -> None:
-        """Store per-grid-point Stage 1 data.
+        """Store collision matrix row for grid point.
 
         Parameters
         ----------
@@ -285,10 +263,6 @@ class CollisionMatrixSolver:
             Loop index over ir_grid_points (0-based).
         collision_result : LBTECollisionResult
             Result from LBTECollisionProvider.compute().
-        group_velocities : NDArray[np.double]
-            Group velocities at this grid point, shape (num_band0, 3).
-        heat_capacities : NDArray[np.double]
-            Mode heat capacities, shape (num_temp, num_band0).
 
         """
         assert self._collision_matrix is not None
@@ -299,49 +273,11 @@ class CollisionMatrixSolver:
         else:
             i_data = i_gp
 
-        self._gamma[:, :, i_data, :] = collision_result.gamma
         self._collision_matrix[:, :, i_data, :] = collision_result.collision_row
-        self._gv[i_data] = group_velocities
-        self._cv[:, i_data, :] = heat_capacities
-
-        if (
-            collision_result.averaged_pp is not None
-            and self._averaged_pp_interaction is not None
-        ):
-            self._averaged_pp_interaction[i_data] = collision_result.averaged_pp
-
-    def store_gamma_iso(self, i_gp: int, gamma_iso: NDArray[np.double]) -> None:
-        """Store isotope scattering rate for one irreducible grid point.
-
-        Parameters
-        ----------
-        i_gp : int
-            Loop index over ir_grid_points (0-based).
-        gamma_iso : NDArray[np.double]
-            Isotope scattering rates, shape (num_sigma, num_band0).
-
-        """
-        if self._gamma_iso is None:
-            num_sigma = len(self._context.sigmas)
-            num_band0 = len(self._context.band_indices)
-            if self._is_reducible_collision_matrix:
-                num_gp = int(np.prod(self._context.mesh_numbers))
-            else:
-                num_gp = len(self._context.ir_grid_points)
-            self._gamma_iso = np.zeros(
-                (num_sigma, num_gp, num_band0), dtype="double", order="C"
-            )
-
-        if self._is_reducible_collision_matrix:
-            ir_gp = self._context.ir_grid_points[i_gp]
-            i_data = int(self._context.bz_grid.bzg2grg[ir_gp])
-        else:
-            i_data = i_gp
-        self._gamma_iso[:, i_data, :] = gamma_iso
 
     def solve(
         self,
-        num_sampling_grid_points: int,
+        grid_point_data: dict[str, Any],
         *,
         suppress_kappa_log: bool = False,
     ) -> LBTESolveResult:
@@ -352,8 +288,10 @@ class CollisionMatrixSolver:
 
         Parameters
         ----------
-        num_sampling_grid_points : int
-            Total number of sampling grid points (sum of k-star orders).
+        grid_point_data : dict
+            Per-grid-point data from the calculator. Required keys:
+            ``num_sampling_grid_points``, ``gamma``, ``group_velocities``.
+            Optional: ``gamma_isotope``.
         suppress_kappa_log : bool, optional
             When True, skip the per-temperature kappa table log so that the
             caller (e.g. WignerLBTEKappaAccumulator) can print its own format
@@ -365,6 +303,16 @@ class CollisionMatrixSolver:
         LBTESolveResult
 
         """
+        num_sampling_grid_points = grid_point_data["num_sampling_grid_points"]
+        if self._is_reducible_collision_matrix:
+            self._setup_reducible_data(grid_point_data)
+        else:
+            # Set references to calculator-owned data (no copy).
+            self._gamma = grid_point_data["gamma"]
+            self._gamma_iso = grid_point_data.get("gamma_isotope")
+            self._gv = grid_point_data["group_velocities"]
+            self._cv = grid_point_data.get("mode_heat_capacities")
+
         assert self._collision_matrix is not None
         if self._log_level:
             print(f"- Collision matrix shape {self._collision_matrix.shape}")
@@ -407,6 +355,46 @@ class CollisionMatrixSolver:
         """
         return self._get_main_diagonal(i_gp, i_sigma, i_temp)
 
+    def _setup_reducible_data(self, grid_point_data: dict[str, Any]) -> None:
+        """Allocate full-mesh arrays and copy IR data for reducible case.
+
+        When is_reducible_collision_matrix is True, _expand_local_values
+        accesses arrays by full-mesh indices, so they must be allocated
+        with num_mesh_points and the IR data copied to the correct GR indices.
+
+        """
+        num_mesh = int(np.prod(self._context.mesh_numbers))
+        gamma_ir = grid_point_data["gamma"]
+        gv_ir = grid_point_data["group_velocities"]
+        cv_ir = grid_point_data.get("mode_heat_capacities")
+        gamma_iso_ir = grid_point_data.get("gamma_isotope")
+
+        num_sigma, num_temp, _, num_band0 = gamma_ir.shape
+
+        self._gamma = np.zeros(
+            (num_sigma, num_temp, num_mesh, num_band0), dtype="double"
+        )
+        self._gv = np.zeros((num_mesh, num_band0, 3), dtype="double")
+        if cv_ir is not None:
+            self._cv = np.zeros((cv_ir.shape[0], num_mesh, num_band0), dtype="double")
+        else:
+            self._cv = None
+        if gamma_iso_ir is not None:
+            self._gamma_iso = np.zeros(
+                (gamma_iso_ir.shape[0], num_mesh, num_band0), dtype="double"
+            )
+        else:
+            self._gamma_iso = None
+
+        for i_gp, ir_gp in enumerate(self._context.ir_grid_points):
+            i_gr = int(self._context.bz_grid.bzg2grg[ir_gp])
+            self._gamma[:, :, i_gr, :] = gamma_ir[:, :, i_gp, :]
+            self._gv[i_gr] = gv_ir[i_gp]
+            if cv_ir is not None and self._cv is not None:
+                self._cv[:, i_gr, :] = cv_ir[:, i_gp, :]
+            if gamma_iso_ir is not None and self._gamma_iso is not None:
+                self._gamma_iso[:, i_gr, :] = gamma_iso_ir[:, i_gp, :]
+
     # ------------------------------------------------------------------
     # Properties
     # ------------------------------------------------------------------
@@ -447,36 +435,6 @@ class CollisionMatrixSolver:
         return self._collision_eigenvalues
 
     @property
-    def gamma(self) -> NDArray[np.double]:
-        """Return gamma, shape (num_sigma, num_temp, num_gp, num_band0)."""
-        return self._gamma
-
-    @gamma.setter
-    def gamma(self, value: NDArray[np.double]) -> None:
-        """Set gamma (used when reading from file)."""
-        self._gamma = value
-
-    @property
-    def gamma_iso(self) -> NDArray[np.double] | None:
-        """Return isotope gamma, shape (num_sigma, num_gp, num_band0)."""
-        return self._gamma_iso
-
-    @property
-    def averaged_pp_interaction(self) -> NDArray[np.double] | None:
-        """Return averaged ph-ph interaction, shape (num_gp, num_band0)."""
-        return self._averaged_pp_interaction
-
-    @property
-    def boundary_mfp(self) -> float | None:
-        """Return boundary mean free path in micrometres."""
-        return self._context.boundary_mfp
-
-    @property
-    def mode_heat_capacities(self) -> NDArray[np.double]:
-        """Return mode heat capacities, shape (num_temp, num_gp, num_band0)."""
-        return self._cv
-
-    @property
     def f_vectors(self) -> NDArray[np.double] | None:
         """Return f-vectors, shape (num_gp, num_band0, 3)."""
         return self._f_vectors
@@ -485,22 +443,6 @@ class CollisionMatrixSolver:
     def mfp(self) -> NDArray[np.double] | None:
         """Return mean free path."""
         return self._mfp
-
-    @property
-    def group_velocities(self) -> NDArray[np.double]:
-        """Return group velocities, shape (num_gp, num_band0, 3)."""
-        return self._gv
-
-    @property
-    def temperatures(self) -> NDArray[np.double]:
-        """Return temperatures in Kelvin."""
-        return self._context.temperatures
-
-    @temperatures.setter
-    def temperatures(self, value: NDArray[np.double]) -> None:
-        """Set temperatures and re-allocate all arrays via prepare()."""
-        self._context.temperatures = np.asarray(value, dtype="double")
-        self.prepare(is_full_pp=self._is_full_pp)
 
     # ------------------------------------------------------------------
     # Collision matrix preparation
