@@ -7,13 +7,8 @@ from phono3py.api_phono3py import Phono3py
 
 def test_kappa_kubo_lbte_si(si_pbesol: Phono3py):
     """Test Kubo-LBTE by Si."""
-    if si_pbesol._make_r0_average:
-        ref_kappa_intra_exact = [110.846, 110.846, 110.846, 0, 0, 0]
-        ref_kappa_inter = [0.083, 0.083, 0.083, 0, 0, 0]
-    else:
-        ref_kappa_intra_exact = [111.099, 111.099, 111.099, 0, 0, 0]
-        ref_kappa_inter = [0.083, 0.083, 0.083, 0, 0, 0]
-
+    ref_kappa_intra_exact = [110.846, 110.846, 110.846, 0, 0, 0]
+    ref_kappa_inter = [0.083, 0.083, 0.083, 0, 0, 0]
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
     si_pbesol.run_thermal_conductivity(

@@ -9,14 +9,9 @@ TOLERANCE = 0.2
 
 def test_kappa_kubo_si(si_pbesol: Phono3py):
     """Test Kubo-RTA by Si."""
-    if si_pbesol._make_r0_average:
-        ref_kappa = [107.877, 107.877, 107.877, 0.0, 0.0, 0.0]
-        ref_kappa_intra = [107.794, 107.794, 107.794, 0.0, 0.0, 0.0]
-        ref_kappa_inter = [0.083, 0.083, 0.083, 0.0, 0.0, 0.0]
-    else:
-        ref_kappa = [107.947, 107.947, 107.947, 0.0, 0.0, 0.0]
-        ref_kappa_intra = [107.949, 107.949, 107.949, 0.0, 0.0, 0.0]
-        ref_kappa_inter = [0.083, 0.083, 0.083, 0.0, 0.0, 0.0]
+    ref_kappa = [107.877, 107.877, 107.877, 0.0, 0.0, 0.0]
+    ref_kappa_intra = [107.794, 107.794, 107.794, 0.0, 0.0, 0.0]
+    ref_kappa_inter = [0.083, 0.083, 0.083, 0.0, 0.0, 0.0]
     tc = _run_kubo_rta(si_pbesol, [9, 9, 9])
     np.testing.assert_allclose(ref_kappa, tc.kappa.ravel(), atol=TOLERANCE)
     np.testing.assert_allclose(ref_kappa_intra, tc.kappa_intra.ravel(), atol=TOLERANCE)
