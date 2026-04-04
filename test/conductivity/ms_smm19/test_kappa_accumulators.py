@@ -80,7 +80,6 @@ def test_get_extra_grid_point_output_stores_velocity_operator():
     num_gp = 2
     ctx = _make_dummy_context(num_gp=num_gp)
     acc = WignerRTAKappaAccumulator(context=ctx, volume=1.0)
-    acc.prepare(num_sigma=1, num_temp=1, num_gp=num_gp, num_band0=6)
 
     aggregates = _make_aggregates(num_gp=num_gp, with_velocity_operator=True)
     acc.finalize(aggregates)
@@ -97,7 +96,6 @@ def test_get_extra_grid_point_output_none_without_velocity_operator():
     """Velocity operator is None when not provided in aggregates.extra."""
     ctx = _make_dummy_context()
     acc = WignerRTAKappaAccumulator(context=ctx, volume=1.0)
-    acc.prepare(num_sigma=1, num_temp=1, num_gp=1, num_band0=6)
 
     aggregates = _make_aggregates(with_velocity_operator=False)
     acc.finalize(aggregates)

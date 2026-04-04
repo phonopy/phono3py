@@ -114,7 +114,6 @@ class ConductivityLBTEWriter:
     ) -> None:
         """Write kappa related properties into a hdf5 file."""
         kappa = lbte.kappa
-        mode_kappa = lbte.mode_kappa
         kappa_RTA = lbte.kappa_RTA
         mode_kappa_RTA = lbte.mode_kappa_RTA
         gv = lbte.group_velocities
@@ -169,7 +168,6 @@ class ConductivityLBTEWriter:
                 mean_free_path=mfp[i],
                 heat_capacity=mode_cv,
                 kappa=kappa[i],
-                mode_kappa=mode_kappa[i],
                 kappa_RTA=kappa_RTA[i],
                 mode_kappa_RTA=mode_kappa_RTA[i],
                 extra_datasets=extra_at_sigma,

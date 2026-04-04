@@ -73,7 +73,7 @@ def _compute_kubo_mode_kappa_matrix(
             )
             denom = np.where(condition_matrix, denom, 1.0)
             contribution_matrix = np.where(
-                condition_matrix,
+                condition_matrix[:, :, None],
                 heat_capacity_matrix[k, :, :, None]
                 * vm_by_vm.real
                 * g_sum[:, :, None]
@@ -122,31 +122,9 @@ class KuboRTAKappaAccumulator:
         self._conversion_factor = conversion_factor
         self._log_level = log_level
 
-        # Kappa arrays (allocated in prepare()).
-        self._kappa: NDArray[np.double]
-        self._mode_kappa_matrix: NDArray[np.double]
-
-    def prepare(
-        self,
-        num_sigma: int,
-        num_temp: int,
-        num_gp: int,
-        num_band0: int,
-        *,
-        num_band: int | None = None,
-    ) -> None:
-        """Allocate kappa arrays."""
-        if num_band is None:
-            num_band = num_band0
-        self._kappa = np.zeros((num_sigma, num_temp, 6), dtype="double", order="C")
-        self._kappa_intra = np.zeros(
-            (num_sigma, num_temp, 6), dtype="double", order="C"
-        )
-        self._mode_kappa_matrix = np.zeros(
-            (num_sigma, num_temp, num_gp, num_band, num_band, 6),
-            dtype="double",
-            order="C",
-        )
+        self._kappa: NDArray[np.double] | None = None
+        self._kappa_intra: NDArray[np.double] | None = None
+        self._mode_kappa_matrix: NDArray[np.double] | None = None
 
     def finalize(self, aggregates: GridPointAggregates) -> None:
         """Compute kappa and kappa_intra from aggregated data."""
@@ -155,6 +133,13 @@ class KuboRTAKappaAccumulator:
 
         num_sampling_grid_points = aggregates.num_sampling_grid_points
         gamma_eff = compute_effective_gamma(aggregates)
+        num_sigma, num_temp, num_gp, num_band = gamma_eff.shape
+
+        self._mode_kappa_matrix = np.zeros(
+            (num_sigma, num_temp, num_gp, num_band, num_band, 6),
+            dtype="double",
+            order="C",
+        )
 
         for i_gp, gp in enumerate(self._context.grid_points):
             mode_kappa_matrix = _compute_kubo_mode_kappa_matrix(
@@ -177,7 +162,7 @@ class KuboRTAKappaAccumulator:
             )
 
     @property
-    def kappa(self) -> NDArray[np.double]:
+    def kappa(self) -> NDArray[np.double] | None:
         """Return total kappa (kappa_intra + kappa_inter).
 
         Shape: (num_sigma, num_temp, 6).
@@ -186,7 +171,7 @@ class KuboRTAKappaAccumulator:
         return self._kappa
 
     @property
-    def kappa_intra(self) -> NDArray[np.double]:
+    def kappa_intra(self) -> NDArray[np.double] | None:
         """Return intra-band (diagonal) kappa.
 
         Shape: (num_sigma, num_temp, 6).
@@ -195,32 +180,33 @@ class KuboRTAKappaAccumulator:
         return self._kappa_intra
 
     @property
-    def kappa_inter(self) -> NDArray[np.double]:
+    def kappa_inter(self) -> NDArray[np.double] | None:
         """Return inter-band (off-diagonal) kappa.
 
         Shape: (num_sigma, num_temp, 6).
 
         """
+        if self._kappa is None or self._kappa_intra is None:
+            return None
+
         return self._kappa - self._kappa_intra
 
     @property
-    def mode_kappa(self) -> NDArray[np.double]:
-        """Return mode kappa summed over j_band.
-
-        Shape: (num_sigma, num_temp, num_gp, num_band0, 6).
-
-        """
-        # Sum over j_band axis (axis=-2 of the per-gp array, axis=4 in stored array).
-        return self._mode_kappa_matrix.sum(axis=4)
-
-    @property
-    def mode_kappa_matrix(self) -> NDArray[np.double]:
+    def mode_kappa_matrix(self) -> NDArray[np.double] | None:
         """Return full band-pair kappa matrix.
 
         Shape: (num_gp, num_sigma, num_temp, num_band0, num_band, 6).
 
         """
         return self._mode_kappa_matrix
+
+    def get_extra_kappa_output(self) -> dict[str, NDArray[np.double] | None]:
+        """Return Kubo LBTE kappa arrays keyed by HDF5 dataset name."""
+        return {
+            "kappa_intra": self._kappa_intra,
+            "kappa_inter": self.kappa_inter,
+            "mode_kappa_matrix": self._mode_kappa_matrix,
+        }
 
     # ------------------------------------------------------------------
     # Properties -- per-grid-point data

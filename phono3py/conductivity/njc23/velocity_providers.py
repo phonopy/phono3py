@@ -12,7 +12,7 @@ from phono3py.conductivity.velocity_providers import (
     get_multiplicity_at_q,
 )
 from phono3py.phonon.grid import get_qpoints_from_bz_grid_points
-from phono3py.phonon.group_velocity_matrix import GroupVelocityMatrix
+from phono3py.phonon.velocity_matrix import VelocityMatrix
 from phono3py.phonon3.interaction import Interaction
 
 
@@ -20,7 +20,7 @@ class VelocityMatrixProvider:
     """Compute group velocity matrix and its k-star-averaged outer product.
 
     This provider implements the ``VelocityProvider`` protocol for the
-    Green-Kubo formula.  It wraps phono3py's ``GroupVelocityMatrix`` and
+    Green-Kubo formula.  It wraps phono3py's ``VelocityMatrix`` and
     computes the k-star-averaged outer product of velocity matrix elements.
 
     The returned ``VelocityResult`` contains:
@@ -35,7 +35,7 @@ class VelocityMatrixProvider:
 
     Notes
     -----
-    The k-star average is computed by evaluating ``GroupVelocityMatrix`` at all
+    The k-star average is computed by evaluating ``VelocityMatrix`` at all
     rotated q-points and summing the outer products, divided by the site
     multiplicity.
 
@@ -69,7 +69,7 @@ class VelocityMatrixProvider:
         self._point_operations = point_operations
         self._is_kappa_star = is_kappa_star
         self._log_level = log_level
-        self._velocity_obj = GroupVelocityMatrix(
+        self._velocity_obj = VelocityMatrix(
             pp.dynamical_matrix,
             q_length=gv_delta_q,
             symmetry=pp.primitive_symmetry,
@@ -95,9 +95,9 @@ class VelocityMatrixProvider:
         """
         q_point = get_qpoints_from_bz_grid_points(gp.grid_point, self._pp.bz_grid)
         self._velocity_obj.run([q_point])
-        assert self._velocity_obj.group_velocity_matrices is not None
+        assert self._velocity_obj.velocity_matrices is not None
         # gvm_full: (3, nat3, nat3) at the irreducible q
-        gvm_full = self._velocity_obj.group_velocity_matrices[0]
+        gvm_full = self._velocity_obj.velocity_matrices[0]
 
         gv = self._get_group_velocities(gp, gvm_full)
         vm_by_vm, kstar_order = self._get_vm_by_vm(gp)
@@ -168,13 +168,13 @@ class VelocityMatrixProvider:
         q = get_qpoints_from_bz_grid_points(gp.grid_point, self._pp.bz_grid)
         qpoints = [np.dot(r, q) for r in self._point_operations]
         self._velocity_obj.run(qpoints)
-        assert self._velocity_obj.group_velocity_matrices is not None
+        assert self._velocity_obj.velocity_matrices is not None
 
         num_band = len(self._pp.primitive) * 3
         num_band0 = len(gp.band_indices)
         vm_by_vm = np.zeros((num_band0, num_band, 6), dtype="complex128")
 
-        for gvm in self._velocity_obj.group_velocity_matrices:
+        for gvm in self._velocity_obj.velocity_matrices:
             # gvm: (3, nat3, nat3) complex at one rotated q-point
             for i_pair, (a, b) in enumerate(VOIGT_INDEX_PAIRS):
                 # V^a_{s s'} * conj(V^b_{s s'}) for selected band0 vs all bands

@@ -25,11 +25,13 @@ from numpy.typing import NDArray
 from phono3py.conductivity.collision_matrix_solver import CollisionMatrixSolver
 from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
+from phono3py.conductivity.kappa_accumulators import (
+    LBTEKappaAccumulator,
+    RTAKappaAccumulator,
+)
 from phono3py.conductivity.lbte_calculator import LBTECalculator
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionProvider
-from phono3py.conductivity.lbte_kappa_accumulator import LBTEKappaAccumulator
 from phono3py.conductivity.rta_calculator import RTACalculator
-from phono3py.conductivity.rta_kappa_accumulator import RTAKappaAccumulator
 from phono3py.conductivity.scattering_providers import RTAScatteringProvider
 from phono3py.conductivity.utils import get_unit_to_WmK
 from phono3py.conductivity.velocity_providers import GroupVelocityProvider

@@ -48,14 +48,14 @@ from phonopy.structure.symmetry import Symmetry
 from phonopy.utils import similarity_transformation
 
 
-class GroupVelocityMatrix(GroupVelocity):
+class VelocityMatrix(GroupVelocity):
     """Class to calculate group velocities matrices of phonons.
 
      v_qjj' = 1/(2*sqrt(omega_qj*omega_qj')) * <e(q,j)|dD/dq|e(q,j')>
 
     Attributes
     ----------
-    group_velocity_matrices : ndarray
+    velocity_matrices : ndarray
 
     """
 
@@ -91,7 +91,7 @@ class GroupVelocityMatrix(GroupVelocity):
             cutoff_frequency=cutoff_frequency,
         )
 
-        self._group_velocity_matrices = None
+        self._velocity_matrices = None
 
     def run(
         self,
@@ -101,7 +101,7 @@ class GroupVelocityMatrix(GroupVelocity):
         """Run group velocity matrix calculate at q-points.
 
         Calculated group velocities are stored in
-        self._group_velocity_matrices.
+        self._velocity_matrices.
 
         Parameters
         ----------
@@ -119,25 +119,25 @@ class GroupVelocityMatrix(GroupVelocity):
             self._directions[0] = np.dot(self._reciprocal_lattice, perturbation)
         self._directions[0] /= np.linalg.norm(self._directions[0])
         gvm = [
-            self._calculate_group_velocity_matrix_at_q(q)
+            self._calculate_velocity_matrix_at_q(q)
             for q in np.asarray(q_points, dtype="double")
         ]
-        self._group_velocity_matrices = np.array(gvm, dtype="cdouble", order="C")
+        self._velocity_matrices = np.array(gvm, dtype="cdouble", order="C")
 
     @property
-    def group_velocity_matrices(self) -> NDArray[np.cdouble] | None:
+    def velocity_matrices(self) -> NDArray[np.cdouble] | None:
         """Return group velocity matrices.
 
         Returns
         -------
-        group_velocity_matrices : ndarray
+        velocity_matrices : ndarray
             shape=(q-points, 3, num_band, num_band), order='C'
             dtype=complex that is "c%d" % (np.dtype('double').itemsize * 2)
 
         """
-        return self._group_velocity_matrices
+        return self._velocity_matrices
 
-    def _calculate_group_velocity_matrix_at_q(
+    def _calculate_velocity_matrix_at_q(
         self, q: NDArray[np.double]
     ) -> NDArray[np.cdouble]:
         self._dynmat.run(q)
@@ -165,11 +165,11 @@ class GroupVelocityMatrix(GroupVelocity):
             if self._symmetry is None:
                 return gvm
             else:
-                return self._symmetrize_group_velocity_matrix(gvm, q)
+                return self._symmetrize_velocity_matrix(gvm, q)
         else:
             return gvm
 
-    def _symmetrize_group_velocity_matrix(
+    def _symmetrize_velocity_matrix(
         self, gvm: NDArray[np.cdouble], q: NDArray[np.double]
     ) -> NDArray[np.cdouble]:
         """Symmetrize obtained group velocity matrices.
