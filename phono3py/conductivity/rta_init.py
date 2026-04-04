@@ -36,7 +36,6 @@
 
 from __future__ import annotations
 
-import os
 import pathlib
 from collections.abc import Sequence
 from typing import Literal, TypeAlias, TypedDict, cast
@@ -45,9 +44,9 @@ import h5py
 import numpy as np
 from numpy.typing import NDArray
 
-from phono3py.conductivity.rta_base import ConductivityRTABase
-from phono3py.conductivity.rta_output import ConductivityRTAWriter, show_rta_progress
-from phono3py.conductivity.type_dispatch import get_rta_conductivity_class
+from phono3py.conductivity.factory import make_conductivity_calculator
+from phono3py.conductivity.rta_calculator import RTACalculator
+from phono3py.conductivity.rta_output import ConductivityRTAWriter
 from phono3py.conductivity.utils import build_options, write_pp_interaction
 from phono3py.file_IO import read_gamma_from_hdf5
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
@@ -79,50 +78,6 @@ class _GammaReadContext(TypedDict):
     ave_pp: NDArray[np.double]
     optional_flags: _OptionalGammaFlags
     verbose: bool
-
-
-class _RTAInitOptions(TypedDict):
-    grid_points: Sequence[int] | NDArray[np.int64] | None
-    temperatures: Sequence[float] | NDArray[np.double] | None
-    sigmas: Sequence[float | None] | None
-    sigma_cutoff: float | None
-    is_isotope: bool
-    mass_variances: Sequence[float] | NDArray[np.double] | None
-    boundary_mfp: float | None
-    use_ave_pp: bool
-    is_kappa_star: bool
-    gv_delta_q: float | None
-    is_full_pp: bool
-    read_pp: bool
-    store_pp: bool
-    pp_filename: str | None
-    is_N_U: bool
-    is_gamma_detail: bool
-    log_level: int
-
-
-class _RTARunOptions(TypedDict):
-    write_pp: bool
-    write_gamma: bool
-    write_gamma_detail: bool
-    compression: Literal["gzip", "lzf"] | int | None
-    output_filename: str | None
-    log_level: int
-
-
-class _RTAFinalizeOptions(TypedDict):
-    grid_points: Sequence[int] | NDArray[np.int64] | None
-    conductivity_type: Literal["wigner", "kubo"] | None
-    write_kappa: bool
-    compression: Literal["gzip", "lzf"] | int | None
-    output_filename: str | None
-    log_level: int
-
-
-class _RTAInputReadOptions(TypedDict):
-    read_gamma: bool
-    read_elph: int | None
-    input_filename: str | None
 
 
 _GammaReadArrays: TypeAlias = tuple[
@@ -203,7 +158,7 @@ def _build_gamma_read_context(
 
 
 def _apply_loaded_gamma_results(
-    br: ConductivityRTABase,
+    br: RTACalculator,
     *,
     gamma: NDArray[np.double],
     gamma_N: NDArray[np.double],
@@ -219,28 +174,112 @@ def _apply_loaded_gamma_results(
         br.set_gamma_N_U(gamma_N, gamma_U)
 
 
-def _build_rta_init_options(
+def get_thermal_conductivity_RTA(
+    interaction: Interaction,
+    temperatures: Sequence[float] | NDArray[np.double] | None = None,
+    sigmas: Sequence[float | None] | None = None,
+    sigma_cutoff: float | None = None,
+    mass_variances: Sequence[float] | NDArray[np.double] | None = None,
+    grid_points: Sequence[int] | NDArray[np.int64] | None = None,
+    is_isotope: bool = False,
+    boundary_mfp: float | None = None,  # in micrometer
+    use_ave_pp: bool = False,
+    is_kappa_star: bool = True,
+    gv_delta_q: float | None = None,
+    is_full_pp: bool = False,
+    is_N_U: bool = False,
+    transport_type: str | None = None,
+    write_gamma: bool = False,
+    read_gamma: bool = False,
+    write_kappa: bool = False,
+    write_pp: bool = False,
+    read_pp: bool = False,
+    read_elph: int | None = None,
+    write_gamma_detail: bool = False,
+    compression: Literal["gzip", "lzf"] | int | None = "gzip",
+    input_filename: str | None = None,
+    output_filename: str | None = None,
+    log_level: int = 0,
+) -> RTACalculator:
+    """Run RTA thermal conductivity calculation."""
+    _temperatures = _normalize_rta_temperatures(temperatures)
+    _mass_variances = (
+        np.asarray(mass_variances, dtype="double")
+        if mass_variances is not None
+        else None
+    )
+    _grid_points = (
+        np.asarray(grid_points, dtype="int64") if grid_points is not None else None
+    )
+
+    if log_level:
+        print(
+            "-------------------- Lattice thermal conductivity (RTA) "
+            "--------------------"
+        )
+
+    method = f"{transport_type}-rta" if transport_type else "rta"
+    return _run_standard_rta(
+        interaction,
+        method=method,
+        temperatures=_temperatures,
+        sigmas=sigmas,
+        sigma_cutoff=sigma_cutoff,
+        mass_variances=_mass_variances,
+        grid_points=_grid_points,
+        is_isotope=is_isotope,
+        boundary_mfp=boundary_mfp,
+        use_ave_pp=use_ave_pp,
+        is_kappa_star=is_kappa_star,
+        gv_delta_q=gv_delta_q,
+        is_full_pp=is_full_pp,
+        is_N_U=is_N_U,
+        write_gamma=write_gamma,
+        read_gamma=read_gamma,
+        write_kappa=write_kappa,
+        write_pp=write_pp,
+        read_pp=read_pp,
+        read_elph=read_elph,
+        write_gamma_detail=write_gamma_detail,
+        compression=compression,
+        input_filename=input_filename,
+        output_filename=output_filename,
+        log_level=log_level,
+    )
+
+
+def _run_standard_rta(
+    interaction: Interaction,
     *,
-    grid_points: Sequence[int] | NDArray[np.int64] | None,
-    temperatures: Sequence[float] | NDArray[np.double] | None,
+    method: str = "rta",
+    temperatures: NDArray[np.double],
     sigmas: Sequence[float | None] | None,
     sigma_cutoff: float | None,
+    mass_variances: NDArray[np.double] | None,
+    grid_points: NDArray[np.int64] | None,
     is_isotope: bool,
-    mass_variances: Sequence[float] | NDArray[np.double] | None,
     boundary_mfp: float | None,
     use_ave_pp: bool,
     is_kappa_star: bool,
     gv_delta_q: float | None,
     is_full_pp: bool,
-    read_pp: bool,
-    write_pp: bool,
-    input_filename: str | None,
     is_N_U: bool,
+    write_gamma: bool,
+    read_gamma: bool,
+    write_kappa: bool,
+    write_pp: bool,
+    read_pp: bool,
+    read_elph: int | None,
     write_gamma_detail: bool,
+    compression: Literal["gzip", "lzf"] | int | None,
+    input_filename: str | None,
+    output_filename: str | None,
     log_level: int,
-) -> _RTAInitOptions:
-    return build_options(
-        _RTAInitOptions,
+) -> RTACalculator:
+    """Run RTA (standard or Wigner) using RTACalculator."""
+    calc = make_conductivity_calculator(
+        interaction,
+        method=method,
         grid_points=grid_points,
         temperatures=temperatures,
         sigmas=sigmas,
@@ -260,179 +299,73 @@ def _build_rta_init_options(
         log_level=log_level,
     )
 
-
-def _build_rta_run_options(
-    *,
-    write_pp: bool,
-    write_gamma: bool,
-    write_gamma_detail: bool,
-    compression: Literal["gzip", "lzf"] | int | None,
-    output_filename: str | None,
-    log_level: int,
-) -> _RTARunOptions:
-    return build_options(
-        _RTARunOptions,
-        write_pp=write_pp,
-        write_gamma=write_gamma,
-        write_gamma_detail=write_gamma_detail,
-        compression=compression,
-        output_filename=output_filename,
-        log_level=log_level,
-    )
-
-
-def _build_rta_finalize_options(
-    *,
-    grid_points: Sequence[int] | NDArray[np.int64] | None,
-    conductivity_type: Literal["wigner", "kubo"] | None,
-    write_kappa: bool,
-    compression: Literal["gzip", "lzf"] | int | None,
-    output_filename: str | None,
-    log_level: int,
-) -> _RTAFinalizeOptions:
-    return build_options(
-        _RTAFinalizeOptions,
-        grid_points=grid_points,
-        conductivity_type=conductivity_type,
-        write_kappa=write_kappa,
-        compression=compression,
-        output_filename=output_filename,
-        log_level=log_level,
-    )
-
-
-def _build_rta_input_read_options(
-    *,
-    read_gamma: bool,
-    read_elph: int | None,
-    input_filename: str | None,
-) -> _RTAInputReadOptions:
-    return build_options(
-        _RTAInputReadOptions,
-        read_gamma=read_gamma,
-        read_elph=read_elph,
-        input_filename=input_filename,
-    )
-
-
-def _apply_rta_input_reads(
-    br: ConductivityRTABase,
-    *,
-    read_gamma: bool,
-    read_elph: int | None,
-    input_filename: str | None,
-    verbose: bool = False,
-) -> None:
     if read_gamma:
-        _set_gamma_from_file(br, filename=input_filename, verbose=verbose)
-
+        _set_gamma_from_file(
+            calc,
+            filename=input_filename,
+            verbose=log_level > 0,
+        )
     if read_elph is not None:
-        _set_gamma_elph_from_file(br, read_elph, verbose=verbose)
-
-
-def get_thermal_conductivity_RTA(
-    interaction: Interaction,
-    temperatures: Sequence[float] | NDArray[np.double] | None = None,
-    sigmas: Sequence[float | None] | None = None,
-    sigma_cutoff: float | None = None,
-    mass_variances: Sequence[float] | NDArray[np.double] | None = None,
-    grid_points: Sequence[int] | NDArray[np.int64] | None = None,
-    is_isotope: bool = False,
-    boundary_mfp: float | None = None,  # in micrometer
-    use_ave_pp: bool = False,
-    is_kappa_star: bool = True,
-    gv_delta_q: float | None = None,
-    is_full_pp: bool = False,
-    is_N_U: bool = False,
-    conductivity_type: Literal["wigner", "kubo"] | None = None,
-    write_gamma: bool = False,
-    read_gamma: bool = False,
-    write_kappa: bool = False,
-    write_pp: bool = False,
-    read_pp: bool = False,
-    read_elph: int | None = None,
-    write_gamma_detail: bool = False,
-    compression: Literal["gzip", "lzf"] | int | None = "gzip",
-    input_filename: str | None = None,
-    output_filename: str | None = None,
-    log_level: int = 0,
-) -> ConductivityRTABase:
-    """Run RTA thermal conductivity calculation."""
-    _temperatures = _normalize_rta_temperatures(temperatures)
-
-    conductivity_RTA_class = get_rta_conductivity_class(conductivity_type)
-
-    if log_level:
-        print(
-            "-------------------- Lattice thermal conductivity (RTA) "
-            "--------------------"
+        _set_gamma_elph_from_file(
+            calc,
+            read_elph,
+            verbose=log_level > 0,
         )
 
-    init_options = _build_rta_init_options(
-        grid_points=grid_points,
-        temperatures=_temperatures,
-        sigmas=sigmas,
-        sigma_cutoff=sigma_cutoff,
-        is_isotope=is_isotope,
-        mass_variances=mass_variances,
-        boundary_mfp=boundary_mfp,
-        use_ave_pp=use_ave_pp,
-        is_kappa_star=is_kappa_star,
-        gv_delta_q=gv_delta_q,
-        is_full_pp=is_full_pp,
-        read_pp=read_pp,
-        write_pp=write_pp,
-        input_filename=input_filename,
-        is_N_U=is_N_U,
-        write_gamma_detail=write_gamma_detail,
-        log_level=log_level,
-    )
+    def _on_grid_point(i: int) -> None:
+        if write_pp:
+            write_pp_interaction(
+                calc,  # type: ignore[arg-type]
+                interaction,
+                i,
+                compression=compression,
+                filename=output_filename,
+            )
+        if write_gamma:
+            ConductivityRTAWriter.write_gamma(
+                calc,
+                interaction,
+                i,
+                compression=compression,
+                filename=output_filename,
+                verbose=log_level > 0,
+            )
+        if write_gamma_detail:
+            ConductivityRTAWriter.write_gamma_detail(
+                calc,
+                interaction,
+                i,
+                compression=compression,
+                filename=output_filename,
+                verbose=log_level > 0,
+            )
 
-    br = conductivity_RTA_class(
-        interaction,
-        **init_options,
-    )
+    calc.run(on_grid_point=_on_grid_point)
 
-    input_read_options = _build_rta_input_read_options(
-        read_gamma=read_gamma,
-        read_elph=read_elph,
-        input_filename=input_filename,
-    )
-    _apply_rta_input_reads(br, **input_read_options, verbose=log_level > 0)
+    if grid_points is None and all_bands_exist(interaction):
+        calc.log_kappa()
+        if write_kappa:
+            ConductivityRTAWriter.write_kappa(
+                calc,
+                interaction.primitive.volume,
+                compression=compression,
+                filename=output_filename,
+                log_level=log_level,
+            )
 
-    run_options = _build_rta_run_options(
-        write_pp=write_pp,
-        write_gamma=write_gamma,
-        write_gamma_detail=write_gamma_detail,
-        compression=compression,
-        output_filename=output_filename,
-        log_level=log_level,
-    )
-    _run_rta_grid_point_outputs(br, interaction, **run_options)
-
-    finalize_options = _build_rta_finalize_options(
-        grid_points=grid_points,
-        conductivity_type=conductivity_type,
-        write_kappa=write_kappa,
-        compression=compression,
-        output_filename=output_filename,
-        log_level=log_level,
-    )
-    _finalize_rta_kappa(br, interaction, **finalize_options)
-
-    return br
+    return calc
 
 
 def _normalize_rta_temperatures(
     temperatures: Sequence[float] | NDArray[np.double] | None,
-) -> Sequence[float] | NDArray[np.double]:
+) -> NDArray[np.double]:
     if temperatures is None:
         return np.arange(0, 1001, 10, dtype="double")
-    return temperatures
+    return np.asarray(temperatures, dtype="double")
 
 
 def _set_gamma_elph_from_file(
-    br: ConductivityRTABase, read_elph: int, verbose: bool = False
+    br: RTACalculator, read_elph: int, verbose: bool = False
 ) -> None:
     if br.temperatures is None:
         raise RuntimeError(
@@ -452,7 +385,7 @@ def _set_gamma_elph_from_file(
 
         # Check consistency between br.temperatures and file temperatures
         if f"temperature_{read_elph}" in f:
-            file_temperatures = f[f"temperature_{read_elph}"][:]  # type: ignore
+            file_temperatures: NDArray[np.double] = f[f"temperature_{read_elph}"][:]  # type: ignore
             if not np.allclose(br.temperatures, file_temperatures):
                 raise RuntimeError(
                     f"Temperature mismatch: ph-ph {br.temperatures} "
@@ -462,69 +395,6 @@ def _set_gamma_elph_from_file(
             raise RuntimeError('"temperature" dataset not found in gamma el-ph file.')
 
         br.gamma_elph = f[gamma_key][:]  # type: ignore
-
-
-def _run_rta_grid_point_outputs(
-    br: ConductivityRTABase,
-    interaction: Interaction,
-    *,
-    write_pp: bool,
-    write_gamma: bool,
-    write_gamma_detail: bool,
-    compression: Literal["gzip", "lzf"] | int | None,
-    output_filename: str | os.PathLike | None,
-    log_level: int,
-) -> None:
-    for i in br:
-        if write_pp:
-            write_pp_interaction(
-                br, interaction, i, compression=compression, filename=output_filename
-            )
-        if write_gamma:
-            ConductivityRTAWriter.write_gamma(
-                br,
-                interaction,
-                i,
-                compression=compression,
-                filename=output_filename,
-                verbose=log_level > 0,
-            )
-        if write_gamma_detail:
-            ConductivityRTAWriter.write_gamma_detail(
-                br,
-                interaction,
-                i,
-                compression=compression,
-                filename=output_filename,
-                verbose=log_level > 0,
-            )
-
-
-def _finalize_rta_kappa(
-    br: ConductivityRTABase,
-    interaction: Interaction,
-    *,
-    grid_points: Sequence[int] | NDArray[np.int64] | None,
-    conductivity_type: Literal["wigner", "kubo"] | None,
-    write_kappa: bool,
-    compression: Literal["gzip", "lzf"] | int | None,
-    output_filename: str | None,
-    log_level: int,
-) -> None:
-    if grid_points is not None or not all_bands_exist(interaction):
-        return
-
-    br.set_kappa_at_sigmas()
-    if log_level:
-        show_rta_progress(br, conductivity_type, log_level)
-    if write_kappa:
-        ConductivityRTAWriter.write_kappa(
-            br,
-            interaction.primitive.volume,
-            compression=compression,
-            filename=output_filename,
-            log_level=log_level,
-        )
 
 
 def _log_if_verbose(verbose: bool, text: str) -> None:
@@ -730,7 +600,7 @@ def _load_gamma_for_sigma(
 
 
 def _set_gamma_from_file(
-    br: ConductivityRTABase, filename: str | None = None, verbose: bool = False
+    br: RTACalculator, filename: str | None = None, verbose: bool = False
 ):
     """Read kappa-*.hdf5 files for thermal conductivity calculation.
 
@@ -739,8 +609,8 @@ def _set_gamma_from_file(
     kappa-m*-gp*-b*.hdf5 files at grid points and bands are searched. If any
     of those files are not found, it fails.
 
-    br : ConductivityRTABase
-        RTA lattice thermal conductivity instance.
+    br : RTACalculator
+        RTA lattice thermal conductivity calculator instance.
     filename : str, optional
         This string is inserted in the filename as kappa-m*.{filename}.hdf5.
     verbose : bool, optional

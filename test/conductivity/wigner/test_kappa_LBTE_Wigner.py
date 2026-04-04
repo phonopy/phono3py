@@ -22,7 +22,7 @@ def test_kappa_LBTE(si_pbesol: Phono3py):
         temperatures=[
             300,
         ],
-        conductivity_type="wigner",
+        transport_type="SMM19",
     )
     # kappa = si_pbesol.thermal_conductivity.kappa.ravel()
     kappa_P = si_pbesol.thermal_conductivity.kappa_P_exact.ravel()

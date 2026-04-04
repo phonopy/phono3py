@@ -1,0 +1,693 @@
+"""RTACalculator: composition-based RTA lattice thermal conductivity."""
+
+from __future__ import annotations
+
+from collections.abc import Callable, Sequence
+from typing import Any
+
+import numpy as np
+from numpy.typing import NDArray
+
+from phono3py.conductivity.context import ConductivityContext
+from phono3py.conductivity.grid_point_data import (
+    GridPointAggregates,
+    GridPointInput,
+    compute_effective_gamma,
+    make_grid_point_input,
+)
+from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
+from phono3py.conductivity.rta_kappa_accumulator import RTAKappaAccumulator
+from phono3py.conductivity.scattering_providers import (
+    BoundaryScatteringProvider,
+    IsotopeScatteringProvider,
+    RTAScatteringProvider,
+)
+from phono3py.conductivity.utils import (
+    show_grid_point_frequencies_gv,
+    show_grid_point_frequencies_gv_on_kstar,
+    show_grid_point_header,
+)
+from phono3py.conductivity.velocity_providers import GroupVelocityProvider
+from phono3py.other.isotope import Isotope
+from phono3py.phonon.grid import (
+    BZGrid,
+    get_qpoints_from_bz_grid_points,
+)
+from phono3py.phonon3.interaction import Interaction
+
+
+class RTACalculator:
+    """RTA lattice thermal conductivity calculator using composed building blocks.
+
+    This class replaces the ``ConductivityBase`` / ``ConductivityRTABase`` /
+    ``ConductivityRTA`` inheritance hierarchy.  Physical building blocks
+    (velocity, heat-capacity, scattering, kappa accumulator) are injected via
+    the constructor rather than inherited.
+
+    Variant-specific output properties (``kappa_P_RTA``, ``kappa_C``, etc.)
+    are not defined on this class.  They are forwarded transparently to the
+    accumulator via ``__getattr__``.
+
+    Usage
+    -----
+    Create via ``make_conductivity_calculator`` (recommended) or directly::
+
+        calc = RTACalculator(pp, vel, cv, scat, accumulator, context, ...)
+        calc.run(on_grid_point=lambda i: writer.write_gamma(calc, i))
+        # results available via calc.kappa, calc.mode_kappa, etc.
+
+    Parameters
+    ----------
+    pp : Interaction
+        Interaction instance. ``init_dynamical_matrix`` must have been called.
+    velocity_provider : GroupVelocityProvider
+        Computes group velocities and v-outer-v at each grid point.
+    cv_provider : ModeHeatCapacityProvider
+        Computes mode heat capacities at each grid point.
+    scattering_provider : RTAScatteringProvider
+        Computes ph-ph linewidths at each grid point.
+    accumulator
+        Owns the kappa computation and BZ-summation arrays; exposes ``kappa``,
+        ``mode_kappa``, and any variant-specific output properties.
+    context : ConductivityContext
+        Shared computation metadata (grid, phonon, symmetry, configuration).
+    is_isotope : bool, optional
+        Include isotope scattering. Default False.
+    mass_variances : array-like or None, optional
+        Mass variances for isotope scattering. Default None.
+    is_N_U : bool, optional
+        Decompose gamma into Normal and Umklapp. Default False.
+    is_gamma_detail : bool, optional
+        Store per-triplet gamma. Default False.
+    log_level : int, optional
+        Verbosity. Default 0.
+
+    """
+
+    def __init__(
+        self,
+        pp: Interaction,
+        velocity_provider: GroupVelocityProvider,
+        cv_provider: ModeHeatCapacityProvider,
+        scattering_provider: RTAScatteringProvider,
+        accumulator: RTAKappaAccumulator,
+        context: ConductivityContext,
+        *,
+        is_isotope: bool = False,
+        mass_variances: Sequence[float] | NDArray[np.double] | None = None,
+        is_N_U: bool = False,
+        is_gamma_detail: bool = False,
+        log_level: int = 0,
+    ):
+        """Init method."""
+        self._pp = pp
+        self._velocity_provider = velocity_provider
+        self._cv_provider = cv_provider
+        self._scattering_provider = scattering_provider
+        self._accumulator = accumulator
+        self._context = context
+        self._is_N_U = is_N_U
+        self._is_gamma_detail = is_gamma_detail
+        self._log_level = log_level
+
+        self._grid_point_count = 0
+
+        # Isotope and boundary providers.
+        self._is_isotope = is_isotope or (mass_variances is not None)
+        self._isotope_provider: IsotopeScatteringProvider | None = None
+        if self._is_isotope:
+            self._isotope_provider = self._build_isotope_provider(mass_variances)
+        self._boundary_provider: BoundaryScatteringProvider | None = (
+            BoundaryScatteringProvider(context.boundary_mfp)
+            if context.boundary_mfp is not None
+            else None
+        )
+
+        # Read flags (set via property setters when gamma is loaded from file).
+        self._read_gamma = False
+        self._read_gamma_iso = False
+
+        # Declare arrays; allocated lazily when temperatures are set.
+        self._gamma: NDArray[np.double] | None = None
+        self._gv: NDArray[np.double] | None = None
+        self._gv_by_gv: NDArray[np.double] | None = None
+        self._cv: NDArray[np.double] | None = None
+        self._vm_by_vm: NDArray[np.cdouble] | None = None
+        self._heat_capacity_matrix: NDArray[np.double] | None = None
+        self._gamma_iso: NDArray[np.double] | None = None
+        self._averaged_pp_interaction: NDArray[np.double] | None = None
+        self._gamma_N: NDArray[np.double] | None = None
+        self._gamma_U: NDArray[np.double] | None = None
+        self._gamma_elph: NDArray[np.double] | None = None
+        self._gamma_boundary: NDArray[np.double] | None = None
+        self._extra: dict[str, Any] = {}
+        self._num_sampling_grid_points = 0
+        self._num_ignored_phonon_modes: NDArray[np.int64] | None = None
+        self._gamma_detail_at_q: NDArray[np.double] | None = None
+
+        if self._context.temperatures is not None:
+            self._allocate_values()
+
+    # ------------------------------------------------------------------
+    # Public interface
+    # ------------------------------------------------------------------
+
+    def run(
+        self,
+        on_grid_point: Callable[[int], None] | None = None,
+    ) -> None:
+        """Run all grid points and compute kappa.
+
+        Parameters
+        ----------
+        on_grid_point : callable or None, optional
+            Called with the grid-point count (0-based index) after each grid
+            point is processed. Used for per-grid-point file writes.
+
+        """
+        if self._context.temperatures is None:
+            raise RuntimeError("Set temperatures before calling run().")
+
+        if self._log_level:
+            print(
+                "==================== Lattice thermal conductivity (RTA) "
+                "===================="
+            )
+
+        self._prepare_isotope_phonons()
+
+        self._num_sampling_grid_points = 0
+        self._grid_point_count = 0
+
+        for i_gp in range(len(self._context.grid_points)):
+            self._run_at_grid_point(i_gp)
+            self._grid_point_count = i_gp + 1
+            if on_grid_point is not None:
+                on_grid_point(i_gp)
+
+        if self._log_level:
+            print(
+                "=================== End of collection of collisions "
+                "==================="
+            )
+
+        aggregates = GridPointAggregates(
+            num_sampling_grid_points=self._num_sampling_grid_points,
+            group_velocities=self._gv,
+            mode_heat_capacities=self._cv,
+            gv_by_gv=self._gv_by_gv,
+            gamma=self._gamma,
+            gamma_isotope=self._gamma_iso,
+            gamma_boundary=self._gamma_boundary,
+            gamma_elph=self._gamma_elph,
+            vm_by_vm=self._vm_by_vm,
+            heat_capacity_matrix=self._heat_capacity_matrix,
+            extra=self._extra,
+        )
+        self._count_ignored_modes(aggregates)
+        self._accumulator.finalize(aggregates)
+
+    # ------------------------------------------------------------------
+    # Properties -- context access
+    # ------------------------------------------------------------------
+
+    @property
+    def context(self) -> ConductivityContext:
+        """Return the computation context."""
+        return self._context
+
+    # ------------------------------------------------------------------
+    # Properties -- grid / phonon metadata
+    # ------------------------------------------------------------------
+
+    @property
+    def mesh_numbers(self) -> NDArray[np.int64]:
+        """Return BZ mesh numbers."""
+        return self._context.mesh_numbers
+
+    @property
+    def bz_grid(self) -> BZGrid:
+        """Return BZ grid object."""
+        return self._context.bz_grid
+
+    @property
+    def frequencies(self) -> NDArray[np.double]:
+        """Return phonon frequencies at the iterated grid points."""
+        return self._context.frequencies[self._context.grid_points]
+
+    @property
+    def qpoints(self) -> NDArray[np.double]:
+        """Return q-point coordinates of the iterated grid points."""
+        return np.array(
+            get_qpoints_from_bz_grid_points(
+                self._context.grid_points, self._context.bz_grid
+            ),
+            dtype="double",
+            order="C",
+        )
+
+    @property
+    def grid_points(self) -> NDArray[np.int64]:
+        """Return BZ grid point indices that were iterated."""
+        return self._context.grid_points
+
+    @property
+    def grid_weights(self) -> NDArray[np.int64]:
+        """Return symmetry weights of the iterated grid points."""
+        return self._context.grid_weights
+
+    @property
+    def temperatures(self) -> NDArray[np.double] | None:
+        """Return temperatures in Kelvin."""
+        return self._context.temperatures
+
+    @temperatures.setter
+    def temperatures(self, temperatures: Sequence[float] | NDArray[np.double]) -> None:
+        self._context.temperatures = np.asarray(temperatures, dtype="double")
+        self._allocate_values()
+
+    @property
+    def sigmas(self) -> list[float | None]:
+        """Return smearing widths."""
+        return self._context.sigmas
+
+    @property
+    def sigma_cutoff_width(self) -> float | None:
+        """Return smearing cutoff width."""
+        return self._context.sigma_cutoff_width
+
+    @property
+    def boundary_mfp(self) -> float | None:
+        """Return boundary mean free path in micrometres."""
+        return self._context.boundary_mfp
+
+    @property
+    def grid_point_count(self) -> int:
+        """Return number of grid points processed so far."""
+        return self._grid_point_count
+
+    @property
+    def number_of_sampling_grid_points(self) -> int:
+        """Return total number of sampling grid points (sum of k-star orders)."""
+        return self._num_sampling_grid_points
+
+    # ------------------------------------------------------------------
+    # Properties -- computed physical quantities
+    # ------------------------------------------------------------------
+
+    def __getattr__(self, name: str) -> object:
+        """Delegate unknown attribute lookups to the accumulator.
+
+        This allows variant-specific properties (kappa_P_RTA, kappa_C,
+        kappa_TOT_RTA, mode_kappa_C, ...) to be accessed directly on the
+        calculator without hard-coding them here.
+
+        """
+        # Avoid infinite recursion if _accumulator is not yet set.
+        if name.startswith("_"):
+            raise AttributeError(name)
+        try:
+            acc = object.__getattribute__(self, "_accumulator")
+        except AttributeError:
+            raise AttributeError(name) from None
+        try:
+            return getattr(acc, name)
+        except AttributeError:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'"
+            ) from None
+
+    def get_extra_kappa_output(self) -> dict[str, Any] | None:
+        """Return variant-specific kappa output from the accumulator.
+
+        Called by output writers to obtain plugin-defined quantities (e.g.
+        Wigner kappa_P_RTA, kappa_C) that are written to the hdf5 file via
+        ``write_kappa_to_hdf5(extra_datasets=...)``.
+
+        Returns None when the accumulator does not implement this method
+        (standard RTA and Kubo).
+
+        """
+        fn = getattr(self._accumulator, "get_extra_kappa_output", None)
+        return fn() if callable(fn) else None
+
+    def get_extra_grid_point_output(self) -> dict[str, Any] | None:
+        """Return per-grid-point extra arrays stored by the calculator.
+
+        Called by output writers to obtain plugin-defined per-grid-point
+        arrays (e.g. Wigner velocity_operator) that are written to
+        the hdf5 file via ``write_kappa_to_hdf5(extra_datasets=...)``.
+        The caller is responsible for slicing by grid-point index.
+
+        Returns None when no extra data has been stored.
+
+        """
+        return self._extra if self._extra else None
+
+    def log_kappa(self) -> None:
+        """Delegate kappa logging to the accumulator.
+
+        Called by rta_init after run() when full kappa is available.
+
+        """
+        fn = getattr(self._accumulator, "log_kappa", None)
+        if callable(fn):
+            num_band = self._context.frequencies.shape[1]
+            num_phonon_modes = self._num_sampling_grid_points * num_band
+            fn(
+                num_ignored_phonon_modes=self._num_ignored_phonon_modes,
+                num_phonon_modes=num_phonon_modes,
+            )
+
+    @property
+    def number_of_ignored_phonon_modes(self) -> NDArray[np.int64] | None:
+        """Return count of ignored modes, shape (num_sigma, num_temp)."""
+        return self._num_ignored_phonon_modes
+
+    # ------------------------------------------------------------------
+    # Properties -- scattering arrays (with setters for file reads)
+    # ------------------------------------------------------------------
+    # kappa, mode_kappa are owned by the accumulator and accessed via
+    # __getattr__ delegation.  All per-grid-point arrays (gamma,
+    # group_velocities, gv_by_gv, mode_heat_capacities, gamma_isotope,
+    # averaged_pp_interaction, vm_by_vm, heat_capacity_matrix) are
+    # owned by the calculator.
+
+    @property
+    def gamma(self) -> NDArray[np.double] | None:
+        """Return ph-ph gamma, shape (num_sigma, num_temp, num_gp, num_band0)."""
+        return self._gamma
+
+    @gamma.setter
+    def gamma(self, gamma: NDArray[np.double]) -> None:
+        self._gamma = gamma
+        self._read_gamma = True
+
+    @property
+    def group_velocities(self) -> NDArray[np.double] | None:
+        """Return group velocities, shape (num_gp, num_band0, 3)."""
+        return self._gv
+
+    @property
+    def gv_by_gv(self) -> NDArray[np.double] | None:
+        """Return symmetrised v-outer-v, shape (num_gp, num_band0, 6)."""
+        return self._gv_by_gv
+
+    @property
+    def mode_heat_capacities(self) -> NDArray[np.double] | None:
+        """Return mode heat capacities, shape (num_temp, num_gp, num_band0)."""
+        return self._cv
+
+    @property
+    def gamma_isotope(self) -> NDArray[np.double] | None:
+        """Return isotope gamma, shape (num_sigma, num_gp, num_band0)."""
+        return self._gamma_iso
+
+    @gamma_isotope.setter
+    def gamma_isotope(self, gamma_iso: NDArray[np.double] | None) -> None:
+        self._gamma_iso = gamma_iso
+        self._read_gamma_iso = gamma_iso is not None
+
+    @property
+    def gamma_elph(self) -> NDArray[np.double] | None:
+        """Return el-ph gamma, shape (num_sigma, num_temp, num_gp, num_band0)."""
+        return self._gamma_elph
+
+    @gamma_elph.setter
+    def gamma_elph(self, gamma_elph: NDArray[np.double] | None) -> None:
+        self._gamma_elph = gamma_elph
+
+    @property
+    def averaged_pp_interaction(self) -> NDArray[np.double] | None:
+        """Return averaged ph-ph interaction, shape (num_gp, num_band0)."""
+        return self._averaged_pp_interaction
+
+    def set_averaged_pp_interaction(self, ave_pp: NDArray[np.double]) -> None:
+        """Set averaged ph-ph interaction from outside."""
+        self._averaged_pp_interaction = ave_pp
+
+    def get_gamma_N_U(
+        self,
+    ) -> tuple[NDArray[np.double] | None, NDArray[np.double] | None]:
+        """Return Normal and Umklapp parts of gamma."""
+        return self._gamma_N, self._gamma_U
+
+    def set_gamma_N_U(
+        self,
+        gamma_N: NDArray[np.double],
+        gamma_U: NDArray[np.double],
+    ) -> None:
+        """Set Normal and Umklapp parts of gamma."""
+        self._gamma_N = gamma_N
+        self._gamma_U = gamma_U
+
+    def get_gamma_detail_at_q(self) -> NDArray[np.double] | None:
+        """Return per-triplet gamma at the last processed q-point."""
+        return self._gamma_detail_at_q
+
+    # ------------------------------------------------------------------
+    # Private: array allocation
+    # ------------------------------------------------------------------
+
+    def _allocate_values(self) -> None:
+        assert self._context.temperatures is not None
+        num_sigma = len(self._context.sigmas)
+        num_temp = len(self._context.temperatures)
+        num_gp = len(self._context.grid_points)
+        num_band0 = len(self._context.band_indices)
+
+        self._gamma = np.zeros(
+            (num_sigma, num_temp, num_gp, num_band0), order="C", dtype="double"
+        )
+        self._gv = np.zeros((num_gp, num_band0, 3), order="C", dtype="double")
+        self._gv_by_gv = np.zeros((num_gp, num_band0, 6), order="C", dtype="double")
+        self._cv = np.zeros((num_temp, num_gp, num_band0), order="C", dtype="double")
+        if not self._read_gamma:
+            if self._is_N_U or self._is_gamma_detail:
+                shape = (num_sigma, num_temp, num_gp, num_band0)
+                self._gamma_N = np.zeros(shape, order="C", dtype="double")
+                self._gamma_U = np.zeros(shape, order="C", dtype="double")
+        if self._context.boundary_mfp is not None:
+            self._gamma_boundary = np.zeros(
+                (num_gp, num_band0), order="C", dtype="double"
+            )
+        num_band = len(self._pp.primitive) * 3
+        self._accumulator.prepare(
+            num_sigma,
+            num_temp,
+            num_gp,
+            num_band0,
+            num_band=num_band,
+        )
+        self._num_ignored_phonon_modes = np.zeros(
+            (num_sigma, num_temp), order="C", dtype="int64"
+        )
+
+    # ------------------------------------------------------------------
+    # Private: isotope
+    # ------------------------------------------------------------------
+
+    def _build_isotope_provider(
+        self,
+        mass_variances: Sequence[float] | NDArray[np.double] | None,
+    ) -> IsotopeScatteringProvider:
+        isotope = Isotope(
+            self._context.mesh_numbers,
+            self._pp.primitive,
+            mass_variances=mass_variances,
+            bz_grid=self._context.bz_grid,
+            frequency_factor_to_THz=self._pp.frequency_factor_to_THz,
+            symprec=self._pp.primitive_symmetry.tolerance,
+            cutoff_frequency=self._context.cutoff_frequency,
+            lapack_zheev_uplo=self._pp.lapack_zheev_uplo,
+        )
+        return IsotopeScatteringProvider(
+            isotope, self._context.sigmas, log_level=self._log_level
+        )
+
+    def _prepare_isotope_phonons(self) -> None:
+        if self._isotope_provider is None:
+            return
+        frequencies, eigenvectors, phonon_done = self._pp.get_phonons()
+        self._isotope_provider.isotope.set_phonons(
+            frequencies,
+            eigenvectors,
+            phonon_done,
+            dm=self._pp.dynamical_matrix,
+        )
+
+    # ------------------------------------------------------------------
+    # Private: per-grid-point computation
+    # ------------------------------------------------------------------
+
+    def _make_grid_point_input(self, i_gp: int) -> GridPointInput:
+        return make_grid_point_input(
+            grid_point=int(self._context.grid_points[i_gp]),
+            grid_weight=int(self._context.grid_weights[i_gp]),
+            frequencies=self._context.frequencies,
+            eigenvectors=self._context.eigenvectors,
+            bz_grid=self._context.bz_grid,
+            band_indices=self._context.band_indices,
+        )
+
+    def _show_log_header(self, i_gp: int) -> None:
+        if not self._log_level:
+            return
+        mass_variances = (
+            self._isotope_provider.isotope.mass_variances
+            if self._is_isotope and self._isotope_provider is not None
+            else None
+        )
+        show_grid_point_header(
+            bzgp=self._context.grid_points[i_gp],
+            i_gp=i_gp,
+            num_gps=len(self._context.grid_points),
+            bz_grid=self._context.bz_grid,
+            boundary_mfp=self._context.boundary_mfp,
+            mass_variances=mass_variances,
+        )
+
+    def _run_at_grid_point(self, i_gp: int) -> None:
+        self._show_log_header(i_gp)
+        gp_input = self._make_grid_point_input(i_gp)
+
+        # Velocity.
+        vel_result = self._velocity_provider.compute(gp_input)
+        self._num_sampling_grid_points += vel_result.num_sampling_grid_points
+
+        # Heat capacity.
+        assert self._context.temperatures is not None
+        cv_result = self._cv_provider.compute(gp_input, self._context.temperatures)
+
+        # ph-ph scattering.
+        if not self._read_gamma:
+            scat_result = self._scattering_provider.compute(gp_input)
+            gamma = scat_result.gamma
+            ave_pp = scat_result.averaged_pp_interaction
+            if self._is_N_U or self._is_gamma_detail:
+                g_N = self._scattering_provider.gamma_N
+                g_U = self._scattering_provider.gamma_U
+                if g_N is not None and self._gamma_N is not None:
+                    self._gamma_N[:, :, i_gp, :] = g_N
+                if g_U is not None and self._gamma_U is not None:
+                    self._gamma_U[:, :, i_gp, :] = g_U
+            self._gamma_detail_at_q = self._scattering_provider.gamma_detail_at_q
+        else:
+            gamma = self._gamma[:, :, i_gp, :]
+            ave_pp = None
+            if self._log_level:
+                print("  Gamma is read from file.")
+
+        # Isotope scattering.
+        gamma_iso: NDArray[np.double] | None = None
+        if self._is_isotope and not self._read_gamma_iso:
+            assert self._isotope_provider is not None
+            gamma_iso = self._isotope_provider.compute(gp_input)
+            gamma_iso = gamma_iso[:, self._context.band_indices]
+
+        # Boundary scattering (needs group velocities computed above).
+        gamma_boundary: NDArray[np.double] | None = None
+        if self._boundary_provider is not None:
+            gamma_boundary = self._boundary_provider.compute(
+                vel_result.group_velocities
+            )
+            self._gamma_boundary[i_gp] = gamma_boundary
+
+        if self._log_level:
+            self._show_log(i_gp, vel_result.group_velocities, ave_pp)
+
+        # Store per-grid-point output data in calculator.
+        self._gamma[:, :, i_gp, :] = gamma
+        self._gv[i_gp] = vel_result.group_velocities
+        self._gv_by_gv[i_gp] = vel_result.gv_by_gv
+        self._cv[:, i_gp, :] = cv_result.heat_capacities
+        if vel_result.vm_by_vm is not None:
+            if self._vm_by_vm is None:
+                self._vm_by_vm = np.zeros(
+                    (len(self._context.grid_points),) + vel_result.vm_by_vm.shape,
+                    dtype="complex128",
+                    order="C",
+                )
+            self._vm_by_vm[i_gp] = vel_result.vm_by_vm
+        if cv_result.heat_capacity_matrix is not None:
+            if self._heat_capacity_matrix is None:
+                shape = cv_result.heat_capacity_matrix.shape
+                self._heat_capacity_matrix = np.zeros(
+                    (shape[0], len(self._context.grid_points)) + shape[1:],
+                    dtype="double",
+                    order="C",
+                )
+            self._heat_capacity_matrix[:, i_gp] = cv_result.heat_capacity_matrix
+        if ave_pp is not None:
+            if self._averaged_pp_interaction is None:
+                self._averaged_pp_interaction = np.zeros(
+                    (len(self._context.grid_points), len(self._context.band_indices)),
+                    dtype="double",
+                    order="C",
+                )
+            self._averaged_pp_interaction[i_gp] = ave_pp
+        if gamma_iso is not None:
+            if self._gamma_iso is None:
+                self._gamma_iso = np.zeros(
+                    (
+                        gamma_iso.shape[0],
+                        len(self._context.grid_points),
+                        gamma_iso.shape[-1],
+                    ),
+                    dtype="double",
+                    order="C",
+                )
+            self._gamma_iso[:, i_gp, :] = gamma_iso
+
+        # Store velocity extra data (e.g. velocity_operator for Wigner).
+        if vel_result.extra:
+            for key, val in vel_result.extra.items():
+                if key not in self._extra:
+                    num_gp = len(self._context.grid_points)
+                    self._extra[key] = np.zeros(
+                        (num_gp,) + val.shape, dtype=val.dtype, order="C"
+                    )
+                self._extra[key][i_gp] = val
+
+    def _show_log(
+        self,
+        i_gp: int,
+        gv: NDArray[np.double],
+        ave_pp: NDArray[np.double] | None,
+    ) -> None:
+        gp = self._context.grid_points[i_gp]
+        frequencies = self._context.frequencies[gp][self._context.band_indices]
+        pp = ave_pp if self._scattering_provider.is_full_pp else None
+        gv_delta_q = getattr(self._velocity_provider, "gv_delta_q", None)
+        if self._log_level > 2:
+            show_grid_point_frequencies_gv_on_kstar(
+                frequencies,
+                gv,
+                gp,
+                self._context.bz_grid,
+                self._context.point_operations,
+                self._context.rotations_cartesian,
+                gv_delta_q=gv_delta_q,
+                ave_pp=pp,
+            )
+        else:
+            show_grid_point_frequencies_gv(
+                frequencies, gv, gv_delta_q=gv_delta_q, ave_pp=pp
+            )
+
+    def _count_ignored_modes(self, aggregates: GridPointAggregates) -> None:
+        """Count modes below cutoff or with negative effective gamma."""
+        assert self._num_ignored_phonon_modes is not None
+        gamma_eff = compute_effective_gamma(aggregates)
+        num_sigma, num_temp, num_gp, num_band0 = gamma_eff.shape
+        for i_gp in range(num_gp):
+            weight = int(self._context.grid_weights[i_gp])
+            gp = self._context.grid_points[i_gp]
+            freq = self._context.frequencies[gp][self._context.band_indices]
+            for j in range(num_sigma):
+                for k in range(num_temp):
+                    for ll in range(num_band0):
+                        if freq[ll] < self._context.cutoff_frequency:
+                            self._num_ignored_phonon_modes[j, k] += weight
+                        elif gamma_eff[j, k, i_gp, ll] < 0:
+                            self._num_ignored_phonon_modes[j, k] += weight

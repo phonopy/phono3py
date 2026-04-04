@@ -55,17 +55,6 @@ def test_kappa_RTA_si_iso(si_pbesol: Phono3py):
     np.testing.assert_allclose(ref_kappa_RTA_iso, kappa, atol=0.5)
 
 
-def test_kappa_RTA_si_kubo(si_pbesol: Phono3py):
-    """Test Kubo-RTA by Si."""
-    if si_pbesol._make_r0_average:
-        ref_kappa_RTA_kubo = [107.877, 107.877, 107.877, 0, 0, 0]
-    else:
-        ref_kappa_RTA_kubo = [107.947, 107.947, 107.947, 0, 0, 0]
-
-    kappa = _get_kappa(si_pbesol, [9, 9, 9], conductivity_type="kubo").ravel()
-    np.testing.assert_allclose(ref_kappa_RTA_kubo, kappa, atol=0.7)
-
-
 @pytest.mark.parametrize(
     "openmp_per_triplets,is_full_pp", itertools.product([False, True], [False, True])
 )
@@ -347,7 +336,7 @@ def _get_kappa(
     is_isotope=False,
     is_full_pp=False,
     openmp_per_triplets=None,
-    conductivity_type=None,
+    transport_type=None,
 ):
     ph3.mesh_numbers = mesh
     ph3.init_phph_interaction(openmp_per_triplets=openmp_per_triplets)
@@ -357,6 +346,6 @@ def _get_kappa(
         ],
         is_isotope=is_isotope,
         is_full_pp=is_full_pp,
-        conductivity_type=conductivity_type,
+        transport_type=transport_type,
     )
     return ph3.thermal_conductivity.kappa

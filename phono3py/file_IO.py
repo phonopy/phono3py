@@ -945,22 +945,14 @@ def write_kappa_to_hdf5(
     frequency: NDArray[np.double] | None = None,
     group_velocity: NDArray[np.double] | None = None,
     gv_by_gv: NDArray[np.double] | None = None,
-    velocity_operator: NDArray[np.cdouble] | None = None,
     mean_free_path: NDArray[np.double] | None = None,
     heat_capacity: NDArray[np.double] | None = None,
     kappa: NDArray[np.double] | None = None,
     mode_kappa: NDArray[np.double] | None = None,
-    kappa_P_exact: NDArray[np.double] | None = None,
-    kappa_P_RTA: NDArray[np.double] | None = None,
-    kappa_C: NDArray[np.double] | None = None,
-    kappa_TOT_exact: NDArray[np.double] | None = None,
-    kappa_TOT_RTA: NDArray[np.double] | None = None,
-    mode_kappa_P_exact: NDArray[np.double] | None = None,  # k_P from exact LBTE
-    mode_kappa_P_RTA: NDArray[np.double] | None = None,  # k_P in RTA in LBTE
-    mode_kappa_C: NDArray[np.double] | None = None,
     kappa_RTA: NDArray[np.double] | None = None,  # RTA calculated in LBTE
     mode_kappa_RTA: NDArray[np.double] | None = None,  # RTA calculated in LBTE
     f_vector: NDArray[np.double] | None = None,
+    extra_datasets: dict[str, NDArray] | None = None,
     gamma: NDArray[np.double] | None = None,
     gamma_isotope: NDArray[np.double] | None = None,
     gamma_N: NDArray[np.double] | None = None,
@@ -978,7 +970,12 @@ def write_kappa_to_hdf5(
     filename: str | os.PathLike | None = None,
     verbose: bool = True,
 ) -> str:
-    """Write thermal conductivity related properties in kappa-*.hdf5."""
+    """Write thermal conductivity related properties in kappa-*.hdf5.
+
+    ``extra_datasets`` is a plugin extension point: each key becomes an HDF5
+    dataset name and the corresponding array is written with compression.
+
+    """
     if band_index is None:
         band_indices = None
     else:
@@ -1011,10 +1008,6 @@ def write_kappa_to_hdf5(
             )
         if gv_by_gv is not None:
             w.create_dataset("gv_by_gv", data=gv_by_gv)
-        if velocity_operator is not None:
-            w.create_dataset(
-                "velocity_operator", data=velocity_operator, compression=compression
-            )
         # if mean_free_path is not None:
         #     w.create_dataset('mean_free_path', data=mean_free_path,
         #                      compression=compression)
@@ -1032,26 +1025,10 @@ def write_kappa_to_hdf5(
             w.create_dataset(
                 "mode_kappa_RTA", data=mode_kappa_RTA, compression=compression
             )
-        if kappa_P_exact is not None:
-            w.create_dataset("kappa_P_exact", data=kappa_P_exact)
-        if kappa_P_RTA is not None:
-            w.create_dataset("kappa_P_RTA", data=kappa_P_RTA)
-        if kappa_C is not None:
-            w.create_dataset("kappa_C", data=kappa_C)
-        if kappa_TOT_exact is not None:
-            w.create_dataset("kappa_TOT_exact", data=kappa_TOT_exact)
-        if kappa_TOT_RTA is not None:
-            w.create_dataset("kappa_TOT_RTA", data=kappa_TOT_RTA)
-        if mode_kappa_P_exact is not None:
-            w.create_dataset(
-                "mode_kappa_P_exact", data=mode_kappa_P_exact, compression=compression
-            )
-        if mode_kappa_P_RTA is not None:
-            w.create_dataset(
-                "mode_kappa_P_RTA", data=mode_kappa_P_RTA, compression=compression
-            )
-        if mode_kappa_C is not None:
-            w.create_dataset("mode_kappa_C", data=mode_kappa_C, compression=compression)
+        if extra_datasets is not None:
+            for key, value in extra_datasets.items():
+                if value is not None:
+                    w.create_dataset(key, data=value, compression=compression)
         if f_vector is not None:
             w.create_dataset("f_vector", data=f_vector, compression=compression)
         if gamma is not None:

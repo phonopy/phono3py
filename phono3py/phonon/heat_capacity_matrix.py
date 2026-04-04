@@ -49,10 +49,25 @@ def mode_cv_matrix(
 ) -> NDArray[np.double]:
     r"""Calculate mode heat capacity matrix, Cqjj'.
 
-    C_{\mathbf{q}jj'} = K_B \frac{e^{x_{\mathbf{q}j} - x_{\mathbf{q}j'}} - 1}
+    C_{\mathbf{q}jj'} =
+    k_\text{B} \frac{e^{x_{\mathbf{q}j} - x_{\mathbf{q}j'}} - 1}
     {x_{\mathbf{q}j} - x_{\mathbf{q}j'}} \left( \frac{
     x_{\mathbf{q}j} + x_{\mathbf{q}j'}}{2}
     \right)^2 n_{\mathbf{q}j}(n_{\mathbf{q}j'} + 1)
+
+    This is reduced to
+
+    C_{\mathbf{q}jj'} = k_\text{B}
+    \left( \frac{x_{\mathbf{q}j} + x_{\mathbf{q}j'}}{2} \right)^2
+    \frac{n_{\mathbf{q}j} - n_{\mathbf{q}j'}}
+    {x_{\mathbf{q}j} - x_{\mathbf{q}j'}}
+
+    With x = \frac{\hbar \omega}{k_\text{B} T},
+
+    C_{\mathbf{q}jj'} =
+    \frac{\hbar(\omega_{\mathbf{q}j} + \omega_{\mathbf{q}j'})^2}
+    {4T(\omega_{\mathbf{q}j} - \omega_{\mathbf{q}j'})}
+    (n_{\mathbf{q}j} - n_{\mathbf{q}j'})
 
     Note
     ----
@@ -65,7 +80,7 @@ def mode_cv_matrix(
     freqs : ndarray
         Phonon frequencies at a q-point in eV.
     cutoff : float
-        This is used to check the degeneracy.
+        This is used to check the degeneracy in eV.
 
     Returns
     -------
@@ -74,16 +89,23 @@ def mode_cv_matrix(
         shape=(num_band, num_band), dtype='double', order='C'.
 
     """
-    KB = get_physical_units().KB
-    x = freqs / KB / temp
-    shape = (len(freqs), len(freqs))
-    cvm = np.zeros(shape, dtype="double", order="C")
-    for i, j in np.ndindex(shape):
-        if abs(freqs[i] - freqs[j]) < cutoff:
-            cvm[i, j] = mode_cv(temp, freqs[i])
-            continue
-        sub = x[i] - x[j]
-        add = x[i] + x[j]
-        n_inv = np.exp([x[i], x[j], sub]) - 1
-        cvm[i, j] = KB * n_inv[2] / sub * (add / 2) ** 2 / n_inv[0] * (1 / n_inv[1] + 1)
+
+    def bose_einstein(freqs, temp):
+        return 1.0 / (np.exp(freqs / (get_physical_units().KB * temp)) - 1)
+
+    n = bose_einstein(freqs, temp)
+    n_sub = np.subtract.outer(n, n)
+    f_sub = np.subtract.outer(freqs, freqs)
+    f_add = np.add.outer(freqs, freqs)
+    f_sub_condition = np.abs(f_sub) > cutoff
+
+    # This line is to avoid numpy div by zero warning.
+    f_sub = np.where(f_sub_condition, f_sub, 1.0)
+
+    cvm = np.where(
+        f_sub_condition,
+        -(f_add**2) / 4 / temp * n_sub / f_sub,
+        np.where(freqs > cutoff, mode_cv(temp, freqs), 0),
+    )
+
     return cvm

@@ -41,7 +41,7 @@ import os
 import pathlib
 import sys
 from collections.abc import Sequence
-from typing import Any, Literal, NoReturn, cast
+from typing import Any, Literal, NoReturn, TypeAlias, cast, get_args
 
 import numpy as np
 from numpy.typing import NDArray
@@ -148,6 +148,36 @@ def print_end_phono3py() -> None:
     print_end()
 
 
+RunMode: TypeAlias = Literal[
+    "write_grid_info",
+    "show_triplets_info",
+    "gruneisen",
+    "jdos",
+    "isotope",
+    "imag_self_energy",
+    "real_self_energy",
+    "spectral_function",
+    "conductivity-RTA",
+    "conductivity-LBTE",
+    "displacements",
+    "phonon",
+    "force constants",
+]
+RUN_MODE_VALUES = cast(tuple[RunMode, ...], get_args(RunMode))
+RUN_MODES_WITH_MESH = (
+    "conductivity-RTA",
+    "conductivity-LBTE",
+    "imag_self_energy",
+    "real_self_energy",
+    "jdos",
+    "isotope",
+    "phonon",
+    "write_grid_info",
+    "show_triplets_info",
+)
+RUN_MODES_WITH_GP = ("imag_self_energy", "real_self_energy", "jdos", "isotope")
+
+
 def _finalize_phono3py(
     phono3py: Phono3py,
     confs_dict: dict,
@@ -197,9 +227,13 @@ def _finalize_phono3py(
     sys.exit(0)
 
 
-def _get_run_mode(settings: Phono3pySettings) -> str:
+def _get_run_mode(settings: Phono3pySettings, args: argparse.Namespace) -> RunMode:
     """Extract run mode from settings."""
-    if settings.is_gruneisen:
+    if args.write_grid_points:
+        run_mode = "write_grid_info"
+    elif args.show_num_triplets:
+        run_mode = "show_triplets_info"
+    elif settings.is_gruneisen:
         run_mode = "gruneisen"
     elif settings.is_joint_dos:
         run_mode = "jdos"
@@ -1125,12 +1159,8 @@ def main(**argparse_control: Any) -> None:
         if log_level:
             print_end_phono3py()
         sys.exit(0)
-    if args.write_grid_points:
-        run_mode = "write_grid_info"
-    elif args.show_num_triplets:
-        run_mode = "show_triplets_info"
-    else:
-        run_mode = None
+
+    run_mode = _get_run_mode(settings, args)
 
     # -----------------------------------------------------------------------
     # ----------------- 'args' should not be used below. --------------------
@@ -1172,10 +1202,6 @@ def main(**argparse_control: Any) -> None:
 
     unitcell_filename = cell_info.optional_structure_info.unitcell_filename
     interface_mode = cell_info.interface_mode
-
-    if run_mode is None:
-        run_mode = _get_run_mode(settings)
-    assert run_mode is not None
 
     ######################################################
     # Create supercells with displacements and then exit #
@@ -1250,20 +1276,10 @@ def main(**argparse_control: Any) -> None:
     ##################
     # Check settings #
     ##################
-    run_modes_with_mesh = (
-        "conductivity-RTA",
-        "conductivity-LBTE",
-        "imag_self_energy",
-        "real_self_energy",
-        "jdos",
-        "isotope",
-        "phonon",
-        "write_grid_info",
-        "show_triplets_info",
-    )
-    run_modes_with_gp = ("imag_self_energy", "real_self_energy", "jdos", "isotope")
+    for _run_mode in RUN_MODES_WITH_MESH + RUN_MODES_WITH_GP:
+        assert _run_mode in RUN_MODE_VALUES
 
-    if settings.mesh_numbers is None and run_mode in run_modes_with_mesh:
+    if settings.mesh_numbers is None and run_mode in RUN_MODES_WITH_MESH:
         print("")
         print("Mesh numbers have to be specified.")
         print("")
@@ -1272,7 +1288,7 @@ def main(**argparse_control: Any) -> None:
         sys.exit(1)
 
     if (
-        run_mode in run_modes_with_gp
+        run_mode in RUN_MODES_WITH_GP
         and settings.grid_points is None
         and settings.grid_addresses is None
     ):  # noqa E129
@@ -1286,7 +1302,7 @@ def main(**argparse_control: Any) -> None:
     ####################
     # Set mesh numbers #
     ####################
-    if run_mode in run_modes_with_mesh:
+    if run_mode in RUN_MODES_WITH_MESH:
         assert settings.mesh_numbers is not None
         # jdos and isotope modes need to set mesh numbers differently.
         if run_mode not in ("jdos", "isotope"):
@@ -1437,7 +1453,7 @@ def main(**argparse_control: Any) -> None:
     ########################################
     # Initialize phonon-phonon interaction #
     ########################################
-    if run_mode in run_modes_with_mesh:
+    if run_mode in RUN_MODES_WITH_MESH:
         _init_phph_interaction(
             ph3py,
             settings,
@@ -1520,9 +1536,7 @@ def main(**argparse_control: Any) -> None:
             read_gamma=settings.read_gamma,
             write_kappa=True,
             is_N_U=settings.is_N_U,
-            conductivity_type=cast(
-                Literal["wigner", "kubo"] | None, settings.conductivity_type
-            ),
+            transport_type=settings.transport_type,
             write_gamma_detail=settings.write_gamma_detail,
             write_collision=settings.write_collision,
             read_collision=settings.read_collision,

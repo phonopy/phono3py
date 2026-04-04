@@ -3,14 +3,10 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Literal, TypeAlias
+from typing import Any, Literal
 
-from numpy.typing import NDArray
-
-from phono3py.conductivity.base import get_unit_to_WmK
-from phono3py.conductivity.direct_solution_base import ConductivityLBTEBase
-from phono3py.conductivity.type_dispatch import get_lbte_writer_kappa_data
-from phono3py.conductivity.utils import select_colmat_solver
+from phono3py.conductivity.lbte_calculator import LBTECalculator
+from phono3py.conductivity.utils import get_unit_to_WmK, select_colmat_solver
 from phono3py.file_IO import (
     write_collision_eigenvalues_to_hdf5,
     write_collision_to_hdf5,
@@ -19,24 +15,13 @@ from phono3py.file_IO import (
 )
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
 
-cond_LBTE_type: TypeAlias = ConductivityLBTEBase
-
-
-def _pick_sigma_item(
-    values: NDArray[Any] | None, sigma_index: int
-) -> NDArray[Any] | None:
-    """Return values at sigma index, or None when values is None."""
-    if values is None:
-        return None
-    return values[sigma_index]
-
 
 class ConductivityLBTEWriter:
     """Collection of result writers."""
 
     @staticmethod
     def write_collision(
-        lbte: cond_LBTE_type,
+        lbte: LBTECalculator,
         interaction: Interaction,
         i: int | None = None,
         is_reducible_collision_matrix: bool = False,
@@ -118,7 +103,7 @@ class ConductivityLBTEWriter:
 
     @staticmethod
     def write_kappa(
-        lbte: cond_LBTE_type,
+        lbte: LBTECalculator,
         volume: float,
         is_reducible_collision_matrix: bool = False,
         write_LBTE_solution: bool = False,
@@ -128,19 +113,12 @@ class ConductivityLBTEWriter:
         log_level: int = 0,
     ) -> None:
         """Write kappa related properties into a hdf5 file."""
-        kappa_data = get_lbte_writer_kappa_data(lbte)
-        kappa = kappa_data["kappa"]
-        mode_kappa = kappa_data["mode_kappa"]
-        kappa_RTA = kappa_data["kappa_RTA"]
-        mode_kappa_RTA = kappa_data["mode_kappa_RTA"]
-        gv = kappa_data["group_velocities"]
-        gv_by_gv = kappa_data["gv_by_gv"]
-        kappa_P_exact = kappa_data["kappa_P_exact"]
-        kappa_P_RTA = kappa_data["kappa_P_RTA"]
-        kappa_C = kappa_data["kappa_C"]
-        mode_kappa_P_exact = kappa_data["mode_kappa_P_exact"]
-        mode_kappa_P_RTA = kappa_data["mode_kappa_P_RTA"]
-        mode_kappa_C = kappa_data["mode_kappa_C"]
+        kappa = lbte.kappa
+        mode_kappa = lbte.mode_kappa
+        kappa_RTA = lbte.kappa_RTA
+        mode_kappa_RTA = lbte.mode_kappa_RTA
+        gv = lbte.group_velocities
+        extra_full: dict[str, Any] | None = lbte.get_extra_kappa_output()
 
         temperatures = lbte.temperatures
         sigmas = lbte.sigmas
@@ -149,14 +127,13 @@ class ConductivityLBTEWriter:
         bz_grid = lbte.bz_grid
         grid_points = lbte.grid_points
         weights = lbte.grid_weights
-        frequencies = lbte.frequencies
         ave_pp = lbte.averaged_pp_interaction
         qpoints = lbte.qpoints
         gamma = lbte.gamma
         gamma_isotope = lbte.gamma_isotope
-        f_vector = lbte.get_f_vectors()
+        f_vector = lbte.f_vectors
         mode_cv = lbte.mode_heat_capacities
-        mfp = lbte.get_mean_free_path()
+        mfp = lbte.mfp
         assert mfp is not None
         boundary_mfp = lbte.boundary_mfp
 
@@ -168,26 +145,20 @@ class ConductivityLBTEWriter:
         else:
             frequencies = lbte.frequencies
 
+        num_sigma = len(sigmas)
+
         for i, sigma in enumerate(sigmas):
-            kappa_at_sigma = _pick_sigma_item(kappa, i)
-            mode_kappa_at_sigma = _pick_sigma_item(mode_kappa, i)
-            kappa_RTA_at_sigma = _pick_sigma_item(kappa_RTA, i)
-            mode_kappa_RTA_at_sigma = _pick_sigma_item(mode_kappa_RTA, i)
-            kappa_P_exact_at_sigma = _pick_sigma_item(kappa_P_exact, i)
-            kappa_P_RTA_at_sigma = _pick_sigma_item(kappa_P_RTA, i)
-            kappa_C_at_sigma = _pick_sigma_item(kappa_C, i)
-            if kappa_P_exact_at_sigma is None or kappa_C_at_sigma is None:
-                kappa_TOT_exact_at_sigma = None
-            else:
-                kappa_TOT_exact_at_sigma = kappa_P_exact_at_sigma + kappa_C_at_sigma
-            if kappa_P_RTA_at_sigma is None or kappa_C_at_sigma is None:
-                kappa_TOT_RTA_at_sigma = None
-            else:
-                kappa_TOT_RTA_at_sigma = kappa_P_RTA_at_sigma + kappa_C_at_sigma
-            mode_kappa_P_exact_at_sigma = _pick_sigma_item(mode_kappa_P_exact, i)
-            mode_kappa_P_RTA_at_sigma = _pick_sigma_item(mode_kappa_P_RTA, i)
-            mode_kappa_C_at_sigma = _pick_sigma_item(mode_kappa_C, i)
-            gamma_isotope_at_sigma = _pick_sigma_item(gamma_isotope, i)
+            gamma_isotope_at_sigma = (
+                gamma_isotope[i] if gamma_isotope is not None else None
+            )
+            extra_at_sigma: dict[str, Any] | None = (
+                {
+                    k: v[i] if v is not None and len(v) == num_sigma else v
+                    for k, v in extra_full.items()
+                }
+                if extra_full is not None
+                else None
+            )
             write_kappa_to_hdf5(
                 temperatures,
                 mesh,
@@ -195,21 +166,13 @@ class ConductivityLBTEWriter:
                 bz_grid=bz_grid,
                 frequency=frequencies,
                 group_velocity=gv,
-                gv_by_gv=gv_by_gv,
                 mean_free_path=mfp[i],
                 heat_capacity=mode_cv,
-                kappa=kappa_at_sigma,
-                mode_kappa=mode_kappa_at_sigma,
-                kappa_RTA=kappa_RTA_at_sigma,
-                mode_kappa_RTA=mode_kappa_RTA_at_sigma,
-                kappa_P_exact=kappa_P_exact_at_sigma,
-                kappa_P_RTA=kappa_P_RTA_at_sigma,
-                kappa_C=kappa_C_at_sigma,
-                kappa_TOT_exact=kappa_TOT_exact_at_sigma,
-                kappa_TOT_RTA=kappa_TOT_RTA_at_sigma,
-                mode_kappa_P_exact=mode_kappa_P_exact_at_sigma,
-                mode_kappa_P_RTA=mode_kappa_P_RTA_at_sigma,
-                mode_kappa_C=mode_kappa_C_at_sigma,
+                kappa=kappa[i],
+                mode_kappa=mode_kappa[i],
+                kappa_RTA=kappa_RTA[i],
+                mode_kappa_RTA=mode_kappa_RTA[i],
+                extra_datasets=extra_at_sigma,
                 f_vector=f_vector,
                 gamma=gamma[i],
                 gamma_isotope=gamma_isotope_at_sigma,
