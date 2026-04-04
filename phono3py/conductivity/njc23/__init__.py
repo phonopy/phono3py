@@ -1,21 +1,21 @@
 """Green-Kubo plugin for phono3py conductivity.
 
-Importing this package registers the ``"kubo-rta"`` and ``"kubo-lbte"``
+Importing this package registers the ``"NJC23-rta"`` and ``"NJC23-lbte"``
 methods with the conductivity factory so that
-``make_conductivity_calculator("kubo-rta", ...)`` and
-``make_conductivity_calculator("kubo-lbte", ...)`` work out of the box.
+``make_conductivity_calculator("NJC23-rta", ...)`` and
+``make_conductivity_calculator("NJC23-lbte", ...)`` work out of the box.
 
 """
 
 from phono3py.conductivity.factory import register_variant
-from phono3py.conductivity.kubo.heat_capacity_providers import (
+from phono3py.conductivity.njc23.heat_capacity_providers import (
     HeatCapacityMatrixProvider,
 )
-from phono3py.conductivity.kubo.kappa_accumulators import (
+from phono3py.conductivity.njc23.kappa_accumulators import (
     KuboLBTEKappaAccumulator,
     KuboRTAKappaAccumulator,
 )
-from phono3py.conductivity.kubo.velocity_providers import VelocityMatrixProvider
+from phono3py.conductivity.njc23.velocity_providers import VelocityMatrixProvider
 
 
 def _make_velocity_provider(ctx):
@@ -50,7 +50,7 @@ def _make_lbte_accumulator(ctx):
 
 
 register_variant(
-    "kubo",
+    "NJC23",
     make_velocity_provider=_make_velocity_provider,
     make_cv_provider=_make_cv_provider,
     make_rta_accumulator=_make_rta_accumulator,

@@ -6,11 +6,11 @@ Built-in methods
     Standard BTE in the relaxation time approximation.
 "lbte"
     Standard BTE via direct LBTE solution.
-"SMM19-rta"
+"MS-SMM19-rta"
     Wigner transport equation in RTA (registered plugin, can be overridden).
-"SMM19-lbte"
+"MS-SMM19-lbte"
     Wigner transport equation via LBTE (registered plugin, can be overridden).
-"kubo-rta"
+"NJC23-rta"
     Green-Kubo formula in RTA (registered plugin, can be overridden).
 
 External plugins
@@ -140,7 +140,7 @@ def register_variant(
     Parameters
     ----------
     name : str
-        Variant name (e.g. ``"SMM19"``, ``"kubo"``).  Becomes the prefix
+        Variant name (e.g. ``"MS-SMM19"``, ``"NJC23"``).  Becomes the prefix
         of the registered method names.
     make_velocity_provider : callable
         ``(ctx: VariantBuildContext) -> VelocityProvider``.
@@ -307,8 +307,8 @@ def make_conductivity_calculator(
     interaction : Interaction
         Interaction instance.  init_dynamical_matrix must have been called.
     method : str, optional
-        Calculation method.  Built-in: "rta", "lbte", "SMM19-rta",
-        "SMM19-lbte", "kubo-rta".  Default "rta".
+        Calculation method.  Built-in: "rta", "lbte", "MS-SMM19-rta",
+        "MS-SMM19-lbte", "NJC23-rta".  Default "rta".
     grid_points : array-like or None, optional
         BZ grid point indices.  None uses irreducible grid points.  Default None.
     temperatures : array-like or None, optional
@@ -404,7 +404,7 @@ def make_conductivity_calculator(
 # ---------------------------------------------------------------------------
 # Register all built-in factories.
 # "rta" and "lbte" are protected by _BUILTIN_METHODS.
-# "SMM19-*" and "kubo-*" can be overridden by external plugins.
+# "MS-SMM19-*" and "NJC23-*" can be overridden by external plugins.
 # The try/except allows each to be installed as a standalone package via
 # namespace packages; if absent, the method is simply not available.
 # ---------------------------------------------------------------------------
@@ -419,11 +419,11 @@ _REGISTRY["rta"] = make_rta_calculator
 _REGISTRY["lbte"] = make_lbte_calculator
 
 try:
-    import phono3py.conductivity.kubo  # noqa: F401, E402
+    import phono3py.conductivity.njc23  # noqa: F401, E402
 except ImportError:
     pass
 
 try:
-    import phono3py.conductivity.wigner  # noqa: F401, E402
+    import phono3py.conductivity.ms_smm19  # noqa: F401, E402
 except ImportError:
     pass

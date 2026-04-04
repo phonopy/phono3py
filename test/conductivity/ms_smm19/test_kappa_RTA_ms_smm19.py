@@ -105,7 +105,7 @@ def test_kappa_RTA_si_N_U(si_pbesol: Phono3py):
             300,
         ],
         is_N_U=is_N_U,
-        transport_type="SMM19",
+        transport_type="MS-SMM19",
     )
     gN, gU = ph3.thermal_conductivity.get_gamma_N_U()
 
@@ -193,7 +193,7 @@ def _get_kappa_RTA(ph3: Phono3py, mesh, is_isotope=False, is_full_pp=False):
         ],
         is_isotope=is_isotope,
         is_full_pp=is_full_pp,
-        transport_type="SMM19",
+        transport_type="MS-SMM19",
     )
     return (
         ph3.thermal_conductivity.kappa_P_RTA.ravel(),

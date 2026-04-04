@@ -1,21 +1,21 @@
 """Wigner transport equation plugin for phono3py conductivity.
 
-Importing this package registers the ``"SMM19-rta"`` and ``"SMM19-lbte"``
+Importing this package registers the ``"MS-SMM19-rta"`` and ``"MS-SMM19-lbte"``
 methods with the conductivity factory so that
-``make_conductivity_calculator("SMM19-rta", ...)`` works out of the box.
+``make_conductivity_calculator("MS-SMM19-rta", ...)`` works out of the box.
 
 This package can also be installed as a standalone ``phono3py-wigner`` package
 via namespace packages, in which case the factory auto-discovery still works
-because ``factory.py`` does ``try: import phono3py.conductivity.wigner``.
+because ``factory.py`` does ``try: import phono3py.conductivity.ms_smm19``.
 
 """
 
 from phono3py.conductivity.factory import register_variant
-from phono3py.conductivity.wigner.kappa_accumulators import (
+from phono3py.conductivity.ms_smm19.kappa_accumulators import (
     WignerLBTEKappaAccumulator,
     WignerRTAKappaAccumulator,
 )
-from phono3py.conductivity.wigner.velocity_providers import VelocityOperatorProvider
+from phono3py.conductivity.ms_smm19.velocity_providers import VelocityOperatorProvider
 
 
 def _make_velocity_provider(ctx):
@@ -48,7 +48,7 @@ def _make_lbte_accumulator(ctx):
 
 
 register_variant(
-    "SMM19",
+    "MS-SMM19",
     make_velocity_provider=_make_velocity_provider,
     make_rta_accumulator=_make_rta_accumulator,
     make_lbte_accumulator=_make_lbte_accumulator,

@@ -1,12 +1,12 @@
-"""Tests for Kubo-LBTE thermal conductivity."""
+"""Tests for NJC23-LBTE thermal conductivity."""
 
 import numpy as np
 
 from phono3py.api_phono3py import Phono3py
 
 
-def test_kappa_kubo_lbte_si(si_pbesol: Phono3py):
-    """Test Kubo-LBTE by Si."""
+def test_kappa_njc23_lbte_si(si_pbesol: Phono3py):
+    """Test NJC23-LBTE by Si."""
     ref_kappa_intra_exact = [110.846, 110.846, 110.846, 0, 0, 0]
     ref_kappa_inter = [0.083, 0.083, 0.083, 0, 0, 0]
     si_pbesol.mesh_numbers = [9, 9, 9]
@@ -14,7 +14,7 @@ def test_kappa_kubo_lbte_si(si_pbesol: Phono3py):
     si_pbesol.run_thermal_conductivity(
         is_LBTE=True,
         temperatures=[300],
-        transport_type="kubo",
+        transport_type="NJC23",
     )
     tc = si_pbesol.thermal_conductivity
     kappa_intra = tc.kappa_intra_exact.ravel()

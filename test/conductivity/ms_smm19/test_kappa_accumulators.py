@@ -8,7 +8,7 @@ import numpy as np
 
 from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.grid_point_data import GridPointAggregates
-from phono3py.conductivity.wigner.kappa_accumulators import WignerRTAKappaAccumulator
+from phono3py.conductivity.ms_smm19.kappa_accumulators import WignerRTAKappaAccumulator
 
 
 def _make_dummy_context(num_gp: int = 1) -> ConductivityContext:

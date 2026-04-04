@@ -35,7 +35,7 @@ def test_phono3py_load_generates_wigner_kappa_hdf5_contents():
             argparse_control = _get_phono3py_load_args(
                 "phono3py.yaml",
                 is_bterta=True,
-                transport_type="SMM19",
+                transport_type="MS-SMM19",
                 temperatures=["300"],
                 mesh_numbers=["5", "5", "5"],
             )
@@ -111,7 +111,7 @@ def test_phono3py_load_wigner_rta():
             argparse_control = _get_phono3py_load_args(
                 "phono3py.yaml",
                 is_bterta=True,
-                transport_type="SMM19",
+                transport_type="MS-SMM19",
                 temperatures=[
                     "300",
                 ],
@@ -156,7 +156,7 @@ def test_phono3py_load_wigner_lbte():
             argparse_control = _get_phono3py_load_args(
                 "phono3py.yaml",
                 is_lbte=True,
-                transport_type="SMM19",
+                transport_type="MS-SMM19",
                 temperatures=[
                     "300",
                 ],
@@ -254,7 +254,7 @@ def test_phono3py_load_wigner_write_gamma_contains_isotope_and_N_U():
                 _data / "phono3py_params_Si-111-222.yaml",
                 mesh_numbers=["9", "9", "9"],
                 is_bterta=True,
-                transport_type="SMM19",
+                transport_type="MS-SMM19",
                 is_isotope=True,
                 is_N_U=True,
                 temperatures=["300"],
@@ -335,7 +335,7 @@ def test_phono3py_load_wigner_write_gamma_detail_outputs_hdf5():
                 _data / "phono3py_params_Si-111-222.yaml",
                 mesh_numbers=["9", "9", "9"],
                 is_bterta=True,
-                transport_type="SMM19",
+                transport_type="MS-SMM19",
                 temperatures=["300"],
                 write_gamma=True,
                 write_gamma_detail=True,

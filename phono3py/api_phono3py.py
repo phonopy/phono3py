@@ -2359,7 +2359,7 @@ class Phono3py:
             and Umklapp scattering is made and imaginary parts of self energy
             for them are separated.
         transport_type : str, optional
-            "SMM19", "kubo", or None. Default is None.
+            "MS-SMM19", "NJC23", or None. Default is None.
         write_kappa : bool, optional, default is False
             With True, thermal conductivity and related properties are
             written into a file. With multiple `sigmas`, respective files
