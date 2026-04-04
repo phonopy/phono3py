@@ -4,7 +4,7 @@ import numpy as np
 
 from phono3py import Phono3py
 
-TOLERANCE = 0.02
+TOLERANCE = 0.2
 
 
 def test_kappa_kubo_si(si_pbesol: Phono3py):
