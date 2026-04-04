@@ -4,7 +4,6 @@ Plugin authors import from this package:
 
     from phono3py.conductivity import (
         register_variant,
-        register_calculator,
         VariantBuildContext,
         GridPointAggregates,
         GridPointInput,
@@ -17,8 +16,8 @@ Plugin authors import from this package:
     )
 """
 
-from phono3py.conductivity.calculator_factory import VariantBuildContext
-from phono3py.conductivity.factory import register_calculator, register_variant
+from phono3py.conductivity.build_components import VariantBuildContext
+from phono3py.conductivity.factory import register_variant
 from phono3py.conductivity.grid_point_data import (
     GridPointAggregates,
     GridPointInput,
@@ -34,7 +33,6 @@ from phono3py.conductivity.protocols import (
 
 __all__ = [
     "register_variant",
-    "register_calculator",
     "VariantBuildContext",
     "GridPointAggregates",
     "GridPointInput",

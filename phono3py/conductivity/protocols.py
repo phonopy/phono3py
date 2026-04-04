@@ -4,7 +4,7 @@ This module defines the stable interfaces that plugin authors implement to
 extend phono3py with new conductivity calculation methods.
 
 A plugin registers a factory function via
-``phono3py.conductivity.register_calculator()`` and implements one or more of
+``phono3py.conductivity.register_variant()`` and implements one or more of
 the Protocols defined here.
 
 Protocols

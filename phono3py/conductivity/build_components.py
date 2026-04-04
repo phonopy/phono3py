@@ -1,14 +1,12 @@
-"""Factory functions for the built-in RTA and LBTE calculators.
+"""Shared building blocks for conductivity calculator construction.
 
-These functions are registered as non-overridable entries in factory._REGISTRY
-for the ``"rta"`` and ``"lbte"`` methods.
+``build_rta_base_components`` and ``build_lbte_base_components`` assemble
+the common infrastructure (context, providers, solver) used by both the
+built-in RTA/LBTE factories in ``factory.py`` and the plugin variants
+(MS-SMM19, NJC23) registered via ``register_variant()``.
 
-``build_rta_base_components`` is a shared helper used by ``make_rta_calculator``
-and the Wigner-RTA / Kubo-RTA factories in their respective subpackages.
-
-``build_lbte_base_components`` is a shared helper used by both
-``make_lbte_calculator`` and the Wigner-LBTE factory in
-``conductivity/wigner/calculator_factory.py``.
+``VariantBuildContext`` and ``CalculatorConfig`` are data classes consumed
+by the framework and plugin component factories.
 
 """
 
@@ -24,17 +22,9 @@ from numpy.typing import NDArray
 
 from phono3py.conductivity.collision_matrix_solver import CollisionMatrixSolver
 from phono3py.conductivity.context import ConductivityContext
-from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
-from phono3py.conductivity.kappa_accumulators import (
-    LBTEKappaAccumulator,
-    RTAKappaAccumulator,
-)
-from phono3py.conductivity.lbte_calculator import LBTECalculator
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionProvider
-from phono3py.conductivity.rta_calculator import RTACalculator
 from phono3py.conductivity.scattering_providers import RTAScatteringProvider
 from phono3py.conductivity.utils import get_unit_to_WmK
-from phono3py.conductivity.velocity_providers import GroupVelocityProvider
 from phono3py.phonon.grid import (
     BZGrid,
     get_grid_points_by_rotations,
@@ -526,103 +516,4 @@ def build_rta_base_components(
         rot_cart=rot_cart,
         scattering_provider=scattering_provider,
         context=context,
-    )
-
-
-def make_rta_calculator(
-    interaction: Interaction,
-    config: CalculatorConfig,
-) -> RTACalculator:
-    """Build a RTACalculator for the standard BTE-RTA method.
-
-    Parameters
-    ----------
-    interaction : Interaction
-        Interaction instance with dynamical matrix initialised.
-    config : CalculatorConfig
-        Calculator settings.
-
-    Returns
-    -------
-    RTACalculator
-
-    """
-    base = build_rta_base_components(interaction, config)
-
-    cv_provider = ModeHeatCapacityProvider(interaction)
-
-    conversion_factor = get_unit_to_WmK() / interaction.primitive.volume
-    velocity_provider = GroupVelocityProvider(
-        interaction,
-        point_operations=base.point_ops,
-        rotations_cartesian=base.rot_cart,
-        is_kappa_star=config.is_kappa_star,
-        gv_delta_q=config.gv_delta_q,
-        log_level=config.log_level,
-    )
-    accumulator = RTAKappaAccumulator(
-        context=base.context,
-        conversion_factor=conversion_factor,
-        log_level=config.log_level,
-    )
-
-    return RTACalculator(
-        interaction,
-        velocity_provider=velocity_provider,
-        cv_provider=cv_provider,
-        scattering_provider=base.scattering_provider,
-        accumulator=accumulator,
-        context=base.context,
-        is_isotope=config.is_isotope,
-        mass_variances=config.mass_variances,
-        is_N_U=config.is_N_U,
-        is_gamma_detail=config.is_gamma_detail,
-        log_level=config.log_level,
-    )
-
-
-def make_lbte_calculator(
-    interaction: Interaction,
-    config: CalculatorConfig,
-) -> LBTECalculator:
-    """Build an LBTECalculator for the standard LBTE direct-solution method.
-
-    Parameters
-    ----------
-    interaction : Interaction
-        Interaction instance with dynamical matrix initialised.
-    config : CalculatorConfig
-        Calculator settings.
-
-    Returns
-    -------
-    LBTECalculator
-
-    """
-    base = build_lbte_base_components(interaction, config)
-
-    velocity_provider = GroupVelocityProvider(
-        interaction,
-        point_operations=base.point_ops,
-        rotations_cartesian=base.rot_cart,
-        is_kappa_star=config.is_kappa_star,
-        gv_delta_q=config.gv_delta_q,
-        log_level=config.log_level,
-    )
-
-    cv_provider = ModeHeatCapacityProvider(interaction)
-
-    accumulator = LBTEKappaAccumulator(base.solver)
-
-    return LBTECalculator(
-        interaction,
-        velocity_provider=velocity_provider,
-        cv_provider=cv_provider,
-        collision_provider=base.collision_provider,
-        accumulator=accumulator,
-        context=base.context,
-        is_isotope=config.is_isotope,
-        mass_variances=config.mass_variances,
-        is_full_pp=config.is_full_pp,
-        log_level=config.log_level,
     )
