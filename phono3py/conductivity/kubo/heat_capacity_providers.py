@@ -6,7 +6,7 @@ import numpy as np
 from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
 
-from phono3py.conductivity.grid_point_data import GridPointInput, GridPointResult
+from phono3py.conductivity.grid_point_data import GridPointInput, HeatCapacityResult
 from phono3py.conductivity.heat_capacity_providers import (
     get_heat_capacities,
     get_temperature_condition,
@@ -25,7 +25,7 @@ class HeatCapacityMatrixProvider:
     ``C_{qjj'}`` using ``mode_cv_matrix`` from
     ``phono3py.phonon.heat_capacity_matrix``.
 
-    The returned ``GridPointResult`` fields:
+    The returned ``HeatCapacityResult`` contains:
     - ``heat_capacities`` (num_temp, num_band0): diagonal (standard) mode heat
       capacities; set for compatibility with ``RTACalculator``.
     - ``heat_capacity_matrix`` (num_temp, num_band0, num_band): full heat
@@ -47,7 +47,7 @@ class HeatCapacityMatrixProvider:
         self,
         gp: GridPointInput,
         temperatures: NDArray[np.double],
-    ) -> GridPointResult:
+    ) -> HeatCapacityResult:
         """Compute heat capacity matrix at a grid point.
 
         Parameters
@@ -59,17 +59,13 @@ class HeatCapacityMatrixProvider:
 
         Returns
         -------
-        GridPointResult
+        HeatCapacityResult
             ``heat_capacities`` (num_temp, num_band0) and
             ``heat_capacity_matrix`` (num_temp, num_band0, num_band) are set.
 
         """
-        result = GridPointResult(input=gp)
-
-        # Scalar heat capacities (diagonal) for RTACalculator storage.
-        result.heat_capacities = get_heat_capacities(
-            gp.grid_point, self._pp, temperatures
-        )
+        # Scalar heat capacities (diagonal).
+        cv = get_heat_capacities(gp.grid_point, self._pp, temperatures)
 
         frequencies, _, _ = self._pp.get_phonons()
         freqs_ev = frequencies[gp.grid_point] * get_physical_units().THzToEv
@@ -87,5 +83,7 @@ class HeatCapacityMatrixProvider:
             cvm = mode_cv_matrix(temp, freqs_ev, cutoff=DIV_BY_ZERO_THRESHOLD_EV)
             cv_mat[i_temp] = cvm[gp.band_indices, :]
 
-        result.heat_capacity_matrix = cv_mat
-        return result
+        return HeatCapacityResult(
+            heat_capacities=cv,
+            heat_capacity_matrix=cv_mat,
+        )

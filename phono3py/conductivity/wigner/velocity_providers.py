@@ -6,7 +6,7 @@ import numpy as np
 from numpy.typing import NDArray
 from phonopy.phonon.degeneracy import degenerate_sets
 
-from phono3py.conductivity.grid_point_data import GridPointInput, GridPointResult
+from phono3py.conductivity.grid_point_data import GridPointInput, VelocityResult
 from phono3py.conductivity.utils import VOIGT_INDEX_PAIRS
 from phono3py.conductivity.wigner.velocity_operator import VelocityOperator
 from phono3py.phonon.grid import (
@@ -23,7 +23,7 @@ class VelocityOperatorProvider:
     transport equation.  It wraps phonopy's ``VelocityOperator`` and computes
     the k-star-averaged outer product of the velocity operator matrix.
 
-    The returned ``GridPointResult`` fields:
+    The returned ``VelocityResult`` contains:
     - ``group_velocities`` (num_band0, 3): diagonal (standard) group velocities,
       with degenerate-subspace diagonalisation applied.
     - ``gv_by_gv`` (num_band0, 6): real diagonal of the outer product (standard
@@ -32,6 +32,7 @@ class VelocityOperatorProvider:
       product  V(s,s') x V*(s,s') packed into 6 Voigt components (xx, yy, zz,
       yz, xz, xy).
     - ``num_sampling_grid_points``: k-star order for this irreducible point.
+    - ``extra["velocity_operator"]``: raw velocity operator matrix.
 
     Notes
     -----
@@ -79,7 +80,7 @@ class VelocityOperatorProvider:
             frequency_factor_to_THz=pp.frequency_factor_to_THz,
         )
 
-    def compute(self, gp: GridPointInput) -> GridPointResult:
+    def compute(self, gp: GridPointInput) -> VelocityResult:
         """Compute velocity operator quantities at a grid point.
 
         Parameters
@@ -90,15 +91,14 @@ class VelocityOperatorProvider:
 
         Returns
         -------
-        GridPointResult
+        VelocityResult
             ``group_velocities`` (num_band0, 3), ``gv_by_gv``
             (num_band0, 6) real, ``vm_by_vm``
             (num_band0, num_band, 6) complex, and
             ``num_sampling_grid_points`` are set.
+            ``extra["velocity_operator"]`` contains the raw operator for HDF5.
 
         """
-        result = GridPointResult(input=gp)
-
         q_point = get_qpoints_from_bz_grid_points(gp.grid_point, self._pp.bz_grid)
         self._velocity_obj.run([q_point])
         assert self._velocity_obj.velocity_operators is not None
@@ -107,15 +107,17 @@ class VelocityOperatorProvider:
         # Filter to selected bands: (num_band0, nat3, 3)
         gv_op = gv_op_full[gp.band_indices, :, :]
 
-        result.group_velocities = self._get_group_velocities(gp, gv_op_full)
+        gv = self._get_group_velocities(gp, gv_op_full)
         vm_by_vm, kstar_order = self._get_gv_by_gv_operator(gp, gv_op)
         num_band0 = vm_by_vm.shape[0]
-        result.gv_by_gv = np.real(vm_by_vm[np.arange(num_band0), np.arange(num_band0)])
-        result.vm_by_vm = vm_by_vm
-        result.num_sampling_grid_points = kstar_order
-        # Store raw velocity operator for HDF5 output.
-        result.extra["velocity_operator"] = gv_op
-        return result
+        gv_by_gv = np.real(vm_by_vm[np.arange(num_band0), np.arange(num_band0)])
+        return VelocityResult(
+            group_velocities=gv,
+            gv_by_gv=gv_by_gv,
+            vm_by_vm=vm_by_vm,
+            num_sampling_grid_points=kstar_order,
+            extra={"velocity_operator": gv_op},
+        )
 
     # ------------------------------------------------------------------
     # Private helpers

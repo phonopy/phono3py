@@ -68,7 +68,7 @@ class LBTECalculator:
     Two-stage design:
 
     Stage 1 (per-grid-point, parallel-ready): for each irreducible grid point
-    compute the collision matrix row via LBTECollisionProvider and accumulate
+    compute the collision matrix row via LBTECollisionProvider and store
     velocities and heat capacities via the standard providers.
 
     Stage 2 (global, after Stage 1 loop): LBTEKappaAccumulator.finalize()
@@ -143,6 +143,7 @@ class LBTECalculator:
         self._averaged_pp_interaction: NDArray[np.double] | None = None
         self._vm_by_vm: NDArray[np.cdouble] | None = None
         self._heat_capacity_matrix: NDArray[np.double] | None = None
+        self._extra: dict[str, Any] = {}
 
         # Allocate arrays.
         self._allocate_values()
@@ -513,6 +514,7 @@ class LBTECalculator:
             gamma_isotope=self._gamma_iso,
             vm_by_vm=self._vm_by_vm,
             heat_capacity_matrix=self._heat_capacity_matrix,
+            extra=self._extra,
         )
 
     def _run_at_grid_point(self, i_gp: int) -> None:
@@ -521,13 +523,11 @@ class LBTECalculator:
 
         # Group velocities.
         vel_result = self._velocity_provider.compute(gp_input)
-        assert vel_result.group_velocities is not None
         gv = vel_result.group_velocities
         self._num_sampling_grid_points += vel_result.num_sampling_grid_points
 
         # Mode heat capacities.
         cv_result = self._cv_provider.compute(gp_input, self._context.temperatures)
-        assert cv_result.heat_capacities is not None
         cv = cv_result.heat_capacities  # (num_temp, num_band0)
 
         # Collision matrix row + gamma (Stage 1).
@@ -543,9 +543,8 @@ class LBTECalculator:
 
         # Isotope scattering (optional).
         if self._isotope_provider is not None:
-            iso_result = self._isotope_provider.compute_gamma_isotope(gp_input)
-            assert iso_result.gamma_isotope is not None
-            gamma_iso = iso_result.gamma_isotope[:, self._context.band_indices]
+            gamma_iso = self._isotope_provider.compute(gp_input)
+            gamma_iso = gamma_iso[:, self._context.band_indices]
             if self._gamma_iso is None:
                 self._gamma_iso = np.zeros(
                     (len(self._context.sigmas),)
@@ -583,13 +582,18 @@ class LBTECalculator:
                 )
             self._heat_capacity_matrix[i_gp] = cv_result.heat_capacity_matrix
 
+        # Store velocity extra data (e.g. velocity_operator for Wigner).
+        if vel_result.extra:
+            for key, val in vel_result.extra.items():
+                if key not in self._extra:
+                    num_ir = len(self._context.ir_grid_points)
+                    self._extra[key] = np.zeros(
+                        (num_ir,) + val.shape, dtype=val.dtype, order="C"
+                    )
+                self._extra[key][i_gp] = val
+
         # Accumulate collision matrix row.
-        extra = vel_result.extra
-        if vel_result.vm_by_vm is not None:
-            extra["vm_by_vm"] = vel_result.vm_by_vm
-        if cv_result.heat_capacity_matrix is not None:
-            extra["heat_capacity_matrix"] = cv_result.heat_capacity_matrix
-        self._accumulator.accumulate(i_gp, collision_result, extra or None)
+        self._accumulator.store(i_gp, collision_result)
 
         if self._log_level:
             self._show_log(i_gp, gv)

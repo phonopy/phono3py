@@ -8,7 +8,9 @@ Plugin authors import from this package:
         VariantBuildContext,
         GridPointAggregates,
         GridPointInput,
-        GridPointResult,
+        VelocityResult,
+        HeatCapacityResult,
+        ScatteringResult,
         VelocityProvider,
         HeatCapacityProvider,
         ScatteringProvider,
@@ -20,7 +22,9 @@ from phono3py.conductivity.factory import register_calculator, register_variant
 from phono3py.conductivity.grid_point_data import (
     GridPointAggregates,
     GridPointInput,
-    GridPointResult,
+    HeatCapacityResult,
+    ScatteringResult,
+    VelocityResult,
 )
 from phono3py.conductivity.protocols import (
     HeatCapacityProvider,
@@ -34,7 +38,9 @@ __all__ = [
     "VariantBuildContext",
     "GridPointAggregates",
     "GridPointInput",
-    "GridPointResult",
+    "VelocityResult",
+    "HeatCapacityResult",
+    "ScatteringResult",
     "VelocityProvider",
     "HeatCapacityProvider",
     "ScatteringProvider",

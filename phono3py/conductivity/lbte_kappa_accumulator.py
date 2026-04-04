@@ -36,8 +36,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import numpy as np
 from numpy.typing import NDArray
 
@@ -50,7 +48,7 @@ class LBTEKappaAccumulator:
     """Assemble global collision matrix and compute LBTE thermal conductivity.
 
     This is Stage 2 of the two-stage LBTE design.  Stage 1 (per-grid-point)
-    is handled by LBTECollisionProvider.  LBTECalculator calls accumulate()
+    is handled by LBTECollisionProvider.  LBTECalculator calls store()
     once per irreducible grid point and then finalize() to assemble the full
     collision matrix, solve it, and compute kappa and kappa_RTA.
 
@@ -75,13 +73,12 @@ class LBTEKappaAccumulator:
         """Allocate global arrays before the grid-point accumulation loop."""
         self._solver.prepare()
 
-    def accumulate(
+    def store(
         self,
         i_gp: int,
         collision_result: LBTECollisionResult,
-        extra: dict[str, Any] | None = None,
     ) -> None:
-        """Store per-grid-point Stage 1 data.
+        """Store collision matrix row for this grid point.
 
         Parameters
         ----------
@@ -89,10 +86,6 @@ class LBTEKappaAccumulator:
             Loop index over ir_grid_points (0-based).
         collision_result : LBTECollisionResult
             Result from LBTECollisionProvider.compute().
-        extra : dict or None, optional
-            Plugin-specific data from the velocity provider.  Ignored by the
-            standard LBTE accumulator; used by plugin accumulators (e.g.
-            Wigner) to extract vm_by_vm, velocity_operator, etc.
 
         """
         self._solver.store(i_gp, collision_result)

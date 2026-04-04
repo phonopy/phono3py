@@ -45,7 +45,11 @@ from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
 
 from phono3py.file_IO import write_pp_to_hdf5
-from phono3py.phonon.grid import BZGrid, get_qpoints_from_bz_grid_points
+from phono3py.phonon.grid import (
+    BZGrid,
+    get_grid_points_by_rotations,
+    get_qpoints_from_bz_grid_points,
+)
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.triplets import get_all_triplets
 
@@ -113,6 +117,7 @@ def show_grid_point_frequencies_gv(
     frequencies: NDArray[np.double],
     gv: NDArray[np.double],
     gv_delta_q: float | None = None,
+    ave_pp: NDArray[np.double] | None = None,
 ) -> None:
     """Print frequencies and group velocities at a grid point.
 
@@ -124,17 +129,93 @@ def show_grid_point_frequencies_gv(
         Group velocities.
     gv_delta_q : float or None, optional
         Finite-difference step used for group velocity; printed when provided.
+    ave_pp : ndarray of double, shape (num_band0,), optional
+        Averaged ph-ph interaction strength.  When provided, an extra Pqj
+        column is printed.
+
     """
     text = "Frequency     group velocity (x, y, z)     |gv|"
+    if ave_pp is not None:
+        text += "       Pqj"
     if gv_delta_q is not None:
         text += "  (dq=%3.1e)" % gv_delta_q
     print(text)
-    for f, v in zip(frequencies, gv, strict=True):
-        print(
-            "%8.3f   (%8.3f %8.3f %8.3f) %8.3f"
-            % (f, v[0], v[1], v[2], np.linalg.norm(v))
-        )
+    _print_freq_gv_rows(frequencies, gv, ave_pp)
     print("", end="", flush=True)
+
+
+def show_grid_point_frequencies_gv_on_kstar(
+    frequencies: NDArray[np.double],
+    gv: NDArray[np.double],
+    gp: int,
+    bz_grid: BZGrid,
+    point_operations: NDArray[np.int64],
+    rotations_cartesian: NDArray[np.double],
+    gv_delta_q: float | None = None,
+    ave_pp: NDArray[np.double] | None = None,
+) -> None:
+    """Print frequencies and group velocities expanded over k-star arms.
+
+    Parameters
+    ----------
+    frequencies : ndarray of double, shape (num_band0,)
+        Phonon frequencies in THz.
+    gv : ndarray of double, shape (num_band0, 3)
+        Group velocities at the irreducible grid point.
+    gp : int
+        BZ grid point index.
+    bz_grid : BZGrid
+        Brillouin zone grid object.
+    point_operations : ndarray of int64, shape (num_ops, 3, 3)
+        Reciprocal-space point-group operations (integer).
+    rotations_cartesian : ndarray of double, shape (num_ops, 3, 3)
+        Cartesian rotation matrices.
+    gv_delta_q : float or None, optional
+        Finite-difference step used for group velocity; printed when provided.
+    ave_pp : ndarray of double, shape (num_band0,), optional
+        Averaged ph-ph interaction strength.
+
+    """
+    text = "Frequency     group velocity (x, y, z)     |gv|"
+    if ave_pp is not None:
+        text += "       Pqj"
+    if gv_delta_q is not None:
+        text += "  (dq=%3.1e)" % gv_delta_q
+    print(text)
+
+    q = get_qpoints_from_bz_grid_points(gp, bz_grid)
+    rotation_map = get_grid_points_by_rotations(gp, bz_grid)
+    for i, j in enumerate(np.unique(rotation_map)):
+        for k, (rot, rot_c) in enumerate(
+            zip(point_operations, rotations_cartesian, strict=True)
+        ):
+            if rotation_map[k] != j:
+                continue
+            q_rot = tuple(np.dot(rot, q))
+            print(" k*%-2d (%5.2f %5.2f %5.2f)" % ((i + 1,) + q_rot))
+            gv_rot = np.dot(rot_c, gv.T).T
+            _print_freq_gv_rows(frequencies, gv_rot, ave_pp)
+    print("", end="", flush=True)
+
+
+def _print_freq_gv_rows(
+    frequencies: NDArray[np.double],
+    gv: NDArray[np.double],
+    ave_pp: NDArray[np.double] | None = None,
+) -> None:
+    """Print frequency/velocity rows with optional Pqj column."""
+    if ave_pp is not None:
+        for f, v, pp in zip(frequencies, gv, ave_pp, strict=True):
+            print(
+                "%8.3f   (%8.3f %8.3f %8.3f) %8.3f %11.3e"
+                % (f, v[0], v[1], v[2], np.linalg.norm(v), pp)
+            )
+    else:
+        for f, v in zip(frequencies, gv, strict=True):
+            print(
+                "%8.3f   (%8.3f %8.3f %8.3f) %8.3f"
+                % (f, v[0], v[1], v[2], np.linalg.norm(v))
+            )
 
 
 def log_kappa_header(

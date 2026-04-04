@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
-from phono3py.conductivity.grid_point_data import GridPointInput, GridPointResult
+from phono3py.conductivity.grid_point_data import GridPointInput, VelocityResult
 from phono3py.conductivity.utils import VOIGT_INDEX_PAIRS
 from phono3py.conductivity.velocity_providers import (
     get_kstar_order,
@@ -23,7 +23,7 @@ class VelocityMatrixProvider:
     Green-Kubo formula.  It wraps phono3py's ``GroupVelocityMatrix`` and
     computes the k-star-averaged outer product of velocity matrix elements.
 
-    The returned ``GridPointResult`` fields:
+    The returned ``VelocityResult`` contains:
     - ``group_velocities`` (num_band0, 3): diagonal (standard) group velocities,
       real part of the velocity matrix diagonal.
     - ``gv_by_gv`` (num_band0, 6): real diagonal of the outer product (standard
@@ -76,7 +76,7 @@ class VelocityMatrixProvider:
             frequency_factor_to_THz=pp.frequency_factor_to_THz,
         )
 
-    def compute(self, gp: GridPointInput) -> GridPointResult:
+    def compute(self, gp: GridPointInput) -> VelocityResult:
         """Compute velocity matrix quantities at a grid point.
 
         Parameters
@@ -86,28 +86,29 @@ class VelocityMatrixProvider:
 
         Returns
         -------
-        GridPointResult
+        VelocityResult
             ``group_velocities`` (num_band0, 3), ``gv_by_gv``
             (num_band0, 6) real, ``vm_by_vm``
             (num_band0, num_band, 6) complex, and
             ``num_sampling_grid_points`` are set.
 
         """
-        result = GridPointResult(input=gp)
-
         q_point = get_qpoints_from_bz_grid_points(gp.grid_point, self._pp.bz_grid)
         self._velocity_obj.run([q_point])
         assert self._velocity_obj.group_velocity_matrices is not None
         # gvm_full: (3, nat3, nat3) at the irreducible q
         gvm_full = self._velocity_obj.group_velocity_matrices[0]
 
-        result.group_velocities = self._get_group_velocities(gp, gvm_full)
+        gv = self._get_group_velocities(gp, gvm_full)
         vm_by_vm, kstar_order = self._get_vm_by_vm(gp)
         num_band0 = vm_by_vm.shape[0]
-        result.gv_by_gv = np.real(vm_by_vm[np.arange(num_band0), np.arange(num_band0)])
-        result.vm_by_vm = vm_by_vm
-        result.num_sampling_grid_points = kstar_order
-        return result
+        gv_by_gv = np.real(vm_by_vm[np.arange(num_band0), np.arange(num_band0)])
+        return VelocityResult(
+            group_velocities=gv,
+            gv_by_gv=gv_by_gv,
+            vm_by_vm=vm_by_vm,
+            num_sampling_grid_points=kstar_order,
+        )
 
     # ------------------------------------------------------------------
     # Private helpers

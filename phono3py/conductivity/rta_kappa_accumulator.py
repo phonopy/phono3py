@@ -8,7 +8,6 @@ from numpy.typing import NDArray
 from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.grid_point_data import (
     GridPointAggregates,
-    GridPointResult,
     compute_effective_gamma,
 )
 from phono3py.conductivity.utils import log_kappa_header, log_kappa_row
@@ -66,69 +65,58 @@ class RTAKappaAccumulator:
             (num_sigma, num_temp, num_gp, num_band0, 6), dtype="double", order="C"
         )
 
-    def accumulate(self, i_gp: int, result: GridPointResult) -> None:
-        """Store per-grid-point data and compute mode kappa at ``i_gp``."""
-        assert result.group_velocities is not None
-        assert result.gv_by_gv is not None
-        assert result.heat_capacities is not None
-        assert result.gamma is not None
-
-        # Compute mode kappa.
-        gv_by_gv = result.gv_by_gv
-        cv = result.heat_capacities  # (num_temp, num_band0)
-        frequencies = result.input.frequencies[result.input.band_indices]
-
-        gamma = compute_effective_gamma(
-            result.gamma,
-            gamma_isotope=result.gamma_isotope,
-            gamma_boundary=result.gamma_boundary,
-            gamma_elph=result.gamma_elph,
-        )  # (num_sigma, num_temp, num_band0)
-        num_sigma, num_temp, num_band0 = gamma.shape
-        mode_kappa = np.zeros((num_sigma, num_temp, num_band0, 6), dtype="double")
-
-        for ll in range(num_band0):
-            if frequencies[ll] < self._context.cutoff_frequency:
-                continue
-            for j in range(num_sigma):
-                for k in range(num_temp):
-                    g = gamma[j, k, ll]
-                    old_settings = np.seterr(all="raise")
-                    try:
-                        mode_kappa[j, k, ll] = (
-                            gv_by_gv[ll] * cv[k, ll] / (g * 2) * self._conversion_factor
-                        )
-                    except FloatingPointError:
-                        # g ~ 0 and |gv| = 0: contribution is zero
-                        pass
-                    except Exception:
-                        print("=" * 26 + " Warning " + "=" * 26)
-                        print(
-                            " Unexpected physical condition of ph-ph "
-                            "interaction calculation was found."
-                        )
-                        print(
-                            " g=%f at gp=%d, band=%d, freq=%f"
-                            % (
-                                g,
-                                result.input.grid_point,
-                                ll + 1,
-                                frequencies[ll],
-                            )
-                        )
-                        print("=" * 61)
-                    finally:
-                        np.seterr(**old_settings)
-
-        self._mode_kappa[:, :, i_gp, :, :] = mode_kappa
-
     def finalize(self, aggregates: GridPointAggregates) -> None:
-        """Compute kappa from mode_kappa."""
+        """Compute mode kappa and kappa from aggregated data."""
+        self._compute_mode_kappa(aggregates)
         num_sampling_grid_points = aggregates.num_sampling_grid_points
         if num_sampling_grid_points > 0:
             self._kappa = (
                 np.sum(self._mode_kappa, axis=(2, 3)) / num_sampling_grid_points
             )
+
+    def _compute_mode_kappa(self, aggregates: GridPointAggregates) -> None:
+        """Compute mode kappa at all grid points."""
+        assert aggregates.gv_by_gv is not None
+        assert aggregates.gamma is not None
+
+        gv_by_gv = aggregates.gv_by_gv
+        cv = aggregates.mode_heat_capacities
+        gamma_eff = compute_effective_gamma(aggregates)
+        num_sigma, num_temp, num_gp, num_band0 = gamma_eff.shape
+
+        for i_gp in range(num_gp):
+            gp = self._context.grid_points[i_gp]
+            frequencies = self._context.frequencies[gp][self._context.band_indices]
+            for ll in range(num_band0):
+                if frequencies[ll] < self._context.cutoff_frequency:
+                    continue
+                for j in range(num_sigma):
+                    for k in range(num_temp):
+                        g = gamma_eff[j, k, i_gp, ll]
+                        old_settings = np.seterr(all="raise")
+                        try:
+                            self._mode_kappa[j, k, i_gp, ll] = (
+                                gv_by_gv[i_gp, ll]
+                                * cv[k, i_gp, ll]
+                                / (g * 2)
+                                * self._conversion_factor
+                            )
+                        except FloatingPointError:
+                            pass
+                        except Exception:
+                            print("=" * 26 + " Warning " + "=" * 26)
+                            print(
+                                " Unexpected physical condition"
+                                " of ph-ph interaction"
+                                " calculation was found."
+                            )
+                            print(
+                                " g=%f at gp=%d, band=%d,"
+                                " freq=%f" % (g, gp, ll + 1, frequencies[ll])
+                            )
+                            print("=" * 61)
+                        finally:
+                            np.seterr(**old_settings)
 
     def log_kappa(
         self,

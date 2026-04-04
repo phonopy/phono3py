@@ -7,7 +7,7 @@ from numpy.typing import NDArray
 from phonopy.phonon.thermal_properties import mode_cv
 from phonopy.physical_units import get_physical_units
 
-from phono3py.conductivity.grid_point_data import GridPointInput, GridPointResult
+from phono3py.conductivity.grid_point_data import GridPointInput, HeatCapacityResult
 from phono3py.phonon3.interaction import Interaction
 
 
@@ -72,8 +72,8 @@ class ModeHeatCapacityProvider:
     requested temperatures using the standard Einstein/harmonic-oscillator
     formula, delegating to ``get_heat_capacities`` from ``conductivity.base``.
 
-    The returned ``GridPointResult`` field ``heat_capacities`` has shape
-    ``(num_temp, num_band0)``.
+    The returned ``HeatCapacityResult`` contains ``heat_capacities``
+    with shape ``(num_temp, num_band0)``.
 
     Parameters
     ----------
@@ -90,7 +90,7 @@ class ModeHeatCapacityProvider:
         self,
         gp: GridPointInput,
         temperatures: NDArray[np.double],
-    ) -> GridPointResult:
+    ) -> HeatCapacityResult:
         """Compute mode heat capacities at a grid point.
 
         Parameters
@@ -102,10 +102,8 @@ class ModeHeatCapacityProvider:
 
         Returns
         -------
-        GridPointResult
+        HeatCapacityResult
             ``heat_capacities`` (num_temp, num_band0) is set.
         """
         cv = get_heat_capacities(gp.grid_point, self._pp, temperatures)
-        result = GridPointResult(input=gp)
-        result.heat_capacities = cv
-        return result
+        return HeatCapacityResult(heat_capacities=cv)

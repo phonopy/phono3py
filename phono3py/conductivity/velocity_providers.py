@@ -8,7 +8,7 @@ import numpy as np
 from numpy.typing import NDArray
 from phonopy.phonon.group_velocity import GroupVelocity
 
-from phono3py.conductivity.grid_point_data import GridPointInput, GridPointResult
+from phono3py.conductivity.grid_point_data import GridPointInput, VelocityResult
 from phono3py.conductivity.utils import VOIGT_INDEX_PAIRS
 from phono3py.phonon.grid import (
     get_grid_points_by_rotations,
@@ -74,10 +74,10 @@ class GroupVelocityProvider:
     to the velocity computation previously embedded in
     ``ConductivityComponents``.
 
-    The returned ``GridPointResult`` fields
-    ``group_velocities`` (num_band0, 3) and ``gv_by_gv`` (num_band0, 6)
-    contain the standard-BTE velocity quantities.  ``gv_by_gv`` stores
-    the six independent components of the symmetry-averaged outer product
+    The returned ``VelocityResult`` contains ``group_velocities``
+    (num_band0, 3) and ``gv_by_gv`` (num_band0, 6) for the standard-BTE
+    velocity quantities.  ``gv_by_gv`` stores the six independent
+    components of the symmetry-averaged outer product
     ``v x v``: xx, yy, zz, yz, xz, xy.
 
     Parameters
@@ -133,7 +133,7 @@ class GroupVelocityProvider:
         """Return delta-q used for finite-difference group velocity."""
         return self._gv_delta_q
 
-    def compute(self, gp: GridPointInput) -> GridPointResult:
+    def compute(self, gp: GridPointInput) -> VelocityResult:
         """Compute group velocity and v x v product at a grid point.
 
         Parameters
@@ -143,17 +143,17 @@ class GroupVelocityProvider:
 
         Returns
         -------
-        GridPointResult
+        VelocityResult
             ``group_velocities`` (num_band0, 3), ``gv_by_gv``
             (num_band0, 6), and ``num_sampling_grid_points`` are set.
         """
-        result = GridPointResult(input=gp)
         gv = self._get_gv(gp)
         gv_by_gv, kstar_order = self._get_gv_by_gv(gp, gv)
-        result.group_velocities = gv
-        result.gv_by_gv = gv_by_gv
-        result.num_sampling_grid_points = kstar_order
-        return result
+        return VelocityResult(
+            group_velocities=gv,
+            gv_by_gv=gv_by_gv,
+            num_sampling_grid_points=kstar_order,
+        )
 
     # ------------------------------------------------------------------
     # Private helpers

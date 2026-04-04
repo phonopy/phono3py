@@ -8,7 +8,7 @@ import numpy as np
 from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
 
-from phono3py.conductivity.grid_point_data import GridPointInput, GridPointResult
+from phono3py.conductivity.grid_point_data import GridPointInput, ScatteringResult
 from phono3py.other.isotope import Isotope
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy, average_by_degeneracy
 from phono3py.phonon3.interaction import Interaction
@@ -21,10 +21,9 @@ class RTAScatteringProvider:
     ``ImagSelfEnergy`` and handles the sigma loop, the temperature loop, and
     the various computation modes (read_pp, use_ave_pp, low-memory path).
 
-    The returned ``GridPointResult.gamma`` has shape
-    ``(num_sigma, num_temp, num_band0)`` and contains ph-ph contributions
-    only.  Isotope and boundary contributions are handled by separate
-    providers.
+    The returned ``ScatteringResult`` contains ``gamma`` with shape
+    ``(num_sigma, num_temp, num_band0)`` (ph-ph contributions only).
+    Isotope and boundary contributions are handled by separate providers.
 
     Parameters
     ----------
@@ -86,7 +85,7 @@ class RTAScatteringProvider:
 
         self._collision = ImagSelfEnergy(pp, with_detail=(is_gamma_detail or is_N_U))
 
-        # Per-grid-point state set during compute_gamma, accessible for output.
+        # Per-grid-point state set during compute, accessible for output.
         self._gamma_N: NDArray[np.double] | None = None
         self._gamma_U: NDArray[np.double] | None = None
         self._gamma_detail_at_q: NDArray[np.double] | None = None
@@ -98,20 +97,20 @@ class RTAScatteringProvider:
 
     @property
     def gamma_N(self) -> NDArray[np.double] | None:
-        """Return Normal-process part of gamma from last compute_gamma call."""
+        """Return Normal-process part of gamma from last compute call."""
         return self._gamma_N
 
     @property
     def gamma_U(self) -> NDArray[np.double] | None:
-        """Return Umklapp-process part of gamma from last compute_gamma call."""
+        """Return Umklapp-process part of gamma from last compute call."""
         return self._gamma_U
 
     @property
     def gamma_detail_at_q(self) -> NDArray[np.double] | None:
-        """Return per-triplet gamma from last compute_gamma call."""
+        """Return per-triplet gamma from last compute call."""
         return self._gamma_detail_at_q
 
-    def compute_gamma(self, gp: GridPointInput) -> GridPointResult:
+    def compute(self, gp: GridPointInput) -> ScatteringResult:
         """Compute ph-ph linewidth at a grid point.
 
         Parameters
@@ -121,7 +120,7 @@ class RTAScatteringProvider:
 
         Returns
         -------
-        GridPointResult
+        ScatteringResult
             ``gamma`` (num_sigma, num_temp, num_band0) is set.
             ``averaged_pp_interaction`` (num_band0) is set when applicable.
         """
@@ -138,7 +137,7 @@ class RTAScatteringProvider:
             self._gamma_U = None
         self._gamma_detail_at_q = None
 
-        result = GridPointResult(input=gp)
+        self._averaged_pp_interaction: NDArray[np.double] | None = None
 
         self._collision.set_grid_point(gp.grid_point)
 
@@ -148,12 +147,14 @@ class RTAScatteringProvider:
             print("Number of triplets: %d" % len(triplets_at_q), flush=True)
 
         if self._requires_full_gamma_path():
-            self._run_sigmas(gp, gamma, result)
+            self._run_sigmas(gp, gamma)
         else:
             self._run_sigmas_lowmem(gp, gamma)
 
-        result.gamma = gamma
-        return result
+        return ScatteringResult(
+            gamma=gamma,
+            averaged_pp_interaction=self._averaged_pp_interaction,
+        )
 
     # ------------------------------------------------------------------
     # Private helpers
@@ -173,12 +174,11 @@ class RTAScatteringProvider:
         self,
         gp: GridPointInput,
         gamma: NDArray[np.double],
-        result: GridPointResult,
     ) -> None:
         for j, sigma in enumerate(self._sigmas):
             self._collision.set_sigma(sigma, sigma_cutoff=self._sigma_cutoff)
             self._collision.run_integration_weights()
-            self._set_interaction_strength(gp, j, sigma, result)
+            self._set_interaction_strength(gp, j, sigma)
             self._allocate_gamma_detail_if_needed()
             self._run_temperatures(gp, j, gamma)
 
@@ -187,13 +187,12 @@ class RTAScatteringProvider:
         gp: GridPointInput,
         i_sigma: int,
         sigma: float | None,
-        result: GridPointResult,
     ) -> None:
         if self._read_pp:
             self._set_from_file(gp, sigma)
         elif self._use_ave_pp:
-            assert result.averaged_pp_interaction is not None
-            self._collision.set_averaged_pp_interaction(result.averaged_pp_interaction)
+            assert self._averaged_pp_interaction is not None
+            self._collision.set_averaged_pp_interaction(self._averaged_pp_interaction)
         elif self._use_const_ave_pp:
             if self._log_level:
                 assert self._pp.constant_averaged_interaction is not None
@@ -202,7 +201,7 @@ class RTAScatteringProvider:
                     % self._pp.constant_averaged_interaction
                 )
             self._collision.run_interaction()
-            result.averaged_pp_interaction = self._pp.averaged_interaction
+            self._averaged_pp_interaction = self._pp.averaged_interaction
         elif i_sigma != 0 and (self._is_full_pp or self._sigma_cutoff is None):
             if self._log_level:
                 print("Existing ph-ph interaction is used.")
@@ -211,7 +210,7 @@ class RTAScatteringProvider:
                 print("Calculating ph-ph interaction...")
             self._collision.run_interaction(is_full_pp=self._is_full_pp)
             if self._is_full_pp:
-                result.averaged_pp_interaction = self._pp.averaged_interaction
+                self._averaged_pp_interaction = self._pp.averaged_interaction
 
     def _set_from_file(self, gp: GridPointInput, sigma: float | None) -> None:
         from phono3py.file_IO import read_pp_from_hdf5
@@ -417,8 +416,7 @@ class RTAScatteringProvider:
 class IsotopeScatteringProvider:
     """Compute isotope scattering linewidth at a grid point.
 
-    Sets ``GridPointResult.gamma_isotope`` with shape
-    ``(num_sigma, num_band0)``.
+    Returns gamma_isotope as NDArray with shape ``(num_sigma, num_band0)``.
 
     Parameters
     ----------
@@ -446,7 +444,7 @@ class IsotopeScatteringProvider:
         """Return the wrapped Isotope instance."""
         return self._isotope
 
-    def compute_gamma_isotope(self, gp: GridPointInput) -> GridPointResult:
+    def compute(self, gp: GridPointInput) -> NDArray[np.double]:
         """Compute isotope linewidth at a grid point.
 
         Parameters
@@ -456,8 +454,8 @@ class IsotopeScatteringProvider:
 
         Returns
         -------
-        GridPointResult
-            ``gamma_isotope`` (num_sigma, num_band0) is set.
+        ndarray of double, shape (num_sigma, num_band)
+            Isotope scattering linewidth for all bands.
         """
         gamma_iso = []
         for sigma in self._sigmas:
@@ -470,15 +468,13 @@ class IsotopeScatteringProvider:
             self._isotope.run()
             gamma_iso.append(self._isotope.gamma)
 
-        result = GridPointResult(input=gp)
-        result.gamma_isotope = np.array(gamma_iso, dtype="double", order="C")
-        return result
+        return np.array(gamma_iso, dtype="double", order="C")
 
 
 class BoundaryScatteringProvider:
     """Compute boundary scattering linewidth at a grid point.
 
-    Sets ``GridPointResult.gamma_boundary`` with shape ``(num_band0,)``.
+    Returns gamma_boundary as NDArray with shape ``(num_band0,)``.
     The formula is:
 
         gamma_boundary[s] = |v_s| * 1e6 * Angstrom / (4 * pi * boundary_mfp)
@@ -496,53 +492,23 @@ class BoundaryScatteringProvider:
         """Init method."""
         self._boundary_mfp = boundary_mfp
 
-    def compute_gamma_boundary(self, gp: GridPointInput) -> GridPointResult:
-        """Compute boundary scattering linewidth at a grid point.
-
-        Parameters
-        ----------
-        gp : GridPointInput
-            Per-grid-point phonon data.  ``group_velocities`` must be set
-            in the input (filled by a VelocityProvider beforehand).
-
-        Returns
-        -------
-        GridPointResult
-            ``gamma_boundary`` (num_band0,) is set.
-
-        Notes
-        -----
-        This provider requires group velocities.  Call a VelocityProvider
-        first and pass the resulting ``group_velocities`` via ``gp`` or
-        provide them externally.
-        """
-        result = GridPointResult(input=gp)
-        num_band0 = len(gp.band_indices)
-        g_boundary = np.zeros(num_band0, dtype="double")
-        result.gamma_boundary = g_boundary
-        return result
-
-    def compute_gamma_boundary_from_gv(
+    def compute(
         self,
-        gp: GridPointInput,
         group_velocities: NDArray[np.double],
-    ) -> GridPointResult:
-        """Compute boundary scattering linewidth using precomputed group velocities.
+    ) -> NDArray[np.double]:
+        """Compute boundary scattering linewidth.
 
         Parameters
         ----------
-        gp : GridPointInput
-            Per-grid-point phonon data.
         group_velocities : ndarray, shape (num_band0, 3)
             Group velocities in THz*Angstrom.
 
         Returns
         -------
-        GridPointResult
-            ``gamma_boundary`` (num_band0,) is set.
+        ndarray of double, shape (num_band0,)
+            Boundary scattering linewidth.
         """
-        result = GridPointResult(input=gp)
-        num_band0 = len(gp.band_indices)
+        num_band0 = len(group_velocities)
         g_boundary = np.zeros(num_band0, dtype="double")
         for ll in range(num_band0):
             g_boundary[ll] = (
@@ -551,5 +517,4 @@ class BoundaryScatteringProvider:
                 * 1e6
                 / (4 * np.pi * self._boundary_mfp)
             )
-        result.gamma_boundary = g_boundary
-        return result
+        return g_boundary

@@ -1,7 +1,8 @@
 """Per-grid-point data containers.
 
-This module defines GridPointInput and GridPointResult, the core data
-structures passed between building blocks in the conductivity calculation.
+This module defines GridPointInput, provider result types
+(VelocityResult, HeatCapacityResult, ScatteringResult), and
+GridPointAggregates used in the conductivity calculation.
 
 Protocol interfaces (VelocityProvider, HeatCapacityProvider,
 ScatteringProvider) are defined in ``phono3py.conductivity.protocols``
@@ -20,6 +21,84 @@ from phono3py.phonon.grid import BZGrid, get_qpoints_from_bz_grid_points
 
 # ---------------------------------------------------------------------------
 # Per-grid-point data containers
+# ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# Provider result types
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class VelocityResult:
+    """Result from a velocity provider at a single grid point.
+
+    Parameters
+    ----------
+    group_velocities : ndarray of double, shape (num_band0, 3)
+        Diagonal (standard) group velocities.
+    gv_by_gv : ndarray of double, shape (num_band0, 6)
+        Symmetrised outer product v x v in Voigt notation.
+    vm_by_vm : ndarray of cdouble, shape (num_band0, num_band, 6), optional
+        Off-diagonal velocity operator/matrix outer product.
+        Only set by Wigner and Kubo velocity providers.
+    num_sampling_grid_points : int
+        k-star order (number of arms) for this irreducible point.
+    extra : dict
+        Plugin-specific data (e.g. velocity_operator for Wigner HDF5 output).
+
+    """
+
+    group_velocities: NDArray[np.double]
+    gv_by_gv: NDArray[np.double]
+    vm_by_vm: NDArray[np.cdouble] | None = None
+    num_sampling_grid_points: int = 0
+    extra: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class HeatCapacityResult:
+    """Result from a heat capacity provider at a single grid point.
+
+    Parameters
+    ----------
+    heat_capacities : ndarray of double, shape (num_temp, num_band0)
+        Mode heat capacities (scalar Cv per mode).
+    heat_capacity_matrix : ndarray of double, optional
+        Shape (num_temp, num_band0, num_band).
+        Only set by HeatCapacityMatrixProvider (Kubo).
+    extra : dict
+        Plugin-specific data.
+
+    """
+
+    heat_capacities: NDArray[np.double]
+    heat_capacity_matrix: NDArray[np.double] | None = None
+    extra: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class ScatteringResult:
+    """Result from a scattering provider at a single grid point.
+
+    Parameters
+    ----------
+    gamma : ndarray of double, shape (num_sigma, num_temp, num_band0)
+        Ph-ph linewidth (imaginary part of self-energy).
+    averaged_pp_interaction : ndarray of double, shape (num_band0,), optional
+        Averaged ph-ph interaction strength.
+    extra : dict
+        Plugin-specific data.
+
+    """
+
+    gamma: NDArray[np.double]
+    averaged_pp_interaction: NDArray[np.double] | None = None
+    extra: dict[str, Any] = field(default_factory=dict)
+
+
+# ---------------------------------------------------------------------------
+# Grid-point input / result containers
 # ---------------------------------------------------------------------------
 
 
@@ -43,6 +122,7 @@ class GridPointInput:
         Symmetry weight for BZ summation (number of arms of the k-star).
     band_indices : ndarray of int64, shape (num_band0,)
         Selected band indices. num_band0 <= num_band.
+
     """
 
     grid_point: int
@@ -51,98 +131,6 @@ class GridPointInput:
     eigenvectors: NDArray[np.cdouble]
     grid_weight: int
     band_indices: NDArray[np.int64]
-
-
-@dataclass
-class GridPointResult:
-    """Computed quantities at a single irreducible BZ grid point.
-
-    Fields are filled incrementally by the building blocks (velocity
-    provider, heat-capacity provider, scattering provider) and finally
-    by the kappa formula.
-
-    Shape conventions
-    -----------------
-    num_band0  : number of selected bands (len(band_indices))
-    num_band   : total number of bands
-    num_temp   : number of temperatures
-    num_sigma  : number of broadening widths (smearing parameters)
-
-    Velocity fields
-    ~~~~~~~~~~~~~~~
-    group_velocities : (num_band0, 3), real
-        Diagonal (standard) group velocities; filled by all velocity providers.
-    gv_by_gv : (num_band0, 6), real
-        Symmetrised outer product v x v (Voigt notation).
-        Filled by all velocity providers.
-    vm_by_vm : (num_band0, num_band, 6), complex, optional
-        Off-diagonal velocity operator/matrix outer product.
-        Only set by Wigner and Kubo velocity providers.
-
-    Heat-capacity fields
-    ~~~~~~~~~~~~~~~~~~~~
-    heat_capacities : (num_temp, num_band0), real
-        Mode heat capacities (scalar Cv per mode).
-    heat_capacity_matrix : (num_temp, num_band0, num_band), real, optional
-        Heat-capacity matrix; only set by HeatCapacityMatrixProvider (Kubo).
-
-    Scattering fields
-    ~~~~~~~~~~~~~~~~~
-    All scattering fields contain ph-ph, isotope, boundary, and elph
-    contributions separately.  The effective linewidth used in the kappa
-    formula is their sum.
-
-    gamma : (num_sigma, num_temp, num_band0), real
-        ph-ph linewidth (imaginary part of self-energy).
-    gamma_isotope : (num_sigma, num_band0), real, optional
-        Isotope scattering linewidth (temperature-independent).
-    gamma_boundary : (num_band0,), real, optional
-        Boundary scattering linewidth (sigma- and temperature-independent).
-    gamma_elph : (num_sigma, num_temp, num_band0), real, optional
-        Electron-phonon scattering linewidth.
-
-    Note: isotope and boundary scattering are diagonal-only contributions
-    that enter both the RTA and the LBTE collision matrix diagonal in the
-    same way.
-
-    Plugin-specific output fields
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    extra : dict[str, Any]
-        Arbitrary plugin-specific data set by kappa-formula implementations.
-        Keys are plugin-defined (e.g. ``"wigner_mode_kappa_C"``).
-        Default is an empty dict; standard formulas do not populate this field.
-
-    Summation helper
-    ~~~~~~~~~~~~~~~~
-    num_sampling_grid_points : int
-        Cumulative count of BZ grid points represented by this irreducible
-        point (i.e. k-star order). Accumulated by the velocity provider.
-    """
-
-    input: GridPointInput
-
-    # --- velocity ---
-    group_velocities: NDArray[np.double] | None = None
-    gv_by_gv: NDArray[np.double] | None = None
-    vm_by_vm: NDArray[np.cdouble] | None = None
-
-    # --- heat capacity ---
-    heat_capacities: NDArray[np.double] | None = None
-    heat_capacity_matrix: NDArray[np.double] | None = None
-
-    # --- scattering ---
-    gamma: NDArray[np.double] | None = None
-    gamma_isotope: NDArray[np.double] | None = None
-    gamma_boundary: NDArray[np.double] | None = None
-    gamma_elph: NDArray[np.double] | None = None
-
-    # --- auxiliary output ---
-    averaged_pp_interaction: NDArray[np.double] | None = None
-    # Plugin-specific data; keys are plugin-defined strings.
-    extra: dict[str, Any] = field(default_factory=dict)
-
-    # --- BZ summation helper ---
-    num_sampling_grid_points: int = 0
 
 
 # ---------------------------------------------------------------------------
@@ -168,24 +156,27 @@ class GridPointAggregates:
     mode_heat_capacities : (num_temp, num_gp, num_band0), real
         Mode heat capacities.
 
-    RTA only
-    ~~~~~~~~
+    Common optional
+    ~~~~~~~~~~~~~~~
     gv_by_gv : (num_gp, num_band0, 6), real
         Symmetrised outer product v x v in Voigt notation.
-
-    LBTE only
-    ~~~~~~~~~
     gamma : (num_sigma, num_temp, num_gp, num_band0), real
         Ph-ph linewidths.
-
-    Optional (plugin-specific)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~
     gamma_isotope : (num_sigma, num_gp, num_band0), real
-        Isotope scattering linewidths (LBTE).
+        Isotope scattering linewidths.
+    gamma_boundary : (num_gp, num_band0), real
+        Boundary scattering linewidths.
+    gamma_elph : (num_sigma, num_temp, num_gp, num_band0), real
+        Electron-phonon scattering linewidths.
+
+    Plugin-specific
+    ~~~~~~~~~~~~~~~
     vm_by_vm : (num_gp, num_band0, num_band, 6), complex
         Off-diagonal velocity operator outer product (Wigner/Kubo).
     heat_capacity_matrix : (num_temp, num_gp, num_band0, num_band), real
         Heat-capacity matrix (Kubo).
+    extra : dict
+        Plugin-specific data (e.g. velocity_operator for Wigner).
 
     """
 
@@ -195,8 +186,11 @@ class GridPointAggregates:
     gv_by_gv: NDArray[np.double] | None = None
     gamma: NDArray[np.double] | None = None
     gamma_isotope: NDArray[np.double] | None = None
+    gamma_boundary: NDArray[np.double] | None = None
+    gamma_elph: NDArray[np.double] | None = None
     vm_by_vm: NDArray[np.cdouble] | None = None
     heat_capacity_matrix: NDArray[np.double] | None = None
+    extra: dict[str, Any] = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -205,43 +199,33 @@ class GridPointAggregates:
 
 
 def compute_effective_gamma(
-    gamma: NDArray[np.double],
-    gamma_isotope: NDArray[np.double] | None = None,
-    gamma_boundary: NDArray[np.double] | None = None,
-    gamma_elph: NDArray[np.double] | None = None,
+    aggregates: GridPointAggregates,
 ) -> NDArray[np.double]:
-    """Return effective linewidth combining all diagonal scattering contributions.
+    """Return effective linewidth from aggregated scattering arrays.
 
-    Sums ph-ph, isotope, boundary, and electron-phonon linewidths:
-
-        gamma_eff = gamma + gamma_isotope + gamma_boundary + gamma_elph
-
-    Only ``gamma`` (ph-ph) is required; the others are added when present.
+    Sums ph-ph, isotope, boundary, and electron-phonon linewidths
+    with proper broadcasting over the
+    (num_sigma, num_temp, num_gp, num_band0) shape.
 
     Parameters
     ----------
-    gamma : ndarray of double
-        Ph-ph linewidth, shape (num_sigma, num_temp, num_band0).
-    gamma_isotope : ndarray of double or None, optional
-        Isotope scattering, shape (num_sigma, num_band0).
-    gamma_boundary : ndarray of double or None, optional
-        Boundary scattering, shape (num_band0,).
-    gamma_elph : ndarray of double or None, optional
-        Electron-phonon scattering, shape (num_sigma, num_temp, num_band0).
+    aggregates : GridPointAggregates
+        Must have ``gamma`` set.
 
     Returns
     -------
-    ndarray of double, shape (num_sigma, num_temp, num_band0)
+    ndarray of double, shape (num_sigma, num_temp, num_gp, num_band0)
         Effective linewidth.
 
     """
-    out = gamma.copy()
-    if gamma_isotope is not None:
-        out += gamma_isotope[:, np.newaxis, :]
-    if gamma_boundary is not None:
-        out += gamma_boundary[np.newaxis, np.newaxis, :]
-    if gamma_elph is not None:
-        out += gamma_elph
+    assert aggregates.gamma is not None
+    out = aggregates.gamma.copy()
+    if aggregates.gamma_isotope is not None:
+        out += aggregates.gamma_isotope[:, np.newaxis, :, :]
+    if aggregates.gamma_boundary is not None:
+        out += aggregates.gamma_boundary[np.newaxis, np.newaxis, :, :]
+    if aggregates.gamma_elph is not None:
+        out += aggregates.gamma_elph
     return out
 
 
@@ -273,6 +257,7 @@ def make_grid_point_input(
     Returns
     -------
     GridPointInput
+
     """
     return GridPointInput(
         grid_point=grid_point,
@@ -306,7 +291,9 @@ from phono3py.conductivity.protocols import (  # noqa: E402
 __all__ = [
     "GridPointAggregates",
     "GridPointInput",
-    "GridPointResult",
+    "HeatCapacityResult",
+    "ScatteringResult",
+    "VelocityResult",
     "compute_effective_gamma",
     "make_grid_point_input",
     "VelocityProvider",

@@ -12,7 +12,7 @@ from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.grid_point_data import (
     GridPointAggregates,
     GridPointInput,
-    GridPointResult,
+    compute_effective_gamma,
     make_grid_point_input,
 )
 from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
@@ -22,12 +22,15 @@ from phono3py.conductivity.scattering_providers import (
     IsotopeScatteringProvider,
     RTAScatteringProvider,
 )
-from phono3py.conductivity.utils import show_grid_point_header
+from phono3py.conductivity.utils import (
+    show_grid_point_frequencies_gv,
+    show_grid_point_frequencies_gv_on_kstar,
+    show_grid_point_header,
+)
 from phono3py.conductivity.velocity_providers import GroupVelocityProvider
 from phono3py.other.isotope import Isotope
 from phono3py.phonon.grid import (
     BZGrid,
-    get_grid_points_by_rotations,
     get_qpoints_from_bz_grid_points,
 )
 from phono3py.phonon3.interaction import Interaction
@@ -137,6 +140,7 @@ class RTACalculator:
         self._gamma_U: NDArray[np.double] | None = None
         self._gamma_elph: NDArray[np.double] | None = None
         self._gamma_boundary: NDArray[np.double] | None = None
+        self._extra: dict[str, Any] = {}
         self._num_sampling_grid_points = 0
         self._num_ignored_phonon_modes: NDArray[np.int64] | None = None
         self._gamma_detail_at_q: NDArray[np.double] | None = None
@@ -192,9 +196,15 @@ class RTACalculator:
             group_velocities=self._gv,
             mode_heat_capacities=self._cv,
             gv_by_gv=self._gv_by_gv,
+            gamma=self._gamma,
+            gamma_isotope=self._gamma_iso,
+            gamma_boundary=self._gamma_boundary,
+            gamma_elph=self._gamma_elph,
             vm_by_vm=self._vm_by_vm,
             heat_capacity_matrix=self._heat_capacity_matrix,
+            extra=self._extra,
         )
+        self._count_ignored_modes(aggregates)
         self._accumulator.finalize(aggregates)
 
     # ------------------------------------------------------------------
@@ -322,18 +332,17 @@ class RTACalculator:
         return fn() if callable(fn) else None
 
     def get_extra_grid_point_output(self) -> dict[str, Any] | None:
-        """Return per-grid-point extra arrays from the accumulator.
+        """Return per-grid-point extra arrays stored by the calculator.
 
         Called by output writers to obtain plugin-defined per-grid-point
         arrays (e.g. Wigner velocity_operator) that are written to
         the hdf5 file via ``write_kappa_to_hdf5(extra_datasets=...)``.
         The caller is responsible for slicing by grid-point index.
 
-        Returns None when the accumulator does not implement this method.
+        Returns None when no extra data has been stored.
 
         """
-        fn = getattr(self._accumulator, "get_extra_grid_point_output", None)
-        return fn() if callable(fn) else None
+        return self._extra if self._extra else None
 
     def log_kappa(self) -> None:
         """Delegate kappa logging to the accumulator.
@@ -544,19 +553,15 @@ class RTACalculator:
 
         # Velocity.
         vel_result = self._velocity_provider.compute(gp_input)
-        assert vel_result.group_velocities is not None
-        assert vel_result.gv_by_gv is not None
         self._num_sampling_grid_points += vel_result.num_sampling_grid_points
 
         # Heat capacity.
         assert self._context.temperatures is not None
         cv_result = self._cv_provider.compute(gp_input, self._context.temperatures)
-        assert cv_result.heat_capacities is not None
 
         # ph-ph scattering.
         if not self._read_gamma:
-            scat_result = self._scattering_provider.compute_gamma(gp_input)
-            assert scat_result.gamma is not None
+            scat_result = self._scattering_provider.compute(gp_input)
             gamma = scat_result.gamma
             ave_pp = scat_result.averaged_pp_interaction
             if self._is_N_U or self._is_gamma_detail:
@@ -577,19 +582,16 @@ class RTACalculator:
         gamma_iso: NDArray[np.double] | None = None
         if self._is_isotope and not self._read_gamma_iso:
             assert self._isotope_provider is not None
-            iso_result = self._isotope_provider.compute_gamma_isotope(gp_input)
-            assert iso_result.gamma_isotope is not None
-            gamma_iso = iso_result.gamma_isotope[:, self._context.band_indices]
+            gamma_iso = self._isotope_provider.compute(gp_input)
+            gamma_iso = gamma_iso[:, self._context.band_indices]
 
         # Boundary scattering (needs group velocities computed above).
         gamma_boundary: NDArray[np.double] | None = None
         if self._boundary_provider is not None:
-            bd_result = self._boundary_provider.compute_gamma_boundary_from_gv(
-                gp_input, vel_result.group_velocities
+            gamma_boundary = self._boundary_provider.compute(
+                vel_result.group_velocities
             )
-            assert bd_result.gamma_boundary is not None
-            self._gamma_boundary[i_gp] = bd_result.gamma_boundary
-            gamma_boundary = bd_result.gamma_boundary
+            self._gamma_boundary[i_gp] = gamma_boundary
 
         if self._log_level:
             self._show_log(i_gp, vel_result.group_velocities, ave_pp)
@@ -637,27 +639,15 @@ class RTACalculator:
                 )
             self._gamma_iso[:, i_gp, :] = gamma_iso
 
-        # Build GridPointResult from provider outputs.
-        result = GridPointResult(input=gp_input)
-        result.group_velocities = vel_result.group_velocities
-        result.gv_by_gv = vel_result.gv_by_gv
-        result.vm_by_vm = vel_result.vm_by_vm
-        result.heat_capacities = cv_result.heat_capacities
-        result.heat_capacity_matrix = cv_result.heat_capacity_matrix
-
-        result.gamma = gamma
-        if gamma_iso is not None:
-            result.gamma_isotope = gamma_iso
-        elif self._read_gamma_iso and self._gamma_iso is not None:
-            result.gamma_isotope = self._gamma_iso[:, i_gp, :]
-        if self._gamma_elph is not None:
-            result.gamma_elph = self._gamma_elph[:, :, i_gp, :]
-        if gamma_boundary is not None:
-            result.gamma_boundary = gamma_boundary
-        result.extra.update(vel_result.extra)
-
-        self._accumulator.accumulate(i_gp, result)
-        self._count_ignored_modes(i_gp, result)
+        # Store velocity extra data (e.g. velocity_operator for Wigner).
+        if vel_result.extra:
+            for key, val in vel_result.extra.items():
+                if key not in self._extra:
+                    num_gp = len(self._context.grid_points)
+                    self._extra[key] = np.zeros(
+                        (num_gp,) + val.shape, dtype=val.dtype, order="C"
+                    )
+                self._extra[key][i_gp] = val
 
     def _show_log(
         self,
@@ -666,98 +656,38 @@ class RTACalculator:
         ave_pp: NDArray[np.double] | None,
     ) -> None:
         gp = self._context.grid_points[i_gp]
-        qpoint = get_qpoints_from_bz_grid_points(gp, self._context.bz_grid)
         frequencies = self._context.frequencies[gp][self._context.band_indices]
-        self._show_log_value_names()
-        if self._log_level > 2:
-            self._show_log_values_on_kstar(frequencies, gv, ave_pp, gp, qpoint)
-        else:
-            self._show_log_values(frequencies, gv, ave_pp)
-        print("", end="", flush=True)
-
-    def _show_log_values(
-        self,
-        frequencies: NDArray[np.double],
-        gv: NDArray[np.double],
-        ave_pp: NDArray[np.double] | None,
-    ) -> None:
-        if self._scattering_provider.is_full_pp:
-            assert ave_pp is not None
-            for f, v, pp in zip(frequencies, gv, ave_pp, strict=True):
-                print(
-                    "%8.3f   (%8.3f %8.3f %8.3f) %8.3f %11.3e"
-                    % (f, v[0], v[1], v[2], np.linalg.norm(v), pp)
-                )
-        else:
-            for f, v in zip(frequencies, gv, strict=True):
-                print(
-                    "%8.3f   (%8.3f %8.3f %8.3f) %8.3f"
-                    % (f, v[0], v[1], v[2], np.linalg.norm(v))
-                )
-
-    def _show_log_values_on_kstar(
-        self,
-        frequencies: NDArray[np.double],
-        gv: NDArray[np.double],
-        ave_pp: NDArray[np.double] | None,
-        gp: int,
-        q: NDArray[np.double],
-    ) -> None:
-        rotation_map = get_grid_points_by_rotations(gp, self._context.bz_grid)
-        for i, j in enumerate(np.unique(rotation_map)):
-            for k, (rot, rot_c) in enumerate(
-                zip(
-                    self._context.point_operations,
-                    self._context.rotations_cartesian,
-                    strict=True,
-                )
-            ):
-                if rotation_map[k] != j:
-                    continue
-                q_rot = tuple(np.dot(rot, q))
-                print(" k*%-2d (%5.2f %5.2f %5.2f)" % ((i + 1,) + q_rot))
-                if self._scattering_provider.is_full_pp:
-                    assert ave_pp is not None
-                    for f, v, pp in zip(
-                        frequencies, np.dot(rot_c, gv.T).T, ave_pp, strict=True
-                    ):
-                        print(
-                            "%8.3f   (%8.3f %8.3f %8.3f) %8.3f %11.3e"
-                            % (f, v[0], v[1], v[2], np.linalg.norm(v), pp)
-                        )
-                else:
-                    for f, v in zip(frequencies, np.dot(rot_c, gv.T).T, strict=True):
-                        print(
-                            "%8.3f   (%8.3f %8.3f %8.3f) %8.3f"
-                            % (f, v[0], v[1], v[2], np.linalg.norm(v))
-                        )
-        print("")
-
-    def _show_log_value_names(self) -> None:
-        if self._scattering_provider.is_full_pp:
-            text = "Frequency     group velocity (x, y, z)     |gv|       Pqj"
-        else:
-            text = "Frequency     group velocity (x, y, z)     |gv|"
+        pp = ave_pp if self._scattering_provider.is_full_pp else None
         gv_delta_q = getattr(self._velocity_provider, "gv_delta_q", None)
-        if gv_delta_q is not None:
-            text += "  (dq=%3.1e)" % gv_delta_q
-        print(text)
+        if self._log_level > 2:
+            show_grid_point_frequencies_gv_on_kstar(
+                frequencies,
+                gv,
+                gp,
+                self._context.bz_grid,
+                self._context.point_operations,
+                self._context.rotations_cartesian,
+                gv_delta_q=gv_delta_q,
+                ave_pp=pp,
+            )
+        else:
+            show_grid_point_frequencies_gv(
+                frequencies, gv, gv_delta_q=gv_delta_q, ave_pp=pp
+            )
 
-    def _count_ignored_modes(self, i_gp: int, result: GridPointResult) -> None:
-        """Increment ignored-mode counter for modes below cutoff or negative gamma."""
+    def _count_ignored_modes(self, aggregates: GridPointAggregates) -> None:
+        """Count modes below cutoff or with negative effective gamma."""
         assert self._num_ignored_phonon_modes is not None
-        assert self._context.temperatures is not None
-        weight = int(self._context.grid_weights[i_gp])
-        freq = self._context.frequencies[self._context.grid_points[i_gp]]
-        for j in range(len(self._context.sigmas)):
-            for k in range(len(self._context.temperatures)):
-                g_eff = result.gamma[j, k].copy()
-                if result.gamma_isotope is not None:
-                    g_eff += result.gamma_isotope[j]
-                if result.gamma_elph is not None:
-                    g_eff += result.gamma_elph[j, k]
-                if result.gamma_boundary is not None:
-                    g_eff += result.gamma_boundary
-                for ll, f in enumerate(freq[self._context.band_indices]):
-                    if f < self._context.cutoff_frequency or g_eff[ll] < 0:
-                        self._num_ignored_phonon_modes[j, k] += weight
+        gamma_eff = compute_effective_gamma(aggregates)
+        num_sigma, num_temp, num_gp, num_band0 = gamma_eff.shape
+        for i_gp in range(num_gp):
+            weight = int(self._context.grid_weights[i_gp])
+            gp = self._context.grid_points[i_gp]
+            freq = self._context.frequencies[gp][self._context.band_indices]
+            for j in range(num_sigma):
+                for k in range(num_temp):
+                    for ll in range(num_band0):
+                        if freq[ll] < self._context.cutoff_frequency:
+                            self._num_ignored_phonon_modes[j, k] += weight
+                        elif gamma_eff[j, k, i_gp, ll] < 0:
+                            self._num_ignored_phonon_modes[j, k] += weight

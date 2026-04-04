@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import numpy as np
 from numpy.typing import NDArray
 
@@ -11,7 +9,6 @@ from phono3py.conductivity.collision_matrix_solver import CollisionMatrixSolver
 from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.grid_point_data import (
     GridPointAggregates,
-    GridPointResult,
     compute_effective_gamma,
 )
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionResult
@@ -125,9 +122,6 @@ class KuboRTAKappaAccumulator:
         self._conversion_factor = conversion_factor
         self._log_level = log_level
 
-        # Per-grid-point arrays (allocated in prepare()).
-        self._gamma_total: NDArray[np.double]
-
         # Kappa arrays (allocated in prepare()).
         self._kappa: NDArray[np.double]
         self._mode_kappa_matrix: NDArray[np.double]
@@ -141,13 +135,9 @@ class KuboRTAKappaAccumulator:
         *,
         num_band: int | None = None,
     ) -> None:
-        """Allocate per-grid-point and kappa arrays."""
+        """Allocate kappa arrays."""
         if num_band is None:
             num_band = num_band0
-        self._gamma_total = np.zeros(
-            (num_sigma, num_temp, num_gp, num_band0), dtype="double", order="C"
-        )
-
         self._kappa = np.zeros((num_sigma, num_temp, 6), dtype="double", order="C")
         self._kappa_intra = np.zeros(
             (num_sigma, num_temp, 6), dtype="double", order="C"
@@ -158,39 +148,26 @@ class KuboRTAKappaAccumulator:
             order="C",
         )
 
-    def accumulate(self, i_gp: int, result: GridPointResult) -> None:
-        """Store per-grid-point data and compute Kubo mode-kappa at ``i_gp``."""
-        assert result.gamma is not None
-
-        self._gamma_total[:, :, i_gp, :] = compute_effective_gamma(
-            result.gamma,
-            gamma_isotope=result.gamma_isotope,
-            gamma_boundary=result.gamma_boundary,
-            gamma_elph=result.gamma_elph,
-        )
-
     def finalize(self, aggregates: GridPointAggregates) -> None:
-        """Compute kappa and kappa_intra from mode_kappa_inter."""
-        assert self._mode_kappa_matrix.shape[3] == self._mode_kappa_matrix.shape[4]
+        """Compute kappa and kappa_intra from aggregated data."""
+        assert aggregates.vm_by_vm is not None
+        assert aggregates.heat_capacity_matrix is not None
 
         num_sampling_grid_points = aggregates.num_sampling_grid_points
-        vm_by_vm = aggregates.vm_by_vm
-        heat_capacity_matrix = aggregates.heat_capacity_matrix
+        gamma_eff = compute_effective_gamma(aggregates)
 
         for i_gp, gp in enumerate(self._context.grid_points):
-            # (num_sigma, num_temp, num_band, num_band, 6)
             mode_kappa_matrix = _compute_kubo_mode_kappa_matrix(
                 frequencies=self._context.frequencies[gp],
-                gamma=self._gamma_total[:, :, i_gp, :],
-                heat_capacity_matrix=heat_capacity_matrix[:, i_gp, :, :],
-                vm_by_vm=vm_by_vm[i_gp],
+                gamma=gamma_eff[:, :, i_gp, :],
+                heat_capacity_matrix=aggregates.heat_capacity_matrix[:, i_gp, :, :],
+                vm_by_vm=aggregates.vm_by_vm[i_gp],
                 cutoff_frequency=self._context.cutoff_frequency,
                 conversion_factor=self._conversion_factor,
             )
             self._mode_kappa_matrix[:, :, i_gp, :, :, :] = mode_kappa_matrix
 
         if num_sampling_grid_points > 0:
-            # Sum over gp, band0, band axes -> (num_sigma, num_temp, 6)
             self._kappa = (
                 self._mode_kappa_matrix.sum(axis=(2, 3, 4)) / num_sampling_grid_points
             )
@@ -302,8 +279,7 @@ class KuboLBTEKappaAccumulator:
     and adds the inter-band kappa from the Kubo formula using the collision
     matrix diagonal as effective linewidths.
 
-    Stage 1 (per-grid-point): accumulate() stores the velocity product and
-    heat capacity matrix, then delegates collision data to the solver.
+    Stage 1 (per-grid-point): store() delegates collision data to the solver.
 
     Stage 2 (global): finalize() calls solver.solve() for the standard LBTE
     kappa (intra-band), then computes Kubo inter-band kappa.
@@ -346,11 +322,10 @@ class KuboLBTEKappaAccumulator:
         """Allocate accumulator arrays."""
         self._solver.prepare()
 
-    def accumulate(
+    def store(
         self,
         i_gp: int,
         collision_result: LBTECollisionResult,
-        extra: dict[str, Any] | None = None,
     ) -> None:
         """Store collision matrix row for this grid point.
 
@@ -360,8 +335,6 @@ class KuboLBTEKappaAccumulator:
             Loop index over ir_grid_points (0-based).
         collision_result : LBTECollisionResult
             Result from LBTECollisionProvider.compute().
-        extra : dict or None
-            Plugin-specific data.  Ignored by KuboLBTEKappaAccumulator.
 
         """
         self._solver.store(i_gp, collision_result)

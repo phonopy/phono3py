@@ -7,17 +7,17 @@ from unittest.mock import MagicMock
 import numpy as np
 
 from phono3py.conductivity.context import ConductivityContext
-from phono3py.conductivity.grid_point_data import GridPointInput, GridPointResult
+from phono3py.conductivity.grid_point_data import GridPointAggregates
 from phono3py.conductivity.wigner.kappa_accumulators import WignerRTAKappaAccumulator
 
 
-def _make_dummy_context() -> ConductivityContext:
+def _make_dummy_context(num_gp: int = 1) -> ConductivityContext:
     """Create a minimal ConductivityContext for unit tests."""
     bz_grid = MagicMock()
     return ConductivityContext(
-        grid_points=np.zeros(1, dtype="int64"),
-        ir_grid_points=np.zeros(1, dtype="int64"),
-        grid_weights=np.ones(1, dtype="int64"),
+        grid_points=np.zeros(num_gp, dtype="int64"),
+        ir_grid_points=np.zeros(num_gp, dtype="int64"),
+        grid_weights=np.ones(num_gp, dtype="int64"),
         bz_grid=bz_grid,
         mesh_numbers=np.array([1, 1, 1], dtype="int64"),
         frequencies=np.ones((1, 6), dtype="double"),
@@ -33,87 +33,75 @@ def _make_dummy_context() -> ConductivityContext:
     )
 
 
-def _make_result_with_velocity_operator(
+def _make_aggregates(
+    num_gp: int = 1,
     nat3: int = 6,
     num_sigma: int = 1,
-    num_temp: int = 2,
-) -> GridPointResult:
-    """Create a GridPointResult with velocity_operator in extra.
+    num_temp: int = 1,
+    *,
+    with_velocity_operator: bool = True,
+) -> GridPointAggregates:
+    """Create a GridPointAggregates with minimal valid data.
 
-    Wigner requires num_band0 == num_band (all phonon branches), so both
-    are set to ``nat3``.
+    Parameters
+    ----------
+    num_gp : int
+        Number of grid points.
+    nat3 : int
+        Number of bands (num_band0 == num_band for Wigner).
+    num_sigma : int
+        Number of broadening widths.
+    num_temp : int
+        Number of temperatures.
+    with_velocity_operator : bool
+        If True, include a random velocity_operator in extra.
 
     """
-    gp_input = GridPointInput(
-        grid_point=0,
-        q_point=np.zeros(3, dtype="double"),
-        frequencies=np.ones(nat3, dtype="double"),
-        eigenvectors=np.eye(nat3, dtype="complex128"),
-        grid_weight=1,
-        band_indices=np.arange(nat3, dtype="int64"),
+    extra: dict = {}
+    if with_velocity_operator:
+        extra["velocity_operator"] = (
+            np.random.default_rng(42)
+            .random((num_gp, nat3, nat3, 3))
+            .astype("complex128")
+        )
+    return GridPointAggregates(
+        num_sampling_grid_points=num_gp,
+        group_velocities=np.zeros((num_gp, nat3, 3), dtype="double"),
+        mode_heat_capacities=np.ones((num_temp, num_gp, nat3), dtype="double"),
+        gv_by_gv=np.zeros((num_gp, nat3, 6), dtype="double"),
+        gamma=np.ones((num_sigma, num_temp, num_gp, nat3), dtype="double") * 0.1,
+        vm_by_vm=np.zeros((num_gp, nat3, nat3, 6), dtype="complex128"),
+        extra=extra,
     )
-    result = GridPointResult(input=gp_input)
-    result.group_velocities = np.zeros((nat3, 3), dtype="double")
-    result.gv_by_gv = np.zeros((nat3, 6), dtype="double")
-    result.vm_by_vm = np.zeros((nat3, nat3, 6), dtype="complex128")
-    result.heat_capacities = np.ones((num_temp, nat3), dtype="double")
-    result.gamma = np.ones((num_sigma, num_temp, nat3), dtype="double") * 0.1
-    result.extra["velocity_operator"] = (
-        np.random.default_rng(42).random((nat3, nat3, 3)).astype("complex128")
-    )
-    return result
 
 
 def test_get_extra_grid_point_output_stores_velocity_operator():
     """Velocity operator is stored per grid point and returned."""
-    ctx = _make_dummy_context()
+    num_gp = 2
+    ctx = _make_dummy_context(num_gp=num_gp)
     acc = WignerRTAKappaAccumulator(context=ctx, volume=1.0)
-    acc.prepare(num_sigma=1, num_temp=2, num_gp=2, num_band0=6)
+    acc.prepare(num_sigma=1, num_temp=1, num_gp=num_gp, num_band0=6)
 
-    result0 = _make_result_with_velocity_operator()
-    result1 = _make_result_with_velocity_operator()
-
-    acc.accumulate(0, result0)
-    acc.accumulate(1, result1)
-
-    extra = acc.get_extra_grid_point_output()
-
-    assert extra is not None
-    np.testing.assert_array_equal(
-        extra["velocity_operator"][0],
-        result0.extra["velocity_operator"],
-    )
-    np.testing.assert_array_equal(
-        extra["velocity_operator"][1],
-        result1.extra["velocity_operator"],
-    )
-
-
-def test_get_extra_grid_point_output_zeros_without_velocity_operator():
-    """Velocity operator is zero when not stored via result.extra."""
-    ctx = _make_dummy_context()
-    acc = WignerRTAKappaAccumulator(context=ctx, volume=1.0)
-    acc.prepare(num_sigma=1, num_temp=2, num_gp=1, num_band0=6)
-
-    # Result without velocity_operator in extra
-    nat3 = 6
-    gp_input = GridPointInput(
-        grid_point=0,
-        q_point=np.zeros(3, dtype="double"),
-        frequencies=np.ones(nat3, dtype="double"),
-        eigenvectors=np.eye(nat3, dtype="complex128"),
-        grid_weight=1,
-        band_indices=np.arange(nat3, dtype="int64"),
-    )
-    result = GridPointResult(input=gp_input)
-    result.group_velocities = np.zeros((nat3, 3), dtype="double")
-    result.gv_by_gv = np.zeros((nat3, 6), dtype="double")
-    result.vm_by_vm = np.zeros((nat3, nat3, 6), dtype="complex128")
-    result.heat_capacities = np.ones((2, nat3), dtype="double")
-    result.gamma = np.ones((1, 2, nat3), dtype="double") * 0.1
-
-    acc.accumulate(0, result)
+    aggregates = _make_aggregates(num_gp=num_gp, with_velocity_operator=True)
+    acc.finalize(aggregates)
 
     extra = acc.get_extra_grid_point_output()
     assert extra is not None
-    np.testing.assert_array_equal(extra["velocity_operator"][0], 0.0)
+    np.testing.assert_array_equal(
+        extra["velocity_operator"],
+        aggregates.extra["velocity_operator"],
+    )
+
+
+def test_get_extra_grid_point_output_none_without_velocity_operator():
+    """Velocity operator is None when not provided in aggregates.extra."""
+    ctx = _make_dummy_context()
+    acc = WignerRTAKappaAccumulator(context=ctx, volume=1.0)
+    acc.prepare(num_sigma=1, num_temp=1, num_gp=1, num_band0=6)
+
+    aggregates = _make_aggregates(with_velocity_operator=False)
+    acc.finalize(aggregates)
+
+    extra = acc.get_extra_grid_point_output()
+    assert extra is not None
+    assert extra["velocity_operator"] is None

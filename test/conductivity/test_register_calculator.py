@@ -6,10 +6,12 @@ import pytest
 
 from phono3py.conductivity import (
     GridPointInput,
-    GridPointResult,
     HeatCapacityProvider,
+    HeatCapacityResult,
     ScatteringProvider,
+    ScatteringResult,
     VelocityProvider,
+    VelocityResult,
     register_calculator,
 )
 from phono3py.conductivity.factory import _BUILTIN_METHODS, _REGISTRY
@@ -112,6 +114,8 @@ def test_public_api_exports_protocols():
 
 
 def test_public_api_exports_data_containers():
-    """GridPointInput and GridPointResult are importable from phono3py.conductivity."""
+    """Data containers are importable from phono3py.conductivity."""
     assert GridPointInput is not None
-    assert GridPointResult is not None
+    assert VelocityResult is not None
+    assert HeatCapacityResult is not None
+    assert ScatteringResult is not None

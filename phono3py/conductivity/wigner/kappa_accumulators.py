@@ -12,11 +12,11 @@ from phono3py.conductivity.collision_matrix_solver import CollisionMatrixSolver
 from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.grid_point_data import (
     GridPointAggregates,
-    GridPointResult,
     compute_effective_gamma,
 )
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionResult
 from phono3py.conductivity.utils import log_kappa_header, log_kappa_row
+
 # Threshold in THz below which two modes are considered degenerate and treated
 # as a population (diagonal) term instead of a coherence (off-diagonal) term.
 DEGENERATE_FREQUENCY_THRESHOLD_THZ = 1e-4
@@ -37,12 +37,7 @@ def _get_conversion_factor_WTE(volume: float) -> float:
 
     """
     u = get_physical_units()
-    return (
-        (u.THz * u.Angstrom) ** 2
-        * u.EV
-        * u.Hbar
-        / (volume * u.Angstrom**3)
-    )
+    return (u.THz * u.Angstrom) ** 2 * u.EV * u.Hbar / (volume * u.Angstrom**3)
 
 
 class WignerRTAKappaAccumulator:
@@ -82,7 +77,7 @@ class WignerRTAKappaAccumulator:
         self._mode_kappa_P: NDArray[np.double]
         self._kappa_C: NDArray[np.double]
         self._mode_kappa_C: NDArray[np.double]
-        self._velocity_operator: NDArray[np.cdouble]
+        self._velocity_operator: NDArray[np.cdouble] | None = None
 
     def prepare(
         self,
@@ -105,75 +100,6 @@ class WignerRTAKappaAccumulator:
             dtype="double",
             order="C",
         )
-        self._velocity_operator = np.zeros(
-            (num_gp, num_band0, num_band, 3), dtype="complex128", order="C"
-        )
-
-    def accumulate(self, i_gp: int, result: GridPointResult) -> None:
-        """Store per-grid-point data and compute mode kappa at ``i_gp``."""
-        assert result.group_velocities is not None
-        assert result.gv_by_gv is not None
-        assert result.vm_by_vm is not None
-        assert result.heat_capacities is not None
-        assert result.gamma is not None
-
-        # Store raw velocity operator for per-grid-point HDF5 output.
-        vel_op = result.extra.get("velocity_operator")
-        if vel_op is not None:
-            self._velocity_operator[i_gp] = vel_op
-
-        frequencies = result.input.frequencies  # (num_band,) all bands
-        vm_by_vm = result.vm_by_vm  # (num_band0, num_band, 6) complex
-        cv = result.heat_capacities  # (num_temp, num_band0)
-
-        gamma = compute_effective_gamma(
-            result.gamma,
-            gamma_isotope=result.gamma_isotope,
-            gamma_boundary=result.gamma_boundary,
-            gamma_elph=result.gamma_elph,
-        )  # (num_sigma, num_temp, num_band0)
-        num_sigma, num_temp, num_band0 = gamma.shape
-        num_band = len(frequencies)
-        THzToEv = get_physical_units().THzToEv
-
-        mode_kappa_P = np.zeros((num_sigma, num_temp, num_band0, 6), dtype="double")
-        mode_kappa_C = np.zeros(
-            (num_sigma, num_temp, num_band0, num_band, 6), dtype="double"
-        )
-
-        for j in range(num_sigma):
-            for k in range(num_temp):
-                g = gamma[j, k]  # (num_band0,)
-                cv_k = cv[k]  # (num_band0,)
-                for s1 in range(num_band0):
-                    freq_s1 = frequencies[s1]
-                    if freq_s1 <= self._context.cutoff_frequency:
-                        continue
-                    for s2 in range(num_band):
-                        freq_s2 = frequencies[s2]
-                        if freq_s2 <= self._context.cutoff_frequency:
-                            continue
-                        pair = self._get_pair_contribution(
-                            freq_s1=freq_s1,
-                            freq_s2=freq_s2,
-                            g_s1=g[s1],
-                            g_s2=g[s2],
-                            cv_s1=cv_k[s1],
-                            cv_s2=cv_k[s2],
-                            gv_by_gv_s1s2=vm_by_vm[s1, s2],
-                            THzToEv=THzToEv,
-                        )
-                        if pair is None:
-                            continue
-                        contribution, is_population = pair
-                        if is_population:
-                            mode_kappa_P[j, k, s1] += 0.5 * contribution
-                            mode_kappa_P[j, k, s2] += 0.5 * contribution
-                        else:
-                            mode_kappa_C[j, k, s1, s2] += contribution
-
-        self._mode_kappa_P[:, :, i_gp, :, :] = mode_kappa_P
-        self._mode_kappa_C[:, :, i_gp, :, :, :] = mode_kappa_C
 
     def _get_pair_contribution(
         self,
@@ -227,7 +153,15 @@ class WignerRTAKappaAccumulator:
         return contribution, is_population
 
     def finalize(self, aggregates: GridPointAggregates) -> None:
-        """Compute kappa_P and kappa_C from mode_kappa arrays."""
+        """Compute mode kappa (P + C) and kappa from aggregated data."""
+        assert aggregates.vm_by_vm is not None
+
+        # Store velocity operator from aggregates.extra.
+        vel_op = aggregates.extra.get("velocity_operator")
+        if vel_op is not None:
+            self._velocity_operator = vel_op
+
+        self._compute_mode_kappa(aggregates)
         num_sampling_grid_points = aggregates.num_sampling_grid_points
         if num_sampling_grid_points > 0:
             self._kappa_P = (
@@ -236,6 +170,60 @@ class WignerRTAKappaAccumulator:
             self._kappa_C = (
                 np.sum(self._mode_kappa_C, axis=(2, 3, 4)) / num_sampling_grid_points
             )
+
+    def _compute_mode_kappa(self, aggregates: GridPointAggregates) -> None:
+        """Compute mode kappa P and C at all grid points."""
+        assert aggregates.vm_by_vm is not None
+
+        vm_by_vm = aggregates.vm_by_vm
+        cv = aggregates.mode_heat_capacities
+        gamma_eff = compute_effective_gamma(aggregates)
+        num_sigma, num_temp, num_gp, num_band0 = gamma_eff.shape
+        THzToEv = get_physical_units().THzToEv
+
+        for i_gp in range(num_gp):
+            gp = self._context.grid_points[i_gp]
+            frequencies = self._context.frequencies[gp]
+            num_band = len(frequencies)
+
+            mode_kappa_P = np.zeros((num_sigma, num_temp, num_band0, 6), dtype="double")
+            mode_kappa_C = np.zeros(
+                (num_sigma, num_temp, num_band0, num_band, 6), dtype="double"
+            )
+
+            for j in range(num_sigma):
+                for k in range(num_temp):
+                    g = gamma_eff[j, k, i_gp]
+                    cv_k = cv[k, i_gp]
+                    for s1 in range(num_band0):
+                        freq_s1 = frequencies[s1]
+                        if freq_s1 <= self._context.cutoff_frequency:
+                            continue
+                        for s2 in range(num_band):
+                            freq_s2 = frequencies[s2]
+                            if freq_s2 <= self._context.cutoff_frequency:
+                                continue
+                            pair = self._get_pair_contribution(
+                                freq_s1=freq_s1,
+                                freq_s2=freq_s2,
+                                g_s1=g[s1],
+                                g_s2=g[s2],
+                                cv_s1=cv_k[s1],
+                                cv_s2=cv_k[s2],
+                                gv_by_gv_s1s2=vm_by_vm[i_gp, s1, s2],
+                                THzToEv=THzToEv,
+                            )
+                            if pair is None:
+                                continue
+                            contribution, is_population = pair
+                            if is_population:
+                                mode_kappa_P[j, k, s1] += 0.5 * contribution
+                                mode_kappa_P[j, k, s2] += 0.5 * contribution
+                            else:
+                                mode_kappa_C[j, k, s1, s2] += contribution
+
+            self._mode_kappa_P[:, :, i_gp, :, :] = mode_kappa_P
+            self._mode_kappa_C[:, :, i_gp, :, :, :] = mode_kappa_C
 
     @property
     def kappa(self) -> NDArray[np.double]:
@@ -356,8 +344,7 @@ class WignerLBTEKappaAccumulator:
     adds the coherence (C) term from the stored velocity operator outer
     products and linewidths.
 
-    Stage 1 (per-grid-point): accumulate() stores the velocity operator outer
-    product and heat capacities, then delegates collision data to the solver.
+    Stage 1 (per-grid-point): store() delegates collision data to the solver.
 
     Stage 2 (global): finalize() calls solver.solve() for the P-term kappa,
     then computes the C-term from the stored outer products and linewidths.
@@ -392,7 +379,7 @@ class WignerLBTEKappaAccumulator:
         self._is_reducible = is_reducible_collision_matrix
         self._log_level = log_level
 
-        # Per-grid-point storage (lazily allocated in accumulate()).
+        # Per-grid-point storage (set in finalize() from aggregates.extra).
         self._velocity_operator: NDArray[np.cdouble] | None = None
 
         # C-term output arrays (populated in finalize()).
@@ -407,13 +394,12 @@ class WignerLBTEKappaAccumulator:
         """Allocate accumulator arrays."""
         self._solver.prepare()
 
-    def accumulate(
+    def store(
         self,
         i_gp: int,
         collision_result: LBTECollisionResult,
-        extra: dict[str, Any] | None = None,
     ) -> None:
-        """Store per-grid-point Stage 1 data and delegate to the solver.
+        """Store collision matrix row for this grid point.
 
         Parameters
         ----------
@@ -421,20 +407,8 @@ class WignerLBTEKappaAccumulator:
             Loop index over ir_grid_points (0-based).
         collision_result : LBTECollisionResult
             Result from LBTECollisionProvider.compute().
-        extra : dict or None
-            Plugin-specific data from the velocity provider.  Expected keys:
-            ``velocity_operator`` (num_band0, nat3, 3) complex.
 
         """
-        velocity_operator = extra.get("velocity_operator") if extra else None
-
-        if velocity_operator is not None:
-            if self._velocity_operator is None:
-                num_ir = len(self._context.ir_grid_points)
-                self._velocity_operator = np.zeros(
-                    (num_ir,) + velocity_operator.shape, dtype="complex128"
-                )
-            self._velocity_operator[i_gp] = velocity_operator
         self._solver.store(i_gp, collision_result)
 
     def finalize(
@@ -448,6 +422,11 @@ class WignerLBTEKappaAccumulator:
         table printed at the end of this method) when log_level > 0.
 
         """
+        # Store velocity operator from aggregates.extra.
+        vel_op = aggregates.extra.get("velocity_operator")
+        if vel_op is not None:
+            self._velocity_operator = vel_op
+
         self._solver.solve(
             aggregates,
             suppress_kappa_log=bool(self._log_level),

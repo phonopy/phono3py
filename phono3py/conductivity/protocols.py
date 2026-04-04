@@ -18,9 +18,9 @@ ScatteringProvider
 
 Data containers
 ---------------
-GridPointInput and GridPointResult are defined in
-``phono3py.conductivity.grid_point_data`` and re-exported here for
-convenience.
+GridPointInput and provider result types (VelocityResult,
+HeatCapacityResult, ScatteringResult) are defined in
+``phono3py.conductivity.grid_point_data``.
 
 """
 
@@ -31,14 +31,21 @@ from typing import Protocol
 import numpy as np
 from numpy.typing import NDArray
 
-from phono3py.conductivity.grid_point_data import GridPointInput, GridPointResult
+from phono3py.conductivity.grid_point_data import (
+    GridPointInput,
+    HeatCapacityResult,
+    ScatteringResult,
+    VelocityResult,
+)
 
 __all__ = [
     "VelocityProvider",
     "HeatCapacityProvider",
     "ScatteringProvider",
     "GridPointInput",
-    "GridPointResult",
+    "VelocityResult",
+    "HeatCapacityResult",
+    "ScatteringResult",
 ]
 
 
@@ -56,10 +63,10 @@ class VelocityProvider(Protocol):
 
     """
 
-    def compute(self, gp: GridPointInput) -> GridPointResult:
-        """Compute velocity quantities and return a partially filled result.
+    def compute(self, gp: GridPointInput) -> VelocityResult:
+        """Compute velocity quantities at a grid point.
 
-        The returned GridPointResult must have at minimum
+        The returned VelocityResult must have at minimum
         ``group_velocities``, ``gv_by_gv``, and
         ``num_sampling_grid_points`` set.
 
@@ -83,10 +90,10 @@ class HeatCapacityProvider(Protocol):
         self,
         gp: GridPointInput,
         temperatures: NDArray[np.double],
-    ) -> GridPointResult:
-        """Compute heat-capacity quantities and return a partially filled result.
+    ) -> HeatCapacityResult:
+        """Compute heat-capacity quantities at a grid point.
 
-        The returned GridPointResult must have at minimum
+        The returned HeatCapacityResult must have at minimum
         ``heat_capacities`` set (and optionally ``heat_capacity_matrix``).
 
         """
@@ -105,17 +112,16 @@ class ScatteringProvider(Protocol):
     -----
     Isotope and boundary scattering are separate diagonal-only contributions
     handled by IsotopeScatteringProvider and BoundaryScatteringProvider.
-    They set ``gamma_isotope`` and ``gamma_boundary`` in GridPointResult.
 
     """
 
-    def compute_gamma(
+    def compute(
         self,
         gp: GridPointInput,
-    ) -> GridPointResult:
-        """Compute phonon linewidths and return a partially filled result.
+    ) -> ScatteringResult:
+        """Compute phonon linewidths at a grid point.
 
-        The returned GridPointResult must have at minimum
+        The returned ScatteringResult must have at minimum
         ``gamma`` of shape (num_sigma, num_temp, num_band0) set.
 
         """
