@@ -7,6 +7,7 @@ methods with the conductivity factory so that
 
 """
 
+from phono3py.conductivity.build_components import VariantBuildContext
 from phono3py.conductivity.factory import register_variant
 from phono3py.conductivity.njc23.heat_capacity_providers import (
     HeatCapacityMatrixProvider,
@@ -18,21 +19,22 @@ from phono3py.conductivity.njc23.kappa_accumulators import (
 from phono3py.conductivity.njc23.velocity_providers import VelocityMatrixProvider
 
 
-def _make_velocity_provider(ctx):
+def _make_velocity_provider(ctx: VariantBuildContext) -> VelocityMatrixProvider:
     return VelocityMatrixProvider(
         ctx.interaction,
-        point_operations=ctx.point_operations,
+        reciprocal_operations=ctx.point_operations,
+        rotations_cartesian=ctx.rotations_cartesian,
         is_kappa_star=ctx.is_kappa_star,
         gv_delta_q=ctx.gv_delta_q,
         log_level=ctx.log_level,
     )
 
 
-def _make_cv_provider(ctx):
+def _make_cv_provider(ctx: VariantBuildContext) -> HeatCapacityMatrixProvider:
     return HeatCapacityMatrixProvider(ctx.interaction)
 
 
-def _make_rta_accumulator(ctx):
+def _make_rta_accumulator(ctx: VariantBuildContext) -> KuboRTAKappaAccumulator:
     return KuboRTAKappaAccumulator(
         context=ctx.context,
         conversion_factor=ctx.conversion_factor,
@@ -40,7 +42,7 @@ def _make_rta_accumulator(ctx):
     )
 
 
-def _make_lbte_accumulator(ctx):
+def _make_lbte_accumulator(ctx: VariantBuildContext) -> KuboLBTEKappaAccumulator:
     return KuboLBTEKappaAccumulator(
         solver=ctx.solver,
         context=ctx.context,

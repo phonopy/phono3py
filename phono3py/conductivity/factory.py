@@ -34,17 +34,21 @@ from __future__ import annotations
 
 import os
 from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING, Any, Literal, TypeAlias
+from typing import Any, Literal, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
 
+from phono3py.conductivity.build_components import (
+    VariantBuildContext,
+    build_lbte_base_components,
+    build_rta_base_components,
+)
+from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
 from phono3py.conductivity.lbte_calculator import LBTECalculator
 from phono3py.conductivity.rta_calculator import RTACalculator
+from phono3py.conductivity.utils import get_unit_to_WmK
 from phono3py.phonon3.interaction import Interaction
-
-if TYPE_CHECKING:
-    from phono3py.conductivity.build_components import VariantBuildContext
 
 # ---------------------------------------------------------------------------
 # Plugin registry
@@ -118,13 +122,6 @@ def register_variant(
         )
 
     """
-    from phono3py.conductivity.build_components import (
-        VariantBuildContext,
-        build_lbte_base_components,
-        build_rta_base_components,
-    )
-    from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
-    from phono3py.conductivity.utils import get_unit_to_WmK
 
     def _rta_factory(
         interaction: Interaction,
@@ -353,19 +350,11 @@ def make_conductivity_calculator(
 # namespace packages; if absent, the method is simply not available.
 # ---------------------------------------------------------------------------
 
-from phono3py.conductivity.build_components import (  # noqa: E402
-    CalculatorConfig,
-    build_lbte_base_components,
-    build_rta_base_components,
-)
-from phono3py.conductivity.heat_capacity_providers import (  # noqa: E402
-    ModeHeatCapacityProvider,
-)
+from phono3py.conductivity.build_components import CalculatorConfig  # noqa: E402
 from phono3py.conductivity.kappa_accumulators import (  # noqa: E402
     LBTEKappaAccumulator,
     RTAKappaAccumulator,
 )
-from phono3py.conductivity.utils import get_unit_to_WmK  # noqa: E402
 from phono3py.conductivity.velocity_providers import (  # noqa: E402
     GroupVelocityProvider,
 )

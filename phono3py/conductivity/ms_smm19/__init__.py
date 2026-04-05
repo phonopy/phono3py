@@ -10,6 +10,7 @@ because ``factory.py`` does ``try: import phono3py.conductivity.ms_smm19``.
 
 """
 
+from phono3py.conductivity.build_components import VariantBuildContext
 from phono3py.conductivity.factory import register_variant
 from phono3py.conductivity.ms_smm19.kappa_accumulators import (
     WignerLBTEKappaAccumulator,
@@ -18,7 +19,7 @@ from phono3py.conductivity.ms_smm19.kappa_accumulators import (
 from phono3py.conductivity.ms_smm19.velocity_providers import VelocityOperatorProvider
 
 
-def _make_velocity_provider(ctx):
+def _make_velocity_provider(ctx: VariantBuildContext) -> VelocityOperatorProvider:
     return VelocityOperatorProvider(
         ctx.interaction,
         point_operations=ctx.point_operations,
@@ -29,7 +30,7 @@ def _make_velocity_provider(ctx):
     )
 
 
-def _make_rta_accumulator(ctx):
+def _make_rta_accumulator(ctx: VariantBuildContext) -> WignerRTAKappaAccumulator:
     return WignerRTAKappaAccumulator(
         context=ctx.context,
         volume=ctx.interaction.primitive.volume,
@@ -37,7 +38,7 @@ def _make_rta_accumulator(ctx):
     )
 
 
-def _make_lbte_accumulator(ctx):
+def _make_lbte_accumulator(ctx: VariantBuildContext) -> WignerLBTEKappaAccumulator:
     return WignerLBTEKappaAccumulator(
         solver=ctx.solver,
         context=ctx.context,

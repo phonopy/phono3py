@@ -44,8 +44,8 @@ from phonopy.harmonic.derivative_dynmat import DerivativeOfDynamicalMatrix
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix
 from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.phonon.group_velocity import GroupVelocity
-from phonopy.structure.symmetry import Symmetry
-from phonopy.utils import similarity_transformation
+
+LITTLE_GROUP_TOLERANCE = 1e-5
 
 
 class VelocityMatrix(GroupVelocity):
@@ -63,7 +63,8 @@ class VelocityMatrix(GroupVelocity):
         self,
         dynamical_matrix: DynamicalMatrix,
         q_length: float | None = None,
-        symmetry: Symmetry | None = None,
+        rotations_cartesian: NDArray[np.double] | None = None,
+        reciprocal_operations: NDArray[np.int64] | None = None,
         frequency_factor_to_THz: float | None = None,
         cutoff_frequency: float = 1e-4,
     ) -> None:
@@ -71,12 +72,14 @@ class VelocityMatrix(GroupVelocity):
 
         See details of parameters at phonopy `GroupVelocity` class.
 
+        ``rotations_cartesian`` is generated from ``reciprocal_operations`` and
+        their orders are corresponding.
+
         """
         self._dynmat: DynamicalMatrix
         self._reciprocal_lattice: NDArray[np.double]
         self._q_length: float | None = None
         self._ddm: DerivativeOfDynamicalMatrix | None
-        self._symmetry: Symmetry | None = None
         self._factor: float
         self._cutoff_frequency: float
         self._directions: NDArray[np.double]
@@ -86,16 +89,20 @@ class VelocityMatrix(GroupVelocity):
             self,
             dynamical_matrix,
             q_length=q_length,
-            symmetry=symmetry,
             frequency_factor_to_THz=frequency_factor_to_THz,
             cutoff_frequency=cutoff_frequency,
         )
+
+        self._reciprocal_operations = reciprocal_operations
+        self._rotations_cartesian = rotations_cartesian
 
         self._velocity_matrices = None
 
     def run(
         self,
-        q_points: Sequence[Sequence[float]] | NDArray[np.double],
+        q_points: Sequence[Sequence[float]]
+        | Sequence[NDArray[np.double]]
+        | NDArray[np.double],
         perturbation: Sequence[float] | NDArray[np.double] | None = None,
     ) -> None:
         """Run group velocity matrix calculate at q-points.
@@ -118,11 +125,11 @@ class VelocityMatrix(GroupVelocity):
         else:
             self._directions[0] = np.dot(self._reciprocal_lattice, perturbation)
         self._directions[0] /= np.linalg.norm(self._directions[0])
-        gvm = [
+        vm = [
             self._calculate_velocity_matrix_at_q(q)
             for q in np.asarray(q_points, dtype="double")
         ]
-        self._velocity_matrices = np.array(gvm, dtype="cdouble", order="C")
+        self._velocity_matrices = np.array(vm, dtype="cdouble", order="C")
 
     @property
     def velocity_matrices(self) -> NDArray[np.cdouble] | None:
@@ -137,9 +144,25 @@ class VelocityMatrix(GroupVelocity):
         """
         return self._velocity_matrices
 
+    @property
+    def group_velocities(
+        self,
+    ) -> NDArray[np.double] | None:
+        """Return group velocities."""
+        if self._velocity_matrices is None:
+            return None
+        shape = self._velocity_matrices.shape
+        gv = np.zeros((shape[0], shape[2], 3), dtype="double", order="C")
+        for i_q, vm in enumerate(self._velocity_matrices):
+            for i, vm_a in enumerate(vm):
+                gv[i_q, :, i] = np.diag(vm_a.real)
+
+        return gv
+
     def _calculate_velocity_matrix_at_q(
         self, q: NDArray[np.double]
     ) -> NDArray[np.cdouble]:
+
         self._dynmat.run(q)
         dm = self._dynmat.dynamical_matrix
         assert dm is not None
@@ -147,7 +170,7 @@ class VelocityMatrix(GroupVelocity):
         eigvals = eigvals.real  # type: ignore
         freqs = np.sqrt(abs(eigvals)) * np.sign(eigvals) * self._factor
         deg_sets = degenerate_sets(freqs)
-        ddms = self._get_dD(np.array(q))
+        ddms = self._get_dD(q)
         rot_eigvecs = np.zeros_like(eigvecs)
 
         for deg in deg_sets:
@@ -156,48 +179,18 @@ class VelocityMatrix(GroupVelocity):
         freqs = np.where(condition, freqs, 1)
         rot_eigvecs = rot_eigvecs * np.where(condition, 1 / np.sqrt(2 * freqs), 0)
 
-        gvm = np.zeros((3,) + eigvecs.shape, dtype="cdouble")
-        for i, ddm in enumerate(ddms[1:]):
-            ddm = ddm * (self._factor**2)
-            gvm[i] = np.dot(rot_eigvecs.T.conj(), np.dot(ddm, rot_eigvecs))
+        vm = np.zeros((3,) + eigvecs.shape, dtype="cdouble")
+        projector = self._get_projector(q)
+        for i, ddm in enumerate(np.einsum("ij,jkl->ikl", projector, ddms[1:])):
+            vm[i] += rot_eigvecs.T.conj() @ ddm @ rot_eigvecs
 
-        if self._perturbation is None:
-            if self._symmetry is None:
-                return gvm
-            else:
-                return self._symmetrize_velocity_matrix(gvm, q)
-        else:
-            return gvm
+        return self._hermitian_velocity_matrix(vm) * (self._factor**2)
 
-    def _symmetrize_velocity_matrix(
-        self, gvm: NDArray[np.cdouble], q: NDArray[np.double]
+    def _hermitian_velocity_matrix(
+        self, vm: NDArray[np.cdouble]
     ) -> NDArray[np.cdouble]:
-        """Symmetrize obtained group velocity matrices.
-
-        The following symmetries are applied:
-            1. site symmetries
-            2. band hermicity
-
-        """
-        assert self._symmetry is not None
-        # site symmetries
-        rotations = []
-        for r in self._symmetry.reciprocal_operations:
-            q_in_BZ = q - np.rint(q)
-            diff = q_in_BZ - np.dot(r, q_in_BZ)
-            if (np.abs(diff) < self._symmetry.tolerance).all():
-                rotations.append(r)
-
-        gvm_sym = np.zeros_like(gvm)
-        for r in rotations:
-            r_cart = similarity_transformation(self._reciprocal_lattice, r)  # type: ignore[arg-type]
-            gvm_sym += np.einsum("ij,jkl->ikl", r_cart, gvm)
-        gvm_sym = gvm_sym / len(rotations)
-
-        # band hermicity
-        gvm_sym = (gvm_sym + gvm_sym.transpose(0, 2, 1).conj()) / 2
-
-        return gvm_sym
+        vm = (vm + vm.transpose(0, 2, 1).conj()) / 2
+        return vm
 
     def _rot_eigsets(
         self, ddms: NDArray[np.cdouble], eigsets: NDArray[np.cdouble]
@@ -228,3 +221,37 @@ class VelocityMatrix(GroupVelocity):
         rot_eigsets = np.dot(eigsets, eigvecs)
 
         return rot_eigsets
+
+    def _get_projector(self, q: NDArray[np.double]) -> NDArray[np.double]:
+        """Return little group rotations at q."""
+        assert (
+            self._reciprocal_operations is not None
+            and self._rotations_cartesian is not None
+        )
+        projector = np.zeros((3, 3), dtype="double", order="C")
+        order = 0
+        for r, r_cart in zip(
+            self._reciprocal_operations, self._rotations_cartesian, strict=True
+        ):
+            q_in_BZ = q - np.rint(q)
+            diff = q_in_BZ - np.dot(r, q_in_BZ)
+            if (np.abs(diff) < LITTLE_GROUP_TOLERANCE).all():
+                projector += r_cart
+                order += 1
+        return projector / order
+
+    def _get_little_group(self, q: NDArray[np.double]) -> list[NDArray[np.double]]:
+        """Return little group rotations at q."""
+        assert (
+            self._reciprocal_operations is not None
+            and self._rotations_cartesian is not None
+        )
+        rotations = []
+        for r, r_cart in zip(
+            self._reciprocal_operations, self._rotations_cartesian, strict=True
+        ):
+            q_in_BZ = q - np.rint(q)
+            diff = q_in_BZ - np.dot(r, q_in_BZ)
+            if (np.abs(diff) < LITTLE_GROUP_TOLERANCE).all():
+                rotations.append(r_cart)
+        return rotations

@@ -50,7 +50,7 @@ class VelocityResult:
     """
 
     group_velocities: NDArray[np.double]
-    gv_by_gv: NDArray[np.double]
+    gv_by_gv: NDArray[np.double] | None = None
     vm_by_vm: NDArray[np.cdouble] | None = None
     num_sampling_grid_points: int = 0
     extra: dict[str, Any] = field(default_factory=dict)
