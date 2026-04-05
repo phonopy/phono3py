@@ -35,7 +35,7 @@ def test_phono3py_load_generates_wigner_kappa_hdf5_contents():
             argparse_control = _get_phono3py_load_args(
                 "phono3py.yaml",
                 is_bterta=True,
-                transport_type="SMM19",
+                transport_type="MS-SMM19",
                 temperatures=["300"],
                 mesh_numbers=["5", "5", "5"],
             )
@@ -50,6 +50,7 @@ def test_phono3py_load_generates_wigner_kappa_hdf5_contents():
                 assert "kappa_P_RTA" in f
                 assert "kappa_C" in f
                 assert "kappa_TOT_RTA" in f
+                assert "mode_kappa" in f
                 assert "mode_kappa_P_RTA" in f
                 assert "mode_kappa_C" in f
                 assert "temperature" in f
@@ -57,6 +58,10 @@ def test_phono3py_load_generates_wigner_kappa_hdf5_contents():
                 assert f["kappa_P_RTA"].shape == (1, 6)
                 assert f["kappa_C"].shape == (1, 6)
                 assert f["kappa_TOT_RTA"].shape == (1, 6)
+                # mode_kappa: (num_temp, num_gp, num_band0, 6)
+                assert f["mode_kappa"].ndim == 4
+                assert f["mode_kappa"].shape[0] == 1  # num_temp
+                assert f["mode_kappa"].shape[-1] == 6  # Voigt
                 # mode_kappa_P_RTA: (num_temp, num_gp, num_band0, 6)
                 assert f["mode_kappa_P_RTA"].ndim == 4
                 assert f["mode_kappa_P_RTA"].shape[0] == 1  # num_temp
@@ -69,6 +74,7 @@ def test_phono3py_load_generates_wigner_kappa_hdf5_contents():
                 assert np.all(f["mesh"][:] == np.array([5, 5, 5]))
                 assert np.all(np.isfinite(f["kappa_TOT_RTA"][0]))
                 assert f["kappa_TOT_RTA"][0, 0] > 0
+                assert np.all(np.isfinite(f["mode_kappa"][:]))
                 assert np.all(np.isfinite(f["mode_kappa_P_RTA"][:]))
                 assert np.all(np.isfinite(f["mode_kappa_C"][:]))
                 # velocity_operator: (num_gp, num_band0, nat3, 3)
@@ -111,7 +117,7 @@ def test_phono3py_load_wigner_rta():
             argparse_control = _get_phono3py_load_args(
                 "phono3py.yaml",
                 is_bterta=True,
-                transport_type="SMM19",
+                transport_type="MS-SMM19",
                 temperatures=[
                     "300",
                 ],
@@ -156,7 +162,7 @@ def test_phono3py_load_wigner_lbte():
             argparse_control = _get_phono3py_load_args(
                 "phono3py.yaml",
                 is_lbte=True,
-                transport_type="SMM19",
+                transport_type="MS-SMM19",
                 temperatures=[
                     "300",
                 ],
@@ -172,6 +178,7 @@ def test_phono3py_load_wigner_lbte():
                 assert "kappa_C" in f
                 assert "kappa_TOT_exact" in f
                 assert "kappa_TOT_RTA" in f
+                assert "mode_kappa" in f
                 assert "mode_kappa_P_exact" in f
                 assert "mode_kappa_P_RTA" in f
                 assert "mode_kappa_C" in f
@@ -187,6 +194,10 @@ def test_phono3py_load_wigner_lbte():
                 assert kappa_c.shape == (1, 6)
                 assert f["kappa_TOT_exact"].shape == (1, 6)
                 assert f["kappa_TOT_RTA"].shape == (1, 6)
+                # mode_kappa: (num_temp, num_gp, num_band0, 6)
+                assert f["mode_kappa"].ndim == 4
+                assert f["mode_kappa"].shape[0] == 1
+                assert f["mode_kappa"].shape[-1] == 6
                 # mode_kappa_P_exact, mode_kappa_P_RTA:
                 #   (num_temp, num_gp, num_band0, 6)
                 assert f["mode_kappa_P_exact"].ndim == 4
@@ -206,6 +217,7 @@ def test_phono3py_load_wigner_lbte():
                 assert np.all(np.isfinite(kappa_c))
                 assert np.all(np.isfinite(f["kappa_TOT_exact"][:]))
                 assert np.all(np.isfinite(f["kappa_TOT_RTA"][:]))
+                assert np.all(np.isfinite(f["mode_kappa"][:]))
                 assert np.all(np.isfinite(f["mode_kappa_P_exact"][:]))
                 assert np.all(np.isfinite(f["mode_kappa_P_RTA"][:]))
                 assert np.all(np.isfinite(f["mode_kappa_C"][:]))
@@ -254,7 +266,7 @@ def test_phono3py_load_wigner_write_gamma_contains_isotope_and_N_U():
                 _data / "phono3py_params_Si-111-222.yaml",
                 mesh_numbers=["9", "9", "9"],
                 is_bterta=True,
-                transport_type="SMM19",
+                transport_type="MS-SMM19",
                 is_isotope=True,
                 is_N_U=True,
                 temperatures=["300"],
@@ -335,7 +347,7 @@ def test_phono3py_load_wigner_write_gamma_detail_outputs_hdf5():
                 _data / "phono3py_params_Si-111-222.yaml",
                 mesh_numbers=["9", "9", "9"],
                 is_bterta=True,
-                transport_type="SMM19",
+                transport_type="MS-SMM19",
                 temperatures=["300"],
                 write_gamma=True,
                 write_gamma_detail=True,

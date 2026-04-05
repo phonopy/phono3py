@@ -1,15 +1,17 @@
-"""RTAKappaAccumulator: kappa accumulator for the standard BTE-RTA method."""
+"""Kappa accumulators for the standard BTE-RTA and LBTE methods."""
 
 from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
 
+from phono3py.conductivity.collision_matrix_solver import CollisionMatrixSolver
 from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.grid_point_data import (
     GridPointAggregates,
     compute_effective_gamma,
 )
+from phono3py.conductivity.lbte_collision_provider import LBTECollisionResult
 from phono3py.conductivity.utils import log_kappa_header, log_kappa_row
 
 
@@ -46,24 +48,8 @@ class RTAKappaAccumulator:
         self._conversion_factor = conversion_factor
         self._log_level = log_level
 
-        # Allocated in prepare().
         self._kappa: NDArray[np.double]
         self._mode_kappa: NDArray[np.double]
-
-    def prepare(
-        self,
-        num_sigma: int,
-        num_temp: int,
-        num_gp: int,
-        num_band0: int,
-        *,
-        num_band: int | None = None,
-    ) -> None:
-        """Allocate per-grid-point and kappa arrays."""
-        self._kappa = np.zeros((num_sigma, num_temp, 6), dtype="double", order="C")
-        self._mode_kappa = np.zeros(
-            (num_sigma, num_temp, num_gp, num_band0, 6), dtype="double", order="C"
-        )
 
     def finalize(self, aggregates: GridPointAggregates) -> None:
         """Compute mode kappa and kappa from aggregated data."""
@@ -83,6 +69,10 @@ class RTAKappaAccumulator:
         cv = aggregates.mode_heat_capacities
         gamma_eff = compute_effective_gamma(aggregates)
         num_sigma, num_temp, num_gp, num_band0 = gamma_eff.shape
+
+        self._mode_kappa = np.zeros(
+            (num_sigma, num_temp, num_gp, num_band0, 6), dtype="double", order="C"
+        )
 
         for i_gp in range(num_gp):
             gp = self._context.grid_points[i_gp]
@@ -147,7 +137,7 @@ class RTAKappaAccumulator:
     # ------------------------------------------------------------------
 
     @property
-    def kappa(self) -> NDArray[np.double]:
+    def kappa(self) -> NDArray[np.double] | None:
         """Return kappa tensor, shape (num_sigma, num_temp, 6)."""
         return self._kappa
 
@@ -155,3 +145,85 @@ class RTAKappaAccumulator:
     def mode_kappa(self) -> NDArray[np.double]:
         """Return mode kappa, shape (num_sigma, num_temp, num_gp, num_band0, 6)."""
         return self._mode_kappa
+
+    def get_extra_kappa_output(self) -> dict[str, NDArray[np.double] | None]:
+        """Return extra kappa arrays keyed by HDF5 dataset name."""
+        return {"mode_kappa": self._mode_kappa}
+
+
+class LBTEKappaAccumulator:
+    """Assemble global collision matrix and compute LBTE thermal conductivity.
+
+    This is Stage 2 of the two-stage LBTE design.  Stage 1 (per-grid-point)
+    is handled by LBTECollisionProvider.  LBTECalculator calls store()
+    once per irreducible grid point and then finalize() to assemble the full
+    collision matrix, solve it, and compute kappa and kappa_RTA.
+
+    Internally delegates all work to CollisionMatrixSolver.
+
+    Parameters
+    ----------
+    solver : CollisionMatrixSolver
+        Pre-configured collision matrix solver.
+
+    """
+
+    def __init__(self, solver: CollisionMatrixSolver) -> None:
+        """Init method."""
+        self._solver = solver
+
+    # ------------------------------------------------------------------
+    # Public interface
+    # ------------------------------------------------------------------
+
+    def prepare(self) -> None:
+        """Allocate global arrays before the grid-point accumulation loop."""
+        self._solver.prepare()
+
+    def store(
+        self,
+        i_gp: int,
+        collision_result: LBTECollisionResult,
+    ) -> None:
+        """Store collision matrix row for this grid point.
+
+        Parameters
+        ----------
+        i_gp : int
+            Loop index over ir_grid_points (0-based).
+        collision_result : LBTECollisionResult
+            Result from LBTECollisionProvider.compute().
+
+        """
+        self._solver.store(i_gp, collision_result)
+
+    def finalize(
+        self,
+        aggregates: GridPointAggregates,
+        *,
+        suppress_kappa_log: bool = False,
+    ) -> None:
+        """Assemble collision matrix and compute LBTE thermal conductivity.
+
+        Stage 2: combine diagonals, apply weights, symmetrize, solve for kappa.
+
+        Parameters
+        ----------
+        aggregates : GridPointAggregates
+            Aggregated per-grid-point data from the calculator.
+        suppress_kappa_log : bool, optional
+            When True, skip the per-temperature kappa table log so that the
+            caller (e.g. WignerLBTEKappaAccumulator) can print its own format
+            after computing additional terms (Stage 3).  Default False.
+
+        """
+        self._solver.solve(aggregates, suppress_kappa_log=suppress_kappa_log)
+
+    # ------------------------------------------------------------------
+    # Properties
+    # ------------------------------------------------------------------
+
+    @property
+    def solver(self) -> CollisionMatrixSolver:
+        """Return the underlying CollisionMatrixSolver."""
+        return self._solver

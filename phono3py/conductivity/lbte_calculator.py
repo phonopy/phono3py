@@ -49,8 +49,8 @@ from phono3py.conductivity.grid_point_data import (
     make_grid_point_input,
 )
 from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
+from phono3py.conductivity.kappa_accumulators import LBTEKappaAccumulator
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionProvider
-from phono3py.conductivity.lbte_kappa_accumulator import LBTEKappaAccumulator
 from phono3py.conductivity.scattering_providers import IsotopeScatteringProvider
 from phono3py.conductivity.utils import (
     show_grid_point_frequencies_gv,
@@ -300,7 +300,7 @@ class LBTECalculator:
     @property
     def kappa(self) -> NDArray[np.double]:
         """Return LBTE thermal conductivity, shape (num_sigma, num_temp, 6)."""
-        return self._accumulator.kappa
+        return self._accumulator.solver.kappa
 
     @property
     def kappa_RTA(self) -> NDArray[np.double]:

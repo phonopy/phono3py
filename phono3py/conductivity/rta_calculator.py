@@ -16,7 +16,7 @@ from phono3py.conductivity.grid_point_data import (
     make_grid_point_input,
 )
 from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
-from phono3py.conductivity.rta_kappa_accumulator import RTAKappaAccumulator
+from phono3py.conductivity.kappa_accumulators import RTAKappaAccumulator
 from phono3py.conductivity.scattering_providers import (
     BoundaryScatteringProvider,
     IsotopeScatteringProvider,
@@ -471,14 +471,6 @@ class RTACalculator:
             self._gamma_boundary = np.zeros(
                 (num_gp, num_band0), order="C", dtype="double"
             )
-        num_band = len(self._pp.primitive) * 3
-        self._accumulator.prepare(
-            num_sigma,
-            num_temp,
-            num_gp,
-            num_band0,
-            num_band=num_band,
-        )
         self._num_ignored_phonon_modes = np.zeros(
             (num_sigma, num_temp), order="C", dtype="int64"
         )

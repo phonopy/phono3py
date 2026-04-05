@@ -155,7 +155,6 @@ class ConductivityRTAWriter:
         bz_grid = br.bz_grid
         frequencies = br.frequencies
         kappa = br.kappa
-        mode_kappa = br.mode_kappa
         gv = br.group_velocities
         gv_by_gv = br.gv_by_gv
         mode_cv = br.mode_heat_capacities
@@ -192,7 +191,6 @@ class ConductivityRTAWriter:
                 gv_by_gv=gv_by_gv,
                 heat_capacity=mode_cv,
                 kappa=kappa[i],
-                mode_kappa=mode_kappa[i],
                 extra_datasets=extra_at_sigma,
                 gamma=gamma[i],
                 gamma_isotope=gamma_isotope_at_sigma,

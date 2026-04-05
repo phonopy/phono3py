@@ -46,9 +46,7 @@ class WignerRTAKappaAccumulator:
     Decomposes kappa into a population term (kappa_P_RTA) and a coherence
     term (kappa_C).  The total kappa is kappa_TOT_RTA = kappa_P_RTA + kappa_C.
 
-    The P arrays are pre-allocated in ``prepare()``.  The C arrays are
-    allocated lazily on the first grid point because their shape depends on
-    ``num_band`` (nat3), which is not known at prepare time.
+    The P and C arrays are allocated in ``finalize()``.
 
     Parameters
     ----------
@@ -72,34 +70,11 @@ class WignerRTAKappaAccumulator:
         self._conversion_factor_WTE = _get_conversion_factor_WTE(volume)
         self._log_level = log_level
 
-        # Kappa arrays (allocated in prepare()).
-        self._kappa_P: NDArray[np.double]
-        self._mode_kappa_P: NDArray[np.double]
-        self._kappa_C: NDArray[np.double]
-        self._mode_kappa_C: NDArray[np.double]
+        self._kappa_P: NDArray[np.double] | None = None
+        self._mode_kappa_P: NDArray[np.double] | None = None
+        self._kappa_C: NDArray[np.double] | None = None
+        self._mode_kappa_C: NDArray[np.double] | None = None
         self._velocity_operator: NDArray[np.cdouble] | None = None
-
-    def prepare(
-        self,
-        num_sigma: int,
-        num_temp: int,
-        num_gp: int,
-        num_band0: int,
-        *,
-        num_band: int | None = None,
-    ) -> None:
-        """Allocate per-grid-point and kappa arrays."""
-        if num_band is None:
-            num_band = num_band0
-        self._kappa_P = np.zeros((num_sigma, num_temp, 6), dtype="double", order="C")
-        self._mode_kappa_P = np.zeros(
-            (num_sigma, num_temp, num_gp, num_band0, 6), dtype="double", order="C"
-        )
-        self._mode_kappa_C = np.zeros(
-            (num_sigma, num_temp, num_gp, num_band0, num_band, 6),
-            dtype="double",
-            order="C",
-        )
 
     def _get_pair_contribution(
         self,
@@ -161,7 +136,19 @@ class WignerRTAKappaAccumulator:
         if vel_op is not None:
             self._velocity_operator = vel_op
 
+        num_sigma, num_temp, num_gp, num_band = aggregates.gamma.shape
+        self._kappa_P = np.zeros((num_sigma, num_temp, 6), dtype="double", order="C")
+        self._mode_kappa_P = np.zeros(
+            (num_sigma, num_temp, num_gp, num_band, 6), dtype="double", order="C"
+        )
+        self._mode_kappa_C = np.zeros(
+            (num_sigma, num_temp, num_gp, num_band, num_band, 6),
+            dtype="double",
+            order="C",
+        )
+
         self._compute_mode_kappa(aggregates)
+
         num_sampling_grid_points = aggregates.num_sampling_grid_points
         if num_sampling_grid_points > 0:
             self._kappa_P = (
@@ -178,7 +165,7 @@ class WignerRTAKappaAccumulator:
         vm_by_vm = aggregates.vm_by_vm
         cv = aggregates.mode_heat_capacities
         gamma_eff = compute_effective_gamma(aggregates)
-        num_sigma, num_temp, num_gp, num_band0 = gamma_eff.shape
+        num_sigma, num_temp, num_gp, num_band = gamma_eff.shape
         THzToEv = get_physical_units().THzToEv
 
         for i_gp in range(num_gp):
@@ -186,16 +173,16 @@ class WignerRTAKappaAccumulator:
             frequencies = self._context.frequencies[gp]
             num_band = len(frequencies)
 
-            mode_kappa_P = np.zeros((num_sigma, num_temp, num_band0, 6), dtype="double")
+            mode_kappa_P = np.zeros((num_sigma, num_temp, num_band, 6), dtype="double")
             mode_kappa_C = np.zeros(
-                (num_sigma, num_temp, num_band0, num_band, 6), dtype="double"
+                (num_sigma, num_temp, num_band, num_band, 6), dtype="double"
             )
 
             for j in range(num_sigma):
                 for k in range(num_temp):
                     g = gamma_eff[j, k, i_gp]
                     cv_k = cv[k, i_gp]
-                    for s1 in range(num_band0):
+                    for s1 in range(num_band):
                         freq_s1 = frequencies[s1]
                         if freq_s1 <= self._context.cutoff_frequency:
                             continue
@@ -226,27 +213,25 @@ class WignerRTAKappaAccumulator:
             self._mode_kappa_C[:, :, i_gp, :, :, :] = mode_kappa_C
 
     @property
-    def kappa(self) -> NDArray[np.double]:
+    def kappa(self) -> NDArray[np.double] | None:
         """Return total Wigner kappa (kappa_P + kappa_C)."""
+        if self._kappa_P is None or self._kappa_C is None:
+            return None
+
         return self._kappa_P + self._kappa_C
 
     @property
-    def kappa_TOT_RTA(self) -> NDArray[np.double]:
+    def kappa_TOT_RTA(self) -> NDArray[np.double] | None:
         """Return total Wigner kappa (same as ``kappa``)."""
         return self.kappa
 
     @property
-    def kappa_P_RTA(self) -> NDArray[np.double]:
+    def kappa_P_RTA(self) -> NDArray[np.double] | None:
         """Return population kappa, shape (num_sigma, num_temp, 6)."""
         return self._kappa_P
 
     @property
-    def kappa_C(self) -> NDArray[np.double]:
-        """Return coherence kappa, shape (num_sigma, num_temp, 6)."""
-        return self._kappa_C
-
-    @property
-    def mode_kappa(self) -> NDArray[np.double]:
+    def mode_kappa(self) -> NDArray[np.double] | None:
         """Return population mode kappa.
 
         Shape: (num_sigma, num_temp, num_gp, num_band0, 6).
@@ -255,7 +240,12 @@ class WignerRTAKappaAccumulator:
         return self._mode_kappa_P
 
     @property
-    def mode_kappa_C(self) -> NDArray[np.double]:
+    def kappa_C(self) -> NDArray[np.double] | None:
+        """Return coherence kappa, shape (num_sigma, num_temp, 6)."""
+        return self._kappa_C
+
+    @property
+    def mode_kappa_C(self) -> NDArray[np.double] | None:
         """Return coherence mode kappa.
 
         Shape: (num_sigma, num_temp, num_gp, num_band0, num_band, 6).
@@ -331,6 +321,7 @@ class WignerRTAKappaAccumulator:
             "kappa_TOT_RTA": self.kappa_TOT_RTA,
             "kappa_P_RTA": self._kappa_P,
             "kappa_C": self._kappa_C,
+            "mode_kappa": self._mode_kappa_P,
             "mode_kappa_P_RTA": self._mode_kappa_P,
             "mode_kappa_C": self._mode_kappa_C,
             "velocity_operator": self._velocity_operator,
@@ -449,11 +440,6 @@ class WignerLBTEKappaAccumulator:
         """Return LBTE thermal conductivity, shape (num_sigma, num_temp, 6)."""
         return self._solver.kappa
 
-    @property
-    def mode_kappa(self) -> NDArray[np.double]:
-        """Return mode LBTE kappa."""
-        return self._solver.mode_kappa
-
     # ------------------------------------------------------------------
     # Properties — Wigner-specific aliases
     # ------------------------------------------------------------------
@@ -492,6 +478,11 @@ class WignerLBTEKappaAccumulator:
         """Return per-mode coherence kappa (complex)."""
         return self._mode_kappa_C
 
+    @property
+    def mode_kappa(self) -> NDArray[np.double]:
+        """Return mode LBTE kappa."""
+        return self._solver.mode_kappa
+
     def get_extra_kappa_output(self) -> dict[str, NDArray | None]:
         """Return Wigner-specific LBTE kappa arrays keyed by HDF5 dataset name.
 
@@ -524,6 +515,7 @@ class WignerLBTEKappaAccumulator:
             "kappa_P_exact": kappa_P_exact,
             "kappa_P_RTA": kappa_P_RTA,
             "kappa_C": kappa_C,
+            "mode_kappa": self._solver.mode_kappa,
             "mode_kappa_P_exact": self._solver.mode_kappa,
             "mode_kappa_P_RTA": self._solver.mode_kappa_RTA,
             "mode_kappa_C": None if mode_kappa_C is None else mode_kappa_C.real,

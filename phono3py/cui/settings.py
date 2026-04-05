@@ -326,7 +326,7 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
         # M. Simoncelli, N. Marzari, F. Mauri; Nat. Phys. 15, 809 (2019)
         if "is_wigner_kappa" in arg_list:
             if args.is_wigner_kappa:
-                self._confs["transport_type"] = "SMM19"
+                self._confs["transport_type"] = "MS-SMM19"
 
         if "transport_type" in arg_list:
             if args.transport_type:

@@ -7,8 +7,8 @@ from numpy.typing import NDArray
 from phonopy.phonon.degeneracy import degenerate_sets
 
 from phono3py.conductivity.grid_point_data import GridPointInput, VelocityResult
+from phono3py.conductivity.ms_smm19.velocity_operator import VelocityOperator
 from phono3py.conductivity.utils import VOIGT_INDEX_PAIRS
-from phono3py.conductivity.wigner.velocity_operator import VelocityOperator
 from phono3py.phonon.grid import (
     get_grid_points_by_rotations,
     get_qpoints_from_bz_grid_points,

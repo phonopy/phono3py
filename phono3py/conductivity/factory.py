@@ -6,27 +6,27 @@ Built-in methods
     Standard BTE in the relaxation time approximation.
 "lbte"
     Standard BTE via direct LBTE solution.
-"SMM19-rta"
+"MS-SMM19-rta"
     Wigner transport equation in RTA (registered plugin, can be overridden).
-"SMM19-lbte"
+"MS-SMM19-lbte"
     Wigner transport equation via LBTE (registered plugin, can be overridden).
-"kubo-rta"
+"NJC23-rta"
     Green-Kubo formula in RTA (registered plugin, can be overridden).
 
 External plugins
 ----------------
-Register a factory callable via register_calculator():
+Register a variant via register_variant():
 
-    from phono3py.conductivity import register_calculator
+    from phono3py.conductivity import register_variant
 
-    def my_factory(interaction, **kwargs):
-        ...
-        return MyCalculator(...)
+    register_variant(
+        "my-variant",
+        make_velocity_provider=...,
+        make_rta_accumulator=...,
+    )
 
-    register_calculator("my-method", my_factory)
-
-The factory receives the Interaction object as the first positional argument
-and all keyword arguments that were passed to make_conductivity_calculator().
+The variant provides component factories that receive a VariantBuildContext.
+The framework handles base-component construction and Calculator assembly.
 
 """
 
@@ -34,27 +34,28 @@ from __future__ import annotations
 
 import os
 from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING, Any, Literal, TypeAlias
+from typing import Any, Literal, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
 
+from phono3py.conductivity.build_components import (
+    VariantBuildContext,
+    build_lbte_base_components,
+    build_rta_base_components,
+)
+from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
 from phono3py.conductivity.lbte_calculator import LBTECalculator
 from phono3py.conductivity.rta_calculator import RTACalculator
+from phono3py.conductivity.utils import get_unit_to_WmK
 from phono3py.phonon3.interaction import Interaction
-
-if TYPE_CHECKING:
-    from phono3py.conductivity.calculator_factory import VariantBuildContext
 
 # ---------------------------------------------------------------------------
 # Plugin registry
 # ---------------------------------------------------------------------------
 
 # Internal registry: all entries are (interaction, config) -> Calculator.
-# Old-style kwargs factories registered via register_calculator() are wrapped.
 _InternalFactory: TypeAlias = Callable[["Interaction", "CalculatorConfig"], Any]
-
-CalculatorFactory: TypeAlias = Callable[..., Any]
 
 # "rta" and "lbte" are registered at module load and cannot be overridden.
 # All other built-in methods (wigner-*, kubo-*) are registered below and can
@@ -62,60 +63,8 @@ CalculatorFactory: TypeAlias = Callable[..., Any]
 _BUILTIN_METHODS: frozenset[str] = frozenset({"rta", "lbte"})
 
 # Populated at module load with all built-in factories.
-# External plugins are added via register_calculator() or register_variant().
+# External plugins are added via register_variant().
 _REGISTRY: dict[str, _InternalFactory] = {}
-
-
-def register_calculator(method: str, factory: CalculatorFactory) -> None:
-    """Register an external calculator factory for a new method name.
-
-    The factory is called as::
-
-        calculator = factory(interaction, **kwargs)
-
-    where ``kwargs`` are all keyword arguments passed to
-    ``make_conductivity_calculator()`` except ``method`` itself.
-
-    Parameters
-    ----------
-    method : str
-        Method name used as the ``method`` argument of
-        ``make_conductivity_calculator()``.  Must not conflict with
-        built-in method names.
-    factory : callable
-        Factory function.  Signature: ``(interaction, **kwargs) -> Any``.
-        May accept only the kwargs it needs and ignore the rest.
-
-    Raises
-    ------
-    ValueError
-        If ``method`` conflicts with a built-in method name.
-
-    Examples
-    --------
-    Register a custom RTA-based calculator::
-
-        from phono3py.conductivity import register_calculator
-
-        def my_factory(interaction, *, temperatures=None, sigmas=None, **kwargs):
-            return MyCalculator(interaction, temperatures=temperatures, ...)
-
-        register_calculator("my-rta", my_factory)
-
-    """
-    if method in _BUILTIN_METHODS:
-        raise ValueError(
-            f"'{method}' is a built-in method and cannot be overridden. "
-            f"Built-in methods: {sorted(_BUILTIN_METHODS)}."
-        )
-
-    def _wrapped(interaction: Interaction, config: CalculatorConfig) -> Any:
-        from dataclasses import fields as dc_fields
-
-        kwargs = {f.name: getattr(config, f.name) for f in dc_fields(config)}
-        return factory(interaction, **kwargs)
-
-    _REGISTRY[method.lower()] = _wrapped
 
 
 def register_variant(
@@ -128,8 +77,7 @@ def register_variant(
 ) -> None:
     """Register a conductivity variant with RTA and optionally LBTE methods.
 
-    This is the declarative alternative to ``register_calculator()``.
-    Instead of writing full factory functions, plugin authors provide small
+    Plugin authors provide small
     component factories that receive a ``VariantBuildContext``.  The
     framework handles base-component construction, Calculator assembly, and
     all keyword argument routing.
@@ -140,7 +88,7 @@ def register_variant(
     Parameters
     ----------
     name : str
-        Variant name (e.g. ``"SMM19"``, ``"kubo"``).  Becomes the prefix
+        Variant name (e.g. ``"MS-SMM19"``, ``"NJC23"``).  Becomes the prefix
         of the registered method names.
     make_velocity_provider : callable
         ``(ctx: VariantBuildContext) -> VelocityProvider``.
@@ -174,13 +122,6 @@ def register_variant(
         )
 
     """
-    from phono3py.conductivity.calculator_factory import (
-        VariantBuildContext,
-        build_lbte_base_components,
-        build_rta_base_components,
-    )
-    from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
-    from phono3py.conductivity.utils import get_unit_to_WmK
 
     def _rta_factory(
         interaction: Interaction,
@@ -307,8 +248,8 @@ def make_conductivity_calculator(
     interaction : Interaction
         Interaction instance.  init_dynamical_matrix must have been called.
     method : str, optional
-        Calculation method.  Built-in: "rta", "lbte", "SMM19-rta",
-        "SMM19-lbte", "kubo-rta".  Default "rta".
+        Calculation method.  Built-in: "rta", "lbte", "MS-SMM19-rta",
+        "MS-SMM19-lbte", "NJC23-rta".  Default "rta".
     grid_points : array-like or None, optional
         BZ grid point indices.  None uses irreducible grid points.  Default None.
     temperatures : array-like or None, optional
@@ -369,7 +310,7 @@ def make_conductivity_calculator(
             f"Built-in methods: {sorted(_BUILTIN_METHODS)}. "
             "Registered methods: "
             f"{sorted(_REGISTRY)}. "
-            "Use register_calculator() to add custom methods."
+            "Use register_variant() to add custom methods."
         )
 
     config = CalculatorConfig(
@@ -404,26 +345,96 @@ def make_conductivity_calculator(
 # ---------------------------------------------------------------------------
 # Register all built-in factories.
 # "rta" and "lbte" are protected by _BUILTIN_METHODS.
-# "SMM19-*" and "kubo-*" can be overridden by external plugins.
+# "MS-SMM19-*" and "NJC23-*" can be overridden by external plugins.
 # The try/except allows each to be installed as a standalone package via
 # namespace packages; if absent, the method is simply not available.
 # ---------------------------------------------------------------------------
 
-from phono3py.conductivity.calculator_factory import (  # noqa: E402
-    CalculatorConfig,
-    make_lbte_calculator,
-    make_rta_calculator,
+from phono3py.conductivity.build_components import CalculatorConfig  # noqa: E402
+from phono3py.conductivity.kappa_accumulators import (  # noqa: E402
+    LBTEKappaAccumulator,
+    RTAKappaAccumulator,
+)
+from phono3py.conductivity.velocity_providers import (  # noqa: E402
+    GroupVelocityProvider,
 )
 
-_REGISTRY["rta"] = make_rta_calculator
-_REGISTRY["lbte"] = make_lbte_calculator
+
+def _make_rta_calculator(
+    interaction: Interaction,
+    config: CalculatorConfig,
+) -> RTACalculator:
+    """Build a RTACalculator for the standard BTE-RTA method."""
+    base = build_rta_base_components(interaction, config)
+    conversion_factor = get_unit_to_WmK() / interaction.primitive.volume
+    velocity_provider = GroupVelocityProvider(
+        interaction,
+        point_operations=base.point_ops,
+        rotations_cartesian=base.rot_cart,
+        is_kappa_star=config.is_kappa_star,
+        gv_delta_q=config.gv_delta_q,
+        log_level=config.log_level,
+    )
+    cv_provider = ModeHeatCapacityProvider(interaction)
+    accumulator = RTAKappaAccumulator(
+        context=base.context,
+        conversion_factor=conversion_factor,
+        log_level=config.log_level,
+    )
+    return RTACalculator(
+        interaction,
+        velocity_provider=velocity_provider,
+        cv_provider=cv_provider,
+        scattering_provider=base.scattering_provider,
+        accumulator=accumulator,
+        context=base.context,
+        is_isotope=config.is_isotope,
+        mass_variances=config.mass_variances,
+        is_N_U=config.is_N_U,
+        is_gamma_detail=config.is_gamma_detail,
+        log_level=config.log_level,
+    )
+
+
+def _make_lbte_calculator(
+    interaction: Interaction,
+    config: CalculatorConfig,
+) -> LBTECalculator:
+    """Build an LBTECalculator for the standard LBTE direct-solution method."""
+    base = build_lbte_base_components(interaction, config)
+    velocity_provider = GroupVelocityProvider(
+        interaction,
+        point_operations=base.point_ops,
+        rotations_cartesian=base.rot_cart,
+        is_kappa_star=config.is_kappa_star,
+        gv_delta_q=config.gv_delta_q,
+        log_level=config.log_level,
+    )
+    cv_provider = ModeHeatCapacityProvider(interaction)
+    accumulator = LBTEKappaAccumulator(base.solver)
+    return LBTECalculator(
+        interaction,
+        velocity_provider=velocity_provider,
+        cv_provider=cv_provider,
+        collision_provider=base.collision_provider,
+        accumulator=accumulator,
+        context=base.context,
+        is_isotope=config.is_isotope,
+        mass_variances=config.mass_variances,
+        is_full_pp=config.is_full_pp,
+        log_level=config.log_level,
+    )
+
+
+_REGISTRY["rta"] = _make_rta_calculator
+_REGISTRY["lbte"] = _make_lbte_calculator
 
 try:
-    import phono3py.conductivity.kubo  # noqa: F401, E402
+    import phono3py.conductivity.njc23  # noqa: F401, E402
 except ImportError:
     pass
 
 try:
-    import phono3py.conductivity.wigner  # noqa: F401, E402
+    import phono3py.conductivity.ms_smm19  # noqa: F401, E402
 except ImportError:
     pass
