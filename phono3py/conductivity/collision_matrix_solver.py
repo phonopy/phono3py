@@ -279,8 +279,6 @@ class CollisionMatrixSolver:
     def solve(
         self,
         aggregates: GridPointAggregates,
-        *,
-        suppress_kappa_log: bool = False,
     ) -> LBTESolveResult:
         """Assemble collision matrix and compute LBTE thermal conductivity.
 
@@ -291,22 +289,42 @@ class CollisionMatrixSolver:
         ----------
         aggregates : GridPointAggregates
             Aggregated per-grid-point data from the calculator.
-        suppress_kappa_log : bool, optional
-            When True, skip the per-temperature kappa table log so that the
-            caller (e.g. WignerLBTEKappaAccumulator) can print its own format
-            after computing additional terms (Stage 3).  The sigma header and
-            diagonalize output are still printed.  Default False.
 
         Returns
         -------
         LBTESolveResult
 
         """
+        for _ in self.solve_iter(aggregates):
+            pass
+        return self._build_result()
+
+    def solve_iter(
+        self,
+        aggregates: GridPointAggregates,
+    ) -> Iterator[tuple[int, int]]:
+        """Iterate over (sigma, temperature), solving one step at a time.
+
+        Yields (i_sigma, i_temp) after each temperature's diagonalization
+        and kappa computation completes.  The caller can inspect solver
+        properties (e.g. kappa, kappa_RTA) after each yield to log or
+        compute additional quantities incrementally.
+
+        Parameters
+        ----------
+        aggregates : GridPointAggregates
+            Aggregated per-grid-point data from the calculator.
+
+        Yields
+        ------
+        tuple[int, int]
+            (i_sigma, i_temp) indices of the just-completed step.
+
+        """
         num_sampling_grid_points = aggregates.num_sampling_grid_points
         if self._is_reducible_collision_matrix:
             self._setup_reducible_data(aggregates)
         else:
-            # Set references to calculator-owned data (no copy).
             self._gamma = aggregates.gamma
             self._gamma_iso = aggregates.gamma_isotope
             self._gv = aggregates.group_velocities
@@ -317,12 +335,13 @@ class CollisionMatrixSolver:
             print(f"- Collision matrix shape {self._collision_matrix.shape}")
 
         weights = self._prepare_collision_matrix_by_type()
-        self._set_kappa_and_rta_at_sigmas(
+        yield from self._iter_kappa_at_sigmas(
             num_sampling_grid_points,
             weights,
-            suppress_kappa_log=suppress_kappa_log,
         )
 
+    def _build_result(self) -> LBTESolveResult:
+        """Build LBTESolveResult from current solver state."""
         return LBTESolveResult(
             kappa=self._kappa,
             kappa_RTA=self._kappa_RTA,
@@ -821,18 +840,13 @@ class CollisionMatrixSolver:
     # Kappa computation
     # ------------------------------------------------------------------
 
-    def _set_kappa_and_rta_at_sigmas(
+    def _iter_kappa_at_sigmas(
         self,
         num_sampling_grid_points: int,
         weights: NDArray[np.double],
-        *,
-        suppress_kappa_log: bool = False,
-    ) -> None:
-        """Loop over sigma and temperature to compute kappa and kappa_RTA."""
-        for i_sigma, sigma in enumerate(self._context.sigmas):
-            if self._log_level:
-                self._log_sigma_header(sigma)
-
+    ) -> Iterator[tuple[int, int]]:
+        """Yield (i_sigma, i_temp) after each temperature's kappa is ready."""
+        for i_sigma in range(len(self._context.sigmas)):
             for i_temp, temperature in enumerate(self._context.temperatures):
                 if temperature <= 0:
                     continue
@@ -853,16 +867,7 @@ class CollisionMatrixSolver:
 
                 self._set_kappa_by_collision_type(i_sigma, i_temp, weights)
 
-                if self._log_level and not suppress_kappa_log:
-                    self._log_kappa_at_temperature(
-                        i_sigma,
-                        i_temp,
-                        temperature,
-                        num_sampling_grid_points,
-                    )
-
-        if self._log_level and not suppress_kappa_log:
-            print("", flush=True)
+                yield i_sigma, i_temp
 
         n = num_sampling_grid_points
         if n > 0:
@@ -1271,37 +1276,3 @@ class CollisionMatrixSolver:
         for r in self._context.rotations_cartesian:
             sum_k += np.outer(np.dot(r, v), np.dot(r, f))
         return sum_k
-
-    # ------------------------------------------------------------------
-    # Logging
-    # ------------------------------------------------------------------
-
-    def _log_sigma_header(self, sigma: float | None) -> None:
-        text = "----------- Thermal conductivity (W/m-k) "
-        if sigma:
-            text += "for sigma=%s -----------" % sigma
-        else:
-            text += "with tetrahedron method -----------"
-        print(text, flush=True)
-
-    def _log_kappa_at_temperature(
-        self,
-        i_sigma: int,
-        i_temp: int,
-        temperature: float,
-        num_sampling_grid_points: int,
-    ) -> None:
-        n = num_sampling_grid_points if num_sampling_grid_points > 0 else 1
-        print(
-            ("#%6s       " + " %-10s" * 6)
-            % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
-        )
-        print(
-            ("%7.1f " + " %10.3f" * 6)
-            % ((temperature,) + tuple(self._kappa[i_sigma, i_temp] / n))
-        )
-        print(
-            (" %6s " + " %10.3f" * 6)
-            % (("(RTA)",) + tuple(self._kappa_RTA[i_sigma, i_temp] / n))
-        )
-        print("-" * 76, flush=True)

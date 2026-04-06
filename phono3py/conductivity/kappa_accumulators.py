@@ -12,7 +12,11 @@ from phono3py.conductivity.grid_point_data import (
     compute_effective_gamma,
 )
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionResult
-from phono3py.conductivity.utils import log_kappa_header, log_kappa_row
+from phono3py.conductivity.utils import (
+    log_kappa_header,
+    log_kappa_row,
+    log_sigma_header,
+)
 
 
 class RTAKappaAccumulator:
@@ -165,12 +169,23 @@ class LBTEKappaAccumulator:
     ----------
     solver : CollisionMatrixSolver
         Pre-configured collision matrix solver.
+    context : ConductivityContext
+        Shared computation metadata (grid, phonon, symmetry, configuration).
+    log_level : int, optional
+        Verbosity level. Default 0.
 
     """
 
-    def __init__(self, solver: CollisionMatrixSolver) -> None:
+    def __init__(
+        self,
+        solver: CollisionMatrixSolver,
+        context: ConductivityContext,
+        log_level: int = 0,
+    ) -> None:
         """Init method."""
         self._solver = solver
+        self._context = context
+        self._log_level = log_level
 
     # ------------------------------------------------------------------
     # Public interface
@@ -200,8 +215,6 @@ class LBTEKappaAccumulator:
     def finalize(
         self,
         aggregates: GridPointAggregates,
-        *,
-        suppress_kappa_log: bool = False,
     ) -> None:
         """Assemble collision matrix and compute LBTE thermal conductivity.
 
@@ -211,13 +224,42 @@ class LBTEKappaAccumulator:
         ----------
         aggregates : GridPointAggregates
             Aggregated per-grid-point data from the calculator.
-        suppress_kappa_log : bool, optional
-            When True, skip the per-temperature kappa table log so that the
-            caller (e.g. WignerLBTEKappaAccumulator) can print its own format
-            after computing additional terms (Stage 3).  Default False.
 
         """
-        self._solver.solve(aggregates, suppress_kappa_log=suppress_kappa_log)
+        n = aggregates.num_sampling_grid_points
+        prev_sigma = -1
+        for i_sigma, i_temp in self._solver.solve_iter(aggregates):
+            if self._log_level:
+                if i_sigma != prev_sigma:
+                    log_sigma_header(self._context.sigmas[i_sigma])
+                    prev_sigma = i_sigma
+                self._log_kappa_at(i_sigma, i_temp, n)
+
+    def _log_kappa_at(
+        self,
+        i_sigma: int,
+        i_temp: int,
+        num_sampling_grid_points: int,
+    ) -> None:
+        """Print standard LBTE kappa for one (sigma, temperature) pair."""
+        t = self._context.temperatures[i_temp]
+        if t <= 0:
+            return
+
+        n = num_sampling_grid_points if num_sampling_grid_points > 0 else 1
+        print(
+            ("#%6s       " + " %-10s" * 6)
+            % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
+        )
+        print(
+            ("%7.1f " + " %10.3f" * 6)
+            % ((t,) + tuple(self._solver._kappa[i_sigma, i_temp] / n))
+        )
+        print(
+            (" %6s " + " %10.3f" * 6)
+            % (("(RTA)",) + tuple(self._solver._kappa_RTA[i_sigma, i_temp] / n))
+        )
+        print("-" * 76, flush=True)
 
     # ------------------------------------------------------------------
     # Properties

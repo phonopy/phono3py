@@ -218,17 +218,22 @@ def _print_freq_gv_rows(
             )
 
 
-def log_kappa_header(
-    sigma: float | None,
-    show_ipm: bool = False,
-) -> None:
-    """Print the kappa table header line for a given sigma."""
+def log_sigma_header(sigma: float | None) -> None:
+    """Print the sigma/tetrahedron banner line only."""
     text = "----------- Thermal conductivity (W/m-k) "
     if sigma:
         text += "for sigma=%s -----------" % sigma
     else:
         text += "with tetrahedron method -----------"
-    print(text)
+    print(text, flush=True)
+
+
+def log_kappa_header(
+    sigma: float | None,
+    show_ipm: bool = False,
+) -> None:
+    """Print the kappa table header line for a given sigma."""
+    log_sigma_header(sigma)
     if show_ipm:
         print(
             ("#%6s       " + " %-10s" * 6 + "#ipm")
@@ -252,7 +257,7 @@ def log_kappa_row(
     if num_ignored is not None and num_phonon_modes is not None:
         print(
             label
-            + ("%7.1f" + " %10.3f" * 6 + " %d/%d")
+            + ("%7.1f" + " %10.3f" * 6 + "    %d/%d")
             % ((temperature,) + tuple(kappa_row) + (num_ignored, num_phonon_modes))
         )
     else:
