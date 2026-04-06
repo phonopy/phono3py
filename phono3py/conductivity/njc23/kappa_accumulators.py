@@ -53,6 +53,12 @@ def _compute_kubo_mode_kappa_matrix(
     g_sum = gamma[:, :, :, None] + gamma[:, :, None, :]  # stbb
     delta_omega = frequencies[None, None, :, None] - frequencies[None, None, None, :]
     denom = delta_omega**2 + g_sum**2  # stbb
+
+    print(heat_capacity_matrix[None, :, :, :, None].shape)
+    print(vm_by_vm.real[None, None, :, :, :].shape)
+    print(g_sum[:, :, :, :, None].shape)
+    print(denom[:, :, :, :, None].shape)
+
     with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
         kappa_mat = (  # stbb6
             heat_capacity_matrix[None, :, :, :, None]
@@ -180,7 +186,6 @@ class KuboRTAKappaAccumulator:
         return {
             "kappa_intra": self._kappa_intra,
             "kappa_inter": self.kappa_inter,
-            "mode_kappa_matrix": self._mode_kappa_matrix,
         }
 
     # ------------------------------------------------------------------
@@ -310,6 +315,7 @@ class KuboLBTEKappaAccumulator:
             aggregates,
             suppress_kappa_log=bool(self._log_level),
         )
+
         self._compute_kubo_kappa(aggregates)
         if self._log_level:
             self._log_kubo_kappa()
@@ -366,33 +372,6 @@ class KuboLBTEKappaAccumulator:
         return self._kappa_inter
 
     @property
-    def mode_kappa_intra_exact(self) -> NDArray[np.double]:
-        """Return intra-band mode kappa from LBTE exact solve.
-
-        Shape: (num_sigma, num_temp, num_gp, num_band0, 6).
-
-        """
-        return self._solver.mode_kappa
-
-    @property
-    def mode_kappa_intra_RTA(self) -> NDArray[np.double]:
-        """Return intra-band mode kappa from LBTE RTA.
-
-        Shape: (num_sigma, num_temp, num_gp, num_band0, 6).
-
-        """
-        return self._solver.mode_kappa_RTA
-
-    @property
-    def mode_kappa(self) -> NDArray[np.double]:
-        """Return intra-band mode kappa from LBTE exact solve.
-
-        Shape: (num_sigma, num_temp, num_gp, num_band0, 6).
-
-        """
-        return self._solver.mode_kappa
-
-    @property
     def mode_kappa_matrix(self) -> NDArray[np.double] | None:
         """Return full band-pair Kubo kappa matrix.
 
@@ -407,8 +386,6 @@ class KuboLBTEKappaAccumulator:
             "kappa_inter": self._kappa_inter,
             "kappa_intra_exact": self._solver.kappa,
             "kappa_intra_RTA": self._solver.kappa_RTA,
-            "mode_kappa_intra_exact": self._solver.mode_kappa,
-            "mode_kappa_intra_RTA": self._solver.mode_kappa_RTA,
         }
 
     # ------------------------------------------------------------------
@@ -417,57 +394,39 @@ class KuboLBTEKappaAccumulator:
 
     def _compute_kubo_kappa(self, aggregates: GridPointAggregates) -> None:
         """Compute inter-band kappa using LBTE collision matrix diagonal."""
-        vm_by_vm = aggregates.vm_by_vm
-        heat_capacity_matrix = aggregates.heat_capacity_matrix
+        assert aggregates.vm_by_vm is not None
+        assert aggregates.heat_capacity_matrix is not None
+
         num_sampling_grid_points = aggregates.num_sampling_grid_points
-        if vm_by_vm is None or heat_capacity_matrix is None:
-            return
+        gamma_eff = compute_effective_gamma(aggregates)
+        num_sigma, num_temp, num_gp, num_band = gamma_eff.shape
 
-        num_sigma = len(self._context.sigmas)
-        num_temp = len(self._context.temperatures)
-        num_ir = len(self._context.ir_grid_points)
+        self._mode_kappa_matrix = np.zeros(
+            (num_sigma, num_temp, num_gp, num_band, num_band, 6),
+            dtype="double",
+            order="C",
+        )
 
-        kappa_inter = np.zeros((num_sigma, num_temp, 6), dtype="double")
-        mode_kappa_inter_list: list[NDArray[np.double]] = []
-
-        for i_gp in range(num_ir):
-            gp = int(self._context.ir_grid_points[i_gp])
-            frequencies = self._context.frequencies[gp]
-            num_band = len(frequencies)
-
-            # Build gamma from LBTE collision matrix diagonal.
-            gamma = np.zeros((num_sigma, num_temp, num_band), dtype="double")
-            for i_sigma in range(num_sigma):
-                for i_temp in range(num_temp):
-                    gamma[i_sigma, i_temp] = self._solver.get_main_diagonal(
-                        i_gp, i_sigma, i_temp
-                    )
-
-            # Diagonal (intra-band) and off-diagonal (inter-band) More
-            # precisely, when frequency differences are small, heat capacity
-            # matrix elements are calculated as usual mode heat capacity.
+        for i_gp, gp in enumerate(self._context.grid_points):
             mode_kappa_matrix = _compute_kubo_mode_kappa_matrix(
-                frequencies=frequencies,
-                gamma=gamma,
-                heat_capacity_matrix=heat_capacity_matrix[i_gp],
-                vm_by_vm=vm_by_vm[i_gp],
+                frequencies=self._context.frequencies[gp],
+                gamma=gamma_eff[:, :, i_gp, :],
+                heat_capacity_matrix=aggregates.heat_capacity_matrix[:, i_gp, :, :],
+                vm_by_vm=aggregates.vm_by_vm[i_gp],
                 conversion_factor=self._conversion_factor,
             )
-            # mkm: (num_sigma, num_temp, num_band0, num_band, 6)
-            mode_kappa_inter_list.append(mode_kappa_matrix)
-
-            # Off-diagonal (inter-band) sum only.
-            all_sum = mode_kappa_matrix.sum(axis=(2, 3))
-            diag = np.diagonal(
-                mode_kappa_matrix, axis1=2, axis2=3
-            )  # (..., 6, num_band)
-            kappa_inter += all_sum - diag.sum(axis=-1)
+            self._mode_kappa_matrix[:, :, i_gp, :, :, :] = mode_kappa_matrix
 
         if num_sampling_grid_points > 0:
-            kappa_inter /= num_sampling_grid_points
-
-        self._kappa_inter = kappa_inter
-        self._mode_kappa_matrix = np.array(mode_kappa_inter_list)
+            kappa_total = (
+                self._mode_kappa_matrix.sum(axis=(2, 3, 4)) / num_sampling_grid_points
+            )
+            self._kappa_intra = (
+                np.einsum("abijjc->abc", self._mode_kappa_matrix)
+                / num_sampling_grid_points
+            )
+            self._kappa_inter = kappa_total - self._kappa_intra
+            self._kappa = self._kappa_inter + self._solver.kappa
 
     def _log_kubo_kappa(self) -> None:
         """Print Kubo LBTE kappa table."""
@@ -484,12 +443,12 @@ class KuboLBTEKappaAccumulator:
                     % ("           T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
                 )
                 print(
-                    "K_intra_exact"
+                    "K_intra      "
                     + ("%7.1f " + " %10.3f" * 6)
                     % ((t,) + tuple(kappa_intra_exact[i_sigma, i_temp]))
                 )
                 print(
-                    "(K_intra_RTA)"
+                    "K_intra_RTA  "
                     + ("%7.1f " + " %10.3f" * 6)
                     % ((t,) + tuple(kappa_intra_RTA[i_sigma, i_temp]))
                 )
@@ -499,13 +458,12 @@ class KuboLBTEKappaAccumulator:
                         + ("%7.1f " + " %10.3f" * 6)
                         % ((t,) + tuple(kappa_inter[i_sigma, i_temp]))
                     )
-                    print(" ")
                     kappa_tot = (
                         kappa_intra_exact[i_sigma, i_temp]
                         + kappa_inter[i_sigma, i_temp]
                     )
                     print(
-                        "K_TOT=K_intra+K_inter"
+                        "K_TOT        "
                         + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(kappa_tot))
                     )
                 print("-" * 76, flush=True)

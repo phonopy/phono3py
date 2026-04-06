@@ -141,6 +141,8 @@ class LBTECalculator:
         self._cv: NDArray[np.double] | None = None
         self._gamma_iso: NDArray[np.double] | None = None
         self._averaged_pp_interaction: NDArray[np.double] | None = None
+        self._gamma_elph: NDArray[np.double] | None = None
+        self._gamma_boundary: NDArray[np.double] | None = None
         self._vm_by_vm: NDArray[np.cdouble] | None = None
         self._heat_capacity_matrix: NDArray[np.double] | None = None
         self._extra: dict[str, Any] = {}
@@ -512,6 +514,8 @@ class LBTECalculator:
             mode_heat_capacities=self._cv,
             gamma=self._gamma,
             gamma_isotope=self._gamma_iso,
+            gamma_boundary=self._gamma_boundary,
+            gamma_elph=self._gamma_elph,
             vm_by_vm=self._vm_by_vm,
             heat_capacity_matrix=self._heat_capacity_matrix,
             extra=self._extra,
@@ -571,16 +575,19 @@ class LBTECalculator:
             if self._vm_by_vm is None:
                 num_ir = len(self._context.ir_grid_points)
                 self._vm_by_vm = np.zeros(
-                    (num_ir,) + vel_result.vm_by_vm.shape, dtype="complex128"
+                    (num_ir,) + vel_result.vm_by_vm.shape, dtype="complex128", order="C"
                 )
             self._vm_by_vm[i_gp] = vel_result.vm_by_vm
         if cv_result.heat_capacity_matrix is not None:
             if self._heat_capacity_matrix is None:
+                shape = cv_result.heat_capacity_matrix.shape
                 num_ir = len(self._context.ir_grid_points)
                 self._heat_capacity_matrix = np.zeros(
-                    (num_ir,) + cv_result.heat_capacity_matrix.shape, dtype="double"
+                    (shape[0], num_ir) + shape[1:],
+                    dtype="double",
+                    order="C",
                 )
-            self._heat_capacity_matrix[i_gp] = cv_result.heat_capacity_matrix
+            self._heat_capacity_matrix[:, i_gp, :, :] = cv_result.heat_capacity_matrix
 
         # Store velocity extra data (e.g. velocity_operator for Wigner).
         if vel_result.extra:
