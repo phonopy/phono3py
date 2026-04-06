@@ -435,6 +435,11 @@ except ImportError:
     pass
 
 try:
+    import phono3py.conductivity.smm19  # noqa: F401, E402
+except ImportError:
+    pass
+
+try:
     import phono3py.conductivity.ms_smm19  # noqa: F401, E402
 except ImportError:
     pass
