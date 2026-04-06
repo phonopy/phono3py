@@ -38,14 +38,12 @@ from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
-from phonopy.phonon.thermal_properties import mode_cv
 from phonopy.physical_units import get_physical_units
 
 
 def mode_cv_matrix(
-    temp: float,
+    temps: NDArray[np.double],
     freqs: NDArray[np.double],
-    cutoff: float = 1e-4,
 ) -> NDArray[np.double]:
     r"""Calculate mode heat capacity matrix, Cqjj'.
 
@@ -58,14 +56,14 @@ def mode_cv_matrix(
     This is reduced to
 
     C_{\mathbf{q}jj'} = k_\text{B}
-    \left( \frac{x_{\mathbf{q}j} + x_{\mathbf{q}j'}}{2} \right)^2
+    -\left( \frac{x_{\mathbf{q}j} + x_{\mathbf{q}j'}}{2} \right)^2
     \frac{n_{\mathbf{q}j} - n_{\mathbf{q}j'}}
     {x_{\mathbf{q}j} - x_{\mathbf{q}j'}}
 
     With x = \frac{\hbar \omega}{k_\text{B} T},
 
     C_{\mathbf{q}jj'} =
-    \frac{\hbar(\omega_{\mathbf{q}j} + \omega_{\mathbf{q}j'})^2}
+    -\frac{\hbar(\omega_{\mathbf{q}j} + \omega_{\mathbf{q}j'})^2}
     {4T(\omega_{\mathbf{q}j} - \omega_{\mathbf{q}j'})}
     (n_{\mathbf{q}j} - n_{\mathbf{q}j'})
 
@@ -75,9 +73,9 @@ def mode_cv_matrix(
 
     Parameters
     ----------
-    temp : float
-        Temperature in K.
-    freqs : ndarray
+    temps: NDArray[np.double]
+        Temperatures in K.
+    freqs : NDArray[np.double]
         Phonon frequencies at a q-point in eV.
     cutoff : float
         This is used to check the degeneracy in eV.
@@ -86,26 +84,21 @@ def mode_cv_matrix(
     -------
     ndarray
         Heat capacity matrix in eV/K.
-        shape=(num_band, num_band), dtype='double', order='C'.
+        shape=(num_temps, num_band, num_band), dtype='double', order='C'.
 
     """
 
-    def bose_einstein(freqs, temp):
-        return 1.0 / (np.exp(freqs / (get_physical_units().KB * temp)) - 1)
+    def bose_einstein(
+        freqs: NDArray[np.double], temps: NDArray[np.double]
+    ) -> NDArray[np.double]:
+        """Re-implemented here because of different physical units."""
+        x = np.divide.outer(freqs, get_physical_units().KB * temps).T
+        return 1.0 / (np.exp(x) - 1)
 
-    n = bose_einstein(freqs, temp)
-    n_sub = np.subtract.outer(n, n)
+    n = bose_einstein(freqs, temps)
+    cvm = np.zeros((len(temps), len(freqs), len(freqs)), dtype="double", order="C")
     f_sub = np.subtract.outer(freqs, freqs)
     f_add = np.add.outer(freqs, freqs)
-    f_sub_condition = np.abs(f_sub) > cutoff
-
-    # This line is to avoid numpy div by zero warning.
-    f_sub = np.where(f_sub_condition, f_sub, 1.0)
-
-    cvm = np.where(
-        f_sub_condition,
-        -(f_add**2) / 4 / temp * n_sub / f_sub,
-        np.where(freqs > cutoff, mode_cv(temp, freqs), 0),
-    )
-
+    n_sub = n[:, :, None] - n[:, None, :]
+    cvm = -(f_add**2)[None, :, :] / 4 / temps[:, None, None] * n_sub / f_sub[None, :, :]
     return cvm

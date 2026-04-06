@@ -9,14 +9,14 @@ methods with the conductivity factory so that
 
 from phono3py.conductivity.build_components import VariantBuildContext
 from phono3py.conductivity.factory import register_variant
-from phono3py.conductivity.njc23.heat_capacity_providers import (
+from phono3py.conductivity.heat_capacity_providers import (
     HeatCapacityMatrixProvider,
 )
 from phono3py.conductivity.njc23.kappa_accumulators import (
     KuboLBTEKappaAccumulator,
     KuboRTAKappaAccumulator,
 )
-from phono3py.conductivity.njc23.velocity_providers import VelocityMatrixProvider
+from phono3py.conductivity.velocity_providers import VelocityMatrixProvider
 
 
 def _make_velocity_provider(ctx: VariantBuildContext) -> VelocityMatrixProvider:
