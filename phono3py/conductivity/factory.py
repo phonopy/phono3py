@@ -411,7 +411,9 @@ def _make_lbte_calculator(
         log_level=config.log_level,
     )
     cv_provider = ModeHeatCapacityProvider(interaction)
-    accumulator = LBTEKappaAccumulator(base.solver)
+    accumulator = LBTEKappaAccumulator(
+        base.solver, context=base.context, log_level=config.log_level
+    )
     return LBTECalculator(
         interaction,
         velocity_provider=velocity_provider,

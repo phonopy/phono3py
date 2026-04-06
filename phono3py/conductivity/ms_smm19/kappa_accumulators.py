@@ -15,7 +15,11 @@ from phono3py.conductivity.grid_point_data import (
     compute_effective_gamma,
 )
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionResult
-from phono3py.conductivity.utils import log_kappa_header, log_kappa_row
+from phono3py.conductivity.utils import (
+    log_kappa_header,
+    log_kappa_row,
+    log_sigma_header,
+)
 
 # Threshold in THz below which two modes are considered degenerate and treated
 # as a population (diagonal) term instead of a coherence (off-diagonal) term.
@@ -405,7 +409,6 @@ class WignerLBTEKappaAccumulator:
     def finalize(
         self,
         aggregates: GridPointAggregates,
-        suppress_kappa_log: bool = False,
     ) -> None:
         """Finalize P-term via solver, then compute C-term.
 
@@ -418,13 +421,15 @@ class WignerLBTEKappaAccumulator:
         if vel_op is not None:
             self._velocity_operator = vel_op
 
-        self._solver.solve(
-            aggregates,
-            suppress_kappa_log=bool(self._log_level),
-        )
-        self._compute_coherence_kappa(aggregates)
-        if self._log_level:
-            self._log_wigner_kappa()
+        self._prepare_coherence_arrays(aggregates)
+        prev_sigma = -1
+        for i_sigma, i_temp in self._solver.solve_iter(aggregates):
+            self._compute_coherence_kappa_at(aggregates, i_sigma, i_temp)
+            if self._log_level:
+                if i_sigma != prev_sigma:
+                    log_sigma_header(self._context.sigmas[i_sigma])
+                    prev_sigma = i_sigma
+                self._log_wigner_kappa_at(i_sigma, i_temp)
 
     # ------------------------------------------------------------------
     # Properties — delegated to solver (LBTE P-term results)
@@ -526,8 +531,8 @@ class WignerLBTEKappaAccumulator:
     # Private: C-term computation
     # ------------------------------------------------------------------
 
-    def _compute_coherence_kappa(self, aggregates: GridPointAggregates) -> None:
-        """Compute the Wigner coherence (C) term of thermal conductivity."""
+    def _prepare_coherence_arrays(self, aggregates: GridPointAggregates) -> None:
+        """Allocate arrays for the coherence (C) term before the solve loop."""
         if self._is_reducible:
             print(
                 " WARNING: Coherences conductivity not implemented for "
@@ -539,46 +544,65 @@ class WignerLBTEKappaAccumulator:
         if vm_by_vm is None or mode_cv is None:
             return
 
-        THzToEv = get_physical_units().THzToEv
         num_sigma = len(self._context.sigmas)
         num_temp = len(self._context.temperatures)
         num_ir = len(self._context.ir_grid_points)
         num_band0 = len(self._context.band_indices)
         num_band = self._context.frequencies.shape[1]
 
-        mode_kappa_C = np.zeros(
+        self._mode_kappa_C = np.zeros(
             (num_sigma, num_temp, num_ir, num_band0, num_band, 6), dtype="complex128"
         )
+        self._kappa_C = np.zeros((num_sigma, num_temp, 6), dtype="double")
+        self._num_sampling_grid_points = aggregates.num_sampling_grid_points
 
-        for i_sigma in range(num_sigma):
-            for i_temp in range(num_temp):
-                for i_gp in range(num_ir):
-                    gp = int(self._context.ir_grid_points[i_gp])
-                    g = self._solver.get_main_diagonal(i_gp, i_sigma, i_temp) * 2.0
-                    frequencies = self._context.frequencies[gp]
-                    cv = mode_cv[i_temp, i_gp, :]
-                    gv_by_gv_op = vm_by_vm[i_gp]
+    def _compute_coherence_kappa_at(
+        self,
+        aggregates: GridPointAggregates,
+        i_sigma: int,
+        i_temp: int,
+    ) -> None:
+        """Compute the Wigner coherence (C) term for one (sigma, temp) pair."""
+        if self._mode_kappa_C is None:
+            return
+        vm_by_vm = aggregates.vm_by_vm
+        mode_cv = aggregates.mode_heat_capacities
+        if vm_by_vm is None or mode_cv is None:
+            return
 
-                    for s1 in range(num_band0):
-                        for s2 in range(num_band):
-                            contrib = self._compute_pair_contribution(
-                                freq_s1=float(frequencies[s1]),
-                                freq_s2=float(frequencies[s2]),
-                                linewidth_s1=float(g[s1]),
-                                linewidth_s2=float(g[s2]),
-                                cv_s1=float(cv[s1]),
-                                cv_s2=float(cv[s2]),
-                                gv_by_gv_s1s2=gv_by_gv_op[s1, s2, :],
-                                THzToEv=THzToEv,
-                            )
-                            if contrib is None:
-                                continue
-                            mode_kappa_C[i_sigma, i_temp, i_gp, s1, s2] = contrib
+        THzToEv = get_physical_units().THzToEv
+        num_ir = len(self._context.ir_grid_points)
+        num_band0 = len(self._context.band_indices)
+        num_band = self._context.frequencies.shape[1]
 
-        self._mode_kappa_C = mode_kappa_C
-        self._kappa_C = (
-            mode_kappa_C.sum(axis=(2, 3, 4)) / aggregates.num_sampling_grid_points
-        ).real
+        for i_gp in range(num_ir):
+            gp = int(self._context.ir_grid_points[i_gp])
+            g = self._solver.get_main_diagonal(i_gp, i_sigma, i_temp) * 2.0
+            frequencies = self._context.frequencies[gp]
+            cv = mode_cv[i_temp, i_gp, :]
+            gv_by_gv_op = vm_by_vm[i_gp]
+
+            for s1 in range(num_band0):
+                for s2 in range(num_band):
+                    contrib = self._compute_pair_contribution(
+                        freq_s1=float(frequencies[s1]),
+                        freq_s2=float(frequencies[s2]),
+                        linewidth_s1=float(g[s1]),
+                        linewidth_s2=float(g[s2]),
+                        cv_s1=float(cv[s1]),
+                        cv_s2=float(cv[s2]),
+                        gv_by_gv_s1s2=gv_by_gv_op[s1, s2, :],
+                        THzToEv=THzToEv,
+                    )
+                    if contrib is None:
+                        continue
+                    self._mode_kappa_C[i_sigma, i_temp, i_gp, s1, s2] = contrib
+
+        n = self._num_sampling_grid_points
+        if n > 0:
+            self._kappa_C[i_sigma, i_temp] = (
+                self._mode_kappa_C[i_sigma, i_temp].sum(axis=(0, 1, 2)) / n
+            ).real
 
     def _compute_pair_contribution(
         self,
@@ -620,42 +644,34 @@ class WignerLBTEKappaAccumulator:
         factor = lorentzian_div_hbar * self._conversion_factor_WTE
         return gv_by_gv_s1s2 * prefactor * factor
 
-    def _log_wigner_kappa(self) -> None:
-        """Print Wigner LBTE kappa table (K_P_exact, K_P_RTA, K_C, K_TOT)."""
-        kappa_P_exact = self._solver.kappa
-        kappa_P_RTA = self._solver.kappa_RTA
+    def _log_wigner_kappa_at(self, i_sigma: int, i_temp: int) -> None:
+        """Print Wigner LBTE kappa for one (sigma, temperature) pair."""
+        t = self._context.temperatures[i_temp]
+        if t <= 0:
+            return
+
+        n = self._num_sampling_grid_points if self._num_sampling_grid_points > 0 else 1
+        kappa_P = self._solver._kappa[i_sigma, i_temp] / n
+        kappa_P_RTA = self._solver._kappa_RTA[i_sigma, i_temp] / n
         kappa_C = self._kappa_C
 
-        for i_sigma in range(len(self._context.sigmas)):
-            for i_temp, t in enumerate(self._context.temperatures):
-                if t <= 0:
-                    continue
-                print(
-                    ("#%6s       " + " %-10s" * 6)
-                    % ("         \t\t  T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
-                )
-                print(
-                    "K_P_exact\t\t"
-                    + ("%7.1f " + " %10.3f" * 6)
-                    % ((t,) + tuple(kappa_P_exact[i_sigma, i_temp]))
-                )
-                print(
-                    "(K_P_RTA)\t\t"
-                    + ("%7.1f " + " %10.3f" * 6)
-                    % ((t,) + tuple(kappa_P_RTA[i_sigma, i_temp]))
-                )
-                if kappa_C is not None:
-                    print(
-                        "K_C      \t\t"
-                        + ("%7.1f " + " %10.3f" * 6)
-                        % ((t,) + tuple(kappa_C[i_sigma, i_temp]))
-                    )
-                    print(" ")
-                    kappa_tot = (
-                        kappa_P_exact[i_sigma, i_temp] + kappa_C[i_sigma, i_temp]
-                    )
-                    print(
-                        "K_TOT=K_P_exact+K_C\t"
-                        + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(kappa_tot))
-                    )
-                print("-" * 76, flush=True)
+        print(
+            ("#%6s       " + " %-10s" * 6)
+            % ("         \t\t  T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
+        )
+        print("K_P_exact\t\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(kappa_P)))
+        print(
+            "(K_P_RTA)\t\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(kappa_P_RTA))
+        )
+        if kappa_C is not None:
+            print(
+                "K_C      \t\t"
+                + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(kappa_C[i_sigma, i_temp]))
+            )
+            print(" ")
+            kappa_tot = kappa_P + kappa_C[i_sigma, i_temp]
+            print(
+                "K_TOT=K_P_exact+K_C\t"
+                + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(kappa_tot))
+            )
+        print("-" * 76, flush=True)
