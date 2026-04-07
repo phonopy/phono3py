@@ -21,6 +21,7 @@ from phono3py.conductivity.scattering_providers import (
     compute_bulk_boundary_scattering,
 )
 from phono3py.conductivity.utils import (
+    get_kappa_star_operations,
     show_grid_point_frequencies_gv,
     show_grid_point_frequencies_gv_on_kstar,
     show_grid_point_header,
@@ -638,13 +639,16 @@ class RTACalculator:
         pp = ave_pp if self._scattering_provider.is_full_pp else None
         gv_delta_q = getattr(self._velocity_provider, "gv_delta_q", None)
         if self._log_level > 2:
+            point_ops, rot_cart = get_kappa_star_operations(
+                self._context.bz_grid, self._context.is_kappa_star
+            )
             show_grid_point_frequencies_gv_on_kstar(
                 frequencies,
                 gv,
                 gp,
                 self._context.bz_grid,
-                self._context.point_operations,
-                self._context.rotations_cartesian,
+                point_ops,
+                rot_cart,
                 gv_delta_q=gv_delta_q,
                 ave_pp=pp,
             )

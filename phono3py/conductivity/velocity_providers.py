@@ -2,70 +2,18 @@
 
 from __future__ import annotations
 
-import textwrap
-
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.phonon.group_velocity import GroupVelocity
 
 from phono3py.conductivity.grid_point_data import VelocityResult
-from phono3py.conductivity.utils import VOIGT_INDEX_PAIRS
+from phono3py.conductivity.utils import VOIGT_INDEX_PAIRS, get_kappa_star_operations
 from phono3py.phonon.grid import (
     get_grid_points_by_rotations,
     get_qpoints_from_bz_grid_points,
 )
 from phono3py.phonon.velocity_matrix import VelocityMatrix
 from phono3py.phonon3.interaction import Interaction
-
-
-def get_multiplicity_at_q(
-    gp: int,
-    pp: Interaction,
-    point_operations: NDArray[np.int64],
-) -> int:
-    """Return multiplicity (order of site-symmetry) of q-point."""
-    q = get_qpoints_from_bz_grid_points(gp, pp.bz_grid)
-    reclat = np.linalg.inv(pp.primitive.cell)
-    multi = 0
-    for q_rot in [np.dot(r, q) for r in point_operations]:
-        diff = q - q_rot
-        diff -= np.rint(diff)
-        dist = np.linalg.norm(np.dot(reclat, diff))
-        if dist < pp.primitive_symmetry.tolerance:
-            multi += 1
-    return multi
-
-
-def get_kstar_order(
-    grid_weight: int,
-    multi: int,
-    point_operations: NDArray[np.int64],
-    verbose: bool = False,
-) -> int:
-    """Return order (number of arms) of kstar.
-
-    multi : int
-        Multiplicity of grid point.
-
-    """
-    order_kstar = len(point_operations) // multi
-    if order_kstar != grid_weight:
-        if verbose:
-            text = (
-                "Number of elements in k* is unequal "
-                "to number of equivalent grid-points. "
-                "This means that the mesh sampling grids break "
-                "symmetry. Please check carefully "
-                "the convergence over grid point densities."
-            )
-            msg = textwrap.fill(
-                text, initial_indent=" ", subsequent_indent=" ", width=70
-            )
-            print("*" * 30 + "Warning" + "*" * 30)
-            print(msg)
-            print("*" * 67)
-
-    return order_kstar
 
 
 class GroupVelocityProvider:
@@ -86,10 +34,6 @@ class GroupVelocityProvider:
     pp : Interaction
         Interaction instance.  ``init_dynamical_matrix()`` must have been
         called beforehand.
-    point_operations : ndarray of int64, shape (num_ops, 3, 3)
-        Reciprocal-space point-group operations (integer representation).
-    rotations_cartesian : ndarray of double, shape (num_ops, 3, 3)
-        Corresponding Cartesian rotation matrices.
     is_kappa_star : bool, optional
         When True use the full k-star for symmetry averaging. Default True.
     average_gv_over_kstar : bool, optional
@@ -108,10 +52,6 @@ class GroupVelocityProvider:
     def __init__(
         self,
         pp: Interaction,
-        point_operations: NDArray[np.int64],
-        rotations_cartesian: NDArray[np.double],
-        grid_points: NDArray[np.int64],
-        grid_weights: NDArray[np.int64],
         is_kappa_star: bool = True,
         average_gv_over_kstar: bool = False,
         gv_delta_q: float | None = None,
@@ -121,13 +61,13 @@ class GroupVelocityProvider:
         if pp.dynamical_matrix is None:
             raise RuntimeError("Interaction.init_dynamical_matrix() must be called.")
         self._pp = pp
-        self._point_operations = point_operations
-        self._rotations_cartesian = rotations_cartesian
-        self._grid_weight_map = dict(zip(grid_points, grid_weights, strict=True))
         self._is_kappa_star = is_kappa_star
         self._average_gv_over_kstar = average_gv_over_kstar
         self._gv_delta_q = gv_delta_q
         self._log_level = log_level
+        self._point_operations, self._rotations_cartesian = (
+            get_kappa_star_operations(pp.bz_grid, is_kappa_star)
+        )
         self._velocity_obj = GroupVelocity(
             pp.dynamical_matrix,
             q_length=gv_delta_q,
@@ -155,8 +95,7 @@ class GroupVelocityProvider:
             (num_band0, 6), and ``num_sampling_grid_points`` are set.
         """
         gv = self._get_gv(grid_point)
-        grid_weight = int(self._grid_weight_map[grid_point])
-        gv_by_gv, kstar_order = self._get_gv_by_gv(grid_point, grid_weight, gv)
+        gv_by_gv, kstar_order = self._get_gv_by_gv(grid_point, gv)
         return VelocityResult(
             group_velocities=gv,
             gv_by_gv=gv_by_gv,
@@ -194,10 +133,13 @@ class GroupVelocityProvider:
         return gv / len(self._point_operations)
 
     def _get_gv_by_gv(
-        self, grid_point: int, grid_weight: int, gv: NDArray[np.double]
+        self, grid_point: int, gv: NDArray[np.double]
     ) -> tuple[NDArray[np.double], int]:
         if self._is_kappa_star:
-            multi = get_multiplicity_at_q(grid_point, self._pp, self._point_operations)
+            gps_rotated = get_grid_points_by_rotations(
+                grid_point, self._pp.bz_grid, with_surface=False
+            )
+            multi = len(np.where(gps_rotated[0] == gps_rotated)[0])
         else:
             multi = 1
 
@@ -207,12 +149,7 @@ class GroupVelocityProvider:
             gv_by_gv_3x3 += [np.outer(r_gv, r_gv) for r_gv in gvs_rot]
         gv_by_gv_3x3 /= multi
 
-        kstar_order = get_kstar_order(
-            grid_weight,
-            multi,
-            self._point_operations,
-            verbose=self._log_level > 0,
-        )
+        kstar_order = len(self._point_operations) // multi
 
         # Convert (num_band0, 3, 3) to (num_band0, 6) Voigt notation
         gv_by_gv = np.zeros((len(gv), 6), dtype="double")
@@ -248,8 +185,6 @@ class VelocityMatrixProvider:
     ----------
     pp : Interaction
         Interaction instance. ``init_dynamical_matrix()`` must have been called.
-    point_operations : ndarray of int64, shape (num_ops, 3, 3)
-        Reciprocal-space point-group operations (integer representation).
     is_kappa_star : bool, optional
         When True use the full k-star for symmetry averaging. Default True.
     gv_delta_q : float or None, optional
@@ -265,10 +200,6 @@ class VelocityMatrixProvider:
     def __init__(
         self,
         pp: Interaction,
-        reciprocal_operations: NDArray[np.int64],
-        rotations_cartesian: NDArray[np.double],
-        grid_points: NDArray[np.int64],
-        grid_weights: NDArray[np.int64],
         is_kappa_star: bool = True,
         gv_delta_q: float | None = None,
         log_level: int = 0,
@@ -278,17 +209,17 @@ class VelocityMatrixProvider:
             raise RuntimeError("Interaction.init_dynamical_matrix() must be called.")
         self._pp = pp
         self._is_kappa_star = is_kappa_star
-        self._grid_weight_map = dict(zip(grid_points, grid_weights, strict=True))
         self._log_level = log_level
+        self._reciprocal_operations, self._rotations_cartesian = (
+            get_kappa_star_operations(pp.bz_grid, is_kappa_star)
+        )
         self._velocity_obj = VelocityMatrix(
             pp.dynamical_matrix,
             q_length=gv_delta_q,
-            rotations_cartesian=rotations_cartesian,
-            reciprocal_operations=reciprocal_operations,
+            rotations_cartesian=self._rotations_cartesian,
+            reciprocal_operations=self._reciprocal_operations,
             frequency_factor_to_THz=pp.frequency_factor_to_THz,
         )
-        self._reciprocal_operations = reciprocal_operations
-        self._rotations_cartesian = rotations_cartesian
 
     def compute(self, grid_point: int) -> VelocityResult:
         """Compute velocity matrix quantities at a grid point.
@@ -311,9 +242,8 @@ class VelocityMatrixProvider:
         self._velocity_obj.run([q_point])
         assert self._velocity_obj.velocity_matrices is not None
         gv = self._velocity_obj.group_velocities[0]
-        grid_weight = int(self._grid_weight_map[grid_point])
         vm_by_vm, kstar_order = self._get_vm_by_vm(
-            grid_point, grid_weight, self._velocity_obj.velocity_matrices[0]
+            grid_point, self._velocity_obj.velocity_matrices[0]
         )
         return VelocityResult(
             group_velocities=gv,
@@ -328,7 +258,6 @@ class VelocityMatrixProvider:
     def _get_vm_by_vm(
         self,
         grid_point: int,
-        grid_weight: int,
         vm: NDArray[np.cdouble],
     ) -> tuple[NDArray[np.cdouble], int]:
         r"""Compute k-star-averaged outer product of velocity matrix elements.
@@ -348,9 +277,10 @@ class VelocityMatrixProvider:
 
         """
         if self._is_kappa_star:
-            multi = get_multiplicity_at_q(
-                grid_point, self._pp, self._reciprocal_operations
+            gps_rotated = get_grid_points_by_rotations(
+                grid_point, self._pp.bz_grid, with_surface=False
             )
+            multi = len(np.where(gps_rotated[0] == gps_rotated)[0])
         else:
             multi = 1
 
@@ -363,12 +293,6 @@ class VelocityMatrixProvider:
                 # V^a_{s s'} * conj(V^b_{s s'}) for selected band0 vs all bands
                 vm_by_vm[:, :, i_pair] += _vm[a] * _vm[b].conj()
         vm_by_vm /= multi
-
-        kstar_order = get_kstar_order(
-            grid_weight,
-            multi,
-            self._reciprocal_operations,
-            verbose=self._log_level > 0,
-        )
+        kstar_order = len(self._reciprocal_operations) // multi
 
         return vm_by_vm, kstar_order

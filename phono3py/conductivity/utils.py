@@ -67,6 +67,28 @@ VOIGT_INDEX_PAIRS: tuple[tuple[int, int], ...] = (
 )
 
 
+def get_kappa_star_operations(
+    bz_grid: BZGrid, is_kappa_star: bool
+) -> tuple[NDArray[np.int64], NDArray[np.double]]:
+    """Return reciprocal operations and Cartesian rotations for kappa-star.
+
+    When ``is_kappa_star`` is True, return the full point-group operations
+    from the BZ grid.  Otherwise return a single identity operation.
+
+    Returns
+    -------
+    reciprocal_operations : ndarray of int64, shape (num_ops, 3, 3)
+    rotations_cartesian : ndarray of double, shape (num_ops, 3, 3)
+
+    """
+    if is_kappa_star:
+        return bz_grid.reciprocal_operations, bz_grid.rotations_cartesian
+    return (
+        np.eye(3, dtype="int64", order="C").reshape(1, 3, 3),
+        np.eye(3, dtype="double", order="C").reshape(1, 3, 3),
+    )
+
+
 def show_grid_point_header(
     bzgp: int,
     i_gp: int,

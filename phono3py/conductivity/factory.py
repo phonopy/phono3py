@@ -111,7 +111,7 @@ def register_variant(
             "my-variant",
             make_velocity_provider=lambda ctx: MyVelocityProvider(
                 ctx.interaction,
-                point_operations=ctx.point_operations,
+                is_kappa_star=ctx.is_kappa_star,
                 log_level=ctx.log_level,
             ),
             make_rta_accumulator=lambda ctx: MyRTAAccumulator(
@@ -131,8 +131,6 @@ def register_variant(
         ctx = VariantBuildContext(
             interaction=interaction,
             context=base.context,
-            point_operations=base.point_ops,
-            rotations_cartesian=base.rot_cart,
             conversion_factor=get_unit_to_WmK() / interaction.primitive.volume,
             is_kappa_star=config.is_kappa_star,
             gv_delta_q=config.gv_delta_q,
@@ -176,8 +174,6 @@ def register_variant(
             ctx = VariantBuildContext(
                 interaction=interaction,
                 context=base.context,
-                point_operations=base.point_ops,
-                rotations_cartesian=base.rot_cart,
                 conversion_factor=get_unit_to_WmK() / interaction.primitive.volume,
                 is_kappa_star=config.is_kappa_star,
                 gv_delta_q=config.gv_delta_q,
@@ -369,10 +365,6 @@ def _make_rta_calculator(
     conversion_factor = get_unit_to_WmK() / interaction.primitive.volume
     velocity_provider = GroupVelocityProvider(
         interaction,
-        point_operations=base.point_ops,
-        rotations_cartesian=base.rot_cart,
-        grid_points=base.context.grid_points,
-        grid_weights=base.context.grid_weights,
         is_kappa_star=config.is_kappa_star,
         gv_delta_q=config.gv_delta_q,
         log_level=config.log_level,
@@ -406,10 +398,6 @@ def _make_lbte_calculator(
     base = build_lbte_base_components(interaction, config)
     velocity_provider = GroupVelocityProvider(
         interaction,
-        point_operations=base.point_ops,
-        rotations_cartesian=base.rot_cart,
-        grid_points=base.context.ir_grid_points,
-        grid_weights=base.context.grid_weights,
         is_kappa_star=config.is_kappa_star,
         gv_delta_q=config.gv_delta_q,
         log_level=config.log_level,

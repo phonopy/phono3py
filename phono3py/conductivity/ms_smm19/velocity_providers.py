@@ -8,7 +8,7 @@ from phonopy.phonon.degeneracy import degenerate_sets
 
 from phono3py.conductivity.grid_point_data import VelocityResult
 from phono3py.conductivity.ms_smm19.velocity_operator import VelocityOperator
-from phono3py.conductivity.utils import VOIGT_INDEX_PAIRS
+from phono3py.conductivity.utils import VOIGT_INDEX_PAIRS, get_kappa_star_operations
 from phono3py.phonon.grid import (
     get_grid_points_by_rotations,
     get_qpoints_from_bz_grid_points,
@@ -43,10 +43,6 @@ class VelocityOperatorProvider:
     ----------
     pp : Interaction
         Interaction instance. ``init_dynamical_matrix()`` must have been called.
-    point_operations : ndarray of int64, shape (num_ops, 3, 3)
-        Reciprocal-space point-group operations (integer representation).
-    rotations_cartesian : ndarray of double, shape (num_ops, 3, 3)
-        Corresponding Cartesian rotation matrices.
     is_kappa_star : bool, optional
         When True use the full k-star for symmetry averaging. Default True.
     gv_delta_q : float or None, optional
@@ -62,8 +58,6 @@ class VelocityOperatorProvider:
     def __init__(
         self,
         pp: Interaction,
-        point_operations: NDArray[np.int64],
-        rotations_cartesian: NDArray[np.double],
         is_kappa_star: bool = True,
         gv_delta_q: float | None = None,
         log_level: int = 0,
@@ -72,10 +66,11 @@ class VelocityOperatorProvider:
         if pp.dynamical_matrix is None:
             raise RuntimeError("Interaction.init_dynamical_matrix() must be called.")
         self._pp = pp
-        self._point_operations = point_operations
-        self._rotations_cartesian = rotations_cartesian
         self._is_kappa_star = is_kappa_star
         self._log_level = log_level
+        self._point_operations, self._rotations_cartesian = (
+            get_kappa_star_operations(pp.bz_grid, is_kappa_star)
+        )
         self._velocity_obj = VelocityOperator(
             pp.dynamical_matrix,
             q_length=gv_delta_q,

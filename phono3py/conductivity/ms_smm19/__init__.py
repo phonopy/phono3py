@@ -22,8 +22,6 @@ from phono3py.conductivity.ms_smm19.velocity_providers import VelocityOperatorPr
 def _make_velocity_provider(ctx: VariantBuildContext) -> VelocityOperatorProvider:
     return VelocityOperatorProvider(
         ctx.interaction,
-        point_operations=ctx.point_operations,
-        rotations_cartesian=ctx.rotations_cartesian,
         is_kappa_star=ctx.is_kappa_star,
         gv_delta_q=ctx.gv_delta_q,
         log_level=ctx.log_level,

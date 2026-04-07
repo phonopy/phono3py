@@ -59,6 +59,7 @@ from phono3py.conductivity.grid_point_data import GridPointAggregates
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionResult
 from phono3py.conductivity.utils import (
     diagonalize_collision_matrix,
+    get_kappa_star_operations,
     select_colmat_solver,
 )
 from phono3py.phonon.grid import get_grid_points_by_rotations
@@ -113,8 +114,6 @@ class CollisionMatrixSolver:
     is_reducible_collision_matrix : bool, optional
         Use the full reducible (non-symmetry-reduced) collision matrix.
         Default False.
-    is_kappa_star : bool, optional
-        Use k-star symmetry averaging.  Default True.
     solve_collective_phonon : bool, optional
         Use Chaput collective-phonon method (not supported; must be False).
         Default False.
@@ -137,7 +136,6 @@ class CollisionMatrixSolver:
         context: ConductivityContext,
         conversion_factor: float,
         is_reducible_collision_matrix: bool = False,
-        is_kappa_star: bool = True,
         solve_collective_phonon: bool = False,
         pinv_cutoff: float = 1.0e-8,
         pinv_solver: int = 0,
@@ -149,13 +147,15 @@ class CollisionMatrixSolver:
         self._context = context
         self._conversion_factor = conversion_factor
         self._is_reducible_collision_matrix = is_reducible_collision_matrix
-        self._is_kappa_star = is_kappa_star
         self._solve_collective_phonon = solve_collective_phonon
         self._pinv_cutoff = pinv_cutoff
         self._pinv_solver = pinv_solver
         self._pinv_method = pinv_method
         self._lang: Literal["C", "Python"] = lang
         self._log_level = log_level
+        _, self._rotations_cartesian = get_kappa_star_operations(
+            context.bz_grid, context.is_kappa_star
+        )
 
         # Set by solve() from grid_point_data (references, not copies).
         self._gamma: NDArray[np.double] | None = None
@@ -479,7 +479,7 @@ class CollisionMatrixSolver:
         return weights
 
     def _prepare_reducible_collision_matrix(self) -> NDArray[np.double]:
-        if self._is_kappa_star:
+        if self._context.is_kappa_star:
             self._expand_reducible_collision_matrix_by_symmetry()
         self._combine_reducible_collisions()
         weights = self._get_reducible_collision_weights()
@@ -527,7 +527,7 @@ class CollisionMatrixSolver:
         for i_irgp, ir_gp in enumerate(self._context.ir_grid_points):
             rot_gps = self._context.rot_grid_points[i_irgp]
             for rotation, rotated_gp in zip(
-                self._context.rotations_cartesian, rot_gps, strict=True
+                self._rotations_cartesian, rot_gps, strict=True
             ):
                 if ir_gp != rotated_gp:
                     continue
@@ -758,7 +758,7 @@ class CollisionMatrixSolver:
         self,
     ) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
         num_mesh_points = int(np.prod(self._context.mesh_numbers))
-        num_rot = len(self._context.rotations_cartesian)
+        num_rot = len(self._rotations_cartesian)
         rot_grid_points = np.zeros((num_rot, num_mesh_points), dtype="int64")
         ir_gr_grid_points = np.array(
             self._context.bz_grid.bzg2grg[self._context.ir_grid_points],
@@ -801,7 +801,7 @@ class CollisionMatrixSolver:
                 colmat_irgp = colmat[:, :, ir_gp, :, :, :].copy()
                 colmat_irgp /= multi
                 colmat[:, :, ir_gp, :, :, :] = 0
-                for j, _ in enumerate(self._context.rotations_cartesian):
+                for j, _ in enumerate(self._rotations_cartesian):
                     gp_r = rot_grid_points[j, ir_gp]
                     for k in range(num_mesh_points):
                         gp_c = rot_grid_points[j, k]
@@ -828,7 +828,7 @@ class CollisionMatrixSolver:
             if self._gamma_iso is not None:
                 gamma_iso_irgp = self._gamma_iso[:, ir_gp, :].copy()
                 self._gamma_iso[:, ir_gp, :] = 0
-            for j, r in enumerate(self._context.rotations_cartesian):
+            for j, r in enumerate(self._rotations_cartesian):
                 gp_r = rot_grid_points[j, ir_gp]
                 self._gv[gp_r] += np.dot(gv_irgp, r.T) / multi
                 self._cv[:, gp_r, :] += cv_irgp / multi
@@ -914,7 +914,7 @@ class CollisionMatrixSolver:
         Y = self._get_Y(i_sigma, i_temp, weights, X)
         self._set_mean_free_path(i_sigma, i_temp, weights, Y)
         self._set_mode_kappa(self._mode_kappa, X, Y, num_mesh_points, i_sigma, i_temp)
-        self._mode_kappa[i_sigma, i_temp] /= len(self._context.rotations_cartesian)
+        self._mode_kappa[i_sigma, i_temp] /= len(self._rotations_cartesian)
         self._kappa[i_sigma, i_temp] += (
             self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0)
         )
@@ -939,7 +939,7 @@ class CollisionMatrixSolver:
         self._set_mode_kappa(
             self._mode_kappa_RTA, X, Y, num_mesh_points, i_sigma, i_temp
         )
-        self._mode_kappa_RTA[i_sigma, i_temp] /= len(self._context.rotations_cartesian)
+        self._mode_kappa_RTA[i_sigma, i_temp] /= len(self._rotations_cartesian)
         self._kappa_RTA[i_sigma, i_temp] += (
             self._mode_kappa_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0)
         )
@@ -1273,6 +1273,6 @@ class CollisionMatrixSolver:
         f: NDArray[np.double],
     ) -> NDArray[np.double]:
         sum_k = np.zeros((3, 3), dtype="double")
-        for r in self._context.rotations_cartesian:
+        for r in self._rotations_cartesian:
             sum_k += np.outer(np.dot(r, v), np.dot(r, f))
         return sum_k

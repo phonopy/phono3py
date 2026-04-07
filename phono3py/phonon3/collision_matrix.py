@@ -57,10 +57,10 @@ class CollisionMatrix(ImagSelfEnergy):
     def __init__(
         self,
         interaction: Interaction,
-        rotations_cartesian: NDArray[np.double] | None = None,
         num_ir_grid_points: int | None = None,
         rot_grid_points: NDArray[np.int64] | None = None,
         is_reducible_collision_matrix: bool = False,
+        is_kappa_star: bool = True,
         log_level: int = 0,
         lang: Literal["C", "Python"] = "C",
     ) -> None:
@@ -78,7 +78,14 @@ class CollisionMatrix(ImagSelfEnergy):
             self._rot_grid_points = np.array(
                 self._pp.bz_grid.bzg2grg[rot_grid_points], dtype="int64", order="C"
             )
-            self._rotations_cartesian = rotations_cartesian
+            if is_kappa_star:
+                self._rotations_cartesian = (
+                    interaction.bz_grid.rotations_cartesian
+                )
+            else:
+                self._rotations_cartesian = np.eye(
+                    3, dtype="double", order="C"
+                ).reshape(1, 3, 3)
 
     def run(self) -> None:
         """Calculate collision matrix at a grid point."""

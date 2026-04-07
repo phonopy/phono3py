@@ -55,15 +55,10 @@ class ConductivityContext:
     eigenvectors: NDArray[np.cdouble]
     """Phonon eigenvectors at all BZ grid points."""
 
-    # -- Symmetry operations --
-
-    point_operations: NDArray[np.int64]
-    """Reciprocal-space point-group operations, shape (num_ops, 3, 3)."""
-
-    rotations_cartesian: NDArray[np.double]
-    """Cartesian rotation matrices, shape (num_ops, 3, 3)."""
-
     # -- Configuration --
+
+    is_kappa_star: bool
+    """Whether k-star symmetry is used."""
 
     temperatures: NDArray[np.double] | None
     """Temperatures in Kelvin, shape (num_temp,), or None if not yet set."""

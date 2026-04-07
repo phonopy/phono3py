@@ -49,10 +49,6 @@ class VariantBuildContext:
         Interaction instance with dynamical matrix initialised.
     context : ConductivityContext
         Shared computation metadata (grid, phonon, symmetry, settings).
-    point_operations : ndarray of int64, shape (num_ops, 3, 3)
-        Reciprocal-space point-group operations.
-    rotations_cartesian : ndarray of double, shape (num_ops, 3, 3)
-        Cartesian rotation matrices.
     conversion_factor : float
         Standard unit conversion factor (get_unit_to_WmK() / volume).
         Plugins may compute their own factor from ``interaction``.
@@ -71,8 +67,6 @@ class VariantBuildContext:
 
     interaction: Interaction
     context: ConductivityContext
-    point_operations: NDArray[np.int64]
-    rotations_cartesian: NDArray[np.double]
     conversion_factor: float
     is_kappa_star: bool
     gv_delta_q: float | None
@@ -181,10 +175,6 @@ class LBTEBaseComponents:
         Smearing widths (empty list selects tetrahedron method).
     temperatures : ndarray of double, shape (num_temp,)
         Temperatures in Kelvin.
-    rot_cart : ndarray of double, shape (num_ops, 3, 3)
-        Cartesian rotation matrices.
-    point_ops : ndarray of int64, shape (num_ops, 3, 3)
-        Reciprocal-space point-group operations.
     frequencies : ndarray of double, shape (num_gp, num_band)
         Phonon frequencies at all BZ grid points.
     ir_grid_points : ndarray of int64, shape (num_ir_gp,)
@@ -200,8 +190,6 @@ class LBTEBaseComponents:
 
     sigmas: list[float | None]
     temperatures: NDArray[np.double]
-    rot_cart: NDArray[np.double]
-    point_ops: NDArray[np.int64]
     frequencies: NDArray[np.double]
     ir_grid_points: NDArray[np.int64]
     rot_grid_points: NDArray[np.int64] | None
@@ -241,13 +229,9 @@ def build_lbte_base_components(
     )
 
     if config.is_kappa_star:
-        rot_cart: NDArray[np.double] = interaction.bz_grid.rotations_cartesian
         reciprocal_rotations: NDArray[np.int64] = interaction.bz_grid.rotations
-        point_ops: NDArray[np.int64] = interaction.bz_grid.reciprocal_operations
     else:
-        rot_cart = np.eye(3, dtype="double", order="C").reshape(1, 3, 3)
         reciprocal_rotations = np.eye(3, dtype="int64").reshape(1, 3, 3)
-        point_ops = np.eye(3, dtype="int64", order="C").reshape(1, 3, 3)
 
     # Ensure phonons at gamma are solved (idempotent).
     interaction.nac_q_direction = None
@@ -256,9 +240,13 @@ def build_lbte_base_components(
         interaction.run_phonon_solver()
     frequencies, eigenvectors, _ = interaction.get_phonons()
 
-    # IR grid points in BZ-grid format.
-    ir_grg, ir_weights, _ = get_ir_grid_points(interaction.bz_grid)
-    ir_gps_bzg = np.array(interaction.bz_grid.grg2bzg[ir_grg], dtype="int64")
+    # Grid points in BZ-grid format.
+    if config.is_kappa_star:
+        ir_grg, ir_weights, _ = get_ir_grid_points(interaction.bz_grid)
+        ir_gps_bzg = np.array(interaction.bz_grid.grg2bzg[ir_grg], dtype="int64")
+    else:
+        ir_gps_bzg = np.array(interaction.bz_grid.grg2bzg, dtype="int64")
+        ir_weights = np.ones(len(ir_gps_bzg), dtype="int64")
 
     # rot_grid_points: shape (num_ir_gp, num_ops), or None for reducible matrix.
     rot_grid_points: NDArray[np.int64] | None
@@ -280,6 +268,7 @@ def build_lbte_base_components(
         collision_matrix_obj = CollisionMatrix(
             interaction,
             is_reducible_collision_matrix=True,
+            is_kappa_star=config.is_kappa_star,
             log_level=config.log_level,
             lang=config.lang,
         )
@@ -287,9 +276,9 @@ def build_lbte_base_components(
         assert rot_grid_points is not None
         collision_matrix_obj = CollisionMatrix(
             interaction,
-            rotations_cartesian=rot_cart,
             num_ir_grid_points=len(ir_gps_bzg),
             rot_grid_points=rot_grid_points,
+            is_kappa_star=config.is_kappa_star,
             log_level=config.log_level,
             lang=config.lang,
         )
@@ -316,8 +305,7 @@ def build_lbte_base_components(
         mesh_numbers=interaction.mesh_numbers,
         frequencies=frequencies,
         eigenvectors=eigenvectors,
-        point_operations=point_ops,
-        rotations_cartesian=rot_cart,
+        is_kappa_star=config.is_kappa_star,
         temperatures=_temps,
         sigmas=_sigmas,
         sigma_cutoff_width=config.sigma_cutoff,
@@ -331,7 +319,6 @@ def build_lbte_base_components(
         context,
         conversion_factor=conversion_factor,
         is_reducible_collision_matrix=config.is_reducible_collision_matrix,
-        is_kappa_star=config.is_kappa_star,
         solve_collective_phonon=config.solve_collective_phonon,
         pinv_cutoff=config.pinv_cutoff,
         pinv_solver=config.pinv_solver,
@@ -343,8 +330,6 @@ def build_lbte_base_components(
     return LBTEBaseComponents(
         sigmas=_sigmas,
         temperatures=_temps,
-        rot_cart=rot_cart,
-        point_ops=point_ops,
         frequencies=frequencies,
         ir_grid_points=ir_gps_bzg,
         rot_grid_points=rot_grid_points,
@@ -369,10 +354,6 @@ class RTABaseComponents:
         Smearing widths (empty list selects tetrahedron method).
     temperatures : ndarray of double or None
         Temperatures in Kelvin, or None when not provided.
-    point_ops : ndarray of int64, shape (num_ops, 3, 3)
-        Reciprocal-space point-group operations.
-    rot_cart : ndarray of double, shape (num_ops, 3, 3)
-        Cartesian rotation matrices.
     scattering_provider : RTAScatteringProvider
         Pre-configured scattering provider.
 
@@ -380,8 +361,6 @@ class RTABaseComponents:
 
     sigmas: list[float | None]
     temperatures: NDArray[np.double] | None
-    point_ops: NDArray[np.int64]
-    rot_cart: NDArray[np.double]
     scattering_provider: RTAScatteringProvider
     context: ConductivityContext
 
@@ -453,13 +432,6 @@ def build_rta_base_components(
         else None
     )
 
-    if config.is_kappa_star:
-        point_ops: NDArray[np.int64] = interaction.bz_grid.reciprocal_operations
-        rot_cart: NDArray[np.double] = interaction.bz_grid.rotations_cartesian
-    else:
-        point_ops = np.eye(3, dtype="int64", order="C").reshape(1, 3, 3)
-        rot_cart = np.eye(3, dtype="double", order="C").reshape(1, 3, 3)
-
     # Ensure phonons are solved (idempotent).
     interaction.nac_q_direction = None
     interaction.run_phonon_solver_at_gamma()
@@ -499,8 +471,7 @@ def build_rta_base_components(
         mesh_numbers=interaction.mesh_numbers,
         frequencies=frequencies,
         eigenvectors=eigenvectors,
-        point_operations=point_ops,
-        rotations_cartesian=rot_cart,
+        is_kappa_star=config.is_kappa_star,
         temperatures=_temperatures,
         sigmas=_sigmas,
         sigma_cutoff_width=config.sigma_cutoff,
@@ -512,8 +483,6 @@ def build_rta_base_components(
     return RTABaseComponents(
         sigmas=_sigmas,
         temperatures=_temperatures,
-        point_ops=point_ops,
-        rot_cart=rot_cart,
         scattering_provider=scattering_provider,
         context=context,
     )
