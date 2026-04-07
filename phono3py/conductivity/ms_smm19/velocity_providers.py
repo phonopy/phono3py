@@ -56,6 +56,9 @@ class VelocityOperatorProvider:
 
     """
 
+    produces_gv_by_gv: bool = False
+    produces_vm_by_vm: bool = True
+
     def __init__(
         self,
         pp: Interaction,
@@ -109,14 +112,10 @@ class VelocityOperatorProvider:
 
         gv = self._get_group_velocities(gp, gv_op_full)
         vm_by_vm, kstar_order = self._get_gv_by_gv_operator(gp, gv_op)
-        num_band0 = vm_by_vm.shape[0]
-        gv_by_gv = np.real(vm_by_vm[np.arange(num_band0), np.arange(num_band0)])
         return VelocityResult(
             group_velocities=gv,
-            gv_by_gv=gv_by_gv,
             vm_by_vm=vm_by_vm,
             num_sampling_grid_points=kstar_order,
-            extra={"velocity_operator": gv_op},
         )
 
     # ------------------------------------------------------------------

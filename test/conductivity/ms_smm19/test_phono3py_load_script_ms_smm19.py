@@ -77,11 +77,6 @@ def test_phono3py_load_generates_wigner_kappa_hdf5_contents():
                 assert np.all(np.isfinite(f["mode_kappa"][:]))
                 assert np.all(np.isfinite(f["mode_kappa_P_RTA"][:]))
                 assert np.all(np.isfinite(f["mode_kappa_C"][:]))
-                # velocity_operator: (num_gp, num_band0, nat3, 3)
-                assert "velocity_operator" in f
-                assert f["velocity_operator"].ndim == 4
-                assert f["velocity_operator"].shape[-1] == 3
-                assert np.all(np.isfinite(f["velocity_operator"][:]))
 
             for created_filename in (
                 "phono3py.yaml",
@@ -221,11 +216,6 @@ def test_phono3py_load_wigner_lbte():
                 assert np.all(np.isfinite(f["mode_kappa_P_exact"][:]))
                 assert np.all(np.isfinite(f["mode_kappa_P_RTA"][:]))
                 assert np.all(np.isfinite(f["mode_kappa_C"][:]))
-                # velocity_operator: (num_gp, num_band0, nat3, 3)
-                assert "velocity_operator" in f
-                assert f["velocity_operator"].ndim == 4
-                assert f["velocity_operator"].shape[-1] == 3
-                assert np.all(np.isfinite(f["velocity_operator"][:]))
                 assert kappa_p_exact[0, 0] == pytest.approx(96.14464215062665, abs=0.8)
                 assert kappa_p_rta[0, 0] == pytest.approx(97.30006583719721, abs=0.8)
                 assert kappa_c[0, 0] == pytest.approx(0.1731832844767842, rel=2e-2)
@@ -305,17 +295,6 @@ def test_phono3py_load_wigner_write_gamma_contains_isotope_and_N_U():
                     0.014355506081254441, rel=0.2
                 )
                 assert np.max(np.abs(gamma - (gamma_n + gamma_u))) < 1e-10
-
-            # Per-grid-point files should contain velocity_operator.
-            gp_files = sorted(pathlib.Path(".").glob("kappa-m999-g*.hdf5"))
-            assert gp_files, "No per-grid-point kappa files found"
-            with h5py.File(gp_files[0], "r") as f_gp:
-                assert "velocity_operator" in f_gp
-                vel_op = f_gp["velocity_operator"][:]
-                # velocity_operator shape: (num_band0, nat3, 3)
-                assert vel_op.ndim == 3
-                assert vel_op.shape[-1] == 3
-                assert np.all(np.isfinite(vel_op))
 
             for created_filename in (
                 "phono3py.yaml",

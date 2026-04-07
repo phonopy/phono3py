@@ -140,7 +140,6 @@ class RTACalculator:
         self._gamma_U: NDArray[np.double] | None = None
         self._gamma_elph: NDArray[np.double] | None = None
         self._gamma_boundary: NDArray[np.double] | None = None
-        self._extra: dict[str, Any] = {}
         self._num_sampling_grid_points = 0
         self._num_ignored_phonon_modes: NDArray[np.int64] | None = None
         self._gamma_detail_at_q: NDArray[np.double] | None = None
@@ -202,7 +201,6 @@ class RTACalculator:
             gamma_elph=self._gamma_elph,
             vm_by_vm=self._vm_by_vm,
             heat_capacity_matrix=self._heat_capacity_matrix,
-            extra=self._extra,
         )
         self._count_ignored_modes(aggregates)
         self._accumulator.finalize(aggregates)
@@ -335,14 +333,14 @@ class RTACalculator:
         """Return per-grid-point extra arrays stored by the calculator.
 
         Called by output writers to obtain plugin-defined per-grid-point
-        arrays (e.g. Wigner velocity_operator) that are written to
-        the hdf5 file via ``write_kappa_to_hdf5(extra_datasets=...)``.
+        arrays that are written to the hdf5 file via
+        ``write_kappa_to_hdf5(extra_datasets=...)``.
         The caller is responsible for slicing by grid-point index.
 
         Returns None when no extra data has been stored.
 
         """
-        return self._extra if self._extra else None
+        return None
 
     def log_kappa(self) -> None:
         """Delegate kappa logging to the accumulator.
@@ -455,12 +453,16 @@ class RTACalculator:
         num_temp = len(self._context.temperatures)
         num_gp = len(self._context.grid_points)
         num_band0 = len(self._context.band_indices)
+        num_band = self._context.frequencies.shape[1]
 
         self._gamma = np.zeros(
             (num_sigma, num_temp, num_gp, num_band0), order="C", dtype="double"
         )
         self._gv = np.zeros((num_gp, num_band0, 3), order="C", dtype="double")
-        self._gv_by_gv = np.zeros((num_gp, num_band0, 6), order="C", dtype="double")
+        if self._velocity_provider.produces_gv_by_gv:
+            self._gv_by_gv = np.zeros(
+                (num_gp, num_band0, 6), order="C", dtype="double"
+            )
         self._cv = np.zeros((num_temp, num_gp, num_band0), order="C", dtype="double")
         if not self._read_gamma:
             if self._is_N_U or self._is_gamma_detail:
@@ -470,6 +472,22 @@ class RTACalculator:
         if self._context.boundary_mfp is not None:
             self._gamma_boundary = np.zeros(
                 (num_gp, num_band0), order="C", dtype="double"
+            )
+        if self._is_isotope:
+            self._gamma_iso = np.zeros(
+                (num_sigma, num_gp, num_band0), order="C", dtype="double"
+            )
+        if self._scattering_provider.is_full_pp:
+            self._averaged_pp_interaction = np.zeros(
+                (num_gp, num_band0), order="C", dtype="double"
+            )
+        if self._velocity_provider.produces_vm_by_vm:
+            self._vm_by_vm = np.zeros(
+                (num_gp, num_band0, num_band, 6), order="C", dtype="complex128"
+            )
+        if self._cv_provider.produces_heat_capacity_matrix:
+            self._heat_capacity_matrix = np.zeros(
+                (num_temp, num_gp, num_band0, num_band), order="C", dtype="double"
             )
         self._num_ignored_phonon_modes = np.zeros(
             (num_sigma, num_temp), order="C", dtype="int64"
@@ -571,19 +589,16 @@ class RTACalculator:
                 print("  Gamma is read from file.")
 
         # Isotope scattering.
-        gamma_iso: NDArray[np.double] | None = None
         if self._is_isotope and not self._read_gamma_iso:
             assert self._isotope_provider is not None
             gamma_iso = self._isotope_provider.compute(gp_input)
-            gamma_iso = gamma_iso[:, self._context.band_indices]
+            self._gamma_iso[:, i_gp, :] = gamma_iso[:, self._context.band_indices]
 
         # Boundary scattering (needs group velocities computed above).
-        gamma_boundary: NDArray[np.double] | None = None
         if self._boundary_provider is not None:
-            gamma_boundary = self._boundary_provider.compute(
+            self._gamma_boundary[i_gp] = self._boundary_provider.compute(
                 vel_result.group_velocities
             )
-            self._gamma_boundary[i_gp] = gamma_boundary
 
         if self._log_level:
             self._show_log(i_gp, vel_result.group_velocities, ave_pp)
@@ -591,55 +606,15 @@ class RTACalculator:
         # Store per-grid-point output data in calculator.
         self._gamma[:, :, i_gp, :] = gamma
         self._gv[i_gp] = vel_result.group_velocities
-        self._gv_by_gv[i_gp] = vel_result.gv_by_gv
+        if vel_result.gv_by_gv is not None:
+            self._gv_by_gv[i_gp] = vel_result.gv_by_gv
         self._cv[:, i_gp, :] = cv_result.heat_capacities
         if vel_result.vm_by_vm is not None:
-            if self._vm_by_vm is None:
-                self._vm_by_vm = np.zeros(
-                    (len(self._context.grid_points),) + vel_result.vm_by_vm.shape,
-                    dtype="complex128",
-                    order="C",
-                )
             self._vm_by_vm[i_gp] = vel_result.vm_by_vm
         if cv_result.heat_capacity_matrix is not None:
-            if self._heat_capacity_matrix is None:
-                shape = cv_result.heat_capacity_matrix.shape
-                self._heat_capacity_matrix = np.zeros(
-                    (shape[0], len(self._context.grid_points)) + shape[1:],
-                    dtype="double",
-                    order="C",
-                )
             self._heat_capacity_matrix[:, i_gp] = cv_result.heat_capacity_matrix
         if ave_pp is not None:
-            if self._averaged_pp_interaction is None:
-                self._averaged_pp_interaction = np.zeros(
-                    (len(self._context.grid_points), len(self._context.band_indices)),
-                    dtype="double",
-                    order="C",
-                )
             self._averaged_pp_interaction[i_gp] = ave_pp
-        if gamma_iso is not None:
-            if self._gamma_iso is None:
-                self._gamma_iso = np.zeros(
-                    (
-                        gamma_iso.shape[0],
-                        len(self._context.grid_points),
-                        gamma_iso.shape[-1],
-                    ),
-                    dtype="double",
-                    order="C",
-                )
-            self._gamma_iso[:, i_gp, :] = gamma_iso
-
-        # Store velocity extra data (e.g. velocity_operator for Wigner).
-        if vel_result.extra:
-            for key, val in vel_result.extra.items():
-                if key not in self._extra:
-                    num_gp = len(self._context.grid_points)
-                    self._extra[key] = np.zeros(
-                        (num_gp,) + val.shape, dtype=val.dtype, order="C"
-                    )
-                self._extra[key][i_gp] = val
 
     def _show_log(
         self,

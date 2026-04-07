@@ -61,6 +61,8 @@ class ModeHeatCapacityProvider:
         (``phonon_all_done == True``) before calling ``compute``.
     """
 
+    produces_heat_capacity_matrix: bool = False
+
     def __init__(self, pp: Interaction):
         """Init method."""
         self._pp = pp
@@ -109,6 +111,8 @@ class HeatCapacityMatrixProvider:
         ``compute``.
 
     """
+
+    produces_heat_capacity_matrix: bool = True
 
     def __init__(self, pp: Interaction):
         """Init method."""

@@ -102,6 +102,9 @@ class GroupVelocityProvider:
         Verbosity level. Default 0.
     """
 
+    produces_gv_by_gv: bool = True
+    produces_vm_by_vm: bool = False
+
     def __init__(
         self,
         pp: Interaction,
@@ -253,6 +256,9 @@ class VelocityMatrixProvider:
         Verbosity level. Default 0.
 
     """
+
+    produces_gv_by_gv: bool = False
+    produces_vm_by_vm: bool = True
 
     def __init__(
         self,

@@ -72,7 +72,7 @@ class HeatCapacityResult:
 
     """
 
-    heat_capacities: NDArray[np.double] | None = None
+    heat_capacities: NDArray[np.double]
     heat_capacity_matrix: NDArray[np.double] | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 

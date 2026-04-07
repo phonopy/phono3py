@@ -35,7 +35,7 @@ class ConductivityRTAWriter:
         """Write mode kappa related properties into a hdf5 file."""
         grid_points = br.grid_points
         group_velocities_i = br.group_velocities[i]
-        gv_by_gv_i = br.gv_by_gv[i]
+        gv_by_gv_i = br.gv_by_gv[i] if br.gv_by_gv is not None else None
         extra_gp_full = br.get_extra_grid_point_output()
         extra_gp_data: dict[str, Any] | None = (
             {k: v[i] for k, v in extra_gp_full.items()}

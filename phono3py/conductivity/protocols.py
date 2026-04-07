@@ -61,16 +61,23 @@ class VelocityProvider(Protocol):
     VelocityMatrixProvider
         Off-diagonal velocity matrix and its outer product (Kubo).
 
+    Class attributes
+    ----------------
+    produces_gv_by_gv : bool
+        True when compute() sets VelocityResult.gv_by_gv.
+    produces_vm_by_vm : bool
+        True when compute() sets VelocityResult.vm_by_vm.
+
+    These flags tell the calculator which arrays to pre-allocate
+    before the grid-point loop.
+
     """
 
+    produces_gv_by_gv: bool
+    produces_vm_by_vm: bool
+
     def compute(self, gp: GridPointInput) -> VelocityResult:
-        """Compute velocity quantities at a grid point.
-
-        The returned VelocityResult must have at minimum
-        ``group_velocities``, ``gv_by_gv``, and
-        ``num_sampling_grid_points`` set.
-
-        """
+        """Compute velocity quantities at a grid point."""
         ...
 
 
@@ -84,19 +91,24 @@ class HeatCapacityProvider(Protocol):
     HeatCapacityMatrixProvider
         Heat-capacity matrix Cv_mat (Kubo).
 
+    Class attributes
+    ----------------
+    produces_heat_capacity_matrix : bool
+        True when compute() sets HeatCapacityResult.heat_capacity_matrix.
+
+    These flags tell the calculator which arrays to pre-allocate
+    before the grid-point loop.
+
     """
+
+    produces_heat_capacity_matrix: bool
 
     def compute(
         self,
         gp: GridPointInput,
         temperatures: NDArray[np.double],
     ) -> HeatCapacityResult:
-        """Compute heat-capacity quantities at a grid point.
-
-        The returned HeatCapacityResult must have at minimum
-        ``heat_capacities`` set (and optionally ``heat_capacity_matrix``).
-
-        """
+        """Compute heat-capacity quantities at a grid point."""
         ...
 
 
