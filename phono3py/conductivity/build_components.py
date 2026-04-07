@@ -417,10 +417,10 @@ def _resolve_rta_grid_points(
         return np.array(grid_points, dtype="int64"), ir_gps_bzg, gp_weights
 
     if not is_kappa_star:
-        all_gps = np.array(bz_grid.grg2bzg, dtype="int64")
+        all_gps = bz_grid.grg2bzg
         return all_gps, all_gps, np.ones(len(all_gps), dtype="int64")
 
-    return ir_gps_bzg, ir_gps_bzg, np.array(ir_weights, dtype="int64")
+    return ir_gps_bzg, ir_gps_bzg, ir_weights
 
 
 def build_rta_base_components(

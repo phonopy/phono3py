@@ -21,6 +21,8 @@ def _make_velocity_provider(ctx: VariantBuildContext) -> VelocityMatrixProvider:
         ctx.interaction,
         reciprocal_operations=ctx.point_operations,
         rotations_cartesian=ctx.rotations_cartesian,
+        grid_points=ctx.context.grid_points,
+        grid_weights=ctx.context.grid_weights,
         is_kappa_star=ctx.is_kappa_star,
         gv_delta_q=ctx.gv_delta_q,
         log_level=ctx.log_level,
@@ -28,7 +30,7 @@ def _make_velocity_provider(ctx: VariantBuildContext) -> VelocityMatrixProvider:
 
 
 def _make_cv_provider(ctx: VariantBuildContext) -> ModeHeatCapacityProvider:
-    return ModeHeatCapacityProvider(ctx.interaction)
+    return ModeHeatCapacityProvider(ctx.interaction, ctx.context.temperatures)
 
 
 def _make_rta_accumulator(ctx: VariantBuildContext) -> SMM19RTAKappaAccumulator:

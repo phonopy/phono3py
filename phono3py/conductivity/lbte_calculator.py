@@ -43,11 +43,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 from phono3py.conductivity.context import ConductivityContext
-from phono3py.conductivity.grid_point_data import (
-    GridPointAggregates,
-    GridPointInput,
-    make_grid_point_input,
-)
+from phono3py.conductivity.grid_point_data import GridPointAggregates
 from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
 from phono3py.conductivity.kappa_accumulators import LBTEKappaAccumulator
 from phono3py.conductivity.lbte_collision_provider import LBTECollisionProvider
@@ -145,7 +141,6 @@ class LBTECalculator:
         self._gamma_boundary: NDArray[np.double] | None = None
         self._vm_by_vm: NDArray[np.cdouble] | None = None
         self._heat_capacity_matrix: NDArray[np.double] | None = None
-        self._extra: dict[str, Any] = {}
 
         # Allocate arrays.
         self._allocate_values()
@@ -161,26 +156,50 @@ class LBTECalculator:
     ) -> None:
         """Run all grid points and compute kappa.
 
+        The computation is organized in separate phases:
+
+        1. Bulk heat capacity (vectorized, single call).
+        2. Velocity loop (per-GP, no interaction state dependency).
+        3. Isotope loop (per-GP, no interaction state dependency).
+        4. Main collision loop (per-GP, requires Interaction.set_grid_point).
+        5. Finalize (assemble collision matrix and compute kappa).
+
         Parameters
         ----------
         on_grid_point : callable or None, optional
             Called with the grid-point loop index after each grid point is
-            processed.  Used for per-grid-point file writes.
+            processed in the collision loop.  Used for per-grid-point file
+            writes.
 
         """
-        if self._log_level:
-            print(
-                "==================== Lattice thermal conductivity (LBTE) "
-                "===================="
-            )
-
         self._prepare_isotope_phonons()
 
-        self._num_sampling_grid_points = 0
-        self._grid_point_count = 0
+        # (1) Bulk heat capacity.
+        if self._log_level:
+            print("Running heat capacity calculations...")
+            self._compute_bulk_heat_capacities()
 
+        # (2) Velocity loop.
+        if self._log_level:
+            print("Running velocity calculations...")
+        self._compute_all_velocities()
+
+        # (3) Isotope loop.
+        if self._isotope_provider is not None:
+            if self._log_level:
+                for sigma in self._context.sigmas:
+                    print("Running isotope scattering calculations ", end="")
+                    print(
+                        "with tetrahedron method..."
+                        if sigma is None
+                        else f"sigma={sigma}..."
+                    )
+            self._compute_all_isotope()
+
+        # (4) Main collision loop.
+        self._grid_point_count = 0
         for i_gp in range(len(self._context.ir_grid_points)):
-            self._run_at_grid_point(i_gp)
+            self._compute_collision_at_grid_point(i_gp)
             self._grid_point_count = i_gp + 1
             if on_grid_point is not None:
                 on_grid_point(i_gp)
@@ -191,6 +210,7 @@ class LBTECalculator:
                 "==================="
             )
 
+        # (5) Finalize.
         self._accumulator.finalize(self._build_grid_point_aggregates())
 
     def set_kappa_at_sigmas(self) -> None:
@@ -457,16 +477,6 @@ class LBTECalculator:
     # Private: per-grid-point computation
     # ------------------------------------------------------------------
 
-    def _make_grid_point_input(self, i_gp: int) -> GridPointInput:
-        return make_grid_point_input(
-            grid_point=int(self._context.ir_grid_points[i_gp]),
-            grid_weight=int(self._context.grid_weights[i_gp]),
-            frequencies=self._context.frequencies,
-            eigenvectors=self._context.eigenvectors,
-            bz_grid=self._context.bz_grid,
-            band_indices=self._context.band_indices,
-        )
-
     def _show_log_header(self, i_gp: int) -> None:
         if not self._log_level:
             return
@@ -499,12 +509,29 @@ class LBTECalculator:
         num_temp = len(self._context.temperatures)
         num_gp = len(self._context.ir_grid_points)
         num_band0 = len(self._context.band_indices)
+        num_band = self._context.frequencies.shape[1]
 
         self._gamma = np.zeros(
             (num_sigma, num_temp, num_gp, num_band0), order="C", dtype="double"
         )
         self._gv = np.zeros((num_gp, num_band0, 3), order="C", dtype="double")
         self._cv = np.zeros((num_temp, num_gp, num_band0), order="C", dtype="double")
+        if self._isotope_provider is not None:
+            self._gamma_iso = np.zeros(
+                (num_sigma, num_gp, num_band0), order="C", dtype="double"
+            )
+        if self._is_full_pp:
+            self._averaged_pp_interaction = np.zeros(
+                (num_gp, num_band0), order="C", dtype="double"
+            )
+        if self._velocity_provider.produces_vm_by_vm:
+            self._vm_by_vm = np.zeros(
+                (num_gp, num_band0, num_band, 6), order="C", dtype="complex128"
+            )
+        if self._cv_provider.produces_heat_capacity_matrix:
+            self._heat_capacity_matrix = np.zeros(
+                (num_temp, num_gp, num_band0, num_band), order="C", dtype="double"
+            )
 
     def _build_grid_point_aggregates(self) -> GridPointAggregates:
         """Build GridPointAggregates for accumulator.finalize()."""
@@ -518,89 +545,46 @@ class LBTECalculator:
             gamma_elph=self._gamma_elph,
             vm_by_vm=self._vm_by_vm,
             heat_capacity_matrix=self._heat_capacity_matrix,
-            extra=self._extra,
         )
 
-    def _run_at_grid_point(self, i_gp: int) -> None:
-        self._show_log_header(i_gp)
-        gp_input = self._make_grid_point_input(i_gp)
-
-        # Group velocities.
-        vel_result = self._velocity_provider.compute(gp_input)
-        gv = vel_result.group_velocities
-        self._num_sampling_grid_points += vel_result.num_sampling_grid_points
-
-        # Mode heat capacities.
-        cv_result = self._cv_provider.compute(gp_input, self._context.temperatures)
-        cv = cv_result.heat_capacities  # (num_temp, num_band0)
-
-        # Collision matrix row + gamma (Stage 1).
-        collision_result = self._collision_provider.compute(gp_input)
-
-        # Store per-grid-point data in calculator.
-        assert self._gamma is not None
-        assert self._gv is not None
-        assert self._cv is not None
-        self._gamma[:, :, i_gp, :] = collision_result.gamma
-        self._gv[i_gp] = gv
-        self._cv[:, i_gp, :] = cv
-
-        # Isotope scattering (optional).
-        if self._isotope_provider is not None:
-            gamma_iso = self._isotope_provider.compute(gp_input)
-            gamma_iso = gamma_iso[:, self._context.band_indices]
-            if self._gamma_iso is None:
-                self._gamma_iso = np.zeros(
-                    (len(self._context.sigmas),)
-                    + (len(self._context.ir_grid_points),)
-                    + gamma_iso.shape[1:],
-                    order="C",
-                    dtype="double",
-                )
-            self._gamma_iso[:, i_gp, :] = gamma_iso
-
-        # Averaged pp interaction (optional).
-        if self._is_full_pp and collision_result.averaged_pp is not None:
-            ave_pp = collision_result.averaged_pp
-            if self._averaged_pp_interaction is None:
-                self._averaged_pp_interaction = np.zeros(
-                    (len(self._context.ir_grid_points),) + ave_pp.shape,
-                    order="C",
-                    dtype="double",
-                )
-            self._averaged_pp_interaction[i_gp] = ave_pp
-
-        # Store vm_by_vm and heat_capacity_matrix (for Wigner/Kubo).
-        if vel_result.vm_by_vm is not None:
-            if self._vm_by_vm is None:
-                num_ir = len(self._context.ir_grid_points)
-                self._vm_by_vm = np.zeros(
-                    (num_ir,) + vel_result.vm_by_vm.shape, dtype="complex128", order="C"
-                )
-            self._vm_by_vm[i_gp] = vel_result.vm_by_vm
+    def _compute_bulk_heat_capacities(self) -> None:
+        """Compute heat capacities for all grid points at once."""
+        cv_result = self._cv_provider.compute(self._context.ir_grid_points)
+        self._cv = cv_result.heat_capacities
         if cv_result.heat_capacity_matrix is not None:
-            if self._heat_capacity_matrix is None:
-                shape = cv_result.heat_capacity_matrix.shape
-                num_ir = len(self._context.ir_grid_points)
-                self._heat_capacity_matrix = np.zeros(
-                    (shape[0], num_ir) + shape[1:],
-                    dtype="double",
-                    order="C",
-                )
-            self._heat_capacity_matrix[:, i_gp, :, :] = cv_result.heat_capacity_matrix
+            self._heat_capacity_matrix = cv_result.heat_capacity_matrix
 
-        # Store velocity extra data (e.g. velocity_operator for Wigner).
-        if vel_result.extra:
-            for key, val in vel_result.extra.items():
-                if key not in self._extra:
-                    num_ir = len(self._context.ir_grid_points)
-                    self._extra[key] = np.zeros(
-                        (num_ir,) + val.shape, dtype=val.dtype, order="C"
-                    )
-                self._extra[key][i_gp] = val
+    def _compute_all_velocities(self) -> None:
+        """Compute velocities for all grid points."""
+        self._num_sampling_grid_points = 0
+        for i_gp in range(len(self._context.ir_grid_points)):
+            grid_point = int(self._context.ir_grid_points[i_gp])
+            vel_result = self._velocity_provider.compute(grid_point)
+            self._num_sampling_grid_points += vel_result.num_sampling_grid_points
+            self._gv[i_gp] = vel_result.group_velocities
+            if vel_result.vm_by_vm is not None:
+                self._vm_by_vm[i_gp] = vel_result.vm_by_vm
 
-        # Accumulate collision matrix row.
+    def _compute_all_isotope(self) -> None:
+        """Compute isotope scattering for all grid points."""
+        assert self._isotope_provider is not None
+        for i_gp in range(len(self._context.ir_grid_points)):
+            grid_point = int(self._context.ir_grid_points[i_gp])
+            gamma_iso = self._isotope_provider.compute(grid_point)
+            self._gamma_iso[:, i_gp, :] = gamma_iso[:, self._context.band_indices]
+
+    def _compute_collision_at_grid_point(self, i_gp: int) -> None:
+        """Compute collision matrix row and gamma at a single grid point."""
+        self._show_log_header(i_gp)
+        grid_point = int(self._context.ir_grid_points[i_gp])
+
+        collision_result = self._collision_provider.compute(grid_point)
+        self._gamma[:, :, i_gp, :] = collision_result.gamma
+
+        if self._is_full_pp and collision_result.averaged_pp is not None:
+            self._averaged_pp_interaction[i_gp] = collision_result.averaged_pp
+
         self._accumulator.store(i_gp, collision_result)
 
         if self._log_level:
-            self._show_log(i_gp, gv)
+            self._show_log(i_gp, self._gv[i_gp])

@@ -42,7 +42,6 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import NDArray
 
-from phono3py.conductivity.grid_point_data import GridPointInput
 from phono3py.file_IO import read_pp_from_hdf5
 from phono3py.phonon3.collision_matrix import CollisionMatrix
 from phono3py.phonon3.interaction import Interaction
@@ -120,13 +119,13 @@ class LBTECollisionProvider:
         self._pp_filename = pp_filename
         self._log_level = log_level
 
-    def compute(self, gp_input: GridPointInput) -> LBTECollisionResult:
+    def compute(self, grid_point: int) -> LBTECollisionResult:
         """Compute gamma and collision matrix row at one grid point.
 
         Parameters
         ----------
-        gp_input : GridPointInput
-            Grid point data including BZ-grid index and band indices.
+        grid_point : int
+            BZ grid point index.
 
         Returns
         -------
@@ -134,7 +133,7 @@ class LBTECollisionProvider:
             gamma shape: (num_sigma, num_temp, num_band0)
             collision_row shape: (num_sigma, num_temp, <row_shape>)
         """
-        self._collision.set_grid_point(gp_input.grid_point)
+        self._collision.set_grid_point(grid_point)
 
         if self._log_level:
             triplets = self._pp.get_triplets_at_q()[0]
@@ -143,27 +142,16 @@ class LBTECollisionProvider:
 
         num_sigma = len(self._sigmas)
         num_temp = len(self._temperatures)
-        num_band0 = len(gp_input.band_indices)
+        num_band0 = len(self._pp.band_indices)
 
         gamma_all = np.zeros((num_sigma, num_temp, num_band0), dtype="double")
         collision_rows: list[list[NDArray[np.double]]] = []
         averaged_pp: NDArray[np.double] | None = None
 
         for i_sigma, sigma in enumerate(self._sigmas):
-            if self._log_level:
-                text = "Calculating collision matrix with "
-                if sigma is None:
-                    text += "tetrahedron method."
-                else:
-                    text += "sigma=%s" % sigma
-                    if self._sigma_cutoff is None:
-                        text += "."
-                    else:
-                        text += "(%4.2f SD)." % self._sigma_cutoff
-                print(text)
             self._collision.set_sigma(sigma, sigma_cutoff=self._sigma_cutoff)
             self._collision.run_integration_weights()
-            self._run_interaction(i_sigma, sigma, gp_input.grid_point)
+            self._run_interaction(i_sigma, sigma, grid_point)
 
             if self._is_full_pp and i_sigma == 0:
                 averaged_pp = np.array(self._pp.averaged_interaction, dtype="double")
@@ -197,9 +185,6 @@ class LBTECollisionProvider:
         elif i_sigma != 0 and (self._is_full_pp or self._sigma_cutoff is None):
             if self._log_level:
                 print("Existing ph-ph interaction is used.")
-        else:
-            if self._log_level:
-                print("Calculating ph-ph interaction...")
             self._collision.run_interaction(is_full_pp=self._is_full_pp)
 
     def _read_interaction_from_file(self, sigma: float | None, grid_point: int) -> None:

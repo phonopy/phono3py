@@ -96,7 +96,7 @@ class Phono3pySettings(Settings):
         self.read_pp: bool = False
         self.output_yaml_filename: str | os.PathLike | None = None
         self.phonon_supercell_matrix: NDArray[np.int64] | None = None
-        self.pinv_cutoff: float = 1.0e-8
+        self.pinv_cutoff: float | None = None
         self.pinv_solver: int = 0
         self.pinv_method: int = 0
         self.pp_conversion_factor: float | None = None

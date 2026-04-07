@@ -6,7 +6,6 @@ Plugin authors import from this package:
         register_variant,
         VariantBuildContext,
         GridPointAggregates,
-        GridPointInput,
         VelocityResult,
         HeatCapacityResult,
         ScatteringResult,
@@ -20,7 +19,6 @@ from phono3py.conductivity.build_components import VariantBuildContext
 from phono3py.conductivity.factory import register_variant
 from phono3py.conductivity.grid_point_data import (
     GridPointAggregates,
-    GridPointInput,
     HeatCapacityResult,
     ScatteringResult,
     VelocityResult,
@@ -35,7 +33,6 @@ __all__ = [
     "register_variant",
     "VariantBuildContext",
     "GridPointAggregates",
-    "GridPointInput",
     "VelocityResult",
     "HeatCapacityResult",
     "ScatteringResult",

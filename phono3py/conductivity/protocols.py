@@ -12,15 +12,14 @@ Protocols
 VelocityProvider
     Computes velocity-related quantities at a single BZ grid point.
 HeatCapacityProvider
-    Computes heat capacity at a single BZ grid point.
+    Computes heat capacity for all grid points at once (bulk).
 ScatteringProvider
     Computes phonon linewidths at a single BZ grid point.
 
 Data containers
 ---------------
-GridPointInput and provider result types (VelocityResult,
-HeatCapacityResult, ScatteringResult) are defined in
-``phono3py.conductivity.grid_point_data``.
+Provider result types (VelocityResult, HeatCapacityResult,
+ScatteringResult) are defined in ``phono3py.conductivity.grid_point_data``.
 
 """
 
@@ -32,7 +31,6 @@ import numpy as np
 from numpy.typing import NDArray
 
 from phono3py.conductivity.grid_point_data import (
-    GridPointInput,
     HeatCapacityResult,
     ScatteringResult,
     VelocityResult,
@@ -42,7 +40,6 @@ __all__ = [
     "VelocityProvider",
     "HeatCapacityProvider",
     "ScatteringProvider",
-    "GridPointInput",
     "VelocityResult",
     "HeatCapacityResult",
     "ScatteringResult",
@@ -61,21 +58,28 @@ class VelocityProvider(Protocol):
     VelocityMatrixProvider
         Off-diagonal velocity matrix and its outer product (Kubo).
 
+    Class attributes
+    ----------------
+    produces_gv_by_gv : bool
+        True when compute() sets VelocityResult.gv_by_gv.
+    produces_vm_by_vm : bool
+        True when compute() sets VelocityResult.vm_by_vm.
+
+    These flags tell the calculator which arrays to pre-allocate
+    before the grid-point loop.
+
     """
 
-    def compute(self, gp: GridPointInput) -> VelocityResult:
-        """Compute velocity quantities at a grid point.
+    produces_gv_by_gv: bool
+    produces_vm_by_vm: bool
 
-        The returned VelocityResult must have at minimum
-        ``group_velocities``, ``gv_by_gv``, and
-        ``num_sampling_grid_points`` set.
-
-        """
+    def compute(self, grid_point: int) -> VelocityResult:
+        """Compute velocity quantities at a grid point."""
         ...
 
 
 class HeatCapacityProvider(Protocol):
-    """Protocol for computing heat capacity at a grid point.
+    """Protocol for computing heat capacity for all grid points at once.
 
     Built-in implementations
     ------------------------
@@ -84,19 +88,23 @@ class HeatCapacityProvider(Protocol):
     HeatCapacityMatrixProvider
         Heat-capacity matrix Cv_mat (Kubo).
 
+    Class attributes
+    ----------------
+    produces_heat_capacity_matrix : bool
+        True when compute() sets HeatCapacityResult.heat_capacity_matrix.
+
+    These flags tell the calculator which arrays to pre-allocate
+    before the grid-point loop.
+
     """
+
+    produces_heat_capacity_matrix: bool
 
     def compute(
         self,
-        gp: GridPointInput,
-        temperatures: NDArray[np.double],
+        grid_points: NDArray[np.int64],
     ) -> HeatCapacityResult:
-        """Compute heat-capacity quantities at a grid point.
-
-        The returned HeatCapacityResult must have at minimum
-        ``heat_capacities`` set (and optionally ``heat_capacity_matrix``).
-
-        """
+        """Compute heat-capacity quantities for all grid points at once."""
         ...
 
 
@@ -111,13 +119,13 @@ class ScatteringProvider(Protocol):
     Notes
     -----
     Isotope and boundary scattering are separate diagonal-only contributions
-    handled by IsotopeScatteringProvider and BoundaryScatteringProvider.
+    handled by IsotopeScatteringProvider and compute_bulk_boundary_scattering.
 
     """
 
     def compute(
         self,
-        gp: GridPointInput,
+        grid_point: int,
     ) -> ScatteringResult:
         """Compute phonon linewidths at a grid point.
 

@@ -143,7 +143,7 @@ def register_variant(
         cv_provider = (
             make_cv_provider(ctx)
             if make_cv_provider is not None
-            else ModeHeatCapacityProvider(interaction)
+            else ModeHeatCapacityProvider(interaction, base.context.temperatures)
         )
         accumulator = make_rta_accumulator(ctx)
 
@@ -189,7 +189,7 @@ def register_variant(
             cv_provider = (
                 make_cv_provider(ctx)
                 if make_cv_provider is not None
-                else ModeHeatCapacityProvider(interaction)
+                else ModeHeatCapacityProvider(interaction, base.context.temperatures)
             )
             accumulator = make_lbte_accumulator(ctx)
 
@@ -371,11 +371,13 @@ def _make_rta_calculator(
         interaction,
         point_operations=base.point_ops,
         rotations_cartesian=base.rot_cart,
+        grid_points=base.context.grid_points,
+        grid_weights=base.context.grid_weights,
         is_kappa_star=config.is_kappa_star,
         gv_delta_q=config.gv_delta_q,
         log_level=config.log_level,
     )
-    cv_provider = ModeHeatCapacityProvider(interaction)
+    cv_provider = ModeHeatCapacityProvider(interaction, base.context.temperatures)
     accumulator = RTAKappaAccumulator(
         context=base.context,
         conversion_factor=conversion_factor,
@@ -406,11 +408,13 @@ def _make_lbte_calculator(
         interaction,
         point_operations=base.point_ops,
         rotations_cartesian=base.rot_cart,
+        grid_points=base.context.ir_grid_points,
+        grid_weights=base.context.grid_weights,
         is_kappa_star=config.is_kappa_star,
         gv_delta_q=config.gv_delta_q,
         log_level=config.log_level,
     )
-    cv_provider = ModeHeatCapacityProvider(interaction)
+    cv_provider = ModeHeatCapacityProvider(interaction, base.context.temperatures)
     accumulator = LBTEKappaAccumulator(
         base.solver, context=base.context, log_level=config.log_level
     )

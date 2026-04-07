@@ -5,7 +5,6 @@ from __future__ import annotations
 import numpy as np
 
 from phono3py.conductivity.grid_point_data import (
-    GridPointInput,
     HeatCapacityResult,
     ScatteringResult,
     VelocityResult,
@@ -25,34 +24,6 @@ NUM_BAND0 = 6
 NUM_TEMP = 3
 
 
-def make_gp_input() -> GridPointInput:
-    """Return a minimal GridPointInput for testing."""
-    return GridPointInput(
-        grid_point=10,
-        q_point=np.array([0.1, 0.2, 0.3]),
-        frequencies=np.ones(NUM_BAND, dtype="double"),
-        eigenvectors=np.eye(NUM_BAND, dtype="complex128"),
-        grid_weight=2,
-        band_indices=np.arange(NUM_BAND0, dtype="int64"),
-    )
-
-
-# ---------------------------------------------------------------------------
-# GridPointInput
-# ---------------------------------------------------------------------------
-
-
-def test_grid_point_input_fields():
-    """Test GridPointInput field shapes and values."""
-    gp = make_gp_input()
-    assert gp.grid_point == 10
-    assert gp.q_point.shape == (3,)
-    assert gp.frequencies.shape == (NUM_BAND,)
-    assert gp.eigenvectors.shape == (NUM_BAND, NUM_BAND)
-    assert gp.grid_weight == 2
-    assert gp.band_indices.shape == (NUM_BAND0,)
-
-
 # ---------------------------------------------------------------------------
 # Protocol structural typing
 # ---------------------------------------------------------------------------
@@ -61,27 +32,37 @@ def test_grid_point_input_fields():
 class _DummyVelocityProvider:
     """Minimal implementation satisfying VelocityProvider protocol."""
 
-    def compute(self, gp: GridPointInput) -> VelocityResult:
+    produces_gv_by_gv: bool = True
+    produces_vm_by_vm: bool = False
+
+    def compute(self, grid_point: int, grid_weight: int) -> VelocityResult:
         return VelocityResult(
             group_velocities=np.zeros((NUM_BAND0, 3), dtype="double"),
             gv_by_gv=np.zeros((NUM_BAND0, 6), dtype="double"),
-            num_sampling_grid_points=gp.grid_weight,
+            num_sampling_grid_points=grid_weight,
         )
 
 
 class _DummyHeatCapacityProvider:
+    produces_heat_capacity_matrix: bool = False
+
     def compute(
         self,
-        gp: GridPointInput,
+        frequencies: np.ndarray,
+        grid_points: np.ndarray,
         temperatures: np.ndarray,
+        band_indices: np.ndarray,
+        cutoff_frequency: float,
     ) -> HeatCapacityResult:
         return HeatCapacityResult(
-            heat_capacities=np.zeros((len(temperatures), NUM_BAND0), dtype="double"),
+            heat_capacities=np.zeros(
+                (len(temperatures), len(grid_points), NUM_BAND0), dtype="double"
+            ),
         )
 
 
 class _DummyScatteringProvider:
-    def compute(self, gp: GridPointInput) -> ScatteringResult:
+    def compute(self, grid_point: int) -> ScatteringResult:
         return ScatteringResult(
             gamma=np.zeros((1, NUM_TEMP, NUM_BAND0), dtype="double"),
         )
@@ -90,26 +71,26 @@ class _DummyScatteringProvider:
 def test_velocity_provider_protocol_satisfied():
     """A class with the right signature is accepted as VelocityProvider."""
     provider: VelocityProvider = _DummyVelocityProvider()
-    gp = make_gp_input()
-    result = provider.compute(gp)
+    result = provider.compute(10, 2)
     assert result.group_velocities is not None
-    assert result.num_sampling_grid_points == gp.grid_weight
+    assert result.num_sampling_grid_points == 2
 
 
 def test_heat_capacity_provider_protocol_satisfied():
     """Test HeatCapacityProvider protocol with a dummy implementation."""
     provider: HeatCapacityProvider = _DummyHeatCapacityProvider()
-    gp = make_gp_input()
+    freqs = np.ones((100, NUM_BAND), dtype="double")
+    gps = np.array([0, 1, 2], dtype="int64")
     temps = np.array([100.0, 200.0, 300.0])
-    result = provider.compute(gp, temps)
+    bands = np.arange(NUM_BAND0, dtype="int64")
+    result = provider.compute(freqs, gps, temps, bands, 0.0)
     assert result.heat_capacities is not None
-    assert result.heat_capacities.shape == (3, NUM_BAND0)
+    assert result.heat_capacities.shape == (3, 3, NUM_BAND0)
 
 
 def test_scattering_provider_protocol_satisfied():
     """Test ScatteringProvider protocol with a dummy implementation."""
     provider: ScatteringProvider = _DummyScatteringProvider()
-    gp = make_gp_input()
-    result = provider.compute(gp)
+    result = provider.compute(10)
     assert result.gamma is not None
     assert result.gamma.shape == (1, NUM_TEMP, NUM_BAND0)
