@@ -18,9 +18,9 @@ from phono3py.conductivity.grid_point_data import (
 from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
 from phono3py.conductivity.kappa_accumulators import RTAKappaAccumulator
 from phono3py.conductivity.scattering_providers import (
-    BoundaryScatteringProvider,
     IsotopeScatteringProvider,
     RTAScatteringProvider,
+    compute_bulk_boundary_scattering,
 )
 from phono3py.conductivity.utils import (
     show_grid_point_frequencies_gv,
@@ -112,16 +112,11 @@ class RTACalculator:
 
         self._grid_point_count = 0
 
-        # Isotope and boundary providers.
+        # Isotope provider.
         self._is_isotope = is_isotope or (mass_variances is not None)
         self._isotope_provider: IsotopeScatteringProvider | None = None
         if self._is_isotope:
             self._isotope_provider = self._build_isotope_provider(mass_variances)
-        self._boundary_provider: BoundaryScatteringProvider | None = (
-            BoundaryScatteringProvider(context.boundary_mfp)
-            if context.boundary_mfp is not None
-            else None
-        )
 
         # Read flags (set via property setters when gamma is loaded from file).
         self._read_gamma = False
@@ -157,11 +152,21 @@ class RTACalculator:
     ) -> None:
         """Run all grid points and compute kappa.
 
+        The computation is organized in separate phases:
+
+        1. Bulk heat capacity (vectorized, single call).
+        2. Velocity loop (per-GP, no interaction state dependency).
+        3. Isotope loop (per-GP, no interaction state dependency).
+        4. Main gamma loop (per-GP, requires Interaction.set_grid_point).
+        5. Bulk boundary scattering (vectorized, from accumulated gv).
+        6. Finalize (aggregate and compute kappa).
+
         Parameters
         ----------
         on_grid_point : callable or None, optional
             Called with the grid-point count (0-based index) after each grid
-            point is processed. Used for per-grid-point file writes.
+            point is processed in the gamma loop. Used for per-grid-point
+            file writes.
 
         """
         if self._context.temperatures is None:
@@ -175,11 +180,20 @@ class RTACalculator:
 
         self._prepare_isotope_phonons()
 
-        self._num_sampling_grid_points = 0
-        self._grid_point_count = 0
+        # (1) Bulk heat capacity.
+        self._compute_bulk_heat_capacities()
 
+        # (2) Velocity loop.
+        self._compute_all_velocities()
+
+        # (3) Isotope loop.
+        if self._is_isotope and not self._read_gamma_iso:
+            self._compute_all_isotope()
+
+        # (4) Main gamma loop.
+        self._grid_point_count = 0
         for i_gp in range(len(self._context.grid_points)):
-            self._run_at_grid_point(i_gp)
+            self._compute_gamma_at_grid_point(i_gp)
             self._grid_point_count = i_gp + 1
             if on_grid_point is not None:
                 on_grid_point(i_gp)
@@ -190,18 +204,14 @@ class RTACalculator:
                 "==================="
             )
 
-        aggregates = GridPointAggregates(
-            num_sampling_grid_points=self._num_sampling_grid_points,
-            group_velocities=self._gv,
-            mode_heat_capacities=self._cv,
-            gv_by_gv=self._gv_by_gv,
-            gamma=self._gamma,
-            gamma_isotope=self._gamma_iso,
-            gamma_boundary=self._gamma_boundary,
-            gamma_elph=self._gamma_elph,
-            vm_by_vm=self._vm_by_vm,
-            heat_capacity_matrix=self._heat_capacity_matrix,
-        )
+        # (5) Bulk boundary scattering.
+        if self._context.boundary_mfp is not None:
+            self._gamma_boundary = compute_bulk_boundary_scattering(
+                self._gv, self._context.boundary_mfp
+            )
+
+        # (6) Finalize.
+        aggregates = self._build_grid_point_aggregates()
         self._count_ignored_modes(aggregates)
         self._accumulator.finalize(aggregates)
 
@@ -460,19 +470,13 @@ class RTACalculator:
         )
         self._gv = np.zeros((num_gp, num_band0, 3), order="C", dtype="double")
         if self._velocity_provider.produces_gv_by_gv:
-            self._gv_by_gv = np.zeros(
-                (num_gp, num_band0, 6), order="C", dtype="double"
-            )
+            self._gv_by_gv = np.zeros((num_gp, num_band0, 6), order="C", dtype="double")
         self._cv = np.zeros((num_temp, num_gp, num_band0), order="C", dtype="double")
         if not self._read_gamma:
             if self._is_N_U or self._is_gamma_detail:
                 shape = (num_sigma, num_temp, num_gp, num_band0)
                 self._gamma_N = np.zeros(shape, order="C", dtype="double")
                 self._gamma_U = np.zeros(shape, order="C", dtype="double")
-        if self._context.boundary_mfp is not None:
-            self._gamma_boundary = np.zeros(
-                (num_gp, num_band0), order="C", dtype="double"
-            )
         if self._is_isotope:
             self._gamma_iso = np.zeros(
                 (num_sigma, num_gp, num_band0), order="C", dtype="double"
@@ -557,20 +561,47 @@ class RTACalculator:
             mass_variances=mass_variances,
         )
 
-    def _run_at_grid_point(self, i_gp: int) -> None:
-        self._show_log_header(i_gp)
-        gp_input = self._make_grid_point_input(i_gp)
-
-        # Velocity.
-        vel_result = self._velocity_provider.compute(gp_input)
-        self._num_sampling_grid_points += vel_result.num_sampling_grid_points
-
-        # Heat capacity.
+    def _compute_bulk_heat_capacities(self) -> None:
+        """Compute heat capacities for all grid points at once."""
         assert self._context.temperatures is not None
-        cv_result = self._cv_provider.compute(gp_input, self._context.temperatures)
+        cv_result = self._cv_provider.compute_all(
+            self._context.frequencies,
+            self._context.grid_points,
+            self._context.temperatures,
+            self._context.band_indices,
+            self._context.cutoff_frequency,
+        )
+        self._cv = cv_result.heat_capacities
+        if cv_result.heat_capacity_matrix is not None:
+            self._heat_capacity_matrix = cv_result.heat_capacity_matrix
 
-        # ph-ph scattering.
+    def _compute_all_velocities(self) -> None:
+        """Compute velocities for all grid points."""
+        self._num_sampling_grid_points = 0
+        for i_gp in range(len(self._context.grid_points)):
+            gp_input = self._make_grid_point_input(i_gp)
+            vel_result = self._velocity_provider.compute(gp_input)
+            self._num_sampling_grid_points += vel_result.num_sampling_grid_points
+            self._gv[i_gp] = vel_result.group_velocities
+            if vel_result.gv_by_gv is not None:
+                self._gv_by_gv[i_gp] = vel_result.gv_by_gv
+            if vel_result.vm_by_vm is not None:
+                self._vm_by_vm[i_gp] = vel_result.vm_by_vm
+
+    def _compute_all_isotope(self) -> None:
+        """Compute isotope scattering for all grid points."""
+        assert self._isotope_provider is not None
+        for i_gp in range(len(self._context.grid_points)):
+            gp_input = self._make_grid_point_input(i_gp)
+            gamma_iso = self._isotope_provider.compute(gp_input)
+            self._gamma_iso[:, i_gp, :] = gamma_iso[:, self._context.band_indices]
+
+    def _compute_gamma_at_grid_point(self, i_gp: int) -> None:
+        """Compute ph-ph scattering gamma at a single grid point."""
+        self._show_log_header(i_gp)
+
         if not self._read_gamma:
+            gp_input = self._make_grid_point_input(i_gp)
             scat_result = self._scattering_provider.compute(gp_input)
             gamma = scat_result.gamma
             ave_pp = scat_result.averaged_pp_interaction
@@ -582,39 +613,31 @@ class RTACalculator:
                 if g_U is not None and self._gamma_U is not None:
                     self._gamma_U[:, :, i_gp, :] = g_U
             self._gamma_detail_at_q = self._scattering_provider.gamma_detail_at_q
+            self._gamma[:, :, i_gp, :] = gamma
+            if ave_pp is not None and self._averaged_pp_interaction is not None:
+                self._averaged_pp_interaction[i_gp] = ave_pp
         else:
-            gamma = self._gamma[:, :, i_gp, :]
             ave_pp = None
             if self._log_level:
                 print("  Gamma is read from file.")
 
-        # Isotope scattering.
-        if self._is_isotope and not self._read_gamma_iso:
-            assert self._isotope_provider is not None
-            gamma_iso = self._isotope_provider.compute(gp_input)
-            self._gamma_iso[:, i_gp, :] = gamma_iso[:, self._context.band_indices]
-
-        # Boundary scattering (needs group velocities computed above).
-        if self._boundary_provider is not None:
-            self._gamma_boundary[i_gp] = self._boundary_provider.compute(
-                vel_result.group_velocities
-            )
-
         if self._log_level:
-            self._show_log(i_gp, vel_result.group_velocities, ave_pp)
+            self._show_log(i_gp, self._gv[i_gp], ave_pp)
 
-        # Store per-grid-point output data in calculator.
-        self._gamma[:, :, i_gp, :] = gamma
-        self._gv[i_gp] = vel_result.group_velocities
-        if vel_result.gv_by_gv is not None:
-            self._gv_by_gv[i_gp] = vel_result.gv_by_gv
-        self._cv[:, i_gp, :] = cv_result.heat_capacities
-        if vel_result.vm_by_vm is not None:
-            self._vm_by_vm[i_gp] = vel_result.vm_by_vm
-        if cv_result.heat_capacity_matrix is not None:
-            self._heat_capacity_matrix[:, i_gp] = cv_result.heat_capacity_matrix
-        if ave_pp is not None:
-            self._averaged_pp_interaction[i_gp] = ave_pp
+    def _build_grid_point_aggregates(self) -> GridPointAggregates:
+        """Build GridPointAggregates for accumulator.finalize()."""
+        return GridPointAggregates(
+            num_sampling_grid_points=self._num_sampling_grid_points,
+            group_velocities=self._gv,
+            mode_heat_capacities=self._cv,
+            gv_by_gv=self._gv_by_gv,
+            gamma=self._gamma,
+            gamma_isotope=self._gamma_iso,
+            gamma_boundary=self._gamma_boundary,
+            gamma_elph=self._gamma_elph,
+            vm_by_vm=self._vm_by_vm,
+            heat_capacity_matrix=self._heat_capacity_matrix,
+        )
 
     def _show_log(
         self,

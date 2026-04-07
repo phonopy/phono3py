@@ -7,58 +7,145 @@ from numpy.typing import NDArray
 from phonopy.phonon.thermal_properties import mode_cv
 from phonopy.physical_units import get_physical_units
 
-from phono3py.conductivity.grid_point_data import GridPointInput, HeatCapacityResult
+from phono3py.conductivity.grid_point_data import HeatCapacityResult
 from phono3py.phonon.heat_capacity_matrix import mode_cv_matrix
 from phono3py.phonon3.interaction import Interaction
 
+# ---------------------------------------------------------------------------
+# Bulk computation functions
+# ---------------------------------------------------------------------------
 
-def _get_heat_capacities(
-    grid_point: int,
-    pp: Interaction,
+
+def compute_bulk_mode_cv(
+    frequencies: NDArray[np.double],
+    grid_points: NDArray[np.int64],
     temperatures: NDArray[np.double],
+    band_indices: NDArray[np.int64],
+    cutoff_frequency: float,
 ) -> NDArray[np.double]:
-    """Return mode heat capacity.
+    """Compute mode heat capacities for all grid points at once.
 
-    cv returned should be given to self._cv by
+    Parameters
+    ----------
+    frequencies : ndarray of double, shape (num_bz_gp, num_band)
+        Phonon frequencies in THz for all BZ grid points.
+    grid_points : ndarray of int64, shape (num_gp,)
+        BZ grid point indices.
+    temperatures : ndarray of double, shape (num_temp,)
+        Temperatures in Kelvin.
+    band_indices : ndarray of int64, shape (num_band0,)
+        Selected band indices.
+    cutoff_frequency : float
+        Cutoff frequency in THz.
 
-        self._cv[:, i_data, :] = cv
+    Returns
+    -------
+    ndarray of double, shape (num_temp, num_gp, num_band0)
+        Mode heat capacities.
 
     """
-    if not pp.phonon_all_done:
-        raise RuntimeError(
-            "Phonon calculation has not been done yet. "
-            "Run phono3py.run_phonon_solver() before this method."
-        )
+    thz_to_ev = get_physical_units().THzToEv
+    freqs_ev = frequencies[grid_points] * thz_to_ev  # (num_gp, num_band)
+    cutoff_ev = cutoff_frequency * thz_to_ev
+    num_gp, num_band = freqs_ev.shape
+    num_temp = len(temperatures)
 
-    frequencies, _, _ = pp.get_phonons()
-    assert frequencies is not None
-    freqs_ev = frequencies[grid_point] * get_physical_units().THzToEv
-    cv = np.zeros((len(temperatures), len(freqs_ev)), dtype="double")
-    cutoff = pp.cutoff_frequency * get_physical_units().THzToEv
-    condition = freqs_ev > cutoff
-
+    flat_freqs = freqs_ev.ravel()  # (num_gp * num_band,)
     with np.errstate(divide="ignore", over="ignore", invalid="ignore"):
-        cv_vals = mode_cv(temperatures, freqs_ev)
-        cv = np.where(np.isfinite(cv_vals) & condition[None, :], cv_vals, 0.0)
-    return cv
+        cv_flat = mode_cv(temperatures, flat_freqs)  # (num_temp, num_gp * num_band)
+    cv = cv_flat.reshape(num_temp, num_gp, num_band)
+
+    condition = freqs_ev > cutoff_ev  # (num_gp, num_band)
+    cv = np.where(np.isfinite(cv) & condition[None, :, :], cv, 0.0)
+    return cv[:, :, band_indices]
+
+
+def compute_bulk_cv_matrix(
+    frequencies: NDArray[np.double],
+    grid_points: NDArray[np.int64],
+    temperatures: NDArray[np.double],
+    band_indices: NDArray[np.int64],
+    cutoff_frequency: float,
+) -> tuple[NDArray[np.double], NDArray[np.double]]:
+    """Compute cv and cv_matrix for all grid points.
+
+    Parameters
+    ----------
+    frequencies : ndarray of double, shape (num_bz_gp, num_band)
+        Phonon frequencies in THz for all BZ grid points.
+    grid_points : ndarray of int64, shape (num_gp,)
+        BZ grid point indices.
+    temperatures : ndarray of double, shape (num_temp,)
+        Temperatures in Kelvin.
+    band_indices : ndarray of int64, shape (num_band0,)
+        Selected band indices.
+    cutoff_frequency : float
+        Cutoff frequency in THz.
+
+    Returns
+    -------
+    cv : ndarray of double, shape (num_temp, num_gp, num_band0)
+        Mode heat capacities (diagonal).
+    cv_mat : ndarray of double, shape (num_temp, num_gp, num_band0, num_band)
+        Heat capacity matrix.
+
+    """
+    thz_to_ev = get_physical_units().THzToEv
+    num_gp = len(grid_points)
+    num_band = frequencies.shape[1]
+    num_temp = len(temperatures)
+
+    cv = compute_bulk_mode_cv(
+        frequencies, grid_points, temperatures, band_indices, cutoff_frequency
+    )
+
+    cutoff_ev = cutoff_frequency * thz_to_ev
+    cv_mat = np.zeros(
+        (num_temp, num_gp, len(band_indices), num_band), dtype="double", order="C"
+    )
+    for i_gp, gp in enumerate(grid_points):
+        freqs_ev = frequencies[gp] * thz_to_ev
+        condition = freqs_ev > cutoff_ev
+        condition_2d = np.logical_and.outer(condition, condition)
+        # cv at this GP for fallback on diagonal
+        cv_at_gp = compute_bulk_mode_cv(
+            frequencies,
+            np.array([gp], dtype="int64"),
+            temperatures,
+            np.arange(num_band, dtype="int64"),
+            cutoff_frequency,
+        )[:, 0, :]  # (num_temp, num_band)
+        with np.errstate(divide="ignore", over="ignore", invalid="ignore"):
+            cvm = mode_cv_matrix(
+                temperatures, freqs_ev
+            )  # (num_temp, num_band, num_band)
+            cvm = np.where(
+                condition_2d[None, :, :],
+                np.where(np.isfinite(cvm), cvm, cv_at_gp[:, None, :]),
+                0.0,
+            )
+        cv_mat[:, i_gp, :, :] = cvm[:, band_indices, :]
+
+    return cv, cv_mat
 
 
 class ModeHeatCapacityProvider:
-    """Compute scalar mode heat capacities at a grid point.
+    """Compute scalar mode heat capacities for all grid points at once.
 
     This provider implements the ``HeatCapacityProvider`` protocol.  It
     computes the mode heat capacity Cv (per mode, per unit cell) at the
     requested temperatures using the standard Einstein/harmonic-oscillator
-    formula, delegating to ``get_heat_capacities`` from ``conductivity.base``.
+    formula via ``compute_bulk_mode_cv``.
 
     The returned ``HeatCapacityResult`` contains ``heat_capacities``
-    with shape ``(num_temp, num_band0)``.
+    with shape ``(num_temp, num_gp, num_band0)``.
 
     Parameters
     ----------
     pp : Interaction
         Interaction instance.  Phonon solver must have been run
-        (``phonon_all_done == True``) before calling ``compute``.
+        (``phonon_all_done == True``) before calling ``compute_all``.
+
     """
 
     produces_heat_capacity_matrix: bool = False
@@ -67,31 +154,43 @@ class ModeHeatCapacityProvider:
         """Init method."""
         self._pp = pp
 
-    def compute(
+    def compute_all(
         self,
-        gp: GridPointInput,
+        frequencies: NDArray[np.double],
+        grid_points: NDArray[np.int64],
         temperatures: NDArray[np.double],
+        band_indices: NDArray[np.int64],
+        cutoff_frequency: float,
     ) -> HeatCapacityResult:
-        """Compute mode heat capacities at a grid point.
+        """Compute mode heat capacities for all grid points.
 
         Parameters
         ----------
-        gp : GridPointInput
-            Per-grid-point phonon data.
+        frequencies : ndarray of double, shape (num_bz_gp, num_band)
+            Phonon frequencies in THz.
+        grid_points : ndarray of int64, shape (num_gp,)
+            BZ grid point indices.
         temperatures : ndarray of double, shape (num_temp,)
             Temperatures in Kelvin.
+        band_indices : ndarray of int64, shape (num_band0,)
+            Selected band indices.
+        cutoff_frequency : float
+            Cutoff frequency in THz.
 
         Returns
         -------
         HeatCapacityResult
-            ``heat_capacities`` (num_temp, num_band0) is set.
+            ``heat_capacities`` (num_temp, num_gp, num_band0) is set.
+
         """
-        cv = _get_heat_capacities(gp.grid_point, self._pp, temperatures)
-        return HeatCapacityResult(heat_capacities=cv[:, self._pp.band_indices])
+        cv = compute_bulk_mode_cv(
+            frequencies, grid_points, temperatures, band_indices, cutoff_frequency
+        )
+        return HeatCapacityResult(heat_capacities=cv)
 
 
 class HeatCapacityMatrixProvider:
-    """Compute heat capacity matrix at a grid point for the Kubo formula.
+    """Compute heat capacity matrix for all grid points (Kubo formula).
 
     This provider implements the ``HeatCapacityProvider`` protocol for the
     Green-Kubo formula.  It computes the off-diagonal heat capacity matrix
@@ -99,16 +198,16 @@ class HeatCapacityMatrixProvider:
     ``phono3py.phonon.heat_capacity_matrix``.
 
     The returned ``HeatCapacityResult`` contains:
-    - ``heat_capacities`` (num_temp, num_band0): diagonal (standard) mode heat
-      capacities; set for compatibility with ``RTACalculator``.
-    - ``heat_capacity_matrix`` (num_temp, num_band0, num_band): full heat
-      capacity matrix for selected bands (rows) vs all bands (columns).
+    - ``heat_capacities`` (num_temp, num_gp, num_band0): diagonal (standard)
+      mode heat capacities.
+    - ``heat_capacity_matrix`` (num_temp, num_gp, num_band0, num_band): full
+      heat capacity matrix for selected bands (rows) vs all bands (columns).
 
     Parameters
     ----------
     pp : Interaction
         Interaction instance.  Phonon solver must have been run before calling
-        ``compute``.
+        ``compute_all``.
 
     """
 
@@ -118,45 +217,41 @@ class HeatCapacityMatrixProvider:
         """Init method."""
         self._pp = pp
 
-    def compute(
+    def compute_all(
         self,
-        gp: GridPointInput,
+        frequencies: NDArray[np.double],
+        grid_points: NDArray[np.int64],
         temperatures: NDArray[np.double],
+        band_indices: NDArray[np.int64],
+        cutoff_frequency: float,
     ) -> HeatCapacityResult:
-        """Compute heat capacity matrix at a grid point.
+        """Compute heat capacity matrix for all grid points.
 
         Parameters
         ----------
-        gp : GridPointInput
-            Per-grid-point phonon data.
+        frequencies : ndarray of double, shape (num_bz_gp, num_band)
+            Phonon frequencies in THz.
+        grid_points : ndarray of int64, shape (num_gp,)
+            BZ grid point indices.
         temperatures : ndarray of double, shape (num_temp,)
             Temperatures in Kelvin.
+        band_indices : ndarray of int64, shape (num_band0,)
+            Selected band indices.
+        cutoff_frequency : float
+            Cutoff frequency in THz.
 
         Returns
         -------
         HeatCapacityResult
-            ``heat_capacities`` (num_temp, num_band0) and
-            ``heat_capacity_matrix`` (num_temp, num_band0, num_band) are set.
+            ``heat_capacities`` (num_temp, num_gp, num_band0) and
+            ``heat_capacity_matrix`` (num_temp, num_gp, num_band0, num_band)
+            are set.
 
         """
-        frequencies, _, _ = self._pp.get_phonons()
-        assert frequencies is not None
-        freqs_ev = frequencies[gp.grid_point] * get_physical_units().THzToEv
-        cv = _get_heat_capacities(gp.grid_point, self._pp, temperatures)
-
-        cutoff = self._pp.cutoff_frequency * get_physical_units().THzToEv
-        condition = freqs_ev > cutoff
-        condition = np.logical_and.outer(condition, condition)
-
-        with np.errstate(divide="ignore", over="ignore", invalid="ignore"):
-            cvm = mode_cv_matrix(temperatures, freqs_ev)
-            cv_mat = np.where(
-                condition[None, :, :],
-                np.where(np.isfinite(cvm), cvm, cv[:, None, :]),
-                0.0,
-            )
-
+        cv, cv_mat = compute_bulk_cv_matrix(
+            frequencies, grid_points, temperatures, band_indices, cutoff_frequency
+        )
         return HeatCapacityResult(
-            heat_capacities=cv[:, self._pp.band_indices],
-            heat_capacity_matrix=cv_mat[:, self._pp.band_indices, :],
+            heat_capacities=cv,
+            heat_capacity_matrix=cv_mat,
         )

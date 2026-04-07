@@ -471,50 +471,35 @@ class IsotopeScatteringProvider:
         return np.array(gamma_iso, dtype="double", order="C")
 
 
-class BoundaryScatteringProvider:
-    """Compute boundary scattering linewidth at a grid point.
+def compute_bulk_boundary_scattering(
+    group_velocities: NDArray[np.double],
+    boundary_mfp: float,
+) -> NDArray[np.double]:
+    """Compute boundary scattering linewidth for all grid points at once.
 
-    Returns gamma_boundary as NDArray with shape ``(num_band0,)``.
     The formula is:
 
-        gamma_boundary[s] = |v_s| * 1e6 * Angstrom / (4 * pi * boundary_mfp)
+        gamma_boundary[gp, s] = |v_s| * 1e6 * Angstrom / (4 * pi * boundary_mfp)
 
     where ``boundary_mfp`` is in micrometres and ``|v_s|`` is the group
     velocity magnitude in THz*Angstrom.
 
     Parameters
     ----------
+    group_velocities : ndarray of double, shape (num_gp, num_band0, 3)
+        Group velocities in THz*Angstrom.
     boundary_mfp : float
         Boundary mean free path in micrometres.
+
+    Returns
+    -------
+    ndarray of double, shape (num_gp, num_band0)
+        Boundary scattering linewidth.
+
     """
-
-    def __init__(self, boundary_mfp: float):
-        """Init method."""
-        self._boundary_mfp = boundary_mfp
-
-    def compute(
-        self,
-        group_velocities: NDArray[np.double],
-    ) -> NDArray[np.double]:
-        """Compute boundary scattering linewidth.
-
-        Parameters
-        ----------
-        group_velocities : ndarray, shape (num_band0, 3)
-            Group velocities in THz*Angstrom.
-
-        Returns
-        -------
-        ndarray of double, shape (num_band0,)
-            Boundary scattering linewidth.
-        """
-        num_band0 = len(group_velocities)
-        g_boundary = np.zeros(num_band0, dtype="double")
-        for ll in range(num_band0):
-            g_boundary[ll] = (
-                np.linalg.norm(group_velocities[ll])
-                * get_physical_units().Angstrom
-                * 1e6
-                / (4 * np.pi * self._boundary_mfp)
-            )
-        return g_boundary
+    return (
+        np.linalg.norm(group_velocities, axis=-1)
+        * get_physical_units().Angstrom
+        * 1e6
+        / (4 * np.pi * boundary_mfp)
+    )

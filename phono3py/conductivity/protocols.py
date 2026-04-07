@@ -12,7 +12,7 @@ Protocols
 VelocityProvider
     Computes velocity-related quantities at a single BZ grid point.
 HeatCapacityProvider
-    Computes heat capacity at a single BZ grid point.
+    Computes heat capacity for all grid points at once (bulk).
 ScatteringProvider
     Computes phonon linewidths at a single BZ grid point.
 
@@ -82,7 +82,7 @@ class VelocityProvider(Protocol):
 
 
 class HeatCapacityProvider(Protocol):
-    """Protocol for computing heat capacity at a grid point.
+    """Protocol for computing heat capacity for all grid points at once.
 
     Built-in implementations
     ------------------------
@@ -94,7 +94,7 @@ class HeatCapacityProvider(Protocol):
     Class attributes
     ----------------
     produces_heat_capacity_matrix : bool
-        True when compute() sets HeatCapacityResult.heat_capacity_matrix.
+        True when compute_all() sets HeatCapacityResult.heat_capacity_matrix.
 
     These flags tell the calculator which arrays to pre-allocate
     before the grid-point loop.
@@ -103,12 +103,15 @@ class HeatCapacityProvider(Protocol):
 
     produces_heat_capacity_matrix: bool
 
-    def compute(
+    def compute_all(
         self,
-        gp: GridPointInput,
+        frequencies: NDArray[np.double],
+        grid_points: NDArray[np.int64],
         temperatures: NDArray[np.double],
+        band_indices: NDArray[np.int64],
+        cutoff_frequency: float,
     ) -> HeatCapacityResult:
-        """Compute heat-capacity quantities at a grid point."""
+        """Compute heat-capacity quantities for all grid points at once."""
         ...
 
 
@@ -123,7 +126,7 @@ class ScatteringProvider(Protocol):
     Notes
     -----
     Isotope and boundary scattering are separate diagonal-only contributions
-    handled by IsotopeScatteringProvider and BoundaryScatteringProvider.
+    handled by IsotopeScatteringProvider and compute_bulk_boundary_scattering.
 
     """
 

@@ -58,14 +58,14 @@ class VelocityResult:
 
 @dataclass
 class HeatCapacityResult:
-    """Result from a heat capacity provider at a single grid point.
+    """Result from a heat capacity provider (bulk computation).
 
     Parameters
     ----------
-    heat_capacities : ndarray of double, shape (num_temp, num_band0)
-        Mode heat capacities (scalar Cv per mode).
+    heat_capacities : ndarray of double, shape (num_temp, num_gp, num_band0)
+        Mode heat capacities (scalar Cv per mode) for all grid points.
     heat_capacity_matrix : ndarray of double, optional
-        Shape (num_temp, num_band0, num_band).
+        Shape (num_temp, num_gp, num_band0, num_band).
         Only set by HeatCapacityMatrixProvider (Kubo).
     extra : dict
         Plugin-specific data.
