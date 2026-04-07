@@ -11,9 +11,7 @@ from numpy.typing import NDArray
 from phono3py.conductivity.context import ConductivityContext
 from phono3py.conductivity.grid_point_data import (
     GridPointAggregates,
-    GridPointInput,
     compute_effective_gamma,
-    make_grid_point_input,
 )
 from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
 from phono3py.conductivity.kappa_accumulators import RTAKappaAccumulator
@@ -540,16 +538,6 @@ class RTACalculator:
     # Private: per-grid-point computation
     # ------------------------------------------------------------------
 
-    def _make_grid_point_input(self, i_gp: int) -> GridPointInput:
-        return make_grid_point_input(
-            grid_point=int(self._context.grid_points[i_gp]),
-            grid_weight=int(self._context.grid_weights[i_gp]),
-            frequencies=self._context.frequencies,
-            eigenvectors=self._context.eigenvectors,
-            bz_grid=self._context.bz_grid,
-            band_indices=self._context.band_indices,
-        )
-
     def _show_log_header(self, i_gp: int) -> None:
         if not self._log_level:
             return
@@ -570,13 +558,7 @@ class RTACalculator:
     def _compute_bulk_heat_capacities(self) -> None:
         """Compute heat capacities for all grid points at once."""
         assert self._context.temperatures is not None
-        cv_result = self._cv_provider.compute_all(
-            self._context.frequencies,
-            self._context.grid_points,
-            self._context.temperatures,
-            self._context.band_indices,
-            self._context.cutoff_frequency,
-        )
+        cv_result = self._cv_provider.compute(self._context.grid_points)
         self._cv = cv_result.heat_capacities
         if cv_result.heat_capacity_matrix is not None:
             self._heat_capacity_matrix = cv_result.heat_capacity_matrix
@@ -585,8 +567,8 @@ class RTACalculator:
         """Compute velocities for all grid points."""
         self._num_sampling_grid_points = 0
         for i_gp in range(len(self._context.grid_points)):
-            gp_input = self._make_grid_point_input(i_gp)
-            vel_result = self._velocity_provider.compute(gp_input)
+            grid_point = int(self._context.grid_points[i_gp])
+            vel_result = self._velocity_provider.compute(grid_point)
             self._num_sampling_grid_points += vel_result.num_sampling_grid_points
             self._gv[i_gp] = vel_result.group_velocities
             if vel_result.gv_by_gv is not None:
@@ -598,8 +580,8 @@ class RTACalculator:
         """Compute isotope scattering for all grid points."""
         assert self._isotope_provider is not None
         for i_gp in range(len(self._context.grid_points)):
-            gp_input = self._make_grid_point_input(i_gp)
-            gamma_iso = self._isotope_provider.compute(gp_input)
+            grid_point = int(self._context.grid_points[i_gp])
+            gamma_iso = self._isotope_provider.compute(grid_point)
             self._gamma_iso[:, i_gp, :] = gamma_iso[:, self._context.band_indices]
 
     def _compute_gamma_at_grid_point(self, i_gp: int) -> None:
@@ -607,8 +589,8 @@ class RTACalculator:
         self._show_log_header(i_gp)
 
         if not self._read_gamma:
-            gp_input = self._make_grid_point_input(i_gp)
-            scat_result = self._scattering_provider.compute(gp_input)
+            grid_point = int(self._context.grid_points[i_gp])
+            scat_result = self._scattering_provider.compute(grid_point)
             gamma = scat_result.gamma
             ave_pp = scat_result.averaged_pp_interaction
             if self._is_N_U or self._is_gamma_detail:

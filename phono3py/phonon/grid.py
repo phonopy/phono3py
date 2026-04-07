@@ -995,7 +995,7 @@ def get_ir_grid_points(
 
     """
     ir_grid_map = _get_ir_grid_map(bz_grid.D_diag, bz_grid.rotations, PS=bz_grid.PS)
-    (ir_grid_points, ir_grid_weights) = extract_ir_grid_points(ir_grid_map)
+    ir_grid_points, ir_grid_weights = extract_ir_grid_points(ir_grid_map)
 
     return ir_grid_points, ir_grid_weights, ir_grid_map
 

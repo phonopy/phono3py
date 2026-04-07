@@ -18,9 +18,8 @@ ScatteringProvider
 
 Data containers
 ---------------
-GridPointInput and provider result types (VelocityResult,
-HeatCapacityResult, ScatteringResult) are defined in
-``phono3py.conductivity.grid_point_data``.
+Provider result types (VelocityResult, HeatCapacityResult,
+ScatteringResult) are defined in ``phono3py.conductivity.grid_point_data``.
 
 """
 
@@ -32,7 +31,6 @@ import numpy as np
 from numpy.typing import NDArray
 
 from phono3py.conductivity.grid_point_data import (
-    GridPointInput,
     HeatCapacityResult,
     ScatteringResult,
     VelocityResult,
@@ -42,7 +40,6 @@ __all__ = [
     "VelocityProvider",
     "HeatCapacityProvider",
     "ScatteringProvider",
-    "GridPointInput",
     "VelocityResult",
     "HeatCapacityResult",
     "ScatteringResult",
@@ -76,7 +73,7 @@ class VelocityProvider(Protocol):
     produces_gv_by_gv: bool
     produces_vm_by_vm: bool
 
-    def compute(self, gp: GridPointInput) -> VelocityResult:
+    def compute(self, grid_point: int) -> VelocityResult:
         """Compute velocity quantities at a grid point."""
         ...
 
@@ -94,7 +91,7 @@ class HeatCapacityProvider(Protocol):
     Class attributes
     ----------------
     produces_heat_capacity_matrix : bool
-        True when compute_all() sets HeatCapacityResult.heat_capacity_matrix.
+        True when compute() sets HeatCapacityResult.heat_capacity_matrix.
 
     These flags tell the calculator which arrays to pre-allocate
     before the grid-point loop.
@@ -103,13 +100,9 @@ class HeatCapacityProvider(Protocol):
 
     produces_heat_capacity_matrix: bool
 
-    def compute_all(
+    def compute(
         self,
-        frequencies: NDArray[np.double],
         grid_points: NDArray[np.int64],
-        temperatures: NDArray[np.double],
-        band_indices: NDArray[np.int64],
-        cutoff_frequency: float,
     ) -> HeatCapacityResult:
         """Compute heat-capacity quantities for all grid points at once."""
         ...
@@ -132,7 +125,7 @@ class ScatteringProvider(Protocol):
 
     def compute(
         self,
-        gp: GridPointInput,
+        grid_point: int,
     ) -> ScatteringResult:
         """Compute phonon linewidths at a grid point.
 

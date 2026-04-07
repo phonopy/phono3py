@@ -144,38 +144,27 @@ class ModeHeatCapacityProvider:
     ----------
     pp : Interaction
         Interaction instance.  Phonon solver must have been run
-        (``phonon_all_done == True``) before calling ``compute_all``.
+        (``phonon_all_done == True``) before calling ``compute``.
 
     """
 
     produces_heat_capacity_matrix: bool = False
 
-    def __init__(self, pp: Interaction):
+    def __init__(self, pp: Interaction, temperatures: NDArray[np.double]):
         """Init method."""
         self._pp = pp
+        self._temperatures = temperatures
 
-    def compute_all(
+    def compute(
         self,
-        frequencies: NDArray[np.double],
         grid_points: NDArray[np.int64],
-        temperatures: NDArray[np.double],
-        band_indices: NDArray[np.int64],
-        cutoff_frequency: float,
     ) -> HeatCapacityResult:
         """Compute mode heat capacities for all grid points.
 
         Parameters
         ----------
-        frequencies : ndarray of double, shape (num_bz_gp, num_band)
-            Phonon frequencies in THz.
         grid_points : ndarray of int64, shape (num_gp,)
             BZ grid point indices.
-        temperatures : ndarray of double, shape (num_temp,)
-            Temperatures in Kelvin.
-        band_indices : ndarray of int64, shape (num_band0,)
-            Selected band indices.
-        cutoff_frequency : float
-            Cutoff frequency in THz.
 
         Returns
         -------
@@ -183,8 +172,13 @@ class ModeHeatCapacityProvider:
             ``heat_capacities`` (num_temp, num_gp, num_band0) is set.
 
         """
+        frequencies = self._pp.get_phonons()[0]
         cv = compute_bulk_mode_cv(
-            frequencies, grid_points, temperatures, band_indices, cutoff_frequency
+            frequencies,
+            grid_points,
+            self._temperatures,
+            self._pp.band_indices,
+            self._pp.cutoff_frequency,
         )
         return HeatCapacityResult(heat_capacities=cv)
 
@@ -207,38 +201,27 @@ class HeatCapacityMatrixProvider:
     ----------
     pp : Interaction
         Interaction instance.  Phonon solver must have been run before calling
-        ``compute_all``.
+        ``compute``.
 
     """
 
     produces_heat_capacity_matrix: bool = True
 
-    def __init__(self, pp: Interaction):
+    def __init__(self, pp: Interaction, temperatures: NDArray[np.double]):
         """Init method."""
         self._pp = pp
+        self._temperatures = temperatures
 
-    def compute_all(
+    def compute(
         self,
-        frequencies: NDArray[np.double],
         grid_points: NDArray[np.int64],
-        temperatures: NDArray[np.double],
-        band_indices: NDArray[np.int64],
-        cutoff_frequency: float,
     ) -> HeatCapacityResult:
         """Compute heat capacity matrix for all grid points.
 
         Parameters
         ----------
-        frequencies : ndarray of double, shape (num_bz_gp, num_band)
-            Phonon frequencies in THz.
         grid_points : ndarray of int64, shape (num_gp,)
             BZ grid point indices.
-        temperatures : ndarray of double, shape (num_temp,)
-            Temperatures in Kelvin.
-        band_indices : ndarray of int64, shape (num_band0,)
-            Selected band indices.
-        cutoff_frequency : float
-            Cutoff frequency in THz.
 
         Returns
         -------
@@ -248,8 +231,13 @@ class HeatCapacityMatrixProvider:
             are set.
 
         """
+        frequencies = self._pp.get_phonons()[0]
         cv, cv_mat = compute_bulk_cv_matrix(
-            frequencies, grid_points, temperatures, band_indices, cutoff_frequency
+            frequencies,
+            grid_points,
+            self._temperatures,
+            self._pp.band_indices,
+            self._pp.cutoff_frequency,
         )
         return HeatCapacityResult(
             heat_capacities=cv,

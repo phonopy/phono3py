@@ -8,7 +8,7 @@ import numpy as np
 from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
 
-from phono3py.conductivity.grid_point_data import GridPointInput, ScatteringResult
+from phono3py.conductivity.grid_point_data import ScatteringResult
 from phono3py.other.isotope import Isotope
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy, average_by_degeneracy
 from phono3py.phonon3.interaction import Interaction
@@ -110,13 +110,13 @@ class RTAScatteringProvider:
         """Return per-triplet gamma from last compute call."""
         return self._gamma_detail_at_q
 
-    def compute(self, gp: GridPointInput) -> ScatteringResult:
+    def compute(self, grid_point: int) -> ScatteringResult:
         """Compute ph-ph linewidth at a grid point.
 
         Parameters
         ----------
-        gp : GridPointInput
-            Per-grid-point phonon data.
+        grid_point : int
+            BZ grid point index.
 
         Returns
         -------
@@ -124,7 +124,7 @@ class RTAScatteringProvider:
             ``gamma`` (num_sigma, num_temp, num_band0) is set.
             ``averaged_pp_interaction`` (num_band0) is set when applicable.
         """
-        num_band0 = len(gp.band_indices)
+        num_band0 = len(self._pp.band_indices)
         num_temp = len(self._temperatures)
         num_sigma = len(self._sigmas)
 
@@ -139,7 +139,7 @@ class RTAScatteringProvider:
 
         self._averaged_pp_interaction: NDArray[np.double] | None = None
 
-        self._collision.set_grid_point(gp.grid_point)
+        self._collision.set_grid_point(grid_point)
 
         if self._log_level:
             triplets_at_q = self._pp.get_triplets_at_q()[0]
@@ -147,9 +147,9 @@ class RTAScatteringProvider:
             print("Number of triplets: %d" % len(triplets_at_q), flush=True)
 
         if self._requires_full_gamma_path():
-            self._run_sigmas(gp, gamma)
+            self._run_sigmas(grid_point, gamma)
         else:
-            self._run_sigmas_lowmem(gp, gamma)
+            self._run_sigmas_lowmem(grid_point, gamma)
 
         return ScatteringResult(
             gamma=gamma,
@@ -172,24 +172,24 @@ class RTAScatteringProvider:
 
     def _run_sigmas(
         self,
-        gp: GridPointInput,
+        grid_point: int,
         gamma: NDArray[np.double],
     ) -> None:
         for j, sigma in enumerate(self._sigmas):
             self._collision.set_sigma(sigma, sigma_cutoff=self._sigma_cutoff)
             self._collision.run_integration_weights()
-            self._set_interaction_strength(gp, j, sigma)
+            self._set_interaction_strength(grid_point, j, sigma)
             self._allocate_gamma_detail_if_needed()
-            self._run_temperatures(gp, j, gamma)
+            self._run_temperatures(j, gamma)
 
     def _set_interaction_strength(
         self,
-        gp: GridPointInput,
+        grid_point: int,
         i_sigma: int,
         sigma: float | None,
     ) -> None:
         if self._read_pp:
-            self._set_from_file(gp, sigma)
+            self._set_from_file(grid_point, sigma)
         elif self._use_ave_pp:
             assert self._averaged_pp_interaction is not None
             self._collision.set_averaged_pp_interaction(self._averaged_pp_interaction)
@@ -206,18 +206,16 @@ class RTAScatteringProvider:
             if self._log_level:
                 print("Existing ph-ph interaction is used.")
         else:
-            if self._log_level:
-                print("Calculating ph-ph interaction...")
             self._collision.run_interaction(is_full_pp=self._is_full_pp)
             if self._is_full_pp:
                 self._averaged_pp_interaction = self._pp.averaged_interaction
 
-    def _set_from_file(self, gp: GridPointInput, sigma: float | None) -> None:
+    def _set_from_file(self, grid_point: int, sigma: float | None) -> None:
         from phono3py.file_IO import read_pp_from_hdf5
 
         pp, _g_zero = read_pp_from_hdf5(
             self._pp.mesh_numbers,
-            grid_point=gp.grid_point,
+            grid_point=grid_point,
             sigma=sigma,
             sigma_cutoff=self._sigma_cutoff,
             filename=self._pp_filename,
@@ -241,7 +239,6 @@ class RTAScatteringProvider:
 
     def _run_temperatures(
         self,
-        gp: GridPointInput,
         i_sigma: int,
         gamma: NDArray[np.double],
     ) -> None:
@@ -263,7 +260,7 @@ class RTAScatteringProvider:
 
     def _run_sigmas_lowmem(
         self,
-        gp: GridPointInput,
+        grid_point: int,
         gamma: NDArray[np.double],
     ) -> None:
         """Compute gamma without storing full ph-ph interaction strength."""
@@ -391,7 +388,7 @@ class RTAScatteringProvider:
             else:
                 col = collisions
 
-            freq_at_gp = frequencies[gp.grid_point]
+            freq_at_gp = frequencies[grid_point]
             for k in range(len(self._temperatures)):
                 gamma[j, k] = average_by_degeneracy(
                     col[k] * col_unit_conv * pp_unit_conv,
@@ -444,13 +441,13 @@ class IsotopeScatteringProvider:
         """Return the wrapped Isotope instance."""
         return self._isotope
 
-    def compute(self, gp: GridPointInput) -> NDArray[np.double]:
+    def compute(self, grid_point: int) -> NDArray[np.double]:
         """Compute isotope linewidth at a grid point.
 
         Parameters
         ----------
-        gp : GridPointInput
-            Per-grid-point phonon data.
+        grid_point : int
+            BZ grid point index.
 
         Returns
         -------
@@ -460,7 +457,7 @@ class IsotopeScatteringProvider:
         gamma_iso = []
         for sigma in self._sigmas:
             self._isotope.sigma = sigma
-            self._isotope.set_grid_point(gp.grid_point)
+            self._isotope.set_grid_point(grid_point)
             self._isotope.run()
             gamma_iso.append(self._isotope.gamma)
 

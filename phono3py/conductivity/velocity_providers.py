@@ -8,7 +8,7 @@ import numpy as np
 from numpy.typing import NDArray
 from phonopy.phonon.group_velocity import GroupVelocity
 
-from phono3py.conductivity.grid_point_data import GridPointInput, VelocityResult
+from phono3py.conductivity.grid_point_data import VelocityResult
 from phono3py.conductivity.utils import VOIGT_INDEX_PAIRS
 from phono3py.phonon.grid import (
     get_grid_points_by_rotations,
@@ -110,6 +110,8 @@ class GroupVelocityProvider:
         pp: Interaction,
         point_operations: NDArray[np.int64],
         rotations_cartesian: NDArray[np.double],
+        grid_points: NDArray[np.int64],
+        grid_weights: NDArray[np.int64],
         is_kappa_star: bool = True,
         average_gv_over_kstar: bool = False,
         gv_delta_q: float | None = None,
@@ -121,6 +123,7 @@ class GroupVelocityProvider:
         self._pp = pp
         self._point_operations = point_operations
         self._rotations_cartesian = rotations_cartesian
+        self._grid_weight_map = dict(zip(grid_points, grid_weights, strict=True))
         self._is_kappa_star = is_kappa_star
         self._average_gv_over_kstar = average_gv_over_kstar
         self._gv_delta_q = gv_delta_q
@@ -137,13 +140,13 @@ class GroupVelocityProvider:
         """Return delta-q used for finite-difference group velocity."""
         return self._gv_delta_q
 
-    def compute(self, gp: GridPointInput) -> VelocityResult:
+    def compute(self, grid_point: int) -> VelocityResult:
         """Compute group velocity and v x v product at a grid point.
 
         Parameters
         ----------
-        gp : GridPointInput
-            Per-grid-point phonon data.
+        grid_point : int
+            BZ grid point index.
 
         Returns
         -------
@@ -151,8 +154,9 @@ class GroupVelocityProvider:
             ``group_velocities`` (num_band0, 3), ``gv_by_gv``
             (num_band0, 6), and ``num_sampling_grid_points`` are set.
         """
-        gv = self._get_gv(gp)
-        gv_by_gv, kstar_order = self._get_gv_by_gv(gp, gv)
+        gv = self._get_gv(grid_point)
+        grid_weight = int(self._grid_weight_map[grid_point])
+        gv_by_gv, kstar_order = self._get_gv_by_gv(grid_point, grid_weight, gv)
         return VelocityResult(
             group_velocities=gv,
             gv_by_gv=gv_by_gv,
@@ -163,10 +167,10 @@ class GroupVelocityProvider:
     # Private helpers
     # ------------------------------------------------------------------
 
-    def _get_gv(self, gp: GridPointInput) -> NDArray[np.double]:
+    def _get_gv(self, grid_point: int) -> NDArray[np.double]:
         if self._average_gv_over_kstar and len(self._point_operations) > 1:
-            return self._get_averaged_gv_over_kstar(gp)
-        return self._get_gv_at_bz_grid_point(gp.grid_point)
+            return self._get_averaged_gv_over_kstar(grid_point)
+        return self._get_gv_at_bz_grid_point(grid_point)
 
     def _get_gv_at_bz_grid_point(self, bz_gp: int) -> NDArray[np.double]:
         self._velocity_obj.run(
@@ -175,27 +179,25 @@ class GroupVelocityProvider:
         assert self._velocity_obj.group_velocities is not None
         return self._velocity_obj.group_velocities[0, self._pp.band_indices, :]
 
-    def _get_averaged_gv_over_kstar(self, gp: GridPointInput) -> NDArray[np.double]:
+    def _get_averaged_gv_over_kstar(self, grid_point: int) -> NDArray[np.double]:
         gps_rotated = get_grid_points_by_rotations(
-            gp.grid_point, self._pp.bz_grid, with_surface=True
+            grid_point, self._pp.bz_grid, with_surface=True
         )
         assert len(gps_rotated) == len(self._point_operations)
         gvs = {
             bz_gp: self._get_gv_at_bz_grid_point(int(bz_gp))
             for bz_gp in np.unique(gps_rotated)
         }
-        gv = np.zeros_like(gvs[gp.grid_point])
+        gv = np.zeros_like(gvs[grid_point])
         for bz_gp, r in zip(gps_rotated, self._rotations_cartesian, strict=True):
             gv += np.dot(gvs[bz_gp], r)
         return gv / len(self._point_operations)
 
     def _get_gv_by_gv(
-        self, gp: GridPointInput, gv: NDArray[np.double]
+        self, grid_point: int, grid_weight: int, gv: NDArray[np.double]
     ) -> tuple[NDArray[np.double], int]:
         if self._is_kappa_star:
-            multi = get_multiplicity_at_q(
-                gp.grid_point, self._pp, self._point_operations
-            )
+            multi = get_multiplicity_at_q(grid_point, self._pp, self._point_operations)
         else:
             multi = 1
 
@@ -206,7 +208,7 @@ class GroupVelocityProvider:
         gv_by_gv_3x3 /= multi
 
         kstar_order = get_kstar_order(
-            gp.grid_weight,
+            grid_weight,
             multi,
             self._point_operations,
             verbose=self._log_level > 0,
@@ -265,6 +267,8 @@ class VelocityMatrixProvider:
         pp: Interaction,
         reciprocal_operations: NDArray[np.int64],
         rotations_cartesian: NDArray[np.double],
+        grid_points: NDArray[np.int64],
+        grid_weights: NDArray[np.int64],
         is_kappa_star: bool = True,
         gv_delta_q: float | None = None,
         log_level: int = 0,
@@ -274,6 +278,7 @@ class VelocityMatrixProvider:
             raise RuntimeError("Interaction.init_dynamical_matrix() must be called.")
         self._pp = pp
         self._is_kappa_star = is_kappa_star
+        self._grid_weight_map = dict(zip(grid_points, grid_weights, strict=True))
         self._log_level = log_level
         self._velocity_obj = VelocityMatrix(
             pp.dynamical_matrix,
@@ -285,13 +290,13 @@ class VelocityMatrixProvider:
         self._reciprocal_operations = reciprocal_operations
         self._rotations_cartesian = rotations_cartesian
 
-    def compute(self, gp: GridPointInput) -> VelocityResult:
+    def compute(self, grid_point: int) -> VelocityResult:
         """Compute velocity matrix quantities at a grid point.
 
         Parameters
         ----------
-        gp : GridPointInput
-            Per-grid-point phonon data.
+        grid_point : int
+            BZ grid point index.
 
         Returns
         -------
@@ -302,12 +307,13 @@ class VelocityMatrixProvider:
             ``num_sampling_grid_points`` are set.
 
         """
-        q_point = get_qpoints_from_bz_grid_points(gp.grid_point, self._pp.bz_grid)
+        q_point = get_qpoints_from_bz_grid_points(grid_point, self._pp.bz_grid)
         self._velocity_obj.run([q_point])
         assert self._velocity_obj.velocity_matrices is not None
         gv = self._velocity_obj.group_velocities[0]
+        grid_weight = int(self._grid_weight_map[grid_point])
         vm_by_vm, kstar_order = self._get_vm_by_vm(
-            gp, self._velocity_obj.velocity_matrices[0]
+            grid_point, grid_weight, self._velocity_obj.velocity_matrices[0]
         )
         return VelocityResult(
             group_velocities=gv,
@@ -321,7 +327,8 @@ class VelocityMatrixProvider:
 
     def _get_vm_by_vm(
         self,
-        gp: GridPointInput,
+        grid_point: int,
+        grid_weight: int,
         vm: NDArray[np.cdouble],
     ) -> tuple[NDArray[np.cdouble], int]:
         r"""Compute k-star-averaged outer product of velocity matrix elements.
@@ -334,8 +341,6 @@ class VelocityMatrixProvider:
 
         Returns
         -------
-        gv : (num_band0, 3) real
-            Diagonal of the velocity matrix (standard group velocities).
         vm_by_vm : (num_band0, num_band, 6) complex
             k-star-averaged outer product in Voigt order (xx, yy, zz, yz, xz, xy).
         kstar_order : int
@@ -344,7 +349,7 @@ class VelocityMatrixProvider:
         """
         if self._is_kappa_star:
             multi = get_multiplicity_at_q(
-                gp.grid_point, self._pp, self._reciprocal_operations
+                grid_point, self._pp, self._reciprocal_operations
             )
         else:
             multi = 1
@@ -360,7 +365,7 @@ class VelocityMatrixProvider:
         vm_by_vm /= multi
 
         kstar_order = get_kstar_order(
-            gp.grid_weight,
+            grid_weight,
             multi,
             self._reciprocal_operations,
             verbose=self._log_level > 0,
