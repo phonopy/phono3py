@@ -173,7 +173,7 @@ def get_thermal_conductivity_LBTE(
     gv_delta_q: float | None = None,
     is_full_pp: bool = False,
     transport_type: str | None = None,
-    pinv_cutoff: float = 1.0e-8,
+    pinv_cutoff: float | None = None,
     pinv_solver: int = 0,  # default: dsyev in lapacke
     pinv_method: int = 0,  # default: abs(eig) < cutoff
     write_collision: bool = False,
@@ -197,14 +197,15 @@ def get_thermal_conductivity_LBTE(
     _grid_points = (
         np.asarray(grid_points, dtype="int64") if grid_points is not None else None
     )
+    if pinv_cutoff is None:
+        _pinv_cutoff = 1.0e-8
+    else:
+        _pinv_cutoff = pinv_cutoff
 
     if sigmas is None:
         sigmas = []
     if log_level:
         print("-" * 19 + " Lattice thermal conductivity (LBTE) " + "-" * 19)
-        print(
-            "Cutoff frequency of pseudo inversion of collision matrix: %s" % pinv_cutoff
-        )
 
     method = f"{transport_type}-lbte" if transport_type else "lbte"
     return _run_standard_lbte(
@@ -222,7 +223,7 @@ def get_thermal_conductivity_LBTE(
         is_kappa_star=is_kappa_star,
         gv_delta_q=gv_delta_q,
         is_full_pp=is_full_pp,
-        pinv_cutoff=pinv_cutoff,
+        pinv_cutoff=_pinv_cutoff,
         pinv_solver=pinv_solver,
         pinv_method=pinv_method,
         write_collision=write_collision,

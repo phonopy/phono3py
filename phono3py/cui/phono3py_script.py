@@ -1027,6 +1027,13 @@ def _init_phph_interaction(
         else:
             print("fc3-r2q-transformation over three atoms: False")
 
+        if settings.transport_type is not None:
+            print(f"Optional transport type: {settings.transport_type.upper()}")
+        if settings.pinv_cutoff is not None:
+            print(
+                f"Pseudo inversion cutoff of collision matrix: {settings.pinv_cutoff}"
+            )
+
     ave_pp = settings.constant_averaged_pp_interaction
     phono3py.init_phph_interaction(
         nac_q_direction=settings.nac_q_direction,

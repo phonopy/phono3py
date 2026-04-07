@@ -172,25 +172,37 @@ class RTACalculator:
         if self._context.temperatures is None:
             raise RuntimeError("Set temperatures before calling run().")
 
-        if self._log_level:
-            print(
-                "==================== Lattice thermal conductivity (RTA) "
-                "===================="
-            )
-
         self._prepare_isotope_phonons()
 
         # (1) Bulk heat capacity.
+        if self._log_level:
+            print("Running heat capacity calculations...")
         self._compute_bulk_heat_capacities()
 
         # (2) Velocity loop.
+        if self._log_level:
+            print("Running velocity calculations...")
         self._compute_all_velocities()
 
-        # (3) Isotope loop.
+        # (3) Bulk boundary scattering.
+        if self._context.boundary_mfp is not None:
+            self._gamma_boundary = compute_bulk_boundary_scattering(
+                self._gv, self._context.boundary_mfp
+            )
+
+        # (4) Isotope loop.
         if self._is_isotope and not self._read_gamma_iso:
+            if self._log_level:
+                for sigma in self._context.sigmas:
+                    print("Running isotope scattering calculations ", end="")
+                    print(
+                        "with tetrahedron method..."
+                        if sigma is None
+                        else f"sigma={sigma}..."
+                    )
             self._compute_all_isotope()
 
-        # (4) Main gamma loop.
+        # (5) Main gamma loop.
         self._grid_point_count = 0
         for i_gp in range(len(self._context.grid_points)):
             self._compute_gamma_at_grid_point(i_gp)
@@ -202,12 +214,6 @@ class RTACalculator:
             print(
                 "=================== End of collection of collisions "
                 "==================="
-            )
-
-        # (5) Bulk boundary scattering.
-        if self._context.boundary_mfp is not None:
-            self._gamma_boundary = compute_bulk_boundary_scattering(
-                self._gv, self._context.boundary_mfp
             )
 
         # (6) Finalize.

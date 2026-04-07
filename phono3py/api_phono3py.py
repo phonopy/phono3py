@@ -2248,7 +2248,7 @@ class Phono3py:
         is_kappa_star: bool = True,
         gv_delta_q: float | None = None,  # for group velocity
         is_full_pp: bool = False,
-        pinv_cutoff: float = 1.0e-8,  # for pseudo-inversion of collision matrix
+        pinv_cutoff: float | None = None,  # for pseudo-inversion of collision matrix
         pinv_method: int = 0,  # for pseudo-inversion of collision matrix
         pinv_solver: int = 0,  # solver of pseudo-inversion of collision matrix
         write_gamma: bool = False,
@@ -2320,7 +2320,7 @@ class Phono3py:
             improve of efficiency is expected.
             With smearing method, even if this is set False, full elements
             are computed unless `sigma_cutoff` is specified.
-        pinv_cutoff : float, optional, default is 1.0e-8
+        pinv_cutoff : float, optional, default is None (usually 1.0e-8)
             Direct solution only (`is_LBTE=True`). This is used as a criterion
             to judge the eigenvalues are considered as zero or not in
             pseudo-inversion of collision matrix. See also `pinv_method`.

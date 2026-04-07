@@ -459,10 +459,6 @@ class IsotopeScatteringProvider:
         """
         gamma_iso = []
         for sigma in self._sigmas:
-            if self._log_level:
-                text = "Calculating Gamma of ph-isotope with "
-                text += "tetrahedron method" if sigma is None else "sigma=%s" % sigma
-                print(text)
             self._isotope.sigma = sigma
             self._isotope.set_grid_point(gp.grid_point)
             self._isotope.run()

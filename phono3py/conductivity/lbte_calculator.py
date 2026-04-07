@@ -176,22 +176,28 @@ class LBTECalculator:
             writes.
 
         """
-        if self._log_level:
-            print(
-                "==================== Lattice thermal conductivity (LBTE) "
-                "===================="
-            )
-
         self._prepare_isotope_phonons()
 
         # (1) Bulk heat capacity.
-        self._compute_bulk_heat_capacities()
+        if self._log_level:
+            print("Running heat capacity calculations...")
+            self._compute_bulk_heat_capacities()
 
         # (2) Velocity loop.
+        if self._log_level:
+            print("Running velocity calculations...")
         self._compute_all_velocities()
 
         # (3) Isotope loop.
         if self._isotope_provider is not None:
+            if self._log_level:
+                for sigma in self._context.sigmas:
+                    print("Running isotope scattering calculations ", end="")
+                    print(
+                        "with tetrahedron method..."
+                        if sigma is None
+                        else f"sigma={sigma}..."
+                    )
             self._compute_all_isotope()
 
         # (4) Main collision loop.
