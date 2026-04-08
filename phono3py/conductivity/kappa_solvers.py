@@ -56,11 +56,8 @@ class RTAKappaSolver:
     def finalize(self, aggregates: GridPointAggregates) -> None:
         """Compute mode kappa and kappa from aggregated data."""
         self._compute_mode_kappa(aggregates)
-        num_sampling_grid_points = aggregates.num_sampling_grid_points
-        if num_sampling_grid_points > 0:
-            self._kappa = (
-                np.sum(self._mode_kappa, axis=(2, 3)) / num_sampling_grid_points
-            )
+        num_mesh_points = int(np.prod(self._kappa_settings.mesh_numbers))
+        self._kappa = np.sum(self._mode_kappa, axis=(2, 3)) / num_mesh_points
 
     def _compute_mode_kappa(self, aggregates: GridPointAggregates) -> None:
         """Compute mode kappa at all grid points."""
@@ -224,38 +221,35 @@ class LBTEKappaSolver:
             Aggregated per-grid-point data from the calculator.
 
         """
-        n = aggregates.num_sampling_grid_points
         prev_sigma = -1
         for i_sigma, i_temp in self._solver.solve_iter(aggregates):
             if self._log_level:
                 if i_sigma != prev_sigma:
                     log_sigma_header(self._kappa_settings.sigmas[i_sigma])
                     prev_sigma = i_sigma
-                self._log_kappa_at(i_sigma, i_temp, n)
+                self._log_kappa_at(i_sigma, i_temp)
 
     def _log_kappa_at(
         self,
         i_sigma: int,
         i_temp: int,
-        num_sampling_grid_points: int,
     ) -> None:
         """Print standard LBTE kappa for one (sigma, temperature) pair."""
         t = self._kappa_settings.temperatures[i_temp]
         if t <= 0:
             return
 
-        n = num_sampling_grid_points if num_sampling_grid_points > 0 else 1
         print(
             ("#%6s       " + " %-10s" * 6)
             % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
         )
         print(
             ("%7.1f " + " %10.3f" * 6)
-            % ((t,) + tuple(self._solver._kappa[i_sigma, i_temp] / n))
+            % ((t,) + tuple(self._solver._kappa[i_sigma, i_temp]))
         )
         print(
             (" %6s " + " %10.3f" * 6)
-            % (("(RTA)",) + tuple(self._solver._kappa_RTA[i_sigma, i_temp] / n))
+            % (("(RTA)",) + tuple(self._solver._kappa_RTA[i_sigma, i_temp]))
         )
         print("-" * 76, flush=True)
 

@@ -63,7 +63,6 @@ def _make_aggregates(
             .astype("complex128")
         )
     return GridPointAggregates(
-        num_sampling_grid_points=num_gp,
         group_velocities=np.zeros((num_gp, nat3, 3), dtype="double"),
         mode_heat_capacities=np.ones((num_temp, num_gp, nat3), dtype="double"),
         gv_by_gv=np.zeros((num_gp, nat3, 6), dtype="double"),

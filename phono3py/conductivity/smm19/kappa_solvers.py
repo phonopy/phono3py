@@ -111,7 +111,6 @@ class SMM19RTAKappaSolver:
         assert aggregates.vm_by_vm is not None
         assert aggregates.mode_heat_capacities is not None
 
-        num_sampling_grid_points = aggregates.num_sampling_grid_points
         gamma_eff = compute_effective_gamma(aggregates)
         num_sigma, num_temp, num_gp, num_band = gamma_eff.shape
 
@@ -131,14 +130,11 @@ class SMM19RTAKappaSolver:
             )
             self._mode_kappa_matrix[:, :, i_gp, :, :, :] = mode_kappa_matrix
 
-        if num_sampling_grid_points > 0:
-            self._kappa = (
-                self._mode_kappa_matrix.sum(axis=(2, 3, 4)) / num_sampling_grid_points
-            )
-            self._kappa_intra = (
-                np.einsum("abijjc->abc", self._mode_kappa_matrix)
-                / num_sampling_grid_points
-            )
+        num_mesh_points = int(np.prod(self._kappa_settings.mesh_numbers))
+        self._kappa = self._mode_kappa_matrix.sum(axis=(2, 3, 4)) / num_mesh_points
+        self._kappa_intra = (
+            np.einsum("abijjc->abc", self._mode_kappa_matrix) / num_mesh_points
+        )
 
     @property
     def kappa(self) -> NDArray[np.double] | None:

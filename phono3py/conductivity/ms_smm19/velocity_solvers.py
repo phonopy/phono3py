@@ -31,7 +31,6 @@ class VelocityOperatorSolver:
     - ``vm_by_vm`` (num_band0, num_band, 6): complex k-star-averaged outer
       product  V(s,s') x V*(s,s') packed into 6 Voigt components (xx, yy, zz,
       yz, xz, xy).
-    - ``num_sampling_grid_points``: k-star order for this irreducible point.
     - ``extra["velocity_operator"]``: raw velocity operator matrix.
 
     Notes
@@ -90,9 +89,8 @@ class VelocityOperatorSolver:
         -------
         VelocityResult
             ``group_velocities`` (num_band0, 3), ``gv_by_gv``
-            (num_band0, 6) real, ``vm_by_vm``
-            (num_band0, num_band, 6) complex, and
-            ``num_sampling_grid_points`` are set.
+            (num_band0, 6) real, and ``vm_by_vm``
+            (num_band0, num_band, 6) complex are set.
             ``extra["velocity_operator"]`` contains the raw operator for HDF5.
 
         """
@@ -106,11 +104,10 @@ class VelocityOperatorSolver:
         gv_op = gv_op_full[band_indices, :, :]
 
         gv = self._get_group_velocities(grid_point, gv_op_full)
-        vm_by_vm, kstar_order = self._get_gv_by_gv_operator(grid_point, gv_op)
+        vm_by_vm = self._get_gv_by_gv_operator(grid_point, gv_op)
         return VelocityResult(
             group_velocities=gv,
             vm_by_vm=vm_by_vm,
-            num_sampling_grid_points=kstar_order,
         )
 
     # ------------------------------------------------------------------
@@ -150,7 +147,7 @@ class VelocityOperatorSolver:
         self,
         grid_point: int,
         gv_op: NDArray[np.cdouble],
-    ) -> tuple[NDArray[np.cdouble], int]:
+    ) -> NDArray[np.cdouble]:
         """Return k-star-averaged velocity-operator outer product.
 
         Parameters
@@ -164,8 +161,6 @@ class VelocityOperatorSolver:
         -------
         gv_by_gv_op : (num_band0, nat3, 6) complex
             Symmetry-averaged outer product packed in Voigt order.
-        kstar_order : int
-            Number of arms in the k-star.
 
         """
         if self._is_kappa_star:
@@ -191,4 +186,4 @@ class VelocityOperatorSolver:
         site_multi = len(rotation_map) // order_kstar
         gv_by_gv_op /= site_multi
 
-        return gv_by_gv_op, order_kstar
+        return gv_by_gv_op

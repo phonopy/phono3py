@@ -155,14 +155,9 @@ class WignerRTAKappaSolver:
 
         self._compute_mode_kappa(aggregates)
 
-        num_sampling_grid_points = aggregates.num_sampling_grid_points
-        if num_sampling_grid_points > 0:
-            self._kappa_P = (
-                np.sum(self._mode_kappa_P, axis=(2, 3)) / num_sampling_grid_points
-            )
-            self._kappa_C = (
-                np.sum(self._mode_kappa_C, axis=(2, 3, 4)) / num_sampling_grid_points
-            )
+        num_mesh_points = int(np.prod(self._kappa_settings.mesh_numbers))
+        self._kappa_P = np.sum(self._mode_kappa_P, axis=(2, 3)) / num_mesh_points
+        self._kappa_C = np.sum(self._mode_kappa_C, axis=(2, 3, 4)) / num_mesh_points
 
     def _compute_mode_kappa(self, aggregates: GridPointAggregates) -> None:
         """Compute mode kappa P and C at all grid points."""
@@ -558,7 +553,6 @@ class WignerLBTEKappaSolver:
             (num_sigma, num_temp, num_ir, num_band0, num_band, 6), dtype="complex128"
         )
         self._kappa_C = np.zeros((num_sigma, num_temp, 6), dtype="double")
-        self._num_sampling_grid_points = aggregates.num_sampling_grid_points
 
     def _compute_coherence_kappa_at(
         self,
@@ -602,11 +596,10 @@ class WignerLBTEKappaSolver:
                         continue
                     self._mode_kappa_C[i_sigma, i_temp, i_gp, s1, s2] = contrib
 
-        n = self._num_sampling_grid_points
-        if n > 0:
-            self._kappa_C[i_sigma, i_temp] = (
-                self._mode_kappa_C[i_sigma, i_temp].sum(axis=(0, 1, 2)) / n
-            ).real
+        num_mesh_points = int(np.prod(self._kappa_settings.mesh_numbers))
+        self._kappa_C[i_sigma, i_temp] = (
+            self._mode_kappa_C[i_sigma, i_temp].sum(axis=(0, 1, 2)) / num_mesh_points
+        ).real
 
     def _compute_pair_contribution(
         self,
@@ -654,9 +647,8 @@ class WignerLBTEKappaSolver:
         if t <= 0:
             return
 
-        n = self._num_sampling_grid_points if self._num_sampling_grid_points > 0 else 1
-        kappa_P = self._solver._kappa[i_sigma, i_temp] / n
-        kappa_P_RTA = self._solver._kappa_RTA[i_sigma, i_temp] / n
+        kappa_P = self._solver._kappa[i_sigma, i_temp]
+        kappa_P_RTA = self._solver._kappa_RTA[i_sigma, i_temp]
         kappa_C = self._kappa_C
 
         print(

@@ -132,7 +132,6 @@ class LBTECalculator:
         if is_isotope or mass_variances is not None:
             self._isotope_solver = self._build_isotope_solver(mass_variances)
 
-        self._num_sampling_grid_points = 0
         self._grid_point_count = 0
 
         # Per-grid-point data (allocated in _allocate_values).
@@ -220,15 +219,11 @@ class LBTECalculator:
     def set_kappa_at_sigmas(self) -> None:
         """Finalize kappa from a pre-loaded collision matrix (read-from-file path).
 
-        Calls kappa_solver.finalize() using the sum of IR grid weights as the
-        number of sampling grid points.  Use this instead of run() when
+        Calls kappa_solver.finalize().  Use this instead of run() when
         gamma and collision_matrix have been loaded externally.
 
         """
         aggregates = self._build_grid_point_aggregates()
-        aggregates.num_sampling_grid_points = int(
-            self._kappa_settings.grid_weights.sum()
-        )
         self._kappa_solver.finalize(aggregates)
 
     def delete_gp_collision_and_pp(self) -> None:
@@ -303,11 +298,6 @@ class LBTECalculator:
     def grid_point_count(self) -> int:
         """Return number of grid points processed so far."""
         return self._grid_point_count
-
-    @property
-    def number_of_sampling_grid_points(self) -> int:
-        """Return total BZ grid points represented (sum of k-star orders)."""
-        return self._num_sampling_grid_points
 
     # ------------------------------------------------------------------
     # Properties — computed physical quantities
@@ -530,7 +520,6 @@ class LBTECalculator:
     def _build_grid_point_aggregates(self) -> GridPointAggregates:
         """Build GridPointAggregates for kappa_solver.finalize()."""
         return GridPointAggregates(
-            num_sampling_grid_points=self._num_sampling_grid_points,
             group_velocities=self._gv,
             mode_heat_capacities=self._cv,
             gamma=self._gamma,
@@ -550,11 +539,9 @@ class LBTECalculator:
 
     def _compute_all_velocities(self) -> None:
         """Compute velocities for all grid points."""
-        self._num_sampling_grid_points = 0
         for i_gp in range(len(self._kappa_settings.grid_points)):
             grid_point = int(self._kappa_settings.grid_points[i_gp])
             vel_result = self._velocity_solver.compute(grid_point)
-            self._num_sampling_grid_points += vel_result.num_sampling_grid_points
             self._gv[i_gp] = vel_result.group_velocities
             if vel_result.vm_by_vm is not None:
                 self._vm_by_vm[i_gp] = vel_result.vm_by_vm

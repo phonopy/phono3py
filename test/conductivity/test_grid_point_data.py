@@ -39,7 +39,6 @@ class _DummyVelocityProvider:
         return VelocityResult(
             group_velocities=np.zeros((NUM_BAND0, 3), dtype="double"),
             gv_by_gv=np.zeros((NUM_BAND0, 6), dtype="double"),
-            num_sampling_grid_points=grid_weight,
         )
 
 
@@ -73,7 +72,6 @@ def test_velocity_provider_protocol_satisfied():
     provider: VelocitySolver = _DummyVelocityProvider()
     result = provider.compute(10, 2)
     assert result.group_velocities is not None
-    assert result.num_sampling_grid_points == 2
 
 
 def test_heat_capacity_provider_protocol_satisfied():

@@ -324,7 +324,6 @@ class CollisionMatrixKernel:
             (i_sigma, i_temp) indices of the just-completed step.
 
         """
-        num_sampling_grid_points = aggregates.num_sampling_grid_points
         if self._is_reducible_collision_matrix:
             self._setup_reducible_data(aggregates)
         else:
@@ -338,10 +337,7 @@ class CollisionMatrixKernel:
             print(f"- Collision matrix shape {self._collision_matrix.shape}")
 
         weights = self._prepare_collision_matrix_by_type()
-        yield from self._iter_kappa_at_sigmas(
-            num_sampling_grid_points,
-            weights,
-        )
+        yield from self._iter_kappa_at_sigmas(weights)
 
     def _build_result(self) -> LBTESolveResult:
         """Build LBTESolveResult from current solver state."""
@@ -845,7 +841,6 @@ class CollisionMatrixKernel:
 
     def _iter_kappa_at_sigmas(
         self,
-        num_sampling_grid_points: int,
         weights: NDArray[np.double],
     ) -> Iterator[tuple[int, int]]:
         """Yield (i_sigma, i_temp) after each temperature's kappa is ready."""
@@ -870,12 +865,11 @@ class CollisionMatrixKernel:
 
                 self._set_kappa_by_collision_type(i_sigma, i_temp, weights)
 
-                yield i_sigma, i_temp
+                num_mesh_points = int(np.prod(self._kappa_settings.mesh_numbers))
+                self._kappa[i_sigma, i_temp] /= num_mesh_points
+                self._kappa_RTA[i_sigma, i_temp] /= num_mesh_points
 
-        n = num_sampling_grid_points
-        if n > 0:
-            self._kappa /= n
-            self._kappa_RTA /= n
+                yield i_sigma, i_temp
 
     def _set_kappa_by_collision_type(
         self, i_sigma: int, i_temp: int, weights: NDArray[np.double]

@@ -138,7 +138,6 @@ class RTACalculator:
         self._gamma_U: NDArray[np.double] | None = None
         self._gamma_elph: NDArray[np.double] | None = None
         self._gamma_boundary: NDArray[np.double] | None = None
-        self._num_sampling_grid_points = 0
         self._num_ignored_phonon_modes: NDArray[np.int64] | None = None
         self._gamma_detail_at_q: NDArray[np.double] | None = None
 
@@ -298,11 +297,6 @@ class RTACalculator:
         """Return number of grid points processed so far."""
         return self._grid_point_count
 
-    @property
-    def number_of_sampling_grid_points(self) -> int:
-        """Return total number of sampling grid points (sum of k-star orders)."""
-        return self._num_sampling_grid_points
-
     # ------------------------------------------------------------------
     # Properties -- computed physical quantities
     # ------------------------------------------------------------------
@@ -365,7 +359,8 @@ class RTACalculator:
         fn = getattr(self._kappa_solver, "log_kappa", None)
         if callable(fn):
             num_band = self._frequencies.shape[1]
-            num_phonon_modes = self._num_sampling_grid_points * num_band
+            num_mesh_points = int(np.prod(self._kappa_settings.mesh_numbers))
+            num_phonon_modes = num_mesh_points * num_band
             fn(
                 num_ignored_phonon_modes=self._num_ignored_phonon_modes,
                 num_phonon_modes=num_phonon_modes,
@@ -565,11 +560,9 @@ class RTACalculator:
 
     def _compute_all_velocities(self) -> None:
         """Compute velocities for all grid points."""
-        self._num_sampling_grid_points = 0
         for i_gp in range(len(self._kappa_settings.grid_points)):
             grid_point = int(self._kappa_settings.grid_points[i_gp])
             vel_result = self._velocity_solver.compute(grid_point)
-            self._num_sampling_grid_points += vel_result.num_sampling_grid_points
             self._gv[i_gp] = vel_result.group_velocities
             if vel_result.gv_by_gv is not None:
                 self._gv_by_gv[i_gp] = vel_result.gv_by_gv
@@ -617,7 +610,6 @@ class RTACalculator:
     def _build_grid_point_aggregates(self) -> GridPointAggregates:
         """Build GridPointAggregates for kappa_solver.finalize()."""
         return GridPointAggregates(
-            num_sampling_grid_points=self._num_sampling_grid_points,
             group_velocities=self._gv,
             mode_heat_capacities=self._cv,
             gv_by_gv=self._gv_by_gv,

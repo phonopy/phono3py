@@ -91,15 +91,14 @@ class GroupVelocitySolver:
         Returns
         -------
         VelocityResult
-            ``group_velocities`` (num_band0, 3), ``gv_by_gv``
-            (num_band0, 6), and ``num_sampling_grid_points`` are set.
+            ``group_velocities`` (num_band0, 3) and ``gv_by_gv``
+            (num_band0, 6) are set.
         """
         gv = self._get_gv(grid_point)
-        gv_by_gv, kstar_order = self._get_gv_by_gv(grid_point, gv)
+        gv_by_gv = self._get_gv_by_gv(grid_point, gv)
         return VelocityResult(
             group_velocities=gv,
             gv_by_gv=gv_by_gv,
-            num_sampling_grid_points=kstar_order,
         )
 
     # ------------------------------------------------------------------
@@ -134,7 +133,7 @@ class GroupVelocitySolver:
 
     def _get_gv_by_gv(
         self, grid_point: int, gv: NDArray[np.double]
-    ) -> tuple[NDArray[np.double], int]:
+    ) -> NDArray[np.double]:
         if self._is_kappa_star:
             gps_rotated = get_grid_points_by_rotations(
                 grid_point, self._pp.bz_grid, with_surface=False
@@ -149,13 +148,11 @@ class GroupVelocitySolver:
             gv_by_gv_3x3 += [np.outer(r_gv, r_gv) for r_gv in gvs_rot]
         gv_by_gv_3x3 /= multi
 
-        kstar_order = len(self._point_operations) // multi
-
         # Convert (num_band0, 3, 3) to (num_band0, 6) Voigt notation
         gv_by_gv = np.zeros((len(gv), 6), dtype="double")
         for j, (a, b) in enumerate(VOIGT_INDEX_PAIRS):
             gv_by_gv[:, j] = gv_by_gv_3x3[:, a, b]
-        return gv_by_gv, kstar_order
+        return gv_by_gv
 
 
 class VelocityMatrixSolver:
@@ -173,7 +170,6 @@ class VelocityMatrixSolver:
     - ``vm_by_vm`` (num_band0, num_band, 6): complex k-star-averaged outer
       product  V(s,s') * V*(s,s') packed into 6 Voigt components (xx, yy, zz,
       yz, xz, xy).
-    - ``num_sampling_grid_points``: k-star order for this irreducible point.
 
     Notes
     -----
@@ -233,22 +229,20 @@ class VelocityMatrixSolver:
         -------
         VelocityResult
             ``group_velocities`` (num_band0, 3), ``gv_by_gv``
-            (num_band0, 6) real, ``vm_by_vm``
-            (num_band0, num_band, 6) complex, and
-            ``num_sampling_grid_points`` are set.
+            (num_band0, 6) real, and ``vm_by_vm``
+            (num_band0, num_band, 6) complex are set.
 
         """
         q_point = get_qpoints_from_bz_grid_points(grid_point, self._pp.bz_grid)
         self._velocity_obj.run([q_point])
         assert self._velocity_obj.velocity_matrices is not None
         gv = self._velocity_obj.group_velocities[0]
-        vm_by_vm, kstar_order = self._get_vm_by_vm(
+        vm_by_vm = self._get_vm_by_vm(
             grid_point, self._velocity_obj.velocity_matrices[0]
         )
         return VelocityResult(
             group_velocities=gv,
             vm_by_vm=vm_by_vm,
-            num_sampling_grid_points=kstar_order,
         )
 
     # ------------------------------------------------------------------
@@ -259,7 +253,7 @@ class VelocityMatrixSolver:
         self,
         grid_point: int,
         vm: NDArray[np.cdouble],
-    ) -> tuple[NDArray[np.cdouble], int]:
+    ) -> NDArray[np.cdouble]:
         r"""Compute k-star-averaged outer product of velocity matrix elements.
 
         For irreducible q-point q and k-star arms {Rq}:
@@ -272,8 +266,6 @@ class VelocityMatrixSolver:
         -------
         vm_by_vm : (num_band0, num_band, 6) complex
             k-star-averaged outer product in Voigt order (xx, yy, zz, yz, xz, xy).
-        kstar_order : int
-            Number of arms in the k-star.
 
         """
         if self._is_kappa_star:
@@ -293,6 +285,5 @@ class VelocityMatrixSolver:
                 # V^a_{s s'} * conj(V^b_{s s'}) for selected band0 vs all bands
                 vm_by_vm[:, :, i_pair] += _vm[a] * _vm[b].conj()
         vm_by_vm /= multi
-        kstar_order = len(self._reciprocal_operations) // multi
 
-        return vm_by_vm, kstar_order
+        return vm_by_vm

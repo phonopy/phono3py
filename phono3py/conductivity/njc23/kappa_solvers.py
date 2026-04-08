@@ -108,7 +108,6 @@ class KuboRTAKappaSolver:
         assert aggregates.vm_by_vm is not None
         assert aggregates.heat_capacity_matrix is not None
 
-        num_sampling_grid_points = aggregates.num_sampling_grid_points
         gamma_eff = compute_effective_gamma(aggregates)
         num_sigma, num_temp, num_gp, num_band = gamma_eff.shape
 
@@ -128,14 +127,11 @@ class KuboRTAKappaSolver:
             )
             self._mode_kappa_matrix[:, :, i_gp, :, :, :] = mode_kappa_matrix
 
-        if num_sampling_grid_points > 0:
-            self._kappa = (
-                self._mode_kappa_matrix.sum(axis=(2, 3, 4)) / num_sampling_grid_points
-            )
-            self._kappa_intra = (
-                np.einsum("abijjc->abc", self._mode_kappa_matrix)
-                / num_sampling_grid_points
-            )
+        num_mesh_points = int(np.prod(self._kappa_settings.mesh_numbers))
+        self._kappa = self._mode_kappa_matrix.sum(axis=(2, 3, 4)) / num_mesh_points
+        self._kappa_intra = (
+            np.einsum("abijjc->abc", self._mode_kappa_matrix) / num_mesh_points
+        )
 
     @property
     def kappa(self) -> NDArray[np.double] | None:
@@ -398,7 +394,6 @@ class KuboLBTEKappaSolver:
             dtype="double",
             order="C",
         )
-        self._num_sampling_grid_points = aggregates.num_sampling_grid_points
         self._kappa_inter = np.zeros((num_sigma, num_temp, 6), dtype="double")
 
     def _compute_kubo_kappa_at(
@@ -423,13 +418,12 @@ class KuboLBTEKappaSolver:
             )
             self._mode_kappa_matrix[i_sigma, i_temp, i_gp] = mode_kappa_matrix[0, 0]
 
-        n = self._num_sampling_grid_points
-        if n > 0:
-            mkm = self._mode_kappa_matrix[i_sigma, i_temp]
-            kappa_total = mkm.sum(axis=(0, 1, 2)) / n
-            kappa_intra = np.einsum("ijjc->c", mkm) / n
+        num_mesh_points = int(np.prod(self._kappa_settings.mesh_numbers))
+        mkm = self._mode_kappa_matrix[i_sigma, i_temp]
+        kappa_total = mkm.sum(axis=(0, 1, 2)) / num_mesh_points
+        kappa_intra = np.einsum("ijjc->c", mkm) / num_mesh_points
 
-            self._kappa_inter[i_sigma, i_temp] = kappa_total - kappa_intra
+        self._kappa_inter[i_sigma, i_temp] = kappa_total - kappa_intra
 
     def _log_kubo_kappa_at(self, i_sigma: int, i_temp: int) -> None:
         """Print Kubo LBTE kappa for one (sigma, temperature) pair."""
@@ -437,9 +431,8 @@ class KuboLBTEKappaSolver:
         if t <= 0:
             return
 
-        n = self._num_sampling_grid_points if self._num_sampling_grid_points > 0 else 1
-        kappa_intra = self._solver._kappa[i_sigma, i_temp] / n
-        kappa_intra_RTA = self._solver._kappa_RTA[i_sigma, i_temp] / n
+        kappa_intra = self._solver._kappa[i_sigma, i_temp]
+        kappa_intra_RTA = self._solver._kappa_RTA[i_sigma, i_temp]
         kappa_inter = self._kappa_inter[i_sigma, i_temp]
 
         print(

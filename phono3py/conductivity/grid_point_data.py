@@ -40,8 +40,6 @@ class VelocityResult:
     vm_by_vm : ndarray of cdouble, shape (num_band0, num_band, 6), optional
         Off-diagonal velocity operator/matrix outer product.
         Only set by off-diagonal velocity solvers (e.g. MS-SMM19, NJC23).
-    num_sampling_grid_points : int
-        k-star order (number of arms) for this irreducible point.
     extra : dict
         Plugin-specific data (e.g. velocity_operator for HDF5 output).
 
@@ -50,7 +48,6 @@ class VelocityResult:
     group_velocities: NDArray[np.double]
     gv_by_gv: NDArray[np.double] | None = None
     vm_by_vm: NDArray[np.cdouble] | None = None
-    num_sampling_grid_points: int = 0
     extra: dict[str, Any] = field(default_factory=dict)
 
 
@@ -110,9 +107,6 @@ class GridPointAggregates:
 
     Always present
     ~~~~~~~~~~~~~~
-    num_sampling_grid_points : int
-        Total number of BZ grid points represented by the sampled
-        irreducible grid points.
     group_velocities : (num_gp, num_band0, 3), real
         Group velocities at each irreducible grid point.
     mode_heat_capacities : (num_temp, num_gp, num_band0), real
@@ -142,7 +136,6 @@ class GridPointAggregates:
 
     """
 
-    num_sampling_grid_points: int
     group_velocities: NDArray[np.double]
     mode_heat_capacities: NDArray[np.double]
     gv_by_gv: NDArray[np.double] | None = None
