@@ -19,10 +19,9 @@ def _collision_context(log_level: int = 0):
     }
 
 
-def test_set_collision_from_full_matrix_if_available_sets_data_and_temperatures():
+def test_set_collision_from_full_matrix_if_available_sets_data():
     """Full-matrix data is copied into lbte buffers."""
     lbte = SimpleNamespace(
-        temperatures=None,
         collision_matrix=np.zeros((2, 1, 1), dtype="double"),
         gamma=np.zeros((2, 1, 1), dtype="double"),
     )
@@ -36,11 +35,9 @@ def test_set_collision_from_full_matrix_if_available_sets_data_and_temperatures(
         cast(Any, lbte),
         collisions,
         i_sigma=1,
-        arrays_allocated=False,
     )
 
     assert ok is True
-    np.testing.assert_allclose(lbte.temperatures, np.array([300.0], dtype="double"))
     np.testing.assert_allclose(
         lbte.collision_matrix[1], np.array([[1.5]], dtype="double")
     )
@@ -153,7 +150,6 @@ def test_set_collision_from_file_full_matrix_path(monkeypatch):
         sigma_cutoff_width=None,
         mesh_numbers=np.array([2, 2, 2], dtype="int64"),
         grid_points=np.array([5], dtype="int64"),
-        temperatures=None,
         collision_matrix=np.zeros((1, 1, 1), dtype="double"),
         gamma=np.zeros((1, 1, 1), dtype="double"),
     )
@@ -177,7 +173,6 @@ def test_set_collision_from_file_full_matrix_path(monkeypatch):
     read_from = ids._set_collision_from_file(cast(Any, lbte), log_level=0)
 
     assert read_from == "full_matrix"
-    np.testing.assert_allclose(lbte.temperatures, np.array([300.0], dtype="double"))
     np.testing.assert_allclose(
         lbte.collision_matrix[0], np.array([[9.0]], dtype="double")
     )
@@ -192,7 +187,6 @@ def test_set_collision_from_file_fallback_grid_points_path(monkeypatch):
         sigma_cutoff_width=None,
         mesh_numbers=np.array([2, 2, 2], dtype="int64"),
         grid_points=np.array([5], dtype="int64"),
-        temperatures=None,
         collision_matrix=np.zeros((1, 1, 1), dtype="double"),
         gamma=np.zeros((1, 1, 1), dtype="double"),
     )
@@ -231,5 +225,4 @@ def test_set_collision_from_file_fallback_grid_points_path(monkeypatch):
     read_from = ids._set_collision_from_file(cast(Any, lbte), log_level=0)
 
     assert read_from == "grid_points"
-    np.testing.assert_allclose(lbte.temperatures, np.array([250.0], dtype="double"))
     assert calls == [(0, 5)]

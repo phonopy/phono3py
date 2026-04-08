@@ -1,4 +1,4 @@
-"""LBTECollisionProvider: per-grid-point LBTE collision matrix row."""
+"""LBTECollisionSolver: per-grid-point LBTE collision matrix row."""
 
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
@@ -37,6 +37,7 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -67,7 +68,7 @@ class LBTECollisionResult:
     averaged_pp: NDArray[np.double] | None = None
 
 
-class LBTECollisionProvider:
+class LBTECollisionSolver:
     """Computes collision matrix row and gamma at one irreducible grid point.
 
     Wraps CollisionMatrix (which must be pre-initialized with the global grid
@@ -100,7 +101,7 @@ class LBTECollisionProvider:
         self,
         pp: Interaction,
         collision: CollisionMatrix,
-        sigmas: list[float | None],
+        sigmas: Sequence[float | None],
         sigma_cutoff: float | None,
         temperatures: NDArray[np.double],
         is_full_pp: bool = False,

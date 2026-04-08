@@ -100,7 +100,6 @@ class ImagSelfEnergy:
         self._g_zero: NDArray[np.byte] | None = (
             None  # Necessary elements of interaction strength
         )
-        self._is_collision_matrix: bool = False
         self._ise_N: NDArray[np.double] | None = None
         self._ise_U: NDArray[np.double] | None = None
 
@@ -163,12 +162,14 @@ class ImagSelfEnergy:
         else:
             f_points = self._frequency_points
 
+        from phono3py.phonon3.collision_matrix import CollisionMatrix
+
         self._g, self._g_zero = get_triplets_integration_weights(
             self._pp,
             np.array(f_points, dtype="double"),
             self._sigma,
             self._sigma_cutoff,
-            is_collision_matrix=self._is_collision_matrix,
+            is_collision_matrix=isinstance(self, CollisionMatrix),
         )
 
         if scattering_event_class == 1 or scattering_event_class == 2:

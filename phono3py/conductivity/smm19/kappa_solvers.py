@@ -1,11 +1,11 @@
-"""Kappa accumulators for the Green-Kubo method."""
+"""Kappa solvers for the SMM19 method."""
 
 from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
 
-from phono3py.conductivity.context import ConductivityContext
+from phono3py.conductivity.build_components import KappaSettings
 from phono3py.conductivity.grid_point_data import (
     GridPointAggregates,
     compute_effective_gamma,
@@ -74,22 +74,18 @@ def _compute_SMM19_mode_kappa_matrix(
     return kappa_mat
 
 
-class SMM19RTAKappaAccumulator:
-    """Kappa accumulator for the SMM19 formula.
+class SMM19RTAKappaSolver:
+    """Kappa solver for the SMM19 formula.
 
-    Accumulates the full band-pair kappa matrix ``mode_kappa_inter``.
+    Computes the full band-pair kappa matrix ``mode_kappa_inter``.
     The ``kappa`` property sums over all band pairs.
 
     See the formula in _compute_SMM19_mode_kappa_matrix().
 
     Parameters
     ----------
-    context : ConductivityContext
+    kappa_settings : KappaSettings
         Shared computation metadata (grid, phonon, symmetry, configuration).
-    conversion_factor : float
-        Unit conversion factor to W/(m*K).
-    is_isotope : bool
-        Include isotope scattering.
     log_level : int
         Verbosity level.
 
@@ -97,13 +93,13 @@ class SMM19RTAKappaAccumulator:
 
     def __init__(
         self,
-        context: ConductivityContext,
-        conversion_factor: float,
+        kappa_settings: KappaSettings,
+        frequencies: NDArray[np.double],
         log_level: int = 0,
     ) -> None:
         """Init method."""
-        self._context = context
-        self._conversion_factor = conversion_factor
+        self._kappa_settings = kappa_settings
+        self._frequencies = frequencies
         self._log_level = log_level
 
         self._kappa: NDArray[np.double] | None = None
@@ -125,13 +121,13 @@ class SMM19RTAKappaAccumulator:
             order="C",
         )
 
-        for i_gp, gp in enumerate(self._context.grid_points):
+        for i_gp, gp in enumerate(self._kappa_settings.grid_points):
             mode_kappa_matrix = _compute_SMM19_mode_kappa_matrix(
-                frequencies=self._context.frequencies[gp],
+                frequencies=self._frequencies[gp],
                 gamma=gamma_eff[:, :, i_gp, :],
                 heat_capacity=aggregates.mode_heat_capacities[:, i_gp, :],
                 vm_by_vm=aggregates.vm_by_vm[i_gp],
-                conversion_factor=self._conversion_factor,
+                conversion_factor=self._kappa_settings.conversion_factor,
             )
             self._mode_kappa_matrix[:, :, i_gp, :, :, :] = mode_kappa_matrix
 
@@ -211,9 +207,9 @@ class SMM19RTAKappaAccumulator:
             and num_phonon_modes is not None
         )
 
-        for i, sigma in enumerate(self._context.sigmas):
+        for i, sigma in enumerate(self._kappa_settings.sigmas):
             log_kappa_header(sigma, show_ipm=show_ipm)
-            for j, t in enumerate(self._context.temperatures):
+            for j, t in enumerate(self._kappa_settings.temperatures):
                 ipm = (
                     int(num_ignored_phonon_modes[i, j])
                     if show_ipm and num_ignored_phonon_modes is not None
@@ -223,7 +219,7 @@ class SMM19RTAKappaAccumulator:
                     "K_intra", t, self._kappa_intra[i, j], ipm, num_phonon_modes
                 )
             print(" ")
-            for j, t in enumerate(self._context.temperatures):
+            for j, t in enumerate(self._kappa_settings.temperatures):
                 ipm = (
                     int(num_ignored_phonon_modes[i, j])
                     if show_ipm and num_ignored_phonon_modes is not None
@@ -231,7 +227,7 @@ class SMM19RTAKappaAccumulator:
                 )
                 log_kappa_row("K_inter", t, kappa_inter[i, j], ipm, num_phonon_modes)
             print(" ")
-            for j, t in enumerate(self._context.temperatures):
+            for j, t in enumerate(self._kappa_settings.temperatures):
                 ipm = (
                     int(num_ignored_phonon_modes[i, j])
                     if show_ipm and num_ignored_phonon_modes is not None

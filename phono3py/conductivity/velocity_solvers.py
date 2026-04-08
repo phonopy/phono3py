@@ -1,4 +1,4 @@
-"""Velocity provider building blocks for conductivity calculations."""
+"""Velocity solver building blocks for conductivity calculations."""
 
 from __future__ import annotations
 
@@ -16,10 +16,10 @@ from phono3py.phonon.velocity_matrix import VelocityMatrix
 from phono3py.phonon3.interaction import Interaction
 
 
-class GroupVelocityProvider:
+class GroupVelocitySolver:
     """Compute group velocities and their symmetrised outer product at a grid point.
 
-    This provider implements the ``VelocityProvider`` protocol and corresponds
+    This solver implements the ``VelocitySolver`` protocol and corresponds
     to the velocity computation previously embedded in
     ``ConductivityComponents``.
 
@@ -65,8 +65,8 @@ class GroupVelocityProvider:
         self._average_gv_over_kstar = average_gv_over_kstar
         self._gv_delta_q = gv_delta_q
         self._log_level = log_level
-        self._point_operations, self._rotations_cartesian = (
-            get_kappa_star_operations(pp.bz_grid, is_kappa_star)
+        self._point_operations, self._rotations_cartesian = get_kappa_star_operations(
+            pp.bz_grid, is_kappa_star
         )
         self._velocity_obj = GroupVelocity(
             pp.dynamical_matrix,
@@ -158,10 +158,10 @@ class GroupVelocityProvider:
         return gv_by_gv, kstar_order
 
 
-class VelocityMatrixProvider:
+class VelocityMatrixSolver:
     """Compute group velocity matrix and its k-star-averaged outer product.
 
-    This provider implements the ``VelocityProvider`` protocol for the
+    This solver implements the ``VelocitySolver`` protocol for the
     Green-Kubo formula.  It wraps phono3py's ``VelocityMatrix`` and
     computes the k-star-averaged outer product of velocity matrix elements.
 

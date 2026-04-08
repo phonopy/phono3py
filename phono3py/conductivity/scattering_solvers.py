@@ -1,7 +1,8 @@
-"""Scattering provider building blocks for conductivity calculations."""
+"""Scattering solver building blocks for conductivity calculations."""
 
 from __future__ import annotations
 
+import os
 from collections.abc import Sequence
 
 import numpy as np
@@ -14,10 +15,10 @@ from phono3py.phonon3.imag_self_energy import ImagSelfEnergy, average_by_degener
 from phono3py.phonon3.interaction import Interaction
 
 
-class RTAScatteringProvider:
+class RTAScatteringSolver:
     """Compute ph-ph linewidth (gamma) at a grid point using the RTA.
 
-    This provider implements the ``ScatteringProvider`` protocol.  It wraps
+    This solver implements the ``ScatteringSolver`` protocol.  It wraps
     ``ImagSelfEnergy`` and handles the sigma loop, the temperature loop, and
     the various computation modes (read_pp, use_ave_pp, low-memory path).
 
@@ -63,7 +64,7 @@ class RTAScatteringProvider:
         use_ave_pp: bool = False,
         read_pp: bool = False,
         store_pp: bool = False,
-        pp_filename: str | None = None,
+        pp_filename: str | os.PathLike | None = None,
         is_N_U: bool = False,
         is_gamma_detail: bool = False,
         log_level: int = 0,
@@ -410,7 +411,7 @@ class RTAScatteringProvider:
                     )
 
 
-class IsotopeScatteringProvider:
+class IsotopeScatteringSolver:
     """Compute isotope scattering linewidth at a grid point.
 
     Returns gamma_isotope as NDArray with shape ``(num_sigma, num_band0)``.

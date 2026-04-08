@@ -1,4 +1,4 @@
-"""Kappa accumulator for the Wigner transport equation."""
+"""Kappa solvers for the Wigner transport equation."""
 
 from __future__ import annotations
 
@@ -8,13 +8,13 @@ import numpy as np
 from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
 
-from phono3py.conductivity.collision_matrix_solver import CollisionMatrixSolver
-from phono3py.conductivity.context import ConductivityContext
+from phono3py.conductivity.build_components import KappaSettings
+from phono3py.conductivity.collision_matrix_kernel import CollisionMatrixKernel
 from phono3py.conductivity.grid_point_data import (
     GridPointAggregates,
     compute_effective_gamma,
 )
-from phono3py.conductivity.lbte_collision_provider import LBTECollisionResult
+from phono3py.conductivity.lbte_collision_solver import LBTECollisionResult
 from phono3py.conductivity.utils import (
     log_kappa_header,
     log_kappa_row,
@@ -44,8 +44,8 @@ def _get_conversion_factor_WTE(volume: float) -> float:
     return (u.THz * u.Angstrom) ** 2 * u.EV * u.Hbar / (volume * u.Angstrom**3)
 
 
-class WignerRTAKappaAccumulator:
-    """Kappa accumulator for the Wigner transport equation (WTE).
+class WignerRTAKappaSolver:
+    """Kappa solver for the Wigner transport equation (WTE).
 
     Decomposes kappa into a population term (kappa_P_RTA) and a coherence
     term (kappa_C).  The total kappa is kappa_TOT_RTA = kappa_P_RTA + kappa_C.
@@ -54,7 +54,7 @@ class WignerRTAKappaAccumulator:
 
     Parameters
     ----------
-    context : ConductivityContext
+    kappa_settings : KappaSettings
         Shared computation metadata (grid, phonon, symmetry, configuration).
     volume : float
         Primitive-cell volume in Angstrom^3.
@@ -65,12 +65,14 @@ class WignerRTAKappaAccumulator:
 
     def __init__(
         self,
-        context: ConductivityContext,
+        kappa_settings: KappaSettings,
+        frequencies: NDArray[np.double],
         volume: float,
         log_level: int = 0,
     ) -> None:
         """Init method."""
-        self._context = context
+        self._kappa_settings = kappa_settings
+        self._frequencies = frequencies
         self._conversion_factor_WTE = _get_conversion_factor_WTE(volume)
         self._log_level = log_level
 
@@ -173,8 +175,8 @@ class WignerRTAKappaAccumulator:
         THzToEv = get_physical_units().THzToEv
 
         for i_gp in range(num_gp):
-            gp = self._context.grid_points[i_gp]
-            frequencies = self._context.frequencies[gp]
+            gp = self._kappa_settings.grid_points[i_gp]
+            frequencies = self._frequencies[gp]
             num_band = len(frequencies)
 
             mode_kappa_P = np.zeros((num_sigma, num_temp, num_band, 6), dtype="double")
@@ -188,11 +190,11 @@ class WignerRTAKappaAccumulator:
                     cv_k = cv[k, i_gp]
                     for s1 in range(num_band):
                         freq_s1 = frequencies[s1]
-                        if freq_s1 <= self._context.cutoff_frequency:
+                        if freq_s1 <= self._kappa_settings.cutoff_frequency:
                             continue
                         for s2 in range(num_band):
                             freq_s2 = frequencies[s2]
-                            if freq_s2 <= self._context.cutoff_frequency:
+                            if freq_s2 <= self._kappa_settings.cutoff_frequency:
                                 continue
                             pair = self._get_pair_contribution(
                                 freq_s1=freq_s1,
@@ -286,9 +288,9 @@ class WignerRTAKappaAccumulator:
             and num_phonon_modes is not None
         )
 
-        for i, sigma in enumerate(self._context.sigmas):
+        for i, sigma in enumerate(self._kappa_settings.sigmas):
             log_kappa_header(sigma, show_ipm=show_ipm)
-            for j, t in enumerate(self._context.temperatures):
+            for j, t in enumerate(self._kappa_settings.temperatures):
                 ipm = (
                     int(num_ignored_phonon_modes[i, j])
                     if show_ipm and num_ignored_phonon_modes is not None
@@ -296,7 +298,7 @@ class WignerRTAKappaAccumulator:
                 )
                 log_kappa_row("K_P\t", t, self._kappa_P[i, j], ipm, num_phonon_modes)
             print(" ")
-            for j, t in enumerate(self._context.temperatures):
+            for j, t in enumerate(self._kappa_settings.temperatures):
                 ipm = (
                     int(num_ignored_phonon_modes[i, j])
                     if show_ipm and num_ignored_phonon_modes is not None
@@ -304,7 +306,7 @@ class WignerRTAKappaAccumulator:
                 )
                 log_kappa_row("K_C\t", t, self._kappa_C[i, j], ipm, num_phonon_modes)
             print(" ")
-            for j, t in enumerate(self._context.temperatures):
+            for j, t in enumerate(self._kappa_settings.temperatures):
                 ipm = (
                     int(num_ignored_phonon_modes[i, j])
                     if show_ipm and num_ignored_phonon_modes is not None
@@ -332,10 +334,10 @@ class WignerRTAKappaAccumulator:
         }
 
 
-class WignerLBTEKappaAccumulator:
-    """LBTE accumulator with added Wigner coherence (C) term.
+class WignerLBTEKappaSolver:
+    """LBTE kappa solver with added Wigner coherence (C) term.
 
-    Composes a CollisionMatrixSolver for the standard LBTE solve (P-term) and
+    Composes a CollisionMatrixKernel for the standard LBTE solve (P-term) and
     adds the coherence (C) term from the stored velocity operator outer
     products and linewidths.
 
@@ -346,9 +348,9 @@ class WignerLBTEKappaAccumulator:
 
     Parameters
     ----------
-    solver : CollisionMatrixSolver
+    solver : CollisionMatrixKernel
         Shared solver for the P-term (standard LBTE).
-    context : ConductivityContext
+    kappa_settings : KappaSettings
         Shared computation metadata (grid, phonon, symmetry, configuration).
     volume : float
         Primitive-cell volume in Angstrom^3.
@@ -361,15 +363,17 @@ class WignerLBTEKappaAccumulator:
 
     def __init__(
         self,
-        solver: CollisionMatrixSolver,
-        context: ConductivityContext,
+        solver: CollisionMatrixKernel,
+        kappa_settings: KappaSettings,
+        frequencies: NDArray[np.double],
         volume: float,
         is_reducible_collision_matrix: bool = False,
         log_level: int = 0,
     ) -> None:
         """Init method."""
         self._solver = solver
-        self._context = context
+        self._kappa_settings = kappa_settings
+        self._frequencies = frequencies
         self._conversion_factor_WTE = _get_conversion_factor_WTE(volume)
         self._is_reducible = is_reducible_collision_matrix
         self._log_level = log_level
@@ -386,7 +390,7 @@ class WignerLBTEKappaAccumulator:
     # ------------------------------------------------------------------
 
     def prepare(self) -> None:
-        """Allocate accumulator arrays."""
+        """Allocate kappa solver arrays."""
         self._solver.prepare()
 
     def store(
@@ -401,7 +405,7 @@ class WignerLBTEKappaAccumulator:
         i_gp : int
             Loop index over ir_grid_points (0-based).
         collision_result : LBTECollisionResult
-            Result from LBTECollisionProvider.compute().
+            Result from LBTECollisionSolver.compute().
 
         """
         self._solver.store(i_gp, collision_result)
@@ -427,7 +431,7 @@ class WignerLBTEKappaAccumulator:
             self._compute_coherence_kappa_at(aggregates, i_sigma, i_temp)
             if self._log_level:
                 if i_sigma != prev_sigma:
-                    log_sigma_header(self._context.sigmas[i_sigma])
+                    log_sigma_header(self._kappa_settings.sigmas[i_sigma])
                     prev_sigma = i_sigma
                 self._log_wigner_kappa_at(i_sigma, i_temp)
 
@@ -436,8 +440,8 @@ class WignerLBTEKappaAccumulator:
     # ------------------------------------------------------------------
 
     @property
-    def solver(self) -> CollisionMatrixSolver:
-        """Return the underlying CollisionMatrixSolver."""
+    def solver(self) -> CollisionMatrixKernel:
+        """Return the underlying CollisionMatrixKernel."""
         return self._solver
 
     @property
@@ -544,11 +548,11 @@ class WignerLBTEKappaAccumulator:
         if vm_by_vm is None or mode_cv is None:
             return
 
-        num_sigma = len(self._context.sigmas)
-        num_temp = len(self._context.temperatures)
-        num_ir = len(self._context.ir_grid_points)
-        num_band0 = len(self._context.band_indices)
-        num_band = self._context.frequencies.shape[1]
+        num_sigma = len(self._kappa_settings.sigmas)
+        num_temp = len(self._kappa_settings.temperatures)
+        num_ir = len(self._kappa_settings.grid_points)
+        num_band0 = len(self._kappa_settings.band_indices)
+        num_band = self._frequencies.shape[1]
 
         self._mode_kappa_C = np.zeros(
             (num_sigma, num_temp, num_ir, num_band0, num_band, 6), dtype="complex128"
@@ -571,14 +575,14 @@ class WignerLBTEKappaAccumulator:
             return
 
         THzToEv = get_physical_units().THzToEv
-        num_ir = len(self._context.ir_grid_points)
-        num_band0 = len(self._context.band_indices)
-        num_band = self._context.frequencies.shape[1]
+        num_ir = len(self._kappa_settings.grid_points)
+        num_band0 = len(self._kappa_settings.band_indices)
+        num_band = self._frequencies.shape[1]
 
         for i_gp in range(num_ir):
-            gp = int(self._context.ir_grid_points[i_gp])
+            gp = int(self._kappa_settings.grid_points[i_gp])
             g = self._solver.get_main_diagonal(i_gp, i_sigma, i_temp) * 2.0
-            frequencies = self._context.frequencies[gp]
+            frequencies = self._frequencies[gp]
             cv = mode_cv[i_temp, i_gp, :]
             gv_by_gv_op = vm_by_vm[i_gp]
 
@@ -621,7 +625,7 @@ class WignerLBTEKappaAccumulator:
         Returns None when the pair is degenerate or below the cutoff frequency.
 
         """
-        cutoff = self._context.cutoff_frequency
+        cutoff = self._kappa_settings.cutoff_frequency
         if freq_s1 <= cutoff or freq_s2 <= cutoff:
             return None
         if np.abs(freq_s1 - freq_s2) <= DEGENERATE_FREQUENCY_THRESHOLD_THZ:
@@ -646,7 +650,7 @@ class WignerLBTEKappaAccumulator:
 
     def _log_wigner_kappa_at(self, i_sigma: int, i_temp: int) -> None:
         """Print Wigner LBTE kappa for one (sigma, temperature) pair."""
-        t = self._context.temperatures[i_temp]
+        t = self._kappa_settings.temperatures[i_temp]
         if t <= 0:
             return
 

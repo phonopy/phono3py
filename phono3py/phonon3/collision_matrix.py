@@ -57,31 +57,43 @@ class CollisionMatrix(ImagSelfEnergy):
     def __init__(
         self,
         interaction: Interaction,
-        num_ir_grid_points: int | None = None,
         rot_grid_points: NDArray[np.int64] | None = None,
-        is_reducible_collision_matrix: bool = False,
         is_kappa_star: bool = True,
         log_level: int = 0,
         lang: Literal["C", "Python"] = "C",
     ) -> None:
-        """Init method."""
+        """Init method.
+
+        Parameters
+        ----------
+        interaction : Interaction
+            Interaction instance with dynamical matrix initialised.
+        rot_grid_points : ndarray of int64 or None
+            Rotated grid point indices, shape (num_ir_gp, num_ops).
+            None selects the reducible collision matrix.
+        is_kappa_star : bool
+            Whether k-star symmetry is used.
+        log_level : int
+            Verbosity level.
+        lang : {"C", "Python"}
+            Backend for C-extension operations.
+
+        """
         self._log_level = log_level
 
         super().__init__(interaction, lang=lang)
 
-        self._is_reducible_collision_matrix = is_reducible_collision_matrix
-        self._is_collision_matrix = True
+        self._is_reducible_collision_matrix = rot_grid_points is None
         self._collision_matrix: NDArray[np.double] | None = None
 
         if not self._is_reducible_collision_matrix:
-            self._num_ir_grid_points = num_ir_grid_points
+            assert rot_grid_points is not None
+            self._num_ir_grid_points = len(rot_grid_points)
             self._rot_grid_points = np.array(
                 self._pp.bz_grid.bzg2grg[rot_grid_points], dtype="int64", order="C"
             )
             if is_kappa_star:
-                self._rotations_cartesian = (
-                    interaction.bz_grid.rotations_cartesian
-                )
+                self._rotations_cartesian = interaction.bz_grid.rotations_cartesian
             else:
                 self._rotations_cartesian = np.eye(
                     3, dtype="double", order="C"

@@ -45,11 +45,12 @@ import numpy as np
 from numpy.typing import NDArray
 
 from phono3py.conductivity.exceptions import LBTECollisionReadError
-from phono3py.conductivity.factory import make_conductivity_calculator
+from phono3py.conductivity.factory import conductivity_calculator
 from phono3py.conductivity.lbte_calculator import LBTECalculator
 from phono3py.conductivity.lbte_output import ConductivityLBTEWriter
 from phono3py.conductivity.utils import build_options, write_pp_interaction
 from phono3py.file_IO import read_collision_from_hdf5
+from phono3py.phonon.grid import get_ir_grid_points
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
 
 
@@ -188,7 +189,16 @@ def get_thermal_conductivity_LBTE(
     log_level: int = 0,
 ) -> LBTECalculator:
     """Calculate lattice thermal conductivity by direct solution."""
-    _temperatures = _normalize_lbte_temperatures(temperatures)
+    _sigmas = [None] if sigmas is None else list(sigmas)
+    if read_collision:
+        _temperatures = _peek_temperatures_from_file(
+            interaction,
+            _sigmas,
+            sigma_cutoff,
+            input_filename,
+        )
+    else:
+        _temperatures = _normalize_lbte_temperatures(temperatures)
     _mass_variances = (
         np.asarray(mass_variances, dtype="double")
         if mass_variances is not None
@@ -202,17 +212,15 @@ def get_thermal_conductivity_LBTE(
     else:
         _pinv_cutoff = pinv_cutoff
 
-    if sigmas is None:
-        sigmas = []
     if log_level:
         print("-" * 19 + " Lattice thermal conductivity (LBTE) " + "-" * 19)
 
-    method = f"{transport_type}-lbte" if transport_type else "lbte"
+    method = f"{transport_type}-lbte" if transport_type else "std-lbte"
     return _run_standard_lbte(
         interaction,
         method=method,
         temperatures=_temperatures,
-        sigmas=sigmas,
+        sigmas=_sigmas,
         sigma_cutoff=sigma_cutoff,
         is_isotope=is_isotope,
         mass_variances=_mass_variances,
@@ -242,7 +250,7 @@ def get_thermal_conductivity_LBTE(
 def _run_standard_lbte(
     interaction: Interaction,
     *,
-    method: str = "lbte",
+    method: str = "std-lbte",
     temperatures: NDArray[np.double],
     sigmas: Sequence[float | None],
     sigma_cutoff: float | None,
@@ -270,15 +278,13 @@ def _run_standard_lbte(
     log_level: int,
 ) -> LBTECalculator:
     """Build and run an LBTECalculator."""
-    _temperatures = _get_lbte_initial_temperatures(temperatures, read_collision)
-
     lbte = cast(
         LBTECalculator,
-        make_conductivity_calculator(
+        conductivity_calculator(
             interaction,
+            temperatures,
+            sigmas,
             method=method,
-            temperatures=_temperatures,
-            sigmas=sigmas,
             sigma_cutoff=sigma_cutoff,
             is_isotope=is_isotope,
             mass_variances=mass_variances,
@@ -367,6 +373,67 @@ def _run_standard_lbte(
     return lbte
 
 
+def _peek_temperatures_from_file(
+    interaction: Interaction,
+    sigmas: Sequence[float | None],
+    sigma_cutoff: float | None,
+    filename: str | os.PathLike | None,
+) -> NDArray[np.double]:
+    """Read temperatures from the first available collision HDF5 file.
+
+    Tries full-matrix, per-grid-point, and per-band files in order.
+    Raises LBTECollisionReadError if no file is found.
+
+    """
+    context = _build_collision_read_context(
+        mesh=interaction.mesh_numbers,
+        indices="all",
+        sigma=sigmas[0],
+        sigma_cutoff=sigma_cutoff,
+        filename=filename,
+        log_level=0,
+    )
+
+    # Try full matrix file.
+    try:
+        _, _, temperatures = _read_collision_data(
+            context,
+            only_temperatures=True,
+        )
+        return temperatures
+    except FileNotFoundError:
+        pass
+
+    # Need a grid point for per-GP / per-band files.
+    ir_grg, _, _ = get_ir_grid_points(interaction.bz_grid)
+    first_gp = int(interaction.bz_grid.grg2bzg[ir_grg[0]])
+
+    # Try per-grid-point file.
+    try:
+        _, _, temperatures = _read_collision_data(
+            context,
+            grid_point=first_gp,
+            only_temperatures=True,
+        )
+        return temperatures
+    except FileNotFoundError:
+        pass
+
+    # Try per-band file.
+    try:
+        _, _, temperatures = _read_collision_data(
+            context,
+            grid_point=first_gp,
+            band_index=0,
+            only_temperatures=True,
+        )
+        return temperatures
+    except FileNotFoundError:
+        pass
+
+    raise LBTECollisionReadError("No collision file found for reading temperatures.")
+
+
 def _normalize_lbte_temperatures(
     temperatures: Sequence[float] | NDArray | None,
 ) -> NDArray[np.double]:
@@ -412,15 +479,6 @@ def _read_lbte_collision_if_requested(
         print("Temperature: " + _format_lbte_temperatures_log(temps_read))
 
     return read_from, False
-
-
-def _get_lbte_initial_temperatures(
-    temperatures: NDArray[np.double],
-    read_collision: str | Sequence[int] | None,
-) -> NDArray[np.double] | None:
-    if read_collision is not None:
-        return None
-    return temperatures
 
 
 def _write_full_collision_if_requested(
@@ -484,7 +542,6 @@ def _set_collision_from_file(
             flush=True,
         )
 
-    arrays_allocated = False
     for i_sigma, sigma in enumerate(sigmas):
         context = _build_collision_read_context(
             mesh=mesh,
@@ -502,10 +559,7 @@ def _set_collision_from_file(
             lbte,
             collision_data,
             i_sigma,
-            arrays_allocated,
         ):
-            if not arrays_allocated:
-                arrays_allocated = True
             read_from = "full_matrix"
         else:
             vals = _allocate_collision_with_fallback(
@@ -515,12 +569,7 @@ def _set_collision_from_file(
             )
             if not vals:
                 return False
-            colmat_at_sigma, gamma_at_sigma, temperatures = vals
-
-            if not arrays_allocated:
-                arrays_allocated = True
-                # The following invokes self._allocate_values()
-                lbte.temperatures = temperatures
+            _, _, temperatures = vals
 
             collision_matrix = lbte.collision_matrix
             gamma = lbte.gamma
@@ -548,15 +597,11 @@ def _set_collision_from_full_matrix_if_available(
     lbte: Any,
     collision_data: _CollisionMatrixData | None,
     i_sigma: int,
-    arrays_allocated: bool,
 ) -> bool:
     if not collision_data:
         return False
 
-    colmat_at_sigma, gamma_at_sigma, temperatures = collision_data
-    if not arrays_allocated:
-        # The following invokes self._allocate_values()
-        lbte.temperatures = temperatures
+    colmat_at_sigma, gamma_at_sigma, _temperatures = collision_data
     collision_matrix = lbte.collision_matrix
     gamma = lbte.gamma
     assert collision_matrix is not None

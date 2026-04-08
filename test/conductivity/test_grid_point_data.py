@@ -10,9 +10,9 @@ from phono3py.conductivity.grid_point_data import (
     VelocityResult,
 )
 from phono3py.conductivity.protocols import (
-    HeatCapacityProvider,
-    ScatteringProvider,
-    VelocityProvider,
+    HeatCapacitySolver,
+    ScatteringSolver,
+    VelocitySolver,
 )
 
 # ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ NUM_TEMP = 3
 
 
 class _DummyVelocityProvider:
-    """Minimal implementation satisfying VelocityProvider protocol."""
+    """Minimal implementation satisfying VelocitySolver protocol."""
 
     produces_gv_by_gv: bool = True
     produces_vm_by_vm: bool = False
@@ -69,16 +69,16 @@ class _DummyScatteringProvider:
 
 
 def test_velocity_provider_protocol_satisfied():
-    """A class with the right signature is accepted as VelocityProvider."""
-    provider: VelocityProvider = _DummyVelocityProvider()
+    """A class with the right signature is accepted as VelocitySolver."""
+    provider: VelocitySolver = _DummyVelocityProvider()
     result = provider.compute(10, 2)
     assert result.group_velocities is not None
     assert result.num_sampling_grid_points == 2
 
 
 def test_heat_capacity_provider_protocol_satisfied():
-    """Test HeatCapacityProvider protocol with a dummy implementation."""
-    provider: HeatCapacityProvider = _DummyHeatCapacityProvider()
+    """Test HeatCapacitySolver protocol with a dummy implementation."""
+    provider: HeatCapacitySolver = _DummyHeatCapacityProvider()
     freqs = np.ones((100, NUM_BAND), dtype="double")
     gps = np.array([0, 1, 2], dtype="int64")
     temps = np.array([100.0, 200.0, 300.0])
@@ -89,8 +89,8 @@ def test_heat_capacity_provider_protocol_satisfied():
 
 
 def test_scattering_provider_protocol_satisfied():
-    """Test ScatteringProvider protocol with a dummy implementation."""
-    provider: ScatteringProvider = _DummyScatteringProvider()
+    """Test ScatteringSolver protocol with a dummy implementation."""
+    provider: ScatteringSolver = _DummyScatteringProvider()
     result = provider.compute(10)
     assert result.gamma is not None
     assert result.gamma.shape == (1, NUM_TEMP, NUM_BAND0)

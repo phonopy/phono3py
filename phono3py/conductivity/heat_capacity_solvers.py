@@ -1,4 +1,4 @@
-"""Heat capacity provider building blocks for conductivity calculations."""
+"""Heat capacity solver building blocks for conductivity calculations."""
 
 from __future__ import annotations
 
@@ -129,10 +129,10 @@ def compute_bulk_cv_matrix(
     return cv, cv_mat
 
 
-class ModeHeatCapacityProvider:
+class ModeHeatCapacitySolver:
     """Compute scalar mode heat capacities for all grid points at once.
 
-    This provider implements the ``HeatCapacityProvider`` protocol.  It
+    This solver implements the ``HeatCapacitySolver`` protocol.  It
     computes the mode heat capacity Cv (per mode, per unit cell) at the
     requested temperatures using the standard Einstein/harmonic-oscillator
     formula via ``compute_bulk_mode_cv``.
@@ -183,10 +183,10 @@ class ModeHeatCapacityProvider:
         return HeatCapacityResult(heat_capacities=cv)
 
 
-class HeatCapacityMatrixProvider:
+class HeatCapacityMatrixSolver:
     """Compute heat capacity matrix for all grid points (Kubo formula).
 
-    This provider implements the ``HeatCapacityProvider`` protocol for the
+    This solver implements the ``HeatCapacitySolver`` protocol for the
     Green-Kubo formula.  It computes the off-diagonal heat capacity matrix
     ``C_{qjj'}`` using ``mode_cv_matrix`` from
     ``phono3py.phonon.heat_capacity_matrix``.

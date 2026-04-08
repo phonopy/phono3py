@@ -1,4 +1,4 @@
-"""Velocity provider for the Wigner transport equation."""
+"""Velocity solver for the Wigner transport equation."""
 
 from __future__ import annotations
 
@@ -16,10 +16,10 @@ from phono3py.phonon.grid import (
 from phono3py.phonon3.interaction import Interaction
 
 
-class VelocityOperatorProvider:
+class VelocityOperatorSolver:
     """Compute velocity operator and its symmetrised outer product at a grid point.
 
-    This provider implements the ``VelocityProvider`` protocol for the Wigner
+    This solver implements the ``VelocitySolver`` protocol for the Wigner
     transport equation.  It wraps phonopy's ``VelocityOperator`` and computes
     the k-star-averaged outer product of the velocity operator matrix.
 
@@ -68,8 +68,8 @@ class VelocityOperatorProvider:
         self._pp = pp
         self._is_kappa_star = is_kappa_star
         self._log_level = log_level
-        self._point_operations, self._rotations_cartesian = (
-            get_kappa_star_operations(pp.bz_grid, is_kappa_star)
+        self._point_operations, self._rotations_cartesian = get_kappa_star_operations(
+            pp.bz_grid, is_kappa_star
         )
         self._velocity_obj = VelocityOperator(
             pp.dynamical_matrix,
