@@ -376,17 +376,22 @@ class WignerLBTEKappaSolver:
         # Per-grid-point storage (set in finalize() from aggregates.extra).
         self._velocity_operator: NDArray[np.cdouble] | None = None
 
-        # C-term output arrays (populated in finalize()).
-        self._kappa_C: NDArray[np.double] | None = None
-        self._mode_kappa_C: NDArray[np.cdouble] | None = None
+        # C-term output arrays.
+        num_sigma = len(kappa_settings.sigmas)
+        num_temp = len(kappa_settings.temperatures)
+        num_ir = len(kappa_settings.grid_points)
+        num_band0 = len(kappa_settings.band_indices)
+        num_band = frequencies.shape[1]
+        self._mode_kappa_C: NDArray[np.cdouble] | None = np.zeros(
+            (num_sigma, num_temp, num_ir, num_band0, num_band, 6), dtype="complex128"
+        )
+        self._kappa_C: NDArray[np.double] | None = np.zeros(
+            (num_sigma, num_temp, 6), dtype="double"
+        )
 
     # ------------------------------------------------------------------
     # Public interface
     # ------------------------------------------------------------------
-
-    def prepare(self) -> None:
-        """Allocate kappa solver arrays."""
-        self._solver.prepare()
 
     def store(
         self,
@@ -420,7 +425,13 @@ class WignerLBTEKappaSolver:
         if vel_op is not None:
             self._velocity_operator = vel_op
 
-        self._prepare_coherence_arrays(aggregates)
+        if self._is_reducible:
+            print(
+                " WARNING: Coherences conductivity not implemented for "
+                "is_reducible_collision_matrix=True"
+            )
+            self._mode_kappa_C = None
+            self._kappa_C = None
         prev_sigma = -1
         for i_sigma, i_temp in self._solver.solve_iter(aggregates):
             self._compute_coherence_kappa_at(aggregates, i_sigma, i_temp)
@@ -529,30 +540,6 @@ class WignerLBTEKappaSolver:
     # ------------------------------------------------------------------
     # Private: C-term computation
     # ------------------------------------------------------------------
-
-    def _prepare_coherence_arrays(self, aggregates: GridPointAggregates) -> None:
-        """Allocate arrays for the coherence (C) term before the solve loop."""
-        if self._is_reducible:
-            print(
-                " WARNING: Coherences conductivity not implemented for "
-                "is_reducible_collision_matrix=True"
-            )
-            return
-        vm_by_vm = aggregates.vm_by_vm
-        mode_cv = aggregates.mode_heat_capacities
-        if vm_by_vm is None or mode_cv is None:
-            return
-
-        num_sigma = len(self._kappa_settings.sigmas)
-        num_temp = len(self._kappa_settings.temperatures)
-        num_ir = len(self._kappa_settings.grid_points)
-        num_band0 = len(self._kappa_settings.band_indices)
-        num_band = self._frequencies.shape[1]
-
-        self._mode_kappa_C = np.zeros(
-            (num_sigma, num_temp, num_ir, num_band0, num_band, 6), dtype="complex128"
-        )
-        self._kappa_C = np.zeros((num_sigma, num_temp, 6), dtype="double")
 
     def _compute_coherence_kappa_at(
         self,

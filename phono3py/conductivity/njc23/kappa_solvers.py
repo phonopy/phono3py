@@ -265,17 +265,20 @@ class KuboLBTEKappaSolver:
         self._frequencies = frequencies
         self._log_level = log_level
 
-        # Output arrays (populated in finalize).
-        self._kappa_inter: NDArray[np.double] | None = None
-        self._mode_kappa_matrix: NDArray[np.double] | None = None
+        num_sigma = len(kappa_settings.sigmas)
+        num_temp = len(kappa_settings.temperatures)
+        num_gp = len(kappa_settings.grid_points)
+        num_band = frequencies.shape[1]
+        self._mode_kappa_matrix = np.zeros(
+            (num_sigma, num_temp, num_gp, num_band, num_band, 6),
+            dtype="double",
+            order="C",
+        )
+        self._kappa_inter = np.zeros((num_sigma, num_temp, 6), dtype="double")
 
     # ------------------------------------------------------------------
     # Public interface
     # ------------------------------------------------------------------
-
-    def prepare(self) -> None:
-        """Allocate kappa solver arrays."""
-        self._solver.prepare()
 
     def store(
         self,
@@ -299,7 +302,7 @@ class KuboLBTEKappaSolver:
         aggregates: GridPointAggregates,
     ) -> None:
         """Finalize LBTE solve, then compute Kubo kappa with LBTE linewidths."""
-        self._prepare_kubo_arrays(aggregates)
+        self._gamma_eff = compute_effective_gamma(aggregates)
         prev_sigma = -1
         for i_sigma, i_temp in self._solver.solve_iter(aggregates):
             self._compute_kubo_kappa_at(aggregates, i_sigma, i_temp)
@@ -329,9 +332,7 @@ class KuboLBTEKappaSolver:
         Shape: (num_sigma, num_temp, 6).
 
         """
-        if self._kappa_inter is not None:
-            return self._solver.kappa + self._kappa_inter
-        return self._solver.kappa
+        return self._solver.kappa + self._kappa_inter
 
     @property
     def kappa_intra_exact(self) -> NDArray[np.double]:
@@ -381,21 +382,6 @@ class KuboLBTEKappaSolver:
     # Private: Kubo kappa computation
     # ------------------------------------------------------------------
 
-    def _prepare_kubo_arrays(self, aggregates: GridPointAggregates) -> None:
-        """Allocate arrays and precompute gamma before the solve loop."""
-        assert aggregates.vm_by_vm is not None
-        assert aggregates.heat_capacity_matrix is not None
-
-        self._gamma_eff = compute_effective_gamma(aggregates)
-        num_sigma, num_temp, num_gp, num_band = self._gamma_eff.shape
-
-        self._mode_kappa_matrix = np.zeros(
-            (num_sigma, num_temp, num_gp, num_band, num_band, 6),
-            dtype="double",
-            order="C",
-        )
-        self._kappa_inter = np.zeros((num_sigma, num_temp, 6), dtype="double")
-
     def _compute_kubo_kappa_at(
         self,
         aggregates: GridPointAggregates,
@@ -431,8 +417,8 @@ class KuboLBTEKappaSolver:
         if t <= 0:
             return
 
-        kappa_intra = self._solver._kappa[i_sigma, i_temp]
-        kappa_intra_RTA = self._solver._kappa_RTA[i_sigma, i_temp]
+        kappa_intra = self._solver.kappa[i_sigma, i_temp]
+        kappa_intra_RTA = self._solver.kappa_RTA[i_sigma, i_temp]
         kappa_inter = self._kappa_inter[i_sigma, i_temp]
 
         print(

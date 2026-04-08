@@ -147,7 +147,6 @@ class LBTECalculator:
 
         # Allocate arrays.
         self._allocate_values()
-        self._kappa_solver.prepare()
 
     # ------------------------------------------------------------------
     # Public interface

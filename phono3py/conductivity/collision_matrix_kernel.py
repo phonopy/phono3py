@@ -166,32 +166,15 @@ class CollisionMatrixKernel:
         self._gv: NDArray[np.double] | None = None
         self._cv: NDArray[np.double] | None = None
 
-        # Allocated in prepare().
-        self._collision_matrix: NDArray[np.double] | None = None
-        self._collision_eigenvalues: NDArray[np.double] | None = None
-        self._f_vectors: NDArray[np.double] | None = None
-        self._mfp: NDArray[np.double] | None = None
-
-        # Allocated in prepare() and filled in solve().
-        self._kappa: NDArray[np.double]
-        self._kappa_RTA: NDArray[np.double]
-        self._mode_kappa: NDArray[np.double]
-        self._mode_kappa_RTA: NDArray[np.double]
-
-    # ------------------------------------------------------------------
-    # Public interface
-    # ------------------------------------------------------------------
-
-    def prepare(self) -> None:
-        """Allocate collision matrix and output arrays."""
-        num_sigma = len(self._kappa_settings.sigmas)
-        num_temp = len(self._kappa_settings.temperatures)
-        num_band0 = len(self._kappa_settings.band_indices)
-        num_band = self._frequencies.shape[1]
-        num_ir_gp = len(self._kappa_settings.grid_points)
+        # Allocate output arrays.
+        num_sigma = len(kappa_settings.sigmas)
+        num_temp = len(kappa_settings.temperatures)
+        num_band0 = len(kappa_settings.band_indices)
+        num_band = frequencies.shape[1]
+        num_ir_gp = len(kappa_settings.grid_points)
 
         if self._is_reducible_collision_matrix:
-            num_gp = int(np.prod(self._kappa_settings.mesh_numbers))
+            num_gp = int(np.prod(kappa_settings.mesh_numbers))
         else:
             num_gp = num_ir_gp
 

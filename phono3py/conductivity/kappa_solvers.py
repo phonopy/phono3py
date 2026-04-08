@@ -186,10 +186,6 @@ class LBTEKappaSolver:
     # Public interface
     # ------------------------------------------------------------------
 
-    def prepare(self) -> None:
-        """Allocate global arrays before the grid-point loop."""
-        self._solver.prepare()
-
     def store(
         self,
         i_gp: int,
