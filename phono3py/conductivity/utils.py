@@ -257,9 +257,11 @@ def log_kappa_header(
     sigma: float | None,
     show_ipm: bool = False,
     num_spaces: int = 2,
+    with_sigma_header: bool = True,
 ) -> None:
     """Print the kappa table header line for a given sigma."""
-    log_sigma_header(sigma)
+    if with_sigma_header:
+        log_sigma_header(sigma)
     if show_ipm:
         print(
             ("#" + " " * num_spaces + "%s")

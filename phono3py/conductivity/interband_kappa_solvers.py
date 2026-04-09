@@ -374,7 +374,7 @@ class InterBandLBTEKappaSolver:
         kappa_inter = self._kappa_inter[i_sigma, i_temp]
 
         sigma = self._kappa_settings.sigmas[i_sigma]
-        log_kappa_header(sigma, num_spaces=14)
+        log_kappa_header(sigma, num_spaces=14, with_sigma_header=False)
         for label, values in [
             ("K_intra     ", kappa_intra),
             ("K_intra_RTA ", kappa_intra_RTA),
