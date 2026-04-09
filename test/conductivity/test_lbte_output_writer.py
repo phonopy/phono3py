@@ -3,6 +3,7 @@
 from types import SimpleNamespace
 
 import numpy as np
+
 from phono3py.conductivity.output import ConductivityLBTEWriter
 
 
