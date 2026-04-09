@@ -7,6 +7,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from phono3py.conductivity.calculators import RTACalculator
 from phonopy.harmonic.force_constants import get_drift_force_constants
 from phonopy.interface.pypolymlp import PypolymlpParams
 from phonopy.structure.atoms import PhonopyAtoms
@@ -14,7 +15,6 @@ from phonopy.structure.cells import isclose
 
 import phono3py
 from phono3py import Phono3py
-from phono3py.conductivity.calculators import RTACalculator
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon3.fc3 import get_drift_fc3
 
