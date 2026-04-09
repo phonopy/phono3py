@@ -46,7 +46,9 @@ from phono3py.conductivity.build_components import (
     build_rot_grid_points,
     build_rta_kappa_settings,
 )
-from phono3py.conductivity.collision_matrix_kernel import CollisionMatrixKernel
+from phono3py.conductivity.collision_matrix_kernel import (
+    create_collision_matrix_kernel,
+)
 from phono3py.conductivity.heat_capacity_solvers import ModeHeatCapacitySolver
 from phono3py.conductivity.kappa_solvers import LBTEKappaSolver, RTAKappaSolver
 from phono3py.conductivity.lbte_calculator import LBTECalculator
@@ -162,7 +164,7 @@ def _build_lbte_calculator(
         pp_filename=config.pp_filename,
         log_level=config.log_level,
     )
-    colmat_kernel = CollisionMatrixKernel(
+    colmat_kernel = create_collision_matrix_kernel(
         kappa_settings=kappa_settings,
         frequencies=frequencies,
         rot_grid_points=rot_grid_points,
