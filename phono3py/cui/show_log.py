@@ -38,7 +38,7 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -47,10 +47,13 @@ from phonopy.structure.cells import print_cell
 from phono3py import Phono3py
 from phono3py.cui.settings import Phono3pySettings
 
+if TYPE_CHECKING:
+    from phono3py.cui.phono3py_script import RunMode
+
 
 def show_general_settings(
     settings: Phono3pySettings,
-    run_mode: str,
+    run_mode: RunMode,
     phono3py: Phono3py,
     cell_filename: str | os.PathLike,
     interface_mode: str | None,

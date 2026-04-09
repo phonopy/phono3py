@@ -8,13 +8,8 @@ from phono3py.api_phono3py import Phono3py
 
 def test_kappa_LBTE(si_pbesol: Phono3py):
     """Test for symmetry reduced collision matrix."""
-    if si_pbesol._make_r0_average:
-        ref_kappa_P_LBTE = [110.896, 110.896, 110.896, 0, 0, 0]
-        ref_kappa_C = [0.166, 0.166, 0.166, 0.000, 0.000, 0.000]
-    else:
-        ref_kappa_P_LBTE = [111.149, 111.149, 111.149, 0, 0, 0]
-        ref_kappa_C = [0.166, 0.166, 0.166, 0.000, 0.000, 0.000]
-
+    ref_kappa_P_LBTE = [110.896, 110.896, 110.896, 0, 0, 0]
+    ref_kappa_C = [0.166, 0.166, 0.166, 0.000, 0.000, 0.000]
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
     si_pbesol.run_thermal_conductivity(
@@ -22,7 +17,7 @@ def test_kappa_LBTE(si_pbesol: Phono3py):
         temperatures=[
             300,
         ],
-        conductivity_type="wigner",
+        transport_type="MS-SMM19",
     )
     # kappa = si_pbesol.thermal_conductivity.kappa.ravel()
     kappa_P = si_pbesol.thermal_conductivity.kappa_P_exact.ravel()

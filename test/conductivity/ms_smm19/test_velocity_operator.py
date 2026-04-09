@@ -4,7 +4,7 @@ import numpy as np
 from phonopy import Phonopy
 from phonopy.physical_units import get_physical_units
 
-from phono3py.phonon.velocity_operator import VelocityOperator
+from phono3py.conductivity.ms_smm19.velocity_operator import VelocityOperator
 
 
 def test_gv_operator_nacl(ph_nacl: Phonopy):

@@ -324,7 +324,7 @@ class JointDos:
             lang=lang,
         )
 
-    def run_jdos(self, lang: Literal["C", "Py"] = "C") -> None:
+    def run_jdos(self, lang: Literal["C", "Python"] = "C") -> None:
         """Run JDOS calculation with having integration weights.
 
         lang="Py" is the original implementation.
