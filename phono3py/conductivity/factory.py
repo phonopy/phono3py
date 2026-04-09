@@ -46,12 +46,13 @@ from phono3py.conductivity.build_components import (
     build_rot_grid_points,
     build_rta_kappa_settings,
 )
-from phono3py.conductivity.collision_matrix_kernel import CollisionMatrixKernel
+from phono3py.conductivity.calculators import LBTECalculator, RTACalculator
+from phono3py.conductivity.collision_matrix_kernel import (
+    create_collision_matrix_kernel,
+)
 from phono3py.conductivity.heat_capacity_solvers import ModeHeatCapacitySolver
 from phono3py.conductivity.kappa_solvers import LBTEKappaSolver, RTAKappaSolver
-from phono3py.conductivity.lbte_calculator import LBTECalculator
 from phono3py.conductivity.lbte_collision_solver import LBTECollisionSolver
-from phono3py.conductivity.rta_calculator import RTACalculator
 from phono3py.conductivity.scattering_solvers import RTAScatteringSolver
 from phono3py.conductivity.velocity_solvers import GroupVelocitySolver
 from phono3py.phonon3.collision_matrix import CollisionMatrix
@@ -87,7 +88,6 @@ def _build_rta_calculator(
     """Build an RTACalculator from variant component factories."""
     _run_phonon_solver(interaction)
     kappa_settings = build_rta_kappa_settings(interaction, config)
-    frequencies, _, _ = interaction.get_phonons()
     scattering_solver = RTAScatteringSolver(
         interaction,
         sigmas=config.sigmas,
@@ -122,7 +122,6 @@ def _build_rta_calculator(
         scattering_solver=scattering_solver,
         kappa_solver=kappa_solver,
         kappa_settings=kappa_settings,
-        frequencies=frequencies,
         is_isotope=config.is_isotope,
         mass_variances=config.mass_variances,
         is_N_U=config.is_N_U,
@@ -162,7 +161,7 @@ def _build_lbte_calculator(
         pp_filename=config.pp_filename,
         log_level=config.log_level,
     )
-    colmat_kernel = CollisionMatrixKernel(
+    colmat_kernel = create_collision_matrix_kernel(
         kappa_settings=kappa_settings,
         frequencies=frequencies,
         rot_grid_points=rot_grid_points,
@@ -194,7 +193,6 @@ def _build_lbte_calculator(
         collision_solver=collision_solver,
         kappa_solver=kappa_solver,
         kappa_settings=kappa_settings,
-        frequencies=frequencies,
         is_isotope=config.is_isotope,
         mass_variances=config.mass_variances,
         is_full_pp=config.is_full_pp,

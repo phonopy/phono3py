@@ -39,124 +39,217 @@ from __future__ import annotations
 import os
 import sys
 from collections.abc import Sequence
-from typing import Any, Literal, TypeAlias, TypedDict, cast, overload
+from typing import Literal, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
 
+from phono3py.conductivity.calculators import LBTECalculator
 from phono3py.conductivity.exceptions import LBTECollisionReadError
 from phono3py.conductivity.factory import conductivity_calculator
-from phono3py.conductivity.lbte_calculator import LBTECalculator
-from phono3py.conductivity.lbte_output import ConductivityLBTEWriter
-from phono3py.conductivity.utils import build_options, write_pp_interaction
+from phono3py.conductivity.output import ConductivityLBTEWriter
+from phono3py.conductivity.utils import write_pp_interaction
 from phono3py.file_IO import read_collision_from_hdf5
 from phono3py.phonon.grid import get_ir_grid_points
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
 
-
-class _LBTEFullCollisionOptions(TypedDict):
-    write_LBTE_solution: bool
-    read_collision: str | Sequence | None
-    read_from: Literal["full_matrix", "grid_points"] | None
-    grid_points: Sequence[int] | NDArray[np.int64] | None
-    output_filename: str | os.PathLike | None
-
-
-class _CollisionReadContext(TypedDict):
-    mesh: NDArray[np.int64]
-    indices: str | Sequence[int]
-    sigma: float | None
-    sigma_cutoff: float | None
-    filename: str | os.PathLike | None
-    log_level: int
-
-
-_CollisionMatrixData: TypeAlias = tuple[
-    NDArray[np.double],
-    NDArray[np.double],
-    NDArray[np.double],
-]
 _CollisionReadSource: TypeAlias = Literal["full_matrix", "grid_points"]
-_AllocatedCollisionData: TypeAlias = tuple[None, None, NDArray[np.double]]
-_CollisionData: TypeAlias = _CollisionMatrixData | _AllocatedCollisionData
 
 
-def _build_lbte_full_collision_options(
-    *,
-    write_LBTE_solution: bool,
-    read_collision: str | Sequence[int] | None,
-    read_from: _CollisionReadSource | None,
-    grid_points: Sequence[int] | NDArray[np.int64] | None,
-    output_filename: str | os.PathLike | None,
-) -> _LBTEFullCollisionOptions:
-    return build_options(
-        _LBTEFullCollisionOptions,
-        write_LBTE_solution=write_LBTE_solution,
-        read_collision=read_collision,
-        read_from=read_from,
-        grid_points=grid_points,
-        output_filename=output_filename,
-    )
+class CollisionFileReader:
+    """Read collision data from HDF5 with 3-level fallback (full -> GP -> band)."""
 
+    def __init__(
+        self,
+        mesh: NDArray[np.int64],
+        indices: str | Sequence[int],
+        sigma_cutoff: float | None,
+        filename: str | os.PathLike | None,
+        log_level: int,
+    ):
+        self._mesh = mesh
+        self._indices = indices
+        self._sigma_cutoff = sigma_cutoff
+        self._filename = filename
+        self._log_level = log_level
 
-def _build_collision_read_context(
-    *,
-    mesh: NDArray[np.int64],
-    indices: str | Sequence[int],
-    sigma: float | None,
-    sigma_cutoff: float | None,
-    filename: str | os.PathLike | None,
-    log_level: int,
-) -> _CollisionReadContext:
-    return build_options(
-        _CollisionReadContext,
-        mesh=mesh,
-        indices=indices,
-        sigma=sigma,
-        sigma_cutoff=sigma_cutoff,
-        filename=filename,
-        log_level=log_level,
-    )
+    def read(
+        self,
+        sigma: float | None,
+        *,
+        grid_point: int | None = None,
+        band_index: int | None = None,
+        only_temperatures: bool = False,
+    ) -> tuple:
+        """Thin wrapper around read_collision_from_hdf5."""
+        return read_collision_from_hdf5(
+            self._mesh,
+            indices=self._indices,
+            grid_point=grid_point,
+            band_index=band_index,
+            sigma=sigma,
+            sigma_cutoff=self._sigma_cutoff,
+            filename=self._filename,
+            only_temperatures=only_temperatures,
+            verbose=(False if only_temperatures else (self._log_level > 0)),
+        )
 
+    def peek_temperatures(
+        self, sigma: float | None, first_gp: int
+    ) -> NDArray[np.double]:
+        """Read only temperatures, trying full -> GP -> band files."""
+        try:
+            _, _, temperatures = self.read(sigma, only_temperatures=True)
+            return temperatures
+        except FileNotFoundError:
+            pass
+        try:
+            _, _, temperatures = self.read(
+                sigma, grid_point=first_gp, only_temperatures=True
+            )
+            return temperatures
+        except FileNotFoundError:
+            pass
+        try:
+            _, _, temperatures = self.read(
+                sigma, grid_point=first_gp, band_index=0, only_temperatures=True
+            )
+            return temperatures
+        except FileNotFoundError:
+            pass
+        raise LBTECollisionReadError(
+            "No collision file found for reading temperatures."
+        )
 
-@overload
-def _read_collision_data(
-    context: _CollisionReadContext,
-    *,
-    grid_point: int | None = None,
-    band_index: int | None = None,
-    only_temperatures: Literal[False] = False,
-) -> _CollisionMatrixData: ...
+    def try_full_matrix(
+        self,
+        sigma: float | None,
+        collision_matrix: NDArray[np.double],
+        gamma: NDArray[np.double],
+        i_sigma: int,
+    ) -> bool:
+        """Try reading full collision matrix.  Returns True if successful."""
+        data = self.read(sigma)
+        if self._log_level:
+            sys.stdout.flush()
+        if not data:
+            return False
+        colmat_at_sigma, gamma_at_sigma, _temperatures = data
+        collision_matrix[i_sigma] = colmat_at_sigma[0]
+        gamma[i_sigma] = gamma_at_sigma[0]
+        return True
 
+    def allocate_with_fallback(
+        self, sigma: float | None, grid_points: NDArray[np.int64]
+    ) -> NDArray[np.double] | Literal[False]:
+        """Get temperatures from per-GP or per-band file."""
+        collision = self.read(sigma, grid_point=grid_points[0], only_temperatures=True)
+        if collision is not None:
+            return collision[2]
 
-@overload
-def _read_collision_data(
-    context: _CollisionReadContext,
-    *,
-    grid_point: int | None = None,
-    band_index: int | None = None,
-    only_temperatures: Literal[True],
-) -> _AllocatedCollisionData: ...
+        if self._log_level:
+            print("Collision at grid point %d doesn't exist." % grid_points[0])
 
+        collision = self.read(
+            sigma, grid_point=grid_points[0], band_index=0, only_temperatures=True
+        )
+        if collision is not None:
+            return collision[2]
 
-def _read_collision_data(
-    context: _CollisionReadContext,
-    *,
-    grid_point: int | None = None,
-    band_index: int | None = None,
-    only_temperatures: bool = False,
-) -> _CollisionData:
-    return read_collision_from_hdf5(
-        context["mesh"],
-        indices=context["indices"],
-        grid_point=grid_point,
-        band_index=band_index,
-        sigma=context["sigma"],
-        sigma_cutoff=context["sigma_cutoff"],
-        filename=context["filename"],
-        only_temperatures=only_temperatures,
-        verbose=(False if only_temperatures else (context["log_level"] > 0)),
-    )
+        if self._log_level:
+            print(
+                "Collision at (grid point %d, band index %d) "
+                "doesn't exist." % (grid_points[0], 1)
+            )
+        return False
+
+    def collect_gp(
+        self,
+        sigma: float | None,
+        colmat_at_sigma: NDArray[np.double],
+        gamma_at_sigma: NDArray[np.double],
+        temperatures: NDArray[np.double],
+        i: int,
+        gp: int,
+        bzg2grg: NDArray[np.int64],
+        is_reducible: bool,
+    ) -> bool:
+        """Collect collision data for one grid point."""
+        data = self.read(sigma, grid_point=gp)
+        if self._log_level:
+            sys.stdout.flush()
+        if not data:
+            return False
+        colmat_at_gp, gamma_at_gp, temperatures_at_gp = data
+        igp = bzg2grg[gp] if is_reducible else i
+        gamma_at_sigma[:, igp] = gamma_at_gp
+        colmat_at_sigma[:, igp] = colmat_at_gp[0]
+        temperatures[:] = temperatures_at_gp
+        return True
+
+    def collect_band(
+        self,
+        sigma: float | None,
+        colmat_at_sigma: NDArray[np.double],
+        gamma_at_sigma: NDArray[np.double],
+        temperatures: NDArray[np.double],
+        i: int,
+        gp: int,
+        bzg2grg: NDArray[np.int64],
+        j: int,
+        is_reducible: bool,
+    ) -> bool:
+        """Collect collision data for one band."""
+        data = self.read(sigma, grid_point=gp, band_index=j)
+        if self._log_level:
+            sys.stdout.flush()
+        if data is False:
+            return False
+        colmat_at_band, gamma_at_band, temperatures_at_band = data
+        igp = bzg2grg[gp] if is_reducible else i
+        gamma_at_sigma[:, igp, j] = gamma_at_band[0]
+        colmat_at_sigma[:, igp, j] = colmat_at_band[0]
+        temperatures[:] = temperatures_at_band
+        return True
+
+    def collect_with_band_fallback(
+        self,
+        sigma: float | None,
+        colmat_at_sigma: NDArray[np.double],
+        gamma_at_sigma: NDArray[np.double],
+        temperatures: NDArray[np.double],
+        i: int,
+        gp: int,
+        bzg2grg: NDArray[np.int64],
+        is_reducible: bool,
+    ) -> bool:
+        """Collect for one GP, falling back to per-band if needed."""
+        if self.collect_gp(
+            sigma,
+            colmat_at_sigma,
+            gamma_at_sigma,
+            temperatures,
+            i,
+            gp,
+            bzg2grg,
+            is_reducible,
+        ):
+            return True
+        num_band = colmat_at_sigma.shape[2]
+        for j in range(num_band):
+            if not self.collect_band(
+                sigma,
+                colmat_at_sigma,
+                gamma_at_sigma,
+                temperatures,
+                i,
+                gp,
+                bzg2grg,
+                j,
+                is_reducible,
+            ):
+                return False
+        return True
 
 
 def get_thermal_conductivity_LBTE(
@@ -278,33 +371,31 @@ def _run_standard_lbte(
     log_level: int,
 ) -> LBTECalculator:
     """Build and run an LBTECalculator."""
-    lbte = cast(
-        LBTECalculator,
-        conductivity_calculator(
-            interaction,
-            temperatures,
-            sigmas,
-            method=method,
-            sigma_cutoff=sigma_cutoff,
-            is_isotope=is_isotope,
-            mass_variances=mass_variances,
-            boundary_mfp=boundary_mfp,
-            is_kappa_star=is_kappa_star,
-            gv_delta_q=gv_delta_q,
-            is_full_pp=is_full_pp,
-            read_pp=read_pp,
-            pp_filename=input_filename,
-            is_reducible_collision_matrix=is_reducible_collision_matrix,
-            solve_collective_phonon=solve_collective_phonon,
-            pinv_cutoff=pinv_cutoff,
-            pinv_solver=pinv_solver,
-            pinv_method=pinv_method,
-            log_level=log_level,
-        ),
+    lbte = conductivity_calculator(
+        interaction,
+        temperatures,
+        sigmas,
+        method=method,
+        sigma_cutoff=sigma_cutoff,
+        is_isotope=is_isotope,
+        mass_variances=mass_variances,
+        boundary_mfp=boundary_mfp,
+        is_kappa_star=is_kappa_star,
+        gv_delta_q=gv_delta_q,
+        is_full_pp=is_full_pp,
+        read_pp=read_pp,
+        pp_filename=input_filename,
+        is_reducible_collision_matrix=is_reducible_collision_matrix,
+        solve_collective_phonon=solve_collective_phonon,
+        pinv_cutoff=pinv_cutoff,
+        pinv_solver=pinv_solver,
+        pinv_method=pinv_method,
+        log_level=log_level,
     )
+    assert isinstance(lbte, LBTECalculator)
 
     read_from, read_collision_failed = _read_lbte_collision_if_requested(
-        cast(Any, lbte),
+        lbte,
         read_collision=read_collision,
         is_reducible_collision_matrix=is_reducible_collision_matrix,
         input_filename=input_filename,
@@ -321,7 +412,7 @@ def _run_standard_lbte(
         def _on_grid_point(i: int) -> None:
             if write_pp:
                 write_pp_interaction(
-                    cast(Any, lbte),
+                    lbte,
                     interaction,
                     i,
                     filename=output_filename,
@@ -329,7 +420,7 @@ def _run_standard_lbte(
                 )
             if write_collision:
                 ConductivityLBTEWriter.write_collision(
-                    cast(Any, lbte),
+                    lbte,
                     interaction,
                     i=i,
                     is_reducible_collision_matrix=is_reducible_collision_matrix,
@@ -341,15 +432,14 @@ def _run_standard_lbte(
             on_grid_point=_on_grid_point if (write_pp or write_collision) else None
         )
 
-    full_collision_options = _build_lbte_full_collision_options(
+    _write_full_collision_if_requested(
+        lbte,
+        interaction,
         write_LBTE_solution=write_LBTE_solution,
         read_collision=read_collision,
         read_from=read_from,
         grid_points=grid_points,
         output_filename=output_filename,
-    )
-    _write_full_collision_if_requested(
-        cast(Any, lbte), interaction, **full_collision_options
     )
 
     if grid_points is None and all_bands_exist(interaction):
@@ -360,7 +450,7 @@ def _run_standard_lbte(
                 compression if isinstance(compression, str) else "gzip"
             )
             ConductivityLBTEWriter.write_kappa(
-                cast(Any, lbte),
+                lbte,
                 interaction.primitive.volume,
                 is_reducible_collision_matrix=is_reducible_collision_matrix,
                 write_LBTE_solution=write_LBTE_solution,
@@ -379,59 +469,17 @@ def _peek_temperatures_from_file(
     sigma_cutoff: float | None,
     filename: str | os.PathLike | None,
 ) -> NDArray[np.double]:
-    """Read temperatures from the first available collision HDF5 file.
-
-    Tries full-matrix, per-grid-point, and per-band files in order.
-    Raises LBTECollisionReadError if no file is found.
-
-    """
-    context = _build_collision_read_context(
+    """Read temperatures from the first available collision HDF5 file."""
+    reader = CollisionFileReader(
         mesh=interaction.mesh_numbers,
         indices="all",
-        sigma=sigmas[0],
         sigma_cutoff=sigma_cutoff,
         filename=filename,
         log_level=0,
     )
-
-    # Try full matrix file.
-    try:
-        _, _, temperatures = _read_collision_data(
-            context,
-            only_temperatures=True,
-        )
-        return temperatures
-    except FileNotFoundError:
-        pass
-
-    # Need a grid point for per-GP / per-band files.
     ir_grg, _, _ = get_ir_grid_points(interaction.bz_grid)
     first_gp = int(interaction.bz_grid.grg2bzg[ir_grg[0]])
-
-    # Try per-grid-point file.
-    try:
-        _, _, temperatures = _read_collision_data(
-            context,
-            grid_point=first_gp,
-            only_temperatures=True,
-        )
-        return temperatures
-    except FileNotFoundError:
-        pass
-
-    # Try per-band file.
-    try:
-        _, _, temperatures = _read_collision_data(
-            context,
-            grid_point=first_gp,
-            band_index=0,
-            only_temperatures=True,
-        )
-        return temperatures
-    except FileNotFoundError:
-        pass
-
-    raise LBTECollisionReadError("No collision file found for reading temperatures.")
+    return reader.peek_temperatures(sigmas[0], first_gp)
 
 
 def _normalize_lbte_temperatures(
@@ -453,7 +501,7 @@ def _format_lbte_temperatures_log(
 
 
 def _read_lbte_collision_if_requested(
-    lbte: Any,
+    lbte: LBTECalculator,
     *,
     read_collision: str | Sequence[int] | None,
     is_reducible_collision_matrix: bool,
@@ -482,7 +530,7 @@ def _read_lbte_collision_if_requested(
 
 
 def _write_full_collision_if_requested(
-    lbte: Any,
+    lbte: LBTECalculator,
     interaction: Interaction,
     *,
     write_LBTE_solution: bool,
@@ -507,34 +555,17 @@ def _write_full_collision_if_requested(
 
 
 def _set_collision_from_file(
-    lbte: Any,
+    lbte: LBTECalculator,
     indices: str | Sequence[int] = "all",
     is_reducible_collision_matrix: bool = False,
     filename: str | os.PathLike | None = None,
     log_level: int = 0,
 ) -> _CollisionReadSource | Literal[False] | None:
-    """Set collision matrix from that read from files.
+    """Set collision matrix from HDF5 files.
 
-    If collision-m*.hdf5 that contains all data is not found,
-    collision-m*-gp*.hdf5 files at grid points are searched. If any of those
-    files are not found, collision-m*-gp*-b*.hdf5 files at grid points and bands
-    are searched. If any of those files are not found, it fails.
-
-    lbte : LBTE calculator instance.
-    filename : str, optional
-        This string is inserted in the filename as collision-m*.{filename}.hdf5.
-    verbose : bool, optional
-        Show text output or not.
-
+    Tries collision-m*.hdf5 (full matrix) first, then per-grid-point files,
+    then per-band files.
     """
-    bz_grid = lbte.bz_grid
-    sigmas = lbte.sigmas
-    sigma_cutoff = lbte.sigma_cutoff_width
-    mesh = lbte.mesh_numbers
-    grid_points = lbte.grid_points
-
-    read_from = None
-
     if log_level:
         print(
             "---------------------- Reading collision data from file "
@@ -542,229 +573,40 @@ def _set_collision_from_file(
             flush=True,
         )
 
-    for i_sigma, sigma in enumerate(sigmas):
-        context = _build_collision_read_context(
-            mesh=mesh,
+    read_from = None
+    for i_sigma, sigma in enumerate(lbte.sigmas):
+        reader = CollisionFileReader(
+            mesh=lbte.mesh_numbers,
             indices=indices,
-            sigma=sigma,
-            sigma_cutoff=sigma_cutoff,
+            sigma_cutoff=lbte.sigma_cutoff_width,
             filename=filename,
             log_level=log_level,
         )
-        collision_data = _read_collision_data(context)
-        if log_level:
-            sys.stdout.flush()
 
-        if _set_collision_from_full_matrix_if_available(
-            lbte,
-            collision_data,
-            i_sigma,
-        ):
+        collision_matrix = lbte.collision_matrix
+        gamma = lbte.gamma
+        assert collision_matrix is not None
+        assert gamma is not None
+
+        if reader.try_full_matrix(sigma, collision_matrix, gamma, i_sigma):
             read_from = "full_matrix"
         else:
-            vals = _allocate_collision_with_fallback(
-                grid_points,
-                context,
-                log_level,
-            )
-            if not vals:
+            temperatures = reader.allocate_with_fallback(sigma, lbte.grid_points)
+            if temperatures is False:
                 return False
-            _, _, temperatures = vals
 
-            collision_matrix = lbte.collision_matrix
-            gamma = lbte.gamma
-            assert collision_matrix is not None
-            assert gamma is not None
-
-            for i, gp in enumerate(grid_points):
-                if not _collect_collision_with_band_fallback(
+            for i, gp in enumerate(lbte.grid_points):
+                if not reader.collect_with_band_fallback(
+                    sigma,
                     collision_matrix[i_sigma],
                     gamma[i_sigma],
                     temperatures,
-                    context,
                     i,
                     gp,
-                    bz_grid.bzg2grg,
+                    lbte.bz_grid.bzg2grg,
                     is_reducible_collision_matrix,
                 ):
                     return False
             read_from = "grid_points"
 
     return read_from
-
-
-def _set_collision_from_full_matrix_if_available(
-    lbte: Any,
-    collision_data: _CollisionMatrixData | None,
-    i_sigma: int,
-) -> bool:
-    if not collision_data:
-        return False
-
-    colmat_at_sigma, gamma_at_sigma, _temperatures = collision_data
-    collision_matrix = lbte.collision_matrix
-    gamma = lbte.gamma
-    assert collision_matrix is not None
-    assert gamma is not None
-    collision_matrix[i_sigma] = colmat_at_sigma[0]
-    gamma[i_sigma] = gamma_at_sigma[0]
-    return True
-
-
-def _allocate_collision(
-    for_gps: bool,
-    grid_points: NDArray[np.int64],
-    context: _CollisionReadContext,
-) -> _AllocatedCollisionData | Literal[False]:
-    if for_gps:
-        collision = _read_collision_data(
-            context,
-            grid_point=grid_points[0],
-            only_temperatures=True,
-        )
-    else:
-        collision = _read_collision_data(
-            context,
-            grid_point=grid_points[0],
-            band_index=0,
-            only_temperatures=True,
-        )
-    if collision is None:
-        return False
-
-    temperatures = collision[2]
-    return None, None, temperatures
-
-
-def _allocate_collision_with_fallback(
-    grid_points: NDArray[np.int64],
-    context: _CollisionReadContext,
-    log_level: int,
-) -> _AllocatedCollisionData | Literal[False]:
-    vals = _allocate_collision(
-        True,
-        grid_points,
-        context,
-    )
-    if vals:
-        return vals
-
-    if log_level:
-        print("Collision at grid point %d doesn't exist." % grid_points[0])
-
-    vals = _allocate_collision(
-        False,
-        grid_points,
-        context,
-    )
-    if vals:
-        return vals
-
-    if log_level:
-        print(
-            "Collision at (grid point %d, band index %d) "
-            "doesn't exist." % (grid_points[0], 1)
-        )
-    return False
-
-
-def _collect_collision_gp(
-    colmat_at_sigma: NDArray[np.double],
-    gamma_at_sigma: NDArray[np.double],
-    temperatures: NDArray[np.double],
-    context: _CollisionReadContext,
-    i: int,
-    gp: int,
-    bzg2grg: NDArray[np.int64],
-    is_reducible_collision_matrix: bool,
-) -> bool:
-    collision_gp = _read_collision_data(context, grid_point=gp)
-    if context["log_level"]:
-        sys.stdout.flush()
-
-    if not collision_gp:
-        return False
-
-    (colmat_at_gp, gamma_at_gp, temperatures_at_gp) = collision_gp
-    if is_reducible_collision_matrix:
-        igp = bzg2grg[gp]
-    else:
-        igp = i
-    gamma_at_sigma[:, igp] = gamma_at_gp
-    colmat_at_sigma[:, igp] = colmat_at_gp[0]
-    temperatures[:] = temperatures_at_gp
-
-    return True
-
-
-def _collect_collision_with_band_fallback(
-    colmat_at_sigma: NDArray[np.double],
-    gamma_at_sigma: NDArray[np.double],
-    temperatures: NDArray[np.double],
-    context: _CollisionReadContext,
-    i: int,
-    gp: int,
-    bzg2grg: NDArray[np.int64],
-    is_reducible_collision_matrix: bool,
-) -> bool:
-    if _collect_collision_gp(
-        colmat_at_sigma,
-        gamma_at_sigma,
-        temperatures,
-        context,
-        i,
-        gp,
-        bzg2grg,
-        is_reducible_collision_matrix,
-    ):
-        return True
-
-    num_band = colmat_at_sigma.shape[2]
-    for i_band in range(num_band):
-        if not _collect_collision_band(
-            colmat_at_sigma,
-            gamma_at_sigma,
-            temperatures,
-            context,
-            i,
-            gp,
-            bzg2grg,
-            i_band,
-            is_reducible_collision_matrix,
-        ):
-            return False
-    return True
-
-
-def _collect_collision_band(
-    colmat_at_sigma: NDArray[np.double],
-    gamma_at_sigma: NDArray[np.double],
-    temperatures: NDArray[np.double],
-    context: _CollisionReadContext,
-    i: int,
-    gp: int,
-    bzg2grg: NDArray[np.int64],
-    j: int,
-    is_reducible_collision_matrix: bool,
-) -> bool:
-    collision_band = _read_collision_data(
-        context,
-        grid_point=gp,
-        band_index=j,
-    )
-    if context["log_level"]:
-        sys.stdout.flush()
-
-    if collision_band is False:
-        return False
-
-    (colmat_at_band, gamma_at_band, temperatures_at_band) = collision_band
-    if is_reducible_collision_matrix:
-        igp = bzg2grg[gp]
-    else:
-        igp = i
-    gamma_at_sigma[:, igp, j] = gamma_at_band[0]
-    colmat_at_sigma[:, igp, j] = colmat_at_band[0]
-    temperatures[:] = temperatures_at_band
-
-    return True

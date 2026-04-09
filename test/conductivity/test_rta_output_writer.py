@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import numpy as np
 
-from phono3py.conductivity.rta_output import ConductivityRTAWriter
+from phono3py.conductivity.output import ConductivityRTAWriter
 
 
 def test_write_gamma_detail_all_bands(monkeypatch):
@@ -15,14 +15,14 @@ def test_write_gamma_detail_all_bands(monkeypatch):
         calls.append((args, kwargs))
 
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.all_bands_exist", lambda _interaction: True
+        "phono3py.conductivity.output.all_bands_exist", lambda _interaction: True
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.get_all_triplets",
+        "phono3py.conductivity.output.get_all_triplets",
         lambda _gp, _bz_grid: np.array([[0, 1, 2]], dtype="int64"),
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.write_gamma_detail_to_hdf5",
+        "phono3py.conductivity.output.write_gamma_detail_to_hdf5",
         _fake_write_gamma_detail_to_hdf5,
     )
 
@@ -64,14 +64,14 @@ def test_write_gamma_detail_band_resolved(monkeypatch):
         calls.append((args, kwargs))
 
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.all_bands_exist", lambda _interaction: False
+        "phono3py.conductivity.output.all_bands_exist", lambda _interaction: False
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.get_all_triplets",
+        "phono3py.conductivity.output.get_all_triplets",
         lambda _gp, _bz_grid: np.array([[0, 1, 2]], dtype="int64"),
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.write_gamma_detail_to_hdf5",
+        "phono3py.conductivity.output.write_gamma_detail_to_hdf5",
         _fake_write_gamma_detail_to_hdf5,
     )
 
@@ -111,10 +111,10 @@ def test_write_gamma_passes_extra_grid_point_output(monkeypatch):
         calls.append(kwargs)
 
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.all_bands_exist", lambda _interaction: True
+        "phono3py.conductivity.output.all_bands_exist", lambda _interaction: True
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.write_kappa_to_hdf5",
+        "phono3py.conductivity.output.write_kappa_to_hdf5",
         _fake_write_kappa_to_hdf5,
     )
 
@@ -126,9 +126,7 @@ def test_write_gamma_passes_extra_grid_point_output(monkeypatch):
         primitive=SimpleNamespace(volume=1.0),
         get_phonons=lambda: (np.ones((20, 3), dtype="double"), None, None),
     )
-    monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.all_bands_exist", lambda _: True
-    )
+    monkeypatch.setattr("phono3py.conductivity.output.all_bands_exist", lambda _: True)
 
     br = SimpleNamespace(
         grid_points=np.array([0], dtype="int64"),
@@ -164,10 +162,10 @@ def test_write_gamma_no_extra_grid_point_output(monkeypatch):
         calls.append(kwargs)
 
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.all_bands_exist", lambda _interaction: True
+        "phono3py.conductivity.output.all_bands_exist", lambda _interaction: True
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.write_kappa_to_hdf5",
+        "phono3py.conductivity.output.write_kappa_to_hdf5",
         _fake_write_kappa_to_hdf5,
     )
 
@@ -208,10 +206,10 @@ def test_write_gamma_band_resolved_slices_extra_data(monkeypatch):
         calls.append(kwargs)
 
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.all_bands_exist", lambda _interaction: False
+        "phono3py.conductivity.output.all_bands_exist", lambda _interaction: False
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.write_kappa_to_hdf5",
+        "phono3py.conductivity.output.write_kappa_to_hdf5",
         _fake_write_kappa_to_hdf5,
     )
 

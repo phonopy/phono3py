@@ -265,7 +265,45 @@ class RTAScatteringSolver:
         gamma: NDArray[np.double],
     ) -> None:
         """Compute gamma without storing full ph-ph interaction strength."""
-        num_band = len(self._pp.primitive) * 3
+        temperatures_THz = np.array(
+            self._temperatures * get_physical_units().KB / get_physical_units().THzToEv,
+            dtype="double",
+        )
+
+        tetrahedra: NDArray[np.int64] | None = None
+        if None in self._sigmas:
+            from phono3py.other.tetrahedron_method import (
+                get_tetrahedra_relative_grid_address,
+            )
+
+            tetrahedra = get_tetrahedra_relative_grid_address(
+                self._pp.bz_grid.microzone_lattice
+            )
+
+        if self._pp.openmp_per_triplets is None:
+            triplets_at_q, _, _, _ = self._pp.get_triplets_at_q()
+            num_band = len(self._pp.primitive) * 3
+            openmp_per_triplets = len(triplets_at_q) > num_band
+        else:
+            openmp_per_triplets = self._pp.openmp_per_triplets
+
+        for j, sigma in enumerate(self._sigmas):
+            collisions = self._dispatch_lowmem_collision(
+                sigma,
+                temperatures_THz,
+                tetrahedra,
+                openmp_per_triplets,
+            )
+            self._store_lowmem_results(j, grid_point, gamma, collisions)
+
+    def _dispatch_lowmem_collision(
+        self,
+        sigma: float | None,
+        temperatures_THz: NDArray[np.double],
+        tetrahedra: NDArray[np.int64] | None,
+        openmp_per_triplets: bool,
+    ) -> NDArray[np.double]:
+        """Call C-extension for low-memory collision at one sigma."""
         band_indices = self._pp.band_indices
         svecs, multi = self._pp.primitive.get_smallest_vectors()
         p2s = self._pp.primitive.p2s_map
@@ -279,136 +317,129 @@ class RTAScatteringSolver:
         assert frequencies is not None
         assert eigenvectors is not None
 
-        temperatures_THz = np.array(
-            self._temperatures * get_physical_units().KB / get_physical_units().THzToEv,
-            dtype="double",
-        )
-
-        if None in self._sigmas:
-            from phono3py.other.tetrahedron_method import (
-                get_tetrahedra_relative_grid_address,
+        if self._is_N_U:
+            collisions = np.zeros(
+                (2, len(self._temperatures), len(band_indices)),
+                dtype="double",
+                order="C",
             )
-
-            tetrahedra = get_tetrahedra_relative_grid_address(
-                self._pp.bz_grid.microzone_lattice
-            )
-
-        if self._pp.openmp_per_triplets is None:
-            openmp_per_triplets = len(triplets_at_q) > num_band
         else:
-            openmp_per_triplets = self._pp.openmp_per_triplets
+            collisions = np.zeros(
+                (len(self._temperatures), len(band_indices)),
+                dtype="double",
+                order="C",
+            )
+
+        self._collision.set_sigma(sigma)
 
         import phono3py._phono3py as phono3c
 
-        for j, sigma in enumerate(self._sigmas):
-            self._collision.set_sigma(sigma)
-            if self._is_N_U:
-                collisions = np.zeros(
-                    (2, len(self._temperatures), len(band_indices)),
-                    dtype="double",
+        if sigma is None:
+            assert tetrahedra is not None
+            phono3c.pp_collision(
+                collisions,
+                np.array(
+                    np.dot(tetrahedra, self._pp.bz_grid.P.T),
+                    dtype="int64",
                     order="C",
-                )
-            else:
-                collisions = np.zeros(
-                    (len(self._temperatures), len(band_indices)),
-                    dtype="double",
-                    order="C",
-                )
+                ),
+                frequencies,
+                eigenvectors,
+                triplets_at_q,
+                weights_at_q,
+                self._pp.bz_grid.addresses,
+                self._pp.bz_grid.gp_map,
+                self._pp.bz_grid.store_dense_gp_map * 1 + 1,
+                self._pp.bz_grid.D_diag,
+                self._pp.bz_grid.Q,
+                self._pp.fc3,
+                self._pp.fc3_nonzero_indices,
+                svecs,
+                multi,
+                masses,
+                p2s,
+                s2p,
+                band_indices,
+                temperatures_THz,
+                self._is_N_U * 1,
+                self._pp.symmetrize_fc3q * 1,
+                self._pp.make_r0_average * 1,
+                self._pp.all_shortest,
+                self._pp.cutoff_frequency,
+                openmp_per_triplets * 1,
+            )
+        else:
+            sigma_cutoff = -1.0 if self._sigma_cutoff is None else self._sigma_cutoff
+            phono3c.pp_collision_with_sigma(
+                collisions,
+                sigma,
+                sigma_cutoff,
+                frequencies,
+                eigenvectors,
+                triplets_at_q,
+                weights_at_q,
+                self._pp.bz_grid.addresses,
+                self._pp.bz_grid.D_diag,
+                self._pp.bz_grid.Q,
+                self._pp.fc3,
+                self._pp.fc3_nonzero_indices,
+                svecs,
+                multi,
+                masses,
+                p2s,
+                s2p,
+                band_indices,
+                temperatures_THz,
+                self._is_N_U * 1,
+                self._pp.symmetrize_fc3q * 1,
+                self._pp.make_r0_average * 1,
+                self._pp.all_shortest,
+                self._pp.cutoff_frequency,
+                openmp_per_triplets * 1,
+            )
 
-            if sigma is None:
-                phono3c.pp_collision(
-                    collisions,
-                    np.array(
-                        np.dot(tetrahedra, self._pp.bz_grid.P.T),
-                        dtype="int64",
-                        order="C",
-                    ),
-                    frequencies,
-                    eigenvectors,
-                    triplets_at_q,
-                    weights_at_q,
-                    self._pp.bz_grid.addresses,
-                    self._pp.bz_grid.gp_map,
-                    self._pp.bz_grid.store_dense_gp_map * 1 + 1,
-                    self._pp.bz_grid.D_diag,
-                    self._pp.bz_grid.Q,
-                    self._pp.fc3,
-                    self._pp.fc3_nonzero_indices,
-                    svecs,
-                    multi,
-                    masses,
-                    p2s,
-                    s2p,
-                    band_indices,
-                    temperatures_THz,
-                    self._is_N_U * 1,
-                    self._pp.symmetrize_fc3q * 1,
-                    self._pp.make_r0_average * 1,
-                    self._pp.all_shortest,
-                    self._pp.cutoff_frequency,
-                    openmp_per_triplets * 1,
-                )
-            else:
-                sigma_cutoff = (
-                    -1.0 if self._sigma_cutoff is None else self._sigma_cutoff
-                )
-                phono3c.pp_collision_with_sigma(
-                    collisions,
-                    sigma,
-                    sigma_cutoff,
-                    frequencies,
-                    eigenvectors,
-                    triplets_at_q,
-                    weights_at_q,
-                    self._pp.bz_grid.addresses,
-                    self._pp.bz_grid.D_diag,
-                    self._pp.bz_grid.Q,
-                    self._pp.fc3,
-                    self._pp.fc3_nonzero_indices,
-                    svecs,
-                    multi,
-                    masses,
-                    p2s,
-                    s2p,
-                    band_indices,
-                    temperatures_THz,
-                    self._is_N_U * 1,
-                    self._pp.symmetrize_fc3q * 1,
-                    self._pp.make_r0_average * 1,
-                    self._pp.all_shortest,
-                    self._pp.cutoff_frequency,
-                    openmp_per_triplets * 1,
-                )
+        return collisions
 
-            col_unit_conv = self._collision.unit_conversion_factor
-            pp_unit_conv = self._pp.unit_conversion_factor
+    def _store_lowmem_results(
+        self,
+        i_sigma: int,
+        grid_point: int,
+        gamma: NDArray[np.double],
+        collisions: NDArray[np.double],
+    ) -> None:
+        """Apply unit conversion and degeneracy averaging to collision results."""
+        col_unit_conv = self._collision.unit_conversion_factor
+        pp_unit_conv = self._pp.unit_conversion_factor
+        band_indices = self._pp.band_indices
+        frequencies, _, _ = self._pp.get_phonons()
+        freq_at_gp = frequencies[grid_point]
+
+        if self._is_N_U:
+            col = collisions.sum(axis=0)
+            col_N = collisions[0]
+            col_U = collisions[1]
+        else:
+            col = collisions
+
+        for k in range(len(self._temperatures)):
+            gamma[i_sigma, k] = average_by_degeneracy(
+                col[k] * col_unit_conv * pp_unit_conv,
+                band_indices,
+                freq_at_gp,
+            )
             if self._is_N_U:
-                col = collisions.sum(axis=0)
-                col_N = collisions[0]
-                col_U = collisions[1]
-            else:
-                col = collisions
-
-            freq_at_gp = frequencies[grid_point]
-            for k in range(len(self._temperatures)):
-                gamma[j, k] = average_by_degeneracy(
-                    col[k] * col_unit_conv * pp_unit_conv,
+                assert self._gamma_N is not None
+                assert self._gamma_U is not None
+                self._gamma_N[i_sigma, k] = average_by_degeneracy(
+                    col_N[k] * col_unit_conv * pp_unit_conv,
                     band_indices,
                     freq_at_gp,
                 )
-                if self._is_N_U:
-                    assert self._gamma_N is not None
-                    assert self._gamma_U is not None
-                    self._gamma_N[j, k] = average_by_degeneracy(
-                        col_N[k] * col_unit_conv * pp_unit_conv,
-                        band_indices,
-                        freq_at_gp,
-                    )
-                    self._gamma_U[j, k] = average_by_degeneracy(
-                        col_U[k] * col_unit_conv * pp_unit_conv,
-                        band_indices,
-                        freq_at_gp,
-                    )
+                self._gamma_U[i_sigma, k] = average_by_degeneracy(
+                    col_U[k] * col_unit_conv * pp_unit_conv,
+                    band_indices,
+                    freq_at_gp,
+                )
 
 
 class IsotopeScatteringSolver:

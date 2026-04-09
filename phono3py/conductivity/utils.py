@@ -38,7 +38,7 @@ from __future__ import annotations
 
 import os
 import time
-from typing import Any, Literal, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -52,6 +52,9 @@ from phono3py.phonon.grid import (
 )
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.triplets import get_all_triplets
+
+if TYPE_CHECKING:
+    from phono3py.conductivity.calculators import LBTECalculator, RTACalculator
 
 _TOptions = TypeVar("_TOptions")
 
@@ -451,7 +454,7 @@ def diagonalize_collision_matrix(
 
 
 def write_pp_interaction(
-    conductivity: Any,
+    conductivity: RTACalculator | LBTECalculator,
     pp: Interaction,
     i: int,
     filename: str | os.PathLike | None = None,
