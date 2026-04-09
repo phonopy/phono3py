@@ -36,7 +36,7 @@ def test_collision_matrix_py_vs_c_reducible(si_pbesol: Phono3py):
 
     results = {}
     for lang in ("C", "Python"):
-        cm = CollisionMatrix(itr, is_reducible_collision_matrix=True, lang=lang)
+        cm = CollisionMatrix(itr, lang=lang)
         cm.set_grid_point(grid_point)
         cm.temperature = temperature
         cm.run_integration_weights()
@@ -51,7 +51,7 @@ def test_get_gp2tp_map_shapes(si_pbesol: Phono3py):
     itr = _get_interaction(si_pbesol, [4, 4, 4])
     grid_point = 1
 
-    cm = CollisionMatrix(itr, is_reducible_collision_matrix=True)
+    cm = CollisionMatrix(itr)
     cm.set_grid_point(grid_point)
 
     gp2tp, tp2s, swapped = cm._get_gp2tp_map()

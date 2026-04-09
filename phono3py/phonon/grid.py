@@ -995,7 +995,7 @@ def get_ir_grid_points(
 
     """
     ir_grid_map = _get_ir_grid_map(bz_grid.D_diag, bz_grid.rotations, PS=bz_grid.PS)
-    (ir_grid_points, ir_grid_weights) = extract_ir_grid_points(ir_grid_map)
+    ir_grid_points, ir_grid_weights = extract_ir_grid_points(ir_grid_map)
 
     return ir_grid_points, ir_grid_weights, ir_grid_map
 
@@ -1057,7 +1057,7 @@ def _get_grid_points_by_bz_rotations(
     bz_gp: int,
     bz_grid: BZGrid,
     rotations: NDArray[np.int64],
-    lang: Literal["C", "Py"] = "C",
+    lang: Literal["C", "Python"] = "C",
 ) -> NDArray[np.int64]:
     """Grid point rotations with surface treatment."""
     if lang == "C":

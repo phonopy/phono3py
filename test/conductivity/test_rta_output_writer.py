@@ -4,194 +4,7 @@ from types import SimpleNamespace
 
 import numpy as np
 
-from phono3py.conductivity import rta_output
-from phono3py.conductivity.base import get_unit_to_WmK
-from phono3py.conductivity.rta_output import ConductivityRTAWriter
-
-
-def test_write_kappa_calls_hdf5_writer(monkeypatch):
-    """`write_kappa` forwards per-sigma data to hdf5 writer."""
-    calls = []
-
-    def _fake_write_kappa_to_hdf5(*args, **kwargs):
-        calls.append((args, kwargs))
-
-    kappa = np.arange(12, dtype="double").reshape(2, 1, 6)
-    mode_kappa = np.arange(12, dtype="double").reshape(2, 1, 1, 1, 6)
-    gv = np.ones((1, 1, 3), dtype="double")
-    gv_by_gv = np.ones((1, 1, 6), dtype="double")
-    mode_cv = np.ones((1, 1, 1), dtype="double")
-
-    monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.get_rta_writer_kappa_data",
-        lambda _br: {
-            "kappa": kappa,
-            "mode_kappa": mode_kappa,
-            "group_velocities": gv,
-            "gv_by_gv": gv_by_gv,
-            "kappa_TOT_RTA": None,
-            "kappa_P_RTA": None,
-            "kappa_C": None,
-            "mode_kappa_P_RTA": None,
-            "mode_kappa_C": None,
-            "mode_heat_capacities": mode_cv,
-        },
-    )
-    monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.write_kappa_to_hdf5",
-        _fake_write_kappa_to_hdf5,
-    )
-
-    br = SimpleNamespace(
-        temperatures=np.array([300.0], dtype="double"),
-        sigmas=[None, 0.1],
-        sigma_cutoff_width=None,
-        gamma=np.zeros((2, 1, 1, 1), dtype="double"),
-        gamma_isotope=np.zeros((2, 1, 1, 1), dtype="double"),
-        gamma_elph=np.zeros((1, 1, 1), dtype="double"),
-        mesh_numbers=np.array([2, 2, 2], dtype="int64"),
-        bz_grid=SimpleNamespace(),
-        frequencies=np.array([[5.0]], dtype="double"),
-        averaged_pp_interaction=None,
-        qpoints=np.array([[0.0, 0.0, 0.0]], dtype="double"),
-        grid_points=np.array([0], dtype="int64"),
-        grid_weights=np.array([1], dtype="int64"),
-        boundary_mfp=None,
-        get_gamma_N_U=lambda: (None, None),
-    )
-
-    ConductivityRTAWriter.write_kappa(
-        br,
-        volume=2.0,
-        compression="gzip",
-        filename="dummy.hdf5",
-        log_level=1,
-    )
-
-    assert len(calls) == 2
-    for i, (_args, kwargs) in enumerate(calls):
-        np.testing.assert_allclose(kwargs["kappa"], kappa[i])
-        assert kwargs["sigma"] == br.sigmas[i]
-        assert kwargs["compression"] == "gzip"
-        assert kwargs["filename"] == "dummy.hdf5"
-        assert kwargs["verbose"] == 1
-        np.testing.assert_allclose(
-            kwargs["kappa_unit_conversion"], get_unit_to_WmK() / 2.0
-        )
-
-
-def test_write_gamma_all_bands(monkeypatch):
-    """`write_gamma` writes one data block per sigma in all-band mode."""
-    calls = []
-
-    def _fake_write_kappa_to_hdf5(*args, **kwargs):
-        calls.append((args, kwargs))
-
-    monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.all_bands_exist", lambda _interaction: True
-    )
-    monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.get_rta_writer_grid_data",
-        lambda _br, _i: {
-            "group_velocities_i": np.array([[1.0, 2.0, 3.0]], dtype="double"),
-            "gv_by_gv_i": np.array([[1.0, 1.0, 1.0, 0.0, 0.0, 0.0]], dtype="double"),
-            "velocity_operator_i": np.array([[[1.0, 0.0, 0.0]]], dtype="cdouble"),
-            "mode_heat_capacities": np.array([[[9.0]]], dtype="double"),
-        },
-    )
-    monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.write_kappa_to_hdf5",
-        _fake_write_kappa_to_hdf5,
-    )
-
-    interaction = SimpleNamespace(
-        primitive=SimpleNamespace(volume=4.0),
-        band_indices=np.array([0], dtype="int64"),
-        bz_grid=SimpleNamespace(),
-        get_phonons=lambda: (np.array([[4.0]], dtype="double"), None, None),
-    )
-    br = SimpleNamespace(
-        grid_points=np.array([0], dtype="int64"),
-        averaged_pp_interaction=np.array([[2.0]], dtype="double"),
-        mesh_numbers=np.array([2, 2, 2], dtype="int64"),
-        bz_grid=SimpleNamespace(),
-        temperatures=np.array([300.0], dtype="double"),
-        gamma=np.array([[[1.0]], [[2.0]]], dtype="double"),
-        gamma_isotope=np.array([[[0.1]], [[0.2]]], dtype="double"),
-        sigmas=[None, 0.1],
-        sigma_cutoff_width=None,
-        get_gamma_N_U=lambda: (None, None),
-    )
-
-    ConductivityRTAWriter.write_gamma(br, interaction, i=0)
-
-    assert len(calls) == 2
-    for i, (_args, kwargs) in enumerate(calls):
-        assert "band_index" not in kwargs
-        assert kwargs["grid_point"] == 0
-        assert kwargs["sigma"] == br.sigmas[i]
-        np.testing.assert_allclose(kwargs["heat_capacity"], np.array([[9.0]]))
-
-
-def test_write_gamma_band_resolved(monkeypatch):
-    """`write_gamma` writes one data block per (sigma, band) when bands are split."""
-    calls = []
-
-    def _fake_write_kappa_to_hdf5(*args, **kwargs):
-        calls.append((args, kwargs))
-
-    monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.all_bands_exist", lambda _interaction: False
-    )
-    monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.get_rta_writer_grid_data",
-        lambda _br, _i: {
-            "group_velocities_i": np.array(
-                [[1.0, 0.0, 0.0], [2.0, 0.0, 0.0]], dtype="double"
-            ),
-            "gv_by_gv_i": np.array(
-                [[1.0, 0.0, 0.0, 0.0, 0.0, 0.0], [2.0, 0.0, 0.0, 0.0, 0.0, 0.0]],
-                dtype="double",
-            ),
-            "velocity_operator_i": np.array(
-                [[[1.0, 0.0, 0.0]], [[2.0, 0.0, 0.0]]], dtype="cdouble"
-            ),
-            "mode_heat_capacities": np.array([[[3.0, 4.0]]], dtype="double"),
-        },
-    )
-    monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.write_kappa_to_hdf5",
-        _fake_write_kappa_to_hdf5,
-    )
-
-    interaction = SimpleNamespace(
-        primitive=SimpleNamespace(volume=2.0),
-        band_indices=np.array([2, 4], dtype="int64"),
-        bz_grid=SimpleNamespace(),
-        get_phonons=lambda: (
-            np.array([[0.0, 0.0, 12.0, 0.0, 20.0]], dtype="double"),
-            None,
-            None,
-        ),
-    )
-    br = SimpleNamespace(
-        grid_points=np.array([0], dtype="int64"),
-        averaged_pp_interaction=np.array([[5.0, 6.0]], dtype="double"),
-        mesh_numbers=np.array([2, 2, 2], dtype="int64"),
-        bz_grid=SimpleNamespace(),
-        temperatures=np.array([300.0], dtype="double"),
-        gamma=np.array([[[[1.0, 2.0]]]], dtype="double"),
-        gamma_isotope=np.array([[[0.1, 0.2]]], dtype="double"),
-        sigmas=[0.05],
-        sigma_cutoff_width=3.0,
-        get_gamma_N_U=lambda: (None, None),
-    )
-
-    ConductivityRTAWriter.write_gamma(br, interaction, i=0)
-
-    assert len(calls) == 2
-    assert {calls[0][1]["band_index"], calls[1][1]["band_index"]} == {2, 4}
-    assert all(call[1]["sigma"] == 0.05 for call in calls)
+from phono3py.conductivity.output import ConductivityRTAWriter
 
 
 def test_write_gamma_detail_all_bands(monkeypatch):
@@ -202,14 +15,14 @@ def test_write_gamma_detail_all_bands(monkeypatch):
         calls.append((args, kwargs))
 
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.all_bands_exist", lambda _interaction: True
+        "phono3py.conductivity.output.all_bands_exist", lambda _interaction: True
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.get_all_triplets",
+        "phono3py.conductivity.output.get_all_triplets",
         lambda _gp, _bz_grid: np.array([[0, 1, 2]], dtype="int64"),
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.write_gamma_detail_to_hdf5",
+        "phono3py.conductivity.output.write_gamma_detail_to_hdf5",
         _fake_write_gamma_detail_to_hdf5,
     )
 
@@ -251,14 +64,14 @@ def test_write_gamma_detail_band_resolved(monkeypatch):
         calls.append((args, kwargs))
 
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.all_bands_exist", lambda _interaction: False
+        "phono3py.conductivity.output.all_bands_exist", lambda _interaction: False
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.get_all_triplets",
+        "phono3py.conductivity.output.get_all_triplets",
         lambda _gp, _bz_grid: np.array([[0, 1, 2]], dtype="int64"),
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.rta_output.write_gamma_detail_to_hdf5",
+        "phono3py.conductivity.output.write_gamma_detail_to_hdf5",
         _fake_write_gamma_detail_to_hdf5,
     )
 
@@ -290,54 +103,152 @@ def test_write_gamma_detail_band_resolved(monkeypatch):
     assert all(call[1]["sigma"] == 0.2 for call in calls)
 
 
-def test_show_rta_progress_dispatch_wigner(monkeypatch):
-    """`show_rta_progress` dispatches to wigner handler for "wigner"."""
-    called = []
+def test_write_gamma_passes_extra_grid_point_output(monkeypatch):
+    """`write_gamma` passes extra_datasets from get_extra_grid_point_output."""
+    calls = []
+
+    def _fake_write_kappa_to_hdf5(*args, **kwargs):
+        calls.append(kwargs)
+
     monkeypatch.setattr(
-        rta_output,
-        "_show_rta_progress_wigner",
-        lambda _br, _log_level: called.append("wigner"),
+        "phono3py.conductivity.output.all_bands_exist", lambda _interaction: True
     )
     monkeypatch.setattr(
-        rta_output,
-        "_RTA_PROGRESS_HANDLERS",
-        {
-            "default": rta_output._show_rta_progress_default,
-            "wigner": rta_output._show_rta_progress_wigner,
-        },
-    )
-    monkeypatch.setattr(
-        rta_output,
-        "get_rta_progress_mode",
-        lambda _conductivity_type: "wigner",
+        "phono3py.conductivity.output.write_kappa_to_hdf5",
+        _fake_write_kappa_to_hdf5,
     )
 
-    rta_output.show_rta_progress(SimpleNamespace(), "wigner", 1)
-    assert called == ["wigner"]
+    # Shape: (num_gp=1, num_band0=3, nat3=6, 3)
+    vel_op = np.ones((1, 3, 6, 3), dtype="complex128")
+    extra_data = {"velocity_operator": vel_op}
+
+    interaction = SimpleNamespace(
+        primitive=SimpleNamespace(volume=1.0),
+        get_phonons=lambda: (np.ones((20, 3), dtype="double"), None, None),
+    )
+    monkeypatch.setattr("phono3py.conductivity.output.all_bands_exist", lambda _: True)
+
+    br = SimpleNamespace(
+        grid_points=np.array([0], dtype="int64"),
+        group_velocities=np.zeros((1, 3, 3), dtype="double"),
+        gv_by_gv=np.zeros((1, 3, 6), dtype="double"),
+        get_extra_grid_point_output=lambda: extra_data,
+        mode_heat_capacities=np.zeros((2, 1, 3), dtype="double"),
+        averaged_pp_interaction=None,
+        mesh_numbers=np.array([2, 2, 2], dtype="int64"),
+        bz_grid=SimpleNamespace(),
+        temperatures=np.array([300.0], dtype="double"),
+        gamma=np.zeros((1, 2, 1, 3), dtype="double"),
+        gamma_isotope=None,
+        sigmas=[None],
+        sigma_cutoff_width=None,
+        get_gamma_N_U=lambda: (None, None),
+        frequencies=np.ones((1, 3), dtype="double"),
+    )
+
+    ConductivityRTAWriter.write_gamma(br, interaction, i=0)
+
+    assert len(calls) == 1
+    np.testing.assert_array_equal(
+        calls[0]["extra_datasets"]["velocity_operator"], vel_op[0]
+    )
 
 
-def test_show_rta_progress_dispatch_default(monkeypatch):
-    """`show_rta_progress` dispatches to default handler for None and kubo."""
-    called = []
+def test_write_gamma_no_extra_grid_point_output(monkeypatch):
+    """`write_gamma` passes None extra_datasets when no extra output."""
+    calls = []
+
+    def _fake_write_kappa_to_hdf5(*args, **kwargs):
+        calls.append(kwargs)
+
     monkeypatch.setattr(
-        rta_output,
-        "_show_rta_progress_default",
-        lambda _br, _log_level: called.append("default"),
+        "phono3py.conductivity.output.all_bands_exist", lambda _interaction: True
     )
     monkeypatch.setattr(
-        rta_output,
-        "_RTA_PROGRESS_HANDLERS",
-        {
-            "default": rta_output._show_rta_progress_default,
-            "wigner": rta_output._show_rta_progress_wigner,
-        },
-    )
-    monkeypatch.setattr(
-        rta_output,
-        "get_rta_progress_mode",
-        lambda _conductivity_type: "default",
+        "phono3py.conductivity.output.write_kappa_to_hdf5",
+        _fake_write_kappa_to_hdf5,
     )
 
-    rta_output.show_rta_progress(SimpleNamespace(), None, 1)
-    rta_output.show_rta_progress(SimpleNamespace(), "kubo", 1)
-    assert called == ["default", "default"]
+    interaction = SimpleNamespace(
+        primitive=SimpleNamespace(volume=1.0),
+        get_phonons=lambda: (np.ones((20, 3), dtype="double"), None, None),
+    )
+
+    br = SimpleNamespace(
+        grid_points=np.array([0], dtype="int64"),
+        group_velocities=np.zeros((1, 3, 3), dtype="double"),
+        gv_by_gv=np.zeros((1, 3, 6), dtype="double"),
+        get_extra_grid_point_output=lambda: None,
+        mode_heat_capacities=np.zeros((2, 1, 3), dtype="double"),
+        averaged_pp_interaction=None,
+        mesh_numbers=np.array([2, 2, 2], dtype="int64"),
+        bz_grid=SimpleNamespace(),
+        temperatures=np.array([300.0], dtype="double"),
+        gamma=np.zeros((1, 2, 1, 3), dtype="double"),
+        gamma_isotope=None,
+        sigmas=[None],
+        sigma_cutoff_width=None,
+        get_gamma_N_U=lambda: (None, None),
+        frequencies=np.ones((1, 3), dtype="double"),
+    )
+
+    ConductivityRTAWriter.write_gamma(br, interaction, i=0)
+
+    assert len(calls) == 1
+    assert calls[0]["extra_datasets"] is None
+
+
+def test_write_gamma_band_resolved_slices_extra_data(monkeypatch):
+    """`write_gamma` slices extra_datasets per band in band-resolved mode."""
+    calls = []
+
+    def _fake_write_kappa_to_hdf5(*args, **kwargs):
+        calls.append(kwargs)
+
+    monkeypatch.setattr(
+        "phono3py.conductivity.output.all_bands_exist", lambda _interaction: False
+    )
+    monkeypatch.setattr(
+        "phono3py.conductivity.output.write_kappa_to_hdf5",
+        _fake_write_kappa_to_hdf5,
+    )
+
+    # velocity_operator shape: (num_gp=1, num_band0=2, nat3=6, 3)
+    vel_op = np.arange(2 * 6 * 3, dtype="complex128").reshape(1, 2, 6, 3)
+    extra_data = {"velocity_operator": vel_op}
+
+    interaction = SimpleNamespace(
+        primitive=SimpleNamespace(volume=1.0),
+        get_phonons=lambda: (np.ones((20, 6), dtype="double"), None, None),
+        band_indices=np.array([1, 3], dtype="int64"),
+    )
+
+    br = SimpleNamespace(
+        grid_points=np.array([0], dtype="int64"),
+        group_velocities=np.zeros((1, 2, 3), dtype="double"),
+        gv_by_gv=np.zeros((1, 2, 6), dtype="double"),
+        get_extra_grid_point_output=lambda: extra_data,
+        mode_heat_capacities=np.zeros((1, 1, 2), dtype="double"),
+        averaged_pp_interaction=None,
+        mesh_numbers=np.array([2, 2, 2], dtype="int64"),
+        bz_grid=SimpleNamespace(),
+        temperatures=np.array([300.0], dtype="double"),
+        gamma=np.zeros((1, 1, 1, 2), dtype="double"),
+        gamma_isotope=None,
+        sigmas=[None],
+        sigma_cutoff_width=None,
+        get_gamma_N_U=lambda: (None, None),
+        frequencies=np.ones((1, 2), dtype="double"),
+    )
+
+    ConductivityRTAWriter.write_gamma(br, interaction, i=0)
+
+    assert len(calls) == 2
+    # First band (k=0): velocity_operator[gp=0][band=0]
+    np.testing.assert_array_equal(
+        calls[0]["extra_datasets"]["velocity_operator"], vel_op[0, 0]
+    )
+    # Second band (k=1): velocity_operator[gp=0][band=1]
+    np.testing.assert_array_equal(
+        calls[1]["extra_datasets"]["velocity_operator"], vel_op[0, 1]
+    )

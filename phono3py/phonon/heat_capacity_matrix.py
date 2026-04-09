@@ -38,21 +38,34 @@ from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
-from phonopy.phonon.thermal_properties import mode_cv
 from phonopy.physical_units import get_physical_units
 
 
 def mode_cv_matrix(
-    temp: float,
+    temps: NDArray[np.double],
     freqs: NDArray[np.double],
-    cutoff: float = 1e-4,
 ) -> NDArray[np.double]:
     r"""Calculate mode heat capacity matrix, Cqjj'.
 
-    C_{\mathbf{q}jj'} = K_B \frac{e^{x_{\mathbf{q}j} - x_{\mathbf{q}j'}} - 1}
+    C_{\mathbf{q}jj'} =
+    k_\text{B} \frac{e^{x_{\mathbf{q}j} - x_{\mathbf{q}j'}} - 1}
     {x_{\mathbf{q}j} - x_{\mathbf{q}j'}} \left( \frac{
     x_{\mathbf{q}j} + x_{\mathbf{q}j'}}{2}
     \right)^2 n_{\mathbf{q}j}(n_{\mathbf{q}j'} + 1)
+
+    This is reduced to
+
+    C_{\mathbf{q}jj'} = k_\text{B}
+    -\left( \frac{x_{\mathbf{q}j} + x_{\mathbf{q}j'}}{2} \right)^2
+    \frac{n_{\mathbf{q}j} - n_{\mathbf{q}j'}}
+    {x_{\mathbf{q}j} - x_{\mathbf{q}j'}}
+
+    With x = \frac{\hbar \omega}{k_\text{B} T},
+
+    C_{\mathbf{q}jj'} =
+    -\frac{\hbar(\omega_{\mathbf{q}j} + \omega_{\mathbf{q}j'})^2}
+    {4T(\omega_{\mathbf{q}j} - \omega_{\mathbf{q}j'})}
+    (n_{\mathbf{q}j} - n_{\mathbf{q}j'})
 
     Note
     ----
@@ -60,30 +73,32 @@ def mode_cv_matrix(
 
     Parameters
     ----------
-    temp : float
-        Temperature in K.
-    freqs : ndarray
+    temps: NDArray[np.double]
+        Temperatures in K.
+    freqs : NDArray[np.double]
         Phonon frequencies at a q-point in eV.
     cutoff : float
-        This is used to check the degeneracy.
+        This is used to check the degeneracy in eV.
 
     Returns
     -------
     ndarray
         Heat capacity matrix in eV/K.
-        shape=(num_band, num_band), dtype='double', order='C'.
+        shape=(num_temps, num_band, num_band), dtype='double', order='C'.
 
     """
-    KB = get_physical_units().KB
-    x = freqs / KB / temp
-    shape = (len(freqs), len(freqs))
-    cvm = np.zeros(shape, dtype="double", order="C")
-    for i, j in np.ndindex(shape):
-        if abs(freqs[i] - freqs[j]) < cutoff:
-            cvm[i, j] = mode_cv(temp, freqs[i])
-            continue
-        sub = x[i] - x[j]
-        add = x[i] + x[j]
-        n_inv = np.exp([x[i], x[j], sub]) - 1
-        cvm[i, j] = KB * n_inv[2] / sub * (add / 2) ** 2 / n_inv[0] * (1 / n_inv[1] + 1)
+
+    def bose_einstein(
+        freqs: NDArray[np.double], temps: NDArray[np.double]
+    ) -> NDArray[np.double]:
+        """Re-implemented here because of different physical units."""
+        x = np.divide.outer(freqs, get_physical_units().KB * temps).T
+        return 1.0 / (np.exp(x) - 1)
+
+    n = bose_einstein(freqs, temps)
+    cvm = np.zeros((len(temps), len(freqs), len(freqs)), dtype="double", order="C")
+    f_sub = np.subtract.outer(freqs, freqs)
+    f_add = np.add.outer(freqs, freqs)
+    n_sub = n[:, :, None] - n[:, None, :]
+    cvm = -(f_add**2)[None, :, :] / 4 / temps[:, None, None] * n_sub / f_sub[None, :, :]
     return cvm

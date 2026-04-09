@@ -2,6 +2,11 @@
 
 # Change Log
 
+## Apr-10-2026: Version 3.30.0
+
+- Big refactoring of thermal conductivity calculation routines. This version is
+  not yet fully stable, so it should be used with the utmost caution.
+
 ## Mar-29-2026: Version 3.29.0
 
 - Refactoring along with type hints coverage improvement.

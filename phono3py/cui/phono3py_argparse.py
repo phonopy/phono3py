@@ -435,13 +435,6 @@ def get_parser(
         help="Calculate joint density of states",
     )
     parser.add_argument(
-        "--kubo",
-        dest="is_kubo_kappa",
-        action="store_true",
-        default=None,
-        help="Choose Kubo lattice thermal conductivity.",
-    )
-    parser.add_argument(
         "--lbte",
         dest="is_lbte",
         action="store_true",
@@ -854,7 +847,15 @@ def get_parser(
         "--tmin", dest="tmin", default=None, help="Minimum calculated temperature"
     )
     parser.add_argument(
+        "--tt",
+        "--transport-type",
+        dest="transport_type",
+        default=None,
+        help=("Transport type of thermal conductivity calculation"),
+    )
+    parser.add_argument(
         "--ts",
+        "--temperature",
         nargs="+",
         dest="temperatures",
         default=None,
@@ -1003,6 +1004,7 @@ class Phono3pyMockArgs:
     show_num_triplets: bool | None = None
     supercell_dimension: Sequence[str] | None = None
     temperatures: Sequence[str] | None = None
+    transport_type: str | None = None
     use_pypolymlp: bool | None = None
     write_gamma: bool | None = None
     write_gamma_detail: bool | None = None

@@ -89,8 +89,8 @@ from phonopy.structure.cells import (
 )
 from phonopy.structure.symmetry import Symmetry
 
-from phono3py.conductivity.base import ConductivityBase
-from phono3py.conductivity.direct_solution_init import get_thermal_conductivity_LBTE
+from phono3py.conductivity.calculators import LBTECalculator, RTACalculator
+from phono3py.conductivity.lbte_init import get_thermal_conductivity_LBTE
 from phono3py.conductivity.rta_init import get_thermal_conductivity_RTA
 from phono3py.interface.fc_calculator import (
     FC3Solver,
@@ -326,8 +326,8 @@ class Phono3py:
         self._phonon_supercells_with_displacements: list[PhonopyAtoms] | None = None
 
         # Thermal conductivity
-        # conductivity_RTA or conductivity_LBTE class instance
-        self._thermal_conductivity: ConductivityBase | None = None
+        # RTACalculator (RTA) or LBTECalculator (standard/Wigner LBTE).
+        self._thermal_conductivity: RTACalculator | LBTECalculator | None = None
 
         # Imaginary part of self energy at frequency points
         self._ise_params: ImagSelfEnergyValues | None = None
@@ -917,7 +917,9 @@ class Phono3py:
         self._set_mesh_numbers(mesh_numbers)
 
     @property
-    def thermal_conductivity(self) -> ConductivityBase | None:
+    def thermal_conductivity(
+        self,
+    ) -> RTACalculator | LBTECalculator | None:
         """Return thermal conductivity class instance."""
         return self._thermal_conductivity
 
@@ -2245,13 +2247,13 @@ class Phono3py:
         is_kappa_star: bool = True,
         gv_delta_q: float | None = None,  # for group velocity
         is_full_pp: bool = False,
-        pinv_cutoff: float = 1.0e-8,  # for pseudo-inversion of collision matrix
+        pinv_cutoff: float | None = None,  # for pseudo-inversion of collision matrix
         pinv_method: int = 0,  # for pseudo-inversion of collision matrix
         pinv_solver: int = 0,  # solver of pseudo-inversion of collision matrix
         write_gamma: bool = False,
         read_gamma: bool = False,
         is_N_U: bool = False,
-        conductivity_type: Literal["wigner", "kubo"] | None = None,
+        transport_type: str | None = None,
         write_kappa: bool = False,
         write_gamma_detail: bool = False,
         write_collision: bool = False,
@@ -2317,7 +2319,7 @@ class Phono3py:
             improve of efficiency is expected.
             With smearing method, even if this is set False, full elements
             are computed unless `sigma_cutoff` is specified.
-        pinv_cutoff : float, optional, default is 1.0e-8
+        pinv_cutoff : float, optional, default is None (usually 1.0e-8)
             Direct solution only (`is_LBTE=True`). This is used as a criterion
             to judge the eigenvalues are considered as zero or not in
             pseudo-inversion of collision matrix. See also `pinv_method`.
@@ -2334,11 +2336,11 @@ class Phono3py:
                 2. Lapacke dsyevd: Larger memory consumption than dsyev, but
                    faster. This is not recommended because sometimes a wrong
                    result is obtained.
-                3. Numpy’s dsyevd (linalg.eigh). This is not recommended
+                3. Numpy's dsyevd (linalg.eigh). This is not recommended
                    because sometimes a wrong result is obtained.
-                4. Scipy’s dsyev: This is the default solver when scipy is
+                4. Scipy's dsyev: This is the default solver when scipy is
                    installed and MKL LAPACKE is not integrated.
-                5. Scipy’s dsyevd. This is not recommended because sometimes
+                5. Scipy's dsyevd. This is not recommended because sometimes
                    a wrong result is obtained.
             The solver choices other than --pinv-solver=1 and
             --pinv-solver=4 are dangerous and not recommend.
@@ -2355,8 +2357,8 @@ class Phono3py:
             RTA only (`is_LBTE=False`). With True, categorization of normal
             and Umklapp scattering is made and imaginary parts of self energy
             for them are separated.
-        conductivity_type : str, optional
-            "wigner", "kubo", or None. Default is None.
+        transport_type : str, optional
+            "MS-SMM19", "NJC23", or None. Default is None.
         write_kappa : bool, optional, default is False
             With True, thermal conductivity and related properties are
             written into a file. With multiple `sigmas`, respective files
@@ -2424,15 +2426,9 @@ class Phono3py:
             _log_level = log_level
 
         if is_LBTE:
-            if temperatures is None:
-                _temperatures = [
-                    300,
-                ]
-            else:
-                _temperatures = temperatures
             self._thermal_conductivity = get_thermal_conductivity_LBTE(
                 self._interaction,
-                temperatures=_temperatures,
+                temperatures=temperatures,
                 sigmas=self._sigmas,
                 sigma_cutoff=self._sigma_cutoff,
                 is_isotope=is_isotope,
@@ -2444,7 +2440,7 @@ class Phono3py:
                 is_kappa_star=is_kappa_star,
                 gv_delta_q=gv_delta_q,
                 is_full_pp=is_full_pp,
-                conductivity_type=conductivity_type,
+                transport_type=transport_type,
                 pinv_cutoff=pinv_cutoff,
                 pinv_solver=pinv_solver,
                 pinv_method=pinv_method,
@@ -2460,13 +2456,9 @@ class Phono3py:
                 log_level=_log_level,
             )
         else:
-            if temperatures is None:
-                _temperatures = np.arange(0, 1001, 10, dtype="double")
-            else:
-                _temperatures = temperatures
             self._thermal_conductivity = get_thermal_conductivity_RTA(
                 self._interaction,
-                temperatures=_temperatures,
+                temperatures=temperatures,
                 sigmas=self._sigmas,
                 sigma_cutoff=self._sigma_cutoff,
                 is_isotope=is_isotope,
@@ -2478,7 +2470,7 @@ class Phono3py:
                 gv_delta_q=gv_delta_q,
                 is_full_pp=is_full_pp,
                 is_N_U=is_N_U,
-                conductivity_type=conductivity_type,
+                transport_type=transport_type,
                 write_gamma=write_gamma,
                 read_gamma=read_gamma,
                 write_kappa=write_kappa,
