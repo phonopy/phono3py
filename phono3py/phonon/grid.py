@@ -1057,7 +1057,7 @@ def _get_grid_points_by_bz_rotations(
     bz_gp: int,
     bz_grid: BZGrid,
     rotations: NDArray[np.int64],
-    lang: Literal["C", "Py"] = "C",
+    lang: Literal["C", "Python"] = "C",
 ) -> NDArray[np.int64]:
     """Grid point rotations with surface treatment."""
     if lang == "C":

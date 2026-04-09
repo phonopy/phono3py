@@ -2,16 +2,18 @@
 
 Built-in methods
 ----------------
-"rta"
+"std-rta"
     Standard BTE in the relaxation time approximation.
-"lbte"
+"std-lbte"
     Standard BTE via direct LBTE solution.
 "MS-SMM19-rta"
-    Wigner transport equation in RTA (registered plugin, can be overridden).
+    MS-SMM19 transport equation in RTA.
 "MS-SMM19-lbte"
-    Wigner transport equation via LBTE (registered plugin, can be overridden).
+    MS-SMM19 transport equation via direct solution.
 "NJC23-rta"
-    Green-Kubo formula in RTA (registered plugin, can be overridden).
+    Green-Kubo formula in RTA.
+"NJC23-lbte"
+    Green-Kubo formula via direct solution.
 
 External plugins
 ----------------
@@ -20,13 +22,11 @@ Register a variant via register_variant():
     from phono3py.conductivity import register_variant
 
     register_variant(
-        "my-variant",
-        make_velocity_provider=...,
-        make_rta_accumulator=...,
+        "my-variant", make_velocity_solver=..., make_rta_kappa_solver=...,
     )
 
-The variant provides component factories that receive a VariantBuildContext.
-The framework handles base-component construction and Calculator assembly.
+The variant provides component factories that receive a VariantContext. The
+framework handles base-component construction and Calculator assembly.
 
 """
 
@@ -40,14 +40,21 @@ import numpy as np
 from numpy.typing import NDArray
 
 from phono3py.conductivity.build_components import (
-    VariantBuildContext,
-    build_lbte_base_components,
-    build_rta_base_components,
+    CalculatorConfig,
+    VariantContext,
+    build_lbte_kappa_settings,
+    build_rot_grid_points,
+    build_rta_kappa_settings,
 )
-from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
+from phono3py.conductivity.collision_matrix_kernel import CollisionMatrixKernel
+from phono3py.conductivity.heat_capacity_solvers import ModeHeatCapacitySolver
+from phono3py.conductivity.kappa_solvers import LBTEKappaSolver, RTAKappaSolver
 from phono3py.conductivity.lbte_calculator import LBTECalculator
+from phono3py.conductivity.lbte_collision_solver import LBTECollisionSolver
 from phono3py.conductivity.rta_calculator import RTACalculator
-from phono3py.conductivity.utils import get_unit_to_WmK
+from phono3py.conductivity.scattering_solvers import RTAScatteringSolver
+from phono3py.conductivity.velocity_solvers import GroupVelocitySolver
+from phono3py.phonon3.collision_matrix import CollisionMatrix
 from phono3py.phonon3.interaction import Interaction
 
 # ---------------------------------------------------------------------------
@@ -57,48 +64,177 @@ from phono3py.phonon3.interaction import Interaction
 # Internal registry: all entries are (interaction, config) -> Calculator.
 _InternalFactory: TypeAlias = Callable[["Interaction", "CalculatorConfig"], Any]
 
-# "rta" and "lbte" are registered at module load and cannot be overridden.
-# All other built-in methods (wigner-*, kubo-*) are registered below and can
-# be overridden by external plugins.
-_BUILTIN_METHODS: frozenset[str] = frozenset({"rta", "lbte"})
-
 # Populated at module load with all built-in factories.
 # External plugins are added via register_variant().
 _REGISTRY: dict[str, _InternalFactory] = {}
 
 
+def _run_phonon_solver(interaction: Interaction) -> None:
+    """Ensure phonons are solved (idempotent)."""
+    interaction.nac_q_direction = None
+    interaction.run_phonon_solver_at_gamma()
+    if not interaction.phonon_all_done:
+        interaction.run_phonon_solver()
+
+
+def _build_rta_calculator(
+    interaction: Interaction,
+    config: CalculatorConfig,
+    make_velocity_solver: Callable[[VariantContext], Any],
+    make_cv_solver: Callable[[VariantContext], Any] | None,
+    make_rta_kappa_solver: Callable[[VariantContext], Any],
+) -> RTACalculator:
+    """Build an RTACalculator from variant component factories."""
+    _run_phonon_solver(interaction)
+    kappa_settings = build_rta_kappa_settings(interaction, config)
+    frequencies, _, _ = interaction.get_phonons()
+    scattering_solver = RTAScatteringSolver(
+        interaction,
+        sigmas=config.sigmas,
+        temperatures=config.temperatures,
+        sigma_cutoff=config.sigma_cutoff,
+        is_full_pp=config.is_full_pp,
+        use_ave_pp=config.use_ave_pp,
+        read_pp=config.read_pp,
+        store_pp=config.store_pp,
+        pp_filename=config.pp_filename,
+        is_N_U=config.is_N_U,
+        is_gamma_detail=config.is_gamma_detail,
+        log_level=config.log_level,
+    )
+    ctx = VariantContext(
+        interaction=interaction,
+        kappa_settings=kappa_settings,
+        log_level=config.log_level,
+    )
+    velocity_solver = make_velocity_solver(ctx)
+    cv_solver = (
+        make_cv_solver(ctx)
+        if make_cv_solver is not None
+        else ModeHeatCapacitySolver(interaction, kappa_settings.temperatures)
+    )
+    kappa_solver = make_rta_kappa_solver(ctx)
+
+    return RTACalculator(
+        interaction,
+        velocity_solver=velocity_solver,
+        cv_solver=cv_solver,
+        scattering_solver=scattering_solver,
+        kappa_solver=kappa_solver,
+        kappa_settings=kappa_settings,
+        frequencies=frequencies,
+        is_isotope=config.is_isotope,
+        mass_variances=config.mass_variances,
+        is_N_U=config.is_N_U,
+        is_gamma_detail=config.is_gamma_detail,
+        sigma_cutoff_width=config.sigma_cutoff,
+        log_level=config.log_level,
+    )
+
+
+def _build_lbte_calculator(
+    interaction: Interaction,
+    config: CalculatorConfig,
+    make_velocity_solver: Callable[[VariantContext], Any],
+    make_cv_solver: Callable[[VariantContext], Any] | None,
+    make_lbte_kappa_solver: Callable[[VariantContext], Any],
+) -> LBTECalculator:
+    """Build an LBTECalculator from variant component factories."""
+    _run_phonon_solver(interaction)
+    kappa_settings = build_lbte_kappa_settings(interaction, config)
+    frequencies, _, _ = interaction.get_phonons()
+    rot_grid_points = build_rot_grid_points(kappa_settings)
+    collision = CollisionMatrix(
+        interaction,
+        rot_grid_points=rot_grid_points,
+        is_kappa_star=config.is_kappa_star,
+        log_level=config.log_level,
+        lang=config.lang,
+    )
+    collision_solver = LBTECollisionSolver(
+        interaction,
+        collision,
+        sigmas=config.sigmas,
+        sigma_cutoff=config.sigma_cutoff,
+        temperatures=config.temperatures,
+        is_full_pp=config.is_full_pp,
+        read_pp=config.read_pp,
+        pp_filename=config.pp_filename,
+        log_level=config.log_level,
+    )
+    colmat_kernel = CollisionMatrixKernel(
+        kappa_settings=kappa_settings,
+        frequencies=frequencies,
+        rot_grid_points=rot_grid_points,
+        solve_collective_phonon=config.solve_collective_phonon,
+        pinv_cutoff=config.pinv_cutoff,
+        pinv_solver=config.pinv_solver,
+        pinv_method=config.pinv_method,
+        lang=config.lang,
+        log_level=config.log_level,
+    )
+    ctx = VariantContext(
+        interaction=interaction,
+        kappa_settings=kappa_settings,
+        log_level=config.log_level,
+        collision_matrix_kernel=colmat_kernel,
+    )
+    velocity_solver = make_velocity_solver(ctx)
+    cv_solver = (
+        make_cv_solver(ctx)
+        if make_cv_solver is not None
+        else ModeHeatCapacitySolver(interaction, kappa_settings.temperatures)
+    )
+    kappa_solver = make_lbte_kappa_solver(ctx)
+
+    return LBTECalculator(
+        interaction,
+        velocity_solver=velocity_solver,
+        cv_solver=cv_solver,
+        collision_solver=collision_solver,
+        kappa_solver=kappa_solver,
+        kappa_settings=kappa_settings,
+        frequencies=frequencies,
+        is_isotope=config.is_isotope,
+        mass_variances=config.mass_variances,
+        is_full_pp=config.is_full_pp,
+        sigma_cutoff_width=config.sigma_cutoff,
+        log_level=config.log_level,
+    )
+
+
 def register_variant(
     name: str,
     *,
-    make_velocity_provider: Callable[[VariantBuildContext], Any],
-    make_rta_accumulator: Callable[[VariantBuildContext], Any],
-    make_cv_provider: Callable[[VariantBuildContext], Any] | None = None,
-    make_lbte_accumulator: Callable[[VariantBuildContext], Any] | None = None,
+    make_velocity_solver: Callable[[VariantContext], Any],
+    make_rta_kappa_solver: Callable[[VariantContext], Any],
+    make_cv_solver: Callable[[VariantContext], Any] | None = None,
+    make_lbte_kappa_solver: Callable[[VariantContext], Any] | None = None,
 ) -> None:
     """Register a conductivity variant with RTA and optionally LBTE methods.
 
     Plugin authors provide small
-    component factories that receive a ``VariantBuildContext``.  The
+    component factories that receive a ``VariantContext``.  The
     framework handles base-component construction, Calculator assembly, and
     all keyword argument routing.
 
     Two method names are registered automatically: ``"{name}-rta"`` and
-    (if ``make_lbte_accumulator`` is provided) ``"{name}-lbte"``.
+    (if ``make_lbte_kappa_solver`` is provided) ``"{name}-lbte"``.
 
     Parameters
     ----------
     name : str
-        Variant name (e.g. ``"MS-SMM19"``, ``"NJC23"``).  Becomes the prefix
-        of the registered method names.
-    make_velocity_provider : callable
-        ``(ctx: VariantBuildContext) -> VelocityProvider``.
-    make_rta_accumulator : callable
-        ``(ctx: VariantBuildContext) -> accumulator`` for RTA.
-    make_cv_provider : callable or None, optional
-        ``(ctx: VariantBuildContext) -> HeatCapacityProvider``.
-        Defaults to ``ModeHeatCapacityProvider(ctx.interaction)``.
-    make_lbte_accumulator : callable or None, optional
-        ``(ctx: VariantBuildContext) -> accumulator`` for LBTE.
+        Variant name (e.g. ``"std"``, ``"MS-SMM19"``, ``"NJC23"``).  Becomes
+        the prefix of the registered method names.
+    make_velocity_solver : callable
+        ``(ctx: VariantContext) -> VelocitySolver``.
+    make_rta_kappa_solver : callable
+        ``(ctx: VariantContext) -> kappa_solver`` for RTA.
+    make_cv_solver : callable or None, optional
+        ``(ctx: VariantContext) -> HeatCapacitySolver``.
+        Defaults to ``ModeHeatCapacitySolver(ctx.interaction)``.
+    make_lbte_kappa_solver : callable or None, optional
+        ``(ctx: VariantContext) -> kappa_solver`` for LBTE.
         When None, only the RTA method is registered.
 
     Examples
@@ -109,117 +245,46 @@ def register_variant(
 
         register_variant(
             "my-variant",
-            make_velocity_provider=lambda ctx: MyVelocityProvider(
+            make_velocity_solver=lambda ctx: MyVelocitySolver(
                 ctx.interaction,
-                point_operations=ctx.point_operations,
+                is_kappa_star=ctx.kappa_settings.is_kappa_star,
                 log_level=ctx.log_level,
             ),
-            make_rta_accumulator=lambda ctx: MyRTAAccumulator(
-                context=ctx.context,
-                conversion_factor=ctx.conversion_factor,
+            make_rta_kappa_solver=lambda ctx: MyRTAKappaSolver(
+                kappa_settings=ctx.kappa_settings,
                 log_level=ctx.log_level,
             ),
         )
 
     """
-
-    def _rta_factory(
-        interaction: Interaction,
-        config: CalculatorConfig,
-    ) -> RTACalculator:
-        base = build_rta_base_components(interaction, config)
-        ctx = VariantBuildContext(
-            interaction=interaction,
-            context=base.context,
-            point_operations=base.point_ops,
-            rotations_cartesian=base.rot_cart,
-            conversion_factor=get_unit_to_WmK() / interaction.primitive.volume,
-            is_kappa_star=config.is_kappa_star,
-            gv_delta_q=config.gv_delta_q,
-            is_reducible_collision_matrix=False,
-            log_level=config.log_level,
-        )
-        velocity_provider = make_velocity_provider(ctx)
-        cv_provider = (
-            make_cv_provider(ctx)
-            if make_cv_provider is not None
-            else ModeHeatCapacityProvider(interaction, base.context.temperatures)
-        )
-        accumulator = make_rta_accumulator(ctx)
-
-        return RTACalculator(
+    _REGISTRY[f"{name}-rta".lower()] = lambda interaction, config: (
+        _build_rta_calculator(
             interaction,
-            velocity_provider=velocity_provider,
-            cv_provider=cv_provider,
-            scattering_provider=base.scattering_provider,
-            accumulator=accumulator,
-            context=base.context,
-            is_isotope=config.is_isotope,
-            mass_variances=config.mass_variances,
-            is_N_U=config.is_N_U,
-            is_gamma_detail=config.is_gamma_detail,
-            log_level=config.log_level,
+            config,
+            make_velocity_solver,
+            make_cv_solver,
+            make_rta_kappa_solver,
+        )
+    )
+
+    if make_lbte_kappa_solver is not None:
+        _REGISTRY[f"{name}-lbte".lower()] = lambda interaction, config: (
+            _build_lbte_calculator(
+                interaction,
+                config,
+                make_velocity_solver,
+                make_cv_solver,
+                make_lbte_kappa_solver,
+            )
         )
 
-    rta_key = f"{name}-rta".lower()
-    if rta_key in _BUILTIN_METHODS:
-        raise ValueError(f"'{rta_key}' is a built-in method and cannot be overridden.")
-    _REGISTRY[rta_key] = _rta_factory
 
-    if make_lbte_accumulator is not None:
-
-        def _lbte_factory(
-            interaction: Interaction,
-            config: CalculatorConfig,
-        ) -> LBTECalculator:
-            base = build_lbte_base_components(interaction, config)
-            ctx = VariantBuildContext(
-                interaction=interaction,
-                context=base.context,
-                point_operations=base.point_ops,
-                rotations_cartesian=base.rot_cart,
-                conversion_factor=get_unit_to_WmK() / interaction.primitive.volume,
-                is_kappa_star=config.is_kappa_star,
-                gv_delta_q=config.gv_delta_q,
-                is_reducible_collision_matrix=config.is_reducible_collision_matrix,
-                log_level=config.log_level,
-                solver=base.solver,
-            )
-            velocity_provider = make_velocity_provider(ctx)
-            cv_provider = (
-                make_cv_provider(ctx)
-                if make_cv_provider is not None
-                else ModeHeatCapacityProvider(interaction, base.context.temperatures)
-            )
-            accumulator = make_lbte_accumulator(ctx)
-
-            return LBTECalculator(
-                interaction,
-                velocity_provider=velocity_provider,
-                cv_provider=cv_provider,
-                collision_provider=base.collision_provider,
-                accumulator=accumulator,
-                context=base.context,
-                is_isotope=config.is_isotope,
-                mass_variances=config.mass_variances,
-                is_full_pp=config.is_full_pp,
-                log_level=config.log_level,
-            )
-
-        lbte_key = f"{name}-lbte".lower()
-        if lbte_key in _BUILTIN_METHODS:
-            raise ValueError(
-                f"'{lbte_key}' is a built-in method and cannot be overridden."
-            )
-        _REGISTRY[lbte_key] = _lbte_factory
-
-
-def make_conductivity_calculator(
+def conductivity_calculator(
     interaction: Interaction,
-    method: str = "rta",
+    temperatures: NDArray[np.double],
+    sigmas: Sequence[float | None],
+    method: str = "std-rta",
     grid_points: NDArray[np.int64] | None = None,
-    temperatures: NDArray[np.double] | None = None,
-    sigmas: Sequence[float | None] | None = None,
     sigma_cutoff: float | None = None,
     is_isotope: bool = False,
     mass_variances: NDArray[np.double] | None = None,
@@ -247,15 +312,15 @@ def make_conductivity_calculator(
     ----------
     interaction : Interaction
         Interaction instance.  init_dynamical_matrix must have been called.
+    temperatures : ndarray of double
+        Temperatures in Kelvin, shape (num_temp,).
+    sigmas : sequence of (float or None)
+        Smearing widths.  A None entry selects the tetrahedron method.
     method : str, optional
-        Calculation method.  Built-in: "rta", "lbte", "MS-SMM19-rta",
-        "MS-SMM19-lbte", "NJC23-rta".  Default "rta".
+        Calculation method.  Built-in: "std-rta", "std-lbte", "MS-SMM19-rta",
+        "MS-SMM19-lbte", "NJC23-rta", "NJC23-lbte".  Default "std-rta".
     grid_points : array-like or None, optional
         BZ grid point indices.  None uses irreducible grid points.  Default None.
-    temperatures : array-like or None, optional
-        Temperatures in Kelvin.  Default None.
-    sigmas : sequence or None, optional
-        Smearing widths.  None selects the tetrahedron method.
     sigma_cutoff : float or None, optional
         Smearing cutoff in units of sigma.  Default None.
     is_isotope : bool, optional
@@ -307,16 +372,14 @@ def make_conductivity_calculator(
     if method.lower() not in _REGISTRY:
         raise NotImplementedError(
             f"method='{method}' is not implemented. "
-            f"Built-in methods: {sorted(_BUILTIN_METHODS)}. "
-            "Registered methods: "
-            f"{sorted(_REGISTRY)}. "
+            f"Registered methods: {sorted(_REGISTRY)}. "
             "Use register_variant() to add custom methods."
         )
 
     config = CalculatorConfig(
-        grid_points=grid_points,
         temperatures=temperatures,
         sigmas=sigmas,
+        grid_points=grid_points,
         sigma_cutoff=sigma_cutoff,
         is_isotope=is_isotope,
         mass_variances=mass_variances,
@@ -343,97 +406,42 @@ def make_conductivity_calculator(
 
 
 # ---------------------------------------------------------------------------
-# Register all built-in factories.
-# "rta" and "lbte" are protected by _BUILTIN_METHODS.
-# "MS-SMM19-*" and "NJC23-*" can be overridden by external plugins.
-# The try/except allows each to be installed as a standalone package via
-# namespace packages; if absent, the method is simply not available.
+# Built-in variant: standard BTE ("std-rta" / "std-lbte")
 # ---------------------------------------------------------------------------
 
-from phono3py.conductivity.build_components import CalculatorConfig  # noqa: E402
-from phono3py.conductivity.kappa_accumulators import (  # noqa: E402
-    LBTEKappaAccumulator,
-    RTAKappaAccumulator,
+
+def _std_make_velocity_solver(ctx: VariantContext) -> GroupVelocitySolver:
+    return GroupVelocitySolver(
+        ctx.interaction,
+        is_kappa_star=ctx.kappa_settings.is_kappa_star,
+        gv_delta_q=ctx.kappa_settings.gv_delta_q,
+        log_level=ctx.log_level,
+    )
+
+
+def _std_make_rta_kappa_solver(ctx: VariantContext) -> RTAKappaSolver:
+    frequencies, _, _ = ctx.interaction.get_phonons()
+    return RTAKappaSolver(
+        kappa_settings=ctx.kappa_settings,
+        frequencies=frequencies,
+        log_level=ctx.log_level,
+    )
+
+
+def _std_make_lbte_kappa_solver(ctx: VariantContext) -> LBTEKappaSolver:
+    return LBTEKappaSolver(
+        ctx.collision_matrix_kernel,
+        kappa_settings=ctx.kappa_settings,
+        log_level=ctx.log_level,
+    )
+
+
+register_variant(
+    "std",
+    make_velocity_solver=_std_make_velocity_solver,
+    make_rta_kappa_solver=_std_make_rta_kappa_solver,
+    make_lbte_kappa_solver=_std_make_lbte_kappa_solver,
 )
-from phono3py.conductivity.velocity_providers import (  # noqa: E402
-    GroupVelocityProvider,
-)
-
-
-def _make_rta_calculator(
-    interaction: Interaction,
-    config: CalculatorConfig,
-) -> RTACalculator:
-    """Build a RTACalculator for the standard BTE-RTA method."""
-    base = build_rta_base_components(interaction, config)
-    conversion_factor = get_unit_to_WmK() / interaction.primitive.volume
-    velocity_provider = GroupVelocityProvider(
-        interaction,
-        point_operations=base.point_ops,
-        rotations_cartesian=base.rot_cart,
-        grid_points=base.context.grid_points,
-        grid_weights=base.context.grid_weights,
-        is_kappa_star=config.is_kappa_star,
-        gv_delta_q=config.gv_delta_q,
-        log_level=config.log_level,
-    )
-    cv_provider = ModeHeatCapacityProvider(interaction, base.context.temperatures)
-    accumulator = RTAKappaAccumulator(
-        context=base.context,
-        conversion_factor=conversion_factor,
-        log_level=config.log_level,
-    )
-    return RTACalculator(
-        interaction,
-        velocity_provider=velocity_provider,
-        cv_provider=cv_provider,
-        scattering_provider=base.scattering_provider,
-        accumulator=accumulator,
-        context=base.context,
-        is_isotope=config.is_isotope,
-        mass_variances=config.mass_variances,
-        is_N_U=config.is_N_U,
-        is_gamma_detail=config.is_gamma_detail,
-        log_level=config.log_level,
-    )
-
-
-def _make_lbte_calculator(
-    interaction: Interaction,
-    config: CalculatorConfig,
-) -> LBTECalculator:
-    """Build an LBTECalculator for the standard LBTE direct-solution method."""
-    base = build_lbte_base_components(interaction, config)
-    velocity_provider = GroupVelocityProvider(
-        interaction,
-        point_operations=base.point_ops,
-        rotations_cartesian=base.rot_cart,
-        grid_points=base.context.ir_grid_points,
-        grid_weights=base.context.grid_weights,
-        is_kappa_star=config.is_kappa_star,
-        gv_delta_q=config.gv_delta_q,
-        log_level=config.log_level,
-    )
-    cv_provider = ModeHeatCapacityProvider(interaction, base.context.temperatures)
-    accumulator = LBTEKappaAccumulator(
-        base.solver, context=base.context, log_level=config.log_level
-    )
-    return LBTECalculator(
-        interaction,
-        velocity_provider=velocity_provider,
-        cv_provider=cv_provider,
-        collision_provider=base.collision_provider,
-        accumulator=accumulator,
-        context=base.context,
-        is_isotope=config.is_isotope,
-        mass_variances=config.mass_variances,
-        is_full_pp=config.is_full_pp,
-        log_level=config.log_level,
-    )
-
-
-_REGISTRY["rta"] = _make_rta_calculator
-_REGISTRY["lbte"] = _make_lbte_calculator
 
 try:
     import phono3py.conductivity.njc23  # noqa: F401, E402

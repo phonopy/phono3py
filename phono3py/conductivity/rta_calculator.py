@@ -8,24 +8,25 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from phono3py.conductivity.context import ConductivityContext
+from phono3py.conductivity.build_components import KappaSettings
 from phono3py.conductivity.grid_point_data import (
     GridPointAggregates,
     compute_effective_gamma,
 )
-from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
-from phono3py.conductivity.kappa_accumulators import RTAKappaAccumulator
-from phono3py.conductivity.scattering_providers import (
-    IsotopeScatteringProvider,
-    RTAScatteringProvider,
+from phono3py.conductivity.heat_capacity_solvers import ModeHeatCapacitySolver
+from phono3py.conductivity.kappa_solvers import RTAKappaSolver
+from phono3py.conductivity.scattering_solvers import (
+    IsotopeScatteringSolver,
+    RTAScatteringSolver,
     compute_bulk_boundary_scattering,
 )
 from phono3py.conductivity.utils import (
+    get_kappa_star_operations,
     show_grid_point_frequencies_gv,
     show_grid_point_frequencies_gv_on_kstar,
     show_grid_point_header,
 )
-from phono3py.conductivity.velocity_providers import GroupVelocityProvider
+from phono3py.conductivity.velocity_solvers import GroupVelocitySolver
 from phono3py.other.isotope import Isotope
 from phono3py.phonon.grid import (
     BZGrid,
@@ -39,18 +40,18 @@ class RTACalculator:
 
     This class replaces the ``ConductivityBase`` / ``ConductivityRTABase`` /
     ``ConductivityRTA`` inheritance hierarchy.  Physical building blocks
-    (velocity, heat-capacity, scattering, kappa accumulator) are injected via
+    (velocity, heat-capacity, scattering, kappa solver) are injected via
     the constructor rather than inherited.
 
     Variant-specific output properties (``kappa_P_RTA``, ``kappa_C``, etc.)
     are not defined on this class.  They are forwarded transparently to the
-    accumulator via ``__getattr__``.
+    kappa solver via ``__getattr__``.
 
     Usage
     -----
-    Create via ``make_conductivity_calculator`` (recommended) or directly::
+    Create via ``conductivity_calculator`` (recommended) or directly::
 
-        calc = RTACalculator(pp, vel, cv, scat, accumulator, context, ...)
+        calc = RTACalculator(pp, vel, cv, scat, kappa_solver, kappa_settings, ...)
         calc.run(on_grid_point=lambda i: writer.write_gamma(calc, i))
         # results available via calc.kappa, calc.mode_kappa, etc.
 
@@ -58,16 +59,16 @@ class RTACalculator:
     ----------
     pp : Interaction
         Interaction instance. ``init_dynamical_matrix`` must have been called.
-    velocity_provider : GroupVelocityProvider
+    velocity_solver : GroupVelocitySolver
         Computes group velocities and v-outer-v at each grid point.
-    cv_provider : ModeHeatCapacityProvider
+    cv_solver : ModeHeatCapacitySolver
         Computes mode heat capacities at each grid point.
-    scattering_provider : RTAScatteringProvider
+    scattering_solver : RTAScatteringSolver
         Computes ph-ph linewidths at each grid point.
-    accumulator
+    kappa_solver
         Owns the kappa computation and BZ-summation arrays; exposes ``kappa``,
         ``mode_kappa``, and any variant-specific output properties.
-    context : ConductivityContext
+    kappa_settings : KappaSettings
         Shared computation metadata (grid, phonon, symmetry, configuration).
     is_isotope : bool, optional
         Include isotope scattering. Default False.
@@ -85,36 +86,40 @@ class RTACalculator:
     def __init__(
         self,
         pp: Interaction,
-        velocity_provider: GroupVelocityProvider,
-        cv_provider: ModeHeatCapacityProvider,
-        scattering_provider: RTAScatteringProvider,
-        accumulator: RTAKappaAccumulator,
-        context: ConductivityContext,
+        velocity_solver: GroupVelocitySolver,
+        cv_solver: ModeHeatCapacitySolver,
+        scattering_solver: RTAScatteringSolver,
+        kappa_solver: RTAKappaSolver,
+        kappa_settings: KappaSettings,
+        frequencies: NDArray[np.double],
         *,
         is_isotope: bool = False,
         mass_variances: Sequence[float] | NDArray[np.double] | None = None,
         is_N_U: bool = False,
         is_gamma_detail: bool = False,
+        sigma_cutoff_width: float | None = None,
         log_level: int = 0,
     ):
         """Init method."""
         self._pp = pp
-        self._velocity_provider = velocity_provider
-        self._cv_provider = cv_provider
-        self._scattering_provider = scattering_provider
-        self._accumulator = accumulator
-        self._context = context
+        self._velocity_solver = velocity_solver
+        self._cv_solver = cv_solver
+        self._scattering_solver = scattering_solver
+        self._kappa_solver = kappa_solver
+        self._kappa_settings = kappa_settings
+        self._frequencies = frequencies
         self._is_N_U = is_N_U
         self._is_gamma_detail = is_gamma_detail
+        self._sigma_cutoff_width = sigma_cutoff_width
         self._log_level = log_level
 
         self._grid_point_count = 0
 
-        # Isotope provider.
+        # Isotope solver.
         self._is_isotope = is_isotope or (mass_variances is not None)
-        self._isotope_provider: IsotopeScatteringProvider | None = None
+        self._isotope_solver: IsotopeScatteringSolver | None = None
         if self._is_isotope:
-            self._isotope_provider = self._build_isotope_provider(mass_variances)
+            self._isotope_solver = self._build_isotope_solver(mass_variances)
 
         # Read flags (set via property setters when gamma is loaded from file).
         self._read_gamma = False
@@ -133,11 +138,10 @@ class RTACalculator:
         self._gamma_U: NDArray[np.double] | None = None
         self._gamma_elph: NDArray[np.double] | None = None
         self._gamma_boundary: NDArray[np.double] | None = None
-        self._num_sampling_grid_points = 0
         self._num_ignored_phonon_modes: NDArray[np.int64] | None = None
         self._gamma_detail_at_q: NDArray[np.double] | None = None
 
-        if self._context.temperatures is not None:
+        if self._kappa_settings.temperatures is not None:
             self._allocate_values()
 
     # ------------------------------------------------------------------
@@ -167,7 +171,7 @@ class RTACalculator:
             file writes.
 
         """
-        if self._context.temperatures is None:
+        if self._kappa_settings.temperatures is None:
             raise RuntimeError("Set temperatures before calling run().")
 
         self._prepare_isotope_phonons()
@@ -183,15 +187,15 @@ class RTACalculator:
         self._compute_all_velocities()
 
         # (3) Bulk boundary scattering.
-        if self._context.boundary_mfp is not None:
+        if self._kappa_settings.boundary_mfp is not None:
             self._gamma_boundary = compute_bulk_boundary_scattering(
-                self._gv, self._context.boundary_mfp
+                self._gv, self._kappa_settings.boundary_mfp
             )
 
         # (4) Isotope loop.
         if self._is_isotope and not self._read_gamma_iso:
             if self._log_level:
-                for sigma in self._context.sigmas:
+                for sigma in self._kappa_settings.sigmas:
                     print("Running isotope scattering calculations ", end="")
                     print(
                         "with tetrahedron method..."
@@ -202,7 +206,7 @@ class RTACalculator:
 
         # (5) Main gamma loop.
         self._grid_point_count = 0
-        for i_gp in range(len(self._context.grid_points)):
+        for i_gp in range(len(self._kappa_settings.grid_points)):
             self._compute_gamma_at_grid_point(i_gp)
             self._grid_point_count = i_gp + 1
             if on_grid_point is not None:
@@ -217,16 +221,16 @@ class RTACalculator:
         # (6) Finalize.
         aggregates = self._build_grid_point_aggregates()
         self._count_ignored_modes(aggregates)
-        self._accumulator.finalize(aggregates)
+        self._kappa_solver.finalize(aggregates)
 
     # ------------------------------------------------------------------
-    # Properties -- context access
+    # Properties -- kappa settings access
     # ------------------------------------------------------------------
 
     @property
-    def context(self) -> ConductivityContext:
-        """Return the computation context."""
-        return self._context
+    def kappa_settings(self) -> KappaSettings:
+        """Return the kappa settings."""
+        return self._kappa_settings
 
     # ------------------------------------------------------------------
     # Properties -- grid / phonon metadata
@@ -235,24 +239,24 @@ class RTACalculator:
     @property
     def mesh_numbers(self) -> NDArray[np.int64]:
         """Return BZ mesh numbers."""
-        return self._context.mesh_numbers
+        return self._kappa_settings.mesh_numbers
 
     @property
     def bz_grid(self) -> BZGrid:
         """Return BZ grid object."""
-        return self._context.bz_grid
+        return self._kappa_settings.bz_grid
 
     @property
     def frequencies(self) -> NDArray[np.double]:
         """Return phonon frequencies at the iterated grid points."""
-        return self._context.frequencies[self._context.grid_points]
+        return self._frequencies[self._kappa_settings.grid_points]
 
     @property
     def qpoints(self) -> NDArray[np.double]:
         """Return q-point coordinates of the iterated grid points."""
         return np.array(
             get_qpoints_from_bz_grid_points(
-                self._context.grid_points, self._context.bz_grid
+                self._kappa_settings.grid_points, self._kappa_settings.bz_grid
             ),
             dtype="double",
             order="C",
@@ -261,65 +265,55 @@ class RTACalculator:
     @property
     def grid_points(self) -> NDArray[np.int64]:
         """Return BZ grid point indices that were iterated."""
-        return self._context.grid_points
+        return self._kappa_settings.grid_points
 
     @property
     def grid_weights(self) -> NDArray[np.int64]:
         """Return symmetry weights of the iterated grid points."""
-        return self._context.grid_weights
+        return self._kappa_settings.grid_weights
 
     @property
     def temperatures(self) -> NDArray[np.double] | None:
         """Return temperatures in Kelvin."""
-        return self._context.temperatures
-
-    @temperatures.setter
-    def temperatures(self, temperatures: Sequence[float] | NDArray[np.double]) -> None:
-        self._context.temperatures = np.asarray(temperatures, dtype="double")
-        self._allocate_values()
+        return self._kappa_settings.temperatures
 
     @property
     def sigmas(self) -> list[float | None]:
         """Return smearing widths."""
-        return self._context.sigmas
+        return self._kappa_settings.sigmas
 
     @property
     def sigma_cutoff_width(self) -> float | None:
         """Return smearing cutoff width."""
-        return self._context.sigma_cutoff_width
+        return self._sigma_cutoff_width
 
     @property
     def boundary_mfp(self) -> float | None:
         """Return boundary mean free path in micrometres."""
-        return self._context.boundary_mfp
+        return self._kappa_settings.boundary_mfp
 
     @property
     def grid_point_count(self) -> int:
         """Return number of grid points processed so far."""
         return self._grid_point_count
 
-    @property
-    def number_of_sampling_grid_points(self) -> int:
-        """Return total number of sampling grid points (sum of k-star orders)."""
-        return self._num_sampling_grid_points
-
     # ------------------------------------------------------------------
     # Properties -- computed physical quantities
     # ------------------------------------------------------------------
 
     def __getattr__(self, name: str) -> object:
-        """Delegate unknown attribute lookups to the accumulator.
+        """Delegate unknown attribute lookups to the kappa solver.
 
         This allows variant-specific properties (kappa_P_RTA, kappa_C,
         kappa_TOT_RTA, mode_kappa_C, ...) to be accessed directly on the
         calculator without hard-coding them here.
 
         """
-        # Avoid infinite recursion if _accumulator is not yet set.
+        # Avoid infinite recursion if _kappa_solver is not yet set.
         if name.startswith("_"):
             raise AttributeError(name)
         try:
-            acc = object.__getattribute__(self, "_accumulator")
+            acc = object.__getattribute__(self, "_kappa_solver")
         except AttributeError:
             raise AttributeError(name) from None
         try:
@@ -330,17 +324,17 @@ class RTACalculator:
             ) from None
 
     def get_extra_kappa_output(self) -> dict[str, Any] | None:
-        """Return variant-specific kappa output from the accumulator.
+        """Return variant-specific kappa output from the kappa solver.
 
-        Called by output writers to obtain plugin-defined quantities (e.g.
-        Wigner kappa_P_RTA, kappa_C) that are written to the hdf5 file via
+        Called by output writers to obtain plugin-defined quantities that
+        are written to the hdf5 file via
         ``write_kappa_to_hdf5(extra_datasets=...)``.
 
-        Returns None when the accumulator does not implement this method
+        Returns None when the kappa solver does not implement this method
         (standard RTA and Kubo).
 
         """
-        fn = getattr(self._accumulator, "get_extra_kappa_output", None)
+        fn = getattr(self._kappa_solver, "get_extra_kappa_output", None)
         return fn() if callable(fn) else None
 
     def get_extra_grid_point_output(self) -> dict[str, Any] | None:
@@ -357,15 +351,16 @@ class RTACalculator:
         return None
 
     def log_kappa(self) -> None:
-        """Delegate kappa logging to the accumulator.
+        """Delegate kappa logging to the kappa solver.
 
         Called by rta_init after run() when full kappa is available.
 
         """
-        fn = getattr(self._accumulator, "log_kappa", None)
+        fn = getattr(self._kappa_solver, "log_kappa", None)
         if callable(fn):
-            num_band = self._context.frequencies.shape[1]
-            num_phonon_modes = self._num_sampling_grid_points * num_band
+            num_band = self._frequencies.shape[1]
+            num_mesh_points = int(np.prod(self._kappa_settings.mesh_numbers))
+            num_phonon_modes = num_mesh_points * num_band
             fn(
                 num_ignored_phonon_modes=self._num_ignored_phonon_modes,
                 num_phonon_modes=num_phonon_modes,
@@ -379,7 +374,7 @@ class RTACalculator:
     # ------------------------------------------------------------------
     # Properties -- scattering arrays (with setters for file reads)
     # ------------------------------------------------------------------
-    # kappa, mode_kappa are owned by the accumulator and accessed via
+    # kappa, mode_kappa are owned by the kappa solver and accessed via
     # __getattr__ delegation.  All per-grid-point arrays (gamma,
     # group_velocities, gv_by_gv, mode_heat_capacities, gamma_isotope,
     # averaged_pp_interaction, vm_by_vm, heat_capacity_matrix) are
@@ -462,18 +457,18 @@ class RTACalculator:
     # ------------------------------------------------------------------
 
     def _allocate_values(self) -> None:
-        assert self._context.temperatures is not None
-        num_sigma = len(self._context.sigmas)
-        num_temp = len(self._context.temperatures)
-        num_gp = len(self._context.grid_points)
-        num_band0 = len(self._context.band_indices)
-        num_band = self._context.frequencies.shape[1]
+        assert self._kappa_settings.temperatures is not None
+        num_sigma = len(self._kappa_settings.sigmas)
+        num_temp = len(self._kappa_settings.temperatures)
+        num_gp = len(self._kappa_settings.grid_points)
+        num_band0 = len(self._kappa_settings.band_indices)
+        num_band = self._frequencies.shape[1]
 
         self._gamma = np.zeros(
             (num_sigma, num_temp, num_gp, num_band0), order="C", dtype="double"
         )
         self._gv = np.zeros((num_gp, num_band0, 3), order="C", dtype="double")
-        if self._velocity_provider.produces_gv_by_gv:
+        if self._velocity_solver.produces_gv_by_gv:
             self._gv_by_gv = np.zeros((num_gp, num_band0, 6), order="C", dtype="double")
         self._cv = np.zeros((num_temp, num_gp, num_band0), order="C", dtype="double")
         if not self._read_gamma:
@@ -485,15 +480,15 @@ class RTACalculator:
             self._gamma_iso = np.zeros(
                 (num_sigma, num_gp, num_band0), order="C", dtype="double"
             )
-        if self._scattering_provider.is_full_pp:
+        if self._scattering_solver.is_full_pp:
             self._averaged_pp_interaction = np.zeros(
                 (num_gp, num_band0), order="C", dtype="double"
             )
-        if self._velocity_provider.produces_vm_by_vm:
+        if self._velocity_solver.produces_vm_by_vm:
             self._vm_by_vm = np.zeros(
                 (num_gp, num_band0, num_band, 6), order="C", dtype="complex128"
             )
-        if self._cv_provider.produces_heat_capacity_matrix:
+        if self._cv_solver.produces_heat_capacity_matrix:
             self._heat_capacity_matrix = np.zeros(
                 (num_temp, num_gp, num_band0, num_band), order="C", dtype="double"
             )
@@ -505,29 +500,29 @@ class RTACalculator:
     # Private: isotope
     # ------------------------------------------------------------------
 
-    def _build_isotope_provider(
+    def _build_isotope_solver(
         self,
         mass_variances: Sequence[float] | NDArray[np.double] | None,
-    ) -> IsotopeScatteringProvider:
+    ) -> IsotopeScatteringSolver:
         isotope = Isotope(
-            self._context.mesh_numbers,
+            self._kappa_settings.mesh_numbers,
             self._pp.primitive,
             mass_variances=mass_variances,
-            bz_grid=self._context.bz_grid,
+            bz_grid=self._kappa_settings.bz_grid,
             frequency_factor_to_THz=self._pp.frequency_factor_to_THz,
             symprec=self._pp.primitive_symmetry.tolerance,
-            cutoff_frequency=self._context.cutoff_frequency,
+            cutoff_frequency=self._kappa_settings.cutoff_frequency,
             lapack_zheev_uplo=self._pp.lapack_zheev_uplo,
         )
-        return IsotopeScatteringProvider(
-            isotope, self._context.sigmas, log_level=self._log_level
+        return IsotopeScatteringSolver(
+            isotope, self._kappa_settings.sigmas, log_level=self._log_level
         )
 
     def _prepare_isotope_phonons(self) -> None:
-        if self._isotope_provider is None:
+        if self._isotope_solver is None:
             return
         frequencies, eigenvectors, phonon_done = self._pp.get_phonons()
-        self._isotope_provider.isotope.set_phonons(
+        self._isotope_solver.isotope.set_phonons(
             frequencies,
             eigenvectors,
             phonon_done,
@@ -542,34 +537,32 @@ class RTACalculator:
         if not self._log_level:
             return
         mass_variances = (
-            self._isotope_provider.isotope.mass_variances
-            if self._is_isotope and self._isotope_provider is not None
+            self._isotope_solver.isotope.mass_variances
+            if self._is_isotope and self._isotope_solver is not None
             else None
         )
         show_grid_point_header(
-            bzgp=self._context.grid_points[i_gp],
+            bzgp=self._kappa_settings.grid_points[i_gp],
             i_gp=i_gp,
-            num_gps=len(self._context.grid_points),
-            bz_grid=self._context.bz_grid,
-            boundary_mfp=self._context.boundary_mfp,
+            num_gps=len(self._kappa_settings.grid_points),
+            bz_grid=self._kappa_settings.bz_grid,
+            boundary_mfp=self._kappa_settings.boundary_mfp,
             mass_variances=mass_variances,
         )
 
     def _compute_bulk_heat_capacities(self) -> None:
         """Compute heat capacities for all grid points at once."""
-        assert self._context.temperatures is not None
-        cv_result = self._cv_provider.compute(self._context.grid_points)
+        assert self._kappa_settings.temperatures is not None
+        cv_result = self._cv_solver.compute(self._kappa_settings.grid_points)
         self._cv = cv_result.heat_capacities
         if cv_result.heat_capacity_matrix is not None:
             self._heat_capacity_matrix = cv_result.heat_capacity_matrix
 
     def _compute_all_velocities(self) -> None:
         """Compute velocities for all grid points."""
-        self._num_sampling_grid_points = 0
-        for i_gp in range(len(self._context.grid_points)):
-            grid_point = int(self._context.grid_points[i_gp])
-            vel_result = self._velocity_provider.compute(grid_point)
-            self._num_sampling_grid_points += vel_result.num_sampling_grid_points
+        for i_gp in range(len(self._kappa_settings.grid_points)):
+            grid_point = int(self._kappa_settings.grid_points[i_gp])
+            vel_result = self._velocity_solver.compute(grid_point)
             self._gv[i_gp] = vel_result.group_velocities
             if vel_result.gv_by_gv is not None:
                 self._gv_by_gv[i_gp] = vel_result.gv_by_gv
@@ -578,29 +571,31 @@ class RTACalculator:
 
     def _compute_all_isotope(self) -> None:
         """Compute isotope scattering for all grid points."""
-        assert self._isotope_provider is not None
-        for i_gp in range(len(self._context.grid_points)):
-            grid_point = int(self._context.grid_points[i_gp])
-            gamma_iso = self._isotope_provider.compute(grid_point)
-            self._gamma_iso[:, i_gp, :] = gamma_iso[:, self._context.band_indices]
+        assert self._isotope_solver is not None
+        for i_gp in range(len(self._kappa_settings.grid_points)):
+            grid_point = int(self._kappa_settings.grid_points[i_gp])
+            gamma_iso = self._isotope_solver.compute(grid_point)
+            self._gamma_iso[:, i_gp, :] = gamma_iso[
+                :, self._kappa_settings.band_indices
+            ]
 
     def _compute_gamma_at_grid_point(self, i_gp: int) -> None:
         """Compute ph-ph scattering gamma at a single grid point."""
         self._show_log_header(i_gp)
 
         if not self._read_gamma:
-            grid_point = int(self._context.grid_points[i_gp])
-            scat_result = self._scattering_provider.compute(grid_point)
+            grid_point = int(self._kappa_settings.grid_points[i_gp])
+            scat_result = self._scattering_solver.compute(grid_point)
             gamma = scat_result.gamma
             ave_pp = scat_result.averaged_pp_interaction
             if self._is_N_U or self._is_gamma_detail:
-                g_N = self._scattering_provider.gamma_N
-                g_U = self._scattering_provider.gamma_U
+                g_N = self._scattering_solver.gamma_N
+                g_U = self._scattering_solver.gamma_U
                 if g_N is not None and self._gamma_N is not None:
                     self._gamma_N[:, :, i_gp, :] = g_N
                 if g_U is not None and self._gamma_U is not None:
                     self._gamma_U[:, :, i_gp, :] = g_U
-            self._gamma_detail_at_q = self._scattering_provider.gamma_detail_at_q
+            self._gamma_detail_at_q = self._scattering_solver.gamma_detail_at_q
             self._gamma[:, :, i_gp, :] = gamma
             if ave_pp is not None and self._averaged_pp_interaction is not None:
                 self._averaged_pp_interaction[i_gp] = ave_pp
@@ -613,9 +608,8 @@ class RTACalculator:
             self._show_log(i_gp, self._gv[i_gp], ave_pp)
 
     def _build_grid_point_aggregates(self) -> GridPointAggregates:
-        """Build GridPointAggregates for accumulator.finalize()."""
+        """Build GridPointAggregates for kappa_solver.finalize()."""
         return GridPointAggregates(
-            num_sampling_grid_points=self._num_sampling_grid_points,
             group_velocities=self._gv,
             mode_heat_capacities=self._cv,
             gv_by_gv=self._gv_by_gv,
@@ -633,18 +627,21 @@ class RTACalculator:
         gv: NDArray[np.double],
         ave_pp: NDArray[np.double] | None,
     ) -> None:
-        gp = self._context.grid_points[i_gp]
-        frequencies = self._context.frequencies[gp][self._context.band_indices]
-        pp = ave_pp if self._scattering_provider.is_full_pp else None
-        gv_delta_q = getattr(self._velocity_provider, "gv_delta_q", None)
+        gp = self._kappa_settings.grid_points[i_gp]
+        frequencies = self._frequencies[gp][self._kappa_settings.band_indices]
+        pp = ave_pp if self._scattering_solver.is_full_pp else None
+        gv_delta_q = getattr(self._velocity_solver, "gv_delta_q", None)
         if self._log_level > 2:
+            point_ops, rot_cart = get_kappa_star_operations(
+                self._kappa_settings.bz_grid, self._kappa_settings.is_kappa_star
+            )
             show_grid_point_frequencies_gv_on_kstar(
                 frequencies,
                 gv,
                 gp,
-                self._context.bz_grid,
-                self._context.point_operations,
-                self._context.rotations_cartesian,
+                self._kappa_settings.bz_grid,
+                point_ops,
+                rot_cart,
                 gv_delta_q=gv_delta_q,
                 ave_pp=pp,
             )
@@ -659,13 +656,13 @@ class RTACalculator:
         gamma_eff = compute_effective_gamma(aggregates)
         num_sigma, num_temp, num_gp, num_band0 = gamma_eff.shape
         for i_gp in range(num_gp):
-            weight = int(self._context.grid_weights[i_gp])
-            gp = self._context.grid_points[i_gp]
-            freq = self._context.frequencies[gp][self._context.band_indices]
+            weight = int(self._kappa_settings.grid_weights[i_gp])
+            gp = self._kappa_settings.grid_points[i_gp]
+            freq = self._frequencies[gp][self._kappa_settings.band_indices]
             for j in range(num_sigma):
                 for k in range(num_temp):
                     for ll in range(num_band0):
-                        if freq[ll] < self._context.cutoff_frequency:
+                        if freq[ll] < self._kappa_settings.cutoff_frequency:
                             self._num_ignored_phonon_modes[j, k] += weight
                         elif gamma_eff[j, k, i_gp, ll] < 0:
                             self._num_ignored_phonon_modes[j, k] += weight

@@ -1,11 +1,11 @@
 """Per-grid-point data containers.
 
-This module defines provider result types (VelocityResult,
+This module defines solver result types (VelocityResult,
 HeatCapacityResult, ScatteringResult) and GridPointAggregates used in
 the conductivity calculation.
 
-Protocol interfaces (VelocityProvider, HeatCapacityProvider,
-ScatteringProvider) are defined in ``phono3py.conductivity.protocols``
+Protocol interfaces (VelocitySolver, HeatCapacitySolver,
+ScatteringSolver) are defined in ``phono3py.conductivity.protocols``
 and re-exported here for backward compatibility.
 """
 
@@ -23,13 +23,13 @@ from numpy.typing import NDArray
 
 
 # ---------------------------------------------------------------------------
-# Provider result types
+# Solver result types
 # ---------------------------------------------------------------------------
 
 
 @dataclass
 class VelocityResult:
-    """Result from a velocity provider at a single grid point.
+    """Result from a velocity solver at a single grid point.
 
     Parameters
     ----------
@@ -39,24 +39,21 @@ class VelocityResult:
         Symmetrised outer product v x v in Voigt notation.
     vm_by_vm : ndarray of cdouble, shape (num_band0, num_band, 6), optional
         Off-diagonal velocity operator/matrix outer product.
-        Only set by Wigner and Kubo velocity providers.
-    num_sampling_grid_points : int
-        k-star order (number of arms) for this irreducible point.
+        Only set by off-diagonal velocity solvers (e.g. MS-SMM19, NJC23).
     extra : dict
-        Plugin-specific data (e.g. velocity_operator for Wigner HDF5 output).
+        Plugin-specific data (e.g. velocity_operator for HDF5 output).
 
     """
 
     group_velocities: NDArray[np.double]
     gv_by_gv: NDArray[np.double] | None = None
     vm_by_vm: NDArray[np.cdouble] | None = None
-    num_sampling_grid_points: int = 0
     extra: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class HeatCapacityResult:
-    """Result from a heat capacity provider (bulk computation).
+    """Result from a heat capacity solver (bulk computation).
 
     Parameters
     ----------
@@ -64,7 +61,7 @@ class HeatCapacityResult:
         Mode heat capacities (scalar Cv per mode) for all grid points.
     heat_capacity_matrix : ndarray of double, optional
         Shape (num_temp, num_gp, num_band0, num_band).
-        Only set by HeatCapacityMatrixProvider (Kubo).
+        Only set by HeatCapacityMatrixSolver (Kubo).
     extra : dict
         Plugin-specific data.
 
@@ -77,7 +74,7 @@ class HeatCapacityResult:
 
 @dataclass
 class ScatteringResult:
-    """Result from a scattering provider at a single grid point.
+    """Result from a scattering solver at a single grid point.
 
     Parameters
     ----------
@@ -96,23 +93,20 @@ class ScatteringResult:
 
 
 # ---------------------------------------------------------------------------
-# Aggregated per-grid-point data (Calculator -> Accumulator.finalize())
+# Aggregated per-grid-point data (Calculator -> KappaSolver.finalize())
 # ---------------------------------------------------------------------------
 
 
 @dataclass
 class GridPointAggregates:
-    """Aggregated per-grid-point data passed from Calculator to Accumulator.
+    """Aggregated per-grid-point data passed from Calculator to KappaSolver.
 
     Built by the Calculator after the grid-point loop and passed to
-    ``accumulator.finalize()``.  Replaces the former untyped
+    ``kappa_solver.finalize()``.  Replaces the former untyped
     ``grid_point_data: dict[str, Any]``.
 
     Always present
     ~~~~~~~~~~~~~~
-    num_sampling_grid_points : int
-        Total number of BZ grid points represented by the sampled
-        irreducible grid points.
     group_velocities : (num_gp, num_band0, 3), real
         Group velocities at each irreducible grid point.
     mode_heat_capacities : (num_temp, num_gp, num_band0), real
@@ -134,15 +128,14 @@ class GridPointAggregates:
     Plugin-specific
     ~~~~~~~~~~~~~~~
     vm_by_vm : (num_gp, num_band0, num_band, 6), complex
-        Off-diagonal velocity operator outer product (Wigner/Kubo).
+        Off-diagonal velocity operator outer product (MS-SMM19/NJC23).
     heat_capacity_matrix : (num_temp, num_gp, num_band0, num_band), real
         Heat-capacity matrix (Kubo).
     extra : dict
-        Plugin-specific data (e.g. velocity_operator for Wigner).
+        Plugin-specific data (e.g. velocity_operator).
 
     """
 
-    num_sampling_grid_points: int
     group_velocities: NDArray[np.double]
     mode_heat_capacities: NDArray[np.double]
     gv_by_gv: NDArray[np.double] | None = None
@@ -197,9 +190,9 @@ def compute_effective_gamma(
 # ---------------------------------------------------------------------------
 
 from phono3py.conductivity.protocols import (  # noqa: E402
-    HeatCapacityProvider,
-    ScatteringProvider,
-    VelocityProvider,
+    HeatCapacitySolver,
+    ScatteringSolver,
+    VelocitySolver,
 )
 
 __all__ = [
@@ -208,7 +201,7 @@ __all__ = [
     "ScatteringResult",
     "VelocityResult",
     "compute_effective_gamma",
-    "VelocityProvider",
-    "HeatCapacityProvider",
-    "ScatteringProvider",
+    "VelocitySolver",
+    "HeatCapacitySolver",
+    "ScatteringSolver",
 ]

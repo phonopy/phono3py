@@ -1,4 +1,4 @@
-"""Velocity provider for the Wigner transport equation."""
+"""Velocity solver for the Wigner transport equation."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from phonopy.phonon.degeneracy import degenerate_sets
 
 from phono3py.conductivity.grid_point_data import VelocityResult
 from phono3py.conductivity.ms_smm19.velocity_operator import VelocityOperator
-from phono3py.conductivity.utils import VOIGT_INDEX_PAIRS
+from phono3py.conductivity.utils import VOIGT_INDEX_PAIRS, get_kappa_star_operations
 from phono3py.phonon.grid import (
     get_grid_points_by_rotations,
     get_qpoints_from_bz_grid_points,
@@ -16,10 +16,10 @@ from phono3py.phonon.grid import (
 from phono3py.phonon3.interaction import Interaction
 
 
-class VelocityOperatorProvider:
+class VelocityOperatorSolver:
     """Compute velocity operator and its symmetrised outer product at a grid point.
 
-    This provider implements the ``VelocityProvider`` protocol for the Wigner
+    This solver implements the ``VelocitySolver`` protocol for the Wigner
     transport equation.  It wraps phonopy's ``VelocityOperator`` and computes
     the k-star-averaged outer product of the velocity operator matrix.
 
@@ -31,7 +31,6 @@ class VelocityOperatorProvider:
     - ``vm_by_vm`` (num_band0, num_band, 6): complex k-star-averaged outer
       product  V(s,s') x V*(s,s') packed into 6 Voigt components (xx, yy, zz,
       yz, xz, xy).
-    - ``num_sampling_grid_points``: k-star order for this irreducible point.
     - ``extra["velocity_operator"]``: raw velocity operator matrix.
 
     Notes
@@ -43,10 +42,6 @@ class VelocityOperatorProvider:
     ----------
     pp : Interaction
         Interaction instance. ``init_dynamical_matrix()`` must have been called.
-    point_operations : ndarray of int64, shape (num_ops, 3, 3)
-        Reciprocal-space point-group operations (integer representation).
-    rotations_cartesian : ndarray of double, shape (num_ops, 3, 3)
-        Corresponding Cartesian rotation matrices.
     is_kappa_star : bool, optional
         When True use the full k-star for symmetry averaging. Default True.
     gv_delta_q : float or None, optional
@@ -62,8 +57,6 @@ class VelocityOperatorProvider:
     def __init__(
         self,
         pp: Interaction,
-        point_operations: NDArray[np.int64],
-        rotations_cartesian: NDArray[np.double],
         is_kappa_star: bool = True,
         gv_delta_q: float | None = None,
         log_level: int = 0,
@@ -72,10 +65,11 @@ class VelocityOperatorProvider:
         if pp.dynamical_matrix is None:
             raise RuntimeError("Interaction.init_dynamical_matrix() must be called.")
         self._pp = pp
-        self._point_operations = point_operations
-        self._rotations_cartesian = rotations_cartesian
         self._is_kappa_star = is_kappa_star
         self._log_level = log_level
+        self._point_operations, self._rotations_cartesian = get_kappa_star_operations(
+            pp.bz_grid, is_kappa_star
+        )
         self._velocity_obj = VelocityOperator(
             pp.dynamical_matrix,
             q_length=gv_delta_q,
@@ -95,9 +89,8 @@ class VelocityOperatorProvider:
         -------
         VelocityResult
             ``group_velocities`` (num_band0, 3), ``gv_by_gv``
-            (num_band0, 6) real, ``vm_by_vm``
-            (num_band0, num_band, 6) complex, and
-            ``num_sampling_grid_points`` are set.
+            (num_band0, 6) real, and ``vm_by_vm``
+            (num_band0, num_band, 6) complex are set.
             ``extra["velocity_operator"]`` contains the raw operator for HDF5.
 
         """
@@ -111,11 +104,10 @@ class VelocityOperatorProvider:
         gv_op = gv_op_full[band_indices, :, :]
 
         gv = self._get_group_velocities(grid_point, gv_op_full)
-        vm_by_vm, kstar_order = self._get_gv_by_gv_operator(grid_point, gv_op)
+        vm_by_vm = self._get_gv_by_gv_operator(grid_point, gv_op)
         return VelocityResult(
             group_velocities=gv,
             vm_by_vm=vm_by_vm,
-            num_sampling_grid_points=kstar_order,
         )
 
     # ------------------------------------------------------------------
@@ -155,7 +147,7 @@ class VelocityOperatorProvider:
         self,
         grid_point: int,
         gv_op: NDArray[np.cdouble],
-    ) -> tuple[NDArray[np.cdouble], int]:
+    ) -> NDArray[np.cdouble]:
         """Return k-star-averaged velocity-operator outer product.
 
         Parameters
@@ -169,8 +161,6 @@ class VelocityOperatorProvider:
         -------
         gv_by_gv_op : (num_band0, nat3, 6) complex
             Symmetry-averaged outer product packed in Voigt order.
-        kstar_order : int
-            Number of arms in the k-star.
 
         """
         if self._is_kappa_star:
@@ -196,4 +186,4 @@ class VelocityOperatorProvider:
         site_multi = len(rotation_map) // order_kstar
         gv_by_gv_op /= site_multi
 
-        return gv_by_gv_op, order_kstar
+        return gv_by_gv_op

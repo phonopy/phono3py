@@ -42,17 +42,17 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from phono3py.conductivity.context import ConductivityContext
+from phono3py.conductivity.build_components import KappaSettings
 from phono3py.conductivity.grid_point_data import GridPointAggregates
-from phono3py.conductivity.heat_capacity_providers import ModeHeatCapacityProvider
-from phono3py.conductivity.kappa_accumulators import LBTEKappaAccumulator
-from phono3py.conductivity.lbte_collision_provider import LBTECollisionProvider
-from phono3py.conductivity.scattering_providers import IsotopeScatteringProvider
+from phono3py.conductivity.heat_capacity_solvers import ModeHeatCapacitySolver
+from phono3py.conductivity.kappa_solvers import LBTEKappaSolver
+from phono3py.conductivity.lbte_collision_solver import LBTECollisionSolver
+from phono3py.conductivity.scattering_solvers import IsotopeScatteringSolver
 from phono3py.conductivity.utils import (
     show_grid_point_frequencies_gv,
     show_grid_point_header,
 )
-from phono3py.conductivity.velocity_providers import GroupVelocityProvider
+from phono3py.conductivity.velocity_solvers import GroupVelocitySolver
 from phono3py.other.isotope import Isotope
 from phono3py.phonon.grid import BZGrid, get_qpoints_from_bz_grid_points
 from phono3py.phonon3.interaction import Interaction
@@ -64,10 +64,10 @@ class LBTECalculator:
     Two-stage design:
 
     Stage 1 (per-grid-point, parallel-ready): for each irreducible grid point
-    compute the collision matrix row via LBTECollisionProvider and store
+    compute the collision matrix row via LBTECollisionSolver and store
     velocities and heat capacities via the standard providers.
 
-    Stage 2 (global, after Stage 1 loop): LBTEKappaAccumulator.finalize()
+    Stage 2 (global, after Stage 1 loop): LBTEKappaSolver.finalize()
     assembles the full collision matrix, symmetrizes it, diagonalizes or
     inverts it, and computes kappa and kappa_RTA.
 
@@ -78,15 +78,15 @@ class LBTECalculator:
     ----------
     pp : Interaction
         Ph-ph interaction object.  init_dynamical_matrix must have been called.
-    velocity_provider : GroupVelocityProvider
+    velocity_solver : GroupVelocitySolver
         Computes group velocities at each grid point.
-    cv_provider : ModeHeatCapacityProvider
+    cv_solver : ModeHeatCapacitySolver
         Computes mode heat capacities at each grid point.
-    collision_provider : LBTECollisionProvider
+    collision_solver : LBTECollisionSolver
         Computes gamma and one collision matrix row per grid point.
-    accumulator : LBTEKappaAccumulator
+    kappa_solver : LBTEKappaSolver
         Owns the global collision matrix and solves for kappa at Stage 2.
-    context : ConductivityContext
+    kappa_settings : KappaSettings
         Shared computation metadata (grid, phonon, symmetry, configuration).
     is_isotope : bool, optional
         Include isotope scattering.  Default False.
@@ -102,33 +102,36 @@ class LBTECalculator:
     def __init__(
         self,
         pp: Interaction,
-        velocity_provider: GroupVelocityProvider,
-        cv_provider: ModeHeatCapacityProvider,
-        collision_provider: LBTECollisionProvider,
-        accumulator: LBTEKappaAccumulator,
-        context: ConductivityContext,
+        velocity_solver: GroupVelocitySolver,
+        cv_solver: ModeHeatCapacitySolver,
+        collision_solver: LBTECollisionSolver,
+        kappa_solver: LBTEKappaSolver,
+        kappa_settings: KappaSettings,
+        frequencies: NDArray[np.double],
         *,
         is_isotope: bool = False,
         mass_variances: Sequence[float] | NDArray[np.double] | None = None,
         is_full_pp: bool = False,
+        sigma_cutoff_width: float | None = None,
         log_level: int = 0,
     ) -> None:
         """Init method."""
         self._pp = pp
-        self._velocity_provider = velocity_provider
-        self._cv_provider = cv_provider
-        self._collision_provider = collision_provider
-        self._accumulator = accumulator
-        self._context = context
+        self._velocity_solver = velocity_solver
+        self._cv_solver = cv_solver
+        self._collision_solver = collision_solver
+        self._kappa_solver = kappa_solver
+        self._kappa_settings = kappa_settings
+        self._frequencies = frequencies
         self._is_full_pp = is_full_pp
+        self._sigma_cutoff_width = sigma_cutoff_width
         self._log_level = log_level
 
-        # Isotope provider (optional).
-        self._isotope_provider: IsotopeScatteringProvider | None = None
+        # Isotope solver (optional).
+        self._isotope_solver: IsotopeScatteringSolver | None = None
         if is_isotope or mass_variances is not None:
-            self._isotope_provider = self._build_isotope_provider(mass_variances)
+            self._isotope_solver = self._build_isotope_solver(mass_variances)
 
-        self._num_sampling_grid_points = 0
         self._grid_point_count = 0
 
         # Per-grid-point data (allocated in _allocate_values).
@@ -144,7 +147,6 @@ class LBTECalculator:
 
         # Allocate arrays.
         self._allocate_values()
-        self._accumulator.prepare()
 
     # ------------------------------------------------------------------
     # Public interface
@@ -185,9 +187,9 @@ class LBTECalculator:
         self._compute_all_velocities()
 
         # (3) Isotope loop.
-        if self._isotope_provider is not None:
+        if self._isotope_solver is not None:
             if self._log_level:
-                for sigma in self._context.sigmas:
+                for sigma in self._kappa_settings.sigmas:
                     print("Running isotope scattering calculations ", end="")
                     print(
                         "with tetrahedron method..."
@@ -198,7 +200,7 @@ class LBTECalculator:
 
         # (4) Main collision loop.
         self._grid_point_count = 0
-        for i_gp in range(len(self._context.ir_grid_points)):
+        for i_gp in range(len(self._kappa_settings.grid_points)):
             self._compute_collision_at_grid_point(i_gp)
             self._grid_point_count = i_gp + 1
             if on_grid_point is not None:
@@ -211,31 +213,29 @@ class LBTECalculator:
             )
 
         # (5) Finalize.
-        self._accumulator.finalize(self._build_grid_point_aggregates())
+        self._kappa_solver.finalize(self._build_grid_point_aggregates())
 
     def set_kappa_at_sigmas(self) -> None:
         """Finalize kappa from a pre-loaded collision matrix (read-from-file path).
 
-        Calls accumulator.finalize() using the sum of IR grid weights as the
-        number of sampling grid points.  Use this instead of run() when
+        Calls kappa_solver.finalize().  Use this instead of run() when
         gamma and collision_matrix have been loaded externally.
 
         """
         aggregates = self._build_grid_point_aggregates()
-        aggregates.num_sampling_grid_points = int(self._context.grid_weights.sum())
-        self._accumulator.finalize(aggregates)
+        self._kappa_solver.finalize(aggregates)
 
     def delete_gp_collision_and_pp(self) -> None:
         """No-op: memory management compatibility method."""
 
     # ------------------------------------------------------------------
-    # Properties — context
+    # Properties — kappa settings
     # ------------------------------------------------------------------
 
     @property
-    def context(self) -> ConductivityContext:
-        """Return computation context."""
-        return self._context
+    def kappa_settings(self) -> KappaSettings:
+        """Return the kappa settings."""
+        return self._kappa_settings
 
     # ------------------------------------------------------------------
     # Properties — grid / phonon metadata
@@ -244,24 +244,24 @@ class LBTECalculator:
     @property
     def mesh_numbers(self) -> NDArray[np.int64]:
         """Return BZ mesh numbers."""
-        return self._context.mesh_numbers
+        return self._kappa_settings.mesh_numbers
 
     @property
     def bz_grid(self) -> BZGrid:
         """Return BZ grid object."""
-        return self._context.bz_grid
+        return self._kappa_settings.bz_grid
 
     @property
     def grid_points(self) -> NDArray[np.int64]:
         """Return irreducible BZ grid point indices."""
-        return self._context.ir_grid_points
+        return self._kappa_settings.grid_points
 
     @property
     def qpoints(self) -> NDArray[np.double]:
         """Return q-point coordinates of the irreducible grid points."""
         return np.array(
             get_qpoints_from_bz_grid_points(
-                self._context.ir_grid_points, self._context.bz_grid
+                self._kappa_settings.grid_points, self._kappa_settings.bz_grid
             ),
             dtype="double",
             order="C",
@@ -270,50 +270,33 @@ class LBTECalculator:
     @property
     def grid_weights(self) -> NDArray[np.int64]:
         """Return symmetry weights of the irreducible grid points."""
-        return self._context.grid_weights
+        return self._kappa_settings.grid_weights
 
     @property
     def temperatures(self) -> NDArray[np.double]:
         """Return temperatures in Kelvin."""
-        assert self._context.temperatures is not None
-        return self._context.temperatures
-
-    @temperatures.setter
-    def temperatures(self, value: Sequence[float] | NDArray[np.double]) -> None:
-        """Set temperatures and re-allocate arrays.
-
-        Used by the read-from-file path to resize arrays when the temperatures
-        stored in the collision file differ from the initial default.
-
-        """
-        self._context.temperatures = np.asarray(value, dtype="double")
-        self._allocate_values()
-        self._accumulator.prepare()
+        assert self._kappa_settings.temperatures is not None
+        return self._kappa_settings.temperatures
 
     @property
     def sigmas(self) -> list[float | None]:
         """Return smearing widths."""
-        return self._context.sigmas
+        return self._kappa_settings.sigmas
 
     @property
     def sigma_cutoff_width(self) -> float | None:
         """Return smearing cutoff width."""
-        return self._context.sigma_cutoff_width
+        return self._sigma_cutoff_width
 
     @property
     def frequencies(self) -> NDArray[np.double]:
         """Return phonon frequencies at the irreducible grid points."""
-        return self._context.frequencies[self._context.ir_grid_points]
+        return self._frequencies[self._kappa_settings.grid_points]
 
     @property
     def grid_point_count(self) -> int:
         """Return number of grid points processed so far."""
         return self._grid_point_count
-
-    @property
-    def number_of_sampling_grid_points(self) -> int:
-        """Return total BZ grid points represented (sum of k-star orders)."""
-        return self._num_sampling_grid_points
 
     # ------------------------------------------------------------------
     # Properties — computed physical quantities
@@ -322,22 +305,22 @@ class LBTECalculator:
     @property
     def kappa(self) -> NDArray[np.double]:
         """Return LBTE thermal conductivity, shape (num_sigma, num_temp, 6)."""
-        return self._accumulator.solver.kappa
+        return self._kappa_solver.solver.kappa
 
     @property
     def kappa_RTA(self) -> NDArray[np.double]:
         """Return RTA thermal conductivity, shape (num_sigma, num_temp, 6)."""
-        return self._accumulator.solver.kappa_RTA
+        return self._kappa_solver.solver.kappa_RTA
 
     @property
     def mode_kappa(self) -> NDArray[np.double]:
         """Return mode LBTE kappa, shape (num_sigma, num_temp, num_gp, num_band0, 6)."""
-        return self._accumulator.solver.mode_kappa
+        return self._kappa_solver.solver.mode_kappa
 
     @property
     def mode_kappa_RTA(self) -> NDArray[np.double]:
         """Return mode RTA kappa, shape (num_sigma, num_temp, num_gp, num_band0, 6)."""
-        return self._accumulator.solver.mode_kappa_RTA
+        return self._kappa_solver.solver.mode_kappa_RTA
 
     @property
     def gamma(self) -> NDArray[np.double]:
@@ -358,17 +341,17 @@ class LBTECalculator:
     @property
     def collision_matrix(self) -> NDArray[np.double] | None:
         """Return assembled collision matrix."""
-        return self._accumulator.solver.collision_matrix
+        return self._kappa_solver.solver.collision_matrix
 
     @collision_matrix.setter
     def collision_matrix(self, value: NDArray[np.double] | None) -> None:
         """Set collision matrix (for loading from file)."""
-        self._accumulator.solver.collision_matrix = value
+        self._kappa_solver.solver.collision_matrix = value
 
     @property
     def collision_eigenvalues(self) -> NDArray[np.double] | None:
         """Return eigenvalues of collision matrix."""
-        return self._accumulator.solver.collision_eigenvalues
+        return self._kappa_solver.solver.collision_eigenvalues
 
     @property
     def averaged_pp_interaction(self) -> NDArray[np.double] | None:
@@ -378,7 +361,7 @@ class LBTECalculator:
     @property
     def boundary_mfp(self) -> float | None:
         """Return boundary mean free path in micrometres."""
-        return self._context.boundary_mfp
+        return self._kappa_settings.boundary_mfp
 
     @property
     def group_velocities(self) -> NDArray[np.double]:
@@ -395,15 +378,15 @@ class LBTECalculator:
     @property
     def f_vectors(self) -> NDArray[np.double] | None:
         """Return f-vectors, shape (num_gp, num_band0, 3)."""
-        return self._accumulator.solver.f_vectors
+        return self._kappa_solver.solver.f_vectors
 
     @property
     def mfp(self) -> NDArray[np.double] | None:
         """Return mean free path, shape (num_sigma, num_temp, num_gp, num_band0, 3)."""
-        return self._accumulator.solver.mfp
+        return self._kappa_solver.solver.mfp
 
     def __getattr__(self, name: str) -> object:
-        """Delegate unknown attribute lookups to the accumulator.
+        """Delegate unknown attribute lookups to the kappa solver.
 
         Allows plugin-specific properties (kappa_P_exact, kappa_C, etc.)
         to be accessed directly on the calculator without hard-coding them here.
@@ -412,7 +395,7 @@ class LBTECalculator:
         if name.startswith("_"):
             raise AttributeError(name)
         try:
-            acc = object.__getattribute__(self, "_accumulator")
+            acc = object.__getattribute__(self, "_kappa_solver")
         except AttributeError:
             raise AttributeError(name) from None
         try:
@@ -423,31 +406,31 @@ class LBTECalculator:
             ) from None
 
     def get_extra_kappa_output(self) -> dict[str, Any] | None:
-        """Return variant-specific kappa output from the accumulator.
+        """Return variant-specific kappa output from the kappa solver.
 
-        Called by output writers to obtain plugin-defined quantities (e.g.
-        Wigner kappa_P_exact, kappa_C) that are written to the hdf5 file via
+        Called by output writers to obtain plugin-defined quantities that
+        are written to the hdf5 file via
         write_kappa_to_hdf5(extra_datasets=...).
 
-        Returns None when the accumulator does not implement this method
+        Returns None when the kappa solver does not implement this method
         (standard LBTE).
 
         """
-        fn = getattr(self._accumulator, "get_extra_kappa_output", None)
+        fn = getattr(self._kappa_solver, "get_extra_kappa_output", None)
         return fn() if callable(fn) else None
 
     def get_frequencies_all(self) -> NDArray[np.double]:
         """Return phonon frequencies on the full BZ grid."""
-        return self._context.frequencies[self._context.bz_grid.grg2bzg]
+        return self._frequencies[self._kappa_settings.bz_grid.grg2bzg]
 
     # ------------------------------------------------------------------
     # Private: isotope
     # ------------------------------------------------------------------
 
-    def _build_isotope_provider(
+    def _build_isotope_solver(
         self,
         mass_variances: Sequence[float] | NDArray[np.double] | None,
-    ) -> IsotopeScatteringProvider:
+    ) -> IsotopeScatteringSolver:
         isotope = Isotope(
             self._pp.mesh_numbers,
             self._pp.primitive,
@@ -458,15 +441,15 @@ class LBTECalculator:
             cutoff_frequency=self._pp.cutoff_frequency,
             lapack_zheev_uplo=self._pp.lapack_zheev_uplo,
         )
-        return IsotopeScatteringProvider(
-            isotope, self._context.sigmas, log_level=self._log_level
+        return IsotopeScatteringSolver(
+            isotope, self._kappa_settings.sigmas, log_level=self._log_level
         )
 
     def _prepare_isotope_phonons(self) -> None:
-        if self._isotope_provider is None:
+        if self._isotope_solver is None:
             return
         frequencies, eigenvectors, phonon_done = self._pp.get_phonons()
-        self._isotope_provider.isotope.set_phonons(
+        self._isotope_solver.isotope.set_phonons(
             frequencies,
             eigenvectors,
             phonon_done,
@@ -481,42 +464,42 @@ class LBTECalculator:
         if not self._log_level:
             return
         mass_variances = (
-            self._isotope_provider.isotope.mass_variances
-            if self._isotope_provider is not None
+            self._isotope_solver.isotope.mass_variances
+            if self._isotope_solver is not None
             else None
         )
         show_grid_point_header(
-            bzgp=self._context.ir_grid_points[i_gp],
+            bzgp=self._kappa_settings.grid_points[i_gp],
             i_gp=i_gp,
-            num_gps=len(self._context.ir_grid_points),
-            bz_grid=self._context.bz_grid,
-            boundary_mfp=self._context.boundary_mfp,
+            num_gps=len(self._kappa_settings.grid_points),
+            bz_grid=self._kappa_settings.bz_grid,
+            boundary_mfp=self._kappa_settings.boundary_mfp,
             mass_variances=mass_variances,
         )
 
     def _show_log(self, i_gp: int, gv: NDArray[np.double]) -> None:
-        bz_gp = self._context.ir_grid_points[i_gp]
-        frequencies = self._context.frequencies[bz_gp][self._context.band_indices]
+        bz_gp = self._kappa_settings.grid_points[i_gp]
+        frequencies = self._frequencies[bz_gp][self._kappa_settings.band_indices]
         show_grid_point_frequencies_gv(
             frequencies,
             gv,
-            gv_delta_q=getattr(self._velocity_provider, "gv_delta_q", None),
+            gv_delta_q=getattr(self._velocity_solver, "gv_delta_q", None),
         )
 
     def _allocate_values(self) -> None:
         """Allocate per-grid-point arrays."""
-        num_sigma = len(self._context.sigmas)
-        num_temp = len(self._context.temperatures)
-        num_gp = len(self._context.ir_grid_points)
-        num_band0 = len(self._context.band_indices)
-        num_band = self._context.frequencies.shape[1]
+        num_sigma = len(self._kappa_settings.sigmas)
+        num_temp = len(self._kappa_settings.temperatures)
+        num_gp = len(self._kappa_settings.grid_points)
+        num_band0 = len(self._kappa_settings.band_indices)
+        num_band = self._frequencies.shape[1]
 
         self._gamma = np.zeros(
             (num_sigma, num_temp, num_gp, num_band0), order="C", dtype="double"
         )
         self._gv = np.zeros((num_gp, num_band0, 3), order="C", dtype="double")
         self._cv = np.zeros((num_temp, num_gp, num_band0), order="C", dtype="double")
-        if self._isotope_provider is not None:
+        if self._isotope_solver is not None:
             self._gamma_iso = np.zeros(
                 (num_sigma, num_gp, num_band0), order="C", dtype="double"
             )
@@ -524,19 +507,18 @@ class LBTECalculator:
             self._averaged_pp_interaction = np.zeros(
                 (num_gp, num_band0), order="C", dtype="double"
             )
-        if self._velocity_provider.produces_vm_by_vm:
+        if self._velocity_solver.produces_vm_by_vm:
             self._vm_by_vm = np.zeros(
                 (num_gp, num_band0, num_band, 6), order="C", dtype="complex128"
             )
-        if self._cv_provider.produces_heat_capacity_matrix:
+        if self._cv_solver.produces_heat_capacity_matrix:
             self._heat_capacity_matrix = np.zeros(
                 (num_temp, num_gp, num_band0, num_band), order="C", dtype="double"
             )
 
     def _build_grid_point_aggregates(self) -> GridPointAggregates:
-        """Build GridPointAggregates for accumulator.finalize()."""
+        """Build GridPointAggregates for kappa_solver.finalize()."""
         return GridPointAggregates(
-            num_sampling_grid_points=self._num_sampling_grid_points,
             group_velocities=self._gv,
             mode_heat_capacities=self._cv,
             gamma=self._gamma,
@@ -549,42 +531,42 @@ class LBTECalculator:
 
     def _compute_bulk_heat_capacities(self) -> None:
         """Compute heat capacities for all grid points at once."""
-        cv_result = self._cv_provider.compute(self._context.ir_grid_points)
+        cv_result = self._cv_solver.compute(self._kappa_settings.grid_points)
         self._cv = cv_result.heat_capacities
         if cv_result.heat_capacity_matrix is not None:
             self._heat_capacity_matrix = cv_result.heat_capacity_matrix
 
     def _compute_all_velocities(self) -> None:
         """Compute velocities for all grid points."""
-        self._num_sampling_grid_points = 0
-        for i_gp in range(len(self._context.ir_grid_points)):
-            grid_point = int(self._context.ir_grid_points[i_gp])
-            vel_result = self._velocity_provider.compute(grid_point)
-            self._num_sampling_grid_points += vel_result.num_sampling_grid_points
+        for i_gp in range(len(self._kappa_settings.grid_points)):
+            grid_point = int(self._kappa_settings.grid_points[i_gp])
+            vel_result = self._velocity_solver.compute(grid_point)
             self._gv[i_gp] = vel_result.group_velocities
             if vel_result.vm_by_vm is not None:
                 self._vm_by_vm[i_gp] = vel_result.vm_by_vm
 
     def _compute_all_isotope(self) -> None:
         """Compute isotope scattering for all grid points."""
-        assert self._isotope_provider is not None
-        for i_gp in range(len(self._context.ir_grid_points)):
-            grid_point = int(self._context.ir_grid_points[i_gp])
-            gamma_iso = self._isotope_provider.compute(grid_point)
-            self._gamma_iso[:, i_gp, :] = gamma_iso[:, self._context.band_indices]
+        assert self._isotope_solver is not None
+        for i_gp in range(len(self._kappa_settings.grid_points)):
+            grid_point = int(self._kappa_settings.grid_points[i_gp])
+            gamma_iso = self._isotope_solver.compute(grid_point)
+            self._gamma_iso[:, i_gp, :] = gamma_iso[
+                :, self._kappa_settings.band_indices
+            ]
 
     def _compute_collision_at_grid_point(self, i_gp: int) -> None:
         """Compute collision matrix row and gamma at a single grid point."""
         self._show_log_header(i_gp)
-        grid_point = int(self._context.ir_grid_points[i_gp])
+        grid_point = int(self._kappa_settings.grid_points[i_gp])
 
-        collision_result = self._collision_provider.compute(grid_point)
+        collision_result = self._collision_solver.compute(grid_point)
         self._gamma[:, :, i_gp, :] = collision_result.gamma
 
         if self._is_full_pp and collision_result.averaged_pp is not None:
             self._averaged_pp_interaction[i_gp] = collision_result.averaged_pp
 
-        self._accumulator.store(i_gp, collision_result)
+        self._kappa_solver.store(i_gp, collision_result)
 
         if self._log_level:
             self._show_log(i_gp, self._gv[i_gp])

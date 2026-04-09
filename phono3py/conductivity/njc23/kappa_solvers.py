@@ -1,17 +1,17 @@
-"""Kappa accumulators for the Green-Kubo method."""
+"""Kappa solvers for the Green-Kubo method."""
 
 from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
 
-from phono3py.conductivity.collision_matrix_solver import CollisionMatrixSolver
-from phono3py.conductivity.context import ConductivityContext
+from phono3py.conductivity.build_components import KappaSettings
+from phono3py.conductivity.collision_matrix_kernel import CollisionMatrixKernel
 from phono3py.conductivity.grid_point_data import (
     GridPointAggregates,
     compute_effective_gamma,
 )
-from phono3py.conductivity.lbte_collision_provider import LBTECollisionResult
+from phono3py.conductivity.lbte_collision_solver import LBTECollisionResult
 from phono3py.conductivity.utils import (
     log_kappa_header,
     log_kappa_row,
@@ -71,22 +71,18 @@ def _compute_kubo_mode_kappa_matrix(
     return mode_kappa_mat
 
 
-class KuboRTAKappaAccumulator:
-    """Kappa accumulator for the Green-Kubo formula.
+class KuboRTAKappaSolver:
+    """Kappa solver for the Green-Kubo formula.
 
-    Accumulates the full band-pair kappa matrix ``mode_kappa_inter``.
+    Computes the full band-pair kappa matrix ``mode_kappa_inter``.
     The ``kappa`` property sums over all band pairs.
 
     See the formula in _compute_kubo_mode_kappa_matrix().
 
     Parameters
     ----------
-    context : ConductivityContext
+    kappa_settings : KappaSettings
         Shared computation metadata (grid, phonon, symmetry, configuration).
-    conversion_factor : float
-        Unit conversion factor to W/(m*K).
-    is_isotope : bool
-        Include isotope scattering.
     log_level : int
         Verbosity level.
 
@@ -94,13 +90,13 @@ class KuboRTAKappaAccumulator:
 
     def __init__(
         self,
-        context: ConductivityContext,
-        conversion_factor: float,
+        kappa_settings: KappaSettings,
+        frequencies: NDArray[np.double],
         log_level: int = 0,
     ) -> None:
         """Init method."""
-        self._context = context
-        self._conversion_factor = conversion_factor
+        self._kappa_settings = kappa_settings
+        self._frequencies = frequencies
         self._log_level = log_level
 
         self._kappa: NDArray[np.double] | None = None
@@ -112,7 +108,6 @@ class KuboRTAKappaAccumulator:
         assert aggregates.vm_by_vm is not None
         assert aggregates.heat_capacity_matrix is not None
 
-        num_sampling_grid_points = aggregates.num_sampling_grid_points
         gamma_eff = compute_effective_gamma(aggregates)
         num_sigma, num_temp, num_gp, num_band = gamma_eff.shape
 
@@ -122,24 +117,21 @@ class KuboRTAKappaAccumulator:
             order="C",
         )
 
-        for i_gp, gp in enumerate(self._context.grid_points):
+        for i_gp, gp in enumerate(self._kappa_settings.grid_points):
             mode_kappa_matrix = _compute_kubo_mode_kappa_matrix(
-                frequencies=self._context.frequencies[gp],
+                frequencies=self._frequencies[gp],
                 gamma=gamma_eff[:, :, i_gp, :],
                 heat_capacity_matrix=aggregates.heat_capacity_matrix[:, i_gp, :, :],
                 vm_by_vm=aggregates.vm_by_vm[i_gp],
-                conversion_factor=self._conversion_factor,
+                conversion_factor=self._kappa_settings.conversion_factor,
             )
             self._mode_kappa_matrix[:, :, i_gp, :, :, :] = mode_kappa_matrix
 
-        if num_sampling_grid_points > 0:
-            self._kappa = (
-                self._mode_kappa_matrix.sum(axis=(2, 3, 4)) / num_sampling_grid_points
-            )
-            self._kappa_intra = (
-                np.einsum("abijjc->abc", self._mode_kappa_matrix)
-                / num_sampling_grid_points
-            )
+        num_mesh_points = int(np.prod(self._kappa_settings.mesh_numbers))
+        self._kappa = self._mode_kappa_matrix.sum(axis=(2, 3, 4)) / num_mesh_points
+        self._kappa_intra = (
+            np.einsum("abijjc->abc", self._mode_kappa_matrix) / num_mesh_points
+        )
 
     @property
     def kappa(self) -> NDArray[np.double] | None:
@@ -207,9 +199,9 @@ class KuboRTAKappaAccumulator:
             and num_phonon_modes is not None
         )
 
-        for i, sigma in enumerate(self._context.sigmas):
+        for i, sigma in enumerate(self._kappa_settings.sigmas):
             log_kappa_header(sigma, show_ipm=show_ipm)
-            for j, t in enumerate(self._context.temperatures):
+            for j, t in enumerate(self._kappa_settings.temperatures):
                 ipm = (
                     int(num_ignored_phonon_modes[i, j])
                     if show_ipm and num_ignored_phonon_modes is not None
@@ -219,7 +211,7 @@ class KuboRTAKappaAccumulator:
                     "K_intra", t, self._kappa_intra[i, j], ipm, num_phonon_modes
                 )
             print(" ")
-            for j, t in enumerate(self._context.temperatures):
+            for j, t in enumerate(self._kappa_settings.temperatures):
                 ipm = (
                     int(num_ignored_phonon_modes[i, j])
                     if show_ipm and num_ignored_phonon_modes is not None
@@ -227,7 +219,7 @@ class KuboRTAKappaAccumulator:
                 )
                 log_kappa_row("K_inter", t, kappa_inter[i, j], ipm, num_phonon_modes)
             print(" ")
-            for j, t in enumerate(self._context.temperatures):
+            for j, t in enumerate(self._kappa_settings.temperatures):
                 ipm = (
                     int(num_ignored_phonon_modes[i, j])
                     if show_ipm and num_ignored_phonon_modes is not None
@@ -237,10 +229,10 @@ class KuboRTAKappaAccumulator:
             print("", flush=True)
 
 
-class KuboLBTEKappaAccumulator:
-    """LBTE accumulator with added Kubo inter-band kappa.
+class KuboLBTEKappaSolver:
+    """LBTE kappa solver with added Kubo inter-band kappa.
 
-    Composes a CollisionMatrixSolver for the standard LBTE solve (intra-band)
+    Composes a CollisionMatrixKernel for the standard LBTE solve (intra-band)
     and adds the inter-band kappa from the Kubo formula using the collision
     matrix diagonal as effective linewidths.
 
@@ -251,12 +243,10 @@ class KuboLBTEKappaAccumulator:
 
     Parameters
     ----------
-    solver : CollisionMatrixSolver
+    solver : CollisionMatrixKernel
         Shared solver for the standard LBTE solve.
-    context : ConductivityContext
+    kappa_settings : KappaSettings
         Shared computation metadata (grid, phonon, symmetry, configuration).
-    conversion_factor : float
-        Unit conversion factor to W/(m*K).
     log_level : int, optional
         Verbosity level. Default 0.
 
@@ -264,28 +254,31 @@ class KuboLBTEKappaAccumulator:
 
     def __init__(
         self,
-        solver: CollisionMatrixSolver,
-        context: ConductivityContext,
-        conversion_factor: float,
+        solver: CollisionMatrixKernel,
+        kappa_settings: KappaSettings,
+        frequencies: NDArray[np.double],
         log_level: int = 0,
     ) -> None:
         """Init method."""
         self._solver = solver
-        self._context = context
-        self._conversion_factor = conversion_factor
+        self._kappa_settings = kappa_settings
+        self._frequencies = frequencies
         self._log_level = log_level
 
-        # Output arrays (populated in finalize).
-        self._kappa_inter: NDArray[np.double] | None = None
-        self._mode_kappa_matrix: NDArray[np.double] | None = None
+        num_sigma = len(kappa_settings.sigmas)
+        num_temp = len(kappa_settings.temperatures)
+        num_gp = len(kappa_settings.grid_points)
+        num_band = frequencies.shape[1]
+        self._mode_kappa_matrix = np.zeros(
+            (num_sigma, num_temp, num_gp, num_band, num_band, 6),
+            dtype="double",
+            order="C",
+        )
+        self._kappa_inter = np.zeros((num_sigma, num_temp, 6), dtype="double")
 
     # ------------------------------------------------------------------
     # Public interface
     # ------------------------------------------------------------------
-
-    def prepare(self) -> None:
-        """Allocate accumulator arrays."""
-        self._solver.prepare()
 
     def store(
         self,
@@ -299,7 +292,7 @@ class KuboLBTEKappaAccumulator:
         i_gp : int
             Loop index over ir_grid_points (0-based).
         collision_result : LBTECollisionResult
-            Result from LBTECollisionProvider.compute().
+            Result from LBTECollisionSolver.compute().
 
         """
         self._solver.store(i_gp, collision_result)
@@ -309,13 +302,13 @@ class KuboLBTEKappaAccumulator:
         aggregates: GridPointAggregates,
     ) -> None:
         """Finalize LBTE solve, then compute Kubo kappa with LBTE linewidths."""
-        self._prepare_kubo_arrays(aggregates)
+        self._gamma_eff = compute_effective_gamma(aggregates)
         prev_sigma = -1
         for i_sigma, i_temp in self._solver.solve_iter(aggregates):
             self._compute_kubo_kappa_at(aggregates, i_sigma, i_temp)
             if self._log_level:
                 if i_sigma != prev_sigma:
-                    log_sigma_header(self._context.sigmas[i_sigma])
+                    log_sigma_header(self._kappa_settings.sigmas[i_sigma])
                     prev_sigma = i_sigma
                 self._log_kubo_kappa_at(i_sigma, i_temp)
 
@@ -324,8 +317,8 @@ class KuboLBTEKappaAccumulator:
     # ------------------------------------------------------------------
 
     @property
-    def solver(self) -> CollisionMatrixSolver:
-        """Return the underlying CollisionMatrixSolver."""
+    def solver(self) -> CollisionMatrixKernel:
+        """Return the underlying CollisionMatrixKernel."""
         return self._solver
 
     # ------------------------------------------------------------------
@@ -339,9 +332,7 @@ class KuboLBTEKappaAccumulator:
         Shape: (num_sigma, num_temp, 6).
 
         """
-        if self._kappa_inter is not None:
-            return self._solver.kappa + self._kappa_inter
-        return self._solver.kappa
+        return self._solver.kappa + self._kappa_inter
 
     @property
     def kappa_intra_exact(self) -> NDArray[np.double]:
@@ -391,22 +382,6 @@ class KuboLBTEKappaAccumulator:
     # Private: Kubo kappa computation
     # ------------------------------------------------------------------
 
-    def _prepare_kubo_arrays(self, aggregates: GridPointAggregates) -> None:
-        """Allocate arrays and precompute gamma before the solve loop."""
-        assert aggregates.vm_by_vm is not None
-        assert aggregates.heat_capacity_matrix is not None
-
-        self._gamma_eff = compute_effective_gamma(aggregates)
-        num_sigma, num_temp, num_gp, num_band = self._gamma_eff.shape
-
-        self._mode_kappa_matrix = np.zeros(
-            (num_sigma, num_temp, num_gp, num_band, num_band, 6),
-            dtype="double",
-            order="C",
-        )
-        self._num_sampling_grid_points = aggregates.num_sampling_grid_points
-        self._kappa_inter = np.zeros((num_sigma, num_temp, 6), dtype="double")
-
     def _compute_kubo_kappa_at(
         self,
         aggregates: GridPointAggregates,
@@ -417,35 +392,33 @@ class KuboLBTEKappaAccumulator:
         assert aggregates.vm_by_vm is not None
         assert aggregates.heat_capacity_matrix is not None
 
-        for i_gp, gp in enumerate(self._context.grid_points):
+        for i_gp, gp in enumerate(self._kappa_settings.grid_points):
             mode_kappa_matrix = _compute_kubo_mode_kappa_matrix(
-                frequencies=self._context.frequencies[gp],
+                frequencies=self._frequencies[gp],
                 gamma=self._gamma_eff[i_sigma : i_sigma + 1, i_temp : i_temp + 1, i_gp],
                 heat_capacity_matrix=aggregates.heat_capacity_matrix[
                     i_temp : i_temp + 1, i_gp
                 ],
                 vm_by_vm=aggregates.vm_by_vm[i_gp],
-                conversion_factor=self._conversion_factor,
+                conversion_factor=self._kappa_settings.conversion_factor,
             )
             self._mode_kappa_matrix[i_sigma, i_temp, i_gp] = mode_kappa_matrix[0, 0]
 
-        n = self._num_sampling_grid_points
-        if n > 0:
-            mkm = self._mode_kappa_matrix[i_sigma, i_temp]
-            kappa_total = mkm.sum(axis=(0, 1, 2)) / n
-            kappa_intra = np.einsum("ijjc->c", mkm) / n
+        num_mesh_points = int(np.prod(self._kappa_settings.mesh_numbers))
+        mkm = self._mode_kappa_matrix[i_sigma, i_temp]
+        kappa_total = mkm.sum(axis=(0, 1, 2)) / num_mesh_points
+        kappa_intra = np.einsum("ijjc->c", mkm) / num_mesh_points
 
-            self._kappa_inter[i_sigma, i_temp] = kappa_total - kappa_intra
+        self._kappa_inter[i_sigma, i_temp] = kappa_total - kappa_intra
 
     def _log_kubo_kappa_at(self, i_sigma: int, i_temp: int) -> None:
         """Print Kubo LBTE kappa for one (sigma, temperature) pair."""
-        t = self._context.temperatures[i_temp]
+        t = self._kappa_settings.temperatures[i_temp]
         if t <= 0:
             return
 
-        n = self._num_sampling_grid_points if self._num_sampling_grid_points > 0 else 1
-        kappa_intra = self._solver._kappa[i_sigma, i_temp] / n
-        kappa_intra_RTA = self._solver._kappa_RTA[i_sigma, i_temp] / n
+        kappa_intra = self._solver.kappa[i_sigma, i_temp]
+        kappa_intra_RTA = self._solver.kappa_RTA[i_sigma, i_temp]
         kappa_inter = self._kappa_inter[i_sigma, i_temp]
 
         print(

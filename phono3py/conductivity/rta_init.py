@@ -44,7 +44,7 @@ import h5py
 import numpy as np
 from numpy.typing import NDArray
 
-from phono3py.conductivity.factory import make_conductivity_calculator
+from phono3py.conductivity.factory import conductivity_calculator
 from phono3py.conductivity.rta_calculator import RTACalculator
 from phono3py.conductivity.rta_output import ConductivityRTAWriter
 from phono3py.conductivity.utils import build_options, write_pp_interaction
@@ -202,6 +202,7 @@ def get_thermal_conductivity_RTA(
     log_level: int = 0,
 ) -> RTACalculator:
     """Run RTA thermal conductivity calculation."""
+    _sigmas = [None] if sigmas is None else list(sigmas)
     _temperatures = _normalize_rta_temperatures(temperatures)
     _mass_variances = (
         np.asarray(mass_variances, dtype="double")
@@ -218,12 +219,12 @@ def get_thermal_conductivity_RTA(
             "--------------------"
         )
 
-    method = f"{transport_type}-rta" if transport_type else "rta"
+    method = f"{transport_type}-rta" if transport_type else "std-rta"
     return _run_standard_rta(
         interaction,
         method=method,
         temperatures=_temperatures,
-        sigmas=sigmas,
+        sigmas=_sigmas,
         sigma_cutoff=sigma_cutoff,
         mass_variances=_mass_variances,
         grid_points=_grid_points,
@@ -251,9 +252,9 @@ def get_thermal_conductivity_RTA(
 def _run_standard_rta(
     interaction: Interaction,
     *,
-    method: str = "rta",
+    method: str = "std-rta",
     temperatures: NDArray[np.double],
-    sigmas: Sequence[float | None] | None,
+    sigmas: Sequence[float | None],
     sigma_cutoff: float | None,
     mass_variances: NDArray[np.double] | None,
     grid_points: NDArray[np.int64] | None,
@@ -276,13 +277,13 @@ def _run_standard_rta(
     output_filename: str | None,
     log_level: int,
 ) -> RTACalculator:
-    """Run RTA (standard or Wigner) using RTACalculator."""
-    calc = make_conductivity_calculator(
+    """Run RTA (standard or its variants) using RTACalculator."""
+    calc = conductivity_calculator(
         interaction,
+        temperatures,
+        sigmas,
         method=method,
         grid_points=grid_points,
-        temperatures=temperatures,
-        sigmas=sigmas,
         sigma_cutoff=sigma_cutoff,
         is_isotope=is_isotope,
         mass_variances=mass_variances,

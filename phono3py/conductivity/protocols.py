@@ -9,16 +9,16 @@ the Protocols defined here.
 
 Protocols
 ---------
-VelocityProvider
+VelocitySolver
     Computes velocity-related quantities at a single BZ grid point.
-HeatCapacityProvider
+HeatCapacitySolver
     Computes heat capacity for all grid points at once (bulk).
-ScatteringProvider
+ScatteringSolver
     Computes phonon linewidths at a single BZ grid point.
 
 Data containers
 ---------------
-Provider result types (VelocityResult, HeatCapacityResult,
+Solver result types (VelocityResult, HeatCapacityResult,
 ScatteringResult) are defined in ``phono3py.conductivity.grid_point_data``.
 
 """
@@ -37,25 +37,25 @@ from phono3py.conductivity.grid_point_data import (
 )
 
 __all__ = [
-    "VelocityProvider",
-    "HeatCapacityProvider",
-    "ScatteringProvider",
+    "VelocitySolver",
+    "HeatCapacitySolver",
+    "ScatteringSolver",
     "VelocityResult",
     "HeatCapacityResult",
     "ScatteringResult",
 ]
 
 
-class VelocityProvider(Protocol):
+class VelocitySolver(Protocol):
     """Protocol for computing velocity-related quantities at a grid point.
 
     Built-in implementations
     ------------------------
-    GroupVelocityProvider
+    GroupVelocitySolver
         Standard group velocity and symmetrised v x v product (BTE, LBTE).
-    VelocityOperatorProvider
-        Full velocity operator and its outer product (Wigner).
-    VelocityMatrixProvider
+    VelocityOperatorSolver
+        Full velocity operator and its outer product (MS-SMM19).
+    VelocityMatrixSolver
         Off-diagonal velocity matrix and its outer product (Kubo).
 
     Class attributes
@@ -78,14 +78,14 @@ class VelocityProvider(Protocol):
         ...
 
 
-class HeatCapacityProvider(Protocol):
+class HeatCapacitySolver(Protocol):
     """Protocol for computing heat capacity for all grid points at once.
 
     Built-in implementations
     ------------------------
-    ModeHeatCapacityProvider
+    ModeHeatCapacitySolver
         Scalar mode heat capacity Cv (all variants).
-    HeatCapacityMatrixProvider
+    HeatCapacityMatrixSolver
         Heat-capacity matrix Cv_mat (Kubo).
 
     Class attributes
@@ -108,18 +108,18 @@ class HeatCapacityProvider(Protocol):
         ...
 
 
-class ScatteringProvider(Protocol):
+class ScatteringSolver(Protocol):
     """Protocol for computing phonon linewidths at a grid point.
 
     Built-in implementations
     ------------------------
-    RTAScatteringProvider
+    RTAScatteringSolver
         Relaxation-time approximation (diagonal collision matrix).
 
     Notes
     -----
     Isotope and boundary scattering are separate diagonal-only contributions
-    handled by IsotopeScatteringProvider and compute_bulk_boundary_scattering.
+    handled by IsotopeScatteringSolver and compute_bulk_boundary_scattering.
 
     """
 

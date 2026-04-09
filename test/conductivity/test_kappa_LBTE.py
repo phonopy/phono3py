@@ -71,6 +71,25 @@ def test_kappa_LBTE_full_colmat(si_pbesol: Phono3py):
     np.testing.assert_allclose(ref_kappa, kappa, atol=0.5)
 
 
+def test_kappa_LBTE_no_kappa_star(si_pbesol: Phono3py):
+    """Test LBTE with is_kappa_star=False iterates all grid points."""
+    si_pbesol.mesh_numbers = [5, 5, 5]
+    si_pbesol.init_phph_interaction()
+    si_pbesol.run_thermal_conductivity(
+        is_LBTE=True,
+        temperatures=[1000],
+        is_kappa_star=True,
+    )
+    kappa_star = si_pbesol.thermal_conductivity.kappa.ravel()
+    si_pbesol.run_thermal_conductivity(
+        is_LBTE=True,
+        temperatures=[1000],
+        is_kappa_star=False,
+    )
+    kappa_nostar = si_pbesol.thermal_conductivity.kappa.ravel()
+    np.testing.assert_allclose(kappa_star[:3], kappa_nostar[:3], atol=0.5)
+
+
 def test_kappa_LBTE_aln(aln_lda: Phono3py):
     """Test direct solution by AlN."""
     ref_kappa = [234.141, 234.141, 254.006, 0, 0, 0]
