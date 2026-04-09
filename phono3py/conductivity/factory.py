@@ -46,14 +46,13 @@ from phono3py.conductivity.build_components import (
     build_rot_grid_points,
     build_rta_kappa_settings,
 )
+from phono3py.conductivity.calculators import LBTECalculator, RTACalculator
 from phono3py.conductivity.collision_matrix_kernel import (
     create_collision_matrix_kernel,
 )
 from phono3py.conductivity.heat_capacity_solvers import ModeHeatCapacitySolver
 from phono3py.conductivity.kappa_solvers import LBTEKappaSolver, RTAKappaSolver
-from phono3py.conductivity.lbte_calculator import LBTECalculator
 from phono3py.conductivity.lbte_collision_solver import LBTECollisionSolver
-from phono3py.conductivity.rta_calculator import RTACalculator
 from phono3py.conductivity.scattering_solvers import RTAScatteringSolver
 from phono3py.conductivity.velocity_solvers import GroupVelocitySolver
 from phono3py.phonon3.collision_matrix import CollisionMatrix

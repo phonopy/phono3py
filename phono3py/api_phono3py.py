@@ -89,9 +89,8 @@ from phonopy.structure.cells import (
 )
 from phonopy.structure.symmetry import Symmetry
 
-from phono3py.conductivity.lbte_calculator import LBTECalculator
+from phono3py.conductivity.calculators import LBTECalculator, RTACalculator
 from phono3py.conductivity.lbte_init import get_thermal_conductivity_LBTE
-from phono3py.conductivity.rta_calculator import RTACalculator
 from phono3py.conductivity.rta_init import get_thermal_conductivity_RTA
 from phono3py.interface.fc_calculator import (
     FC3Solver,

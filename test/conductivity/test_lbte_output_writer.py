@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import numpy as np
 
-from phono3py.conductivity.lbte_output import ConductivityLBTEWriter
+from phono3py.conductivity.output import ConductivityLBTEWriter
 
 
 def test_write_collision_all_bands(monkeypatch):
@@ -15,11 +15,11 @@ def test_write_collision_all_bands(monkeypatch):
         calls.append((args, kwargs))
 
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.all_bands_exist",
+        "phono3py.conductivity.output.all_bands_exist",
         lambda _interaction: True,
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.write_collision_to_hdf5",
+        "phono3py.conductivity.output.write_collision_to_hdf5",
         _fake_write_collision_to_hdf5,
     )
 
@@ -54,11 +54,11 @@ def test_write_collision_band_resolved(monkeypatch):
         calls.append((args, kwargs))
 
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.all_bands_exist",
+        "phono3py.conductivity.output.all_bands_exist",
         lambda _interaction: False,
     )
     monkeypatch.setattr(
-        "phono3py.conductivity.lbte_output.write_collision_to_hdf5",
+        "phono3py.conductivity.output.write_collision_to_hdf5",
         _fake_write_collision_to_hdf5,
     )
 
