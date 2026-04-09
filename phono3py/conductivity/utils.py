@@ -256,18 +256,22 @@ def log_sigma_header(sigma: float | None) -> None:
 def log_kappa_header(
     sigma: float | None,
     show_ipm: bool = False,
+    num_spaces: int = 2,
 ) -> None:
     """Print the kappa table header line for a given sigma."""
     log_sigma_header(sigma)
     if show_ipm:
         print(
-            ("#%6s       " + " %-10s" * 6 + "#ipm")
-            % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
+            ("#" + " " * num_spaces + "%s")
+            % (
+                "T(K)        xx         yy         zz         "
+                "yz         xz         xy        #ipm"
+            )
         )
     else:
         print(
-            ("#%6s       " + " %-10s" * 6)
-            % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
+            ("#" + " " * num_spaces + "%s")
+            % "T(K)        xx         yy         zz         yz         xz         xy"
         )
 
 

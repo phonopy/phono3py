@@ -1,4 +1,4 @@
-"""Green-Kubo plugin for phono3py conductivity.
+"""NJC23 (Green-Kubo) plugin for phono3py conductivity.
 
 Importing this package registers the ``"NJC23-rta"`` and ``"NJC23-lbte"``
 methods with the conductivity factory so that
@@ -12,10 +12,11 @@ from phono3py.conductivity.factory import register_variant
 from phono3py.conductivity.heat_capacity_solvers import (
     HeatCapacityMatrixSolver,
 )
-from phono3py.conductivity.njc23.kappa_solvers import (
-    KuboLBTEKappaSolver,
-    KuboRTAKappaSolver,
+from phono3py.conductivity.interband_kappa_solvers import (
+    InterBandLBTEKappaSolver,
+    InterBandRTAKappaSolver,
 )
+from phono3py.conductivity.njc23.kappa_solvers import compute_njc23_mode_kappa
 from phono3py.conductivity.velocity_solvers import VelocityMatrixSolver
 
 
@@ -32,21 +33,23 @@ def _make_cv_solver(ctx: VariantContext) -> HeatCapacityMatrixSolver:
     return HeatCapacityMatrixSolver(ctx.interaction, ctx.kappa_settings.temperatures)
 
 
-def _make_rta_kappa_solver(ctx: VariantContext) -> KuboRTAKappaSolver:
+def _make_rta_kappa_solver(ctx: VariantContext) -> InterBandRTAKappaSolver:
     frequencies, _, _ = ctx.interaction.get_phonons()
-    return KuboRTAKappaSolver(
+    return InterBandRTAKappaSolver(
         kappa_settings=ctx.kappa_settings,
         frequencies=frequencies,
+        compute_mode_kappa=compute_njc23_mode_kappa,
         log_level=ctx.log_level,
     )
 
 
-def _make_lbte_kappa_solver(ctx: VariantContext) -> KuboLBTEKappaSolver:
+def _make_lbte_kappa_solver(ctx: VariantContext) -> InterBandLBTEKappaSolver:
     frequencies, _, _ = ctx.interaction.get_phonons()
-    return KuboLBTEKappaSolver(
+    return InterBandLBTEKappaSolver(
         solver=ctx.collision_matrix_kernel,
         kappa_settings=ctx.kappa_settings,
         frequencies=frequencies,
+        compute_mode_kappa=compute_njc23_mode_kappa,
         log_level=ctx.log_level,
     )
 
