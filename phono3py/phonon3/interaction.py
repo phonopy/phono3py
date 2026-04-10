@@ -1,38 +1,5 @@
 """Calculate ph-ph interaction and phonons on grid."""
 
-# Copyright (C) 2020 Atsushi Togo
-# All rights reserved.
-#
-# This file is part of phono3py.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# * Redistributions of source code must retain the above copyright
-#   notice, this list of conditions and the following disclaimer.
-#
-# * Redistributions in binary form must reproduce the above copyright
-#   notice, this list of conditions and the following disclaimer in
-#   the documentation and/or other materials provided with the
-#   distribution.
-#
-# * Neither the name of the phonopy project nor the names of its
-#   contributors may be used to endorse or promote products derived
-#   from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -42,7 +9,7 @@ import numpy as np
 from numpy.typing import NDArray
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
 from phonopy.physical_units import get_physical_units
-from phonopy.structure.cells import Primitive, Supercell, compute_all_sg_permutations
+from phonopy.structure.cells import Primitive, Supercell
 from phonopy.structure.symmetry import Symmetry
 
 from phono3py.phonon.grid import (
@@ -189,7 +156,7 @@ class Interaction:
         self, lang: Literal["C", "Python"] = "C", g_zero: NDArray[np.byte] | None = None
     ) -> None:
         """Run ph-ph interaction calculation."""
-        if self._phonon_all_done:
+        if not self._phonon_all_done:
             self.run_phonon_solver()
 
         if self._triplets_at_q is None:
@@ -695,16 +662,25 @@ class Interaction:
         ir_bz_grid_points = self._bz_grid.grg2bzg[ir_grid_points]
         self.run_phonon_solver(grid_points=ir_bz_grid_points)
 
-        d2r_map = self._get_reciprocal_rotations_in_space_group_operations()
+        # --- Replace eigenvectors by projected ones to lift degeneracy. ---
+        # assert self._dm is not None
+        # assert self._eigenvectors is not None
+        # assert self._frequencies is not None
+        # direction = np.array([1, 2, 3], dtype="double")
+        # dq_cart = direction / np.linalg.norm(direction) * 1e-5
+        # dq = self._primitive.cell @ dq_cart
+        # for q, gp in zip(
+        #     self._bz_grid.addresses[ir_bz_grid_points] @ self._bz_grid.QDinv.T,
+        #     ir_bz_grid_points,
+        #     strict=True,
+        # ):
+        #     dD = delta_dynamical_matrix(q, dq, self._dm)
+        #     self._eigenvectors[gp] = lift_degeneracy(
+        #         self._frequencies[gp], self._eigenvectors[gp], dD
+        #     )[1]
 
-        # perms.shape = (len(spg_ops), len(primitive)), dtype='int64'
-        perms = compute_all_sg_permutations(
-            self._primitive.scaled_positions,
-            self._bz_grid.grid_symmetry_dataset.rotations,  # type: ignore
-            self._bz_grid.grid_symmetry_dataset.translations,  # type: ignore
-            np.array(self._primitive.cell.T, dtype="double", order="C"),
-            symprec=self._symprec,
-        )
+        d2r_map = self._get_reciprocal_rotations_in_space_group_operations()
+        perms = self._primitive_symmetry.atomic_permutations
 
         for d_i, r_i in enumerate(d2r_map):
             rot = self._bz_grid.rotations[r_i]
