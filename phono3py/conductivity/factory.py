@@ -455,3 +455,22 @@ try:
     import phono3py.conductivity.ms_smm19  # noqa: F401, E402
 except ImportError:
     pass
+
+
+# ---------------------------------------------------------------------------
+# External plugin discovery via entry_points
+# ---------------------------------------------------------------------------
+#
+# Packages installed separately (e.g. phono3py-wte) declare a
+# ``phono3py.conductivity`` entry point whose target is a ``register()``
+# callable.  Each callable is expected to invoke ``register_variant()`` so
+# that ``conductivity_calculator("<variant>-rta", ...)`` becomes usable
+# without the user importing the plugin explicitly.
+
+from importlib.metadata import entry_points  # noqa: E402
+
+for _ep in entry_points(group="phono3py.conductivity"):
+    try:
+        _ep.load()()
+    except Exception:  # noqa: BLE001 -- a failing plugin must not crash import
+        pass
