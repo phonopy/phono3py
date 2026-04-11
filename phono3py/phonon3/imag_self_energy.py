@@ -768,7 +768,7 @@ def get_imag_self_energy(
 
     _temperatures = np.asarray(temperatures, dtype="double")
 
-    if (interaction.get_phonons()[2] == 0).any():  # type: ignore[union-attr]
+    if not interaction.phonon_all_done:
         if log_level:
             print("Running harmonic phonon calculations...")
         interaction.run_phonon_solver()
