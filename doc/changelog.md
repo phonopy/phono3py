@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Apr-11-2026: Version 3.30.1
+
+- Added external plugin discovery via entry_points to the conductivity factory.
+
 ## Apr-10-2026: Version 3.30.0
 
 - Big refactoring of thermal conductivity calculation routines. This version is
