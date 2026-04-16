@@ -44,3 +44,6 @@ _build
 
 # ctest
 Testing
+
+# Rust
+rust/target/

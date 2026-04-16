@@ -505,17 +505,16 @@ class BZGrid:
         Terminate when symmetry of grid is broken.
 
         """
-        import phono3py._recgrid as recgrid  # type: ignore
+        import phono3py_rs
 
-        direct_rotations = np.array(
-            self._symmetry_dataset.rotations, dtype="int64", order="C"
+        direct_rotations = np.ascontiguousarray(
+            self._symmetry_dataset.rotations, dtype="int64"
         )
-        rec_rotations = np.zeros((48, 3, 3), dtype="int64", order="C")
-        num_rec_rot = recgrid.reciprocal_rotations(
-            rec_rotations, direct_rotations, self._is_time_reversal
-        )
-        self._reciprocal_operations = np.array(
-            rec_rotations[:num_rec_rot], dtype="int64", order="C"
+        self._reciprocal_operations = np.ascontiguousarray(
+            phono3py_rs.reciprocal_rotations(
+                direct_rotations, bool(self._is_time_reversal)
+            ),
+            dtype="int64",
         )
         self._rotations = self._get_GRG_rotations()
         self._rotations_cartesian = np.array(
@@ -531,18 +530,14 @@ class BZGrid:
 
     def _get_GRG_rotations(self) -> NDArray[np.int64]:
         """Return rotation matrices in GR-grid."""
-        import phono3py._recgrid as recgrid  # type: ignore
+        import phono3py_rs
 
-        rotations = np.zeros(
-            self._reciprocal_operations.shape, dtype="int64", order="C"
+        rots = np.ascontiguousarray(self._reciprocal_operations, dtype="int64")
+        d_diag = np.ascontiguousarray(self._D_diag, dtype="int64")
+        q = np.ascontiguousarray(self._Q, dtype="int64")
+        return np.ascontiguousarray(
+            phono3py_rs.transform_rotations(rots, d_diag, q), dtype="int64"
         )
-        if not recgrid.transform_rotations(
-            rotations, self._reciprocal_operations, self._D_diag, self._Q
-        ):
-            msg = "Grid symmetry is broken. Use generalized regular grid."
-            raise RuntimeError(msg)
-
-        return rotations
 
 
 class GridMatrix:
@@ -793,12 +788,19 @@ class GridMatrix:
         if (np.diag(gm_diag) == _grid_matrix).all() and not force_SNF:
             self._D_diag = np.array(gm_diag, dtype="int64")
         else:
-            import phono3py._recgrid as recgrid  # type: ignore
+            import phono3py_rs
 
-            if not recgrid.snf3x3(self._D_diag, self._P, self._Q, _grid_matrix):
+            try:
+                d_diag, p, q = phono3py_rs.snf3x3(
+                    np.ascontiguousarray(_grid_matrix, dtype="int64")
+                )
+            except (ValueError, RuntimeError) as exc:
                 msg = "SNF3x3 failed."
-                raise RuntimeError(msg)
+                raise RuntimeError(msg) from exc
 
+            self._D_diag[:] = d_diag
+            self._P[:] = p
+            self._Q[:] = q
             self._grid_matrix = _grid_matrix  # type: ignore[assignment]
 
     def _get_grid_matrix(
@@ -957,17 +959,19 @@ def get_grid_point_from_address(
         shape=(n, ), dtype='int64'
 
     """
-    import phono3py._recgrid as recgrid  # type: ignore
+    import phono3py_rs
 
-    adrs_array = np.asarray(address, dtype="int64", order="C")
-    mesh_array = np.asarray(D_diag, dtype="int64")
+    adrs_array = np.ascontiguousarray(address, dtype="int64")
+    mesh_array = np.ascontiguousarray(D_diag, dtype="int64")
 
     if adrs_array.ndim == 1:
-        return recgrid.grid_index_from_address(adrs_array, mesh_array)
+        return phono3py_rs.grid_index_from_address(adrs_array, mesh_array)
 
     gps = np.zeros(adrs_array.shape[0], dtype="int64")
     for i, adrs in enumerate(adrs_array):
-        gps[i] = recgrid.grid_index_from_address(adrs, mesh_array)
+        gps[i] = phono3py_rs.grid_index_from_address(
+            np.ascontiguousarray(adrs), mesh_array
+        )
     return gps
 
 
@@ -1069,18 +1073,23 @@ def _get_grid_points_by_bz_rotations(
 def _get_grid_points_by_bz_rotations_c(
     bz_gp: int, bz_grid: BZGrid, rotations: NDArray
 ) -> NDArray[np.int64]:
-    import phono3py._recgrid as recgrid  # type: ignore
+    import phono3py_rs
 
+    addresses = np.ascontiguousarray(bz_grid.addresses, dtype="int64")
+    gp_map = np.ascontiguousarray(bz_grid.gp_map, dtype="int64")
+    d_diag = np.ascontiguousarray(bz_grid.D_diag, dtype="int64")
+    ps = np.ascontiguousarray(bz_grid.PS, dtype="int64")
+    bz_grid_type = int(bz_grid.store_dense_gp_map) + 1
     bzgps = np.zeros(len(rotations), dtype="int64")
     for i, r in enumerate(rotations):
-        bzgps[i] = recgrid.rotate_bz_grid_index(
-            bz_gp,
-            r,
-            bz_grid.addresses,
-            bz_grid.gp_map,
-            bz_grid.D_diag,
-            bz_grid.PS,
-            bz_grid.store_dense_gp_map * 1 + 1,
+        bzgps[i] = phono3py_rs.rotate_bz_grid_index(
+            int(bz_gp),
+            np.ascontiguousarray(r, dtype="int64"),
+            addresses,
+            gp_map,
+            d_diag,
+            ps,
+            bz_grid_type,
         )
     return bzgps
 
@@ -1149,11 +1158,10 @@ def _get_grid_address(D_diag: NDArray[np.int64] | Sequence[int]) -> NDArray[np.i
         shape=(prod(D_diag), 3), dtype='int64'
 
     """
-    import phono3py._recgrid as recgrid  # type: ignore
+    import phono3py_rs
 
-    gr_grid_addresses = np.zeros((np.prod(D_diag), 3), dtype="int64")
-    recgrid.gr_grid_addresses(gr_grid_addresses, np.array(D_diag, dtype="int64"))
-    return gr_grid_addresses
+    d_diag = np.ascontiguousarray(D_diag, dtype="int64")
+    return np.asarray(phono3py_rs.gr_grid_addresses(d_diag), dtype="int64")
 
 
 def _relocate_BZ_grid_address(
@@ -1218,34 +1226,25 @@ def _relocate_BZ_grid_address(
     shape=(prod(mesh) + 1, )
 
     """
-    import phono3py._recgrid as recgrid  # type: ignore
+    import phono3py_rs
 
     if PS is None:
-        _PS = np.zeros(3, dtype="int64")
+        ps = np.zeros(3, dtype="int64")
     else:
-        _PS = np.array(PS, dtype="int64")
-    bz_grid_addresses = np.zeros((np.prod(D_diag) * 8, 3), dtype="int64", order="C")
-    bzg2grg = np.zeros(len(bz_grid_addresses), dtype="int64")
-
-    if store_dense_gp_map:
-        bz_map = np.zeros(np.prod(D_diag) + 1, dtype="int64")
-    else:
-        bz_map = np.zeros(np.prod(D_diag) * 9 + 1, dtype="int64")
+        ps = np.ascontiguousarray(PS, dtype="int64")
 
     reduced_basis, tmat_inv_int = get_reduced_bases_and_tmat_inv(reciprocal_lattice)
-    num_gp = recgrid.bz_grid_addresses(
-        bz_grid_addresses,
-        bz_map,
-        bzg2grg,
-        np.array(D_diag, dtype="int64"),
-        np.array(tmat_inv_int @ Q, dtype="int64", order="C"),
-        _PS,
-        reduced_basis,
-        store_dense_gp_map * 1 + 1,
+    q_eff = np.ascontiguousarray(tmat_inv_int @ Q, dtype="int64")
+    d_diag = np.ascontiguousarray(D_diag, dtype="int64")
+    rec = np.ascontiguousarray(reduced_basis, dtype="float64")
+
+    addresses, bz_map, bzg2grg = phono3py_rs.bz_grid_addresses(
+        d_diag, q_eff, ps, rec, int(store_dense_gp_map) + 1
     )
 
-    bz_grid_addresses = np.array(bz_grid_addresses[:num_gp], dtype="int64", order="C")
-    bzg2grg = np.array(bzg2grg[:num_gp], dtype="int64")
+    bz_grid_addresses = np.ascontiguousarray(addresses, dtype="int64")
+    bz_map = np.asarray(bz_map, dtype="int64")
+    bzg2grg = np.asarray(bzg2grg, dtype="int64")
     return bz_grid_addresses, bz_map, bzg2grg
 
 
@@ -1312,23 +1311,19 @@ def _get_ir_grid_map(
         dtype='int64', shape=(prod(mesh),)
 
     """
-    import phono3py._recgrid as recgrid  # type: ignore
+    import phono3py_rs
 
-    ir_grid_map = np.zeros(np.prod(D_diag), dtype="int64")
+    d_diag = np.ascontiguousarray(D_diag, dtype="int64")
     if PS is None:
-        _PS = np.zeros(3, dtype="int64")
+        ps = np.zeros(3, dtype="int64")
     else:
-        _PS = np.array(PS, dtype="int64")
+        ps = np.ascontiguousarray(PS, dtype="int64")
+    rots = np.ascontiguousarray(grg_rotations, dtype="int64")
 
-    num_ir = recgrid.ir_grid_map(
-        ir_grid_map,
-        np.array(D_diag, dtype="int64"),
-        _PS,
-        np.array(grg_rotations, dtype="int64", order="C"),
-    )
+    map_vec, num_ir = phono3py_rs.ir_grid_map(rots, d_diag, ps)
 
     if num_ir > 0:
-        return ir_grid_map
+        return np.asarray(map_vec, dtype="int64")
     else:
         raise RuntimeError("_get_ir_grid_map failed to find ir-grid-points.")
 
