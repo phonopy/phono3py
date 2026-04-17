@@ -4,15 +4,13 @@
 //! integer unimodular matrices `P` and `Q` and a diagonal matrix
 //! `D` such that `P * A * Q = D`.
 
-type Mat = [[i64; 3]; 3];
-
-const IDENTITY: Mat = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+use crate::common::{det_i, matmul_i, transpose_i, IDENTITY, MatI};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Snf3x3 {
     pub d_diag: [i64; 3],
-    pub p: Mat,
-    pub q: Mat,
+    pub p: MatI,
+    pub q: MatI,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -21,8 +19,8 @@ pub enum Snf3x3Error {
     NotConverged,
 }
 
-pub fn snf3x3(a: Mat) -> Result<Snf3x3, Snf3x3Error> {
-    if det(&a) == 0 {
+pub fn snf3x3(a: MatI) -> Result<Snf3x3, Snf3x3Error> {
+    if det_i(&a) == 0 {
         return Err(Snf3x3Error::Singular);
     }
 
@@ -33,7 +31,7 @@ pub fn snf3x3(a: Mat) -> Result<Snf3x3, Snf3x3Error> {
     for _ in 0..100 {
         if first(&mut a, &mut p, &mut q) && second(&mut a, &mut p, &mut q) {
             finalize(&mut a, &mut p, &mut q);
-            transpose(&mut q);
+            q = transpose_i(&q);
             let d_diag = [a[0][0], a[1][1], a[2][2]];
             return Ok(Snf3x3 { d_diag, p, q });
         }
@@ -43,7 +41,7 @@ pub fn snf3x3(a: Mat) -> Result<Snf3x3, Snf3x3Error> {
 
 // ---------- first row/column reduction ----------
 
-fn first(a: &mut Mat, p: &mut Mat, q: &mut Mat) -> bool {
+fn first(a: &mut MatI, p: &mut MatI, q: &mut MatI) -> bool {
     first_one_loop(a, p, q);
 
     if a[1][0] == 0 && a[2][0] == 0 {
@@ -52,51 +50,51 @@ fn first(a: &mut Mat, p: &mut Mat, q: &mut Mat) -> bool {
 
     if a[1][0] % a[0][0] == 0 && a[2][0] % a[0][0] == 0 {
         let l = first_finalize(a);
-        *a = matmul(&l, a);
-        *p = matmul(&l, p);
+        *a = matmul_i(&l, a);
+        *p = matmul_i(&l, p);
         return true;
     }
     false
 }
 
-fn first_one_loop(a: &mut Mat, p: &mut Mat, q: &mut Mat) {
+fn first_one_loop(a: &mut MatI, p: &mut MatI, q: &mut MatI) {
     first_column(a, p);
-    transpose(a);
+    *a = transpose_i(a);
     first_column(a, q);
-    transpose(a);
+    *a = transpose_i(a);
 }
 
-fn first_column(a: &mut Mat, p: &mut Mat) {
+fn first_column(a: &mut MatI, p: &mut MatI) {
     let Some(i) = search_first_pivot(a) else {
         return;
     };
     if i > 0 {
         let l = elementary_swap_rows(0, i);
-        *a = matmul(&l, a);
-        *p = matmul(&l, p);
+        *a = matmul_i(&l, a);
+        *p = matmul_i(&l, p);
     }
     if a[1][0] != 0 {
         let l = zero_first_column(1, a);
-        *a = matmul(&l, a);
-        *p = matmul(&l, p);
+        *a = matmul_i(&l, a);
+        *p = matmul_i(&l, p);
     }
     if a[2][0] != 0 {
         let l = zero_first_column(2, a);
-        *a = matmul(&l, a);
-        *p = matmul(&l, p);
+        *a = matmul_i(&l, a);
+        *p = matmul_i(&l, p);
     }
 }
 
-fn zero_first_column(j: usize, a: &Mat) -> Mat {
+fn zero_first_column(j: usize, a: &MatI) -> MatI {
     let [r, s, t] = extended_gcd(a[0][0], a[j][0]);
     elementary_set_zero(0, j, a[0][0], a[j][0], r, s, t)
 }
 
-fn search_first_pivot(a: &Mat) -> Option<usize> {
+fn search_first_pivot(a: &MatI) -> Option<usize> {
     (0..3).find(|&i| a[i][0] != 0)
 }
 
-fn first_finalize(a: &Mat) -> Mat {
+fn first_finalize(a: &MatI) -> MatI {
     let mut l = IDENTITY;
     l[1][0] = -a[1][0] / a[0][0];
     l[2][0] = -a[2][0] / a[0][0];
@@ -105,7 +103,7 @@ fn first_finalize(a: &Mat) -> Mat {
 
 // ---------- second row/column reduction ----------
 
-fn second(a: &mut Mat, p: &mut Mat, q: &mut Mat) -> bool {
+fn second(a: &mut MatI, p: &mut MatI, q: &mut MatI) -> bool {
     second_one_loop(a, p, q);
 
     if a[2][1] == 0 {
@@ -113,39 +111,39 @@ fn second(a: &mut Mat, p: &mut Mat, q: &mut Mat) -> bool {
     }
     if a[2][1] % a[1][1] == 0 {
         let l = second_finalize(a);
-        *a = matmul(&l, a);
-        *p = matmul(&l, p);
+        *a = matmul_i(&l, a);
+        *p = matmul_i(&l, p);
         return true;
     }
     false
 }
 
-fn second_one_loop(a: &mut Mat, p: &mut Mat, q: &mut Mat) {
+fn second_one_loop(a: &mut MatI, p: &mut MatI, q: &mut MatI) {
     second_column(a, p);
-    transpose(a);
+    *a = transpose_i(a);
     second_column(a, q);
-    transpose(a);
+    *a = transpose_i(a);
 }
 
-fn second_column(a: &mut Mat, p: &mut Mat) {
+fn second_column(a: &mut MatI, p: &mut MatI) {
     if a[1][1] == 0 && a[2][1] != 0 {
         let l = elementary_swap_rows(1, 2);
-        *a = matmul(&l, a);
-        *p = matmul(&l, p);
+        *a = matmul_i(&l, a);
+        *p = matmul_i(&l, p);
     }
     if a[2][1] != 0 {
         let l = zero_second_column(a);
-        *a = matmul(&l, a);
-        *p = matmul(&l, p);
+        *a = matmul_i(&l, a);
+        *p = matmul_i(&l, p);
     }
 }
 
-fn zero_second_column(a: &Mat) -> Mat {
+fn zero_second_column(a: &MatI) -> MatI {
     let [r, s, t] = extended_gcd(a[1][1], a[2][1]);
     elementary_set_zero(1, 2, a[1][1], a[2][1], r, s, t)
 }
 
-fn second_finalize(a: &Mat) -> Mat {
+fn second_finalize(a: &MatI) -> MatI {
     let mut l = IDENTITY;
     l[2][1] = -a[2][1] / a[1][1];
     l
@@ -153,7 +151,7 @@ fn second_finalize(a: &Mat) -> Mat {
 
 // ---------- finalize ----------
 
-fn finalize(a: &mut Mat, p: &mut Mat, q: &mut Mat) {
+fn finalize(a: &mut MatI, p: &mut MatI, q: &mut MatI) {
     make_diag_positive(a, p);
     finalize_sort(a, p, q);
     finalize_disturb(a, q, 0, 1);
@@ -164,7 +162,7 @@ fn finalize(a: &mut Mat, p: &mut Mat, q: &mut Mat) {
     flip_pq(p, q);
 }
 
-fn finalize_sort(a: &mut Mat, p: &mut Mat, q: &mut Mat) {
+fn finalize_sort(a: &mut MatI, p: &mut MatI, q: &mut MatI) {
     if a[0][0] > a[1][1] {
         swap_diag_elems(a, p, q, 0, 1);
     }
@@ -176,38 +174,38 @@ fn finalize_sort(a: &mut Mat, p: &mut Mat, q: &mut Mat) {
     }
 }
 
-fn finalize_disturb(a: &mut Mat, q: &mut Mat, i: usize, j: usize) {
+fn finalize_disturb(a: &mut MatI, q: &mut MatI, i: usize, j: usize) {
     if a[j][j] % a[i][i] != 0 {
-        transpose(a);
+        *a = transpose_i(a);
         let l = elementary_disturb_rows(i, j);
-        *a = matmul(&l, a);
-        *q = matmul(&l, q);
-        transpose(a);
+        *a = matmul_i(&l, a);
+        *q = matmul_i(&l, q);
+        *a = transpose_i(a);
     }
 }
 
-fn swap_diag_elems(a: &mut Mat, p: &mut Mat, q: &mut Mat, i: usize, j: usize) {
+fn swap_diag_elems(a: &mut MatI, p: &mut MatI, q: &mut MatI, i: usize, j: usize) {
     let l = elementary_swap_rows(i, j);
-    *a = matmul(&l, a);
-    *p = matmul(&l, p);
-    transpose(a);
-    *a = matmul(&l, a);
-    *q = matmul(&l, q);
-    transpose(a);
+    *a = matmul_i(&l, a);
+    *p = matmul_i(&l, p);
+    *a = transpose_i(a);
+    *a = matmul_i(&l, a);
+    *q = matmul_i(&l, q);
+    *a = transpose_i(a);
 }
 
-fn make_diag_positive(a: &mut Mat, p: &mut Mat) {
+fn make_diag_positive(a: &mut MatI, p: &mut MatI) {
     for i in 0..3 {
         if a[i][i] < 0 {
             let l = elementary_flip_sign_row(i);
-            *a = matmul(&l, a);
-            *p = matmul(&l, p);
+            *a = matmul_i(&l, a);
+            *p = matmul_i(&l, p);
         }
     }
 }
 
-fn flip_pq(p: &mut Mat, q: &mut Mat) {
-    if det(p) < 0 {
+fn flip_pq(p: &mut MatI, q: &mut MatI) {
+    if det_i(p) < 0 {
         for i in 0..3 {
             for j in 0..3 {
                 p[i][j] = -p[i][j];
@@ -219,7 +217,7 @@ fn flip_pq(p: &mut Mat, q: &mut Mat) {
 
 // ---------- elementary matrices ----------
 
-fn elementary_swap_rows(r1: usize, r2: usize) -> Mat {
+fn elementary_swap_rows(r1: usize, r2: usize) -> MatI {
     let mut l = IDENTITY;
     l[r1][r1] = 0;
     l[r2][r2] = 0;
@@ -228,7 +226,7 @@ fn elementary_swap_rows(r1: usize, r2: usize) -> Mat {
     l
 }
 
-fn elementary_set_zero(i: usize, j: usize, a: i64, b: i64, r: i64, s: i64, t: i64) -> Mat {
+fn elementary_set_zero(i: usize, j: usize, a: i64, b: i64, r: i64, s: i64, t: i64) -> MatI {
     let mut l = IDENTITY;
     l[i][i] = s;
     l[i][j] = t;
@@ -237,13 +235,13 @@ fn elementary_set_zero(i: usize, j: usize, a: i64, b: i64, r: i64, s: i64, t: i6
     l
 }
 
-fn elementary_flip_sign_row(i: usize) -> Mat {
+fn elementary_flip_sign_row(i: usize) -> MatI {
     let mut l = IDENTITY;
     l[i][i] = -1;
     l
 }
 
-fn elementary_disturb_rows(i: usize, j: usize) -> Mat {
+fn elementary_disturb_rows(i: usize, j: usize) -> MatI {
     let mut l = IDENTITY;
     l[i][j] = 1;
     l
@@ -277,34 +275,4 @@ fn extended_gcd(a: i64, b: i64) -> [i64; 3] {
 
     debug_assert_eq!(r[0], a * s[0] + b * t[0]);
     [r[0], s[0], t[0]]
-}
-
-// ---------- matrix utilities ----------
-
-fn transpose(m: &mut Mat) {
-    for i in 0..3 {
-        for j in (i + 1)..3 {
-            let tmp = m[i][j];
-            m[i][j] = m[j][i];
-            m[j][i] = tmp;
-        }
-    }
-}
-
-// Returns a * b.  Safe against aliasing because the result is
-// returned by value, not written through a shared pointer.
-fn matmul(a: &Mat, b: &Mat) -> Mat {
-    let mut c = [[0i64; 3]; 3];
-    for i in 0..3 {
-        for j in 0..3 {
-            c[i][j] = a[i][0] * b[0][j] + a[i][1] * b[1][j] + a[i][2] * b[2][j];
-        }
-    }
-    c
-}
-
-fn det(m: &Mat) -> i64 {
-    m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
-        + m[0][1] * (m[1][2] * m[2][0] - m[1][0] * m[2][2])
-        + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0])
 }

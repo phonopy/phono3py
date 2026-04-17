@@ -1,21 +1,29 @@
 use numpy::ndarray::{Array1, Array2, Array3};
 use numpy::{
     IntoPyArray, PyArray1, PyArray2, PyArray3, PyReadonlyArray1, PyReadonlyArray2,
-    PyReadonlyArray3,
+    PyReadonlyArray3, PyReadwriteArray4, PyReadwriteArray5, PyUntypedArrayMethods,
 };
 use pyo3::exceptions::{PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
 
 mod bzgrid;
+mod common;
 mod grgrid;
 mod recip_rotations;
 mod snf3x3;
+mod tetrahedron_method;
 mod transform_rotations;
+mod triplet;
+mod triplet_grid;
+mod triplet_iw;
 
 use bzgrid::{BzGridAddressesError, RotateBzGridError};
 use recip_rotations::ReciprocalRotationsError;
 use snf3x3::Snf3x3Error;
 use transform_rotations::TransformRotationsError;
+use triplet::RelativeGridAddress;
+use triplet_grid::BzTripletsError;
+use triplet_iw::{BzGridError, BzGridView, TpType};
 
 // ---------------------------------------------------------------
 // Boundary conversion helpers (numpy <-> fixed-size Rust arrays)
@@ -324,6 +332,246 @@ fn py_rotate_bz_grid_index<'py>(
     }
 }
 
+/// Search symmetry-reduced triplets at a fixed q-point.
+///
+/// Returns ``(map_triplets, map_q, num_ir)``.
+#[pyfunction]
+#[pyo3(name = "ir_triplets_at_q")]
+fn py_ir_triplets_at_q<'py>(
+    py: Python<'py>,
+    grid_point: i64,
+    d_diag: PyReadonlyArray1<'py, i64>,
+    rec_rotations: PyReadonlyArray3<'py, i64>,
+    is_time_reversal: bool,
+    swappable: bool,
+) -> PyResult<(
+    Bound<'py, PyArray1<i64>>,
+    Bound<'py, PyArray1<i64>>,
+    i64,
+)> {
+    let d = vec3_i(&d_diag)?;
+    let rots = rots_i(&rec_rotations)?;
+    match triplet_grid::ir_triplets_at_q(grid_point, d, &rots, is_time_reversal, swappable) {
+        Ok(r) => Ok((
+            r.map_triplets.into_pyarray(py),
+            r.map_q.into_pyarray(py),
+            r.num_ir,
+        )),
+        Err(ReciprocalRotationsError::TooManyRotations) => Err(PyValueError::new_err(
+            "ir_triplets_at_q: more than 48 unique rotations",
+        )),
+        Err(ReciprocalRotationsError::TooManyForInversion) => Err(PyValueError::new_err(
+            "ir_triplets_at_q: cannot add inversion (count exceeds 24)",
+        )),
+    }
+}
+
+/// Find symmetry-reduced BZ triplets at a fixed q-point.
+///
+/// Returns the ``(num_ir, 3)`` integer array of triplets.
+#[pyfunction]
+#[pyo3(name = "bz_triplets_at_q")]
+fn py_bz_triplets_at_q<'py>(
+    py: Python<'py>,
+    grid_point: i64,
+    bz_grid_addresses: PyReadonlyArray2<'py, i64>,
+    bz_map: PyReadonlyArray1<'py, i64>,
+    map_triplets: PyReadonlyArray1<'py, i64>,
+    d_diag: PyReadonlyArray1<'py, i64>,
+    q: PyReadonlyArray2<'py, i64>,
+    reciprocal_lattice: PyReadonlyArray2<'py, f64>,
+    bz_grid_type: i64,
+) -> PyResult<Bound<'py, PyArray2<i64>>> {
+    let adrs = addresses_i(&bz_grid_addresses)?;
+    let bzmap_view = bz_map.as_array();
+    let bzmap_slice = bzmap_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("bz_map must be contiguous"))?;
+    let mtv = map_triplets.as_array();
+    let map_triplets_slice = mtv
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("map_triplets must be contiguous"))?;
+    let d = vec3_i(&d_diag)?;
+    let qm = mat3_i(&q)?;
+    let rec = mat3_f(&reciprocal_lattice)?;
+    match triplet_grid::bz_triplets_at_q(
+        grid_point,
+        &adrs,
+        bzmap_slice,
+        map_triplets_slice,
+        d,
+        qm,
+        rec,
+        bz_grid_type,
+    ) {
+        Ok(v) => Ok(addresses_to_array(py, v)),
+        Err(BzTripletsError::BadGridType) => Err(PyValueError::new_err(
+            "bz_triplets_at_q: bz_grid_type must be 1 or 2",
+        )),
+    }
+}
+
+/// Triplet tetrahedron-method integration weights.
+///
+/// Writes into ``iw`` (shape ``(num_channels, num_triplets, num_band0,
+/// num_band1, num_band2)``, dtype ``float64``) and ``iw_zero`` (shape
+/// ``(num_triplets, num_band0, num_band1, num_band2)``, dtype ``int8``).
+/// ``tp_type`` is 2, 3, or 4.
+#[pyfunction]
+#[pyo3(name = "triplets_integration_weights")]
+#[allow(clippy::too_many_arguments)]
+fn py_triplets_integration_weights<'py>(
+    py: Python<'py>,
+    mut iw: PyReadwriteArray5<'py, f64>,
+    mut iw_zero: PyReadwriteArray4<'py, i8>,
+    frequency_points: PyReadonlyArray1<'py, f64>,
+    relative_grid_address: PyReadonlyArray3<'py, i64>,
+    d_diag: PyReadonlyArray1<'py, i64>,
+    triplets: PyReadonlyArray2<'py, i64>,
+    frequencies1: PyReadonlyArray2<'py, f64>,
+    frequencies2: PyReadonlyArray2<'py, f64>,
+    bz_grid_addresses: PyReadonlyArray2<'py, i64>,
+    bz_map: PyReadonlyArray1<'py, i64>,
+    bz_grid_type: i64,
+    tp_type: i64,
+) -> PyResult<()> {
+    let tp = TpType::try_from_i64(tp_type)
+        .map_err(|_| PyValueError::new_err("tp_type must be 2, 3, or 4"))?;
+    let rga = relative_grid_address_3d(&relative_grid_address)?;
+    let trip = addresses_i(&triplets)?;
+    let adrs = addresses_i(&bz_grid_addresses)?;
+    let bzmap_view = bz_map.as_array();
+    let bzmap_slice = bzmap_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("bz_map must be C-contiguous"))?;
+    let d = vec3_i(&d_diag)?;
+
+    let fp_view = frequency_points.as_array();
+    let fp_slice = fp_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("frequency_points must be C-contiguous"))?;
+    let f1_view = frequencies1.as_array();
+    let f1_slice = f1_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("frequencies1 must be C-contiguous"))?;
+    let f2_view = frequencies2.as_array();
+    let f2_slice = f2_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("frequencies2 must be C-contiguous"))?;
+    let num_band1 = frequencies1.shape()[1] as i64;
+    let num_band2 = frequencies2.shape()[1] as i64;
+
+    let iw_slice = iw
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("iw must be C-contiguous"))?;
+    let iwz_slice = iw_zero
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("iw_zero must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        let bzgrid = BzGridView {
+            d_diag: d,
+            addresses: &adrs,
+            gp_map: bzmap_slice,
+            bz_grid_type,
+        };
+        triplet::integration_weight(
+            iw_slice,
+            iwz_slice,
+            fp_slice,
+            &rga,
+            &trip,
+            &bzgrid,
+            f1_slice,
+            num_band1,
+            f2_slice,
+            num_band2,
+            tp,
+        )
+    })
+    .map_err(|e| match e {
+        BzGridError::BadGridType => {
+            PyValueError::new_err("bz_grid_type must be 1 or 2")
+        }
+        BzGridError::BadTpType => PyValueError::new_err("tp_type must be 2, 3, or 4"),
+    })
+}
+
+/// Triplet Gaussian-smeared integration weights.
+///
+/// ``iw`` is ``(num_channels, num_triplets, num_band0, num_band, num_band)``
+/// and ``iw_zero`` is ``(num_triplets, num_band0, num_band, num_band)``.
+/// ``tp_type`` is inferred from ``iw.shape[0]``: 2→Type2, 3→Type3.
+/// Pass ``sigma_cutoff < 0`` to disable the cutoff-skip optimisation.
+#[pyfunction]
+#[pyo3(name = "triplets_integration_weights_with_sigma")]
+fn py_triplets_integration_weights_with_sigma<'py>(
+    py: Python<'py>,
+    mut iw: PyReadwriteArray5<'py, f64>,
+    mut iw_zero: PyReadwriteArray4<'py, i8>,
+    frequency_points: PyReadonlyArray1<'py, f64>,
+    triplets: PyReadonlyArray2<'py, i64>,
+    frequencies: PyReadonlyArray2<'py, f64>,
+    sigma: f64,
+    sigma_cutoff: f64,
+) -> PyResult<()> {
+    let tp = TpType::try_from_i64(iw.shape()[0] as i64)
+        .map_err(|_| PyValueError::new_err("iw.shape[0] must be 1, 2, or 3"))?;
+    let trip = addresses_i(&triplets)?;
+    let num_band = frequencies.shape()[1] as i64;
+
+    let fp_view = frequency_points.as_array();
+    let fp_slice = fp_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("frequency_points must be C-contiguous"))?;
+    let f_view = frequencies.as_array();
+    let f_slice = f_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("frequencies must be C-contiguous"))?;
+
+    let iw_slice = iw
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("iw must be C-contiguous"))?;
+    let iwz_slice = iw_zero
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("iw_zero must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        triplet::integration_weight_with_sigma(
+            iw_slice,
+            iwz_slice,
+            sigma,
+            sigma_cutoff,
+            fp_slice,
+            &trip,
+            f_slice,
+            num_band,
+            tp,
+        );
+    });
+    Ok(())
+}
+
+fn relative_grid_address_3d(
+    arr: &PyReadonlyArray3<i64>,
+) -> PyResult<RelativeGridAddress> {
+    let v = arr.as_array();
+    if v.shape() != [24, 4, 3] {
+        return Err(PyValueError::new_err(
+            "relative_grid_address must have shape (24, 4, 3)",
+        ));
+    }
+    let mut out: RelativeGridAddress = [[[0i64; 3]; 4]; 24];
+    for i in 0..24 {
+        for j in 0..4 {
+            for k in 0..3 {
+                out[i][j][k] = v[[i, j, k]];
+            }
+        }
+    }
+    Ok(out)
+}
+
 #[pymodule]
 fn phono3py_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_snf3x3, m)?)?;
@@ -334,5 +582,12 @@ fn phono3py_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_transform_rotations, m)?)?;
     m.add_function(wrap_pyfunction!(py_bz_grid_addresses, m)?)?;
     m.add_function(wrap_pyfunction!(py_rotate_bz_grid_index, m)?)?;
+    m.add_function(wrap_pyfunction!(py_ir_triplets_at_q, m)?)?;
+    m.add_function(wrap_pyfunction!(py_bz_triplets_at_q, m)?)?;
+    m.add_function(wrap_pyfunction!(py_triplets_integration_weights, m)?)?;
+    m.add_function(wrap_pyfunction!(
+        py_triplets_integration_weights_with_sigma,
+        m
+    )?)?;
     Ok(())
 }

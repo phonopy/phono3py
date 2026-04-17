@@ -2,18 +2,15 @@
 //!
 //! Port of `bzg_get_bz_grid_addresses` and friends in `c/bzgrid.c`.
 
+use crate::common::{matvec_dd, matvec_id, matvec_ii, nint, MatD, MatI, Vec3I};
 use crate::grgrid::{double_grid_address, grid_address_from_index, grid_index_from_address};
-
-type Vec3 = [i64; 3];
-type MatI = [[i64; 3]; 3];
-type MatD = [[f64; 3]; 3];
 
 const GRID_TOLERANCE_FACTOR: f64 = 0.01;
 
 /// 125-point search space used to locate BZ-equivalent images of
 /// each GR-grid point.  Copied verbatim from `bz_search_space` in
 /// `c/bzgrid.c`.
-const BZ_SEARCH_SPACE: [Vec3; 125] = [
+const BZ_SEARCH_SPACE: [Vec3I; 125] = [
     [0, 0, 0], [0, 0, 1], [0, 0, 2], [0, 0, -2], [0, 0, -1],
     [0, 1, 0], [0, 1, 1], [0, 1, 2], [0, 1, -2], [0, 1, -1],
     [0, 2, 0], [0, 2, 1], [0, 2, 2], [0, 2, -2], [0, 2, -1],
@@ -58,7 +55,7 @@ pub enum RotateBzGridError {
 /// Output of `bz_grid_addresses`.
 pub struct BzGridAddresses {
     /// Addresses in BZ layout, length = `num_gp`.
-    pub addresses: Vec<Vec3>,
+    pub addresses: Vec<Vec3I>,
     /// Map from GR-grid mesh (type 2) or 2x mesh (type 1) to BZ index.
     pub bz_map: Vec<i64>,
     /// Map from BZ index back to GR grid index.
@@ -92,40 +89,8 @@ fn inverse_unimodular(m: &MatI) -> Option<MatI> {
     Some(c)
 }
 
-fn nint_f64(x: f64) -> i64 {
-    if x < 0.0 {
-        (x - 0.5) as i64
-    } else {
-        (x + 0.5) as i64
-    }
-}
-
-fn matvec_ld(a: &MatI, b: [f64; 3]) -> [f64; 3] {
-    [
-        a[0][0] as f64 * b[0] + a[0][1] as f64 * b[1] + a[0][2] as f64 * b[2],
-        a[1][0] as f64 * b[0] + a[1][1] as f64 * b[1] + a[1][2] as f64 * b[2],
-        a[2][0] as f64 * b[0] + a[2][1] as f64 * b[1] + a[2][2] as f64 * b[2],
-    ]
-}
-
-fn matvec_dd(a: &MatD, b: [f64; 3]) -> [f64; 3] {
-    [
-        a[0][0] * b[0] + a[0][1] * b[1] + a[0][2] * b[2],
-        a[1][0] * b[0] + a[1][1] * b[1] + a[1][2] * b[2],
-        a[2][0] * b[0] + a[2][1] * b[1] + a[2][2] * b[2],
-    ]
-}
-
-fn matvec_ll(a: &MatI, b: Vec3) -> Vec3 {
-    [
-        a[0][0] * b[0] + a[0][1] * b[1] + a[0][2] * b[2],
-        a[1][0] * b[0] + a[1][1] * b[1] + a[1][2] * b[2],
-        a[2][0] * b[0] + a[2][1] * b[1] + a[2][2] * b[2],
-    ]
-}
-
 /// Tolerance for BZ reduction, in units of squared length.
-fn bz_tolerance(rec_lattice: &MatD, d_diag: Vec3) -> f64 {
+pub(crate) fn bz_tolerance(rec_lattice: &MatD, d_diag: Vec3I) -> f64 {
     let mut max_len = 0.0f64;
     for i in 0..3 {
         let mut len = 0.0;
@@ -144,24 +109,24 @@ fn bz_tolerance(rec_lattice: &MatD, d_diag: Vec3) -> f64 {
 /// identify the minimum.  Returns `(min_distance, nint, distances)`
 /// matching the C helper `get_bz_distances`.
 fn bz_distances(
-    grid_address: Vec3,
-    d_diag: Vec3,
-    ps: Vec3,
+    grid_address: Vec3I,
+    d_diag: Vec3I,
+    ps: Vec3I,
     q: &MatI,
     rec_lattice: &MatD,
     tolerance: f64,
-) -> (f64, Vec3, [f64; 125]) {
+) -> (f64, Vec3I, [f64; 125]) {
     let dadrs = double_grid_address(grid_address, ps);
     let mut q_red = [
         dadrs[0] as f64 / (2.0 * d_diag[0] as f64),
         dadrs[1] as f64 / (2.0 * d_diag[1] as f64),
         dadrs[2] as f64 / (2.0 * d_diag[2] as f64),
     ];
-    q_red = matvec_ld(q, q_red);
-    let mut nint = [0i64; 3];
+    q_red = matvec_id(q, q_red);
+    let mut nint_v = [0i64; 3];
     for i in 0..3 {
-        nint[i] = nint_f64(q_red[i]);
-        q_red[i] -= nint[i] as f64;
+        nint_v[i] = nint(q_red[i]);
+        q_red[i] -= nint_v[i] as f64;
     }
 
     let mut distances = [0.0f64; 125];
@@ -181,22 +146,22 @@ fn bz_distances(
             min_distance = distances[i];
         }
     }
-    (min_distance, nint, distances)
+    (min_distance, nint_v, distances)
 }
 
 fn set_bz_address(
     bz_index: usize,
-    grid_address: Vec3,
-    d_diag: Vec3,
-    nint: Vec3,
+    grid_address: Vec3I,
+    d_diag: Vec3I,
+    nint_v: Vec3I,
     q_inv: &MatI,
-) -> Vec3 {
+) -> Vec3I {
     let delta_g = [
-        BZ_SEARCH_SPACE[bz_index][0] - nint[0],
-        BZ_SEARCH_SPACE[bz_index][1] - nint[1],
-        BZ_SEARCH_SPACE[bz_index][2] - nint[2],
+        BZ_SEARCH_SPACE[bz_index][0] - nint_v[0],
+        BZ_SEARCH_SPACE[bz_index][1] - nint_v[1],
+        BZ_SEARCH_SPACE[bz_index][2] - nint_v[2],
     ];
-    let delta_g = matvec_ll(q_inv, delta_g);
+    let delta_g = matvec_ii(q_inv, delta_g);
     [
         grid_address[0] + delta_g[0] * d_diag[0],
         grid_address[1] + delta_g[1] * d_diag[1],
@@ -208,9 +173,9 @@ fn set_bz_address(
 ///
 /// `bz_grid_type` mirrors the C API: `1` = sparse layout, `2` = dense layout.
 pub fn bz_grid_addresses(
-    d_diag: Vec3,
+    d_diag: Vec3I,
     q: MatI,
-    ps: Vec3,
+    ps: Vec3I,
     rec_lattice: MatD,
     bz_grid_type: i64,
 ) -> Result<BzGridAddresses, BzGridAddressesError> {
@@ -226,17 +191,17 @@ pub fn bz_grid_addresses(
     if bz_grid_type == 2 {
         // Dense layout: addresses appear in order, gp_map holds the
         // starting BZ index for each GR-grid point (length = total+1).
-        let mut addresses: Vec<Vec3> = Vec::with_capacity(total_num_gp * 8);
+        let mut addresses: Vec<Vec3I> = Vec::with_capacity(total_num_gp * 8);
         let mut bzg2grg: Vec<i64> = Vec::with_capacity(total_num_gp * 8);
         let mut bz_map = vec![0i64; total_num_gp + 1];
 
         for i in 0..total_num_gp {
             let gr_adrs = grid_address_from_index(i as i64, d_diag);
-            let (min_distance, nint, distances) =
+            let (min_distance, nint_v, distances) =
                 bz_distances(gr_adrs, d_diag, ps, &q, &rec_lattice, tolerance);
             for j in 0..125 {
                 if distances[j] < min_distance + tolerance {
-                    let adrs = set_bz_address(j, gr_adrs, d_diag, nint, &q_inv);
+                    let adrs = set_bz_address(j, gr_adrs, d_diag, nint_v, &q_inv);
                     addresses.push(adrs);
                     bzg2grg.push(i as i64);
                 }
@@ -253,10 +218,10 @@ pub fn bz_grid_addresses(
     }
 
     // Sparse layout (type 1).
-    let bzmesh: Vec3 = [d_diag[0] * 2, d_diag[1] * 2, d_diag[2] * 2];
+    let bzmesh: Vec3I = [d_diag[0] * 2, d_diag[1] * 2, d_diag[2] * 2];
     let num_bzmesh = (bzmesh[0] * bzmesh[1] * bzmesh[2]) as usize;
 
-    let mut addresses: Vec<Vec3> = vec![[0; 3]; total_num_gp * 8];
+    let mut addresses: Vec<Vec3I> = vec![[0; 3]; total_num_gp * 8];
     let mut bzg2grg: Vec<i64> = vec![0; total_num_gp * 8];
     let mut bz_map = vec![num_bzmesh as i64; num_bzmesh + total_num_gp + 1];
     bz_map[num_bzmesh] = 0;
@@ -266,7 +231,7 @@ pub fn bz_grid_addresses(
 
     for i in 0..total_num_gp as i64 {
         let gr_adrs = grid_address_from_index(i, d_diag);
-        let (min_distance, nint, distances) =
+        let (min_distance, nint_v, distances) =
             bz_distances(gr_adrs, d_diag, ps, &q, &rec_lattice, tolerance);
         let mut count: i64 = 0;
         for j in 0..125 {
@@ -279,7 +244,7 @@ pub fn bz_grid_addresses(
                     g
                 };
                 count += 1;
-                let adrs = set_bz_address(j, gr_adrs, d_diag, nint, &q_inv);
+                let adrs = set_bz_address(j, gr_adrs, d_diag, nint_v, &q_inv);
                 addresses[gp as usize] = adrs;
                 // Equivalent to C's grg_get_double_grid_index on the
                 // 2x mesh: `(adrs*2 + ps - ps)/2` collapses to `adrs`,
@@ -313,10 +278,10 @@ pub fn bz_grid_addresses(
 pub fn rotate_bz_grid_index(
     bz_grid_index: i64,
     rotation: MatI,
-    bz_grid_addresses: &[Vec3],
+    bz_grid_addresses: &[Vec3I],
     bz_map: &[i64],
-    d_diag: Vec3,
-    ps: Vec3,
+    d_diag: Vec3I,
+    ps: Vec3I,
     bz_grid_type: i64,
 ) -> Result<i64, RotateBzGridError> {
     if bz_grid_type != 1 && bz_grid_type != 2 {
@@ -325,11 +290,7 @@ pub fn rotate_bz_grid_index(
 
     let start_adrs = bz_grid_addresses[bz_grid_index as usize];
     let dadrs = double_grid_address(start_adrs, ps);
-    let dadrs_rot = [
-        rotation[0][0] * dadrs[0] + rotation[0][1] * dadrs[1] + rotation[0][2] * dadrs[2],
-        rotation[1][0] * dadrs[0] + rotation[1][1] * dadrs[1] + rotation[1][2] * dadrs[2],
-        rotation[2][0] * dadrs[0] + rotation[2][1] * dadrs[1] + rotation[2][2] * dadrs[2],
-    ];
+    let dadrs_rot = matvec_ii(&rotation, dadrs);
     // `(dadrs_rot - PS) / 2` uses truncation toward zero, matching C.
     let adrs_rot = [
         (dadrs_rot[0] - ps[0]) / 2,

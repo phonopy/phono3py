@@ -2,9 +2,7 @@
 //!
 //! Port of `grg_get_reciprocal_point_group` in `c/grgrid.c`.
 
-type Mat = [[i64; 3]; 3];
-
-const INVERSION: Mat = [[-1, 0, 0], [0, -1, 0], [0, 0, -1]];
+use crate::common::{negate_i, transpose_i, INVERSION, MatI};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ReciprocalRotationsError {
@@ -15,30 +13,21 @@ pub enum ReciprocalRotationsError {
     TooManyForInversion,
 }
 
-fn transpose(m: &Mat) -> Mat {
-    [
-        [m[0][0], m[1][0], m[2][0]],
-        [m[0][1], m[1][1], m[2][1]],
-        [m[0][2], m[1][2], m[2][2]],
-    ]
-}
-
-fn negate(m: &Mat) -> Mat {
-    [
-        [-m[0][0], -m[0][1], -m[0][2]],
-        [-m[1][0], -m[1][1], -m[1][2]],
-        [-m[2][0], -m[2][1], -m[2][2]],
-    ]
-}
-
-/// Build the reciprocal-space point group from a set of real-space
-/// rotations.  The Python-facing path in `c/_recgrid.cpp` always
-/// passes `is_transpose = 1`, so transposition is hard-coded here.
-pub fn reciprocal_rotations(
-    rotations: &[Mat],
+/// Core logic: deduplicate rotations, optionally transpose, optionally
+/// add time-reversal (inversion).
+///
+/// - `is_transpose`: when `true`, each unique rotation is transposed
+///   before further processing.  The `_recgrid.cpp` path passes
+///   real-space rotations and needs transposition; the triplet path
+///   passes reciprocal-space rotations directly and does not.
+/// - `is_time_reversal`: when `true`, negated copies are appended if
+///   the inversion matrix is not already present.
+pub fn get_reciprocal_point_group(
+    rotations: &[MatI],
     is_time_reversal: bool,
-) -> Result<Vec<Mat>, ReciprocalRotationsError> {
-    let mut unique: Vec<Mat> = Vec::with_capacity(48);
+    is_transpose: bool,
+) -> Result<Vec<MatI>, ReciprocalRotationsError> {
+    let mut unique: Vec<MatI> = Vec::with_capacity(48);
     for r in rotations {
         if unique.iter().any(|u| u == r) {
             continue;
@@ -49,8 +38,10 @@ pub fn reciprocal_rotations(
         unique.push(*r);
     }
 
-    for r in unique.iter_mut() {
-        *r = transpose(r);
+    if is_transpose {
+        for r in unique.iter_mut() {
+            *r = transpose_i(r);
+        }
     }
 
     if is_time_reversal {
@@ -61,10 +52,21 @@ pub fn reciprocal_rotations(
             }
             let n = unique.len();
             for i in 0..n {
-                unique.push(negate(&unique[i]));
+                unique.push(negate_i(&unique[i]));
             }
         }
     }
 
     Ok(unique)
+}
+
+/// Build the reciprocal-space point group from a set of real-space
+/// rotations (with transposition).
+///
+/// Convenience wrapper used by the `_recgrid.cpp` Python path.
+pub fn reciprocal_rotations(
+    rotations: &[MatI],
+    is_time_reversal: bool,
+) -> Result<Vec<MatI>, ReciprocalRotationsError> {
+    get_reciprocal_point_group(rotations, is_time_reversal, true)
 }

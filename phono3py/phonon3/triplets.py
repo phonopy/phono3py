@@ -199,7 +199,7 @@ def get_triplets_integration_weights(
 
     if sigma:
         if lang == "C":
-            import phono3py._phono3py as phono3c
+            import phono3py_rs
 
             g_zero = np.zeros(g.shape[1:], dtype="byte", order="C")
             cutoff: float
@@ -208,7 +208,7 @@ def get_triplets_integration_weights(
             else:
                 cutoff = float(sigma_cutoff)
             # cutoff < 0 disables g_zero feature.
-            phono3c.triplets_integration_weights_with_sigma(
+            phono3py_rs.triplets_integration_weights_with_sigma(
                 g, g_zero, frequency_points, triplets, frequencies, sigma, cutoff
             )
         else:
@@ -281,19 +281,14 @@ def _get_triplets_reciprocal_mesh_at_q(
         shape=(prod(mesh),), dtype='int64'
 
     """
-    import phono3py._phono3py as phono3c
+    import phono3py_rs
 
-    map_triplets = np.zeros(np.prod(D_diag), dtype="int64")
-    map_q = np.zeros(np.prod(D_diag), dtype="int64")
-
-    num_triplets = phono3c.triplets_reciprocal_mesh_at_q(
-        map_triplets,
-        map_q,
+    map_triplets, map_q, num_triplets = phono3py_rs.ir_triplets_at_q(
         fixed_grid_number,
         np.array(D_diag, dtype="int64"),
-        is_time_reversal * 1,
         np.array(rec_rotations, dtype="int64", order="C"),
-        swappable * 1,
+        is_time_reversal,
+        swappable,
     )
     assert num_triplets == len(np.unique(map_triplets))
 
@@ -342,18 +337,16 @@ def _get_BZ_triplets_at_q(
         shape=(n_triplets,), dtype='int64'
 
     """
-    import phono3py._phono3py as phono3c
+    import phono3py_rs
 
     weights = np.zeros(len(map_triplets), dtype="int64")
     for g in map_triplets:
         weights[g] += 1
     ir_weights = np.extract(weights > 0, weights)
-    triplets = -np.ones((len(ir_weights), 3), dtype="int64", order="C")
     reduced_basis, tmat_inv_int = get_reduced_bases_and_tmat_inv(
         bz_grid.reciprocal_lattice
     )
-    num_ir_ret = phono3c.BZ_triplets_at_q(
-        triplets,
+    triplets = phono3py_rs.bz_triplets_at_q(
         bz_grid_index,
         bz_grid.addresses,
         bz_grid.gp_map,
@@ -364,7 +357,7 @@ def _get_BZ_triplets_at_q(
         bz_grid.store_dense_gp_map * 1 + 1,
     )
 
-    assert num_ir_ret == len(ir_weights)
+    assert len(triplets) == len(ir_weights)
 
     return triplets, np.array(ir_weights, dtype="int64")
 
@@ -375,12 +368,12 @@ def _set_triplets_integration_weights_c(
     pp: Interaction | JointDos,
     frequency_points: NDArray[np.double],
 ) -> None:
-    import phono3py._phono3py as phono3c
+    import phono3py_rs
 
     tetrahedra = get_tetrahedra_relative_grid_address(pp.bz_grid.microzone_lattice)
     triplets_at_q = pp.get_triplets_at_q()[0]
     frequencies = pp.get_phonons()[0]
-    phono3c.triplets_integration_weights(
+    phono3py_rs.triplets_integration_weights(
         g,
         g_zero,
         frequency_points,  # f0
