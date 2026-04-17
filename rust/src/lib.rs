@@ -1,13 +1,17 @@
 use numpy::ndarray::{Array1, Array2, Array3};
 use numpy::{
-    IntoPyArray, PyArray1, PyArray2, PyArray3, PyReadonlyArray1, PyReadonlyArray2,
-    PyReadonlyArray3, PyReadwriteArray4, PyReadwriteArray5, PyUntypedArrayMethods,
+    Complex64, IntoPyArray, PyArray1, PyArray2, PyArray3, PyReadonlyArray1, PyReadonlyArray2,
+    PyReadonlyArray3, PyReadonlyArray4, PyReadwriteArray2, PyReadwriteArray3, PyReadwriteArray4,
+    PyReadwriteArray5, PyUntypedArrayMethods,
 };
 use pyo3::exceptions::{PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
 
+use crate::common::Cmplx;
+
 mod bzgrid;
 mod common;
+mod dynmat;
 mod grgrid;
 mod recip_rotations;
 mod snf3x3;
@@ -552,6 +556,831 @@ fn py_triplets_integration_weights_with_sigma<'py>(
     Ok(())
 }
 
+/// Reinterpret a `Complex64` slice as `[f64; 2]` slice (`Cmplx`).
+///
+/// SAFETY: `num_complex::Complex<f64>` is `repr(C)` with fields
+/// `re: f64, im: f64`, giving the exact same layout and alignment as
+/// `[f64; 2]`.  The lifetime of the returned slice is bounded by the
+/// input, so no aliasing or escape is possible.
+fn complex_as_cmplx_mut(s: &mut [Complex64]) -> &mut [Cmplx] {
+    let len = s.len();
+    let ptr = s.as_mut_ptr() as *mut Cmplx;
+    unsafe { std::slice::from_raw_parts_mut(ptr, len) }
+}
+
+/// Reinterpret a flat slice as a slice of fixed-size arrays.
+///
+/// SAFETY: `[T; N]` has the same layout as `N` consecutive `T`s.
+/// The returned slice borrows from the input, so no escape is
+/// possible.  The input length must be a multiple of `N`.
+fn group_as_array<T, const N: usize>(s: &[T]) -> &[[T; N]] {
+    debug_assert_eq!(s.len() % N, 0);
+    let n = s.len() / N;
+    let ptr = s.as_ptr() as *const [T; N];
+    unsafe { std::slice::from_raw_parts(ptr, n) }
+}
+
+fn group_as_array_2d<T, const N: usize, const M: usize>(s: &[T]) -> &[[[T; M]; N]] {
+    debug_assert_eq!(s.len() % (N * M), 0);
+    let n = s.len() / (N * M);
+    let ptr = s.as_ptr() as *const [[T; M]; N];
+    unsafe { std::slice::from_raw_parts(ptr, n) }
+}
+
+/// Build the dynamical matrix at a single q-point in place.
+///
+/// Writes into ``dynamical_matrix`` (complex128, shape
+/// ``(num_patom*3, num_patom*3)``).  ``fc`` is float64 with shape
+/// ``(n_rows, num_satom, 3, 3)``, where ``n_rows`` is ``num_satom``
+/// for full force constants or ``num_patom`` for the compact layout.
+/// ``charge_sum`` is the optional Wang-NAC contribution
+/// (``(num_patom, num_patom, 3, 3)``); pass ``None`` for the no-NAC
+/// or Gonze-Lee paths.
+#[pyfunction]
+#[pyo3(name = "dynamical_matrix_at_q")]
+#[pyo3(signature = (dynamical_matrix, fc, q, svecs, multi, mass, s2p_map, p2s_map, charge_sum=None))]
+#[allow(clippy::too_many_arguments)]
+fn py_dynamical_matrix_at_q<'py>(
+    py: Python<'py>,
+    mut dynamical_matrix: PyReadwriteArray2<'py, Complex64>,
+    fc: PyReadonlyArray4<'py, f64>,
+    q: PyReadonlyArray1<'py, f64>,
+    svecs: PyReadonlyArray2<'py, f64>,
+    multi: PyReadonlyArray3<'py, i64>,
+    mass: PyReadonlyArray1<'py, f64>,
+    s2p_map: PyReadonlyArray1<'py, i64>,
+    p2s_map: PyReadonlyArray1<'py, i64>,
+    charge_sum: Option<PyReadonlyArray4<'py, f64>>,
+) -> PyResult<()> {
+    let num_patom = p2s_map.shape()[0];
+    let num_satom = s2p_map.shape()[0];
+    let num_band = num_patom * 3;
+
+    if dynamical_matrix.shape() != [num_band, num_band] {
+        return Err(PyValueError::new_err(
+            "dynamical_matrix must have shape (num_patom*3, num_patom*3)",
+        ));
+    }
+    let fc_shape = fc.shape();
+    if fc_shape[1] != num_satom
+        || fc_shape[2] != 3
+        || fc_shape[3] != 3
+        || (fc_shape[0] != num_patom && fc_shape[0] != num_satom)
+    {
+        return Err(PyValueError::new_err(
+            "fc must have shape (num_patom or num_satom, num_satom, 3, 3)",
+        ));
+    }
+    if q.shape() != [3] {
+        return Err(PyValueError::new_err("q must have shape (3,)"));
+    }
+    if svecs.shape().len() != 2 || svecs.shape()[1] != 3 {
+        return Err(PyValueError::new_err("svecs must have shape (n, 3)"));
+    }
+    if multi.shape() != [num_satom, num_patom, 2] {
+        return Err(PyValueError::new_err(
+            "multi must have shape (num_satom, num_patom, 2)",
+        ));
+    }
+    if mass.shape() != [num_patom] {
+        return Err(PyValueError::new_err("mass must have shape (num_patom,)"));
+    }
+
+    let q_view = q.as_array();
+    let q3 = [q_view[0], q_view[1], q_view[2]];
+
+    let svecs_view = svecs.as_array();
+    let svecs_flat = svecs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("svecs must be C-contiguous"))?;
+    let svecs_slice: &[[f64; 3]] = group_as_array(svecs_flat);
+
+    let multi_view = multi.as_array();
+    let multi_flat = multi_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("multi must be C-contiguous"))?;
+    let multi_slice: &[[i64; 2]] = group_as_array(multi_flat);
+
+    let mass_view = mass.as_array();
+    let mass_slice = mass_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("mass must be C-contiguous"))?;
+
+    let s2p_view = s2p_map.as_array();
+    let s2p_slice = s2p_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("s2p_map must be C-contiguous"))?;
+
+    let p2s_view = p2s_map.as_array();
+    let p2s_slice = p2s_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("p2s_map must be C-contiguous"))?;
+
+    let fc_view = fc.as_array();
+    let fc_slice = fc_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("fc must be C-contiguous"))?;
+
+    let cs_view;
+    let cs_flat;
+    let cs: Option<&[[[f64; 3]; 3]]> = match charge_sum.as_ref() {
+        None => None,
+        Some(cs_arr) => {
+            if cs_arr.shape() != [num_patom, num_patom, 3, 3] {
+                return Err(PyValueError::new_err(
+                    "charge_sum must have shape (num_patom, num_patom, 3, 3)",
+                ));
+            }
+            cs_view = cs_arr.as_array();
+            cs_flat = cs_view
+                .as_slice()
+                .ok_or_else(|| PyValueError::new_err("charge_sum must be C-contiguous"))?;
+            Some(group_as_array_2d::<f64, 3, 3>(cs_flat))
+        }
+    };
+
+    let dm_slice = dynamical_matrix
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("dynamical_matrix must be C-contiguous"))?;
+    let dm_cmplx = complex_as_cmplx_mut(dm_slice);
+
+    py.allow_threads(|| {
+        dynmat::get_dynamical_matrix_at_q(
+            dm_cmplx,
+            fc_slice,
+            q3,
+            svecs_slice,
+            multi_slice,
+            mass_slice,
+            s2p_slice,
+            p2s_slice,
+            cs,
+            num_patom,
+            num_satom,
+        );
+    });
+
+    Ok(())
+}
+
+/// Build the Wang-NAC charge sum.
+///
+/// Writes into ``charge_sum`` (float64, shape
+/// ``(num_patom, num_patom, 3, 3)``).  ``born`` has shape
+/// ``(num_patom, 3, 3)`` and ``q_cart`` has shape ``(3,)``.
+/// ``factor`` is the prefactor assembled on the Python side
+/// (``4*pi/V * unit_conversion / denominator``).
+#[pyfunction]
+#[pyo3(name = "charge_sum")]
+fn py_charge_sum<'py>(
+    mut charge_sum: PyReadwriteArray4<'py, f64>,
+    factor: f64,
+    q_cart: PyReadonlyArray1<'py, f64>,
+    born: PyReadonlyArray3<'py, f64>,
+) -> PyResult<()> {
+    let num_patom = born.shape()[0];
+    if born.shape() != [num_patom, 3, 3] {
+        return Err(PyValueError::new_err(
+            "born must have shape (num_patom, 3, 3)",
+        ));
+    }
+    if charge_sum.shape() != [num_patom, num_patom, 3, 3] {
+        return Err(PyValueError::new_err(
+            "charge_sum must have shape (num_patom, num_patom, 3, 3)",
+        ));
+    }
+    if q_cart.shape() != [3] {
+        return Err(PyValueError::new_err("q_cart must have shape (3,)"));
+    }
+
+    let q_view = q_cart.as_array();
+    let q3 = [q_view[0], q_view[1], q_view[2]];
+
+    let born_view = born.as_array();
+    let born_flat = born_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("born must be C-contiguous"))?;
+    let born_slice: &[[[f64; 3]; 3]] = group_as_array_2d::<f64, 3, 3>(born_flat);
+
+    let cs_slice = charge_sum
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("charge_sum must be C-contiguous"))?;
+    let cs_blocks: &mut [[[f64; 3]; 3]] = {
+        debug_assert_eq!(cs_slice.len() % 9, 0);
+        let n = cs_slice.len() / 9;
+        let ptr = cs_slice.as_mut_ptr() as *mut [[f64; 3]; 3];
+        unsafe { std::slice::from_raw_parts_mut(ptr, n) }
+    };
+
+    dynmat::get_charge_sum(cs_blocks, factor, q3, born_slice);
+    Ok(())
+}
+
+/// Build the q=0 reciprocal dipole-dipole correction.
+///
+/// Writes into ``dd_q0`` (complex128, shape ``(num_patom, 3, 3)``).
+/// ``g_list`` is ``(num_G, 3)`` cartesian reciprocal vectors,
+/// ``born`` is ``(num_patom, 3, 3)``, ``dielectric`` is ``(3, 3)``,
+/// ``pos`` is ``(num_patom, 3)`` cartesian positions.  ``lambda``
+/// is the Ewald parameter and ``tolerance`` is the |K| zero
+/// threshold.
+#[pyfunction]
+#[pyo3(name = "recip_dipole_dipole_q0")]
+#[allow(clippy::too_many_arguments)]
+fn py_recip_dipole_dipole_q0<'py>(
+    py: Python<'py>,
+    mut dd_q0: PyReadwriteArray3<'py, Complex64>,
+    g_list: PyReadonlyArray2<'py, f64>,
+    born: PyReadonlyArray3<'py, f64>,
+    dielectric: PyReadonlyArray2<'py, f64>,
+    pos: PyReadonlyArray2<'py, f64>,
+    lambda: f64,
+    tolerance: f64,
+) -> PyResult<()> {
+    let num_patom = born.shape()[0];
+    if born.shape() != [num_patom, 3, 3] {
+        return Err(PyValueError::new_err(
+            "born must have shape (num_patom, 3, 3)",
+        ));
+    }
+    if dd_q0.shape() != [num_patom, 3, 3] {
+        return Err(PyValueError::new_err(
+            "dd_q0 must have shape (num_patom, 3, 3)",
+        ));
+    }
+    if pos.shape() != [num_patom, 3] {
+        return Err(PyValueError::new_err("pos must have shape (num_patom, 3)"));
+    }
+    let g_shape = g_list.shape();
+    if g_shape.len() != 2 || g_shape[1] != 3 {
+        return Err(PyValueError::new_err("g_list must have shape (num_G, 3)"));
+    }
+
+    let diel = mat3_f(&dielectric)?;
+
+    let g_view = g_list.as_array();
+    let g_flat = g_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("g_list must be C-contiguous"))?;
+    let g_slice: &[[f64; 3]] = group_as_array(g_flat);
+
+    let pos_view = pos.as_array();
+    let pos_flat = pos_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("pos must be C-contiguous"))?;
+    let pos_slice: &[[f64; 3]] = group_as_array(pos_flat);
+
+    let born_view = born.as_array();
+    let born_flat = born_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("born must be C-contiguous"))?;
+    let born_slice: &[[[f64; 3]; 3]] = group_as_array_2d::<f64, 3, 3>(born_flat);
+
+    let dd_slice = dd_q0
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("dd_q0 must be C-contiguous"))?;
+    let dd_cmplx = complex_as_cmplx_mut(dd_slice);
+
+    py.allow_threads(|| {
+        dynmat::get_recip_dipole_dipole_q0(
+            dd_cmplx,
+            g_slice,
+            num_patom,
+            born_slice,
+            &diel,
+            pos_slice,
+            lambda,
+            tolerance,
+        );
+    });
+
+    Ok(())
+}
+
+/// Build the Gonze-Lee reciprocal dipole-dipole correction at q.
+///
+/// Writes into ``dd`` (complex128, shape ``(num_patom, 3, num_patom, 3)``).
+/// ``dd_q0`` (complex128, shape ``(num_patom, 3, 3)``) is the q=0
+/// correction subtracted on the diagonal blocks.  ``q_direction_cart``
+/// is a 3-vector or ``None`` (use ``None`` when q is non-zero).
+/// ``factor`` is ``4*pi/V * unit_conversion``.
+#[pyfunction]
+#[pyo3(name = "recip_dipole_dipole")]
+#[pyo3(signature = (dd, dd_q0, g_list, q_cart, born, dielectric, pos, factor, lambda_, tolerance, q_direction_cart=None))]
+#[allow(clippy::too_many_arguments)]
+fn py_recip_dipole_dipole<'py>(
+    py: Python<'py>,
+    mut dd: PyReadwriteArray4<'py, Complex64>,
+    dd_q0: PyReadonlyArray3<'py, Complex64>,
+    g_list: PyReadonlyArray2<'py, f64>,
+    q_cart: PyReadonlyArray1<'py, f64>,
+    born: PyReadonlyArray3<'py, f64>,
+    dielectric: PyReadonlyArray2<'py, f64>,
+    pos: PyReadonlyArray2<'py, f64>,
+    factor: f64,
+    lambda_: f64,
+    tolerance: f64,
+    q_direction_cart: Option<PyReadonlyArray1<'py, f64>>,
+) -> PyResult<()> {
+    let num_patom = born.shape()[0];
+    if born.shape() != [num_patom, 3, 3] {
+        return Err(PyValueError::new_err(
+            "born must have shape (num_patom, 3, 3)",
+        ));
+    }
+    if dd.shape() != [num_patom, 3, num_patom, 3] {
+        return Err(PyValueError::new_err(
+            "dd must have shape (num_patom, 3, num_patom, 3)",
+        ));
+    }
+    if dd_q0.shape() != [num_patom, 3, 3] {
+        return Err(PyValueError::new_err(
+            "dd_q0 must have shape (num_patom, 3, 3)",
+        ));
+    }
+    if pos.shape() != [num_patom, 3] {
+        return Err(PyValueError::new_err("pos must have shape (num_patom, 3)"));
+    }
+    let g_shape = g_list.shape();
+    if g_shape.len() != 2 || g_shape[1] != 3 {
+        return Err(PyValueError::new_err("g_list must have shape (num_G, 3)"));
+    }
+    if q_cart.shape() != [3] {
+        return Err(PyValueError::new_err("q_cart must have shape (3,)"));
+    }
+
+    let diel = mat3_f(&dielectric)?;
+
+    let q_view = q_cart.as_array();
+    let q3 = [q_view[0], q_view[1], q_view[2]];
+
+    let qd_view;
+    let qd: Option<[f64; 3]> = match q_direction_cart.as_ref() {
+        None => None,
+        Some(arr) => {
+            if arr.shape() != [3] {
+                return Err(PyValueError::new_err(
+                    "q_direction_cart must have shape (3,)",
+                ));
+            }
+            qd_view = arr.as_array();
+            Some([qd_view[0], qd_view[1], qd_view[2]])
+        }
+    };
+
+    let g_view = g_list.as_array();
+    let g_flat = g_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("g_list must be C-contiguous"))?;
+    let g_slice: &[[f64; 3]] = group_as_array(g_flat);
+
+    let pos_view = pos.as_array();
+    let pos_flat = pos_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("pos must be C-contiguous"))?;
+    let pos_slice: &[[f64; 3]] = group_as_array(pos_flat);
+
+    let born_view = born.as_array();
+    let born_flat = born_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("born must be C-contiguous"))?;
+    let born_slice: &[[[f64; 3]; 3]] = group_as_array_2d::<f64, 3, 3>(born_flat);
+
+    let dd_q0_view = dd_q0.as_array();
+    let dd_q0_flat = dd_q0_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("dd_q0 must be C-contiguous"))?;
+    let dd_q0_cmplx: &[Cmplx] = {
+        let n = dd_q0_flat.len();
+        let ptr = dd_q0_flat.as_ptr() as *const Cmplx;
+        unsafe { std::slice::from_raw_parts(ptr, n) }
+    };
+
+    let dd_slice = dd
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("dd must be C-contiguous"))?;
+    let dd_cmplx = complex_as_cmplx_mut(dd_slice);
+
+    py.allow_threads(|| {
+        dynmat::get_recip_dipole_dipole(
+            dd_cmplx,
+            dd_q0_cmplx,
+            g_slice,
+            num_patom,
+            q3,
+            qd,
+            born_slice,
+            &diel,
+            pos_slice,
+            factor,
+            lambda_,
+            tolerance,
+        );
+    });
+
+    Ok(())
+}
+
+/// Build dynamical matrices at the listed grid points (Wang- or
+/// no-NAC path).
+///
+/// ``dynmats`` is complex128 with shape
+/// ``(num_phonons, num_band, num_band)``; only blocks at
+/// ``undone_grid_points`` are written.  ``undone_grid_points`` must
+/// be strictly ascending (sorted and unique) with every entry in
+/// ``0..num_phonons``.  Pass ``born=None`` for the no-NAC path;
+/// otherwise ``dielectric`` and ``reciprocal_lattice`` must also be
+/// provided.  ``q_direction`` selects the Gamma-limit direction
+/// (fractional) and may be left ``None``.
+#[pyfunction]
+#[pyo3(name = "dynamical_matrices_at_gridpoints")]
+#[pyo3(signature = (
+    dynmats, undone_grid_points, grid_addresses, qd_inv,
+    fc, svecs, multi, mass, p2s_map, s2p_map,
+    born=None, dielectric=None, reciprocal_lattice=None,
+    q_direction=None, nac_factor=0.0,
+))]
+#[allow(clippy::too_many_arguments)]
+fn py_dynamical_matrices_at_gridpoints<'py>(
+    py: Python<'py>,
+    mut dynmats: PyReadwriteArray3<'py, Complex64>,
+    undone_grid_points: PyReadonlyArray1<'py, i64>,
+    grid_addresses: PyReadonlyArray2<'py, i64>,
+    qd_inv: PyReadonlyArray2<'py, f64>,
+    fc: PyReadonlyArray4<'py, f64>,
+    svecs: PyReadonlyArray2<'py, f64>,
+    multi: PyReadonlyArray3<'py, i64>,
+    mass: PyReadonlyArray1<'py, f64>,
+    p2s_map: PyReadonlyArray1<'py, i64>,
+    s2p_map: PyReadonlyArray1<'py, i64>,
+    born: Option<PyReadonlyArray3<'py, f64>>,
+    dielectric: Option<PyReadonlyArray2<'py, f64>>,
+    reciprocal_lattice: Option<PyReadonlyArray2<'py, f64>>,
+    q_direction: Option<PyReadonlyArray1<'py, f64>>,
+    nac_factor: f64,
+) -> PyResult<()> {
+    let num_patom = p2s_map.shape()[0];
+    let num_satom = s2p_map.shape()[0];
+    let num_band = num_patom * 3;
+    let num_phonons = grid_addresses.shape()[0];
+
+    if dynmats.shape() != [num_phonons, num_band, num_band] {
+        return Err(PyValueError::new_err(
+            "dynmats must have shape (num_phonons, num_band, num_band)",
+        ));
+    }
+    if grid_addresses.shape() != [num_phonons, 3] {
+        return Err(PyValueError::new_err(
+            "grid_addresses must have shape (num_phonons, 3)",
+        ));
+    }
+    if qd_inv.shape() != [3, 3] {
+        return Err(PyValueError::new_err("qd_inv must have shape (3, 3)"));
+    }
+    let fc_shape = fc.shape();
+    if fc_shape[1] != num_satom
+        || fc_shape[2] != 3
+        || fc_shape[3] != 3
+        || (fc_shape[0] != num_patom && fc_shape[0] != num_satom)
+    {
+        return Err(PyValueError::new_err(
+            "fc must have shape (num_patom or num_satom, num_satom, 3, 3)",
+        ));
+    }
+    if svecs.shape().len() != 2 || svecs.shape()[1] != 3 {
+        return Err(PyValueError::new_err("svecs must have shape (n, 3)"));
+    }
+    if multi.shape() != [num_satom, num_patom, 2] {
+        return Err(PyValueError::new_err(
+            "multi must have shape (num_satom, num_patom, 2)",
+        ));
+    }
+    if mass.shape() != [num_patom] {
+        return Err(PyValueError::new_err("mass must have shape (num_patom,)"));
+    }
+
+    let qd = mat3_f(&qd_inv)?;
+    let ga = addresses_i(&grid_addresses)?;
+
+    let ug_view = undone_grid_points.as_array();
+    let ug_slice = ug_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("undone_grid_points must be C-contiguous"))?;
+
+    let fc_view = fc.as_array();
+    let fc_slice = fc_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("fc must be C-contiguous"))?;
+
+    let svecs_view = svecs.as_array();
+    let svecs_flat = svecs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("svecs must be C-contiguous"))?;
+    let svecs_slice: &[[f64; 3]] = group_as_array(svecs_flat);
+
+    let multi_view = multi.as_array();
+    let multi_flat = multi_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("multi must be C-contiguous"))?;
+    let multi_slice: &[[i64; 2]] = group_as_array(multi_flat);
+
+    let mass_view = mass.as_array();
+    let mass_slice = mass_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("mass must be C-contiguous"))?;
+    let p2s_view = p2s_map.as_array();
+    let p2s_slice = p2s_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("p2s_map must be C-contiguous"))?;
+    let s2p_view = s2p_map.as_array();
+    let s2p_slice = s2p_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("s2p_map must be C-contiguous"))?;
+
+    let born_view;
+    let wang = match born.as_ref() {
+        None => None,
+        Some(b) => {
+            let diel_arr = dielectric.as_ref().ok_or_else(|| {
+                PyValueError::new_err("dielectric must be provided when born is given")
+            })?;
+            let rec_arr = reciprocal_lattice.as_ref().ok_or_else(|| {
+                PyValueError::new_err(
+                    "reciprocal_lattice must be provided when born is given",
+                )
+            })?;
+            if b.shape() != [num_patom, 3, 3] {
+                return Err(PyValueError::new_err(
+                    "born must have shape (num_patom, 3, 3)",
+                ));
+            }
+            let diel = mat3_f(diel_arr)?;
+            let rec = mat3_f(rec_arr)?;
+            born_view = b.as_array();
+            let born_flat = born_view
+                .as_slice()
+                .ok_or_else(|| PyValueError::new_err("born must be C-contiguous"))?;
+            let born_slice: &[[[f64; 3]; 3]] = group_as_array_2d::<f64, 3, 3>(born_flat);
+
+            let qd_dir: Option<[f64; 3]> = match q_direction.as_ref() {
+                None => None,
+                Some(arr) => {
+                    if arr.shape() != [3] {
+                        return Err(PyValueError::new_err(
+                            "q_direction must have shape (3,)",
+                        ));
+                    }
+                    let v = arr.as_array();
+                    Some([v[0], v[1], v[2]])
+                }
+            };
+            Some(dynmat::WangNacParams {
+                born: born_slice,
+                dielectric: diel,
+                reciprocal_lattice: rec,
+                q_direction: qd_dir,
+                nac_factor,
+            })
+        }
+    };
+
+    let dm_slice = dynmats
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("dynmats must be C-contiguous"))?;
+    let dm_cmplx = complex_as_cmplx_mut(dm_slice);
+
+    py.allow_threads(|| {
+        dynmat::dynamical_matrices_at_gridpoints(
+            dm_cmplx,
+            ug_slice,
+            &ga,
+            &qd,
+            fc_slice,
+            svecs_slice,
+            multi_slice,
+            mass_slice,
+            p2s_slice,
+            s2p_slice,
+            num_patom,
+            num_satom,
+            wang.as_ref(),
+        );
+    });
+
+    Ok(())
+}
+
+/// Build dynamical matrices at the listed grid points (Gonze-Lee
+/// NAC path).  Same output buffer layout as
+/// ``dynamical_matrices_at_gridpoints``.  ``undone_grid_points``
+/// must be strictly ascending (sorted and unique) with every entry
+/// in ``0..num_phonons``.
+#[pyfunction]
+#[pyo3(name = "dynamical_matrices_at_gridpoints_gonze")]
+#[pyo3(signature = (
+    dynmats, undone_grid_points, grid_addresses, qd_inv,
+    fc, svecs, multi, mass, p2s_map, s2p_map,
+    born, dielectric, reciprocal_lattice,
+    pos, dd_q0, g_list, nac_factor, lambda_,
+    q_direction=None,
+))]
+#[allow(clippy::too_many_arguments)]
+fn py_dynamical_matrices_at_gridpoints_gonze<'py>(
+    py: Python<'py>,
+    mut dynmats: PyReadwriteArray3<'py, Complex64>,
+    undone_grid_points: PyReadonlyArray1<'py, i64>,
+    grid_addresses: PyReadonlyArray2<'py, i64>,
+    qd_inv: PyReadonlyArray2<'py, f64>,
+    fc: PyReadonlyArray4<'py, f64>,
+    svecs: PyReadonlyArray2<'py, f64>,
+    multi: PyReadonlyArray3<'py, i64>,
+    mass: PyReadonlyArray1<'py, f64>,
+    p2s_map: PyReadonlyArray1<'py, i64>,
+    s2p_map: PyReadonlyArray1<'py, i64>,
+    born: PyReadonlyArray3<'py, f64>,
+    dielectric: PyReadonlyArray2<'py, f64>,
+    reciprocal_lattice: PyReadonlyArray2<'py, f64>,
+    pos: PyReadonlyArray2<'py, f64>,
+    dd_q0: PyReadonlyArray3<'py, Complex64>,
+    g_list: PyReadonlyArray2<'py, f64>,
+    nac_factor: f64,
+    lambda_: f64,
+    q_direction: Option<PyReadonlyArray1<'py, f64>>,
+) -> PyResult<()> {
+    let num_patom = p2s_map.shape()[0];
+    let num_satom = s2p_map.shape()[0];
+    let num_band = num_patom * 3;
+    let num_phonons = grid_addresses.shape()[0];
+
+    if dynmats.shape() != [num_phonons, num_band, num_band] {
+        return Err(PyValueError::new_err(
+            "dynmats must have shape (num_phonons, num_band, num_band)",
+        ));
+    }
+    if grid_addresses.shape() != [num_phonons, 3] {
+        return Err(PyValueError::new_err(
+            "grid_addresses must have shape (num_phonons, 3)",
+        ));
+    }
+    if qd_inv.shape() != [3, 3] {
+        return Err(PyValueError::new_err("qd_inv must have shape (3, 3)"));
+    }
+    let fc_shape = fc.shape();
+    if fc_shape[1] != num_satom
+        || fc_shape[2] != 3
+        || fc_shape[3] != 3
+        || (fc_shape[0] != num_patom && fc_shape[0] != num_satom)
+    {
+        return Err(PyValueError::new_err(
+            "fc must have shape (num_patom or num_satom, num_satom, 3, 3)",
+        ));
+    }
+    if svecs.shape().len() != 2 || svecs.shape()[1] != 3 {
+        return Err(PyValueError::new_err("svecs must have shape (n, 3)"));
+    }
+    if multi.shape() != [num_satom, num_patom, 2] {
+        return Err(PyValueError::new_err(
+            "multi must have shape (num_satom, num_patom, 2)",
+        ));
+    }
+    if mass.shape() != [num_patom] {
+        return Err(PyValueError::new_err("mass must have shape (num_patom,)"));
+    }
+    if born.shape() != [num_patom, 3, 3] {
+        return Err(PyValueError::new_err(
+            "born must have shape (num_patom, 3, 3)",
+        ));
+    }
+    if pos.shape() != [num_patom, 3] {
+        return Err(PyValueError::new_err("pos must have shape (num_patom, 3)"));
+    }
+    if dd_q0.shape() != [num_patom, 3, 3] {
+        return Err(PyValueError::new_err(
+            "dd_q0 must have shape (num_patom, 3, 3)",
+        ));
+    }
+    let g_shape = g_list.shape();
+    if g_shape.len() != 2 || g_shape[1] != 3 {
+        return Err(PyValueError::new_err("g_list must have shape (num_G, 3)"));
+    }
+
+    let qd = mat3_f(&qd_inv)?;
+    let diel = mat3_f(&dielectric)?;
+    let rec = mat3_f(&reciprocal_lattice)?;
+    let ga = addresses_i(&grid_addresses)?;
+
+    let qd_dir: Option<[f64; 3]> = match q_direction.as_ref() {
+        None => None,
+        Some(arr) => {
+            if arr.shape() != [3] {
+                return Err(PyValueError::new_err("q_direction must have shape (3,)"));
+            }
+            let v = arr.as_array();
+            Some([v[0], v[1], v[2]])
+        }
+    };
+
+    let ug_view = undone_grid_points.as_array();
+    let ug_slice = ug_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("undone_grid_points must be C-contiguous"))?;
+
+    let fc_view = fc.as_array();
+    let fc_slice = fc_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("fc must be C-contiguous"))?;
+
+    let svecs_view = svecs.as_array();
+    let svecs_flat = svecs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("svecs must be C-contiguous"))?;
+    let svecs_slice: &[[f64; 3]] = group_as_array(svecs_flat);
+
+    let multi_view = multi.as_array();
+    let multi_flat = multi_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("multi must be C-contiguous"))?;
+    let multi_slice: &[[i64; 2]] = group_as_array(multi_flat);
+
+    let mass_view = mass.as_array();
+    let mass_slice = mass_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("mass must be C-contiguous"))?;
+    let p2s_view = p2s_map.as_array();
+    let p2s_slice = p2s_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("p2s_map must be C-contiguous"))?;
+    let s2p_view = s2p_map.as_array();
+    let s2p_slice = s2p_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("s2p_map must be C-contiguous"))?;
+
+    let born_view = born.as_array();
+    let born_flat = born_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("born must be C-contiguous"))?;
+    let born_slice: &[[[f64; 3]; 3]] = group_as_array_2d::<f64, 3, 3>(born_flat);
+
+    let pos_view = pos.as_array();
+    let pos_flat = pos_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("pos must be C-contiguous"))?;
+    let pos_slice: &[[f64; 3]] = group_as_array(pos_flat);
+
+    let g_view = g_list.as_array();
+    let g_flat = g_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("g_list must be C-contiguous"))?;
+    let g_slice: &[[f64; 3]] = group_as_array(g_flat);
+
+    let dd_q0_view = dd_q0.as_array();
+    let dd_q0_flat = dd_q0_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("dd_q0 must be C-contiguous"))?;
+    let dd_q0_cmplx: &[Cmplx] = {
+        let n = dd_q0_flat.len();
+        let ptr = dd_q0_flat.as_ptr() as *const Cmplx;
+        unsafe { std::slice::from_raw_parts(ptr, n) }
+    };
+
+    let gonze = dynmat::GonzeNacParams {
+        born: born_slice,
+        dielectric: diel,
+        reciprocal_lattice: rec,
+        q_direction: qd_dir,
+        nac_factor,
+        pos: pos_slice,
+        dd_q0: dd_q0_cmplx,
+        g_list: g_slice,
+        lambda: lambda_,
+    };
+
+    let dm_slice = dynmats
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("dynmats must be C-contiguous"))?;
+    let dm_cmplx = complex_as_cmplx_mut(dm_slice);
+
+    py.allow_threads(|| {
+        dynmat::dynamical_matrices_at_gridpoints_gonze(
+            dm_cmplx,
+            ug_slice,
+            &ga,
+            &qd,
+            fc_slice,
+            svecs_slice,
+            multi_slice,
+            mass_slice,
+            p2s_slice,
+            s2p_slice,
+            num_patom,
+            num_satom,
+            &gonze,
+        );
+    });
+
+    Ok(())
+}
+
 fn relative_grid_address_3d(
     arr: &PyReadonlyArray3<i64>,
 ) -> PyResult<RelativeGridAddress> {
@@ -587,6 +1416,15 @@ fn phono3py_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_triplets_integration_weights, m)?)?;
     m.add_function(wrap_pyfunction!(
         py_triplets_integration_weights_with_sigma,
+        m
+    )?)?;
+    m.add_function(wrap_pyfunction!(py_dynamical_matrix_at_q, m)?)?;
+    m.add_function(wrap_pyfunction!(py_charge_sum, m)?)?;
+    m.add_function(wrap_pyfunction!(py_recip_dipole_dipole_q0, m)?)?;
+    m.add_function(wrap_pyfunction!(py_recip_dipole_dipole, m)?)?;
+    m.add_function(wrap_pyfunction!(py_dynamical_matrices_at_gridpoints, m)?)?;
+    m.add_function(wrap_pyfunction!(
+        py_dynamical_matrices_at_gridpoints_gonze,
         m
     )?)?;
     Ok(())

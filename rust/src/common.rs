@@ -9,6 +9,10 @@ pub type Vec3D = [f64; 3];
 pub type MatI = [[i64; 3]; 3];
 pub type MatD = [[f64; 3]; 3];
 
+/// Complex value as `[real, imag]`, mirroring the `double[2]`
+/// layout used throughout the C code (e.g. `c/dynmat.c`).
+pub type Cmplx = [f64; 2];
+
 pub const IDENTITY: MatI = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
 pub const INVERSION: MatI = [[-1, 0, 0], [0, -1, 0], [0, 0, -1]];
 
