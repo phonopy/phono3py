@@ -101,6 +101,7 @@ def _build_rta_calculator(
         is_N_U=config.is_N_U,
         is_gamma_detail=config.is_gamma_detail,
         log_level=config.log_level,
+        lang=config.lang,
     )
     ctx = VariantContext(
         interaction=interaction,
@@ -301,7 +302,7 @@ def conductivity_calculator(
     pinv_cutoff: float = 1.0e-8,
     pinv_solver: int = 0,
     pinv_method: int = 0,
-    lang: Literal["C", "Python"] = "C",
+    lang: Literal["C", "Python", "Rust"] = "C",
     log_level: int = 0,
 ) -> RTACalculator | LBTECalculator:
     """Create a conductivity calculator with the appropriate building blocks.
@@ -355,8 +356,10 @@ def conductivity_calculator(
         Solver selection index (LBTE only).  Default 0.
     pinv_method : int, optional
         Pseudo-inverse criterion (LBTE only).  Default 0.
-    lang : {"C", "Python"}, optional
-        Backend for C-extension operations (LBTE only).  Default "C".
+    lang : {"C", "Python", "Rust"}, optional
+        Backend for scattering-kernel operations.  ``"Rust"`` is
+        currently only wired through the RTA low-memory collision path;
+        LBTE and other paths fall back to the C backend.  Default "C".
     log_level : int, optional
         Verbosity.  Default 0.
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Sequence
+from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
@@ -13,6 +14,144 @@ from phono3py.conductivity.grid_point_data import ScatteringResult
 from phono3py.other.isotope import Isotope
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy, average_by_degeneracy
 from phono3py.phonon3.interaction import Interaction
+
+
+def run_pp_collision_rust(
+    collisions: NDArray[np.double],
+    relative_grid_address: NDArray[np.int64],
+    frequencies: NDArray[np.double],
+    eigenvectors: NDArray[np.cdouble],
+    triplets_at_q: NDArray[np.int64],
+    weights_at_q: NDArray[np.int64],
+    bz_grid_addresses: NDArray[np.int64],
+    bz_map: NDArray[np.int64],
+    bz_grid_type: int,
+    d_diag: NDArray[np.int64],
+    q_matrix: NDArray[np.int64],
+    fc3: NDArray[np.double],
+    fc3_nonzero_indices: NDArray[np.byte],
+    svecs: NDArray[np.double],
+    multiplicity: NDArray[np.int64],
+    masses: NDArray[np.double],
+    p2s_map: NDArray[np.int64],
+    s2p_map: NDArray[np.int64],
+    band_indices: NDArray[np.int64],
+    temperatures_thz: NDArray[np.double],
+    is_N_U: bool,
+    symmetrize_fc3_q: bool,
+    make_r0_average: bool,
+    all_shortest: NDArray[np.byte],
+    cutoff_frequency: float,
+    openmp_per_triplets: bool,
+) -> None:
+    """Compute low-memory collision with the tetrahedron method (Rust).
+
+    Drop-in replacement for ``phono3c.pp_collision``.  Writes into
+    ``collisions`` in place; the shape is ``(num_temps, num_band0)`` or
+    ``(2, num_temps, num_band0)`` when ``is_N_U`` is True.
+
+    """
+    import phono3py_rs
+
+    is_compact_fc3 = fc3.shape[0] != fc3.shape[1]
+
+    phono3py_rs.pp_collision(
+        collisions,
+        np.ascontiguousarray(relative_grid_address, dtype="int64"),
+        np.ascontiguousarray(frequencies, dtype="double"),
+        np.ascontiguousarray(eigenvectors, dtype="complex128"),
+        np.ascontiguousarray(triplets_at_q, dtype="int64"),
+        np.ascontiguousarray(weights_at_q, dtype="int64"),
+        np.ascontiguousarray(bz_grid_addresses, dtype="int64"),
+        np.ascontiguousarray(bz_map, dtype="int64"),
+        int(bz_grid_type),
+        np.ascontiguousarray(d_diag, dtype="int64"),
+        np.ascontiguousarray(q_matrix, dtype="int64"),
+        np.ascontiguousarray(fc3, dtype="double"),
+        np.ascontiguousarray(fc3_nonzero_indices, dtype="byte"),
+        np.ascontiguousarray(svecs, dtype="double"),
+        np.ascontiguousarray(multiplicity, dtype="int64"),
+        np.ascontiguousarray(masses, dtype="double"),
+        np.ascontiguousarray(p2s_map, dtype="int64"),
+        np.ascontiguousarray(s2p_map, dtype="int64"),
+        np.ascontiguousarray(band_indices, dtype="int64"),
+        np.ascontiguousarray(temperatures_thz, dtype="double"),
+        bool(is_N_U),
+        bool(symmetrize_fc3_q),
+        bool(make_r0_average),
+        np.ascontiguousarray(all_shortest, dtype="byte"),
+        float(cutoff_frequency),
+        is_compact_fc3,
+        bool(openmp_per_triplets),
+    )
+
+
+def run_pp_collision_with_sigma_rust(
+    collisions: NDArray[np.double],
+    sigma: float,
+    sigma_cutoff: float,
+    frequencies: NDArray[np.double],
+    eigenvectors: NDArray[np.cdouble],
+    triplets_at_q: NDArray[np.int64],
+    weights_at_q: NDArray[np.int64],
+    bz_grid_addresses: NDArray[np.int64],
+    d_diag: NDArray[np.int64],
+    q_matrix: NDArray[np.int64],
+    fc3: NDArray[np.double],
+    fc3_nonzero_indices: NDArray[np.byte],
+    svecs: NDArray[np.double],
+    multiplicity: NDArray[np.int64],
+    masses: NDArray[np.double],
+    p2s_map: NDArray[np.int64],
+    s2p_map: NDArray[np.int64],
+    band_indices: NDArray[np.int64],
+    temperatures_thz: NDArray[np.double],
+    is_N_U: bool,
+    symmetrize_fc3_q: bool,
+    make_r0_average: bool,
+    all_shortest: NDArray[np.byte],
+    cutoff_frequency: float,
+    openmp_per_triplets: bool,
+) -> None:
+    """Compute low-memory collision with Gaussian smearing (Rust).
+
+    Drop-in replacement for ``phono3c.pp_collision_with_sigma``.  The
+    ``sigma_cutoff <= 0`` convention disables the cutoff-skip
+    optimisation (matches the C backend).
+
+    """
+    import phono3py_rs
+
+    is_compact_fc3 = fc3.shape[0] != fc3.shape[1]
+
+    phono3py_rs.pp_collision_with_sigma(
+        collisions,
+        float(sigma),
+        float(sigma_cutoff),
+        np.ascontiguousarray(frequencies, dtype="double"),
+        np.ascontiguousarray(eigenvectors, dtype="complex128"),
+        np.ascontiguousarray(triplets_at_q, dtype="int64"),
+        np.ascontiguousarray(weights_at_q, dtype="int64"),
+        np.ascontiguousarray(bz_grid_addresses, dtype="int64"),
+        np.ascontiguousarray(d_diag, dtype="int64"),
+        np.ascontiguousarray(q_matrix, dtype="int64"),
+        np.ascontiguousarray(fc3, dtype="double"),
+        np.ascontiguousarray(fc3_nonzero_indices, dtype="byte"),
+        np.ascontiguousarray(svecs, dtype="double"),
+        np.ascontiguousarray(multiplicity, dtype="int64"),
+        np.ascontiguousarray(masses, dtype="double"),
+        np.ascontiguousarray(p2s_map, dtype="int64"),
+        np.ascontiguousarray(s2p_map, dtype="int64"),
+        np.ascontiguousarray(band_indices, dtype="int64"),
+        np.ascontiguousarray(temperatures_thz, dtype="double"),
+        bool(is_N_U),
+        bool(symmetrize_fc3_q),
+        bool(make_r0_average),
+        np.ascontiguousarray(all_shortest, dtype="byte"),
+        float(cutoff_frequency),
+        is_compact_fc3,
+        bool(openmp_per_triplets),
+    )
 
 
 class RTAScatteringSolver:
@@ -52,6 +191,11 @@ class RTAScatteringSolver:
         Store detailed per-triplet gamma. Default False.
     log_level : int, optional
         Verbosity level. Default 0.
+    lang : str, optional
+        Backend selection for the low-memory and ImagSelfEnergy paths.
+        ``"C"`` (default) uses the C extension, ``"Python"`` the slow
+        reference, and ``"Rust"`` the Rust backend.
+
     """
 
     def __init__(
@@ -68,6 +212,7 @@ class RTAScatteringSolver:
         is_N_U: bool = False,
         is_gamma_detail: bool = False,
         log_level: int = 0,
+        lang: Literal["C", "Python", "Rust"] = "C",
     ):
         """Init method."""
         self._pp = pp
@@ -83,8 +228,11 @@ class RTAScatteringSolver:
         self._is_N_U = is_N_U
         self._is_gamma_detail = is_gamma_detail
         self._log_level = log_level
+        self._lang: Literal["C", "Python", "Rust"] = lang
 
-        self._collision = ImagSelfEnergy(pp, with_detail=(is_gamma_detail or is_N_U))
+        self._collision = ImagSelfEnergy(
+            pp, with_detail=(is_gamma_detail or is_N_U), lang=lang
+        )
 
         # Per-grid-point state set during compute, accessible for output.
         self._gamma_N: NDArray[np.double] | None = None
@@ -332,71 +480,133 @@ class RTAScatteringSolver:
 
         self._collision.set_sigma(sigma)
 
-        import phono3py._phono3py as phono3c
-
         if sigma is None:
             assert tetrahedra is not None
-            phono3c.pp_collision(
-                collisions,
-                np.array(
-                    np.dot(tetrahedra, self._pp.bz_grid.P.T),
-                    dtype="int64",
-                    order="C",
-                ),
-                frequencies,
-                eigenvectors,
-                triplets_at_q,
-                weights_at_q,
-                self._pp.bz_grid.addresses,
-                self._pp.bz_grid.gp_map,
-                self._pp.bz_grid.store_dense_gp_map * 1 + 1,
-                self._pp.bz_grid.D_diag,
-                self._pp.bz_grid.Q,
-                self._pp.fc3,
-                self._pp.fc3_nonzero_indices,
-                svecs,
-                multi,
-                masses,
-                p2s,
-                s2p,
-                band_indices,
-                temperatures_THz,
-                self._is_N_U * 1,
-                self._pp.symmetrize_fc3q * 1,
-                self._pp.make_r0_average * 1,
-                self._pp.all_shortest,
-                self._pp.cutoff_frequency,
-                openmp_per_triplets * 1,
+            relative_grid_address = np.array(
+                np.dot(tetrahedra, self._pp.bz_grid.P.T),
+                dtype="int64",
+                order="C",
             )
+            if self._lang == "Rust":
+                run_pp_collision_rust(
+                    collisions,
+                    relative_grid_address,
+                    frequencies,
+                    eigenvectors,
+                    triplets_at_q,
+                    weights_at_q,
+                    self._pp.bz_grid.addresses,
+                    self._pp.bz_grid.gp_map,
+                    self._pp.bz_grid.store_dense_gp_map * 1 + 1,
+                    self._pp.bz_grid.D_diag,
+                    self._pp.bz_grid.Q,
+                    self._pp.fc3,
+                    self._pp.fc3_nonzero_indices,
+                    svecs,
+                    multi,
+                    masses,
+                    p2s,
+                    s2p,
+                    band_indices,
+                    temperatures_THz,
+                    self._is_N_U,
+                    self._pp.symmetrize_fc3q,
+                    self._pp.make_r0_average,
+                    self._pp.all_shortest,
+                    self._pp.cutoff_frequency,
+                    openmp_per_triplets,
+                )
+            else:
+                import phono3py._phono3py as phono3c
+
+                phono3c.pp_collision(
+                    collisions,
+                    relative_grid_address,
+                    frequencies,
+                    eigenvectors,
+                    triplets_at_q,
+                    weights_at_q,
+                    self._pp.bz_grid.addresses,
+                    self._pp.bz_grid.gp_map,
+                    self._pp.bz_grid.store_dense_gp_map * 1 + 1,
+                    self._pp.bz_grid.D_diag,
+                    self._pp.bz_grid.Q,
+                    self._pp.fc3,
+                    self._pp.fc3_nonzero_indices,
+                    svecs,
+                    multi,
+                    masses,
+                    p2s,
+                    s2p,
+                    band_indices,
+                    temperatures_THz,
+                    self._is_N_U * 1,
+                    self._pp.symmetrize_fc3q * 1,
+                    self._pp.make_r0_average * 1,
+                    self._pp.all_shortest,
+                    self._pp.cutoff_frequency,
+                    openmp_per_triplets * 1,
+                )
         else:
             sigma_cutoff = -1.0 if self._sigma_cutoff is None else self._sigma_cutoff
-            phono3c.pp_collision_with_sigma(
-                collisions,
-                sigma,
-                sigma_cutoff,
-                frequencies,
-                eigenvectors,
-                triplets_at_q,
-                weights_at_q,
-                self._pp.bz_grid.addresses,
-                self._pp.bz_grid.D_diag,
-                self._pp.bz_grid.Q,
-                self._pp.fc3,
-                self._pp.fc3_nonzero_indices,
-                svecs,
-                multi,
-                masses,
-                p2s,
-                s2p,
-                band_indices,
-                temperatures_THz,
-                self._is_N_U * 1,
-                self._pp.symmetrize_fc3q * 1,
-                self._pp.make_r0_average * 1,
-                self._pp.all_shortest,
-                self._pp.cutoff_frequency,
-                openmp_per_triplets * 1,
-            )
+            if self._lang == "Rust":
+                run_pp_collision_with_sigma_rust(
+                    collisions,
+                    sigma,
+                    sigma_cutoff,
+                    frequencies,
+                    eigenvectors,
+                    triplets_at_q,
+                    weights_at_q,
+                    self._pp.bz_grid.addresses,
+                    self._pp.bz_grid.D_diag,
+                    self._pp.bz_grid.Q,
+                    self._pp.fc3,
+                    self._pp.fc3_nonzero_indices,
+                    svecs,
+                    multi,
+                    masses,
+                    p2s,
+                    s2p,
+                    band_indices,
+                    temperatures_THz,
+                    self._is_N_U,
+                    self._pp.symmetrize_fc3q,
+                    self._pp.make_r0_average,
+                    self._pp.all_shortest,
+                    self._pp.cutoff_frequency,
+                    openmp_per_triplets,
+                )
+            else:
+                import phono3py._phono3py as phono3c
+
+                phono3c.pp_collision_with_sigma(
+                    collisions,
+                    sigma,
+                    sigma_cutoff,
+                    frequencies,
+                    eigenvectors,
+                    triplets_at_q,
+                    weights_at_q,
+                    self._pp.bz_grid.addresses,
+                    self._pp.bz_grid.D_diag,
+                    self._pp.bz_grid.Q,
+                    self._pp.fc3,
+                    self._pp.fc3_nonzero_indices,
+                    svecs,
+                    multi,
+                    masses,
+                    p2s,
+                    s2p,
+                    band_indices,
+                    temperatures_THz,
+                    self._is_N_U * 1,
+                    self._pp.symmetrize_fc3q * 1,
+                    self._pp.make_r0_average * 1,
+                    self._pp.all_shortest,
+                    self._pp.cutoff_frequency,
+                    openmp_per_triplets * 1,
+                )
 
         return collisions
 

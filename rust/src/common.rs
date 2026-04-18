@@ -13,6 +13,13 @@ pub type MatD = [[f64; 3]; 3];
 /// layout used throughout the C code (e.g. `c/dynmat.c`).
 pub type Cmplx = [f64; 2];
 
+/// Complex multiplication.  Mirrors `phonoc_complex_prod` in
+/// `c/lapack_wrapper.c`.
+#[inline]
+pub fn cmplx_mul(a: Cmplx, b: Cmplx) -> Cmplx {
+    [a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] * b[0]]
+}
+
 pub const IDENTITY: MatI = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
 pub const INVERSION: MatI = [[-1, 0, 0], [0, -1, 0], [0, 0, -1]];
 

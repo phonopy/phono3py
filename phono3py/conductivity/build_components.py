@@ -172,8 +172,10 @@ class CalculatorConfig:
         Solver selection index (LBTE only).
     pinv_method : int
         Pseudo-inverse criterion (LBTE only).
-    lang : {"C", "Python"}
-        Backend for C-extension operations (LBTE only).
+    lang : {"C", "Python", "Rust"}
+        Backend for scattering-kernel operations.  ``"Rust"`` is
+        currently only wired through the RTA low-memory collision path;
+        LBTE and other paths fall back to the C backend.
     log_level : int
         Verbosity.
 
@@ -200,7 +202,7 @@ class CalculatorConfig:
     pinv_cutoff: float = 1.0e-8
     pinv_solver: int = 0
     pinv_method: int = 0
-    lang: Literal["C", "Python"] = "C"
+    lang: Literal["C", "Python", "Rust"] = "C"
     log_level: int = 0
 
 

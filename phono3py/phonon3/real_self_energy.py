@@ -154,7 +154,7 @@ class RealSelfEnergy:
 
     def run_interaction(self) -> None:
         """Calculate ph-ph interaction strength."""
-        self._pp.run(lang=self._lang)
+        self._pp.run()
         self._pp_strength = self._pp.interaction_strength
         self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
         self._triplets_at_q, self._weights_at_q, _, _ = self._pp.get_triplets_at_q()

@@ -114,19 +114,12 @@ pub fn integration_weight_per_triplet(
     tp_type: TpType,
 ) -> Result<(), BzGridError> {
     debug_assert_eq!(iw_ch.len(), tp_type.num_channels());
-    let max_i: usize = match tp_type {
-        TpType::Type2 | TpType::Type3 => 3,
-        TpType::Type4 => 1,
-    };
-    let nb12 = (num_band1 * num_band2) as usize;
+    let nbb = (num_band1 * num_band2) as usize;
+    let nb0 = num_band0 as usize;
 
-    let vertices = triplet_tetrahedra_vertices(
-        tp_relative_grid_address,
-        triplet,
-        bzgrid,
-    )?;
+    let vertices = triplet_tetrahedra_vertices(tp_relative_grid_address, triplet, bzgrid)?;
 
-    for b12 in 0..nb12 {
+    for b12 in 0..nbb {
         let b1 = (b12 as i64) / num_band2;
         let b2 = (b12 as i64) % num_band2;
         let freq_vertices = build_freq_vertices(
@@ -139,25 +132,13 @@ pub fn integration_weight_per_triplet(
             b2,
             tp_type,
         );
-        for j in 0..num_band0 {
-            let adrs_shift =
-                (j * num_band1 * num_band2 + b1 * num_band2 + b2) as usize;
-            let f0 = frequency_points[j as usize];
-            let (g, iwz) = compute_g(f0, &freq_vertices, max_i);
-            iw_zero[adrs_shift] = iwz;
-            match tp_type {
-                TpType::Type2 => {
-                    iw_ch[0][adrs_shift] = g[2];
-                    iw_ch[1][adrs_shift] = g[0] - g[1];
-                }
-                TpType::Type3 => {
-                    iw_ch[0][adrs_shift] = g[2];
-                    iw_ch[1][adrs_shift] = g[0] - g[1];
-                    iw_ch[2][adrs_shift] = g[0] + g[1] + g[2];
-                }
-                TpType::Type4 => {
-                    iw_ch[0][adrs_shift] = g[0];
-                }
+        for j in 0..nb0 {
+            let adrs = j * nbb + b12;
+            let f0 = frequency_points[j];
+            let (ch, iwz) = compute_tetra_channels(f0, &freq_vertices, tp_type);
+            iw_zero[adrs] = iwz;
+            for (k, iw_ch_k) in iw_ch.iter_mut().enumerate() {
+                iw_ch_k[adrs] = ch[k];
             }
         }
     }
@@ -183,28 +164,22 @@ pub fn integration_weight_per_triplet_inner_par(
     tp_type: TpType,
 ) -> Result<(), BzGridError> {
     debug_assert_eq!(iw_ch.len(), tp_type.num_channels());
-    let max_i: usize = match tp_type {
-        TpType::Type2 | TpType::Type3 => 3,
-        TpType::Type4 => 1,
-    };
     let nbb = (num_band1 * num_band2) as usize;
     let nb0 = num_band0 as usize;
 
     let vertices = triplet_tetrahedra_vertices(tp_relative_grid_address, triplet, bzgrid)?;
 
-    // Pull raw pointers once; safety argument below.
     let ch_ptrs: Vec<SyncMutPtr<f64>> = iw_ch
         .iter_mut()
         .map(|s| SyncMutPtr(s.as_mut_ptr()))
         .collect();
     let iwz_ptr = SyncMutPtr(iw_zero.as_mut_ptr());
 
-    // SAFETY: For each `b12 in 0..nbb`, the inner `j` loop writes to
-    // offsets `{ j * nbb + b12 : j in 0..nb0 }` in every per-channel
-    // slice and in `iw_zero`.  These index sets are pairwise disjoint
-    // across different `b12` values, so concurrent writes from
-    // different rayon tasks do not race.  Slice lengths are
-    // `nb0 * nbb`, so all offsets are in-bounds.
+    // SAFETY: for each b12 in 0..nbb the inner j loop writes to offsets
+    // { j * nbb + b12 : j in 0..nb0 } in every per-channel slice and in
+    // iw_zero.  These index sets are pairwise disjoint across different
+    // b12 values, so concurrent writes from different rayon tasks do not
+    // race.  Slice lengths are nb0 * nbb so all offsets are in-bounds.
     (0..nbb).into_par_iter().for_each(|b12| {
         let b1 = (b12 as i64) / num_band2;
         let b2 = (b12 as i64) % num_band2;
@@ -221,22 +196,11 @@ pub fn integration_weight_per_triplet_inner_par(
         for j in 0..nb0 {
             let adrs = j * nbb + b12;
             let f0 = frequency_points[j];
-            let (g, iwz) = compute_g(f0, &freq_vertices, max_i);
+            let (ch, iwz) = compute_tetra_channels(f0, &freq_vertices, tp_type);
             unsafe {
                 *iwz_ptr.ptr().add(adrs) = iwz;
-                match tp_type {
-                    TpType::Type2 => {
-                        *ch_ptrs[0].ptr().add(adrs) = g[2];
-                        *ch_ptrs[1].ptr().add(adrs) = g[0] - g[1];
-                    }
-                    TpType::Type3 => {
-                        *ch_ptrs[0].ptr().add(adrs) = g[2];
-                        *ch_ptrs[1].ptr().add(adrs) = g[0] - g[1];
-                        *ch_ptrs[2].ptr().add(adrs) = g[0] + g[1] + g[2];
-                    }
-                    TpType::Type4 => {
-                        *ch_ptrs[0].ptr().add(adrs) = g[0];
-                    }
+                for (k, ch_ptr) in ch_ptrs.iter().enumerate() {
+                    *ch_ptr.ptr().add(adrs) = ch[k];
                 }
             }
         }
@@ -265,52 +229,20 @@ pub fn integration_weight_with_sigma_per_triplet(
 ) {
     debug_assert_eq!(iw_ch.len(), tp_type.num_channels());
     let nbb = (num_band * num_band) as usize;
+    let nb0 = num_band0 as usize;
 
     for b12 in 0..nbb {
         let b1 = (b12 as i64) / num_band;
         let b2 = (b12 as i64) % num_band;
         let f1 = frequencies[(triplet[1] * num_band + b1) as usize];
         let f2 = frequencies[(triplet[2] * num_band + b2) as usize];
-        for j in 0..num_band0 {
-            let f0 = frequency_points[j as usize];
-            let adrs_shift =
-                (j * num_band * num_band + b1 * num_band + b2) as usize;
-
-            match tp_type {
-                TpType::Type2 | TpType::Type3 => {
-                    let (g0, g1, g2) = if cutoff > 0.0
-                        && (f0 + f1 - f2).abs() > cutoff
-                        && (f0 - f1 + f2).abs() > cutoff
-                        && (f0 - f1 - f2).abs() > cutoff
-                    {
-                        iw_zero[adrs_shift] = 1;
-                        (0.0, 0.0, 0.0)
-                    } else {
-                        iw_zero[adrs_shift] = 0;
-                        (
-                            gaussian(f0 + f1 - f2, sigma),
-                            gaussian(f0 - f1 + f2, sigma),
-                            gaussian(f0 - f1 - f2, sigma),
-                        )
-                    };
-                    if matches!(tp_type, TpType::Type2) {
-                        iw_ch[0][adrs_shift] = g2;
-                        iw_ch[1][adrs_shift] = g0 - g1;
-                    } else {
-                        iw_ch[0][adrs_shift] = g2;
-                        iw_ch[1][adrs_shift] = g0 - g1;
-                        iw_ch[2][adrs_shift] = g0 + g1 + g2;
-                    }
-                }
-                TpType::Type4 => {
-                    if cutoff > 0.0 && (f0 + f1 - f2).abs() > cutoff {
-                        iw_zero[adrs_shift] = 1;
-                        iw_ch[0][adrs_shift] = 0.0;
-                    } else {
-                        iw_zero[adrs_shift] = 0;
-                        iw_ch[0][adrs_shift] = gaussian(f0 + f1 - f2, sigma);
-                    }
-                }
+        for j in 0..nb0 {
+            let adrs = j * nbb + b12;
+            let f0 = frequency_points[j];
+            let (ch, iwz) = compute_sigma_channels(f0, f1, f2, sigma, cutoff, tp_type);
+            iw_zero[adrs] = iwz;
+            for (k, iw_ch_k) in iw_ch.iter_mut().enumerate() {
+                iw_ch_k[adrs] = ch[k];
             }
         }
     }
@@ -341,53 +273,22 @@ pub fn integration_weight_with_sigma_per_triplet_inner_par(
         .collect();
     let iwz_ptr = SyncMutPtr(iw_zero.as_mut_ptr());
 
-    // SAFETY: see the tetrahedron variant above; the same disjointedness
-    // argument holds (offsets `j * nbb + b12` are pairwise disjoint
-    // across `b12`).
+    // SAFETY: see the tetrahedron inner_par variant above; the same
+    // disjointedness argument holds (offsets j * nbb + b12 are pairwise
+    // disjoint across b12).
     (0..nbb).into_par_iter().for_each(|b12| {
         let b1 = (b12 as i64) / num_band;
         let b2 = (b12 as i64) % num_band;
         let f1 = frequencies[(triplet[1] * num_band + b1) as usize];
         let f2 = frequencies[(triplet[2] * num_band + b2) as usize];
         for j in 0..nb0 {
-            let f0 = frequency_points[j];
             let adrs = j * nbb + b12;
+            let f0 = frequency_points[j];
+            let (ch, iwz) = compute_sigma_channels(f0, f1, f2, sigma, cutoff, tp_type);
             unsafe {
-                match tp_type {
-                    TpType::Type2 | TpType::Type3 => {
-                        let (g0, g1, g2) = if cutoff > 0.0
-                            && (f0 + f1 - f2).abs() > cutoff
-                            && (f0 - f1 + f2).abs() > cutoff
-                            && (f0 - f1 - f2).abs() > cutoff
-                        {
-                            *iwz_ptr.ptr().add(adrs) = 1;
-                            (0.0, 0.0, 0.0)
-                        } else {
-                            *iwz_ptr.ptr().add(adrs) = 0;
-                            (
-                                gaussian(f0 + f1 - f2, sigma),
-                                gaussian(f0 - f1 + f2, sigma),
-                                gaussian(f0 - f1 - f2, sigma),
-                            )
-                        };
-                        if matches!(tp_type, TpType::Type2) {
-                            *ch_ptrs[0].ptr().add(adrs) = g2;
-                            *ch_ptrs[1].ptr().add(adrs) = g0 - g1;
-                        } else {
-                            *ch_ptrs[0].ptr().add(adrs) = g2;
-                            *ch_ptrs[1].ptr().add(adrs) = g0 - g1;
-                            *ch_ptrs[2].ptr().add(adrs) = g0 + g1 + g2;
-                        }
-                    }
-                    TpType::Type4 => {
-                        if cutoff > 0.0 && (f0 + f1 - f2).abs() > cutoff {
-                            *iwz_ptr.ptr().add(adrs) = 1;
-                            *ch_ptrs[0].ptr().add(adrs) = 0.0;
-                        } else {
-                            *iwz_ptr.ptr().add(adrs) = 0;
-                            *ch_ptrs[0].ptr().add(adrs) = gaussian(f0 + f1 - f2, sigma);
-                        }
-                    }
+                *iwz_ptr.ptr().add(adrs) = iwz;
+                for (k, ch_ptr) in ch_ptrs.iter().enumerate() {
+                    *ch_ptr.ptr().add(adrs) = ch[k];
                 }
             }
         }
@@ -557,6 +458,69 @@ fn compute_g(
         }
     }
     (g, iw_zero)
+}
+
+/// Pure helper: combine tetrahedron g-values into the per-channel output
+/// slots for a single `(f0, freq_vertices)`.  The first
+/// `tp_type.num_channels()` entries of the returned array are meaningful;
+/// trailing entries are 0.0 padding.  No side effects.
+fn compute_tetra_channels(
+    f0: f64,
+    freq_vertices: &[[[f64; 4]; 24]; 3],
+    tp_type: TpType,
+) -> ([f64; 3], i8) {
+    let max_i = match tp_type {
+        TpType::Type2 | TpType::Type3 => 3,
+        TpType::Type4 => 1,
+    };
+    let (g, iwz) = compute_g(f0, freq_vertices, max_i);
+    let ch = match tp_type {
+        TpType::Type2 => [g[2], g[0] - g[1], 0.0],
+        TpType::Type3 => [g[2], g[0] - g[1], g[0] + g[1] + g[2]],
+        TpType::Type4 => [g[0], 0.0, 0.0],
+    };
+    (ch, iwz)
+}
+
+/// Pure helper: compute the per-channel Gaussian-smeared values and the
+/// iw_zero flag for a single `(f0, f1, f2)`.  `cutoff <= 0` disables the
+/// skip optimisation (matches the C convention).  Only the first
+/// `tp_type.num_channels()` entries of the returned array are meaningful.
+fn compute_sigma_channels(
+    f0: f64,
+    f1: f64,
+    f2: f64,
+    sigma: f64,
+    cutoff: f64,
+    tp_type: TpType,
+) -> ([f64; 3], i8) {
+    match tp_type {
+        TpType::Type2 | TpType::Type3 => {
+            if cutoff > 0.0
+                && (f0 + f1 - f2).abs() > cutoff
+                && (f0 - f1 + f2).abs() > cutoff
+                && (f0 - f1 - f2).abs() > cutoff
+            {
+                return ([0.0, 0.0, 0.0], 1);
+            }
+            let g0 = gaussian(f0 + f1 - f2, sigma);
+            let g1 = gaussian(f0 - f1 + f2, sigma);
+            let g2 = gaussian(f0 - f1 - f2, sigma);
+            let ch = match tp_type {
+                TpType::Type2 => [g2, g0 - g1, 0.0],
+                TpType::Type3 => [g2, g0 - g1, g0 + g1 + g2],
+                TpType::Type4 => unreachable!(),
+            };
+            (ch, 0)
+        }
+        TpType::Type4 => {
+            if cutoff > 0.0 && (f0 + f1 - f2).abs() > cutoff {
+                ([0.0, 0.0, 0.0], 1)
+            } else {
+                ([gaussian(f0 + f1 - f2, sigma), 0.0, 0.0], 0)
+            }
+        }
+    }
 }
 
 /// Mirrors `funcs_gaussian` from `c/funcs.c`.

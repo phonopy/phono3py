@@ -1,8 +1,9 @@
 use numpy::ndarray::{Array1, Array2, Array3};
 use numpy::{
     Complex64, IntoPyArray, PyArray1, PyArray2, PyArray3, PyReadonlyArray1, PyReadonlyArray2,
-    PyReadonlyArray3, PyReadonlyArray4, PyReadwriteArray2, PyReadwriteArray3, PyReadwriteArray4,
-    PyReadwriteArray5, PyUntypedArrayMethods,
+    PyReadonlyArray3, PyReadonlyArray4, PyReadonlyArray5, PyReadonlyArray6, PyReadwriteArray1,
+    PyReadwriteArray2, PyReadwriteArray3, PyReadwriteArray4, PyReadwriteArray5,
+    PyReadwriteArray6, PyReadwriteArrayDyn, PyUntypedArrayMethods,
 };
 use pyo3::exceptions::{PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
@@ -13,7 +14,12 @@ mod bzgrid;
 mod common;
 mod dynmat;
 mod grgrid;
+mod imag_self_energy;
+mod interaction;
+mod pp_collision;
+mod real_to_reciprocal;
 mod recip_rotations;
+mod reciprocal_to_normal;
 mod snf3x3;
 mod tetrahedron_method;
 mod transform_rotations;
@@ -1381,6 +1387,296 @@ fn py_dynamical_matrices_at_gridpoints_gonze<'py>(
     Ok(())
 }
 
+/// Transform fc3 from real space to reciprocal space at a q-triplet.
+///
+/// Writes into ``fc3_reciprocal`` (complex128, shape
+/// ``(num_patom, num_patom, num_patom, 3, 3, 3)``).  ``fc3`` is
+/// float64 with shape ``(num_rows, num_satom, num_satom, 3, 3, 3)``
+/// where ``num_rows`` is ``num_patom`` for compact fc3 or
+/// ``num_satom`` for the full layout; ``is_compact_fc3`` selects the
+/// variant.  ``q_vecs`` is the fractional q-triplet ``(3, 3)``.
+/// ``all_shortest`` and ``nonzero_indices`` are int8 flag arrays.
+/// Set ``openmp_per_triplets`` to ``true`` when outer parallelism
+/// over triplets is already in effect; otherwise this function
+/// parallelises over the ``(num_patom, num_patom, num_patom)`` atom
+/// triplet.
+#[pyfunction]
+#[pyo3(name = "real_to_reciprocal")]
+#[allow(clippy::too_many_arguments)]
+fn py_real_to_reciprocal<'py>(
+    py: Python<'py>,
+    mut fc3_reciprocal: PyReadwriteArray6<'py, Complex64>,
+    q_vecs: PyReadonlyArray2<'py, f64>,
+    fc3: PyReadonlyArray6<'py, f64>,
+    is_compact_fc3: bool,
+    svecs: PyReadonlyArray2<'py, f64>,
+    multiplicity: PyReadonlyArray3<'py, i64>,
+    p2s_map: PyReadonlyArray1<'py, i64>,
+    s2p_map: PyReadonlyArray1<'py, i64>,
+    make_r0_average: bool,
+    all_shortest: PyReadonlyArray3<'py, i8>,
+    nonzero_indices: PyReadonlyArray3<'py, i8>,
+    openmp_per_triplets: bool,
+) -> PyResult<()> {
+    let num_patom = p2s_map.shape()[0];
+    let num_satom = s2p_map.shape()[0];
+    let num_rows = if is_compact_fc3 { num_patom } else { num_satom };
+
+    if fc3_reciprocal.shape() != [num_patom, num_patom, num_patom, 3, 3, 3] {
+        return Err(PyValueError::new_err(
+            "fc3_reciprocal must have shape (num_patom, num_patom, num_patom, 3, 3, 3)",
+        ));
+    }
+    if fc3.shape() != [num_rows, num_satom, num_satom, 3, 3, 3] {
+        return Err(PyValueError::new_err(
+            "fc3 must have shape (num_patom or num_satom, num_satom, num_satom, 3, 3, 3)",
+        ));
+    }
+    if q_vecs.shape() != [3, 3] {
+        return Err(PyValueError::new_err("q_vecs must have shape (3, 3)"));
+    }
+    if svecs.shape().len() != 2 || svecs.shape()[1] != 3 {
+        return Err(PyValueError::new_err("svecs must have shape (n, 3)"));
+    }
+    if multiplicity.shape() != [num_satom, num_patom, 2] {
+        return Err(PyValueError::new_err(
+            "multiplicity must have shape (num_satom, num_patom, 2)",
+        ));
+    }
+    if all_shortest.shape() != [num_patom, num_satom, num_satom] {
+        return Err(PyValueError::new_err(
+            "all_shortest must have shape (num_patom, num_satom, num_satom)",
+        ));
+    }
+    if nonzero_indices.shape() != [num_rows, num_satom, num_satom] {
+        return Err(PyValueError::new_err(
+            "nonzero_indices must have shape matching fc3.shape[:3]",
+        ));
+    }
+
+    let q_view = q_vecs.as_array();
+    let q3 = [
+        [q_view[[0, 0]], q_view[[0, 1]], q_view[[0, 2]]],
+        [q_view[[1, 0]], q_view[[1, 1]], q_view[[1, 2]]],
+        [q_view[[2, 0]], q_view[[2, 1]], q_view[[2, 2]]],
+    ];
+
+    let svecs_view = svecs.as_array();
+    let svecs_flat = svecs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("svecs must be C-contiguous"))?;
+    let svecs_slice: &[[f64; 3]] = group_as_array(svecs_flat);
+
+    let multi_view = multiplicity.as_array();
+    let multi_flat = multi_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("multiplicity must be C-contiguous"))?;
+    let multi_slice: &[[i64; 2]] = group_as_array(multi_flat);
+
+    let p2s_view = p2s_map.as_array();
+    let p2s_slice = p2s_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("p2s_map must be C-contiguous"))?;
+    let s2p_view = s2p_map.as_array();
+    let s2p_slice = s2p_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("s2p_map must be C-contiguous"))?;
+
+    let all_short_view = all_shortest.as_array();
+    let all_short_slice = all_short_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("all_shortest must be C-contiguous"))?;
+    let nonzero_view = nonzero_indices.as_array();
+    let nonzero_slice = nonzero_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("nonzero_indices must be C-contiguous"))?;
+
+    let fc3_view = fc3.as_array();
+    let fc3_slice = fc3_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("fc3 must be C-contiguous"))?;
+
+    let rec_slice = fc3_reciprocal
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("fc3_reciprocal must be C-contiguous"))?;
+    let rec_cmplx = complex_as_cmplx_mut(rec_slice);
+
+    py.allow_threads(|| {
+        let atom_triplets = real_to_reciprocal::AtomTriplets {
+            svecs: svecs_slice,
+            num_satom,
+            num_patom,
+            multiplicity: multi_slice,
+            p2s_map: p2s_slice,
+            s2p_map: s2p_slice,
+            make_r0_average,
+            all_shortest: all_short_slice,
+            nonzero_indices: nonzero_slice,
+        };
+        real_to_reciprocal::real_to_reciprocal(
+            rec_cmplx,
+            &q3,
+            fc3_slice,
+            is_compact_fc3,
+            &atom_triplets,
+            openmp_per_triplets,
+        );
+    });
+
+    Ok(())
+}
+
+/// Compute `|<e0, fc3_reciprocal e1 e2>|^2 / (f0 * f1 * f2)` for each
+/// `g_pos` entry.  See `reciprocal_to_normal::reciprocal_to_normal_squared`
+/// for the full algorithm.
+///
+/// Shapes:
+/// - ``fc3_normal_squared``: ``(n_out,)`` ``float64``.  Written at
+///   ``g_pos[i, 3]`` positions.
+/// - ``g_pos``: ``(num_g_pos, 4)`` ``int64``.
+/// - ``fc3_reciprocal``: ``(num_patom, num_patom, num_patom, 3, 3, 3)``
+///   ``complex128`` (atom-first layout matching
+///   ``phono3py_rs.real_to_reciprocal``).
+/// - ``freqs0``, ``freqs1``, ``freqs2``: ``(num_band,)`` ``float64``.
+/// - ``eigvecs0``, ``eigvecs1``, ``eigvecs2``: ``(num_band, num_band)``
+///   ``complex128`` row-major ``[component, band]`` (un-scaled).
+/// - ``masses``: ``(num_patom,)`` ``float64``.
+/// - ``band_indices``: ``(num_band0,)`` ``int64``.
+///
+/// Set ``openmp_per_triplets`` to ``true`` when outer parallelism over
+/// triplets is already in effect.
+#[pyfunction]
+#[pyo3(name = "reciprocal_to_normal_squared")]
+#[allow(clippy::too_many_arguments)]
+fn py_reciprocal_to_normal_squared<'py>(
+    py: Python<'py>,
+    mut fc3_normal_squared: PyReadwriteArray1<'py, f64>,
+    g_pos: PyReadonlyArray2<'py, i64>,
+    fc3_reciprocal: PyReadonlyArray6<'py, Complex64>,
+    freqs0: PyReadonlyArray1<'py, f64>,
+    freqs1: PyReadonlyArray1<'py, f64>,
+    freqs2: PyReadonlyArray1<'py, f64>,
+    eigvecs0: PyReadonlyArray2<'py, Complex64>,
+    eigvecs1: PyReadonlyArray2<'py, Complex64>,
+    eigvecs2: PyReadonlyArray2<'py, Complex64>,
+    masses: PyReadonlyArray1<'py, f64>,
+    band_indices: PyReadonlyArray1<'py, i64>,
+    cutoff_frequency: f64,
+    openmp_per_triplets: bool,
+) -> PyResult<()> {
+    let num_patom = masses.shape()[0];
+    let num_band = num_patom * 3;
+
+    if fc3_reciprocal.shape() != [num_patom, num_patom, num_patom, 3, 3, 3] {
+        return Err(PyValueError::new_err(
+            "fc3_reciprocal must have shape (num_patom, num_patom, num_patom, 3, 3, 3)",
+        ));
+    }
+    if g_pos.shape().len() != 2 || g_pos.shape()[1] != 4 {
+        return Err(PyValueError::new_err("g_pos must have shape (num_g_pos, 4)"));
+    }
+    for (name, f) in [("freqs0", &freqs0), ("freqs1", &freqs1), ("freqs2", &freqs2)] {
+        if f.shape() != [num_band] {
+            return Err(PyValueError::new_err(format!(
+                "{name} must have shape (num_band,)"
+            )));
+        }
+    }
+    for (name, e) in [
+        ("eigvecs0", &eigvecs0),
+        ("eigvecs1", &eigvecs1),
+        ("eigvecs2", &eigvecs2),
+    ] {
+        if e.shape() != [num_band, num_band] {
+            return Err(PyValueError::new_err(format!(
+                "{name} must have shape (num_band, num_band)"
+            )));
+        }
+    }
+
+    let complex_readonly_as_cmplx = |s: &[Complex64]| -> &[Cmplx] {
+        let n = s.len();
+        let ptr = s.as_ptr() as *const Cmplx;
+        unsafe { std::slice::from_raw_parts(ptr, n) }
+    };
+
+    let g_pos_view = g_pos.as_array();
+    let g_pos_flat = g_pos_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("g_pos must be C-contiguous"))?;
+    let g_pos_slice: &[[i64; 4]] = group_as_array(g_pos_flat);
+
+    let fc3_rec_view = fc3_reciprocal.as_array();
+    let fc3_rec_flat = fc3_rec_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("fc3_reciprocal must be C-contiguous"))?;
+    let fc3_rec_cmplx = complex_readonly_as_cmplx(fc3_rec_flat);
+
+    let f0_view = freqs0.as_array();
+    let f0_slice = f0_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("freqs0 must be C-contiguous"))?;
+    let f1_view = freqs1.as_array();
+    let f1_slice = f1_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("freqs1 must be C-contiguous"))?;
+    let f2_view = freqs2.as_array();
+    let f2_slice = f2_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("freqs2 must be C-contiguous"))?;
+
+    let e0_view = eigvecs0.as_array();
+    let e0_flat = e0_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("eigvecs0 must be C-contiguous"))?;
+    let e0_cmplx = complex_readonly_as_cmplx(e0_flat);
+    let e1_view = eigvecs1.as_array();
+    let e1_flat = e1_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("eigvecs1 must be C-contiguous"))?;
+    let e1_cmplx = complex_readonly_as_cmplx(e1_flat);
+    let e2_view = eigvecs2.as_array();
+    let e2_flat = e2_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("eigvecs2 must be C-contiguous"))?;
+    let e2_cmplx = complex_readonly_as_cmplx(e2_flat);
+
+    let masses_view = masses.as_array();
+    let masses_slice = masses_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("masses must be C-contiguous"))?;
+
+    let band_view = band_indices.as_array();
+    let band_slice = band_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("band_indices must be C-contiguous"))?;
+
+    let out_slice = fc3_normal_squared
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("fc3_normal_squared must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        reciprocal_to_normal::reciprocal_to_normal_squared(
+            out_slice,
+            g_pos_slice,
+            fc3_rec_cmplx,
+            f0_slice,
+            f1_slice,
+            f2_slice,
+            e0_cmplx,
+            e1_cmplx,
+            e2_cmplx,
+            masses_slice,
+            band_slice,
+            num_patom,
+            cutoff_frequency,
+            openmp_per_triplets,
+        );
+    });
+
+    Ok(())
+}
+
 fn relative_grid_address_3d(
     arr: &PyReadonlyArray3<i64>,
 ) -> PyResult<RelativeGridAddress> {
@@ -1399,6 +1695,993 @@ fn relative_grid_address_3d(
         }
     }
     Ok(out)
+}
+
+/// Imaginary-part of the bubble self-energy at a fixed temperature,
+/// using pre-computed integration weights ``g``.  Mirrors
+/// ``phono3py._phono3py.imag_self_energy_with_g``.
+///
+/// Shapes:
+/// - ``imag_self_energy``: ``(num_band0,)`` ``float64``, write-only.
+/// - ``fc3_normal_squared``: ``(num_triplets, num_band0, num_band, num_band)``
+///   ``float64``.
+/// - ``triplets``: ``(num_triplets, 3)`` ``int64``.
+/// - ``triplet_weights``: ``(num_triplets,)`` ``int64``.
+/// - ``frequencies``: ``(num_grid, num_band)`` ``float64``.
+/// - ``g``: ``(2, num_triplets, num_band0_or_freqpts, num_band, num_band)``
+///   ``float64``; layer 0 is ``g1``, layer 1 is ``g2 - g3``.
+/// - ``g_zero``: ``(num_triplets, num_band0_or_freqpts, num_band, num_band)``
+///   ``byte``.
+///
+/// ``frequency_point_index`` is ``< 0`` for band-index mode; otherwise
+/// the frequency point index to sample.
+#[pyfunction]
+#[pyo3(name = "imag_self_energy_with_g")]
+#[allow(clippy::too_many_arguments)]
+fn py_imag_self_energy_with_g<'py>(
+    py: Python<'py>,
+    mut imag_self_energy: PyReadwriteArray1<'py, f64>,
+    fc3_normal_squared: PyReadonlyArray4<'py, f64>,
+    triplets: PyReadonlyArray2<'py, i64>,
+    triplet_weights: PyReadonlyArray1<'py, i64>,
+    frequencies: PyReadonlyArray2<'py, f64>,
+    temperature_thz: f64,
+    g: PyReadonlyArray5<'py, f64>,
+    g_zero: PyReadonlyArray4<'py, i8>,
+    cutoff_frequency: f64,
+    frequency_point_index: i64,
+) -> PyResult<()> {
+    let fc3_shape = fc3_normal_squared.shape();
+    if fc3_shape.len() != 4 {
+        return Err(PyValueError::new_err(
+            "fc3_normal_squared must have shape (num_triplets, num_band0, num_band, num_band)",
+        ));
+    }
+    let num_triplets = fc3_shape[0];
+    let num_band0 = fc3_shape[1];
+    let num_band = fc3_shape[2];
+    if fc3_shape[3] != num_band {
+        return Err(PyValueError::new_err(
+            "fc3_normal_squared last two dims must be equal (num_band, num_band)",
+        ));
+    }
+
+    if imag_self_energy.shape() != [num_band0] {
+        return Err(PyValueError::new_err(
+            "imag_self_energy must have shape (num_band0,)",
+        ));
+    }
+    if triplets.shape() != [num_triplets, 3] {
+        return Err(PyValueError::new_err(
+            "triplets must have shape (num_triplets, 3)",
+        ));
+    }
+    if triplet_weights.shape() != [num_triplets] {
+        return Err(PyValueError::new_err(
+            "triplet_weights must have shape (num_triplets,)",
+        ));
+    }
+    if frequencies.shape().len() != 2 || frequencies.shape()[1] != num_band {
+        return Err(PyValueError::new_err(
+            "frequencies must have shape (num_grid, num_band)",
+        ));
+    }
+
+    let g_shape = g.shape();
+    if g_shape.len() != 5 || g_shape[0] != 2 || g_shape[1] != num_triplets {
+        return Err(PyValueError::new_err(
+            "g must have shape (2, num_triplets, dim, num_band, num_band)",
+        ));
+    }
+    let num_freq_points = g_shape[2];
+    if g_shape[3] != num_band || g_shape[4] != num_band {
+        return Err(PyValueError::new_err(
+            "g last two dims must be (num_band, num_band)",
+        ));
+    }
+    if g_zero.shape() != [num_triplets, num_freq_points, num_band, num_band] {
+        return Err(PyValueError::new_err(
+            "g_zero must have shape matching one layer of g",
+        ));
+    }
+    if frequency_point_index < 0 && num_freq_points != num_band0 {
+        return Err(PyValueError::new_err(
+            "g third dim must equal num_band0 when frequency_point_index < 0",
+        ));
+    }
+    if frequency_point_index >= 0 && frequency_point_index as usize >= num_freq_points {
+        return Err(PyValueError::new_err(
+            "frequency_point_index out of range",
+        ));
+    }
+
+    let fc3_view = fc3_normal_squared.as_array();
+    let fc3_slice = fc3_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("fc3_normal_squared must be C-contiguous"))?;
+    let freqs_view = frequencies.as_array();
+    let freqs_slice = freqs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("frequencies must be C-contiguous"))?;
+
+    let triplets_view = triplets.as_array();
+    let triplets_flat = triplets_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("triplets must be C-contiguous"))?;
+    let triplets_slice: &[[i64; 3]] = group_as_array(triplets_flat);
+
+    let weights_view = triplet_weights.as_array();
+    let weights_slice = weights_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("triplet_weights must be C-contiguous"))?;
+
+    let g_view = g.as_array();
+    let g_slice = g_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("g must be C-contiguous"))?;
+    let g_zero_view = g_zero.as_array();
+    let g_zero_slice = g_zero_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("g_zero must be C-contiguous"))?;
+
+    let ise_slice = imag_self_energy
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("imag_self_energy must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        imag_self_energy::get_imag_self_energy_with_g(
+            ise_slice,
+            fc3_slice,
+            freqs_slice,
+            triplets_slice,
+            weights_slice,
+            g_slice,
+            g_zero_slice,
+            temperature_thz,
+            cutoff_frequency,
+            num_freq_points as i64,
+            frequency_point_index,
+            num_band0,
+            num_band,
+        );
+    });
+
+    Ok(())
+}
+
+/// Ph-ph interaction strength in normal-mode coordinates, per triplet.
+/// Mirrors ``phono3py._phono3py.interaction``.
+///
+/// Writes ``fc3_normal_squared`` of shape
+/// ``(num_triplets, num_band0, num_band, num_band)`` ``float64``.
+/// Input layouts follow the existing C binding:
+///
+/// - ``g_zero``: ``(num_triplets, num_band0, num_band, num_band)`` ``byte``.
+/// - ``frequencies``: ``(num_grid, num_band)`` ``float64``.
+/// - ``eigenvectors``: ``(num_grid, num_band, num_band)`` ``complex128``
+///   row-major ``[component, band]``.
+/// - ``triplets``: ``(num_triplets, 3)`` ``int64``.
+/// - ``bz_grid_addresses``: ``(num_grid, 3)`` ``int64``.
+/// - ``d_diag``: ``(3,)`` ``int64``.
+/// - ``q_mat``: ``(3, 3)`` ``int64``.
+/// - ``fc3``: ``(num_rows, num_satom, num_satom, 3, 3, 3)`` ``float64``
+///   with ``num_rows = num_patom`` when ``is_compact_fc3`` else
+///   ``num_satom``.
+/// - ``fc3_nonzero_indices``: ``(num_rows, num_satom, num_satom)`` ``int8``.
+/// - ``all_shortest``: ``(num_patom, num_satom, num_satom)`` ``int8``.
+/// - ``svecs``: ``(n_svec, 3)`` ``float64``.
+/// - ``multiplicity``: ``(num_satom, num_patom, 2)`` ``int64``.
+/// - ``masses``: ``(num_patom,)`` ``float64``.
+/// - ``p2s_map``: ``(num_patom,)`` ``int64``.
+/// - ``s2p_map``: ``(num_satom,)`` ``int64``.
+/// - ``band_indices``: ``(num_band0,)`` ``int64``.
+#[pyfunction]
+#[pyo3(name = "interaction")]
+#[allow(clippy::too_many_arguments)]
+fn py_interaction<'py>(
+    py: Python<'py>,
+    mut fc3_normal_squared: PyReadwriteArray4<'py, f64>,
+    g_zero: PyReadonlyArray4<'py, i8>,
+    frequencies: PyReadonlyArray2<'py, f64>,
+    eigenvectors: PyReadonlyArray3<'py, Complex64>,
+    triplets: PyReadonlyArray2<'py, i64>,
+    bz_grid_addresses: PyReadonlyArray2<'py, i64>,
+    d_diag: PyReadonlyArray1<'py, i64>,
+    q_mat: PyReadonlyArray2<'py, i64>,
+    fc3: PyReadonlyArray6<'py, f64>,
+    fc3_nonzero_indices: PyReadonlyArray3<'py, i8>,
+    svecs: PyReadonlyArray2<'py, f64>,
+    multiplicity: PyReadonlyArray3<'py, i64>,
+    masses: PyReadonlyArray1<'py, f64>,
+    p2s_map: PyReadonlyArray1<'py, i64>,
+    s2p_map: PyReadonlyArray1<'py, i64>,
+    band_indices: PyReadonlyArray1<'py, i64>,
+    symmetrize_fc3_q: bool,
+    make_r0_average: bool,
+    all_shortest: PyReadonlyArray3<'py, i8>,
+    cutoff_frequency: f64,
+    is_compact_fc3: bool,
+    openmp_per_triplets: bool,
+) -> PyResult<()> {
+    let num_patom = p2s_map.shape()[0];
+    let num_satom = s2p_map.shape()[0];
+    let num_rows = if is_compact_fc3 { num_patom } else { num_satom };
+    let num_band = num_patom * 3;
+    let num_band0 = band_indices.shape()[0];
+    let num_triplets = triplets.shape()[0];
+    let num_grid = bz_grid_addresses.shape()[0];
+
+    if fc3_normal_squared.shape() != [num_triplets, num_band0, num_band, num_band] {
+        return Err(PyValueError::new_err(
+            "fc3_normal_squared must have shape (num_triplets, num_band0, num_band, num_band)",
+        ));
+    }
+    if g_zero.shape() != [num_triplets, num_band0, num_band, num_band] {
+        return Err(PyValueError::new_err(
+            "g_zero must have shape (num_triplets, num_band0, num_band, num_band)",
+        ));
+    }
+    if frequencies.shape() != [num_grid, num_band] {
+        return Err(PyValueError::new_err(
+            "frequencies must have shape (num_grid, num_band)",
+        ));
+    }
+    if eigenvectors.shape() != [num_grid, num_band, num_band] {
+        return Err(PyValueError::new_err(
+            "eigenvectors must have shape (num_grid, num_band, num_band)",
+        ));
+    }
+    if triplets.shape() != [num_triplets, 3] {
+        return Err(PyValueError::new_err(
+            "triplets must have shape (num_triplets, 3)",
+        ));
+    }
+    if d_diag.shape() != [3] {
+        return Err(PyValueError::new_err("d_diag must have shape (3,)"));
+    }
+    if q_mat.shape() != [3, 3] {
+        return Err(PyValueError::new_err("q_mat must have shape (3, 3)"));
+    }
+    if fc3.shape() != [num_rows, num_satom, num_satom, 3, 3, 3] {
+        return Err(PyValueError::new_err(
+            "fc3 must have shape (num_rows, num_satom, num_satom, 3, 3, 3)",
+        ));
+    }
+    if fc3_nonzero_indices.shape() != [num_rows, num_satom, num_satom] {
+        return Err(PyValueError::new_err(
+            "fc3_nonzero_indices must match fc3.shape[:3]",
+        ));
+    }
+    if all_shortest.shape() != [num_patom, num_satom, num_satom] {
+        return Err(PyValueError::new_err(
+            "all_shortest must have shape (num_patom, num_satom, num_satom)",
+        ));
+    }
+    if svecs.shape().len() != 2 || svecs.shape()[1] != 3 {
+        return Err(PyValueError::new_err("svecs must have shape (n, 3)"));
+    }
+    if multiplicity.shape() != [num_satom, num_patom, 2] {
+        return Err(PyValueError::new_err(
+            "multiplicity must have shape (num_satom, num_patom, 2)",
+        ));
+    }
+    if masses.shape() != [num_patom] {
+        return Err(PyValueError::new_err(
+            "masses must have shape (num_patom,)",
+        ));
+    }
+
+    let complex_readonly_as_cmplx = |s: &[Complex64]| -> &[Cmplx] {
+        let n = s.len();
+        let ptr = s.as_ptr() as *const Cmplx;
+        unsafe { std::slice::from_raw_parts(ptr, n) }
+    };
+
+    let d_view = d_diag.as_array();
+    let d3 = [d_view[0], d_view[1], d_view[2]];
+    let q_view = q_mat.as_array();
+    let q3 = [
+        [q_view[[0, 0]], q_view[[0, 1]], q_view[[0, 2]]],
+        [q_view[[1, 0]], q_view[[1, 1]], q_view[[1, 2]]],
+        [q_view[[2, 0]], q_view[[2, 1]], q_view[[2, 2]]],
+    ];
+
+    let g_zero_view = g_zero.as_array();
+    let g_zero_slice = g_zero_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("g_zero must be C-contiguous"))?;
+    let freqs_view = frequencies.as_array();
+    let freqs_slice = freqs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("frequencies must be C-contiguous"))?;
+    let eig_view = eigenvectors.as_array();
+    let eig_flat = eig_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("eigenvectors must be C-contiguous"))?;
+    let eig_cmplx = complex_readonly_as_cmplx(eig_flat);
+    let triplets_view = triplets.as_array();
+    let triplets_flat = triplets_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("triplets must be C-contiguous"))?;
+    let triplets_slice: &[[i64; 3]] = group_as_array(triplets_flat);
+    let addr_view = bz_grid_addresses.as_array();
+    let addr_flat = addr_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("bz_grid_addresses must be C-contiguous"))?;
+    let addr_slice: &[[i64; 3]] = group_as_array(addr_flat);
+    let fc3_view = fc3.as_array();
+    let fc3_slice = fc3_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("fc3 must be C-contiguous"))?;
+    let nonzero_view = fc3_nonzero_indices.as_array();
+    let nonzero_slice = nonzero_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("fc3_nonzero_indices must be C-contiguous"))?;
+    let svecs_view = svecs.as_array();
+    let svecs_flat = svecs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("svecs must be C-contiguous"))?;
+    let svecs_slice: &[[f64; 3]] = group_as_array(svecs_flat);
+    let multi_view = multiplicity.as_array();
+    let multi_flat = multi_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("multiplicity must be C-contiguous"))?;
+    let multi_slice: &[[i64; 2]] = group_as_array(multi_flat);
+    let masses_view = masses.as_array();
+    let masses_slice = masses_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("masses must be C-contiguous"))?;
+    let p2s_view = p2s_map.as_array();
+    let p2s_slice = p2s_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("p2s_map must be C-contiguous"))?;
+    let s2p_view = s2p_map.as_array();
+    let s2p_slice = s2p_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("s2p_map must be C-contiguous"))?;
+    let band_view = band_indices.as_array();
+    let band_slice = band_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("band_indices must be C-contiguous"))?;
+    let all_short_view = all_shortest.as_array();
+    let all_short_slice = all_short_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("all_shortest must be C-contiguous"))?;
+
+    let out_slice = fc3_normal_squared
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("fc3_normal_squared must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        let atom_triplets = real_to_reciprocal::AtomTriplets {
+            svecs: svecs_slice,
+            num_satom,
+            num_patom,
+            multiplicity: multi_slice,
+            p2s_map: p2s_slice,
+            s2p_map: s2p_slice,
+            make_r0_average,
+            all_shortest: all_short_slice,
+            nonzero_indices: nonzero_slice,
+        };
+        interaction::get_interaction(
+            out_slice,
+            g_zero_slice,
+            freqs_slice,
+            eig_cmplx,
+            triplets_slice,
+            addr_slice,
+            d3,
+            q3,
+            fc3_slice,
+            is_compact_fc3,
+            &atom_triplets,
+            masses_slice,
+            band_slice,
+            symmetrize_fc3_q,
+            cutoff_frequency,
+            num_band0,
+            num_band,
+            openmp_per_triplets,
+        );
+    });
+
+    Ok(())
+}
+
+/// Detailed imaginary self-energy at a fixed temperature with Normal/
+/// Umklapp splitting.  Mirrors
+/// ``phono3py._phono3py.detailed_imag_self_energy_with_g``.
+///
+/// Shapes:
+/// - ``detailed_imag_self_energy`` (out):
+///   ``(num_triplets, num_band0, num_band, num_band)`` ``float64``.
+/// - ``imag_self_energy_n`` / ``imag_self_energy_u`` (out):
+///   ``(num_band0,)`` ``float64``.
+/// - ``fc3_normal_squared``:
+///   ``(num_triplets, num_band0, num_band, num_band)`` ``float64``.
+/// - ``triplets``: ``(num_triplets, 3)`` ``int64``.
+/// - ``triplet_weights``: ``(num_triplets,)`` ``int64``.
+/// - ``bz_grid_addresses``: ``(num_grid, 3)`` ``int64``.
+/// - ``frequencies``: ``(num_grid, num_band)`` ``float64``.
+/// - ``g``: ``(2, num_triplets, num_band0, num_band, num_band)`` ``float64``.
+/// - ``g_zero``: ``(num_triplets, num_band0, num_band, num_band)`` ``byte``.
+#[pyfunction]
+#[pyo3(name = "detailed_imag_self_energy_with_g")]
+#[allow(clippy::too_many_arguments)]
+fn py_detailed_imag_self_energy_with_g<'py>(
+    py: Python<'py>,
+    mut detailed_imag_self_energy: PyReadwriteArray4<'py, f64>,
+    mut imag_self_energy_n: PyReadwriteArray1<'py, f64>,
+    mut imag_self_energy_u: PyReadwriteArray1<'py, f64>,
+    fc3_normal_squared: PyReadonlyArray4<'py, f64>,
+    triplets: PyReadonlyArray2<'py, i64>,
+    triplet_weights: PyReadonlyArray1<'py, i64>,
+    bz_grid_addresses: PyReadonlyArray2<'py, i64>,
+    frequencies: PyReadonlyArray2<'py, f64>,
+    temperature_thz: f64,
+    g: PyReadonlyArray5<'py, f64>,
+    g_zero: PyReadonlyArray4<'py, i8>,
+    cutoff_frequency: f64,
+) -> PyResult<()> {
+    let fc3_shape = fc3_normal_squared.shape();
+    if fc3_shape.len() != 4 {
+        return Err(PyValueError::new_err(
+            "fc3_normal_squared must have shape (num_triplets, num_band0, num_band, num_band)",
+        ));
+    }
+    let num_triplets = fc3_shape[0];
+    let num_band0 = fc3_shape[1];
+    let num_band = fc3_shape[2];
+    if fc3_shape[3] != num_band {
+        return Err(PyValueError::new_err(
+            "fc3_normal_squared last two dims must be equal (num_band, num_band)",
+        ));
+    }
+
+    if detailed_imag_self_energy.shape() != [num_triplets, num_band0, num_band, num_band] {
+        return Err(PyValueError::new_err(
+            "detailed_imag_self_energy must have shape (num_triplets, num_band0, num_band, num_band)",
+        ));
+    }
+    if imag_self_energy_n.shape() != [num_band0] {
+        return Err(PyValueError::new_err(
+            "imag_self_energy_n must have shape (num_band0,)",
+        ));
+    }
+    if imag_self_energy_u.shape() != [num_band0] {
+        return Err(PyValueError::new_err(
+            "imag_self_energy_u must have shape (num_band0,)",
+        ));
+    }
+    if triplets.shape() != [num_triplets, 3] {
+        return Err(PyValueError::new_err(
+            "triplets must have shape (num_triplets, 3)",
+        ));
+    }
+    if triplet_weights.shape() != [num_triplets] {
+        return Err(PyValueError::new_err(
+            "triplet_weights must have shape (num_triplets,)",
+        ));
+    }
+    if bz_grid_addresses.shape().len() != 2 || bz_grid_addresses.shape()[1] != 3 {
+        return Err(PyValueError::new_err(
+            "bz_grid_addresses must have shape (num_grid, 3)",
+        ));
+    }
+    if frequencies.shape().len() != 2 || frequencies.shape()[1] != num_band {
+        return Err(PyValueError::new_err(
+            "frequencies must have shape (num_grid, num_band)",
+        ));
+    }
+    let g_shape = g.shape();
+    if g_shape.len() != 5
+        || g_shape[0] != 2
+        || g_shape[1] != num_triplets
+        || g_shape[2] != num_band0
+        || g_shape[3] != num_band
+        || g_shape[4] != num_band
+    {
+        return Err(PyValueError::new_err(
+            "g must have shape (2, num_triplets, num_band0, num_band, num_band)",
+        ));
+    }
+    if g_zero.shape() != [num_triplets, num_band0, num_band, num_band] {
+        return Err(PyValueError::new_err(
+            "g_zero must have shape (num_triplets, num_band0, num_band, num_band)",
+        ));
+    }
+
+    let fc3_view = fc3_normal_squared.as_array();
+    let fc3_slice = fc3_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("fc3_normal_squared must be C-contiguous"))?;
+    let freqs_view = frequencies.as_array();
+    let freqs_slice = freqs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("frequencies must be C-contiguous"))?;
+    let triplets_view = triplets.as_array();
+    let triplets_flat = triplets_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("triplets must be C-contiguous"))?;
+    let triplets_slice: &[[i64; 3]] = group_as_array(triplets_flat);
+    let weights_view = triplet_weights.as_array();
+    let weights_slice = weights_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("triplet_weights must be C-contiguous"))?;
+    let addr_view = bz_grid_addresses.as_array();
+    let addr_flat = addr_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("bz_grid_addresses must be C-contiguous"))?;
+    let addr_slice: &[[i64; 3]] = group_as_array(addr_flat);
+    let g_view = g.as_array();
+    let g_slice = g_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("g must be C-contiguous"))?;
+    let g_zero_view = g_zero.as_array();
+    let g_zero_slice = g_zero_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("g_zero must be C-contiguous"))?;
+
+    let detailed_slice = detailed_imag_self_energy
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("detailed_imag_self_energy must be C-contiguous"))?;
+    let ise_n_slice = imag_self_energy_n
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("imag_self_energy_n must be C-contiguous"))?;
+    let ise_u_slice = imag_self_energy_u
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("imag_self_energy_u must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        imag_self_energy::get_detailed_imag_self_energy_with_g(
+            detailed_slice,
+            ise_n_slice,
+            ise_u_slice,
+            fc3_slice,
+            freqs_slice,
+            triplets_slice,
+            weights_slice,
+            addr_slice,
+            g_slice,
+            g_zero_slice,
+            temperature_thz,
+            cutoff_frequency,
+            num_band0,
+            num_band,
+        );
+    });
+
+    Ok(())
+}
+
+/// Low-memory driver: tetrahedron-method gamma accumulation at a grid
+/// point.  Mirrors ``phono3py._phono3py.pp_collision``.
+///
+/// Shapes:
+/// - ``collisions`` (out): ``(num_temps, num_band0)`` ``float64`` when
+///   ``is_n_u = False``, or ``(2, num_temps, num_band0)`` when ``True``
+///   (layer 0 = Normal, layer 1 = Umklapp).
+/// - ``relative_grid_address``: ``(24, 4, 3)`` ``int64``.
+/// - ``frequencies``: ``(num_grid, num_band)`` ``float64``.
+/// - ``eigenvectors``: ``(num_grid, num_band, num_band)`` ``complex128``.
+/// - ``triplets``: ``(num_triplets, 3)`` ``int64``.
+/// - ``triplet_weights``: ``(num_triplets,)`` ``int64``.
+/// - ``bz_grid_addresses``: ``(num_grid, 3)`` ``int64``.
+/// - ``bz_map``: flat BZ map (``int64``); layout is selected by
+///   ``bz_grid_type`` (1 = sparse, 2 = dense).
+/// - ``d_diag``: ``(3,)`` ``int64``.
+/// - ``q_mat``: ``(3, 3)`` ``int64``.
+/// - ``fc3`` / ``fc3_nonzero_indices`` / ``svecs`` / ``multiplicity``
+///   / ``masses`` / ``p2s_map`` / ``s2p_map`` / ``band_indices``
+///   / ``all_shortest``: same layouts as in ``interaction``.
+/// - ``temperatures_thz``: ``(num_temps,)`` ``float64``.
+#[pyfunction]
+#[pyo3(name = "pp_collision")]
+#[allow(clippy::too_many_arguments)]
+fn py_pp_collision<'py>(
+    py: Python<'py>,
+    mut collisions: PyReadwriteArrayDyn<'py, f64>,
+    relative_grid_address: PyReadonlyArray3<'py, i64>,
+    frequencies: PyReadonlyArray2<'py, f64>,
+    eigenvectors: PyReadonlyArray3<'py, Complex64>,
+    triplets: PyReadonlyArray2<'py, i64>,
+    triplet_weights: PyReadonlyArray1<'py, i64>,
+    bz_grid_addresses: PyReadonlyArray2<'py, i64>,
+    bz_map: PyReadonlyArray1<'py, i64>,
+    bz_grid_type: i64,
+    d_diag: PyReadonlyArray1<'py, i64>,
+    q_mat: PyReadonlyArray2<'py, i64>,
+    fc3: PyReadonlyArray6<'py, f64>,
+    fc3_nonzero_indices: PyReadonlyArray3<'py, i8>,
+    svecs: PyReadonlyArray2<'py, f64>,
+    multiplicity: PyReadonlyArray3<'py, i64>,
+    masses: PyReadonlyArray1<'py, f64>,
+    p2s_map: PyReadonlyArray1<'py, i64>,
+    s2p_map: PyReadonlyArray1<'py, i64>,
+    band_indices: PyReadonlyArray1<'py, i64>,
+    temperatures_thz: PyReadonlyArray1<'py, f64>,
+    is_n_u: bool,
+    symmetrize_fc3_q: bool,
+    make_r0_average: bool,
+    all_shortest: PyReadonlyArray3<'py, i8>,
+    cutoff_frequency: f64,
+    is_compact_fc3: bool,
+    openmp_per_triplets: bool,
+) -> PyResult<()> {
+    let num_patom = p2s_map.shape()[0];
+    let num_satom = s2p_map.shape()[0];
+    let num_rows = if is_compact_fc3 { num_patom } else { num_satom };
+    let num_band = num_patom * 3;
+    let num_band0 = band_indices.shape()[0];
+    let num_temps = temperatures_thz.shape()[0];
+    let expected_shape: &[usize] = if is_n_u {
+        &[2, num_temps, num_band0]
+    } else {
+        &[num_temps, num_band0]
+    };
+    if collisions.shape() != expected_shape {
+        return Err(PyValueError::new_err(
+            "collisions shape must be (num_temps, num_band0) or (2, num_temps, num_band0)",
+        ));
+    }
+    let rga = relative_grid_address_3d(&relative_grid_address)?;
+    let d3 = vec3_i(&d_diag)?;
+    let q3 = mat3_i(&q_mat)?;
+
+    if fc3.shape() != [num_rows, num_satom, num_satom, 3, 3, 3] {
+        return Err(PyValueError::new_err(
+            "fc3 must have shape (num_rows, num_satom, num_satom, 3, 3, 3)",
+        ));
+    }
+    if fc3_nonzero_indices.shape() != [num_rows, num_satom, num_satom] {
+        return Err(PyValueError::new_err(
+            "fc3_nonzero_indices must match fc3.shape[:3]",
+        ));
+    }
+    if all_shortest.shape() != [num_patom, num_satom, num_satom] {
+        return Err(PyValueError::new_err(
+            "all_shortest must have shape (num_patom, num_satom, num_satom)",
+        ));
+    }
+    if svecs.shape().len() != 2 || svecs.shape()[1] != 3 {
+        return Err(PyValueError::new_err("svecs must have shape (n, 3)"));
+    }
+    if multiplicity.shape() != [num_satom, num_patom, 2] {
+        return Err(PyValueError::new_err(
+            "multiplicity must have shape (num_satom, num_patom, 2)",
+        ));
+    }
+    if masses.shape() != [num_patom] {
+        return Err(PyValueError::new_err("masses must have shape (num_patom,)"));
+    }
+
+    let complex_readonly_as_cmplx = |s: &[Complex64]| -> &[Cmplx] {
+        let n = s.len();
+        let ptr = s.as_ptr() as *const Cmplx;
+        unsafe { std::slice::from_raw_parts(ptr, n) }
+    };
+
+    let freqs_view = frequencies.as_array();
+    let freqs_slice = freqs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("frequencies must be C-contiguous"))?;
+    let eig_view = eigenvectors.as_array();
+    let eig_flat = eig_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("eigenvectors must be C-contiguous"))?;
+    let eig_cmplx = complex_readonly_as_cmplx(eig_flat);
+    let triplets_view = triplets.as_array();
+    let triplets_flat = triplets_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("triplets must be C-contiguous"))?;
+    let triplets_slice: &[[i64; 3]] = group_as_array(triplets_flat);
+    let weights_view = triplet_weights.as_array();
+    let weights_slice = weights_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("triplet_weights must be C-contiguous"))?;
+    let addr_view = bz_grid_addresses.as_array();
+    let addr_flat = addr_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("bz_grid_addresses must be C-contiguous"))?;
+    let addr_slice: &[[i64; 3]] = group_as_array(addr_flat);
+    let bzmap_view = bz_map.as_array();
+    let bzmap_slice = bzmap_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("bz_map must be C-contiguous"))?;
+    let fc3_view = fc3.as_array();
+    let fc3_slice = fc3_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("fc3 must be C-contiguous"))?;
+    let nonzero_view = fc3_nonzero_indices.as_array();
+    let nonzero_slice = nonzero_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("fc3_nonzero_indices must be C-contiguous"))?;
+    let svecs_view = svecs.as_array();
+    let svecs_flat = svecs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("svecs must be C-contiguous"))?;
+    let svecs_slice: &[[f64; 3]] = group_as_array(svecs_flat);
+    let multi_view = multiplicity.as_array();
+    let multi_flat = multi_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("multiplicity must be C-contiguous"))?;
+    let multi_slice: &[[i64; 2]] = group_as_array(multi_flat);
+    let masses_view = masses.as_array();
+    let masses_slice = masses_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("masses must be C-contiguous"))?;
+    let p2s_view = p2s_map.as_array();
+    let p2s_slice = p2s_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("p2s_map must be C-contiguous"))?;
+    let s2p_view = s2p_map.as_array();
+    let s2p_slice = s2p_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("s2p_map must be C-contiguous"))?;
+    let band_view = band_indices.as_array();
+    let band_slice = band_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("band_indices must be C-contiguous"))?;
+    let all_short_view = all_shortest.as_array();
+    let all_short_slice = all_short_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("all_shortest must be C-contiguous"))?;
+    let temps_view = temperatures_thz.as_array();
+    let temps_slice = temps_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("temperatures_thz must be C-contiguous"))?;
+
+    let out_slice = collisions
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("collisions must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        let atom_triplets = real_to_reciprocal::AtomTriplets {
+            svecs: svecs_slice,
+            num_satom,
+            num_patom,
+            multiplicity: multi_slice,
+            p2s_map: p2s_slice,
+            s2p_map: s2p_slice,
+            make_r0_average,
+            all_shortest: all_short_slice,
+            nonzero_indices: nonzero_slice,
+        };
+        let bzgrid = BzGridView {
+            d_diag: d3,
+            addresses: addr_slice,
+            gp_map: bzmap_slice,
+            bz_grid_type,
+        };
+        pp_collision::get_pp_collision(
+            out_slice,
+            &rga,
+            freqs_slice,
+            eig_cmplx,
+            triplets_slice,
+            weights_slice,
+            &bzgrid,
+            d3,
+            q3,
+            fc3_slice,
+            is_compact_fc3,
+            &atom_triplets,
+            masses_slice,
+            band_slice,
+            temps_slice,
+            is_n_u,
+            symmetrize_fc3_q,
+            cutoff_frequency,
+            openmp_per_triplets,
+            num_band0,
+            num_band,
+        )
+    })
+    .map_err(|e| match e {
+        BzGridError::BadGridType => PyValueError::new_err("bz_grid_type must be 1 or 2"),
+        BzGridError::BadTpType => PyValueError::new_err("tp_type must be 2, 3, or 4"),
+    })?;
+    Ok(())
+}
+
+/// Low-memory driver: Gaussian-smearing gamma accumulation at a grid
+/// point.  Mirrors ``phono3py._phono3py.pp_collision_with_sigma``.
+///
+/// ``sigma_cutoff <= 0`` disables the cutoff-skip optimisation (matches
+/// C semantics).  Shape conventions otherwise mirror ``pp_collision``.
+#[pyfunction]
+#[pyo3(name = "pp_collision_with_sigma")]
+#[allow(clippy::too_many_arguments)]
+fn py_pp_collision_with_sigma<'py>(
+    py: Python<'py>,
+    mut collisions: PyReadwriteArrayDyn<'py, f64>,
+    sigma: f64,
+    sigma_cutoff: f64,
+    frequencies: PyReadonlyArray2<'py, f64>,
+    eigenvectors: PyReadonlyArray3<'py, Complex64>,
+    triplets: PyReadonlyArray2<'py, i64>,
+    triplet_weights: PyReadonlyArray1<'py, i64>,
+    bz_grid_addresses: PyReadonlyArray2<'py, i64>,
+    d_diag: PyReadonlyArray1<'py, i64>,
+    q_mat: PyReadonlyArray2<'py, i64>,
+    fc3: PyReadonlyArray6<'py, f64>,
+    fc3_nonzero_indices: PyReadonlyArray3<'py, i8>,
+    svecs: PyReadonlyArray2<'py, f64>,
+    multiplicity: PyReadonlyArray3<'py, i64>,
+    masses: PyReadonlyArray1<'py, f64>,
+    p2s_map: PyReadonlyArray1<'py, i64>,
+    s2p_map: PyReadonlyArray1<'py, i64>,
+    band_indices: PyReadonlyArray1<'py, i64>,
+    temperatures_thz: PyReadonlyArray1<'py, f64>,
+    is_n_u: bool,
+    symmetrize_fc3_q: bool,
+    make_r0_average: bool,
+    all_shortest: PyReadonlyArray3<'py, i8>,
+    cutoff_frequency: f64,
+    is_compact_fc3: bool,
+    openmp_per_triplets: bool,
+) -> PyResult<()> {
+    let num_patom = p2s_map.shape()[0];
+    let num_satom = s2p_map.shape()[0];
+    let num_rows = if is_compact_fc3 { num_patom } else { num_satom };
+    let num_band = num_patom * 3;
+    let num_band0 = band_indices.shape()[0];
+    let num_temps = temperatures_thz.shape()[0];
+    let expected_shape: &[usize] = if is_n_u {
+        &[2, num_temps, num_band0]
+    } else {
+        &[num_temps, num_band0]
+    };
+    if collisions.shape() != expected_shape {
+        return Err(PyValueError::new_err(
+            "collisions shape must be (num_temps, num_band0) or (2, num_temps, num_band0)",
+        ));
+    }
+    let d3 = vec3_i(&d_diag)?;
+    let q3 = mat3_i(&q_mat)?;
+
+    if fc3.shape() != [num_rows, num_satom, num_satom, 3, 3, 3] {
+        return Err(PyValueError::new_err(
+            "fc3 must have shape (num_rows, num_satom, num_satom, 3, 3, 3)",
+        ));
+    }
+    if fc3_nonzero_indices.shape() != [num_rows, num_satom, num_satom] {
+        return Err(PyValueError::new_err(
+            "fc3_nonzero_indices must match fc3.shape[:3]",
+        ));
+    }
+    if all_shortest.shape() != [num_patom, num_satom, num_satom] {
+        return Err(PyValueError::new_err(
+            "all_shortest must have shape (num_patom, num_satom, num_satom)",
+        ));
+    }
+    if svecs.shape().len() != 2 || svecs.shape()[1] != 3 {
+        return Err(PyValueError::new_err("svecs must have shape (n, 3)"));
+    }
+    if multiplicity.shape() != [num_satom, num_patom, 2] {
+        return Err(PyValueError::new_err(
+            "multiplicity must have shape (num_satom, num_patom, 2)",
+        ));
+    }
+    if masses.shape() != [num_patom] {
+        return Err(PyValueError::new_err("masses must have shape (num_patom,)"));
+    }
+
+    let complex_readonly_as_cmplx = |s: &[Complex64]| -> &[Cmplx] {
+        let n = s.len();
+        let ptr = s.as_ptr() as *const Cmplx;
+        unsafe { std::slice::from_raw_parts(ptr, n) }
+    };
+
+    let freqs_view = frequencies.as_array();
+    let freqs_slice = freqs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("frequencies must be C-contiguous"))?;
+    let eig_view = eigenvectors.as_array();
+    let eig_flat = eig_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("eigenvectors must be C-contiguous"))?;
+    let eig_cmplx = complex_readonly_as_cmplx(eig_flat);
+    let triplets_view = triplets.as_array();
+    let triplets_flat = triplets_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("triplets must be C-contiguous"))?;
+    let triplets_slice: &[[i64; 3]] = group_as_array(triplets_flat);
+    let weights_view = triplet_weights.as_array();
+    let weights_slice = weights_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("triplet_weights must be C-contiguous"))?;
+    let addr_view = bz_grid_addresses.as_array();
+    let addr_flat = addr_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("bz_grid_addresses must be C-contiguous"))?;
+    let addr_slice: &[[i64; 3]] = group_as_array(addr_flat);
+    let fc3_view = fc3.as_array();
+    let fc3_slice = fc3_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("fc3 must be C-contiguous"))?;
+    let nonzero_view = fc3_nonzero_indices.as_array();
+    let nonzero_slice = nonzero_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("fc3_nonzero_indices must be C-contiguous"))?;
+    let svecs_view = svecs.as_array();
+    let svecs_flat = svecs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("svecs must be C-contiguous"))?;
+    let svecs_slice: &[[f64; 3]] = group_as_array(svecs_flat);
+    let multi_view = multiplicity.as_array();
+    let multi_flat = multi_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("multiplicity must be C-contiguous"))?;
+    let multi_slice: &[[i64; 2]] = group_as_array(multi_flat);
+    let masses_view = masses.as_array();
+    let masses_slice = masses_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("masses must be C-contiguous"))?;
+    let p2s_view = p2s_map.as_array();
+    let p2s_slice = p2s_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("p2s_map must be C-contiguous"))?;
+    let s2p_view = s2p_map.as_array();
+    let s2p_slice = s2p_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("s2p_map must be C-contiguous"))?;
+    let band_view = band_indices.as_array();
+    let band_slice = band_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("band_indices must be C-contiguous"))?;
+    let all_short_view = all_shortest.as_array();
+    let all_short_slice = all_short_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("all_shortest must be C-contiguous"))?;
+    let temps_view = temperatures_thz.as_array();
+    let temps_slice = temps_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("temperatures_thz must be C-contiguous"))?;
+
+    let out_slice = collisions
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("collisions must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        let atom_triplets = real_to_reciprocal::AtomTriplets {
+            svecs: svecs_slice,
+            num_satom,
+            num_patom,
+            multiplicity: multi_slice,
+            p2s_map: p2s_slice,
+            s2p_map: s2p_slice,
+            make_r0_average,
+            all_shortest: all_short_slice,
+            nonzero_indices: nonzero_slice,
+        };
+        pp_collision::get_pp_collision_with_sigma(
+            out_slice,
+            sigma,
+            sigma_cutoff,
+            freqs_slice,
+            eig_cmplx,
+            triplets_slice,
+            weights_slice,
+            addr_slice,
+            d3,
+            q3,
+            fc3_slice,
+            is_compact_fc3,
+            &atom_triplets,
+            masses_slice,
+            band_slice,
+            temps_slice,
+            is_n_u,
+            symmetrize_fc3_q,
+            cutoff_frequency,
+            openmp_per_triplets,
+            num_band0,
+            num_band,
+        );
+    });
+    Ok(())
 }
 
 #[pymodule]
@@ -1427,5 +2710,12 @@ fn phono3py_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
         py_dynamical_matrices_at_gridpoints_gonze,
         m
     )?)?;
+    m.add_function(wrap_pyfunction!(py_real_to_reciprocal, m)?)?;
+    m.add_function(wrap_pyfunction!(py_reciprocal_to_normal_squared, m)?)?;
+    m.add_function(wrap_pyfunction!(py_imag_self_energy_with_g, m)?)?;
+    m.add_function(wrap_pyfunction!(py_detailed_imag_self_energy_with_g, m)?)?;
+    m.add_function(wrap_pyfunction!(py_interaction, m)?)?;
+    m.add_function(wrap_pyfunction!(py_pp_collision, m)?)?;
+    m.add_function(wrap_pyfunction!(py_pp_collision_with_sigma, m)?)?;
     Ok(())
 }
