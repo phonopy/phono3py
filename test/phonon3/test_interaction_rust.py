@@ -92,28 +92,20 @@ def _run_rust(itr: Interaction) -> np.ndarray:
 
 def test_interaction_rust_vs_c_plain(si_pbesol: Phono3py):
     """Non-symmetrized, r0-average=True (default) matches C."""
-    itr_c = _make_interaction(
-        si_pbesol, symmetrize_fc3q=False, make_r0_average=True
-    )
+    itr_c = _make_interaction(si_pbesol, symmetrize_fc3q=False, make_r0_average=True)
     c_out = _run_c_and_capture(itr_c)
 
-    itr_rust = _make_interaction(
-        si_pbesol, symmetrize_fc3q=False, make_r0_average=True
-    )
+    itr_rust = _make_interaction(si_pbesol, symmetrize_fc3q=False, make_r0_average=True)
     rust_out = _run_rust(itr_rust)
     np.testing.assert_allclose(rust_out, c_out, rtol=1e-10, atol=1e-18)
 
 
 def test_interaction_rust_vs_c_symmetrized(si_pbesol: Phono3py):
     """symmetrize_fc3q=True path matches C."""
-    itr_c = _make_interaction(
-        si_pbesol, symmetrize_fc3q=True, make_r0_average=True
-    )
+    itr_c = _make_interaction(si_pbesol, symmetrize_fc3q=True, make_r0_average=True)
     c_out = _run_c_and_capture(itr_c)
 
-    itr_rust = _make_interaction(
-        si_pbesol, symmetrize_fc3q=True, make_r0_average=True
-    )
+    itr_rust = _make_interaction(si_pbesol, symmetrize_fc3q=True, make_r0_average=True)
     rust_out = _run_rust(itr_rust)
     np.testing.assert_allclose(rust_out, c_out, rtol=1e-10, atol=1e-18)
 

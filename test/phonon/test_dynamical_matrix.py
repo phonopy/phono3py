@@ -1,5 +1,8 @@
-"""Regression tests comparing the Rust dynamical-matrix builder
-to phonopy's Python implementation."""
+"""Regression tests comparing the Rust dynamical-matrix builder.
+
+The reference is phonopy's Python implementation.
+
+"""
 
 from __future__ import annotations
 
@@ -24,9 +27,7 @@ def _extract_inputs(dm: DynamicalMatrix):
         fc_s2p = s2p
     else:
         p2p = prim.p2p_map
-        s2pp = np.array(
-            [p2p[s2p[i]] for i in range(len(s2p))], dtype="int64"
-        )
+        s2pp = np.array([p2p[s2p[i]] for i in range(len(s2p))], dtype="int64")
         fc_p2s = np.arange(len(p2s), dtype="int64")
         fc_s2p = s2pp
     return (
@@ -64,7 +65,7 @@ def _ref_dm(dm: DynamicalMatrix, q: Sequence[float]) -> np.ndarray:
 
 @pytest.fixture(scope="module")
 def si_dm(si_pbesol) -> DynamicalMatrix:
-    """A no-NAC DynamicalMatrix for the Si fixture."""
+    """Build a no-NAC DynamicalMatrix for the Si fixture."""
     si_pbesol.mesh_numbers = [3, 3, 3]
     si_pbesol.init_phph_interaction()
     return si_pbesol.dynamical_matrix
@@ -83,8 +84,11 @@ Q_POINTS: list[list[float]] = [
 def test_dynamical_matrix_at_q_matches_phonopy(
     si_dm: DynamicalMatrix, q: list[float]
 ) -> None:
-    """Rust and phonopy's Python dynamical matrix agree to machine
-    precision on a no-NAC Si fixture."""
+    """Rust and phonopy's Python dynamical matrix agree on a no-NAC Si fixture.
+
+    The agreement holds to machine precision.
+
+    """
     ref = _ref_dm(si_dm, q)
     out = _rust_dm(si_dm, q)
     np.testing.assert_allclose(out, ref, atol=1e-13, rtol=1e-13)
@@ -108,11 +112,13 @@ def test_dynamical_matrix_is_hermitian(si_dm: DynamicalMatrix) -> None:
     np.testing.assert_allclose(out, out.conj().T, atol=1e-15)
 
 
-def _ref_charge_sum(
-    factor: float, q_cart: np.ndarray, born: np.ndarray
-) -> np.ndarray:
-    """Reference Wang-NAC charge sum, matching phonopy
-    DynamicalMatrixWang._get_charge_sum (without the 1/factor)."""
+def _ref_charge_sum(factor: float, q_cart: np.ndarray, born: np.ndarray) -> np.ndarray:
+    """Compute the reference Wang-NAC charge sum.
+
+    Matches phonopy's DynamicalMatrixWang._get_charge_sum (without the
+    1/factor).
+
+    """
     num_patom = born.shape[0]
     qb = np.einsum("k,ika->ia", q_cart, born)
     out = np.zeros((num_patom, num_patom, 3, 3), dtype="double")
@@ -124,7 +130,7 @@ def _ref_charge_sum(
 
 @pytest.fixture(scope="module")
 def nacl_dm_gl(nacl_pbe):
-    """A Gonze-Lee NAC DynamicalMatrix on the NaCl fixture."""
+    """Build a Gonze-Lee NAC DynamicalMatrix on the NaCl fixture."""
     nacl_pbe.mesh_numbers = [3, 3, 3]
     nacl_pbe.init_phph_interaction()
     return nacl_pbe.dynamical_matrix
@@ -181,8 +187,11 @@ def test_recip_dipole_dipole_q0_matches_phonopy(nacl_dm_gl) -> None:
 
 
 def _extract_grid_inputs(ph3):
-    """Collect the non-NAC inputs that the grid-wide Rust builders
-    need from a Phono3py instance."""
+    """Collect the non-NAC inputs for the grid-wide Rust builders.
+
+    Gathers the fields needed from a Phono3py instance.
+
+    """
     dm = ph3.dynamical_matrix
     prim = dm.primitive
     svecs, multi = prim.get_smallest_vectors()
@@ -211,8 +220,11 @@ def _extract_grid_inputs(ph3):
 
 
 def _reference_dm_at_gridpoints(dm, grid_address, QDinv) -> np.ndarray:
-    """Build the full dynamical-matrix buffer by calling phonopy's
-    per-q-point DM builder at each gp."""
+    """Build the full dynamical-matrix buffer via phonopy.
+
+    Calls phonopy's per-q-point DM builder at each grid point.
+
+    """
     num_phonons = len(grid_address)
     num_band = len(dm.primitive) * 3
     out = np.zeros((num_phonons, num_band, num_band), dtype="cdouble")
@@ -224,8 +236,11 @@ def _reference_dm_at_gridpoints(dm, grid_address, QDinv) -> np.ndarray:
 
 
 def test_dynamical_matrices_at_gridpoints_no_nac_matches_phonopy(si_pbesol) -> None:
-    """Rust grid-wide no-NAC DM equals phonopy's per-q-point DM
-    at every grid point, to machine precision."""
+    """Rust grid-wide no-NAC DM matches phonopy's per-q-point DM.
+
+    Checked at every grid point to machine precision.
+
+    """
     si_pbesol.mesh_numbers = [3, 3, 3]
     si_pbesol.init_phph_interaction()
     dm = si_pbesol.dynamical_matrix
@@ -251,17 +266,20 @@ def test_dynamical_matrices_at_gridpoints_no_nac_matches_phonopy(si_pbesol) -> N
     np.testing.assert_allclose(dynmats, ref, atol=1e-13, rtol=1e-13)
 
 
-def test_dynamical_matrices_at_gridpoints_gonze_matches_phonopy(nacl_dm_gl, nacl_pbe) -> None:
-    """Rust grid-wide Gonze-Lee DM equals phonopy's per-q-point
-    DynamicalMatrixGL output at every grid point."""
+def test_dynamical_matrices_at_gridpoints_gonze_matches_phonopy(
+    nacl_dm_gl, nacl_pbe
+) -> None:
+    """Rust grid-wide Gonze-Lee DM matches phonopy's per-q-point DM.
+
+    Uses DynamicalMatrixGL output at every grid point.
+
+    """
     dm = nacl_dm_gl
     inp = _extract_grid_inputs(nacl_pbe)
     num_phonons = len(inp["grid_address"])
     num_band = len(dm.primitive) * 3
 
-    rec_lat = np.ascontiguousarray(
-        np.linalg.inv(dm.primitive.cell), dtype="double"
-    )
+    rec_lat = np.ascontiguousarray(np.linalg.inv(dm.primitive.cell), dtype="double")
     pos = np.ascontiguousarray(dm.primitive.positions, dtype="double")
 
     # Gonze uses fc with dipole-dipole contribution removed.

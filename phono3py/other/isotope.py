@@ -110,6 +110,7 @@ class Isotope:
         symprec: float = 1e-5,
         cutoff_frequency: float | None = None,
         lapack_zheev_uplo: Literal["L", "U"] = "L",
+        lang: Literal["C", "Python", "Rust"] = "C",
     ):
         """Init method."""
         self._mesh = mesh
@@ -128,6 +129,7 @@ class Isotope:
             self._cutoff_frequency = cutoff_frequency
         self._frequency_factor_to_THz = frequency_factor_to_THz
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
+        self._lang: Literal["C", "Python", "Rust"] = lang
         self._nac_q_direction: NDArray[np.double] | None = None
 
         self._grid_points: NDArray[np.int64] | None = None
@@ -164,10 +166,16 @@ class Isotope:
         if self._phonon_done is None:
             self._allocate_phonon()
 
-    def run(self, lang: Literal["C", "Python"] = "C") -> None:
-        """Run isotope scattering calculation."""
-        if lang == "C":
+    def run(self) -> None:
+        """Run isotope scattering calculation.
+
+        The backend is selected by ``self._lang`` set at construction.
+
+        """
+        if self._lang == "C":
             self._run_c()
+        elif self._lang == "Rust":
+            self._run_rust()
         else:
             self._run_py()
 
@@ -284,6 +292,49 @@ class Isotope:
             )
         else:
             phono3c.isotope_strength(
+                gamma,
+                self._grid_point,
+                self._bz_grid.grg2bzg,
+                weights_in_bzgp,
+                self._mass_variances,
+                self._frequencies,
+                self._eigenvectors,
+                self._band_indices,
+                self._sigma,
+                self._cutoff_frequency,
+            )
+
+        self._gamma = gamma / np.prod(self._bz_grid.D_diag)
+
+    def _run_rust(self) -> None:
+        """Run isotope scattering via the Rust backend.
+
+        Mirrors ``_run_c`` but dispatches to ``phono3py_rs``.
+
+        """
+        assert self._grid_points is not None
+
+        self._run_phonon_solver_c(self._grid_points)
+        import phono3py_rs  # type: ignore
+
+        gamma = np.zeros(len(self._band_indices), dtype="double")
+        weights_in_bzgp = np.ones(len(self._grid_points), dtype="double")
+        if self._sigma is None:
+            self._set_integration_weights()
+            phono3py_rs.thm_isotope_strength(
+                gamma,
+                self._grid_point,
+                self._bz_grid.grg2bzg,
+                weights_in_bzgp,
+                self._mass_variances,
+                self._frequencies,
+                self._eigenvectors,
+                self._band_indices,
+                self._integration_weights,
+                self._cutoff_frequency,
+            )
+        else:
+            phono3py_rs.isotope_strength(
                 gamma,
                 self._grid_point,
                 self._bz_grid.grg2bzg,

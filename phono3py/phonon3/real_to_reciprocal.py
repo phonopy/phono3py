@@ -171,9 +171,7 @@ class RealToReciprocal:
             np.all(self._triplet != 0, axis=0), self._triplet.sum(axis=0), 0
         )
         sum_q = sum_triplets.astype("double") / self._mesh
-        prephase = np.array(
-            [self._get_prephase(sum_q, i) for i in range(num_patom)]
-        )
+        prephase = np.array([self._get_prephase(sum_q, i) for i in range(num_patom)])
 
         for i in range(num_patom):
             for j in range(num_patom):

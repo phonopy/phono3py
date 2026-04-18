@@ -58,9 +58,7 @@ def _run_rta_solver(
 
 def test_pp_collision_rust_vs_c_tetrahedron(si_pbesol: Phono3py):
     """Tetrahedron (sigma=None) low-memory path matches between backends."""
-    gamma_c, _, _ = _run_rta_solver(
-        si_pbesol, sigmas=[None], is_N_U=False, lang="C"
-    )
+    gamma_c, _, _ = _run_rta_solver(si_pbesol, sigmas=[None], is_N_U=False, lang="C")
     gamma_rust, _, _ = _run_rta_solver(
         si_pbesol, sigmas=[None], is_N_U=False, lang="Rust"
     )
@@ -69,9 +67,7 @@ def test_pp_collision_rust_vs_c_tetrahedron(si_pbesol: Phono3py):
 
 def test_pp_collision_rust_vs_c_sigma(si_pbesol: Phono3py):
     """Smearing (sigma=0.1) low-memory path matches between backends."""
-    gamma_c, _, _ = _run_rta_solver(
-        si_pbesol, sigmas=[0.1], is_N_U=False, lang="C"
-    )
+    gamma_c, _, _ = _run_rta_solver(si_pbesol, sigmas=[0.1], is_N_U=False, lang="C")
     gamma_rust, _, _ = _run_rta_solver(
         si_pbesol, sigmas=[0.1], is_N_U=False, lang="Rust"
     )
@@ -130,9 +126,7 @@ def _run_rta_solver_full_path(
 
 def test_full_gamma_path_rust_vs_c_tetrahedron(si_pbesol: Phono3py):
     """Full-gamma path (ImagSelfEnergy), tetrahedron: Rust matches C."""
-    gamma_c, detail_c = _run_rta_solver_full_path(
-        si_pbesol, sigmas=[None], lang="C"
-    )
+    gamma_c, detail_c = _run_rta_solver_full_path(si_pbesol, sigmas=[None], lang="C")
     gamma_rust, detail_rust = _run_rta_solver_full_path(
         si_pbesol, sigmas=[None], lang="Rust"
     )
@@ -143,9 +137,7 @@ def test_full_gamma_path_rust_vs_c_tetrahedron(si_pbesol: Phono3py):
 
 def test_full_gamma_path_rust_vs_c_sigma(si_pbesol: Phono3py):
     """Full-gamma path (ImagSelfEnergy), Gaussian smearing: Rust matches C."""
-    gamma_c, detail_c = _run_rta_solver_full_path(
-        si_pbesol, sigmas=[0.1], lang="C"
-    )
+    gamma_c, detail_c = _run_rta_solver_full_path(si_pbesol, sigmas=[0.1], lang="C")
     gamma_rust, detail_rust = _run_rta_solver_full_path(
         si_pbesol, sigmas=[0.1], lang="Rust"
     )

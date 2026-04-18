@@ -1,5 +1,9 @@
-"""Regression tests comparing the Rust real_to_reciprocal transform
-to a pure-Python reference with C-matching pre-phase semantics."""
+"""Regression tests comparing the Rust real_to_reciprocal transform.
+
+The reference is a pure-Python implementation with C-matching pre-phase
+semantics.
+
+"""
 
 from __future__ import annotations
 
@@ -33,7 +37,8 @@ def _python_reference(fc3, primitive, q_vecs):
 
     Computes fc3_reciprocal in atom-first layout
     (num_patom, num_patom, num_patom, 3, 3, 3) for ``make_r0_average=False``
-    and no fc3_nonzero / all_shortest skipping (full fc3 assumed)."""
+    and no fc3_nonzero / all_shortest skipping (full fc3 assumed).
+    """
     svecs, multi = primitive.get_smallest_vectors()
     p2s = np.asarray(primitive.p2s_map, dtype="int64")
     s2p = np.asarray(primitive.s2p_map, dtype="int64")

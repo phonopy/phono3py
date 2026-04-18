@@ -129,6 +129,7 @@ def _build_rta_calculator(
         is_gamma_detail=config.is_gamma_detail,
         sigma_cutoff_width=config.sigma_cutoff,
         log_level=config.log_level,
+        lang=config.lang,
     )
 
 
@@ -199,6 +200,7 @@ def _build_lbte_calculator(
         is_full_pp=config.is_full_pp,
         sigma_cutoff_width=config.sigma_cutoff,
         log_level=config.log_level,
+        lang=config.lang,
     )
 
 

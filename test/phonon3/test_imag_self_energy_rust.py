@@ -40,7 +40,9 @@ def _random_inputs(
         axis=1,
     )
     weights = rng.integers(1, 5, size=num_triplets, dtype="int64")
-    g = rng.standard_normal((2, num_triplets, g_dim, num_band, num_band)).astype("double")
+    g = rng.standard_normal((2, num_triplets, g_dim, num_band, num_band)).astype(
+        "double"
+    )
     g_zero = (
         rng.random((num_triplets, g_dim, num_band, num_band)) < g_zero_density
     ).astype("byte")

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import abc
 from collections.abc import Callable, Sequence
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 from numpy.typing import NDArray
@@ -54,6 +54,7 @@ def _build_isotope_solver(
     kappa_settings: KappaSettings,
     log_level: int,
     mass_variances: Sequence[float] | NDArray[np.double] | None,
+    lang: Literal["C", "Python", "Rust"] = "C",
 ) -> IsotopeScatteringSolver:
     """Build an IsotopeScatteringSolver from Interaction and KappaSettings."""
     isotope = Isotope(
@@ -65,6 +66,7 @@ def _build_isotope_solver(
         symprec=pp.primitive_symmetry.tolerance,
         cutoff_frequency=kappa_settings.cutoff_frequency,
         lapack_zheev_uplo=pp.lapack_zheev_uplo,
+        lang=lang,
     )
     return IsotopeScatteringSolver(isotope, kappa_settings.sigmas, log_level=log_level)
 
@@ -170,6 +172,7 @@ class ConductivityCalculatorBase(abc.ABC):
         mass_variances: Sequence[float] | NDArray[np.double] | None = None,
         sigma_cutoff_width: float | None = None,
         log_level: int = 0,
+        lang: Literal["C", "Python", "Rust"] = "C",
     ):
         self._pp = pp
         self._velocity_solver = velocity_solver
@@ -184,7 +187,7 @@ class ConductivityCalculatorBase(abc.ABC):
         self._isotope_solver: IsotopeScatteringSolver | None = None
         if is_isotope or mass_variances is not None:
             self._isotope_solver = _build_isotope_solver(
-                pp, kappa_settings, log_level, mass_variances
+                pp, kappa_settings, log_level, mass_variances, lang=lang
             )
 
         # Shared per-grid-point arrays (allocated by subclass _allocate_values).
@@ -518,6 +521,7 @@ class RTACalculator(ConductivityCalculatorBase):
         is_gamma_detail: bool = False,
         sigma_cutoff_width: float | None = None,
         log_level: int = 0,
+        lang: Literal["C", "Python", "Rust"] = "C",
     ):
         """Init method."""
         self._scattering_solver = scattering_solver
@@ -544,6 +548,7 @@ class RTACalculator(ConductivityCalculatorBase):
             mass_variances=mass_variances,
             sigma_cutoff_width=sigma_cutoff_width,
             log_level=log_level,
+            lang=lang,
         )
 
         if self._kappa_settings.temperatures is not None:
@@ -820,6 +825,7 @@ class LBTECalculator(ConductivityCalculatorBase):
         is_full_pp: bool = False,
         sigma_cutoff_width: float | None = None,
         log_level: int = 0,
+        lang: Literal["C", "Python", "Rust"] = "C",
     ) -> None:
         """Init method."""
         self._collision_solver = collision_solver
@@ -835,6 +841,7 @@ class LBTECalculator(ConductivityCalculatorBase):
             mass_variances=mass_variances,
             sigma_cutoff_width=sigma_cutoff_width,
             log_level=log_level,
+            lang=lang,
         )
 
         # Allocate arrays.

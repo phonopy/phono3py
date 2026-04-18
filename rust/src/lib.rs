@@ -16,6 +16,7 @@ mod dynmat;
 mod grgrid;
 mod imag_self_energy;
 mod interaction;
+mod isotope;
 mod pp_collision;
 mod real_to_reciprocal;
 mod recip_rotations;
@@ -2684,6 +2685,226 @@ fn py_pp_collision_with_sigma<'py>(
     Ok(())
 }
 
+/// Gaussian-smearing isotope scattering strength.  Mirrors
+/// ``phono3py._phono3py.isotope_strength``.
+///
+/// Shapes:
+/// - ``gamma``: ``(num_band0,)`` ``float64``, write-only.
+/// - ``ir_grid_points``: ``(num_grid_points,)`` ``int64``.
+/// - ``weights``: ``(num_bz_gp,)`` ``float64``; indexed by BZ grid
+///   point, so ``weights.len() >= max(ir_grid_points) + 1``.
+/// - ``mass_variances``: ``(num_patom,)`` ``float64``.
+/// - ``frequencies``: ``(num_grid, num_band)`` ``float64``.
+/// - ``eigenvectors``: ``(num_grid, num_band, num_band)`` ``complex128``
+///   row-major ``[component, band]``.
+/// - ``band_indices``: ``(num_band0,)`` ``int64``.
+#[pyfunction]
+#[pyo3(name = "isotope_strength")]
+#[allow(clippy::too_many_arguments)]
+fn py_isotope_strength<'py>(
+    py: Python<'py>,
+    mut gamma: PyReadwriteArray1<'py, f64>,
+    grid_point: i64,
+    ir_grid_points: PyReadonlyArray1<'py, i64>,
+    weights: PyReadonlyArray1<'py, f64>,
+    mass_variances: PyReadonlyArray1<'py, f64>,
+    frequencies: PyReadonlyArray2<'py, f64>,
+    eigenvectors: PyReadonlyArray3<'py, Complex64>,
+    band_indices: PyReadonlyArray1<'py, i64>,
+    sigma: f64,
+    cutoff_frequency: f64,
+) -> PyResult<()> {
+    let freq_shape = frequencies.shape();
+    if freq_shape.len() != 2 {
+        return Err(PyValueError::new_err(
+            "frequencies must have shape (num_grid, num_band)",
+        ));
+    }
+    let num_grid = freq_shape[0];
+    let num_band = freq_shape[1];
+    let num_band0 = band_indices.shape()[0];
+
+    if gamma.shape() != [num_band0] {
+        return Err(PyValueError::new_err("gamma must have shape (num_band0,)"));
+    }
+    if eigenvectors.shape() != [num_grid, num_band, num_band] {
+        return Err(PyValueError::new_err(
+            "eigenvectors must have shape (num_grid, num_band, num_band)",
+        ));
+    }
+    if mass_variances.shape() != [num_band / 3] {
+        return Err(PyValueError::new_err(
+            "mass_variances must have shape (num_band / 3,)",
+        ));
+    }
+    if grid_point < 0 || (grid_point as usize) >= num_grid {
+        return Err(PyValueError::new_err("grid_point out of range"));
+    }
+
+    let ir_view = ir_grid_points.as_array();
+    let ir_slice = ir_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("ir_grid_points must be C-contiguous"))?;
+    let weights_view = weights.as_array();
+    let weights_slice = weights_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("weights must be C-contiguous"))?;
+    let mv_view = mass_variances.as_array();
+    let mv_slice = mv_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("mass_variances must be C-contiguous"))?;
+    let freqs_view = frequencies.as_array();
+    let freqs_slice = freqs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("frequencies must be C-contiguous"))?;
+    let eig_view = eigenvectors.as_array();
+    let eig_flat = eig_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("eigenvectors must be C-contiguous"))?;
+    let complex_readonly_as_cmplx = |s: &[Complex64]| -> &[Cmplx] {
+        let n = s.len();
+        let ptr = s.as_ptr() as *const Cmplx;
+        unsafe { std::slice::from_raw_parts(ptr, n) }
+    };
+    let eig_slice = complex_readonly_as_cmplx(eig_flat);
+    let bi_view = band_indices.as_array();
+    let bi_slice = bi_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("band_indices must be C-contiguous"))?;
+
+    let gamma_slice = gamma
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("gamma must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        isotope::isotope_strength(
+            gamma_slice,
+            grid_point,
+            ir_slice,
+            weights_slice,
+            mv_slice,
+            freqs_slice,
+            eig_slice,
+            bi_slice,
+            num_band,
+            sigma,
+            cutoff_frequency,
+        );
+    });
+    Ok(())
+}
+
+/// Tetrahedron-method isotope scattering strength.  Mirrors
+/// ``phono3py._phono3py.thm_isotope_strength``.
+///
+/// Shapes: same as ``isotope_strength`` plus
+/// - ``integration_weights``: ``(num_grid_points, num_band0, num_band)``
+///   ``float64``.
+#[pyfunction]
+#[pyo3(name = "thm_isotope_strength")]
+#[allow(clippy::too_many_arguments)]
+fn py_thm_isotope_strength<'py>(
+    py: Python<'py>,
+    mut gamma: PyReadwriteArray1<'py, f64>,
+    grid_point: i64,
+    ir_grid_points: PyReadonlyArray1<'py, i64>,
+    weights: PyReadonlyArray1<'py, f64>,
+    mass_variances: PyReadonlyArray1<'py, f64>,
+    frequencies: PyReadonlyArray2<'py, f64>,
+    eigenvectors: PyReadonlyArray3<'py, Complex64>,
+    band_indices: PyReadonlyArray1<'py, i64>,
+    integration_weights: PyReadonlyArray3<'py, f64>,
+    cutoff_frequency: f64,
+) -> PyResult<()> {
+    let freq_shape = frequencies.shape();
+    if freq_shape.len() != 2 {
+        return Err(PyValueError::new_err(
+            "frequencies must have shape (num_grid, num_band)",
+        ));
+    }
+    let num_grid = freq_shape[0];
+    let num_band = freq_shape[1];
+    let num_band0 = band_indices.shape()[0];
+
+    if gamma.shape() != [num_band0] {
+        return Err(PyValueError::new_err("gamma must have shape (num_band0,)"));
+    }
+    if eigenvectors.shape() != [num_grid, num_band, num_band] {
+        return Err(PyValueError::new_err(
+            "eigenvectors must have shape (num_grid, num_band, num_band)",
+        ));
+    }
+    if mass_variances.shape() != [num_band / 3] {
+        return Err(PyValueError::new_err(
+            "mass_variances must have shape (num_band / 3,)",
+        ));
+    }
+    if integration_weights.shape() != [num_grid, num_band0, num_band] {
+        return Err(PyValueError::new_err(
+            "integration_weights must have shape (num_grid, num_band0, num_band)",
+        ));
+    }
+    if grid_point < 0 || (grid_point as usize) >= num_grid {
+        return Err(PyValueError::new_err("grid_point out of range"));
+    }
+
+    let ir_view = ir_grid_points.as_array();
+    let ir_slice = ir_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("ir_grid_points must be C-contiguous"))?;
+    let weights_view = weights.as_array();
+    let weights_slice = weights_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("weights must be C-contiguous"))?;
+    let mv_view = mass_variances.as_array();
+    let mv_slice = mv_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("mass_variances must be C-contiguous"))?;
+    let freqs_view = frequencies.as_array();
+    let freqs_slice = freqs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("frequencies must be C-contiguous"))?;
+    let eig_view = eigenvectors.as_array();
+    let eig_flat = eig_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("eigenvectors must be C-contiguous"))?;
+    let complex_readonly_as_cmplx = |s: &[Complex64]| -> &[Cmplx] {
+        let n = s.len();
+        let ptr = s.as_ptr() as *const Cmplx;
+        unsafe { std::slice::from_raw_parts(ptr, n) }
+    };
+    let eig_slice = complex_readonly_as_cmplx(eig_flat);
+    let bi_view = band_indices.as_array();
+    let bi_slice = bi_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("band_indices must be C-contiguous"))?;
+    let iw_view = integration_weights.as_array();
+    let iw_slice = iw_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("integration_weights must be C-contiguous"))?;
+
+    let gamma_slice = gamma
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("gamma must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        isotope::thm_isotope_strength(
+            gamma_slice,
+            grid_point,
+            ir_slice,
+            weights_slice,
+            mv_slice,
+            freqs_slice,
+            eig_slice,
+            bi_slice,
+            num_band,
+            iw_slice,
+            cutoff_frequency,
+        );
+    });
+    Ok(())
+}
+
 #[pymodule]
 fn phono3py_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_snf3x3, m)?)?;
@@ -2717,5 +2938,7 @@ fn phono3py_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_interaction, m)?)?;
     m.add_function(wrap_pyfunction!(py_pp_collision, m)?)?;
     m.add_function(wrap_pyfunction!(py_pp_collision_with_sigma, m)?)?;
+    m.add_function(wrap_pyfunction!(py_isotope_strength, m)?)?;
+    m.add_function(wrap_pyfunction!(py_thm_isotope_strength, m)?)?;
     Ok(())
 }
