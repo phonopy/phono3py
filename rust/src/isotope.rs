@@ -10,13 +10,7 @@
 use rayon::prelude::*;
 
 use crate::common::Cmplx;
-
-/// Gaussian normalized so that its integral is 1, matching
-/// `funcs_gaussian` in `c/funcs.c`.
-#[inline]
-fn gaussian(x: f64, sigma: f64) -> f64 {
-    (-(x * x) / (2.0 * sigma * sigma)).exp() / ((2.0 * std::f64::consts::PI).sqrt() * sigma)
-}
+use crate::funcs::gaussian;
 
 const M_2PI: f64 = std::f64::consts::TAU;
 

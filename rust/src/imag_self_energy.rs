@@ -10,12 +10,7 @@
 
 use rayon::prelude::*;
 
-/// Bose-Einstein occupation `1 / (exp(x / T) - 1)` for `x`, `T` in
-/// consistent (THz) units.
-#[inline]
-fn bose_einstein(x: f64, temperature_thz: f64) -> f64 {
-    1.0 / ((x / temperature_thz).exp() - 1.0)
-}
+use crate::funcs::bose_einstein;
 
 /// Build the non-zero entries of `g_zero` as `(band0, j, k, flat_idx)`
 /// tuples.  `g_zero` is `(num_band0, num_band, num_band)` flat for
@@ -431,14 +426,6 @@ pub fn get_detailed_imag_self_energy_with_g(
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn bose_einstein_basic() {
-        // T -> infinity limit: n ~ T/x -> large.  At T = x: n = 1/(e - 1).
-        let n = bose_einstein(1.0, 1.0);
-        let expected = 1.0 / (std::f64::consts::E - 1.0);
-        assert!((n - expected).abs() < 1e-15);
-    }
 
     #[test]
     fn set_g_pos_filters_zeros() {

@@ -13,11 +13,13 @@ use crate::common::Cmplx;
 mod bzgrid;
 mod common;
 mod dynmat;
+mod funcs;
 mod grgrid;
 mod imag_self_energy;
 mod interaction;
 mod isotope;
 mod pp_collision;
+mod real_self_energy;
 mod real_to_reciprocal;
 mod recip_rotations;
 mod reciprocal_to_normal;
@@ -2905,6 +2907,221 @@ fn py_thm_isotope_strength<'py>(
     Ok(())
 }
 
+/// Real-part of the bubble-diagram self-energy at on-shell band
+/// frequencies.  Mirrors ``phono3py._phono3py.real_self_energy_at_bands``.
+///
+/// Shapes:
+/// - ``real_self_energy``: ``(num_band0,)`` ``float64``, write-only.
+/// - ``fc3_normal_squared``: ``(num_triplets, num_band0, num_band,
+///   num_band)`` ``float64``.
+/// - ``triplets``: ``(num_triplets, 3)`` ``int64``.
+/// - ``triplet_weights``: ``(num_triplets,)`` ``int64``.
+/// - ``frequencies``: ``(num_grid, num_band)`` ``float64``.
+/// - ``band_indices``: ``(num_band0,)`` ``int64``.
+#[pyfunction]
+#[pyo3(name = "real_self_energy_at_bands")]
+#[allow(clippy::too_many_arguments)]
+fn py_real_self_energy_at_bands<'py>(
+    py: Python<'py>,
+    mut real_self_energy: PyReadwriteArray1<'py, f64>,
+    fc3_normal_squared: PyReadonlyArray4<'py, f64>,
+    triplets: PyReadonlyArray2<'py, i64>,
+    triplet_weights: PyReadonlyArray1<'py, i64>,
+    frequencies: PyReadonlyArray2<'py, f64>,
+    band_indices: PyReadonlyArray1<'py, i64>,
+    temperature_thz: f64,
+    epsilon: f64,
+    unit_conversion_factor: f64,
+    cutoff_frequency: f64,
+) -> PyResult<()> {
+    let fc3_shape = fc3_normal_squared.shape();
+    if fc3_shape.len() != 4 {
+        return Err(PyValueError::new_err(
+            "fc3_normal_squared must have shape (num_triplets, num_band0, num_band, num_band)",
+        ));
+    }
+    let num_triplets = fc3_shape[0];
+    let num_band0 = fc3_shape[1];
+    let num_band = fc3_shape[2];
+    if fc3_shape[3] != num_band {
+        return Err(PyValueError::new_err(
+            "fc3_normal_squared last two axes must be equal (num_band)",
+        ));
+    }
+    if real_self_energy.shape() != [num_band0] {
+        return Err(PyValueError::new_err(
+            "real_self_energy must have shape (num_band0,)",
+        ));
+    }
+    if band_indices.shape() != [num_band0] {
+        return Err(PyValueError::new_err(
+            "band_indices must have shape (num_band0,)",
+        ));
+    }
+    if triplets.shape() != [num_triplets, 3] {
+        return Err(PyValueError::new_err(
+            "triplets must have shape (num_triplets, 3)",
+        ));
+    }
+    if triplet_weights.shape() != [num_triplets] {
+        return Err(PyValueError::new_err(
+            "triplet_weights must have shape (num_triplets,)",
+        ));
+    }
+    let freq_shape = frequencies.shape();
+    if freq_shape.len() != 2 || freq_shape[1] != num_band {
+        return Err(PyValueError::new_err(
+            "frequencies must have shape (num_grid, num_band)",
+        ));
+    }
+
+    let fc3_view = fc3_normal_squared.as_array();
+    let fc3_slice = fc3_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("fc3_normal_squared must be C-contiguous"))?;
+    let triplets_view = triplets.as_array();
+    let triplets_flat = triplets_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("triplets must be C-contiguous"))?;
+    let triplets_slice: &[[i64; 3]] = group_as_array(triplets_flat);
+    let weights_view = triplet_weights.as_array();
+    let weights_slice = weights_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("triplet_weights must be C-contiguous"))?;
+    let freqs_view = frequencies.as_array();
+    let freqs_slice = freqs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("frequencies must be C-contiguous"))?;
+    let bi_view = band_indices.as_array();
+    let bi_slice = bi_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("band_indices must be C-contiguous"))?;
+    let rse_slice = real_self_energy
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("real_self_energy must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        real_self_energy::real_self_energy_at_bands(
+            rse_slice,
+            fc3_slice,
+            num_triplets,
+            num_band0,
+            num_band,
+            bi_slice,
+            freqs_slice,
+            triplets_slice,
+            weights_slice,
+            epsilon,
+            temperature_thz,
+            unit_conversion_factor,
+            cutoff_frequency,
+        );
+    });
+    Ok(())
+}
+
+/// Real-part of the bubble-diagram self-energy at a single external
+/// frequency point.  Mirrors
+/// ``phono3py._phono3py.real_self_energy_at_frequency_point``.
+#[pyfunction]
+#[pyo3(name = "real_self_energy_at_frequency_point")]
+#[allow(clippy::too_many_arguments)]
+fn py_real_self_energy_at_frequency_point<'py>(
+    py: Python<'py>,
+    mut real_self_energy: PyReadwriteArray1<'py, f64>,
+    frequency_point: f64,
+    fc3_normal_squared: PyReadonlyArray4<'py, f64>,
+    triplets: PyReadonlyArray2<'py, i64>,
+    triplet_weights: PyReadonlyArray1<'py, i64>,
+    frequencies: PyReadonlyArray2<'py, f64>,
+    band_indices: PyReadonlyArray1<'py, i64>,
+    temperature_thz: f64,
+    epsilon: f64,
+    unit_conversion_factor: f64,
+    cutoff_frequency: f64,
+) -> PyResult<()> {
+    let fc3_shape = fc3_normal_squared.shape();
+    if fc3_shape.len() != 4 {
+        return Err(PyValueError::new_err(
+            "fc3_normal_squared must have shape (num_triplets, num_band0, num_band, num_band)",
+        ));
+    }
+    let num_triplets = fc3_shape[0];
+    let num_band0 = fc3_shape[1];
+    let num_band = fc3_shape[2];
+    if fc3_shape[3] != num_band {
+        return Err(PyValueError::new_err(
+            "fc3_normal_squared last two axes must be equal (num_band)",
+        ));
+    }
+    if real_self_energy.shape() != [num_band0] {
+        return Err(PyValueError::new_err(
+            "real_self_energy must have shape (num_band0,)",
+        ));
+    }
+    if band_indices.shape() != [num_band0] {
+        return Err(PyValueError::new_err(
+            "band_indices must have shape (num_band0,)",
+        ));
+    }
+    if triplets.shape() != [num_triplets, 3] {
+        return Err(PyValueError::new_err(
+            "triplets must have shape (num_triplets, 3)",
+        ));
+    }
+    if triplet_weights.shape() != [num_triplets] {
+        return Err(PyValueError::new_err(
+            "triplet_weights must have shape (num_triplets,)",
+        ));
+    }
+    let freq_shape = frequencies.shape();
+    if freq_shape.len() != 2 || freq_shape[1] != num_band {
+        return Err(PyValueError::new_err(
+            "frequencies must have shape (num_grid, num_band)",
+        ));
+    }
+
+    let fc3_view = fc3_normal_squared.as_array();
+    let fc3_slice = fc3_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("fc3_normal_squared must be C-contiguous"))?;
+    let triplets_view = triplets.as_array();
+    let triplets_flat = triplets_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("triplets must be C-contiguous"))?;
+    let triplets_slice: &[[i64; 3]] = group_as_array(triplets_flat);
+    let weights_view = triplet_weights.as_array();
+    let weights_slice = weights_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("triplet_weights must be C-contiguous"))?;
+    let freqs_view = frequencies.as_array();
+    let freqs_slice = freqs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("frequencies must be C-contiguous"))?;
+    let rse_slice = real_self_energy
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("real_self_energy must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        real_self_energy::real_self_energy_at_frequency_point(
+            rse_slice,
+            frequency_point,
+            fc3_slice,
+            num_triplets,
+            num_band0,
+            num_band,
+            freqs_slice,
+            triplets_slice,
+            weights_slice,
+            epsilon,
+            temperature_thz,
+            unit_conversion_factor,
+            cutoff_frequency,
+        );
+    });
+    Ok(())
+}
+
 #[pymodule]
 fn phono3py_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_snf3x3, m)?)?;
@@ -2940,5 +3157,7 @@ fn phono3py_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_pp_collision_with_sigma, m)?)?;
     m.add_function(wrap_pyfunction!(py_isotope_strength, m)?)?;
     m.add_function(wrap_pyfunction!(py_thm_isotope_strength, m)?)?;
+    m.add_function(wrap_pyfunction!(py_real_self_energy_at_bands, m)?)?;
+    m.add_function(wrap_pyfunction!(py_real_self_energy_at_frequency_point, m)?)?;
     Ok(())
 }
