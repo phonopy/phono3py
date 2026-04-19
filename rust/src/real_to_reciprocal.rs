@@ -43,8 +43,9 @@ fn get_phase_factor(q: Vec3D, svecs: &[Vec3D], multi: [i64; 2]) -> Cmplx {
     for i in 0..count {
         let s = svecs[base + i];
         let phase = (q[0] * s[0] + q[1] * s[1] + q[2] * s[2]) * 2.0 * PI;
-        sum_real += phase.cos();
-        sum_imag += phase.sin();
+        let (sin_p, cos_p) = phase.sin_cos();
+        sum_real += cos_p;
+        sum_imag += sin_p;
     }
     let inv = 1.0 / count as f64;
     [sum_real * inv, sum_imag * inv]
@@ -65,7 +66,8 @@ fn get_pre_phase_factor(
         phase += svec[j] * (q_vecs[0][j] + q_vecs[1][j] + q_vecs[2][j]);
     }
     phase *= 2.0 * PI;
-    [phase.cos(), phase.sin()]
+    let (sin_p, cos_p) = phase.sin_cos();
+    [cos_p, sin_p]
 }
 
 /// Accumulate the 3x3x3 fc3 element block at primitive triplet
