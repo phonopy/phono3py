@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+import importlib.util
+
 import numpy as np
 
 from phono3py import Phono3py
 from phono3py.phonon3.collision_matrix import CollisionMatrix
 from phono3py.phonon3.interaction import Interaction
+
+_HAS_RUST = importlib.util.find_spec("phono3py_rs") is not None
+_LANGS: tuple[str, ...] = ("C", "Python", "Rust") if _HAS_RUST else ("C", "Python")
 
 
 def _get_interaction(ph3: Phono3py, mesh: list[int]) -> Interaction:
@@ -35,7 +40,7 @@ def test_collision_matrix_py_vs_c_reducible(si_pbesol: Phono3py):
     temperature = 300.0
 
     results = {}
-    for lang in ("C", "Python", "Rust"):
+    for lang in _LANGS:
         cm = CollisionMatrix(itr, lang=lang)
         cm.set_grid_point(grid_point)
         cm.temperature = temperature
@@ -44,7 +49,8 @@ def test_collision_matrix_py_vs_c_reducible(si_pbesol: Phono3py):
         results[lang] = cm.get_collision_matrix().copy()
 
     np.testing.assert_allclose(results["Python"], results["C"], rtol=0, atol=1e-10)
-    np.testing.assert_allclose(results["Rust"], results["C"], rtol=0, atol=1e-10)
+    if _HAS_RUST:
+        np.testing.assert_allclose(results["Rust"], results["C"], rtol=0, atol=1e-10)
 
 
 def test_collision_matrix_py_vs_c_irreducible(si_pbesol: Phono3py):
@@ -66,7 +72,7 @@ def test_collision_matrix_py_vs_c_irreducible(si_pbesol: Phono3py):
     )
 
     results = {}
-    for lang in ("C", "Python", "Rust"):
+    for lang in _LANGS:
         cm = CollisionMatrix(itr, rot_grid_points=rot_grid_points, lang=lang)
         cm.set_grid_point(grid_point)
         cm.temperature = temperature
@@ -75,7 +81,8 @@ def test_collision_matrix_py_vs_c_irreducible(si_pbesol: Phono3py):
         results[lang] = cm.get_collision_matrix().copy()
 
     np.testing.assert_allclose(results["Python"], results["C"], rtol=0, atol=1e-10)
-    np.testing.assert_allclose(results["Rust"], results["C"], rtol=0, atol=1e-10)
+    if _HAS_RUST:
+        np.testing.assert_allclose(results["Rust"], results["C"], rtol=0, atol=1e-10)
 
 
 def test_get_gp2tp_map_shapes(si_pbesol: Phono3py):

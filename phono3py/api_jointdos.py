@@ -189,6 +189,7 @@ class Phono3pyJointDos:
             force_SNF=False,
             SNF_coordinates=self._SNF_coordinates,
             store_dense_gp_map=True,
+            lang="Rust" if self._lang == "Rust" else "C",
         )
 
     def initialize(

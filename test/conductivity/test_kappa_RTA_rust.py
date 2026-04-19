@@ -23,8 +23,10 @@ from phono3py.phonon3.interaction import Interaction
 pytest.importorskip("phono3py_rs")
 
 
-def _build_interaction(ph3: Phono3py, mesh: Sequence[int]) -> Interaction:
-    """Build an Interaction with the default (C) phonon solver."""
+def _build_interaction(
+    ph3: Phono3py, mesh: Sequence[int], *, lang: str = "C"
+) -> Interaction:
+    """Build an Interaction with the given phonon-solver lang (default C)."""
     ph3.mesh_numbers = mesh
     assert ph3.grid is not None
     itr = Interaction(
@@ -33,6 +35,7 @@ def _build_interaction(ph3: Phono3py, mesh: Sequence[int]) -> Interaction:
         ph3.primitive_symmetry,
         fc3=ph3.fc3,
         cutoff_frequency=1e-4,
+        lang=lang,
     )
     itr.init_dynamical_matrix(ph3.fc2, ph3.phonon_supercell, ph3.phonon_primitive)
     itr.run_phonon_solver()
@@ -44,6 +47,7 @@ def _run_rta(
     mesh: Sequence[int],
     *,
     lang: str,
+    interaction_lang: str = "C",
     sigmas: Sequence[float | None] = (None,),
     is_isotope: bool = False,
     is_full_pp: bool = False,
@@ -51,7 +55,7 @@ def _run_rta(
     is_gamma_detail: bool = False,
 ) -> np.ndarray:
     """Run one RTA solve and return a copy of the kappa tensor."""
-    itr = _build_interaction(ph3, mesh)
+    itr = _build_interaction(ph3, mesh, lang=interaction_lang)
     rta = conductivity_calculator(
         itr,
         temperatures=np.array([300.0], dtype="double"),
@@ -123,3 +127,21 @@ def test_kappa_RTA_rust_vs_c_nosym(si_pbesol: Phono3py, si_pbesol_nosym: Phono3p
     kappa_c = _run_rta(si_pbesol_nosym, [4, 4, 4], lang="C")
     kappa_rust = _run_rta(si_pbesol_nosym, [4, 4, 4], lang="Rust")
     np.testing.assert_allclose(kappa_rust, kappa_c, rtol=1e-10, atol=1e-10)
+
+
+def test_kappa_RTA_rust_vs_c_full_rust(si_pbesol: Phono3py):
+    """All-Rust (phonon solver + conductivity) vs all-C, dense mesh.
+
+    The Rust and C phonon solvers can produce different eigenvectors
+    within degenerate subspaces, which propagates into the interaction
+    strength and kappa.  A denser mesh averages this down; the residual
+    tolerance is looser than in the other tests.
+
+    """
+    kappa_c = _run_rta(
+        si_pbesol, [11, 11, 11], lang="C", interaction_lang="C"
+    )
+    kappa_rust = _run_rta(
+        si_pbesol, [11, 11, 11], lang="Rust", interaction_lang="Rust"
+    )
+    np.testing.assert_allclose(kappa_rust, kappa_c, rtol=5e-3, atol=0.0)

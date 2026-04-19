@@ -2881,6 +2881,7 @@ class Phono3py:
                 force_SNF=False,
                 SNF_coordinates=self._SNF_coordinates,
                 store_dense_gp_map=True,
+                lang=self._lang,
             )
         except RuntimeError as e:
             if "Grid symmetry is broken." in str(e) and isinstance(mesh, (float, int)):
@@ -2893,6 +2894,7 @@ class Phono3py:
                     force_SNF=False,
                     SNF_coordinates=self._SNF_coordinates,
                     store_dense_gp_map=True,
+                    lang=self._lang,
                 )
             else:
                 msg = (

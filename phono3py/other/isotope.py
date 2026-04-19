@@ -157,6 +157,7 @@ class Isotope:
                 lattice=self._primitive.cell,
                 symmetry_dataset=primitive_symmetry.dataset,
                 use_grg=use_grg,
+                lang="Rust" if self._lang == "Rust" else "C",
             )
         else:
             self._bz_grid = bz_grid
