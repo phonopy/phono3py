@@ -762,9 +762,7 @@ class RTAScatteringSolver:
         num_temp = len(self._temperatures)
         num_sigma = len(self._sigmas)
 
-        gamma = np.zeros(
-            (num_sigma, num_temp, num_band0), dtype="double", order="C"
-        )
+        gamma = np.zeros((num_sigma, num_temp, num_band0), dtype="double", order="C")
         if self._is_N_U:
             self._gamma_N = np.zeros_like(gamma)
             self._gamma_U = np.zeros_like(gamma)
@@ -784,8 +782,7 @@ class RTAScatteringSolver:
 
         if self._log_level:
             print(
-                "Computing gamma at grid point %d (Rust low-memory)."
-                % grid_point,
+                "Computing gamma at grid point %d (Rust low-memory)." % grid_point,
                 flush=True,
             )
 
@@ -849,9 +846,7 @@ class RTAScatteringSolver:
         assert frequencies is not None
         assert eigenvectors is not None
 
-        tetrahedra = get_tetrahedra_relative_grid_address(
-            pp.bz_grid.microzone_lattice
-        )
+        tetrahedra = get_tetrahedra_relative_grid_address(pp.bz_grid.microzone_lattice)
         relative_grid_address = np.array(
             np.dot(tetrahedra, pp.bz_grid.P.T), dtype="int64", order="C"
         )
@@ -873,9 +868,7 @@ class RTAScatteringSolver:
         sigma_cutoffs = np.full(len(self._sigmas), sigma_cutoff_val, dtype="double")
 
         temperatures_thz = np.array(
-            self._temperatures
-            * get_physical_units().KB
-            / get_physical_units().THzToEv,
+            self._temperatures * get_physical_units().KB / get_physical_units().THzToEv,
             dtype="double",
         )
 
