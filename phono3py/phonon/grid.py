@@ -578,9 +578,7 @@ class BZGrid:
 
         rotations = np.zeros(rots.shape, dtype="int64", order="C")
         if not recgrid.transform_rotations(rotations, rots, d_diag, q):
-            raise RuntimeError(
-                "Grid symmetry is broken. Use generalized regular grid."
-            )
+            raise RuntimeError("Grid symmetry is broken. Use generalized regular grid.")
         return rotations
 
 
@@ -1041,9 +1039,7 @@ def get_grid_point_from_address(
 
     gps = np.zeros(adrs_array.shape[0], dtype="int64")
     for i, adrs in enumerate(adrs_array):
-        gps[i] = backend.grid_index_from_address(
-            np.ascontiguousarray(adrs), mesh_array
-        )
+        gps[i] = backend.grid_index_from_address(np.ascontiguousarray(adrs), mesh_array)
     return gps
 
 
@@ -1376,9 +1372,7 @@ def _relocate_BZ_grid_address(
         rec,
         bz_grid_type,
     )
-    bz_grid_addresses = np.ascontiguousarray(
-        bz_grid_addresses[:num_gp], dtype="int64"
-    )
+    bz_grid_addresses = np.ascontiguousarray(bz_grid_addresses[:num_gp], dtype="int64")
     bzg2grg = np.asarray(bzg2grg[:num_gp], dtype="int64")
     return bz_grid_addresses, bz_map, bzg2grg
 

@@ -106,9 +106,7 @@ def test_kappa_LBTE_rust_vs_c_full_rust(si_pbesol: Phono3py):
     tolerance is looser than in the other tests.
 
     """
-    kappa_c = _run_lbte(
-        si_pbesol, [11, 11, 11], lang="C", interaction_lang="C"
-    )
+    kappa_c = _run_lbte(si_pbesol, [11, 11, 11], lang="C", interaction_lang="C")
     kappa_rust = _run_lbte(
         si_pbesol, [11, 11, 11], lang="Rust", interaction_lang="Rust"
     )
