@@ -532,6 +532,7 @@ def _init_phono3py(
         make_r0_average=settings.is_fc3_r0_average,
         symprec=symprec,
         log_level=log_level,
+        lang="Rust" if settings.use_rust else "C",
     )
     phono3py.masses = settings.masses
     phono3py.band_indices = settings.band_indices
@@ -933,6 +934,7 @@ def _run_jdos_then_exit(
         is_mesh_symmetry=settings.is_mesh_symmetry,
         symprec=phono3py.symmetry.tolerance,
         log_level=log_level,
+        lang=phono3py.lang,
     )
 
     if log_level > 0:
@@ -974,6 +976,7 @@ def _run_isotope_then_exit(
         symprec=phono3py.symmetry.tolerance,
         cutoff_frequency=settings.cutoff_frequency,
         lapack_zheev_uplo=settings.lapack_zheev_uplo,
+        lang=phono3py.lang,
     )
     assert phono3py.fc2 is not None
     iso.init_dynamical_matrix(

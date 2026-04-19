@@ -109,6 +109,9 @@ class RealSelfEnergy:
         self.grid_point = grid_point
 
         self._lang: Literal["C", "Python", "Rust"] = lang
+        from phono3py._lang import log_dispatch
+
+        log_dispatch(lang, "RealSelfEnergy.__init__")
         self._frequency_: None = None
         self._pp_strength: NDArray[np.double] | None = None
         self._frequencies: NDArray[np.double] | None = None
@@ -618,6 +621,7 @@ def get_real_self_energy(
     write_hdf5: bool = True,
     output_filename: str | os.PathLike | None = None,
     log_level: int = 0,
+    lang: Literal["C", "Python", "Rust"] = "C",
 ) -> tuple[NDArray[np.double] | None, NDArray[np.double]]:
     """Real part of self energy at frequency points.
 
@@ -691,7 +695,7 @@ def get_real_self_energy(
             print("Running harmonic phonon calculations...")
         interaction.run_phonon_solver()
 
-    fst = RealSelfEnergy(interaction)
+    fst = RealSelfEnergy(interaction, lang=lang)
     mesh = interaction.mesh_numbers
     bz_grid = interaction.bz_grid
 

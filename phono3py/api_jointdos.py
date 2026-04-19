@@ -87,6 +87,7 @@ class Phono3pyJointDos:
         symprec: float = 1e-5,
         output_filename: str | os.PathLike | None = None,
         log_level: int = 0,
+        lang: Literal["C", "Python", "Rust"] = "C",
     ) -> None:
         """Init method."""
         self._primitive = primitive
@@ -121,6 +122,7 @@ class Phono3pyJointDos:
         self._symprec = symprec
         self._filename = output_filename
         self._log_level = log_level
+        self._lang: Literal["C", "Python", "Rust"] = lang
 
         self._bz_grid: BZGrid | None = None
         self._jdos: JointDos | None = None
@@ -208,6 +210,7 @@ class Phono3pyJointDos:
             symprec=self._symprec,
             filename=self._filename,
             log_level=self._log_level,
+            lang=self._lang,
         )
         if self._log_level:
             print("Generating grid system ... ", end="", flush=True)

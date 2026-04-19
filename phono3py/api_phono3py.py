@@ -199,6 +199,7 @@ class Phono3py:
         symprec: float = 1e-5,
         calculator: str | None = None,
         log_level: int = 0,
+        lang: Literal["C", "Rust"] = "C",
     ):
         """Init method.
 
@@ -256,6 +257,10 @@ class Phono3py:
             of physical units. Default is None, which is equivalent to "vasp".
         log_level : int, optional
             Verbosity control. Default is 0. This can be 0, 1, or 2.
+        lang : Literal["C", "Rust"], optional
+            Backend implementation for compute-heavy kernels. "C" (default)
+            uses the existing C extension. "Rust" selects the experimental
+            phono3py-rs backend. Default is "C".
 
         """
         self._symprec = symprec
@@ -278,6 +283,7 @@ class Phono3py:
         self._cutoff_frequency = cutoff_frequency
         self._calculator = calculator
         self._log_level = log_level
+        self._lang: Literal["C", "Rust"] = lang
 
         # Create supercell and primitive cell
         self._unitcell = unitcell
@@ -374,6 +380,17 @@ class Phono3py:
 
         """
         return self._calculator
+
+    @property
+    def lang(self) -> Literal["C", "Rust"]:
+        """Return the selected backend implementation.
+
+        Literal["C", "Rust"]
+            "C" uses the C extension; "Rust" uses the experimental
+            phono3py-rs backend.
+
+        """
+        return self._lang
 
     @property
     def fc3(self) -> NDArray[np.double] | None:
@@ -1251,6 +1268,7 @@ class Phono3py:
             make_r0_average=self._make_r0_average,
             lapack_zheev_uplo=lapack_zheev_uplo,
             openmp_per_triplets=openmp_per_triplets,
+            lang=self._lang,
         )
         self._interaction.nac_q_direction = nac_q_direction
         self._init_dynamical_matrix()
@@ -2021,6 +2039,7 @@ class Phono3py:
             return_gamma_detail=keep_gamma_detail,
             output_filename=output_filename,
             log_level=self._log_level,
+            lang=self._lang,
         )
         if keep_gamma_detail:
             self._ise_params = ImagSelfEnergyValues(
@@ -2142,6 +2161,7 @@ class Phono3py:
             write_hdf5=write_hdf5,
             output_filename=output_filename,
             log_level=self._log_level,
+            lang=self._lang,
         )
 
         if write_txt:
@@ -2454,6 +2474,7 @@ class Phono3py:
                 input_filename=input_filename,
                 output_filename=output_filename,
                 log_level=_log_level,
+                lang=self._lang,
             )
         else:
             self._thermal_conductivity = get_thermal_conductivity_RTA(
@@ -2482,6 +2503,7 @@ class Phono3py:
                 input_filename=input_filename,
                 output_filename=output_filename,
                 log_level=_log_level,
+                lang=self._lang,
             )
 
     def save(

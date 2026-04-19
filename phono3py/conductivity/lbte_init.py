@@ -280,6 +280,7 @@ def get_thermal_conductivity_LBTE(
     input_filename: str | os.PathLike | None = None,
     output_filename: str | os.PathLike | None = None,
     log_level: int = 0,
+    lang: Literal["C", "Python", "Rust"] = "C",
 ) -> LBTECalculator:
     """Calculate lattice thermal conductivity by direct solution."""
     _sigmas = [None] if sigmas is None else list(sigmas)
@@ -337,6 +338,7 @@ def get_thermal_conductivity_LBTE(
         input_filename=input_filename,
         output_filename=output_filename,
         log_level=log_level,
+        lang=lang,
     )
 
 
@@ -369,6 +371,7 @@ def _run_standard_lbte(
     input_filename: str | os.PathLike | None,
     output_filename: str | os.PathLike | None,
     log_level: int,
+    lang: Literal["C", "Python", "Rust"],
 ) -> LBTECalculator:
     """Build and run an LBTECalculator."""
     lbte = conductivity_calculator(
@@ -391,6 +394,7 @@ def _run_standard_lbte(
         pinv_solver=pinv_solver,
         pinv_method=pinv_method,
         log_level=log_level,
+        lang=lang,
     )
     assert isinstance(lbte, LBTECalculator)
 

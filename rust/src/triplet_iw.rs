@@ -309,6 +309,72 @@ pub fn neighboring_grid_points(
     Ok(out)
 }
 
+/// Public: parallel batch of `neighboring_grid_points` over many
+/// `grid_points`.  Mirrors `ph3py_get_neighboring_gird_points`.  `out`
+/// is `num_grid_points * relative_grid_address.len()` long in row-major
+/// order: chunk `i` holds the neighbours of `grid_points[i]`.
+///
+/// Caller must ensure `out.len() == grid_points.len() * relative_grid_address.len()`.
+pub fn neighboring_grid_points_many(
+    out: &mut [i64],
+    grid_points: &[i64],
+    relative_grid_address: &[Vec3I],
+    bzgrid: &BzGridView,
+) -> Result<(), BzGridError> {
+    let num_rga = relative_grid_address.len();
+    out.par_chunks_mut(num_rga)
+        .zip(grid_points.par_iter())
+        .try_for_each(|(chunk, &gp)| {
+            fill_neighboring_grid_points(chunk, gp, relative_grid_address, bzgrid)
+        })
+}
+
+/// Public: tetrahedron-method integration weights for many grid points.
+/// Mirrors `ph3py_get_thm_integration_weights_at_grid_points`.
+///
+/// `iw` is `(num_gp, num_fp, num_band)` in C-contiguous layout.
+/// `relative_grid_address` is the 24-tetrahedra vertex offset table.
+/// `frequencies` is `(num_ir, num_band)` flat; `gp2irgp_map` maps each
+/// BZ-grid index to its row in `frequencies`.  Parallelised over grid
+/// points (output chunks are disjoint).
+pub fn integration_weights_at_grid_points(
+    iw: &mut [f64],
+    frequency_points: &[f64],
+    relative_grid_address: &[[Vec3I; 4]; 24],
+    grid_points: &[i64],
+    frequencies: &[f64],
+    num_band: usize,
+    bzgrid: &BzGridView,
+    gp2irgp_map: &[i64],
+    function: WeightFunction,
+) -> Result<(), BzGridError> {
+    let num_fp = frequency_points.len();
+    let chunk_size = num_fp * num_band;
+
+    iw.par_chunks_mut(chunk_size)
+        .zip(grid_points.par_iter())
+        .try_for_each(|(iw_chunk, &gp)| -> Result<(), BzGridError> {
+            let mut vertices = [[0i64; 4]; 24];
+            for (j, tet) in relative_grid_address.iter().enumerate() {
+                fill_neighboring_grid_points(&mut vertices[j], gp, tet, bzgrid)?;
+            }
+            let mut freq_vertices = [[0.0f64; 4]; 24];
+            for bi in 0..num_band {
+                for j in 0..24 {
+                    for k in 0..4 {
+                        let ir = gp2irgp_map[vertices[j][k] as usize] as usize;
+                        freq_vertices[j][k] = frequencies[ir * num_band + bi];
+                    }
+                }
+                for j in 0..num_fp {
+                    iw_chunk[j * num_band + bi] =
+                        integration_weight(frequency_points[j], &freq_vertices, function);
+                }
+            }
+            Ok(())
+        })
+}
+
 fn fill_neighboring_grid_points(
     out: &mut [i64],
     grid_point: i64,

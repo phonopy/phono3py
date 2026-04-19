@@ -11,8 +11,10 @@ use pyo3::prelude::*;
 use crate::common::Cmplx;
 
 mod bzgrid;
+mod collision_matrix;
 mod common;
 mod dynmat;
+mod fc3;
 mod funcs;
 mod grgrid;
 mod imag_self_energy;
@@ -34,6 +36,7 @@ use bzgrid::{BzGridAddressesError, RotateBzGridError};
 use recip_rotations::ReciprocalRotationsError;
 use snf3x3::Snf3x3Error;
 use transform_rotations::TransformRotationsError;
+use tetrahedron_method::WeightFunction;
 use triplet::RelativeGridAddress;
 use triplet_grid::BzTripletsError;
 use triplet_iw::{BzGridError, BzGridView, TpType};
@@ -1771,9 +1774,11 @@ fn py_imag_self_energy_with_g<'py>(
     }
 
     let g_shape = g.shape();
-    if g_shape.len() != 5 || g_shape[0] != 2 || g_shape[1] != num_triplets {
+    // Accept >=2 on axis 0: CollisionMatrix callers pass the (3, ...)
+    // type-3 layout but the kernel only reads slabs 0 and 1.
+    if g_shape.len() != 5 || g_shape[0] < 2 || g_shape[1] != num_triplets {
         return Err(PyValueError::new_err(
-            "g must have shape (2, num_triplets, dim, num_band, num_band)",
+            "g must have shape (>=2, num_triplets, dim, num_band, num_band)",
         ));
     }
     let num_freq_points = g_shape[2];
@@ -3122,6 +3127,887 @@ fn py_real_self_energy_at_frequency_point<'py>(
     Ok(())
 }
 
+/// Collision matrix for direct LBTE solution with k-star reduction.
+/// Mirrors ``phono3py._phono3py.collision_matrix``.
+///
+/// Shapes:
+/// - ``collision_matrix``: ``(num_band0, 3, num_ir_gp, num_band, 3)``
+///   ``float64``, accumulated.
+/// - ``fc3_normal_squared``: ``(num_triplets, num_band0, num_band,
+///   num_band)`` ``float64``.
+/// - ``frequencies``: ``(num_grid, num_band)`` ``float64``.
+/// - ``g``: ``(3, num_triplets, num_band0, num_band, num_band)``
+///   ``float64``; only the type-3 slab ``g[2]`` is read.
+/// - ``triplets``: ``(num_triplets, 3)`` ``int64``.
+/// - ``triplets_map``, ``map_q``: ``(num_gp,)`` ``int64``.
+/// - ``rot_grid_points``: ``(num_ir_gp, num_rot)`` ``int64``.
+/// - ``rotations_cartesian``: ``(num_rot, 3, 3)`` ``float64``.
+#[pyfunction]
+#[pyo3(name = "collision_matrix")]
+#[allow(clippy::too_many_arguments)]
+fn py_collision_matrix<'py>(
+    py: Python<'py>,
+    mut collision_matrix: PyReadwriteArray5<'py, f64>,
+    fc3_normal_squared: PyReadonlyArray4<'py, f64>,
+    frequencies: PyReadonlyArray2<'py, f64>,
+    g: PyReadonlyArray5<'py, f64>,
+    triplets: PyReadonlyArray2<'py, i64>,
+    triplets_map: PyReadonlyArray1<'py, i64>,
+    map_q: PyReadonlyArray1<'py, i64>,
+    rot_grid_points: PyReadonlyArray2<'py, i64>,
+    rotations_cartesian: PyReadonlyArray3<'py, f64>,
+    temperature_thz: f64,
+    unit_conversion_factor: f64,
+    cutoff_frequency: f64,
+) -> PyResult<()> {
+    let fc3_shape = fc3_normal_squared.shape();
+    if fc3_shape.len() != 4 {
+        return Err(PyValueError::new_err(
+            "fc3_normal_squared must have shape (num_triplets, num_band0, num_band, num_band)",
+        ));
+    }
+    let num_triplets = fc3_shape[0];
+    let num_band0 = fc3_shape[1];
+    let num_band = fc3_shape[2];
+    if fc3_shape[3] != num_band {
+        return Err(PyValueError::new_err(
+            "fc3_normal_squared last two axes must be equal (num_band)",
+        ));
+    }
+    let num_gp = triplets_map.shape()[0];
+    if map_q.shape() != [num_gp] {
+        return Err(PyValueError::new_err("map_q must have shape (num_gp,)"));
+    }
+    let rot_shape = rot_grid_points.shape();
+    if rot_shape.len() != 2 {
+        return Err(PyValueError::new_err(
+            "rot_grid_points must have shape (num_ir_gp, num_rot)",
+        ));
+    }
+    let num_ir_gp = rot_shape[0];
+    let num_rot = rot_shape[1];
+    if rotations_cartesian.shape() != [num_rot, 3, 3] {
+        return Err(PyValueError::new_err(
+            "rotations_cartesian must have shape (num_rot, 3, 3)",
+        ));
+    }
+    if collision_matrix.shape() != [num_band0, 3, num_ir_gp, num_band, 3] {
+        return Err(PyValueError::new_err(
+            "collision_matrix must have shape (num_band0, 3, num_ir_gp, num_band, 3)",
+        ));
+    }
+    if triplets.shape() != [num_triplets, 3] {
+        return Err(PyValueError::new_err(
+            "triplets must have shape (num_triplets, 3)",
+        ));
+    }
+    let g_shape = g.shape();
+    if g_shape.len() != 5
+        || g_shape[0] != 3
+        || g_shape[1] != num_triplets
+        || g_shape[2] != num_band0
+        || g_shape[3] != num_band
+        || g_shape[4] != num_band
+    {
+        return Err(PyValueError::new_err(
+            "g must have shape (3, num_triplets, num_band0, num_band, num_band)",
+        ));
+    }
+    let freq_shape = frequencies.shape();
+    if freq_shape.len() != 2 || freq_shape[1] != num_band {
+        return Err(PyValueError::new_err(
+            "frequencies must have shape (num_grid, num_band)",
+        ));
+    }
+
+    let fc3_view = fc3_normal_squared.as_array();
+    let fc3_slice = fc3_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("fc3_normal_squared must be C-contiguous"))?;
+    let freqs_view = frequencies.as_array();
+    let freqs_slice = freqs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("frequencies must be C-contiguous"))?;
+    let g_view = g.as_array();
+    let g_flat = g_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("g must be C-contiguous"))?;
+    let g_offset = 2 * num_triplets * num_band0 * num_band * num_band;
+    let g_slab = &g_flat[g_offset..];
+    let triplets_view = triplets.as_array();
+    let triplets_flat = triplets_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("triplets must be C-contiguous"))?;
+    let triplets_slice: &[[i64; 3]] = group_as_array(triplets_flat);
+    let tm_view = triplets_map.as_array();
+    let tm_slice = tm_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("triplets_map must be C-contiguous"))?;
+    let mq_view = map_q.as_array();
+    let mq_slice = mq_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("map_q must be C-contiguous"))?;
+    let rgp_view = rot_grid_points.as_array();
+    let rgp_slice = rgp_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("rot_grid_points must be C-contiguous"))?;
+    let rc_view = rotations_cartesian.as_array();
+    let rc_slice = rc_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("rotations_cartesian must be C-contiguous"))?;
+    let cm_slice = collision_matrix
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("collision_matrix must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        collision_matrix::collision_matrix(
+            cm_slice,
+            fc3_slice,
+            num_band0,
+            num_band,
+            freqs_slice,
+            triplets_slice,
+            tm_slice,
+            mq_slice,
+            rgp_slice,
+            num_ir_gp,
+            num_rot,
+            rc_slice,
+            g_slab,
+            temperature_thz,
+            unit_conversion_factor,
+            cutoff_frequency,
+        );
+    });
+    Ok(())
+}
+
+/// Reducible collision matrix for direct LBTE solution.  Mirrors
+/// ``phono3py._phono3py.reducible_collision_matrix``.
+///
+/// Shapes:
+/// - ``collision_matrix``: ``(num_band0, num_gp, num_band)`` ``float64``,
+///   accumulated.
+/// - ``fc3_normal_squared``: ``(num_triplets, num_band0, num_band,
+///   num_band)`` ``float64``.
+/// - ``frequencies``: ``(num_grid, num_band)`` ``float64``.
+/// - ``g``: ``(3, num_triplets, num_band0, num_band, num_band)``
+///   ``float64``; only the type-3 slab ``g[2]`` is read.
+/// - ``triplets``: ``(num_triplets, 3)`` ``int64``.
+/// - ``triplets_map``, ``map_q``: ``(num_gp,)`` ``int64``.
+#[pyfunction]
+#[pyo3(name = "reducible_collision_matrix")]
+#[allow(clippy::too_many_arguments)]
+fn py_reducible_collision_matrix<'py>(
+    py: Python<'py>,
+    mut collision_matrix: PyReadwriteArray3<'py, f64>,
+    fc3_normal_squared: PyReadonlyArray4<'py, f64>,
+    frequencies: PyReadonlyArray2<'py, f64>,
+    g: PyReadonlyArray5<'py, f64>,
+    triplets: PyReadonlyArray2<'py, i64>,
+    triplets_map: PyReadonlyArray1<'py, i64>,
+    map_q: PyReadonlyArray1<'py, i64>,
+    temperature_thz: f64,
+    unit_conversion_factor: f64,
+    cutoff_frequency: f64,
+) -> PyResult<()> {
+    let fc3_shape = fc3_normal_squared.shape();
+    if fc3_shape.len() != 4 {
+        return Err(PyValueError::new_err(
+            "fc3_normal_squared must have shape (num_triplets, num_band0, num_band, num_band)",
+        ));
+    }
+    let num_triplets = fc3_shape[0];
+    let num_band0 = fc3_shape[1];
+    let num_band = fc3_shape[2];
+    if fc3_shape[3] != num_band {
+        return Err(PyValueError::new_err(
+            "fc3_normal_squared last two axes must be equal (num_band)",
+        ));
+    }
+    let num_gp = triplets_map.shape()[0];
+    if map_q.shape() != [num_gp] {
+        return Err(PyValueError::new_err("map_q must have shape (num_gp,)"));
+    }
+    if collision_matrix.shape() != [num_band0, num_gp, num_band] {
+        return Err(PyValueError::new_err(
+            "collision_matrix must have shape (num_band0, num_gp, num_band)",
+        ));
+    }
+    if triplets.shape() != [num_triplets, 3] {
+        return Err(PyValueError::new_err(
+            "triplets must have shape (num_triplets, 3)",
+        ));
+    }
+    let g_shape = g.shape();
+    if g_shape.len() != 5
+        || g_shape[0] != 3
+        || g_shape[1] != num_triplets
+        || g_shape[2] != num_band0
+        || g_shape[3] != num_band
+        || g_shape[4] != num_band
+    {
+        return Err(PyValueError::new_err(
+            "g must have shape (3, num_triplets, num_band0, num_band, num_band)",
+        ));
+    }
+    let freq_shape = frequencies.shape();
+    if freq_shape.len() != 2 || freq_shape[1] != num_band {
+        return Err(PyValueError::new_err(
+            "frequencies must have shape (num_grid, num_band)",
+        ));
+    }
+
+    let fc3_view = fc3_normal_squared.as_array();
+    let fc3_slice = fc3_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("fc3_normal_squared must be C-contiguous"))?;
+    let freqs_view = frequencies.as_array();
+    let freqs_slice = freqs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("frequencies must be C-contiguous"))?;
+    let g_view = g.as_array();
+    let g_flat = g_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("g must be C-contiguous"))?;
+    let g_offset = 2 * num_triplets * num_band0 * num_band * num_band;
+    let g_slab = &g_flat[g_offset..];
+    let triplets_view = triplets.as_array();
+    let triplets_flat = triplets_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("triplets must be C-contiguous"))?;
+    let triplets_slice: &[[i64; 3]] = group_as_array(triplets_flat);
+    let tm_view = triplets_map.as_array();
+    let tm_slice = tm_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("triplets_map must be C-contiguous"))?;
+    let mq_view = map_q.as_array();
+    let mq_slice = mq_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("map_q must be C-contiguous"))?;
+    let cm_slice = collision_matrix
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("collision_matrix must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        collision_matrix::reducible_collision_matrix(
+            cm_slice,
+            fc3_slice,
+            num_band0,
+            num_band,
+            freqs_slice,
+            triplets_slice,
+            tm_slice,
+            mq_slice,
+            g_slab,
+            temperature_thz,
+            unit_conversion_factor,
+            cutoff_frequency,
+        );
+    });
+    Ok(())
+}
+
+/// Symmetrize collision matrix in-place as ``(Omega + Omega^T) / 2``.
+/// Mirrors ``phono3py._phono3py.symmetrize_collision_matrix``.
+///
+/// Accepts either a 6D array
+/// ``(num_sigma, num_temp, num_grid_points, num_band, num_grid_points,
+/// num_band)`` or an 8D array
+/// ``(num_sigma, num_temp, num_grid_points, num_band, 3, num_grid_points,
+/// num_band, 3)``.  In both cases each ``(sigma, temp)`` slice is
+/// viewed as a square ``(num_column, num_column)`` matrix whose
+/// ``num_column`` is inferred from ndim.
+#[pyfunction]
+#[pyo3(name = "symmetrize_collision_matrix")]
+fn py_symmetrize_collision_matrix<'py>(
+    py: Python<'py>,
+    mut collision_matrix: PyReadwriteArrayDyn<'py, f64>,
+) -> PyResult<()> {
+    let shape = collision_matrix.shape().to_vec();
+    let (num_sigma, num_temp, num_column) = match shape.len() {
+        6 => {
+            let num_grid_points = shape[2];
+            let num_band = shape[3];
+            if shape[4] != num_grid_points || shape[5] != num_band {
+                return Err(PyValueError::new_err(
+                    "6D collision_matrix must have shape (num_sigma, num_temp, \
+                     num_grid_points, num_band, num_grid_points, num_band)",
+                ));
+            }
+            (shape[0], shape[1], num_grid_points * num_band)
+        }
+        8 => {
+            let num_grid_points = shape[2];
+            let num_band = shape[3];
+            if shape[4] != 3 || shape[5] != num_grid_points || shape[6] != num_band || shape[7] != 3
+            {
+                return Err(PyValueError::new_err(
+                    "8D collision_matrix must have shape (num_sigma, num_temp, \
+                     num_grid_points, num_band, 3, num_grid_points, num_band, 3)",
+                ));
+            }
+            (shape[0], shape[1], num_grid_points * num_band * 3)
+        }
+        _ => {
+            return Err(PyValueError::new_err(
+                "collision_matrix must be 6D or 8D",
+            ));
+        }
+    };
+
+    let cm_slice = collision_matrix
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("collision_matrix must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        collision_matrix::symmetrize_collision_matrix(cm_slice, num_column, num_temp, num_sigma);
+    });
+    Ok(())
+}
+
+/// Expand collision matrix to all grid points by k-star symmetry.
+/// Mirrors ``phono3py._phono3py.expand_collision_matrix``.
+///
+/// Shapes:
+/// - ``collision_matrix``: ``(num_sigma, num_temp, num_grid_points,
+///   num_band, num_grid_points, num_band)`` ``float64``.
+/// - ``ir_grid_points``: ``(num_ir_gp,)`` ``int64``.
+/// - ``rot_grid_points``: ``(num_rot, num_grid_points)`` ``int64``.
+#[pyfunction]
+#[pyo3(name = "expand_collision_matrix")]
+fn py_expand_collision_matrix<'py>(
+    py: Python<'py>,
+    mut collision_matrix: PyReadwriteArray6<'py, f64>,
+    ir_grid_points: PyReadonlyArray1<'py, i64>,
+    rot_grid_points: PyReadonlyArray2<'py, i64>,
+) -> PyResult<()> {
+    let cm_shape = collision_matrix.shape();
+    let num_sigma = cm_shape[0];
+    let num_temp = cm_shape[1];
+    let num_grid_points = cm_shape[2];
+    let num_band = cm_shape[3];
+    if cm_shape[4] != num_grid_points || cm_shape[5] != num_band {
+        return Err(PyValueError::new_err(
+            "collision_matrix must have shape (num_sigma, num_temp, \
+             num_grid_points, num_band, num_grid_points, num_band)",
+        ));
+    }
+    let rot_shape = rot_grid_points.shape();
+    if rot_shape.len() != 2 || rot_shape[1] != num_grid_points {
+        return Err(PyValueError::new_err(
+            "rot_grid_points must have shape (num_rot, num_grid_points)",
+        ));
+    }
+    let num_rot = rot_shape[0];
+
+    let ir_view = ir_grid_points.as_array();
+    let ir_slice = ir_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("ir_grid_points must be C-contiguous"))?;
+    let rot_view = rot_grid_points.as_array();
+    let rot_slice = rot_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("rot_grid_points must be C-contiguous"))?;
+    let cm_slice = collision_matrix
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("collision_matrix must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        collision_matrix::expand_collision_matrix(
+            cm_slice,
+            rot_slice,
+            ir_slice,
+            num_grid_points,
+            num_rot,
+            num_sigma,
+            num_temp,
+            num_band,
+        );
+    });
+    Ok(())
+}
+
+#[pyfunction]
+#[pyo3(name = "distribute_fc3")]
+fn py_distribute_fc3<'py>(
+    py: Python<'py>,
+    mut fc3: PyReadwriteArray6<'py, f64>,
+    target: i64,
+    source: i64,
+    atom_mapping: PyReadonlyArray1<'py, i64>,
+    rot_cart_inv: PyReadonlyArray2<'py, f64>,
+) -> PyResult<()> {
+    let fc3_shape = fc3.shape();
+    let num_atom = fc3_shape[0];
+    if fc3_shape[1] != num_atom
+        || fc3_shape[2] != num_atom
+        || fc3_shape[3] != 3
+        || fc3_shape[4] != 3
+        || fc3_shape[5] != 3
+    {
+        return Err(PyValueError::new_err(
+            "fc3 must have shape (num_atom, num_atom, num_atom, 3, 3, 3)",
+        ));
+    }
+    if atom_mapping.shape() != [num_atom] {
+        return Err(PyValueError::new_err(
+            "atom_mapping must have shape (num_atom,)",
+        ));
+    }
+    let rot_shape = rot_cart_inv.shape();
+    if rot_shape != [3, 3] {
+        return Err(PyValueError::new_err(
+            "rot_cart_inv must have shape (3, 3)",
+        ));
+    }
+    if target < 0 || (target as usize) >= num_atom {
+        return Err(PyValueError::new_err("target out of range"));
+    }
+    if source < 0 || (source as usize) >= num_atom {
+        return Err(PyValueError::new_err("source out of range"));
+    }
+
+    let atom_view = atom_mapping.as_array();
+    let atom_slice = atom_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("atom_mapping must be C-contiguous"))?;
+    let rot_view = rot_cart_inv.as_array();
+    let rot_slice = rot_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("rot_cart_inv must be C-contiguous"))?;
+    let fc3_slice = fc3
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("fc3 must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        fc3::distribute_fc3(
+            fc3_slice,
+            target as usize,
+            source as usize,
+            atom_slice,
+            num_atom,
+            rot_slice,
+        );
+    });
+    Ok(())
+}
+
+#[pyfunction]
+#[pyo3(name = "permutation_symmetry_fc3")]
+fn py_permutation_symmetry_fc3<'py>(
+    py: Python<'py>,
+    mut fc3: PyReadwriteArray6<'py, f64>,
+) -> PyResult<()> {
+    let fc3_shape = fc3.shape();
+    let num_atom = fc3_shape[0];
+    if fc3_shape[1] != num_atom
+        || fc3_shape[2] != num_atom
+        || fc3_shape[3] != 3
+        || fc3_shape[4] != 3
+        || fc3_shape[5] != 3
+    {
+        return Err(PyValueError::new_err(
+            "fc3 must have shape (num_atom, num_atom, num_atom, 3, 3, 3)",
+        ));
+    }
+    let fc3_slice = fc3
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("fc3 must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        fc3::set_permutation_symmetry_fc3(fc3_slice, num_atom);
+    });
+    Ok(())
+}
+
+#[pyfunction]
+#[pyo3(name = "transpose_compact_fc3")]
+fn py_transpose_compact_fc3<'py>(
+    py: Python<'py>,
+    mut fc3: PyReadwriteArray6<'py, f64>,
+    permutations: PyReadonlyArray2<'py, i64>,
+    s2pp_map: PyReadonlyArray1<'py, i64>,
+    p2s_map: PyReadonlyArray1<'py, i64>,
+    nsym_list: PyReadonlyArray1<'py, i64>,
+    t_type: i64,
+) -> PyResult<()> {
+    let fc3_shape = fc3.shape();
+    let n_patom = fc3_shape[0];
+    let n_satom = fc3_shape[1];
+    if fc3_shape[2] != n_satom
+        || fc3_shape[3] != 3
+        || fc3_shape[4] != 3
+        || fc3_shape[5] != 3
+    {
+        return Err(PyValueError::new_err(
+            "fc3 must have shape (n_patom, n_satom, n_satom, 3, 3, 3)",
+        ));
+    }
+    if p2s_map.shape() != [n_patom] {
+        return Err(PyValueError::new_err("p2s_map must have shape (n_patom,)"));
+    }
+    if s2pp_map.shape() != [n_satom] || nsym_list.shape() != [n_satom] {
+        return Err(PyValueError::new_err(
+            "s2pp_map and nsym_list must have shape (n_satom,)",
+        ));
+    }
+    let perms_shape = permutations.shape();
+    if perms_shape.len() != 2 || perms_shape[1] != n_satom {
+        return Err(PyValueError::new_err(
+            "permutations must have shape (num_sym, n_satom)",
+        ));
+    }
+
+    let perms_view = permutations.as_array();
+    let perms_slice = perms_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("permutations must be C-contiguous"))?;
+    let s2pp_view = s2pp_map.as_array();
+    let s2pp_slice = s2pp_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("s2pp_map must be C-contiguous"))?;
+    let p2s_view = p2s_map.as_array();
+    let p2s_slice = p2s_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("p2s_map must be C-contiguous"))?;
+    let nsym_view = nsym_list.as_array();
+    let nsym_slice = nsym_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("nsym_list must be C-contiguous"))?;
+    let fc3_slice = fc3
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("fc3 must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        fc3::transpose_compact_fc3(
+            fc3_slice,
+            p2s_slice,
+            s2pp_slice,
+            nsym_slice,
+            perms_slice,
+            n_satom,
+            n_patom,
+            t_type,
+        );
+    });
+    Ok(())
+}
+
+#[pyfunction]
+#[pyo3(name = "permutation_symmetry_compact_fc3")]
+fn py_permutation_symmetry_compact_fc3<'py>(
+    py: Python<'py>,
+    mut fc3: PyReadwriteArray6<'py, f64>,
+    permutations: PyReadonlyArray2<'py, i64>,
+    s2pp_map: PyReadonlyArray1<'py, i64>,
+    p2s_map: PyReadonlyArray1<'py, i64>,
+    nsym_list: PyReadonlyArray1<'py, i64>,
+) -> PyResult<()> {
+    let fc3_shape = fc3.shape();
+    let n_patom = fc3_shape[0];
+    let n_satom = fc3_shape[1];
+    if fc3_shape[2] != n_satom
+        || fc3_shape[3] != 3
+        || fc3_shape[4] != 3
+        || fc3_shape[5] != 3
+    {
+        return Err(PyValueError::new_err(
+            "fc3 must have shape (n_patom, n_satom, n_satom, 3, 3, 3)",
+        ));
+    }
+    if p2s_map.shape() != [n_patom] {
+        return Err(PyValueError::new_err("p2s_map must have shape (n_patom,)"));
+    }
+    if s2pp_map.shape() != [n_satom] || nsym_list.shape() != [n_satom] {
+        return Err(PyValueError::new_err(
+            "s2pp_map and nsym_list must have shape (n_satom,)",
+        ));
+    }
+    let perms_shape = permutations.shape();
+    if perms_shape.len() != 2 || perms_shape[1] != n_satom {
+        return Err(PyValueError::new_err(
+            "permutations must have shape (num_sym, n_satom)",
+        ));
+    }
+
+    let perms_view = permutations.as_array();
+    let perms_slice = perms_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("permutations must be C-contiguous"))?;
+    let s2pp_view = s2pp_map.as_array();
+    let s2pp_slice = s2pp_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("s2pp_map must be C-contiguous"))?;
+    let p2s_view = p2s_map.as_array();
+    let p2s_slice = p2s_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("p2s_map must be C-contiguous"))?;
+    let nsym_view = nsym_list.as_array();
+    let nsym_slice = nsym_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("nsym_list must be C-contiguous"))?;
+    let fc3_slice = fc3
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("fc3 must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        fc3::set_permutation_symmetry_compact_fc3(
+            fc3_slice,
+            p2s_slice,
+            s2pp_slice,
+            nsym_slice,
+            perms_slice,
+            n_satom,
+            n_patom,
+        );
+    });
+    Ok(())
+}
+
+#[pyfunction]
+#[pyo3(name = "rotate_delta_fc2s")]
+fn py_rotate_delta_fc2s<'py>(
+    py: Python<'py>,
+    mut fc3: PyReadwriteArray5<'py, f64>,
+    delta_fc2s: PyReadonlyArray5<'py, f64>,
+    inv_u: PyReadonlyArray2<'py, f64>,
+    site_sym_cart: PyReadonlyArray3<'py, f64>,
+    rot_map_syms: PyReadonlyArray2<'py, i64>,
+) -> PyResult<()> {
+    let fc3_shape = fc3.shape();
+    let num_atom = fc3_shape[0];
+    if fc3_shape[1] != num_atom
+        || fc3_shape[2] != 3
+        || fc3_shape[3] != 3
+        || fc3_shape[4] != 3
+    {
+        return Err(PyValueError::new_err(
+            "fc3 must have shape (num_atom, num_atom, 3, 3, 3)",
+        ));
+    }
+    let df_shape = delta_fc2s.shape();
+    let num_disp = df_shape[0];
+    if df_shape[1] != num_atom
+        || df_shape[2] != num_atom
+        || df_shape[3] != 3
+        || df_shape[4] != 3
+    {
+        return Err(PyValueError::new_err(
+            "delta_fc2s must have shape (num_disp, num_atom, num_atom, 3, 3)",
+        ));
+    }
+    let ss_shape = site_sym_cart.shape();
+    let num_site_sym = ss_shape[0];
+    if ss_shape[1] != 3 || ss_shape[2] != 3 {
+        return Err(PyValueError::new_err(
+            "site_sym_cart must have shape (num_site_sym, 3, 3)",
+        ));
+    }
+    let inv_shape = inv_u.shape();
+    if inv_shape[0] != 3 || inv_shape[1] != num_disp * num_site_sym {
+        return Err(PyValueError::new_err(
+            "inv_u must have shape (3, num_disp * num_site_sym)",
+        ));
+    }
+    let rm_shape = rot_map_syms.shape();
+    if rm_shape[0] != num_site_sym || rm_shape[1] != num_atom {
+        return Err(PyValueError::new_err(
+            "rot_map_syms must have shape (num_site_sym, num_atom)",
+        ));
+    }
+
+    let df_view = delta_fc2s.as_array();
+    let df_slice = df_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("delta_fc2s must be C-contiguous"))?;
+    let inv_view = inv_u.as_array();
+    let inv_slice = inv_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("inv_u must be C-contiguous"))?;
+    let ss_view = site_sym_cart.as_array();
+    let ss_slice = ss_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("site_sym_cart must be C-contiguous"))?;
+    let rm_view = rot_map_syms.as_array();
+    let rm_slice = rm_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("rot_map_syms must be C-contiguous"))?;
+    let fc3_slice = fc3
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("fc3 must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        fc3::rotate_delta_fc2s(
+            fc3_slice,
+            df_slice,
+            inv_slice,
+            ss_slice,
+            rm_slice,
+            num_atom,
+            num_site_sym,
+            num_disp,
+        );
+    });
+    Ok(())
+}
+
+#[pyfunction]
+#[pyo3(name = "neighboring_grid_points")]
+fn py_neighboring_grid_points<'py>(
+    py: Python<'py>,
+    mut relative_grid_points: PyReadwriteArray1<'py, i64>,
+    grid_points: PyReadonlyArray1<'py, i64>,
+    relative_grid_address: PyReadonlyArray2<'py, i64>,
+    d_diag: PyReadonlyArray1<'py, i64>,
+    bz_grid_addresses: PyReadonlyArray2<'py, i64>,
+    bz_map: PyReadonlyArray1<'py, i64>,
+    bz_grid_type: i64,
+) -> PyResult<()> {
+    let rga = addresses_i(&relative_grid_address)?;
+    let adrs = addresses_i(&bz_grid_addresses)?;
+    let d = vec3_i(&d_diag)?;
+    let gp_view = grid_points.as_array();
+    let gp_slice = gp_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("grid_points must be C-contiguous"))?;
+    let bzmap_view = bz_map.as_array();
+    let bzmap_slice = bzmap_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("bz_map must be C-contiguous"))?;
+    let out = relative_grid_points
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("relative_grid_points must be C-contiguous"))?;
+    if out.len() != gp_slice.len() * rga.len() {
+        return Err(PyValueError::new_err(
+            "relative_grid_points must have length num_grid_points * num_relative_grid_address",
+        ));
+    }
+
+    py.allow_threads(|| {
+        let bzgrid = BzGridView {
+            d_diag: d,
+            addresses: &adrs,
+            gp_map: bzmap_slice,
+            bz_grid_type,
+        };
+        triplet_iw::neighboring_grid_points_many(out, gp_slice, &rga, &bzgrid)
+    })
+    .map_err(|e| match e {
+        BzGridError::BadGridType => PyValueError::new_err("bz_grid_type must be 1 or 2"),
+        BzGridError::BadTpType => PyValueError::new_err("tp_type must be 2, 3, or 4"),
+    })
+}
+
+#[pyfunction]
+#[pyo3(name = "integration_weights_at_grid_points")]
+fn py_integration_weights_at_grid_points<'py>(
+    py: Python<'py>,
+    mut iw: PyReadwriteArray3<'py, f64>,
+    frequency_points: PyReadonlyArray1<'py, f64>,
+    relative_grid_address: PyReadonlyArray3<'py, i64>,
+    d_diag: PyReadonlyArray1<'py, i64>,
+    grid_points: PyReadonlyArray1<'py, i64>,
+    frequencies: PyReadonlyArray2<'py, f64>,
+    bz_grid_addresses: PyReadonlyArray2<'py, i64>,
+    bz_map: PyReadonlyArray1<'py, i64>,
+    gp2irgp_map: PyReadonlyArray1<'py, i64>,
+    bz_grid_type: i64,
+    function: &str,
+) -> PyResult<()> {
+    let wf = match function {
+        "I" => WeightFunction::I,
+        "J" => WeightFunction::J,
+        _ => return Err(PyValueError::new_err("function must be 'I' or 'J'")),
+    };
+    let rga = relative_grid_address_3d(&relative_grid_address)?;
+    let adrs = addresses_i(&bz_grid_addresses)?;
+    let d = vec3_i(&d_diag)?;
+
+    let fp_view = frequency_points.as_array();
+    let fp_slice = fp_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("frequency_points must be C-contiguous"))?;
+    let gp_view = grid_points.as_array();
+    let gp_slice = gp_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("grid_points must be C-contiguous"))?;
+    let fr_view = frequencies.as_array();
+    let fr_slice = fr_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("frequencies must be C-contiguous"))?;
+    let num_band = frequencies.shape()[1];
+    let bzmap_view = bz_map.as_array();
+    let bzmap_slice = bzmap_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("bz_map must be C-contiguous"))?;
+    let gp2ir_view = gp2irgp_map.as_array();
+    let gp2ir_slice = gp2ir_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("gp2irgp_map must be C-contiguous"))?;
+
+    let iw_shape = iw.shape();
+    if iw_shape != [gp_slice.len(), fp_slice.len(), num_band] {
+        return Err(PyValueError::new_err(
+            "iw must have shape (num_grid_points, num_frequency_points, num_band)",
+        ));
+    }
+    let iw_slice = iw
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("iw must be C-contiguous"))?;
+
+    py.allow_threads(|| {
+        let bzgrid = BzGridView {
+            d_diag: d,
+            addresses: &adrs,
+            gp_map: bzmap_slice,
+            bz_grid_type,
+        };
+        triplet_iw::integration_weights_at_grid_points(
+            iw_slice,
+            fp_slice,
+            &rga,
+            gp_slice,
+            fr_slice,
+            num_band,
+            &bzgrid,
+            gp2ir_slice,
+            wf,
+        )
+    })
+    .map_err(|e| match e {
+        BzGridError::BadGridType => PyValueError::new_err("bz_grid_type must be 1 or 2"),
+        BzGridError::BadTpType => PyValueError::new_err("tp_type must be 2, 3, or 4"),
+    })
+}
+
+#[pyfunction]
+#[pyo3(name = "tetrahedra_relative_grid_address")]
+fn py_tetrahedra_relative_grid_address<'py>(
+    mut relative_grid_address: PyReadwriteArray3<'py, i64>,
+    reciprocal_lattice: PyReadonlyArray2<'py, f64>,
+) -> PyResult<()> {
+    let rga_shape = relative_grid_address.shape();
+    if rga_shape != [24, 4, 3] {
+        return Err(PyValueError::new_err(
+            "relative_grid_address must have shape (24, 4, 3)",
+        ));
+    }
+    let rec = mat3_f(&reciprocal_lattice)?;
+    let (table, _main_diag_index) = tetrahedron_method::relative_grid_address(rec);
+    let out = relative_grid_address
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("relative_grid_address must be C-contiguous"))?;
+    for i in 0..24 {
+        for j in 0..4 {
+            for k in 0..3 {
+                out[(i * 4 + j) * 3 + k] = table[i][j][k];
+            }
+        }
+    }
+    Ok(())
+}
+
 #[pymodule]
 fn phono3py_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_snf3x3, m)?)?;
@@ -3159,5 +4045,17 @@ fn phono3py_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_thm_isotope_strength, m)?)?;
     m.add_function(wrap_pyfunction!(py_real_self_energy_at_bands, m)?)?;
     m.add_function(wrap_pyfunction!(py_real_self_energy_at_frequency_point, m)?)?;
+    m.add_function(wrap_pyfunction!(py_collision_matrix, m)?)?;
+    m.add_function(wrap_pyfunction!(py_reducible_collision_matrix, m)?)?;
+    m.add_function(wrap_pyfunction!(py_symmetrize_collision_matrix, m)?)?;
+    m.add_function(wrap_pyfunction!(py_expand_collision_matrix, m)?)?;
+    m.add_function(wrap_pyfunction!(py_distribute_fc3, m)?)?;
+    m.add_function(wrap_pyfunction!(py_permutation_symmetry_fc3, m)?)?;
+    m.add_function(wrap_pyfunction!(py_transpose_compact_fc3, m)?)?;
+    m.add_function(wrap_pyfunction!(py_permutation_symmetry_compact_fc3, m)?)?;
+    m.add_function(wrap_pyfunction!(py_rotate_delta_fc2s, m)?)?;
+    m.add_function(wrap_pyfunction!(py_tetrahedra_relative_grid_address, m)?)?;
+    m.add_function(wrap_pyfunction!(py_neighboring_grid_points, m)?)?;
+    m.add_function(wrap_pyfunction!(py_integration_weights_at_grid_points, m)?)?;
     Ok(())
 }

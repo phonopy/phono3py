@@ -68,6 +68,8 @@ def show_general_settings(
     phonon_supercell_matrix = phono3py.phonon_supercell_matrix
 
     print("-" * 29 + " General settings " + "-" * 29)
+    if settings.use_rust:
+        print("Experimental Rust backend enabled (lang=Rust)")
     if settings.use_pypolymlp:
         if settings.create_displacements or settings.random_displacements is not None:
             print(f"Run mode: pypolymlp + {run_mode}")

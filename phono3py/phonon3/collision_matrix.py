@@ -60,7 +60,7 @@ class CollisionMatrix(ImagSelfEnergy):
         rot_grid_points: NDArray[np.int64] | None = None,
         is_kappa_star: bool = True,
         log_level: int = 0,
-        lang: Literal["C", "Python"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "C",
     ) -> None:
         """Init method.
 
@@ -75,8 +75,8 @@ class CollisionMatrix(ImagSelfEnergy):
             Whether k-star symmetry is used.
         log_level : int
             Verbosity level.
-        lang : {"C", "Python"}
-            Backend for C-extension operations.
+        lang : {"C", "Python", "Rust"}
+            Backend for the collision-matrix and imag-self-energy kernels.
 
         """
         self._log_level = log_level
@@ -152,6 +152,11 @@ class CollisionMatrix(ImagSelfEnergy):
                     self._run_c_reducible_collision_matrix()
                 else:
                     self._run_c_collision_matrix()
+            elif self._lang == "Rust":
+                if self._is_reducible_collision_matrix:
+                    self._run_rust_reducible_collision_matrix()
+                else:
+                    self._run_rust_collision_matrix()
             else:
                 if self._is_reducible_collision_matrix:
                     self._run_py_reducible_collision_matrix()
@@ -182,6 +187,42 @@ class CollisionMatrix(ImagSelfEnergy):
 
         assert self._temperature is not None
         phono3c.reducible_collision_matrix(
+            self._collision_matrix,
+            self._pp_strength,
+            self._frequencies,
+            self._g,
+            self._triplets_at_q,
+            self._triplets_map_at_q,
+            self._ir_map_at_q,
+            self._temperature * get_physical_units().KB / get_physical_units().THzToEv,
+            self._unit_conversion,
+            self._cutoff_frequency,
+        )
+
+    def _run_rust_collision_matrix(self) -> None:
+        import phono3py_rs  # type: ignore[import-untyped]
+
+        assert self._temperature is not None
+        phono3py_rs.collision_matrix(
+            self._collision_matrix,
+            self._pp_strength,
+            self._frequencies,
+            self._g,
+            self._triplets_at_q,
+            self._triplets_map_at_q,
+            self._ir_map_at_q,
+            self._rot_grid_points,  # in GRGrid
+            self._rotations_cartesian,
+            self._temperature * get_physical_units().KB / get_physical_units().THzToEv,
+            self._unit_conversion,
+            self._cutoff_frequency,
+        )
+
+    def _run_rust_reducible_collision_matrix(self) -> None:
+        import phono3py_rs  # type: ignore[import-untyped]
+
+        assert self._temperature is not None
+        phono3py_rs.reducible_collision_matrix(
             self._collision_matrix,
             self._pp_strength,
             self._frequencies,

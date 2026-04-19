@@ -9,8 +9,12 @@ import pytest
 from phono3py import Phono3py
 from phono3py.phonon3.fc3 import (
     cutoff_fc3_by_zero,
+    distribute_fc3,
+    get_drift_fc3,
     get_fc3,
+    set_permutation_symmetry_compact_fc3,
     set_permutation_symmetry_fc3,
+    set_translational_invariance_compact_fc3,
     set_translational_invariance_fc3,
 )
 
@@ -349,6 +353,198 @@ def test_fc3_lapacke_solver(si_pbesol_111: Phono3py):
         ]
 
         np.testing.assert_allclose(fc3[0, 1, 7], fc3_ref, atol=1e-8, rtol=0)
+
+
+def test_distribute_fc3_rust_vs_c():
+    """Compare lang='Rust' and default (C) paths of distribute_fc3.
+
+    Build a synthetic fc3 and a small permutations/rotations set that maps
+    every target atom back to the single first_disp_atom, then distribute
+    with both backends and require exact (bit-equal) agreement.
+
+    """
+    pytest.importorskip("phono3py_rs")
+
+    n_satom = 4
+    rng = np.random.default_rng(42)
+    base = rng.standard_normal((n_satom, n_satom, n_satom, 3, 3, 3)).astype(
+        "double", order="C"
+    )
+    fc3_c = base.copy(order="C")
+    fc3_rust = base.copy(order="C")
+
+    identity = np.eye(3, dtype="int64")
+    rotations = np.array([identity] * n_satom, dtype="int64")
+    permutations = np.array(
+        [
+            [0, 1, 2, 3],
+            [1, 0, 2, 3],
+            [2, 1, 0, 3],
+            [3, 1, 2, 0],
+        ],
+        dtype="int64",
+    )
+    lattice = np.eye(3, dtype="double")
+    s2compact = np.arange(n_satom, dtype="int64")
+
+    distribute_fc3(fc3_c, [0], [1, 2, 3], lattice, rotations, permutations, s2compact)
+    distribute_fc3(
+        fc3_rust,
+        [0],
+        [1, 2, 3],
+        lattice,
+        rotations,
+        permutations,
+        s2compact,
+        lang="Rust",
+    )
+
+    np.testing.assert_array_equal(fc3_rust, fc3_c)
+
+
+def test_distribute_fc3_rust_vs_c_rotated_lattice():
+    """Check C vs Rust under a non-trivial rot_cart_inv.
+
+    A non-cubic lattice and a C2 rotation around z produce a non-identity
+    rot_cart_inv, exercising the full tensor3 rotation kernel (not just
+    identity / swap permutations).
+
+    """
+    pytest.importorskip("phono3py_rs")
+
+    n_satom = 2
+    rng = np.random.default_rng(7)
+    base = rng.standard_normal((n_satom, n_satom, n_satom, 3, 3, 3)).astype(
+        "double", order="C"
+    )
+    fc3_c = base.copy(order="C")
+    fc3_rust = base.copy(order="C")
+
+    rotations = np.array(
+        [np.eye(3, dtype="int64"), np.diag([-1, -1, 1]).astype("int64")],
+        dtype="int64",
+    )
+    permutations = np.array([[0, 1], [1, 0]], dtype="int64")
+    lattice = np.array(
+        [[3.0, 0.1, 0.0], [0.0, 3.2, 0.0], [0.0, 0.0, 5.0]], dtype="double"
+    )
+    s2compact = np.arange(n_satom, dtype="int64")
+
+    distribute_fc3(fc3_c, [0], [1], lattice, rotations, permutations, s2compact)
+    distribute_fc3(
+        fc3_rust, [0], [1], lattice, rotations, permutations, s2compact, lang="Rust"
+    )
+
+    np.testing.assert_allclose(fc3_rust, fc3_c, rtol=1e-14, atol=1e-14)
+
+
+def test_set_translational_invariance_compact_fc3_rust_vs_c(si_pbesol: Phono3py):
+    """Compare lang='Rust' and C paths of set_translational_invariance_compact_fc3.
+
+    Uses a real compact fc3 built from the si_pbesol fixture so the Rust
+    transpose kernel is exercised against genuine symmetry tables.
+
+    """
+    pytest.importorskip("phono3py_rs")
+
+    assert si_pbesol.fc3 is not None
+    # Emulate compact fc3 by contracting the first axis to primitive atoms.
+    primitive = si_pbesol.primitive
+    p2s_map = primitive.p2s_map
+    compact = np.ascontiguousarray(si_pbesol.fc3[p2s_map])
+    compact_c = compact.copy(order="C")
+    compact_rust = compact.copy(order="C")
+
+    set_translational_invariance_compact_fc3(compact_c, primitive)
+    set_translational_invariance_compact_fc3(compact_rust, primitive, lang="Rust")
+
+    np.testing.assert_array_equal(compact_rust, compact_c)
+
+
+def test_get_drift_fc3_compact_rust_vs_c(si_pbesol: Phono3py):
+    """Compare lang='Rust' and C paths of get_drift_fc3 on a compact fc3."""
+    pytest.importorskip("phono3py_rs")
+
+    assert si_pbesol.fc3 is not None
+    primitive = si_pbesol.primitive
+    p2s_map = primitive.p2s_map
+    compact = np.ascontiguousarray(si_pbesol.fc3[p2s_map])
+    compact_c = compact.copy(order="C")
+    compact_rust = compact.copy(order="C")
+
+    result_c = get_drift_fc3(compact_c, primitive=primitive)
+    result_rust = get_drift_fc3(compact_rust, primitive=primitive, lang="Rust")
+
+    assert result_c == result_rust
+    # get_drift_fc3 restores the fc3 via a second transpose; both inputs
+    # must have been left identical.
+    np.testing.assert_array_equal(compact_rust, compact_c)
+
+
+def test_set_permutation_symmetry_compact_fc3_rust_vs_c(si_pbesol: Phono3py):
+    """Compare lang='Rust' and C paths of set_permutation_symmetry_compact_fc3."""
+    pytest.importorskip("phono3py_rs")
+
+    assert si_pbesol.fc3 is not None
+    primitive = si_pbesol.primitive
+    p2s_map = primitive.p2s_map
+    compact = np.ascontiguousarray(si_pbesol.fc3[p2s_map])
+    compact_c = compact.copy(order="C")
+    compact_rust = compact.copy(order="C")
+
+    set_permutation_symmetry_compact_fc3(compact_c, primitive)
+    set_permutation_symmetry_compact_fc3(compact_rust, primitive, lang="Rust")
+
+    np.testing.assert_array_equal(compact_rust, compact_c)
+
+
+def test_get_fc3_rust_vs_c(si_pbesol_111: Phono3py):
+    """Compare lang='Rust' and C paths of get_fc3 (rotate_delta_fc2s path).
+
+    The Rust rotate_delta_fc2s may differ from C by FMA/SIMD rounding in
+    release builds, so use a tight tolerance instead of bit-equal.
+
+    """
+    pytest.importorskip("phono3py_rs")
+
+    ph = si_pbesol_111
+    _, fc3_c = get_fc3(
+        ph.supercell,
+        ph.primitive,
+        ph.dataset,
+        ph.symmetry,
+        lang="C",
+    )
+    _, fc3_rust = get_fc3(
+        ph.supercell,
+        ph.primitive,
+        ph.dataset,
+        ph.symmetry,
+        lang="Rust",
+    )
+    np.testing.assert_allclose(fc3_rust, fc3_c, rtol=1e-13, atol=1e-13)
+
+
+def test_set_permutation_symmetry_fc3_rust_vs_c():
+    """Compare lang='Rust' and default (C) paths of set_permutation_symmetry_fc3.
+
+    Uses a synthetic random fc3 of moderate size; because the operation
+    sums six doubles and divides by 6 in a deterministic order, Rust and
+    C must produce bit-identical output.
+
+    """
+    pytest.importorskip("phono3py_rs")
+
+    num_atom = 5
+    rng = np.random.default_rng(2024)
+    base = rng.standard_normal((num_atom,) * 3 + (3, 3, 3)).astype("double", order="C")
+    fc3_c = base.copy(order="C")
+    fc3_rust = base.copy(order="C")
+
+    set_permutation_symmetry_fc3(fc3_c)
+    set_permutation_symmetry_fc3(fc3_rust, lang="Rust")
+
+    np.testing.assert_array_equal(fc3_rust, fc3_c)
 
 
 def test_fc3_symfc(si_pbesol_111_symfc: Phono3py):

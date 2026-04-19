@@ -197,6 +197,9 @@ class Interaction:
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
         self._openmp_per_triplets = openmp_per_triplets
         self._lang: Literal["C", "Python", "Rust"] = lang
+        from phono3py._lang import log_dispatch
+
+        log_dispatch(lang, "Interaction.__init__")
 
         self._symprec = self._primitive_symmetry.tolerance
 

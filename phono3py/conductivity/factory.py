@@ -379,6 +379,10 @@ def conductivity_calculator(
             "Use register_variant() to add custom methods."
         )
 
+    from phono3py._lang import log_dispatch
+
+    log_dispatch(lang, f"conductivity_calculator[{method.lower()}]")
+
     config = CalculatorConfig(
         temperatures=temperatures,
         sigmas=sigmas,

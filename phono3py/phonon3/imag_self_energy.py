@@ -177,6 +177,9 @@ class ImagSelfEnergy:
         self._grid_point: int | None = None
 
         self._lang: Literal["C", "Python", "Rust"] = lang
+        from phono3py._lang import log_dispatch
+
+        log_dispatch(lang, "ImagSelfEnergy.__init__")
         self._imag_self_energy: NDArray[np.double] | None = None
         self._detailed_imag_self_energy: NDArray[np.double] | None = None
         self._pp_strength: NDArray[np.double] | None = None
@@ -879,6 +882,7 @@ def get_imag_self_energy(
     return_gamma_detail: bool = False,
     output_filename: str | None = None,
     log_level: int = 0,
+    lang: Literal["C", "Python", "Rust"] = "C",
 ) -> tuple[NDArray[np.double] | None, NDArray[np.double], list[NDArray[np.double]]]:
     """Imaginary-part of self-energy at frequency points.
 
@@ -1011,7 +1015,9 @@ def get_imag_self_energy(
     detailed_gamma: list[NDArray[np.double]] = []
 
     ise = ImagSelfEnergy(
-        interaction, with_detail=(write_gamma_detail or return_gamma_detail)
+        interaction,
+        with_detail=(write_gamma_detail or return_gamma_detail),
+        lang=lang,
     )
     for i, gp in enumerate(grid_points):
         ise.set_grid_point(gp)

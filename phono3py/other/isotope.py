@@ -130,6 +130,9 @@ class Isotope:
         self._frequency_factor_to_THz = frequency_factor_to_THz
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
         self._lang: Literal["C", "Python", "Rust"] = lang
+        from phono3py._lang import log_dispatch
+
+        log_dispatch(lang, "Isotope.__init__")
         self._nac_q_direction: NDArray[np.double] | None = None
 
         self._grid_points: NDArray[np.int64] | None = None
