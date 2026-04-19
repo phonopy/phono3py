@@ -21,14 +21,42 @@ use crate::triplet_iw::{
     integration_weight_with_sigma_per_triplet_inner_par, BzGridError, BzGridView, TpType,
 };
 
+/// Scratch buffers reused across triplets to avoid per-triplet heap
+/// churn.  One instance per rayon worker (or one total for the
+/// sequential path).
+struct CollisionScratch {
+    fc3_normal_squared: Vec<f64>,
+    g_buf: Vec<f64>,
+    g_zero: Vec<i8>,
+}
+
+impl CollisionScratch {
+    fn new(num_band_prod: usize) -> Self {
+        Self {
+            fc3_normal_squared: vec![0.0; num_band_prod],
+            g_buf: vec![0.0; 2 * num_band_prod],
+            g_zero: vec![0; num_band_prod],
+        }
+    }
+
+    fn reset(&mut self) {
+        self.fc3_normal_squared.fill(0.0);
+        self.g_buf.fill(0.0);
+        self.g_zero.fill(0);
+    }
+}
+
 /// Per-triplet evaluator: compute interaction, then imag-self-energy
 /// for all temperatures at that triplet.  `g_buf` is the `(2, num_band0,
 /// num_band, num_band)` integration weight (pre-filled by the caller),
-/// `g_zero` is the flag block of matching shape.  Writes
-/// `ise_at_triplet` of shape `(num_temps, num_band0)`.
+/// `g_zero` is the flag block of matching shape.  `fc3_normal_squared`
+/// is a caller-owned scratch buffer (length `num_band0 * num_band *
+/// num_band`) that must be zeroed on entry.  Writes `ise_at_triplet`
+/// of shape `(num_temps, num_band0)`.
 #[allow(clippy::too_many_arguments)]
 fn evaluate_collision_at_triplet(
     ise_at_triplet: &mut [f64],
+    fc3_normal_squared: &mut [f64],
     triplet: [i64; 3],
     triplet_weight: i64,
     g_buf: &[f64],
@@ -52,10 +80,9 @@ fn evaluate_collision_at_triplet(
     openmp_per_triplets: bool,
 ) {
     let num_band_prod = num_band0 * num_band * num_band;
-    let mut fc3_normal_squared = vec![0.0f64; num_band_prod];
 
     get_interaction_at_triplet(
-        &mut fc3_normal_squared,
+        fc3_normal_squared,
         g_zero,
         num_band0,
         num_band,
@@ -84,7 +111,7 @@ fn evaluate_collision_at_triplet(
             slot,
             num_band0,
             num_band,
-            &fc3_normal_squared,
+            fc3_normal_squared,
             frequencies,
             triplet,
             triplet_weight,
@@ -183,83 +210,87 @@ pub fn get_pp_collision(
 
     let mut ise_per_triplet = vec![0.0f64; num_triplets * per_triplet_stride];
 
-    let run_one = |(i, ise_slot): (usize, &mut [f64])| -> Result<(), BzGridError> {
-        let triplet = triplets[i];
-        let mut g_buf = vec![0.0f64; 2 * num_band_prod];
-        let mut g_zero = vec![0i8; num_band_prod];
-        {
-            let (g1_slot, g2_3_slot) = g_buf.split_at_mut(num_band_prod);
-            let mut iw_ch: Vec<&mut [f64]> = vec![g1_slot, g2_3_slot];
-            if openmp_per_triplets {
-                integration_weight_per_triplet(
-                    &mut iw_ch,
-                    &mut g_zero,
-                    &freqs_at_gp,
-                    num_band0 as i64,
-                    &tp_relative,
-                    triplet,
-                    bzgrid,
-                    frequencies,
-                    num_band as i64,
-                    frequencies,
-                    num_band as i64,
-                    TpType::Type2,
-                )?;
-            } else {
-                integration_weight_per_triplet_inner_par(
-                    &mut iw_ch,
-                    &mut g_zero,
-                    &freqs_at_gp,
-                    num_band0 as i64,
-                    &tp_relative,
-                    triplet,
-                    bzgrid,
-                    frequencies,
-                    num_band as i64,
-                    frequencies,
-                    num_band as i64,
-                    TpType::Type2,
-                )?;
+    let run_one =
+        |scratch: &mut CollisionScratch,
+         (i, ise_slot): (usize, &mut [f64])|
+         -> Result<(), BzGridError> {
+            let triplet = triplets[i];
+            scratch.reset();
+            {
+                let (g1_slot, g2_3_slot) = scratch.g_buf.split_at_mut(num_band_prod);
+                let mut iw_ch: Vec<&mut [f64]> = vec![g1_slot, g2_3_slot];
+                if openmp_per_triplets {
+                    integration_weight_per_triplet(
+                        &mut iw_ch,
+                        &mut scratch.g_zero,
+                        &freqs_at_gp,
+                        num_band0 as i64,
+                        &tp_relative,
+                        triplet,
+                        bzgrid,
+                        frequencies,
+                        num_band as i64,
+                        frequencies,
+                        num_band as i64,
+                        TpType::Type2,
+                    )?;
+                } else {
+                    integration_weight_per_triplet_inner_par(
+                        &mut iw_ch,
+                        &mut scratch.g_zero,
+                        &freqs_at_gp,
+                        num_band0 as i64,
+                        &tp_relative,
+                        triplet,
+                        bzgrid,
+                        frequencies,
+                        num_band as i64,
+                        frequencies,
+                        num_band as i64,
+                        TpType::Type2,
+                    )?;
+                }
             }
-        }
-        evaluate_collision_at_triplet(
-            ise_slot,
-            triplet,
-            triplet_weights[i],
-            &g_buf,
-            &g_zero,
-            num_band0,
-            num_band,
-            num_temps,
-            temperatures_thz,
-            frequencies,
-            eigenvectors,
-            bzgrid.addresses,
-            d_diag,
-            q_mat,
-            fc3,
-            is_compact_fc3,
-            atom_triplets,
-            masses,
-            band_indices,
-            symmetrize_fc3_q,
-            cutoff_frequency,
-            openmp_per_triplets,
-        );
-        Ok(())
-    };
+            evaluate_collision_at_triplet(
+                ise_slot,
+                &mut scratch.fc3_normal_squared,
+                triplet,
+                triplet_weights[i],
+                &scratch.g_buf,
+                &scratch.g_zero,
+                num_band0,
+                num_band,
+                num_temps,
+                temperatures_thz,
+                frequencies,
+                eigenvectors,
+                bzgrid.addresses,
+                d_diag,
+                q_mat,
+                fc3,
+                is_compact_fc3,
+                atom_triplets,
+                masses,
+                band_indices,
+                symmetrize_fc3_q,
+                cutoff_frequency,
+                openmp_per_triplets,
+            );
+            Ok(())
+        };
 
     if openmp_per_triplets {
         ise_per_triplet
             .par_chunks_mut(per_triplet_stride)
             .enumerate()
-            .try_for_each(run_one)?;
+            .try_for_each_init(|| CollisionScratch::new(num_band_prod), run_one)?;
     } else {
+        let mut scratch = CollisionScratch::new(num_band_prod);
         for (i, slot) in ise_per_triplet
             .chunks_mut(per_triplet_stride)
             .enumerate()
         {
-            run_one((i, slot))?;
+            run_one(&mut scratch, (i, slot))?;
         }
     }
 
@@ -316,17 +347,16 @@ pub fn get_pp_collision_with_sigma(
 
     let mut ise_per_triplet = vec![0.0f64; num_triplets * per_triplet_stride];
 
-    let run_one = |(i, ise_slot): (usize, &mut [f64])| {
+    let run_one = |scratch: &mut CollisionScratch, (i, ise_slot): (usize, &mut [f64])| {
         let triplet = triplets[i];
-        let mut g_buf = vec![0.0f64; 2 * num_band_prod];
-        let mut g_zero = vec![0i8; num_band_prod];
+        scratch.reset();
         {
-            let (g1_slot, g2_3_slot) = g_buf.split_at_mut(num_band_prod);
+            let (g1_slot, g2_3_slot) = scratch.g_buf.split_at_mut(num_band_prod);
             let mut iw_ch: Vec<&mut [f64]> = vec![g1_slot, g2_3_slot];
             if openmp_per_triplets {
                 integration_weight_with_sigma_per_triplet(
                     &mut iw_ch,
-                    &mut g_zero,
+                    &mut scratch.g_zero,
                     sigma,
                     cutoff,
                     &freqs_at_gp,
@@ -339,7 +369,7 @@ pub fn get_pp_collision_with_sigma(
             } else {
                 integration_weight_with_sigma_per_triplet_inner_par(
                     &mut iw_ch,
-                    &mut g_zero,
+                    &mut scratch.g_zero,
                     sigma,
                     cutoff,
                     &freqs_at_gp,
@@ -353,10 +383,11 @@ pub fn get_pp_collision_with_sigma(
         }
         evaluate_collision_at_triplet(
             ise_slot,
+            &mut scratch.fc3_normal_squared,
             triplet,
             triplet_weights[i],
-            &g_buf,
-            &g_zero,
+            &scratch.g_buf,
+            &scratch.g_zero,
             num_band0,
             num_band,
             num_temps,
@@ -381,13 +412,14 @@ pub fn get_pp_collision_with_sigma(
         ise_per_triplet
             .par_chunks_mut(per_triplet_stride)
             .enumerate()
-            .for_each(run_one);
+            .for_each_init(|| CollisionScratch::new(num_band_prod), run_one);
     } else {
+        let mut scratch = CollisionScratch::new(num_band_prod);
         for (i, slot) in ise_per_triplet
             .chunks_mut(per_triplet_stride)
             .enumerate()
         {
-            run_one((i, slot));
+            run_one(&mut scratch, (i, slot));
         }
     }
 

@@ -354,7 +354,7 @@ class ImagSelfEnergy:
         else:
             self._pp.set_grid_point(grid_point)
             self._pp_strength = None
-            (self._triplets_at_q, self._weights_at_q) = self._pp.get_triplets_at_q()[:2]
+            self._triplets_at_q, self._weights_at_q = self._pp.get_triplets_at_q()[:2]
             self._grid_point = grid_point
             self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
 

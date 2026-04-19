@@ -16,3 +16,7 @@ rayon = "1"
 [profile.release]
 lto = "thin"
 codegen-units = 1
+
+[profile.release-with-debug]
+inherits = "release"
+debug = true

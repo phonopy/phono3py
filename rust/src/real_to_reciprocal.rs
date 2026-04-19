@@ -129,9 +129,20 @@ fn real_to_reciprocal_elements(
                 1.0
             };
 
-            for l in 0..27 {
-                fc3_rec_real[l] += phase[0] * fc3[adrs_shift_fc3 + l] * mult;
-                fc3_rec_imag[l] += phase[1] * fc3[adrs_shift_fc3 + l] * mult;
+            // Hoist phase * mult out of the inner loop, and slice fc3 up
+            // front so the inner loop iterates over fixed-length chunks.
+            // This lets LLVM drop bounds checks and emit a fused-multiply
+            // loop over the 27 elements.
+            let pr = phase[0] * mult;
+            let pi = phase[1] * mult;
+            let fc3_block = &fc3[adrs_shift_fc3..adrs_shift_fc3 + 27];
+            for ((rr, ri), &f) in fc3_rec_real
+                .iter_mut()
+                .zip(fc3_rec_imag.iter_mut())
+                .zip(fc3_block.iter())
+            {
+                *rr += pr * f;
+                *ri += pi * f;
             }
         }
     }
