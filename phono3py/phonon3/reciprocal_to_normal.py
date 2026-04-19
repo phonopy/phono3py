@@ -43,6 +43,57 @@ from numpy.typing import NDArray
 from phonopy.structure.atoms import PhonopyAtoms
 
 
+def run_reciprocal_to_normal_squared_rust(
+    fc3_reciprocal: NDArray[np.cdouble],
+    frequencies: NDArray[np.double],
+    eigenvectors: NDArray[np.cdouble],
+    masses: NDArray[np.double],
+    band_indices: NDArray[np.int64],
+    g_pos: NDArray[np.int64],
+    cutoff_frequency: float,
+    n_out: int,
+    openmp_per_triplets: bool = False,
+) -> NDArray[np.double]:
+    """Compute ``|fc3_normal|^2 / (f0*f1*f2)`` at a triplet using the Rust backend.
+
+    ``fc3_reciprocal`` uses the atom-first layout
+    ``(num_patom, num_patom, num_patom, 3, 3, 3)`` produced by
+    ``run_real_to_reciprocal_rust``.  ``frequencies`` has shape
+    ``(3, num_band)`` and ``eigenvectors`` has shape
+    ``(3, num_band, num_band)``; each row selects the quantity at one
+    vertex of the triplet.  ``eigenvectors`` is indexed as
+    ``[component, band]`` (un-scaled; mass scaling is applied inside).
+
+    ``g_pos`` has shape ``(num_g_pos, 4)`` with columns
+    ``(i0, j, k, dest)`` where ``i0`` indexes ``band_indices`` and
+    ``dest`` is the flat offset in the output.  Output length is
+    ``n_out``; entries not touched by ``g_pos`` are zero.
+
+    """
+    import phono3py_rs
+
+    fc3_normal_squared = np.zeros(n_out, dtype="double")
+    f0, f1, f2 = np.ascontiguousarray(frequencies, dtype="double")
+    e0, e1, e2 = (np.ascontiguousarray(e, dtype="complex128") for e in eigenvectors)
+
+    phono3py_rs.reciprocal_to_normal_squared(
+        fc3_normal_squared,
+        np.ascontiguousarray(g_pos, dtype="int64"),
+        np.ascontiguousarray(fc3_reciprocal, dtype="complex128"),
+        f0,
+        f1,
+        f2,
+        e0,
+        e1,
+        e2,
+        np.ascontiguousarray(masses, dtype="double"),
+        np.ascontiguousarray(band_indices, dtype="int64"),
+        float(cutoff_frequency),
+        bool(openmp_per_triplets),
+    )
+    return fc3_normal_squared
+
+
 class ReciprocalToNormal:
     """Class to transform fc3 in reciprocal space to phonon space.
 

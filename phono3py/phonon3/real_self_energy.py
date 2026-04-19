@@ -83,7 +83,7 @@ class RealSelfEnergy:
         grid_point: int | None = None,
         temperature: float | None = None,
         epsilon: float | None = None,
-        lang: Literal["C", "Python"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "C",
     ) -> None:
         """Init method.
 
@@ -108,7 +108,10 @@ class RealSelfEnergy:
             self.temperature = temperature
         self.grid_point = grid_point
 
-        self._lang: Literal["C", "Python"] = lang
+        self._lang: Literal["C", "Python", "Rust"] = lang
+        from phono3py._lang import log_dispatch
+
+        log_dispatch(lang, "RealSelfEnergy.__init__")
         self._frequency_: None = None
         self._pp_strength: NDArray[np.double] | None = None
         self._frequencies: NDArray[np.double] | None = None
@@ -154,7 +157,7 @@ class RealSelfEnergy:
 
     def run_interaction(self) -> None:
         """Calculate ph-ph interaction strength."""
-        self._pp.run(lang=self._lang)
+        self._pp.run()
         self._pp_strength = self._pp.interaction_strength
         self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
         self._triplets_at_q, self._weights_at_q, _, _ = self._pp.get_triplets_at_q()
@@ -245,12 +248,16 @@ class RealSelfEnergy:
     def _run_with_band_indices(self) -> None:
         if self._lang == "C":
             self._run_c_with_band_indices()
+        elif self._lang == "Rust":
+            self._run_rust_with_band_indices()
         else:
             self._run_py_with_band_indices()
 
     def _run_with_frequency_points(self) -> None:
         if self._lang == "C":
             self._run_c_with_frequency_points()
+        elif self._lang == "Rust":
+            self._run_rust_with_frequency_points()
         else:
             self._run_py_with_frequency_points()
 
@@ -265,6 +272,29 @@ class RealSelfEnergy:
         assert self._band_indices is not None
         assert self._temperature is not None
         phono3c.real_self_energy_at_bands(
+            self._real_self_energies,
+            self._pp_strength,
+            self._triplets_at_q,
+            self._weights_at_q,
+            self._frequencies,
+            self._band_indices,
+            self._temperature * get_physical_units().KB / get_physical_units().THzToEv,
+            self._epsilon,
+            self._unit_conversion,
+            self._cutoff_frequency,
+        )
+
+    def _run_rust_with_band_indices(self) -> None:
+        import phono3py_rs  # type: ignore
+
+        assert self._real_self_energies is not None
+        assert self._pp_strength is not None
+        assert self._triplets_at_q is not None
+        assert self._weights_at_q is not None
+        assert self._frequencies is not None
+        assert self._band_indices is not None
+        assert self._temperature is not None
+        phono3py_rs.real_self_energy_at_bands(
             self._real_self_energies,
             self._pp_strength,
             self._triplets_at_q,
@@ -318,6 +348,36 @@ class RealSelfEnergy:
             phono3c.real_self_energy_at_frequency_point(
                 shifts,
                 fpoint,
+                self._pp_strength,
+                self._triplets_at_q,
+                self._weights_at_q,
+                self._frequencies,
+                self._band_indices,
+                self._temperature
+                * get_physical_units().KB
+                / get_physical_units().THzToEv,
+                self._epsilon,
+                self._unit_conversion,
+                self._cutoff_frequency,
+            )
+            self._real_self_energies[i][:] = shifts
+
+    def _run_rust_with_frequency_points(self) -> None:
+        import phono3py_rs  # type: ignore
+
+        assert self._frequency_points is not None
+        assert self._real_self_energies is not None
+        assert self._pp_strength is not None
+        assert self._triplets_at_q is not None
+        assert self._weights_at_q is not None
+        assert self._frequencies is not None
+        assert self._band_indices is not None
+        assert self._temperature is not None
+        for i, fpoint in enumerate(self._frequency_points):
+            shifts = np.zeros(self._real_self_energies.shape[1], dtype="double")
+            phono3py_rs.real_self_energy_at_frequency_point(
+                shifts,
+                float(fpoint),
                 self._pp_strength,
                 self._triplets_at_q,
                 self._weights_at_q,
@@ -561,6 +621,7 @@ def get_real_self_energy(
     write_hdf5: bool = True,
     output_filename: str | os.PathLike | None = None,
     log_level: int = 0,
+    lang: Literal["C", "Python", "Rust"] = "C",
 ) -> tuple[NDArray[np.double] | None, NDArray[np.double]]:
     """Real part of self energy at frequency points.
 
@@ -634,7 +695,7 @@ def get_real_self_energy(
             print("Running harmonic phonon calculations...")
         interaction.run_phonon_solver()
 
-    fst = RealSelfEnergy(interaction)
+    fst = RealSelfEnergy(interaction, lang=lang)
     mesh = interaction.mesh_numbers
     bz_grid = interaction.bz_grid
 

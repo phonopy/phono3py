@@ -101,6 +101,7 @@ def _build_rta_calculator(
         is_N_U=config.is_N_U,
         is_gamma_detail=config.is_gamma_detail,
         log_level=config.log_level,
+        lang=config.lang,
     )
     ctx = VariantContext(
         interaction=interaction,
@@ -128,6 +129,7 @@ def _build_rta_calculator(
         is_gamma_detail=config.is_gamma_detail,
         sigma_cutoff_width=config.sigma_cutoff,
         log_level=config.log_level,
+        lang=config.lang,
     )
 
 
@@ -198,6 +200,7 @@ def _build_lbte_calculator(
         is_full_pp=config.is_full_pp,
         sigma_cutoff_width=config.sigma_cutoff,
         log_level=config.log_level,
+        lang=config.lang,
     )
 
 
@@ -301,7 +304,7 @@ def conductivity_calculator(
     pinv_cutoff: float = 1.0e-8,
     pinv_solver: int = 0,
     pinv_method: int = 0,
-    lang: Literal["C", "Python"] = "C",
+    lang: Literal["C", "Python", "Rust"] = "C",
     log_level: int = 0,
 ) -> RTACalculator | LBTECalculator:
     """Create a conductivity calculator with the appropriate building blocks.
@@ -355,8 +358,10 @@ def conductivity_calculator(
         Solver selection index (LBTE only).  Default 0.
     pinv_method : int, optional
         Pseudo-inverse criterion (LBTE only).  Default 0.
-    lang : {"C", "Python"}, optional
-        Backend for C-extension operations (LBTE only).  Default "C".
+    lang : {"C", "Python", "Rust"}, optional
+        Backend for scattering-kernel operations.  ``"Rust"`` is
+        currently only wired through the RTA low-memory collision path;
+        LBTE and other paths fall back to the C backend.  Default "C".
     log_level : int, optional
         Verbosity.  Default 0.
 
@@ -373,6 +378,10 @@ def conductivity_calculator(
             f"Registered methods: {sorted(_REGISTRY)}. "
             "Use register_variant() to add custom methods."
         )
+
+    from phono3py._lang import log_dispatch
+
+    log_dispatch(lang, f"conductivity_calculator[{method.lower()}]")
 
     config = CalculatorConfig(
         temperatures=temperatures,

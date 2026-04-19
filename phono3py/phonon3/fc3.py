@@ -39,7 +39,7 @@ from __future__ import annotations
 import logging
 import sys
 from collections.abc import Sequence
-from typing import cast
+from typing import Literal, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -76,6 +76,7 @@ def get_fc3(
     is_compact_fc: bool = False,
     pinv_solver: str = "numpy",
     verbose: bool = False,
+    lang: Literal["C", "Rust"] = "C",
 ) -> tuple[NDArray[np.double], NDArray[np.double]]:
     """Calculate fc3.
 
@@ -108,6 +109,7 @@ def get_fc3(
         is_compact_fc=(is_compact_fc and "cutoff_distance" not in disp_dataset),
         pinv_solver=pinv_solver,
         verbose=verbose,
+        lang=lang,
     )
     if verbose:
         print("Expanding fc3.")
@@ -187,6 +189,7 @@ def distribute_fc3(
     permutations: NDArray[np.int64],
     s2compact: NDArray[np.int64],
     verbose: bool = False,
+    lang: Literal["C", "Rust"] = "C",
 ) -> None:
     """Distribute fc3.
 
@@ -240,6 +243,14 @@ def distribute_fc3(
             print("    [ %d, x, x ] to [ %d, x, x ]" % (i_done + 1, i_target + 1))
             sys.stdout.flush()
 
+        if lang == "Rust":
+            import phono3py_rs  # type: ignore[import-untyped]
+
+            phono3py_rs.distribute_fc3(
+                fc3, s2compact[i_target], s2compact[i_done], atom_mapping, rot_cart_inv
+            )
+            continue
+
         try:
             import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
@@ -257,8 +268,17 @@ def distribute_fc3(
                     )
 
 
-def set_permutation_symmetry_fc3(fc3: NDArray[np.double]) -> None:
+def set_permutation_symmetry_fc3(
+    fc3: NDArray[np.double],
+    lang: Literal["C", "Rust"] = "C",
+) -> None:
     """Enforce permutation symmetry to full fc3."""
+    if lang == "Rust":
+        import phono3py_rs  # type: ignore[import-untyped]
+
+        phono3py_rs.permutation_symmetry_fc3(fc3)
+        return
+
     try:
         import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
@@ -274,23 +294,30 @@ def set_permutation_symmetry_fc3(fc3: NDArray[np.double]) -> None:
 
 
 def set_permutation_symmetry_compact_fc3(
-    fc3: NDArray[np.double], primitive: Primitive
+    fc3: NDArray[np.double],
+    primitive: Primitive,
+    lang: Literal["C", "Rust"] = "C",
 ) -> None:
     """Enforce permulation symmetry to compact fc3."""
+    s2p_map = primitive.s2p_map
+    p2s_map = primitive.p2s_map
+    p2p_map = primitive.p2p_map
+    permutations = primitive.atomic_permutations
+    s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map, p2p_map, permutations)
+
+    if lang == "Rust":
+        import phono3py_rs  # type: ignore[import-untyped]
+
+        phono3py_rs.permutation_symmetry_compact_fc3(
+            fc3, permutations, s2pp_map, p2s_map, nsym_list
+        )
+        return
+
     try:
         import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
-        s2p_map = primitive.s2p_map
-        p2s_map = primitive.p2s_map
-        p2p_map = primitive.p2p_map
-        permutations = primitive.atomic_permutations
-        s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map, p2p_map, permutations)
         phono3c.permutation_symmetry_compact_fc3(
-            fc3,
-            permutations,
-            s2pp_map,
-            p2s_map,
-            nsym_list,
+            fc3, permutations, s2pp_map, p2s_map, nsym_list
         )
     except ImportError as exc:
         text = (
@@ -335,33 +362,38 @@ def set_translational_invariance_fc3(fc3: NDArray[np.double]) -> None:
 
 
 def set_translational_invariance_compact_fc3(
-    fc3: NDArray[np.double], primitive: Primitive
+    fc3: NDArray[np.double],
+    primitive: Primitive,
+    lang: Literal["C", "Rust"] = "C",
 ) -> None:
     """Enforce translational symmetry to compact fc3."""
-    try:
-        import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
+    s2p_map = primitive.s2p_map
+    p2s_map = primitive.p2s_map
+    p2p_map = primitive.p2p_map
+    permutations = primitive.atomic_permutations
+    s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map, p2p_map, permutations)
 
-        s2p_map = primitive.s2p_map
-        p2s_map = primitive.p2s_map
-        p2p_map = primitive.p2p_map
-        permutations = primitive.atomic_permutations
-        s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map, p2p_map, permutations)
-        phono3c.transpose_compact_fc3(
-            fc3, permutations, s2pp_map, p2s_map, nsym_list, 0
-        )  # dim[0] <--> dim[1]
-        _set_translational_invariance_fc3_per_index(fc3, index=1)
-        phono3c.transpose_compact_fc3(
-            fc3, permutations, s2pp_map, p2s_map, nsym_list, 0
-        )  # dim[0] <--> dim[1]
-        _set_translational_invariance_fc3_per_index(fc3, index=1)
-        _set_translational_invariance_fc3_per_index(fc3, index=2)
+    if lang == "Rust":
+        import phono3py_rs  # type: ignore[import-untyped]
 
-    except ImportError as exc:
-        text = (
-            "Import error at phono3c.tranpose_compact_fc3. "
-            "Corresponding python code is not implemented."
-        )
-        raise RuntimeError(text) from exc
+        transpose = phono3py_rs.transpose_compact_fc3
+    else:
+        try:
+            import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
+
+            transpose = phono3c.transpose_compact_fc3
+        except ImportError as exc:
+            text = (
+                "Import error at phono3c.tranpose_compact_fc3. "
+                "Corresponding python code is not implemented."
+            )
+            raise RuntimeError(text) from exc
+
+    transpose(fc3, permutations, s2pp_map, p2s_map, nsym_list, 0)  # dim[0] <--> dim[1]
+    _set_translational_invariance_fc3_per_index(fc3, index=1)
+    transpose(fc3, permutations, s2pp_map, p2s_map, nsym_list, 0)  # dim[0] <--> dim[1]
+    _set_translational_invariance_fc3_per_index(fc3, index=1)
+    _set_translational_invariance_fc3_per_index(fc3, index=2)
 
 
 def _set_translational_invariance_fc3_per_index(
@@ -473,6 +505,7 @@ def _solve_fc3(
     symprec: float,
     pinv_solver: str = "numpy",
     verbose: bool = False,
+    lang: Literal["C", "Rust"] = "C",
 ) -> NDArray[np.double]:
     logger.debug("solve_fc3")
 
@@ -536,6 +569,14 @@ def _solve_fc3(
     fc3 = np.zeros((num_atom, num_atom, 3, 3, 3), dtype="double", order="C")
 
     logger.debug("rotate_delta_fc2s")
+
+    if lang == "Rust":
+        import phono3py_rs  # type: ignore[import-untyped]
+
+        phono3py_rs.rotate_delta_fc2s(
+            fc3, delta_fc2s, inv_U, site_sym_cart, rot_map_syms
+        )
+        return fc3
 
     try:
         import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
@@ -626,7 +667,9 @@ def show_drift_fc3(
 
 
 def get_drift_fc3(
-    fc3: NDArray[np.double], primitive: Primitive | None = None
+    fc3: NDArray[np.double],
+    primitive: Primitive | None = None,
+    lang: Literal["C", "Rust"] = "C",
 ) -> tuple[float, float, float, list[int], list[int], list[int]]:
     """Return max drift of fc3."""
     if fc3.shape[0] == fc3.shape[1]:
@@ -655,48 +698,54 @@ def get_drift_fc3(
             raise RuntimeError(
                 "Primitive cell is required to get drift of compact fc3."
             )
-        try:
-            import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
+        s2p_map = primitive.s2p_map
+        p2s_map = primitive.p2s_map
+        p2p_map = primitive.p2p_map
+        permutations = primitive.atomic_permutations
+        s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map, p2p_map, permutations)
+        num_patom = fc3.shape[0]
+        num_satom = fc3.shape[1]
+        maxval1 = 0
+        maxval2 = 0
+        maxval3 = 0
+        xyz1 = [0, 0, 0]
+        xyz2 = [0, 0, 0]
+        xyz3 = [0, 0, 0]
+        if lang == "Rust":
+            import phono3py_rs  # type: ignore[import-untyped]
 
-            s2p_map = primitive.s2p_map
-            p2s_map = primitive.p2s_map
-            p2p_map = primitive.p2p_map
-            permutations = primitive.atomic_permutations
-            s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map, p2p_map, permutations)
-            num_patom = fc3.shape[0]
-            num_satom = fc3.shape[1]
-            maxval1 = 0
-            maxval2 = 0
-            maxval3 = 0
-            xyz1 = [0, 0, 0]
-            xyz2 = [0, 0, 0]
-            xyz3 = [0, 0, 0]
-            phono3c.transpose_compact_fc3(
-                fc3, permutations, s2pp_map, p2s_map, nsym_list, 0
-            )  # dim[0] <--> dim[1]
-            for i, j, k, ll, m in np.ndindex((num_patom, num_satom, 3, 3, 3)):
-                val1 = fc3[i, :, j, k, ll, m].sum()
-                if abs(val1) > abs(maxval1):
-                    maxval1 = val1
-                    xyz1 = [k, ll, m]
-            phono3c.transpose_compact_fc3(
-                fc3, permutations, s2pp_map, p2s_map, nsym_list, 0
-            )  # dim[0] <--> dim[1]
-            for i, j, k, ll, m in np.ndindex((num_patom, num_satom, 3, 3, 3)):
-                val2 = fc3[i, :, j, k, ll, m].sum()
-                val3 = fc3[i, j, :, k, ll, m].sum()
-                if abs(val2) > abs(maxval2):
-                    maxval2 = val2
-                    xyz2 = [k, ll, m]
-                if abs(val3) > abs(maxval3):
-                    maxval3 = val3
-                    xyz3 = [k, ll, m]
-        except ImportError as exc:
-            text = (
-                "Import error at phono3c.tranpose_compact_fc3. "
-                "Corresponding python code is not implemented."
-            )
-            raise RuntimeError(text) from exc
+            transpose = phono3py_rs.transpose_compact_fc3
+        else:
+            try:
+                import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
+
+                transpose = phono3c.transpose_compact_fc3
+            except ImportError as exc:
+                text = (
+                    "Import error at phono3c.tranpose_compact_fc3. "
+                    "Corresponding python code is not implemented."
+                )
+                raise RuntimeError(text) from exc
+        transpose(
+            fc3, permutations, s2pp_map, p2s_map, nsym_list, 0
+        )  # dim[0] <--> dim[1]
+        for i, j, k, ll, m in np.ndindex((num_patom, num_satom, 3, 3, 3)):
+            val1 = fc3[i, :, j, k, ll, m].sum()
+            if abs(val1) > abs(maxval1):
+                maxval1 = val1
+                xyz1 = [k, ll, m]
+        transpose(
+            fc3, permutations, s2pp_map, p2s_map, nsym_list, 0
+        )  # dim[0] <--> dim[1]
+        for i, j, k, ll, m in np.ndindex((num_patom, num_satom, 3, 3, 3)):
+            val2 = fc3[i, :, j, k, ll, m].sum()
+            val3 = fc3[i, j, :, k, ll, m].sum()
+            if abs(val2) > abs(maxval2):
+                maxval2 = val2
+                xyz2 = [k, ll, m]
+            if abs(val3) > abs(maxval3):
+                maxval3 = val3
+                xyz3 = [k, ll, m]
 
     return maxval1, maxval2, maxval3, xyz1, xyz2, xyz3
 
@@ -736,6 +785,7 @@ def _get_fc3_least_atoms(
     is_compact_fc: bool = False,
     pinv_solver: str = "numpy",
     verbose: bool = True,
+    lang: Literal["C", "Rust"] = "C",
 ) -> NDArray[np.double]:
     symprec = symmetry.tolerance
     num_satom = len(supercell)
@@ -804,6 +854,7 @@ def _get_fc3_least_atoms(
             symprec,
             pinv_solver=pinv_solver,
             verbose=verbose,
+            lang=lang,
         )
         if is_compact_fc:
             fc3[p2p_map[s2p_map[first_atom_num]]] = fc3_first

@@ -78,6 +78,7 @@ class JointDos:
         filename: str | os.PathLike | None = None,
         log_level: int = 0,
         lapack_zheev_uplo: Literal["L", "U"] = "L",
+        lang: Literal["C", "Python", "Rust"] = "C",
     ) -> None:
         """Init method."""
         self._grid_point: int | None = None
@@ -105,6 +106,10 @@ class JointDos:
         self._filename = filename
         self._log_level = log_level
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
+        self._lang: Literal["C", "Python", "Rust"] = lang
+        from phono3py._lang import log_dispatch
+
+        log_dispatch(lang, "JointDos.__init__")
 
         self._num_band = len(self._primitive) * 3
         self._reciprocal_lattice = np.linalg.inv(self._primitive.cell)
@@ -306,13 +311,15 @@ class JointDos:
         try:
             import phono3py._phono3py as phono3c  # noqa F401 # type: ignore
 
-            self.run_integration_weights()
+            self.run_integration_weights(lang=self._lang)
             self.run_jdos()
         except ImportError:
             print("Joint density of states in python is not implemented.")
             return
 
-    def run_integration_weights(self, lang: Literal["C", "Python"] = "C") -> None:
+    def run_integration_weights(
+        self, lang: Literal["C", "Python", "Rust"] = "C"
+    ) -> None:
         """Compute triplets integration weights."""
         assert self._frequency_points is not None
         self._g, self._g_zero = get_triplets_integration_weights(

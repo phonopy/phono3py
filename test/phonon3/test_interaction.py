@@ -28,9 +28,9 @@ def test_interaction_RTA_si(si_pbesol: Phono3py, lang: Literal["C", "Python"]):
         4.659572e-08,
         4.730222e-08,
     ]
-    itr = _get_irt(si_pbesol, [4, 4, 4])
+    itr = _get_irt(si_pbesol, [4, 4, 4], lang=lang)
     itr.set_grid_point(1)
-    itr.run(lang=lang)
+    itr.run()
     # _show(itr)
     # (10, 6, 6, 6)
     np.testing.assert_allclose(
@@ -255,6 +255,7 @@ def _get_irt(
     nac_params: Optional[dict] = None,
     solve_dynamical_matrices: bool = True,
     make_r0_average: bool = False,
+    lang: Literal["C", "Python", "Rust"] = "C",
 ):
     ph3.mesh_numbers = mesh
     assert ph3.grid is not None
@@ -265,6 +266,7 @@ def _get_irt(
         fc3=ph3.fc3,
         make_r0_average=make_r0_average,
         cutoff_frequency=1e-4,
+        lang=lang,
     )
     if nac_params is None:
         itr.init_dynamical_matrix(
