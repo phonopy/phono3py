@@ -70,7 +70,6 @@ fn real_to_normal(
     band_indices: &[i64],
     num_patom: usize,
     cutoff_frequency: f64,
-    openmp_per_triplets: bool,
 ) {
     let fc3_recip_len = num_patom * num_patom * num_patom * 27;
     let mut fc3_reciprocal: Vec<Cmplx> = vec![[0.0, 0.0]; fc3_recip_len];
@@ -80,7 +79,6 @@ fn real_to_normal(
         fc3,
         is_compact_fc3,
         atom_triplets,
-        openmp_per_triplets,
     );
     reciprocal_to_normal_squared(
         fc3_normal_squared,
@@ -96,7 +94,6 @@ fn real_to_normal(
         band_indices,
         num_patom,
         cutoff_frequency,
-        openmp_per_triplets,
     );
 }
 
@@ -120,7 +117,6 @@ fn real_to_normal_sym_q(
     band_indices: &[i64],
     num_patom: usize,
     cutoff_frequency: f64,
-    openmp_per_triplets: bool,
 ) {
     let num_band = num_patom * 3;
     let num_band0 = band_indices.len();
@@ -159,7 +155,6 @@ fn real_to_normal_sym_q(
             &full_band_indices,
             num_patom,
             cutoff_frequency,
-            openmp_per_triplets,
         );
 
         // Scatter tmp into fc3_normal_squared using band index exchange.
@@ -214,7 +209,6 @@ pub fn get_interaction_at_triplet(
     band_indices: &[i64],
     symmetrize_fc3_q: bool,
     cutoff_frequency: f64,
-    openmp_per_triplets: bool,
 ) {
     let num_patom = num_band / 3;
     let q_vecs = compute_q_vecs(triplet, bz_grid_addresses, d_diag, q_mat);
@@ -258,7 +252,6 @@ pub fn get_interaction_at_triplet(
             band_indices,
             num_patom,
             cutoff_frequency,
-            openmp_per_triplets,
         );
     } else {
         let base0 = triplet[0] as usize * num_band;
@@ -284,7 +277,6 @@ pub fn get_interaction_at_triplet(
             band_indices,
             num_patom,
             cutoff_frequency,
-            openmp_per_triplets,
         );
     }
 }
@@ -292,8 +284,10 @@ pub fn get_interaction_at_triplet(
 /// Main entry: port of `itr_get_interaction` in `c/interaction.c`.
 ///
 /// Writes `fc3_normal_squared` of shape `(num_triplets, num_band0,
-/// num_band, num_band)` flat.  Parallelizes over triplets when
-/// `openmp_per_triplets` is true (matches the C semantics).
+/// num_band, num_band)` flat.  Always parallelizes over triplets
+/// with rayon; the per-triplet kernels also run internal rayon
+/// loops, and rayon's work-stealing scheduler handles the nested
+/// case without oversubscribing.
 #[allow(clippy::too_many_arguments)]
 pub fn get_interaction(
     fc3_normal_squared: &mut [f64],
@@ -313,48 +307,37 @@ pub fn get_interaction(
     cutoff_frequency: f64,
     num_band0: usize,
     num_band: usize,
-    openmp_per_triplets: bool,
 ) {
     let num_triplets = triplets.len();
     let num_band_prod = num_band0 * num_band * num_band;
     debug_assert_eq!(fc3_normal_squared.len(), num_triplets * num_band_prod);
     debug_assert_eq!(g_zero.len(), num_triplets * num_band_prod);
 
-    let kernel = |(i, slot): (usize, &mut [f64])| {
-        let gz = &g_zero[i * num_band_prod..(i + 1) * num_band_prod];
-        get_interaction_at_triplet(
-            slot,
-            gz,
-            num_band0,
-            num_band,
-            frequencies,
-            eigenvectors,
-            triplets[i],
-            bz_grid_addresses,
-            d_diag,
-            q_mat,
-            fc3,
-            is_compact_fc3,
-            atom_triplets,
-            masses,
-            band_indices,
-            symmetrize_fc3_q,
-            cutoff_frequency,
-            openmp_per_triplets,
-        );
-    };
-
-    if openmp_per_triplets {
-        fc3_normal_squared
-            .par_chunks_mut(num_band_prod)
-            .enumerate()
-            .for_each(kernel);
-    } else {
-        fc3_normal_squared
-            .chunks_mut(num_band_prod)
-            .enumerate()
-            .for_each(kernel);
-    }
+    fc3_normal_squared
+        .par_chunks_mut(num_band_prod)
+        .enumerate()
+        .for_each(|(i, slot)| {
+            let gz = &g_zero[i * num_band_prod..(i + 1) * num_band_prod];
+            get_interaction_at_triplet(
+                slot,
+                gz,
+                num_band0,
+                num_band,
+                frequencies,
+                eigenvectors,
+                triplets[i],
+                bz_grid_addresses,
+                d_diag,
+                q_mat,
+                fc3,
+                is_compact_fc3,
+                atom_triplets,
+                masses,
+                band_indices,
+                symmetrize_fc3_q,
+                cutoff_frequency,
+            );
+        });
 }
 
 #[cfg(test)]

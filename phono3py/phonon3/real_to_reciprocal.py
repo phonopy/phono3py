@@ -51,7 +51,6 @@ def run_real_to_reciprocal_rust(
     make_r0_average: bool,
     all_shortest: NDArray[np.byte],
     nonzero_indices: NDArray[np.byte],
-    openmp_per_triplets: bool = False,
 ) -> NDArray[np.cdouble]:
     """Transform fc3 to reciprocal space at a q-triplet using the Rust backend.
 
@@ -88,7 +87,6 @@ def run_real_to_reciprocal_rust(
         bool(make_r0_average),
         np.ascontiguousarray(all_shortest, dtype="byte"),
         np.ascontiguousarray(nonzero_indices, dtype="byte"),
-        bool(openmp_per_triplets),
     )
     return fc3_reciprocal
 

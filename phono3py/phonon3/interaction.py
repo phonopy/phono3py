@@ -48,7 +48,6 @@ def run_interaction_rust(
     make_r0_average: bool,
     all_shortest: NDArray[np.byte],
     cutoff_frequency: float,
-    openmp_per_triplets: bool,
 ) -> None:
     """Compute ph-ph interaction strength via the Rust backend.
 
@@ -87,7 +86,6 @@ def run_interaction_rust(
         np.ascontiguousarray(all_shortest, dtype="byte"),
         float(cutoff_frequency),
         is_compact_fc3,
-        bool(openmp_per_triplets),
     )
 
 
@@ -999,7 +997,6 @@ class Interaction:
         assert self._interaction_strength is not None
         assert self._triplets_at_q is not None
 
-        num_band = len(self._primitive) * 3
         if g_zero is None or self._symmetrize_fc3q:
             _g_zero = np.zeros(
                 self._interaction_strength.shape,
@@ -1008,11 +1005,6 @@ class Interaction:
             )
         else:
             _g_zero = g_zero
-
-        if self._openmp_per_triplets is None:
-            openmp_per_triplets = len(self._triplets_at_q) > num_band
-        else:
-            openmp_per_triplets = self._openmp_per_triplets
 
         run_interaction_rust(
             self._interaction_strength,
@@ -1035,7 +1027,6 @@ class Interaction:
             self._make_r0_average,
             self._all_shortest,
             self._cutoff_frequency,
-            openmp_per_triplets,
         )
         self._interaction_strength *= self._unit_conversion
         self._g_zero = g_zero

@@ -52,7 +52,6 @@ def run_reciprocal_to_normal_squared_rust(
     g_pos: NDArray[np.int64],
     cutoff_frequency: float,
     n_out: int,
-    openmp_per_triplets: bool = False,
 ) -> NDArray[np.double]:
     """Compute ``|fc3_normal|^2 / (f0*f1*f2)`` at a triplet using the Rust backend.
 
@@ -89,7 +88,6 @@ def run_reciprocal_to_normal_squared_rust(
         np.ascontiguousarray(masses, dtype="double"),
         np.ascontiguousarray(band_indices, dtype="int64"),
         float(cutoff_frequency),
-        bool(openmp_per_triplets),
     )
     return fc3_normal_squared
 

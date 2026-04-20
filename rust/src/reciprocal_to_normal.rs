@@ -13,8 +13,6 @@
 //! `[band, component]` and multiplies by `1 / sqrt(mass_of(component))`,
 //! mirroring the C preamble in `reciprocal_to_normal_squared`.
 
-use rayon::prelude::*;
-
 use crate::common::{cmplx_mul, Cmplx};
 
 /// Pre-scale eigenvectors by `1 / sqrt(mass)` and transpose so the
@@ -126,9 +124,9 @@ fn get_fc3_sum_atomwise(
 ///   length `num_band0`.
 /// - `cutoff_frequency`: entries with any of `freqs0[bi]`, `freqs1[j]`,
 ///   `freqs2[k]` not exceeding this are zeroed.
-/// - `openmp_per_triplets`: when `true`, loops run sequentially (the
-///   caller parallelizes over triplets); when `false`, the per-band0
-///   and per-`g_pos` loops are parallelized with rayon.
+///
+/// The per-band0 and per-`g_pos` loops run sequentially; callers that
+/// need thread-level parallelism parallelize over triplets instead.
 #[allow(clippy::too_many_arguments)]
 pub fn reciprocal_to_normal_squared(
     fc3_normal_squared: &mut [f64],
@@ -144,7 +142,6 @@ pub fn reciprocal_to_normal_squared(
     band_indices: &[i64],
     num_patom: usize,
     cutoff_frequency: f64,
-    openmp_per_triplets: bool,
 ) {
     let num_band = num_patom * 3;
     debug_assert_eq!(fc3_reciprocal.len(), num_patom * num_patom * num_patom * 27);
@@ -167,22 +164,10 @@ pub fn reciprocal_to_normal_squared(
     let entry_size = num_patom * num_patom * 9;
     let mut fc3_e0 = vec![[0.0f64; 2]; num_band0 * entry_size];
 
-    if openmp_per_triplets {
-        for i0 in 0..num_band0 {
-            let bi = band_indices[i0] as usize;
-            let e0_band = &e0[bi * num_band..(bi + 1) * num_band];
-            let out = &mut fc3_e0[i0 * entry_size..(i0 + 1) * entry_size];
-            contract_fc3_e0(out, fc3_reciprocal, e0_band, num_patom);
-        }
-    } else {
-        fc3_e0
-            .par_chunks_mut(entry_size)
-            .enumerate()
-            .for_each(|(i0, out)| {
-                let bi = band_indices[i0] as usize;
-                let e0_band = &e0[bi * num_band..(bi + 1) * num_band];
-                contract_fc3_e0(out, fc3_reciprocal, e0_band, num_patom);
-            });
+    for (i0, out) in fc3_e0.chunks_mut(entry_size).enumerate() {
+        let bi = band_indices[i0] as usize;
+        let e0_band = &e0[bi * num_band..(bi + 1) * num_band];
+        contract_fc3_e0(out, fc3_reciprocal, e0_band, num_patom);
     }
 
     let eval_one = |gp: &[i64; 4]| -> (usize, f64) {
@@ -204,18 +189,9 @@ pub fn reciprocal_to_normal_squared(
         (dest, sq / (freqs0[bi] * freqs1[j] * freqs2[k]))
     };
 
-    if openmp_per_triplets {
-        for gp in g_pos {
-            let (dest, val) = eval_one(gp);
-            fc3_normal_squared[dest] = val;
-        }
-    } else {
-        // Parallelize over g_pos; each entry writes to a distinct
-        // `dest` so we gather pairs and scatter afterwards.
-        let results: Vec<(usize, f64)> = g_pos.par_iter().map(eval_one).collect();
-        for (dest, val) in results {
-            fc3_normal_squared[dest] = val;
-        }
+    for gp in g_pos {
+        let (dest, val) = eval_one(gp);
+        fc3_normal_squared[dest] = val;
     }
 }
 
@@ -290,7 +266,6 @@ mod tests {
             &band_indices,
             num_patom,
             0.0,
-            false,
         );
         for v in &out {
             assert_eq!(*v, 0.0);
@@ -332,7 +307,6 @@ mod tests {
             &band_indices,
             num_patom,
             0.5,
-            false,
         );
         assert_eq!(out[0], 0.0);
 
@@ -351,7 +325,6 @@ mod tests {
             &band_indices,
             num_patom,
             0.5,
-            false,
         );
         assert!(out[0] > 0.0);
     }

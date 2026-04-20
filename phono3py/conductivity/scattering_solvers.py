@@ -42,7 +42,6 @@ def run_pp_collision_rust(
     make_r0_average: bool,
     all_shortest: NDArray[np.byte],
     cutoff_frequency: float,
-    openmp_per_triplets: bool,
 ) -> None:
     """Compute low-memory collision with the tetrahedron method (Rust).
 
@@ -82,7 +81,6 @@ def run_pp_collision_rust(
         np.ascontiguousarray(all_shortest, dtype="byte"),
         float(cutoff_frequency),
         is_compact_fc3,
-        bool(openmp_per_triplets),
     )
 
 
@@ -111,7 +109,6 @@ def run_pp_collision_with_sigma_rust(
     make_r0_average: bool,
     all_shortest: NDArray[np.byte],
     cutoff_frequency: float,
-    openmp_per_triplets: bool,
 ) -> None:
     """Compute low-memory collision with Gaussian smearing (Rust).
 
@@ -150,7 +147,6 @@ def run_pp_collision_with_sigma_rust(
         np.ascontiguousarray(all_shortest, dtype="byte"),
         float(cutoff_frequency),
         is_compact_fc3,
-        bool(openmp_per_triplets),
     )
 
 
@@ -188,7 +184,6 @@ def run_collision_at_grid_point_rust(
     make_r0_average: bool,
     all_shortest: NDArray[np.byte],
     cutoff_frequency: float,
-    openmp_per_triplets: bool,
 ) -> None:
     """Compute gamma for one grid point with multiple sigmas (Rust).
 
@@ -242,7 +237,6 @@ def run_collision_at_grid_point_rust(
         np.ascontiguousarray(all_shortest, dtype="byte"),
         float(cutoff_frequency),
         is_compact_fc3,
-        bool(openmp_per_triplets),
     )
 
 
@@ -613,7 +607,6 @@ class RTAScatteringSolver:
                     self._pp.make_r0_average,
                     self._pp.all_shortest,
                     self._pp.cutoff_frequency,
-                    openmp_per_triplets,
                 )
             else:
                 import phono3py._phono3py as phono3c
@@ -674,7 +667,6 @@ class RTAScatteringSolver:
                     self._pp.make_r0_average,
                     self._pp.all_shortest,
                     self._pp.cutoff_frequency,
-                    openmp_per_triplets,
                 )
             else:
                 import phono3py._phono3py as phono3c
@@ -820,7 +812,6 @@ class RTAScatteringSolver:
             cache["make_r0_average"],
             cache["all_shortest"],
             cache["cutoff_frequency"],
-            cache["openmp_per_triplets"],
         )
 
         for j in range(num_sigma):
@@ -872,12 +863,6 @@ class RTAScatteringSolver:
             dtype="double",
         )
 
-        num_band = len(pp.primitive) * 3
-        if pp.openmp_per_triplets is None:
-            openmp_per_triplets = int(np.prod(pp.bz_grid.D_diag)) > num_band
-        else:
-            openmp_per_triplets = pp.openmp_per_triplets
-
         self._rust_cache = {
             "sigmas": sigmas,
             "sigma_cutoffs": sigma_cutoffs,
@@ -915,7 +900,6 @@ class RTAScatteringSolver:
             "make_r0_average": bool(pp.make_r0_average),
             "all_shortest": np.ascontiguousarray(pp.all_shortest, dtype="byte"),
             "cutoff_frequency": float(pp.cutoff_frequency),
-            "openmp_per_triplets": bool(openmp_per_triplets),
         }
         return self._rust_cache
 

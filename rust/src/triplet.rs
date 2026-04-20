@@ -212,8 +212,7 @@ pub fn integration_weight_with_sigma(
 
 /// Choose outer (per-triplet) parallelism when there are at least as
 /// many triplets as worker threads; otherwise the caller falls back to
-/// inner (per-`b12`) parallelism inside each triplet kernel.  Mirrors
-/// the role of C's `openmp_per_triplets` flag.
+/// inner (per-`b12`) parallelism inside each triplet kernel.
 fn outer_parallel(num_triplets: usize) -> bool {
     num_triplets >= rayon::current_num_threads()
 }

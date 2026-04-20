@@ -10,8 +10,6 @@
 
 use std::f64::consts::PI;
 
-use rayon::prelude::*;
-
 use crate::common::{cmplx_mul, Cmplx, Vec3D};
 
 /// Atom-triplet metadata shared across the real-to-reciprocal transform.
@@ -292,17 +290,15 @@ fn r0_average_block(
 ///
 /// Output layout: atom-first `(num_patom, num_patom, num_patom, 3, 3, 3)`
 /// flat.  `q_vecs` is the fractional q-triplet `[q0, q1, q2]`.
-/// `openmp_per_triplets` matches the C flag: when `true`, this
-/// function runs sequentially (the outer loop over triplets is
-/// parallelized upstream); when `false`, the `pi0, pi1, pi2` loop
-/// is parallelized here.
+/// The `pi0, pi1, pi2` loop runs sequentially; callers that need
+/// thread-level parallelism parallelize over triplets instead, which
+/// keeps the common production case from paying nested-par overhead.
 pub fn real_to_reciprocal(
     fc3_reciprocal: &mut [Cmplx],
     q_vecs: &[Vec3D; 3],
     fc3: &[f64],
     is_compact_fc3: bool,
     atom_triplets: &AtomTriplets,
-    openmp_per_triplets: bool,
 ) {
     let num_patom = atom_triplets.num_patom;
     let num_satom = atom_triplets.num_satom;
@@ -338,41 +334,20 @@ pub fn real_to_reciprocal(
     }
 
     if atom_triplets.make_r0_average {
-        if openmp_per_triplets {
-            for (ijk, block) in fc3_reciprocal.chunks_mut(27).enumerate() {
-                r0_average_block(
-                    block,
-                    ijk,
-                    num_patom,
-                    num_satom,
-                    &pre_phase_factors,
-                    &phase_factor0,
-                    &phase_factor1,
-                    &phase_factor2,
-                    fc3,
-                    is_compact_fc3,
-                    atom_triplets,
-                );
-            }
-        } else {
-            fc3_reciprocal
-                .par_chunks_mut(27)
-                .enumerate()
-                .for_each(|(ijk, block)| {
-                    r0_average_block(
-                        block,
-                        ijk,
-                        num_patom,
-                        num_satom,
-                        &pre_phase_factors,
-                        &phase_factor0,
-                        &phase_factor1,
-                        &phase_factor2,
-                        fc3,
-                        is_compact_fc3,
-                        atom_triplets,
-                    );
-                });
+        for (ijk, block) in fc3_reciprocal.chunks_mut(27).enumerate() {
+            r0_average_block(
+                block,
+                ijk,
+                num_patom,
+                num_satom,
+                &pre_phase_factors,
+                &phase_factor0,
+                &phase_factor1,
+                &phase_factor2,
+                fc3,
+                is_compact_fc3,
+                atom_triplets,
+            );
         }
 
         // Divide by 3 to average the three legs.
@@ -380,7 +355,7 @@ pub fn real_to_reciprocal(
             c[0] /= 3.0;
             c[1] /= 3.0;
         }
-    } else if openmp_per_triplets {
+    } else {
         for (ijk, block) in fc3_reciprocal.chunks_mut(27).enumerate() {
             legacy_block(
                 block,
@@ -395,24 +370,6 @@ pub fn real_to_reciprocal(
                 atom_triplets,
             );
         }
-    } else {
-        fc3_reciprocal
-            .par_chunks_mut(27)
-            .enumerate()
-            .for_each(|(ijk, block)| {
-                legacy_block(
-                    block,
-                    ijk,
-                    num_patom,
-                    num_satom,
-                    &pre_phase_factors,
-                    &phase_factor1,
-                    &phase_factor2,
-                    fc3,
-                    is_compact_fc3,
-                    atom_triplets,
-                );
-            });
     }
 }
 

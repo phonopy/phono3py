@@ -60,7 +60,6 @@ def _run_rust(itr: Interaction) -> np.ndarray:
         order="C",
     )
     g_zero = np.zeros(out.shape, dtype="byte", order="C")
-    openmp_per_triplets = num_triplets > num_band
     frequencies, eigenvectors, _ = itr.get_phonons()
     assert frequencies is not None and eigenvectors is not None
     svecs, multi = itr.primitive.get_smallest_vectors()
@@ -85,7 +84,6 @@ def _run_rust(itr: Interaction) -> np.ndarray:
         itr.make_r0_average,
         itr.all_shortest,
         itr.cutoff_frequency,
-        openmp_per_triplets,
     )
     return out
 

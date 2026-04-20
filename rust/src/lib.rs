@@ -1402,10 +1402,10 @@ fn py_dynamical_matrices_at_gridpoints_gonze<'py>(
 /// ``num_satom`` for the full layout; ``is_compact_fc3`` selects the
 /// variant.  ``q_vecs`` is the fractional q-triplet ``(3, 3)``.
 /// ``all_shortest`` and ``nonzero_indices`` are int8 flag arrays.
-/// Set ``openmp_per_triplets`` to ``true`` when outer parallelism
-/// over triplets is already in effect; otherwise this function
-/// parallelises over the ``(num_patom, num_patom, num_patom)`` atom
-/// triplet.
+///
+/// This function handles a single q-triplet, so it always parallelises
+/// over the ``(num_patom, num_patom, num_patom)`` atom triplet
+/// (equivalent to ``num_triplets = 1 <= num_band``).
 #[pyfunction]
 #[pyo3(name = "real_to_reciprocal")]
 #[allow(clippy::too_many_arguments)]
@@ -1422,7 +1422,6 @@ fn py_real_to_reciprocal<'py>(
     make_r0_average: bool,
     all_shortest: PyReadonlyArray3<'py, i8>,
     nonzero_indices: PyReadonlyArray3<'py, i8>,
-    openmp_per_triplets: bool,
 ) -> PyResult<()> {
     let num_patom = p2s_map.shape()[0];
     let num_satom = s2p_map.shape()[0];
@@ -1525,7 +1524,6 @@ fn py_real_to_reciprocal<'py>(
             fc3_slice,
             is_compact_fc3,
             &atom_triplets,
-            openmp_per_triplets,
         );
     });
 
@@ -1549,8 +1547,8 @@ fn py_real_to_reciprocal<'py>(
 /// - ``masses``: ``(num_patom,)`` ``float64``.
 /// - ``band_indices``: ``(num_band0,)`` ``int64``.
 ///
-/// Set ``openmp_per_triplets`` to ``true`` when outer parallelism over
-/// triplets is already in effect.
+/// This function handles a single q-triplet, so it always parallelises
+/// internally (equivalent to ``num_triplets = 1 <= num_band``).
 #[pyfunction]
 #[pyo3(name = "reciprocal_to_normal_squared")]
 #[allow(clippy::too_many_arguments)]
@@ -1568,7 +1566,6 @@ fn py_reciprocal_to_normal_squared<'py>(
     masses: PyReadonlyArray1<'py, f64>,
     band_indices: PyReadonlyArray1<'py, i64>,
     cutoff_frequency: f64,
-    openmp_per_triplets: bool,
 ) -> PyResult<()> {
     let num_patom = masses.shape()[0];
     let num_band = num_patom * 3;
@@ -1676,7 +1673,6 @@ fn py_reciprocal_to_normal_squared<'py>(
             band_slice,
             num_patom,
             cutoff_frequency,
-            openmp_per_triplets,
         );
     });
 
@@ -1909,7 +1905,6 @@ fn py_interaction<'py>(
     all_shortest: PyReadonlyArray3<'py, i8>,
     cutoff_frequency: f64,
     is_compact_fc3: bool,
-    openmp_per_triplets: bool,
 ) -> PyResult<()> {
     let num_patom = p2s_map.shape()[0];
     let num_satom = s2p_map.shape()[0];
@@ -2090,7 +2085,6 @@ fn py_interaction<'py>(
             cutoff_frequency,
             num_band0,
             num_band,
-            openmp_per_triplets,
         );
     });
 
@@ -2315,7 +2309,6 @@ fn py_pp_collision<'py>(
     all_shortest: PyReadonlyArray3<'py, i8>,
     cutoff_frequency: f64,
     is_compact_fc3: bool,
-    openmp_per_triplets: bool,
 ) -> PyResult<()> {
     let num_patom = p2s_map.shape()[0];
     let num_satom = s2p_map.shape()[0];
@@ -2481,7 +2474,6 @@ fn py_pp_collision<'py>(
             is_n_u,
             symmetrize_fc3_q,
             cutoff_frequency,
-            openmp_per_triplets,
             num_band0,
             num_band,
         )
@@ -2528,7 +2520,6 @@ fn py_pp_collision_with_sigma<'py>(
     all_shortest: PyReadonlyArray3<'py, i8>,
     cutoff_frequency: f64,
     is_compact_fc3: bool,
-    openmp_per_triplets: bool,
 ) -> PyResult<()> {
     let num_patom = p2s_map.shape()[0];
     let num_satom = s2p_map.shape()[0];
@@ -2684,7 +2675,6 @@ fn py_pp_collision_with_sigma<'py>(
             is_n_u,
             symmetrize_fc3_q,
             cutoff_frequency,
-            openmp_per_triplets,
             num_band0,
             num_band,
         );
@@ -2761,7 +2751,6 @@ fn py_collision_at_grid_point<'py>(
     all_shortest: PyReadonlyArray3<'py, i8>,
     cutoff_frequency: f64,
     is_compact_fc3: bool,
-    openmp_per_triplets: bool,
 ) -> PyResult<()> {
     let num_patom = p2s_map.shape()[0];
     let num_satom = s2p_map.shape()[0];
@@ -3025,7 +3014,6 @@ fn py_collision_at_grid_point<'py>(
                     is_n_u,
                     symmetrize_fc3_q,
                     cutoff_frequency,
-                    openmp_per_triplets,
                     num_band0,
                     num_band,
                 )?;
@@ -3050,7 +3038,6 @@ fn py_collision_at_grid_point<'py>(
                     is_n_u,
                     symmetrize_fc3_q,
                     cutoff_frequency,
-                    openmp_per_triplets,
                     num_band0,
                     num_band,
                 );
