@@ -181,25 +181,6 @@ pub fn all_relative_grid_address() -> AllRelativeGridAddress {
     DB_RELATIVE_GRID_ADDRESS
 }
 
-/// Bounding-box test: is `f0` inside `[fmin, fmax]` of any vertex?
-/// Mirrors `thm_in_tetrahedra`.
-pub fn in_tetrahedra(f0: f64, freq_vertices: &[[f64; 4]; 24]) -> bool {
-    let mut fmin = freq_vertices[0][0];
-    let mut fmax = freq_vertices[0][0];
-    for i in 0..24 {
-        for j in 0..4 {
-            let v = freq_vertices[i][j];
-            if fmin > v {
-                fmin = v;
-            }
-            if fmax < v {
-                fmax = v;
-            }
-        }
-    }
-    !(fmin > f0 || fmax < f0)
-}
-
 /// Tetrahedron-method integration weight for a single `omega`.
 /// Mirrors `thm_get_integration_weight`.
 pub fn integration_weight(
@@ -658,19 +639,6 @@ mod tests {
         assert_eq!(table[0][0], [0, 0, 0]);
         assert_eq!(table[0][1], [1, 0, 0]);
         assert_eq!(table[0][3], [0, 1, 1]);
-    }
-
-    #[test]
-    fn in_tetrahedra_inside_and_outside() {
-        let mut fv = [[0.0; 4]; 24];
-        for i in 0..24 {
-            fv[i] = [0.0, 1.0, 2.0, 3.0];
-        }
-        assert!(in_tetrahedra(1.5, &fv));
-        assert!(in_tetrahedra(0.0, &fv)); // boundary counts as inside
-        assert!(in_tetrahedra(3.0, &fv));
-        assert!(!in_tetrahedra(-0.001, &fv));
-        assert!(!in_tetrahedra(3.001, &fv));
     }
 
     #[test]
