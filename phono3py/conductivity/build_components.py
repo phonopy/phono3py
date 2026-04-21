@@ -178,6 +178,12 @@ class CalculatorConfig:
         LBTE and other paths fall back to the C backend.
     log_level : int
         Verbosity.
+    rust_gp_batch_size : int or None
+        Batch size for the Rust batched grid-point path (RTA only).
+        ``None`` defers to the ``PHONO3PY_RUST_GP_BATCH_SIZE`` env var
+        (default 0 = batching disabled).  ``0`` forces the non-batched
+        per-gp path; a positive integer enables batched
+        ``compute_batched`` calls of that size.
 
     """
 
@@ -204,6 +210,7 @@ class CalculatorConfig:
     pinv_method: int = 0
     lang: Literal["C", "Python", "Rust"] = "C"
     log_level: int = 0
+    rust_gp_batch_size: int | None = None
 
 
 def build_lbte_kappa_settings(

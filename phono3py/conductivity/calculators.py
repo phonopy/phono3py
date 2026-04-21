@@ -533,12 +533,14 @@ class RTACalculator(ConductivityCalculatorBase):
         sigma_cutoff_width: float | None = None,
         log_level: int = 0,
         lang: Literal["C", "Python", "Rust"] = "C",
+        rust_gp_batch_size: int | None = None,
     ):
         """Init method."""
         self._scattering_solver = scattering_solver
         self._kappa_solver = kappa_solver
         self._is_N_U = is_N_U
         self._is_gamma_detail = is_gamma_detail
+        self._rust_gp_batch_size = rust_gp_batch_size
 
         # Read flags (set via property setters when gamma is loaded from file).
         self._read_gamma = False
@@ -764,20 +766,29 @@ class RTACalculator(ConductivityCalculatorBase):
     def _iterate_grid_points(self, on_grid_point: Callable[[int], None] | None) -> None:
         """Batched main loop when the Rust low-memory path is active.
 
-        Default is disabled (``PHONO3PY_RUST_GP_BATCH_SIZE=0``), falling back
-        to the per-gp ``_compute_at_grid_point`` loop.  Set the env var to a
-        positive integer to enable batched ``compute_batched`` calls.
+        Batch size is resolved in this order:
+        1. ``rust_gp_batch_size`` constructor argument (if not None).
+        2. ``PHONO3PY_RUST_GP_BATCH_SIZE`` env var (default ``0``).
+
+        A value of ``0`` (or negative) falls back to the per-gp
+        ``_compute_at_grid_point`` loop; a positive integer enables
+        batched ``compute_batched`` calls of that size.
         """
-        batch_size_env = int(os.environ.get("PHONO3PY_RUST_GP_BATCH_SIZE", "0"))
+        if self._rust_gp_batch_size is not None:
+            batch_size_resolved = self._rust_gp_batch_size
+        else:
+            batch_size_resolved = int(
+                os.environ.get("PHONO3PY_RUST_GP_BATCH_SIZE", "0")
+            )
         if (
-            batch_size_env <= 0
+            batch_size_resolved <= 0
             or self._read_gamma
             or not getattr(self._scattering_solver, "supports_rust_batching", False)
         ):
             super()._iterate_grid_points(on_grid_point)
             return
 
-        batch_size = max(1, batch_size_env)
+        batch_size = max(1, batch_size_resolved)
         n_gp = len(self._kappa_settings.grid_points)
         i = 0
         while i < n_gp:

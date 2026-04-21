@@ -130,6 +130,7 @@ def _build_rta_calculator(
         sigma_cutoff_width=config.sigma_cutoff,
         log_level=config.log_level,
         lang=config.lang,
+        rust_gp_batch_size=config.rust_gp_batch_size,
     )
 
 
@@ -306,6 +307,7 @@ def conductivity_calculator(
     pinv_method: int = 0,
     lang: Literal["C", "Python", "Rust"] = "C",
     log_level: int = 0,
+    rust_gp_batch_size: int | None = None,
 ) -> RTACalculator | LBTECalculator:
     """Create a conductivity calculator with the appropriate building blocks.
 
@@ -364,6 +366,12 @@ def conductivity_calculator(
         LBTE and other paths fall back to the C backend.  Default "C".
     log_level : int, optional
         Verbosity.  Default 0.
+    rust_gp_batch_size : int or None, optional
+        Batch size for the Rust batched grid-point path (RTA only).
+        ``None`` defers to the ``PHONO3PY_RUST_GP_BATCH_SIZE`` env var
+        (default 0 = batching disabled).  ``0`` forces the non-batched
+        per-gp path; a positive integer enables batched
+        ``compute_batched`` calls of that size.  Default None.
 
     Returns
     -------
@@ -407,6 +415,7 @@ def conductivity_calculator(
         pinv_method=pinv_method,
         lang=lang,
         log_level=log_level,
+        rust_gp_batch_size=rust_gp_batch_size,
     )
 
     return _REGISTRY[method.lower()](interaction, config)
