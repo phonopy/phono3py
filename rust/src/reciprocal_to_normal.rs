@@ -122,33 +122,47 @@ fn contract_fc3_e0(
 /// lanes are combined at the end.  This exposes ILP to LLVM that the
 /// single-scalar form cannot express without `-ffast-math`.
 ///
+/// `chunks_exact(4)` + fixed-size `&[Cmplx; 4]` binding destructure
+/// lets LLVM see the 4-lane structure statically and emits the inner
+/// loop with zero bounds checks.  Earlier `a[base + i]` form produced
+/// eight `panic_bounds_check` branches per chunk iteration on aarch64.
+///
 /// `#[inline]` (hint, not force): benchmarked `#[inline(always)]` on
-/// NaMgF3 128 threads and it regressed 46.25s → 46.92s (2026-04-21),
+/// NaMgF3 128 threads and it regressed 46.25s -> 46.92s (2026-04-21),
 /// likely due to code-size pressure in the Phase 2 par_iter closure
 /// that outweighs prologue/epilogue savings on a 60-element loop.
 #[inline]
 fn cmplx_dot_partial4(a: &[Cmplx], b: &[Cmplx]) -> Cmplx {
     debug_assert_eq!(a.len(), b.len());
-    let n = a.len();
-    let chunks = n / 4;
-    let mut acc_re = [0.0f64; 4];
-    let mut acc_im = [0.0f64; 4];
-    for ch in 0..chunks {
-        let base = ch * 4;
-        for i in 0..4 {
-            let ai = a[base + i];
-            let bi = b[base + i];
-            acc_re[i] += ai[0] * bi[0] - ai[1] * bi[1];
-            acc_im[i] += ai[0] * bi[1] + ai[1] * bi[0];
-        }
+    let mut re0 = 0.0f64;
+    let mut re1 = 0.0f64;
+    let mut re2 = 0.0f64;
+    let mut re3 = 0.0f64;
+    let mut im0 = 0.0f64;
+    let mut im1 = 0.0f64;
+    let mut im2 = 0.0f64;
+    let mut im3 = 0.0f64;
+
+    let mut ai = a.chunks_exact(4);
+    let mut bi = b.chunks_exact(4);
+    for (ac, bc) in (&mut ai).zip(&mut bi) {
+        let [a0, a1, a2, a3] = <&[Cmplx; 4]>::try_from(ac).unwrap();
+        let [b0, b1, b2, b3] = <&[Cmplx; 4]>::try_from(bc).unwrap();
+        re0 += a0[0] * b0[0] - a0[1] * b0[1];
+        im0 += a0[0] * b0[1] + a0[1] * b0[0];
+        re1 += a1[0] * b1[0] - a1[1] * b1[1];
+        im1 += a1[0] * b1[1] + a1[1] * b1[0];
+        re2 += a2[0] * b2[0] - a2[1] * b2[1];
+        im2 += a2[0] * b2[1] + a2[1] * b2[0];
+        re3 += a3[0] * b3[0] - a3[1] * b3[1];
+        im3 += a3[0] * b3[1] + a3[1] * b3[0];
     }
-    let mut re = acc_re[0] + acc_re[1] + acc_re[2] + acc_re[3];
-    let mut im = acc_im[0] + acc_im[1] + acc_im[2] + acc_im[3];
-    for i in (chunks * 4)..n {
-        let ai = a[i];
-        let bi = b[i];
-        re += ai[0] * bi[0] - ai[1] * bi[1];
-        im += ai[0] * bi[1] + ai[1] * bi[0];
+
+    let mut re = (re0 + re1) + (re2 + re3);
+    let mut im = (im0 + im1) + (im2 + im3);
+    for (av, bv) in ai.remainder().iter().zip(bi.remainder().iter()) {
+        re += av[0] * bv[0] - av[1] * bv[1];
+        im += av[0] * bv[1] + av[1] * bv[0];
     }
     [re, im]
 }
