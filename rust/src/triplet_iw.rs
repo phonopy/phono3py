@@ -11,7 +11,7 @@ use rayon::prelude::*;
 
 use crate::common::Vec3I;
 use crate::grgrid::grid_index_from_address;
-use crate::tetrahedron_method::{in_tetrahedra, integration_weight, WeightFunction};
+use crate::tetrahedron_method::{integration_weight, WeightFunction};
 
 /// `*mut T` wrapper opting into Send + Sync for rayon.  Used only inside
 /// parallel kernels where the Rust author has manually verified that
@@ -119,6 +119,7 @@ pub fn integration_weight_per_triplet(
 
     let vertices = triplet_tetrahedra_vertices(tp_relative_grid_address, triplet, bzgrid)?;
 
+    let max_i = max_tetra_channels(tp_type);
     for b12 in 0..nbb {
         let b1 = (b12 as i64) / num_band2;
         let b2 = (b12 as i64) % num_band2;
@@ -132,10 +133,11 @@ pub fn integration_weight_per_triplet(
             b2,
             tp_type,
         );
+        let bboxes = freq_vertices_bboxes(&freq_vertices, max_i);
         for j in 0..nb0 {
             let adrs = j * nbb + b12;
             let f0 = frequency_points[j];
-            let (ch, iwz) = compute_tetra_channels(f0, &freq_vertices, tp_type);
+            let (ch, iwz) = compute_tetra_channels(f0, &freq_vertices, &bboxes, tp_type);
             iw_zero[adrs] = iwz;
             for (k, iw_ch_k) in iw_ch.iter_mut().enumerate() {
                 iw_ch_k[adrs] = ch[k];
@@ -175,6 +177,7 @@ pub fn integration_weight_per_triplet_inner_par(
         .collect();
     let iwz_ptr = SyncMutPtr(iw_zero.as_mut_ptr());
 
+    let max_i = max_tetra_channels(tp_type);
     // SAFETY: for each b12 in 0..nbb the inner j loop writes to offsets
     // { j * nbb + b12 : j in 0..nb0 } in every per-channel slice and in
     // iw_zero.  These index sets are pairwise disjoint across different
@@ -193,10 +196,11 @@ pub fn integration_weight_per_triplet_inner_par(
             b2,
             tp_type,
         );
+        let bboxes = freq_vertices_bboxes(&freq_vertices, max_i);
         for j in 0..nb0 {
             let adrs = j * nbb + b12;
             let f0 = frequency_points[j];
-            let (ch, iwz) = compute_tetra_channels(f0, &freq_vertices, tp_type);
+            let (ch, iwz) = compute_tetra_channels(f0, &freq_vertices, &bboxes, tp_type);
             unsafe {
                 *iwz_ptr.ptr().add(adrs) = iwz;
                 for (k, ch_ptr) in ch_ptrs.iter().enumerate() {
@@ -505,18 +509,57 @@ fn build_freq_vertices(
     out
 }
 
+/// Number of tetrahedron channels to compute for a given `tp_type`.
+fn max_tetra_channels(tp_type: TpType) -> usize {
+    match tp_type {
+        TpType::Type2 | TpType::Type3 => 3,
+        TpType::Type4 => 1,
+    }
+}
+
+/// Per-channel (fmin, fmax) bounding boxes across the 24 tetrahedra's
+/// 4 vertices.  Only the first `max_i` entries are populated.  Hoisted
+/// out of the `f0` loop so the per-`f0` in-tetrahedron test reduces
+/// from a 96-entry min/max scan to a pair of comparisons.
+fn freq_vertices_bboxes(
+    freq_vertices: &[[[f64; 4]; 24]; 3],
+    max_i: usize,
+) -> [(f64, f64); 3] {
+    let mut out = [(0.0f64, 0.0f64); 3];
+    for i in 0..max_i {
+        let mut fmin = freq_vertices[i][0][0];
+        let mut fmax = freq_vertices[i][0][0];
+        for j in 0..24 {
+            for k in 0..4 {
+                let v = freq_vertices[i][j][k];
+                if fmin > v {
+                    fmin = v;
+                }
+                if fmax < v {
+                    fmax = v;
+                }
+            }
+        }
+        out[i] = (fmin, fmax);
+    }
+    out
+}
+
 /// Compute g[0..max_i] and the iw_zero flag for one (f0, freq_vertices).
-/// Mirrors `set_g`.  Returns `(g, iw_zero)` where `iw_zero == 1` means
-/// every populated `g[i]` is exactly zero.
+/// Mirrors `set_g`.  `bboxes[i]` must hold the (fmin, fmax) of
+/// `freq_vertices[i]` for every `i in 0..max_i`.  Returns `(g, iw_zero)`
+/// where `iw_zero == 1` means every populated `g[i]` is exactly zero.
 fn compute_g(
     f0: f64,
     freq_vertices: &[[[f64; 4]; 24]; 3],
+    bboxes: &[(f64, f64); 3],
     max_i: usize,
 ) -> ([f64; 3], i8) {
     let mut g = [0.0f64; 3];
     let mut iw_zero: i8 = 1;
     for i in 0..max_i {
-        if in_tetrahedra(f0, &freq_vertices[i]) {
+        let (fmin, fmax) = bboxes[i];
+        if fmin <= f0 && f0 <= fmax {
             g[i] = integration_weight(f0, &freq_vertices[i], WeightFunction::I);
             iw_zero = 0;
         } else {
@@ -533,13 +576,11 @@ fn compute_g(
 fn compute_tetra_channels(
     f0: f64,
     freq_vertices: &[[[f64; 4]; 24]; 3],
+    bboxes: &[(f64, f64); 3],
     tp_type: TpType,
 ) -> ([f64; 3], i8) {
-    let max_i = match tp_type {
-        TpType::Type2 | TpType::Type3 => 3,
-        TpType::Type4 => 1,
-    };
-    let (g, iwz) = compute_g(f0, freq_vertices, max_i);
+    let max_i = max_tetra_channels(tp_type);
+    let (g, iwz) = compute_g(f0, freq_vertices, bboxes, max_i);
     let ch = match tp_type {
         TpType::Type2 => [g[2], g[0] - g[1], 0.0],
         TpType::Type3 => [g[2], g[0] - g[1], g[0] + g[1] + g[2]],

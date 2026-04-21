@@ -70,15 +70,26 @@ fn real_to_normal(
     band_indices: &[i64],
     num_patom: usize,
     cutoff_frequency: f64,
+    inner_par: bool,
 ) {
     let fc3_recip_len = num_patom * num_patom * num_patom * 27;
     let mut fc3_reciprocal: Vec<Cmplx> = vec![[0.0, 0.0]; fc3_recip_len];
+    // NOTE: always sequential.  Splitting the num_patom^3 block loop with
+    // rayon inside the nested-par call path regressed 46.92s -> 50.30s
+    // on NaMgF3 128 threads (2026-04-21); each r0_average_block chunk is
+    // too small to amortize rayon launch overhead, and the outer
+    // par_chunks_mut over triplets + reciprocal_to_normal_squared's
+    // inner par already provide enough work-stealing pool.  The
+    // real_to_reciprocal `inner_par` parameter is kept for the
+    // single-triplet Python entry (py_real_to_reciprocal), which has
+    // no outer par and genuinely benefits.
     real_to_reciprocal(
         &mut fc3_reciprocal,
         &q_vecs,
         fc3,
         is_compact_fc3,
         atom_triplets,
+        false,
     );
     reciprocal_to_normal_squared(
         fc3_normal_squared,
@@ -94,6 +105,7 @@ fn real_to_normal(
         band_indices,
         num_patom,
         cutoff_frequency,
+        inner_par,
     );
 }
 
@@ -117,6 +129,7 @@ fn real_to_normal_sym_q(
     band_indices: &[i64],
     num_patom: usize,
     cutoff_frequency: f64,
+    inner_par: bool,
 ) {
     let num_band = num_patom * 3;
     let num_band0 = band_indices.len();
@@ -155,6 +168,7 @@ fn real_to_normal_sym_q(
             &full_band_indices,
             num_patom,
             cutoff_frequency,
+            inner_par,
         );
 
         // Scatter tmp into fc3_normal_squared using band index exchange.
@@ -209,6 +223,7 @@ pub fn get_interaction_at_triplet(
     band_indices: &[i64],
     symmetrize_fc3_q: bool,
     cutoff_frequency: f64,
+    inner_par: bool,
 ) {
     let num_patom = num_band / 3;
     let q_vecs = compute_q_vecs(triplet, bz_grid_addresses, d_diag, q_mat);
@@ -252,6 +267,7 @@ pub fn get_interaction_at_triplet(
             band_indices,
             num_patom,
             cutoff_frequency,
+            inner_par,
         );
     } else {
         let base0 = triplet[0] as usize * num_band;
@@ -277,6 +293,7 @@ pub fn get_interaction_at_triplet(
             band_indices,
             num_patom,
             cutoff_frequency,
+            inner_par,
         );
     }
 }
@@ -284,10 +301,12 @@ pub fn get_interaction_at_triplet(
 /// Main entry: port of `itr_get_interaction` in `c/interaction.c`.
 ///
 /// Writes `fc3_normal_squared` of shape `(num_triplets, num_band0,
-/// num_band, num_band)` flat.  Always parallelizes over triplets
-/// with rayon; the per-triplet kernels also run internal rayon
-/// loops, and rayon's work-stealing scheduler handles the nested
-/// case without oversubscribing.
+/// num_band, num_band)` flat.  Parallelizes over triplets with rayon.
+/// When `num_triplets < num_threads` the outer loop cannot saturate
+/// the thread pool, so the per-triplet kernel also enables its own
+/// inner rayon loops via `inner_par = true`.  Rayon's work-stealing
+/// scheduler bridges across-triplet granularity gaps (e.g.  Phase 1
+/// of one triplet backfills with Phase 2 of another).
 #[allow(clippy::too_many_arguments)]
 pub fn get_interaction(
     fc3_normal_squared: &mut [f64],
@@ -313,6 +332,8 @@ pub fn get_interaction(
     debug_assert_eq!(fc3_normal_squared.len(), num_triplets * num_band_prod);
     debug_assert_eq!(g_zero.len(), num_triplets * num_band_prod);
 
+    let inner_par = num_triplets < rayon::current_num_threads();
+
     fc3_normal_squared
         .par_chunks_mut(num_band_prod)
         .enumerate()
@@ -336,6 +357,7 @@ pub fn get_interaction(
                 band_indices,
                 symmetrize_fc3_q,
                 cutoff_frequency,
+                inner_par,
             );
         });
 }

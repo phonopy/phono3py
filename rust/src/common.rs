@@ -15,7 +15,7 @@ pub type Cmplx = [f64; 2];
 
 /// Complex multiplication.  Mirrors `phonoc_complex_prod` in
 /// `c/lapack_wrapper.c`.
-#[inline]
+#[inline(always)]
 pub fn cmplx_mul(a: Cmplx, b: Cmplx) -> Cmplx {
     [a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] * b[0]]
 }
