@@ -43,15 +43,21 @@ fn scale_and_transpose(eigvecs: &[Cmplx], masses: &[f64], num_band: usize) -> Ve
 /// `e0_band` is the length-`num_band` row of the scaled-and-transposed
 /// `e0` at the target band (i.e. `e0_scaled[band_index_0, :]`).
 ///
-/// Produces `out[b, c, m, n] = sum over (a, l) of
-/// fc3[a, b, c, l, m, n] * e0_band[a * 3 + l]`, in flat layout
-/// `((b * num_patom + c) * 3 + m) * 3 + n`.
+/// Produces the band-pair matrix
+/// `out[bm, cn] = sum over (a, l) of fc3[a, b, c, l, m, n] * e0_band[a * 3 + l]`
+/// where `bm = b * 3 + m` and `cn = c * 3 + n`, laid out as
+/// `(num_band, num_band)` flat with index `bm * num_band + cn`.
+/// This matches the band-first layout that `get_fc3_sum_atomwise`
+/// consumes, so its inner reduction becomes a row-wise dot product
+/// over contiguous memory.
 fn contract_fc3_e0(
     out: &mut [Cmplx],
     fc3_reciprocal: &[Cmplx],
     e0_band: &[Cmplx],
     num_patom: usize,
 ) {
+    let num_band = num_patom * 3;
+    debug_assert_eq!(out.len(), num_band * num_band);
     for entry in out.iter_mut() {
         *entry = [0.0, 0.0];
     }
@@ -64,11 +70,14 @@ fn contract_fc3_e0(
             for b in 0..num_patom {
                 for c in 0..num_patom {
                     let fc3_base = ((a * num_patom + b) * num_patom + c) * 27 + l * 9;
-                    let out_base = (b * num_patom + c) * 9;
-                    for mn in 0..9 {
-                        let prod = cmplx_mul(fc3_reciprocal[fc3_base + mn], e0_al);
-                        out[out_base + mn][0] += prod[0];
-                        out[out_base + mn][1] += prod[1];
+                    for m in 0..3 {
+                        let bm = b * 3 + m;
+                        for n in 0..3 {
+                            let cn = c * 3 + n;
+                            let prod = cmplx_mul(fc3_reciprocal[fc3_base + m * 3 + n], e0_al);
+                            out[bm * num_band + cn][0] += prod[0];
+                            out[bm * num_band + cn][1] += prod[1];
+                        }
                     }
                 }
             }
@@ -76,33 +85,66 @@ fn contract_fc3_e0(
     }
 }
 
-/// Inner contraction over `(b, c, m, n)` at a single `(j, k)` band pair.
-/// Returns `|sum|^2` where `sum = sum over (b, c, m, n) of
-/// fc3_e0[b, c, m, n] * e1[b * 3 + m] * e2[c * 3 + n]`.
+/// Complex-valued dot product `sum_i a[i] * b[i]` with 4-way partial
+/// sums to break the IEEE-strict reduction dependency chain.  Each of
+/// the four lanes accumulates 1/4 of the terms independently, then the
+/// lanes are combined at the end.  This exposes ILP to LLVM that the
+/// single-scalar form cannot express without `-ffast-math`.
+#[inline]
+fn cmplx_dot_partial4(a: &[Cmplx], b: &[Cmplx]) -> Cmplx {
+    debug_assert_eq!(a.len(), b.len());
+    let n = a.len();
+    let chunks = n / 4;
+    let mut acc_re = [0.0f64; 4];
+    let mut acc_im = [0.0f64; 4];
+    for ch in 0..chunks {
+        let base = ch * 4;
+        for i in 0..4 {
+            let ai = a[base + i];
+            let bi = b[base + i];
+            acc_re[i] += ai[0] * bi[0] - ai[1] * bi[1];
+            acc_im[i] += ai[0] * bi[1] + ai[1] * bi[0];
+        }
+    }
+    let mut re = acc_re[0] + acc_re[1] + acc_re[2] + acc_re[3];
+    let mut im = acc_im[0] + acc_im[1] + acc_im[2] + acc_im[3];
+    for i in (chunks * 4)..n {
+        let ai = a[i];
+        let bi = b[i];
+        re += ai[0] * bi[0] - ai[1] * bi[1];
+        im += ai[0] * bi[1] + ai[1] * bi[0];
+    }
+    [re, im]
+}
+
+/// Inner contraction over `(bm, cn)` at a single `(j, k)` band pair.
+///
+/// `fc3_e0` is the `(num_band, num_band)` band-pair matrix produced by
+/// `contract_fc3_e0`.  Returns `|sum|^2` where
+/// `sum = sum over (bm, cn) of fc3_e0[bm, cn] * e1_band[bm] * e2_band[cn]`.
+///
+/// The reduction is split in two phases: first contract `cn` away
+/// into `scratch[bm]` as a row-wise dot product, then contract `bm`
+/// away into a scalar.  Each dot product is computed with
+/// `cmplx_dot_partial4` so the inner loop has four independent
+/// accumulator lanes.
 fn get_fc3_sum_atomwise(
     fc3_e0: &[Cmplx],
     e1_band: &[Cmplx],
     e2_band: &[Cmplx],
-    num_patom: usize,
+    scratch: &mut [Cmplx],
 ) -> f64 {
-    let mut sum_real = 0.0f64;
-    let mut sum_imag = 0.0f64;
-    for b in 0..num_patom {
-        for c in 0..num_patom {
-            let base = (b * num_patom + c) * 9;
-            for m in 0..3 {
-                let e1_bm = e1_band[b * 3 + m];
-                for n in 0..3 {
-                    let e2_cn = e2_band[c * 3 + n];
-                    let e12 = cmplx_mul(e1_bm, e2_cn);
-                    let t = cmplx_mul(fc3_e0[base + m * 3 + n], e12);
-                    sum_real += t[0];
-                    sum_imag += t[1];
-                }
-            }
-        }
+    let num_band = e1_band.len();
+    debug_assert_eq!(fc3_e0.len(), num_band * num_band);
+    debug_assert_eq!(e2_band.len(), num_band);
+    debug_assert_eq!(scratch.len(), num_band);
+
+    for bm in 0..num_band {
+        let row = &fc3_e0[bm * num_band..(bm + 1) * num_band];
+        scratch[bm] = cmplx_dot_partial4(row, e2_band);
     }
-    sum_real * sum_real + sum_imag * sum_imag
+    let sum = cmplx_dot_partial4(scratch, e1_band);
+    sum[0] * sum[0] + sum[1] * sum[1]
 }
 
 /// Compute `|M|^2 / (f0 * f1 * f2)` for each `g_pos` entry.
@@ -158,10 +200,11 @@ pub fn reciprocal_to_normal_squared(
     let e2 = scale_and_transpose(eigvecs2, masses, num_band);
 
     // fc3_e0 caches the contraction over (a, l) at each target band0
-    // index.  Shape: (num_band0, num_patom, num_patom, 3, 3) flat with
-    // entry size num_patom * num_patom * 9 complex.
+    // index as a (num_band, num_band) band-pair matrix.  Shape:
+    // (num_band0, num_band, num_band) flat.  entry_size equals
+    // num_band * num_band (= num_patom * num_patom * 9).
     let num_band0 = band_indices.len();
-    let entry_size = num_patom * num_patom * 9;
+    let entry_size = num_band * num_band;
     let mut fc3_e0 = vec![[0.0f64; 2]; num_band0 * entry_size];
 
     for (i0, out) in fc3_e0.chunks_mut(entry_size).enumerate() {
@@ -170,27 +213,28 @@ pub fn reciprocal_to_normal_squared(
         contract_fc3_e0(out, fc3_reciprocal, e0_band, num_patom);
     }
 
-    let eval_one = |gp: &[i64; 4]| -> (usize, f64) {
+    // Scratch row buffer for get_fc3_sum_atomwise Phase 1; one
+    // allocation per reciprocal_to_normal_squared invocation.
+    let mut scratch = vec![[0.0f64; 2]; num_band];
+
+    for gp in g_pos {
         let i0 = gp[0] as usize;
         let j = gp[1] as usize;
         let k = gp[2] as usize;
         let dest = gp[3] as usize;
         let bi = band_indices[i0] as usize;
-        if freqs0[bi] <= cutoff_frequency
+        let val = if freqs0[bi] <= cutoff_frequency
             || freqs1[j] <= cutoff_frequency
             || freqs2[k] <= cutoff_frequency
         {
-            return (dest, 0.0);
-        }
-        let fc3_e0_entry = &fc3_e0[i0 * entry_size..(i0 + 1) * entry_size];
-        let e1_band = &e1[j * num_band..(j + 1) * num_band];
-        let e2_band = &e2[k * num_band..(k + 1) * num_band];
-        let sq = get_fc3_sum_atomwise(fc3_e0_entry, e1_band, e2_band, num_patom);
-        (dest, sq / (freqs0[bi] * freqs1[j] * freqs2[k]))
-    };
-
-    for gp in g_pos {
-        let (dest, val) = eval_one(gp);
+            0.0
+        } else {
+            let fc3_e0_entry = &fc3_e0[i0 * entry_size..(i0 + 1) * entry_size];
+            let e1_band = &e1[j * num_band..(j + 1) * num_band];
+            let e2_band = &e2[k * num_band..(k + 1) * num_band];
+            let sq = get_fc3_sum_atomwise(fc3_e0_entry, e1_band, e2_band, &mut scratch);
+            sq / (freqs0[bi] * freqs1[j] * freqs2[k])
+        };
         fc3_normal_squared[dest] = val;
     }
 }
