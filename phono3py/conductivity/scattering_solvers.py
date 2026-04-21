@@ -14,6 +14,7 @@ from phono3py.conductivity.grid_point_data import ScatteringResult
 from phono3py.other.isotope import Isotope
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy, average_by_degeneracy
 from phono3py.phonon3.interaction import Interaction
+from phono3py.phonon3.triplets import get_triplets_at_q
 
 
 def run_pp_collision_rust(
@@ -130,6 +131,100 @@ def run_pp_collision_with_sigma_rust(
         np.ascontiguousarray(triplets_at_q, dtype="int64"),
         np.ascontiguousarray(weights_at_q, dtype="int64"),
         np.ascontiguousarray(bz_grid_addresses, dtype="int64"),
+        np.ascontiguousarray(d_diag, dtype="int64"),
+        np.ascontiguousarray(q_matrix, dtype="int64"),
+        np.ascontiguousarray(fc3, dtype="double"),
+        np.ascontiguousarray(fc3_nonzero_indices, dtype="byte"),
+        np.ascontiguousarray(svecs, dtype="double"),
+        np.ascontiguousarray(multiplicity, dtype="int64"),
+        np.ascontiguousarray(masses, dtype="double"),
+        np.ascontiguousarray(p2s_map, dtype="int64"),
+        np.ascontiguousarray(s2p_map, dtype="int64"),
+        np.ascontiguousarray(band_indices, dtype="int64"),
+        np.ascontiguousarray(temperatures_thz, dtype="double"),
+        bool(is_N_U),
+        bool(symmetrize_fc3_q),
+        bool(make_r0_average),
+        np.ascontiguousarray(all_shortest, dtype="byte"),
+        float(cutoff_frequency),
+        is_compact_fc3,
+    )
+
+
+def run_collision_at_grid_points_batched_rust(
+    collisions: NDArray[np.double],
+    grid_points: NDArray[np.int64],
+    sigmas: NDArray[np.double],
+    sigma_cutoffs: NDArray[np.double],
+    relative_grid_address: NDArray[np.int64],
+    bzg2grg: NDArray[np.int64],
+    reciprocal_rotations: NDArray[np.int64],
+    is_time_reversal: bool,
+    swappable: bool,
+    is_mesh_symmetry: bool,
+    reciprocal_lattice: NDArray[np.double],
+    bz_triplets_q_mat: NDArray[np.int64],
+    frequencies: NDArray[np.double],
+    eigenvectors: NDArray[np.cdouble],
+    bz_grid_addresses: NDArray[np.int64],
+    bz_map: NDArray[np.int64],
+    bz_grid_type: int,
+    d_diag: NDArray[np.int64],
+    q_matrix: NDArray[np.int64],
+    fc3: NDArray[np.double],
+    fc3_nonzero_indices: NDArray[np.byte],
+    svecs: NDArray[np.double],
+    multiplicity: NDArray[np.int64],
+    masses: NDArray[np.double],
+    p2s_map: NDArray[np.int64],
+    s2p_map: NDArray[np.int64],
+    band_indices: NDArray[np.int64],
+    temperatures_thz: NDArray[np.double],
+    is_N_U: bool,
+    symmetrize_fc3_q: bool,
+    make_r0_average: bool,
+    all_shortest: NDArray[np.byte],
+    cutoff_frequency: float,
+) -> None:
+    """Compute gamma for a batch of grid points in one Rust call.
+
+    Collapses the nested rayon parallelism present in the single-gp
+    path (``inner_par=true`` when ``num_triplets < num_threads``) by
+    flattening the outer rayon loop across all ``(gp, triplet)``
+    pairs in the batch.  Every per-triplet kernel then runs with
+    ``inner_par=false``, eliminating the ~30% ``do_spin`` observed
+    in single-gp profiles on many-core machines.
+
+    ``collisions`` has shape
+    ``(num_gp_batch, num_sigma, num_temps, num_band0)`` or
+    ``(num_gp_batch, num_sigma, 2, num_temps, num_band0)`` when
+    ``is_N_U``.  ``grid_points[i]`` is the BZ grid point for batch
+    slot ``i``.  A NaN entry in ``sigmas`` selects the tetrahedron
+    path for that slot; finite values pick Gaussian smearing.
+
+    """
+    import phono3py_rs
+
+    is_compact_fc3 = fc3.shape[0] != fc3.shape[1]
+
+    phono3py_rs.collision_at_grid_points_batched(
+        collisions,
+        np.ascontiguousarray(grid_points, dtype="int64"),
+        np.ascontiguousarray(sigmas, dtype="double"),
+        np.ascontiguousarray(sigma_cutoffs, dtype="double"),
+        np.ascontiguousarray(relative_grid_address, dtype="int64"),
+        np.ascontiguousarray(bzg2grg, dtype="int64"),
+        np.ascontiguousarray(reciprocal_rotations, dtype="int64"),
+        bool(is_time_reversal),
+        bool(swappable),
+        bool(is_mesh_symmetry),
+        np.ascontiguousarray(reciprocal_lattice, dtype="double"),
+        np.ascontiguousarray(bz_triplets_q_mat, dtype="int64"),
+        np.ascontiguousarray(frequencies, dtype="double"),
+        np.ascontiguousarray(eigenvectors, dtype="complex128"),
+        np.ascontiguousarray(bz_grid_addresses, dtype="int64"),
+        np.ascontiguousarray(bz_map, dtype="int64"),
+        int(bz_grid_type),
         np.ascontiguousarray(d_diag, dtype="int64"),
         np.ascontiguousarray(q_matrix, dtype="int64"),
         np.ascontiguousarray(fc3, dtype="double"),
@@ -773,8 +868,9 @@ class RTAScatteringSolver:
         self._averaged_pp_interaction = None
 
         if self._log_level:
+            triplets_at_q = get_triplets_at_q(grid_point, self._pp.bz_grid)[0]
             print(
-                "Computing gamma at grid point %d (Rust low-memory)." % grid_point,
+                "Number of triplets: %d" % len(triplets_at_q),
                 flush=True,
             )
 
@@ -821,6 +917,133 @@ class RTAScatteringSolver:
             gamma=gamma,
             averaged_pp_interaction=self._averaged_pp_interaction,
         )
+
+    @property
+    def supports_rust_batching(self) -> bool:
+        """Whether ``compute_batched`` goes through the Rust batched path."""
+        return self._lang == "Rust" and not self._requires_full_gamma_path()
+
+    def compute_batched(self, grid_points: Sequence[int]) -> list[dict]:
+        """Compute ph-ph linewidth at multiple grid points in one Rust call.
+
+        Collapses the per-gp rayon nested parallelism by flattening the
+        outer par over all ``(gp, triplet)`` pairs in the batch; useful
+        on many-core machines where single-gp ``num_triplets`` is below
+        the thread count.
+
+        Falls back to a per-gp ``compute()`` loop if the Rust batched
+        path is not available (e.g. non-Rust ``lang`` or full-gamma mode).
+
+        Returns
+        -------
+        list of dict, one per grid point in ``grid_points``, each with
+        keys ``"result"`` (``ScatteringResult``), ``"gamma_N"`` and
+        ``"gamma_U"`` (``NDArray | None``).  Unlike ``compute()``, this
+        method does not leave the last gp's N/U on ``self`` — the caller
+        must read them from the returned list.
+
+        """
+        if not self.supports_rust_batching:
+            fallback: list[dict] = []
+            for gp in grid_points:
+                result = self.compute(int(gp))
+                fallback.append(
+                    {
+                        "result": result,
+                        "gamma_N": None
+                        if self._gamma_N is None
+                        else self._gamma_N.copy(),
+                        "gamma_U": None
+                        if self._gamma_U is None
+                        else self._gamma_U.copy(),
+                    }
+                )
+            return fallback
+
+        cache = self._get_rust_cache()
+
+        num_gp_batch = len(grid_points)
+        num_band0 = len(self._pp.band_indices)
+        num_temp = len(self._temperatures)
+        num_sigma = len(self._sigmas)
+
+        if self._is_N_U:
+            collisions = np.zeros(
+                (num_gp_batch, num_sigma, 2, num_temp, num_band0),
+                dtype="double",
+                order="C",
+            )
+        else:
+            collisions = np.zeros(
+                (num_gp_batch, num_sigma, num_temp, num_band0),
+                dtype="double",
+                order="C",
+            )
+
+        grid_points_arr = np.ascontiguousarray(list(grid_points), dtype="int64")
+
+        run_collision_at_grid_points_batched_rust(
+            collisions,
+            grid_points_arr,
+            cache["sigmas"],
+            cache["sigma_cutoffs"],
+            cache["relative_grid_address"],
+            cache["bzg2grg"],
+            cache["reciprocal_rotations"],
+            cache["is_time_reversal"],
+            cache["swappable"],
+            cache["is_mesh_symmetry"],
+            cache["reciprocal_lattice"],
+            cache["bz_triplets_q_mat"],
+            cache["frequencies"],
+            cache["eigenvectors"],
+            cache["bz_grid_addresses"],
+            cache["bz_map"],
+            cache["bz_grid_type"],
+            cache["d_diag"],
+            cache["q_matrix"],
+            cache["fc3"],
+            cache["fc3_nonzero_indices"],
+            cache["svecs"],
+            cache["multiplicity"],
+            cache["masses"],
+            cache["p2s_map"],
+            cache["s2p_map"],
+            cache["band_indices"],
+            cache["temperatures_thz"],
+            self._is_N_U,
+            cache["symmetrize_fc3q"],
+            cache["make_r0_average"],
+            cache["all_shortest"],
+            cache["cutoff_frequency"],
+        )
+
+        out: list[dict] = []
+        for i, gp in enumerate(grid_points):
+            gamma_i = np.zeros(
+                (num_sigma, num_temp, num_band0), dtype="double", order="C"
+            )
+            if self._is_N_U:
+                self._gamma_N = np.zeros_like(gamma_i)
+                self._gamma_U = np.zeros_like(gamma_i)
+            else:
+                self._gamma_N = None
+                self._gamma_U = None
+            self._gamma_detail_at_q = None
+            self._averaged_pp_interaction = None
+            for j in range(num_sigma):
+                self._store_lowmem_results(j, int(gp), gamma_i, collisions[i, j])
+            out.append(
+                {
+                    "result": ScatteringResult(
+                        gamma=gamma_i,
+                        averaged_pp_interaction=None,
+                    ),
+                    "gamma_N": None if self._gamma_N is None else self._gamma_N.copy(),
+                    "gamma_U": None if self._gamma_U is None else self._gamma_U.copy(),
+                }
+            )
+        return out
 
     def _get_rust_cache(self) -> dict:
         if self._rust_cache is not None:

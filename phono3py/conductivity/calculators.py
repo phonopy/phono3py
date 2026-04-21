@@ -11,6 +11,7 @@ _post_main_loop, _finalize).
 from __future__ import annotations
 
 import abc
+import os
 from collections.abc import Callable, Sequence
 from typing import Any, Literal
 
@@ -20,6 +21,7 @@ from numpy.typing import NDArray
 from phono3py.conductivity.build_components import KappaSettings
 from phono3py.conductivity.grid_point_data import (
     GridPointAggregates,
+    ScatteringResult,
     compute_effective_gamma,
 )
 from phono3py.conductivity.heat_capacity_solvers import ModeHeatCapacitySolver
@@ -43,6 +45,7 @@ from phono3py.phonon.grid import (
     get_qpoints_from_bz_grid_points,
 )
 from phono3py.phonon3.interaction import Interaction
+from phono3py.phonon3.triplets import get_triplets_at_q
 
 # ------------------------------------------------------------------
 # Shared helper functions
@@ -255,11 +258,7 @@ class ConductivityCalculatorBase(abc.ABC):
 
         # (5) Main loop.
         self._grid_point_count = 0
-        for i_gp in range(len(self._kappa_settings.grid_points)):
-            self._compute_at_grid_point(i_gp)
-            self._grid_point_count = i_gp + 1
-            if on_grid_point is not None:
-                on_grid_point(i_gp)
+        self._iterate_grid_points(on_grid_point)
 
         if self._log_level:
             print(
@@ -475,6 +474,18 @@ class ConductivityCalculatorBase(abc.ABC):
 
     def _post_main_loop(self) -> None:  # noqa: B027
         """Run post-main-loop computation (e.g. counting ignored modes)."""
+
+    # ------------------------------------------------------------------
+    # Main-loop iteration hook
+    # ------------------------------------------------------------------
+
+    def _iterate_grid_points(self, on_grid_point: Callable[[int], None] | None) -> None:
+        """Default per-gp iteration; subclasses may override for batching."""
+        for i_gp in range(len(self._kappa_settings.grid_points)):
+            self._compute_at_grid_point(i_gp)
+            self._grid_point_count = i_gp + 1
+            if on_grid_point is not None:
+                on_grid_point(i_gp)
 
     # ------------------------------------------------------------------
     # Abstract methods
@@ -716,19 +727,14 @@ class RTACalculator(ConductivityCalculatorBase):
         if not self._read_gamma:
             grid_point = int(self._kappa_settings.grid_points[i_gp])
             scat_result = self._scattering_solver.compute(grid_point)
-            gamma = scat_result.gamma
-            ave_pp = scat_result.averaged_pp_interaction
-            if self._is_N_U or self._is_gamma_detail:
-                g_N = self._scattering_solver.gamma_N
-                g_U = self._scattering_solver.gamma_U
-                if g_N is not None and self._gamma_N is not None:
-                    self._gamma_N[:, :, i_gp, :] = g_N
-                if g_U is not None and self._gamma_U is not None:
-                    self._gamma_U[:, :, i_gp, :] = g_U
+            self._store_scattering_result(
+                i_gp,
+                scat_result,
+                self._scattering_solver.gamma_N,
+                self._scattering_solver.gamma_U,
+            )
             self._gamma_detail_at_q = self._scattering_solver.gamma_detail_at_q
-            self._gamma[:, :, i_gp, :] = gamma
-            if ave_pp is not None and self._averaged_pp_interaction is not None:
-                self._averaged_pp_interaction[i_gp] = ave_pp
+            ave_pp = scat_result.averaged_pp_interaction
         else:
             ave_pp = None
             if self._log_level:
@@ -736,6 +742,86 @@ class RTACalculator(ConductivityCalculatorBase):
 
         if self._log_level:
             self._show_log(i_gp, self._gv[i_gp], ave_pp)
+
+    def _store_scattering_result(
+        self,
+        i_gp: int,
+        scat_result: ScatteringResult,
+        gamma_N: NDArray[np.double] | None,
+        gamma_U: NDArray[np.double] | None,
+    ) -> None:
+        """Store a precomputed per-gp scattering result into per-gp arrays."""
+        if self._is_N_U or self._is_gamma_detail:
+            if gamma_N is not None and self._gamma_N is not None:
+                self._gamma_N[:, :, i_gp, :] = gamma_N
+            if gamma_U is not None and self._gamma_U is not None:
+                self._gamma_U[:, :, i_gp, :] = gamma_U
+        self._gamma[:, :, i_gp, :] = scat_result.gamma
+        ave_pp = scat_result.averaged_pp_interaction
+        if ave_pp is not None and self._averaged_pp_interaction is not None:
+            self._averaged_pp_interaction[i_gp] = ave_pp
+
+    def _iterate_grid_points(self, on_grid_point: Callable[[int], None] | None) -> None:
+        """Batched main loop when the Rust low-memory path is active.
+
+        Default is disabled (``PHONO3PY_RUST_GP_BATCH_SIZE=0``), falling back
+        to the per-gp ``_compute_at_grid_point`` loop.  Set the env var to a
+        positive integer to enable batched ``compute_batched`` calls.
+        """
+        batch_size_env = int(os.environ.get("PHONO3PY_RUST_GP_BATCH_SIZE", "0"))
+        if (
+            batch_size_env <= 0
+            or self._read_gamma
+            or not getattr(self._scattering_solver, "supports_rust_batching", False)
+        ):
+            super()._iterate_grid_points(on_grid_point)
+            return
+
+        batch_size = max(1, batch_size_env)
+        n_gp = len(self._kappa_settings.grid_points)
+        i = 0
+        while i < n_gp:
+            end = min(i + batch_size, n_gp)
+            i_gp_list = list(range(i, end))
+            gp_list = [int(self._kappa_settings.grid_points[j]) for j in i_gp_list]
+            num_triplets_list: list[int] = []
+            if self._log_level:
+                num_triplets_list = [
+                    len(get_triplets_at_q(gp, self._kappa_settings.bz_grid)[0])
+                    for gp in gp_list
+                ]
+                print(
+                    "Batch: %d grid points, %d triplets."
+                    % (len(gp_list), sum(num_triplets_list)),
+                    flush=True,
+                )
+            batched = self._scattering_solver.compute_batched(gp_list)
+            for idx, i_gp in enumerate(i_gp_list):
+                payload = batched[idx]
+                if self._log_level:
+                    _show_log_header(
+                        i_gp,
+                        self._kappa_settings,
+                        self._isotope_solver,
+                        self._log_level,
+                    )
+                    print(
+                        "Number of triplets: %d" % num_triplets_list[idx],
+                        flush=True,
+                    )
+                self._store_scattering_result(
+                    i_gp,
+                    payload["result"],
+                    payload["gamma_N"],
+                    payload["gamma_U"],
+                )
+                self._gamma_detail_at_q = None
+                if self._log_level:
+                    self._show_log(i_gp, self._gv[i_gp], None)
+                self._grid_point_count = i_gp + 1
+                if on_grid_point is not None:
+                    on_grid_point(i_gp)
+            i = end
 
     def _finalize(self) -> None:
         aggregates = self._build_grid_point_aggregates()

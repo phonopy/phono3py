@@ -1524,6 +1524,7 @@ fn py_real_to_reciprocal<'py>(
             fc3_slice,
             is_compact_fc3,
             &atom_triplets,
+            true,
         );
     });
 
@@ -1673,6 +1674,7 @@ fn py_reciprocal_to_normal_squared<'py>(
             band_slice,
             num_patom,
             cutoff_frequency,
+            true,
         );
     });
 
@@ -3052,6 +3054,382 @@ fn py_collision_at_grid_point<'py>(
     Ok(())
 }
 
+/// Batched low-memory gamma driver over a **list of grid points**.
+///
+/// Rationale: per-gp ``collision_at_grid_point`` has triplet counts
+/// (~50-120 for NaMgF3 20-atom) that are smaller than the rayon
+/// thread count (128).  The nested-par work-stealing that kept
+/// threads busy still costs ~30% ``do_spin`` in single-gp runs.
+/// Batching several gps into one flat ``(gp, triplet)`` rayon par
+/// saturates the pool with ``inner_par=false``, eliminating the
+/// nested coordination cost.
+///
+/// Shapes (additions vs ``collision_at_grid_point``):
+/// - ``collisions``: ``(num_gp_batch, num_sigma, num_temps, num_band0)``
+///   or ``(num_gp_batch, num_sigma, 2, num_temps, num_band0)``.
+/// - ``grid_points``: ``(num_gp_batch,)`` ``int64``.  BZ grid point
+///   indices, one per batch slot.
+///
+/// All other inputs match ``collision_at_grid_point``.
+#[pyfunction]
+#[pyo3(name = "collision_at_grid_points_batched")]
+#[allow(clippy::too_many_arguments)]
+fn py_collision_at_grid_points_batched<'py>(
+    py: Python<'py>,
+    mut collisions: PyReadwriteArrayDyn<'py, f64>,
+    grid_points: PyReadonlyArray1<'py, i64>,
+    sigmas: PyReadonlyArray1<'py, f64>,
+    sigma_cutoffs: PyReadonlyArray1<'py, f64>,
+    relative_grid_address: PyReadonlyArray3<'py, i64>,
+    bzg2grg: PyReadonlyArray1<'py, i64>,
+    reciprocal_rotations: PyReadonlyArray3<'py, i64>,
+    is_time_reversal: bool,
+    swappable: bool,
+    is_mesh_symmetry: bool,
+    reciprocal_lattice: PyReadonlyArray2<'py, f64>,
+    bz_triplets_q_mat: PyReadonlyArray2<'py, i64>,
+    frequencies: PyReadonlyArray2<'py, f64>,
+    eigenvectors: PyReadonlyArray3<'py, Complex64>,
+    bz_grid_addresses: PyReadonlyArray2<'py, i64>,
+    bz_map: PyReadonlyArray1<'py, i64>,
+    bz_grid_type: i64,
+    d_diag: PyReadonlyArray1<'py, i64>,
+    q_mat: PyReadonlyArray2<'py, i64>,
+    fc3: PyReadonlyArray6<'py, f64>,
+    fc3_nonzero_indices: PyReadonlyArray3<'py, i8>,
+    svecs: PyReadonlyArray2<'py, f64>,
+    multiplicity: PyReadonlyArray3<'py, i64>,
+    masses: PyReadonlyArray1<'py, f64>,
+    p2s_map: PyReadonlyArray1<'py, i64>,
+    s2p_map: PyReadonlyArray1<'py, i64>,
+    band_indices: PyReadonlyArray1<'py, i64>,
+    temperatures_thz: PyReadonlyArray1<'py, f64>,
+    is_n_u: bool,
+    symmetrize_fc3_q: bool,
+    make_r0_average: bool,
+    all_shortest: PyReadonlyArray3<'py, i8>,
+    cutoff_frequency: f64,
+    is_compact_fc3: bool,
+) -> PyResult<()> {
+    let num_patom = p2s_map.shape()[0];
+    let num_satom = s2p_map.shape()[0];
+    let num_rows = if is_compact_fc3 { num_patom } else { num_satom };
+    let num_band = num_patom * 3;
+    let num_band0 = band_indices.shape()[0];
+    let num_temps = temperatures_thz.shape()[0];
+    let num_sigma = sigmas.shape()[0];
+    let num_gp_batch = grid_points.shape()[0];
+    if sigma_cutoffs.shape()[0] != num_sigma {
+        return Err(PyValueError::new_err(
+            "sigmas and sigma_cutoffs must have the same length",
+        ));
+    }
+    let expected_shape: &[usize] = if is_n_u {
+        &[num_gp_batch, num_sigma, 2, num_temps, num_band0]
+    } else {
+        &[num_gp_batch, num_sigma, num_temps, num_band0]
+    };
+    if collisions.shape() != expected_shape {
+        return Err(PyValueError::new_err(
+            "collisions shape must be (num_gp_batch, num_sigma, num_temps, num_band0) \
+             or (num_gp_batch, num_sigma, 2, num_temps, num_band0)",
+        ));
+    }
+    let rga = relative_grid_address_3d(&relative_grid_address)?;
+    let d3 = vec3_i(&d_diag)?;
+    let q3 = mat3_i(&q_mat)?;
+    let bz_trip_q = mat3_i(&bz_triplets_q_mat)?;
+    let rec_lat = mat3_f(&reciprocal_lattice)?;
+
+    if fc3.shape() != [num_rows, num_satom, num_satom, 3, 3, 3] {
+        return Err(PyValueError::new_err(
+            "fc3 must have shape (num_rows, num_satom, num_satom, 3, 3, 3)",
+        ));
+    }
+    if fc3_nonzero_indices.shape() != [num_rows, num_satom, num_satom] {
+        return Err(PyValueError::new_err(
+            "fc3_nonzero_indices must match fc3.shape[:3]",
+        ));
+    }
+    if all_shortest.shape() != [num_patom, num_satom, num_satom] {
+        return Err(PyValueError::new_err(
+            "all_shortest must have shape (num_patom, num_satom, num_satom)",
+        ));
+    }
+    if svecs.shape().len() != 2 || svecs.shape()[1] != 3 {
+        return Err(PyValueError::new_err("svecs must have shape (n, 3)"));
+    }
+    if multiplicity.shape() != [num_satom, num_patom, 2] {
+        return Err(PyValueError::new_err(
+            "multiplicity must have shape (num_satom, num_patom, 2)",
+        ));
+    }
+    if masses.shape() != [num_patom] {
+        return Err(PyValueError::new_err("masses must have shape (num_patom,)"));
+    }
+
+    let complex_readonly_as_cmplx = |s: &[Complex64]| -> &[Cmplx] {
+        let n = s.len();
+        let ptr = s.as_ptr() as *const Cmplx;
+        unsafe { std::slice::from_raw_parts(ptr, n) }
+    };
+
+    let freqs_view = frequencies.as_array();
+    let freqs_slice = freqs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("frequencies must be C-contiguous"))?;
+    let eig_view = eigenvectors.as_array();
+    let eig_flat = eig_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("eigenvectors must be C-contiguous"))?;
+    let eig_cmplx = complex_readonly_as_cmplx(eig_flat);
+    let addr_view = bz_grid_addresses.as_array();
+    let addr_flat = addr_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("bz_grid_addresses must be C-contiguous"))?;
+    let addr_slice: &[[i64; 3]] = group_as_array(addr_flat);
+    let bzmap_view = bz_map.as_array();
+    let bzmap_slice = bzmap_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("bz_map must be C-contiguous"))?;
+    let bzg2grg_view = bzg2grg.as_array();
+    let bzg2grg_slice = bzg2grg_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("bzg2grg must be C-contiguous"))?;
+    let fc3_view = fc3.as_array();
+    let fc3_slice = fc3_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("fc3 must be C-contiguous"))?;
+    let nonzero_view = fc3_nonzero_indices.as_array();
+    let nonzero_slice = nonzero_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("fc3_nonzero_indices must be C-contiguous"))?;
+    let svecs_view = svecs.as_array();
+    let svecs_flat = svecs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("svecs must be C-contiguous"))?;
+    let svecs_slice: &[[f64; 3]] = group_as_array(svecs_flat);
+    let multi_view = multiplicity.as_array();
+    let multi_flat = multi_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("multiplicity must be C-contiguous"))?;
+    let multi_slice: &[[i64; 2]] = group_as_array(multi_flat);
+    let masses_view = masses.as_array();
+    let masses_slice = masses_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("masses must be C-contiguous"))?;
+    let p2s_view = p2s_map.as_array();
+    let p2s_slice = p2s_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("p2s_map must be C-contiguous"))?;
+    let s2p_view = s2p_map.as_array();
+    let s2p_slice = s2p_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("s2p_map must be C-contiguous"))?;
+    let band_view = band_indices.as_array();
+    let band_slice = band_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("band_indices must be C-contiguous"))?;
+    let all_short_view = all_shortest.as_array();
+    let all_short_slice = all_short_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("all_shortest must be C-contiguous"))?;
+    let temps_view = temperatures_thz.as_array();
+    let temps_slice = temps_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("temperatures_thz must be C-contiguous"))?;
+    let sigmas_view = sigmas.as_array();
+    let sigmas_slice = sigmas_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("sigmas must be C-contiguous"))?;
+    let sigma_cutoffs_view = sigma_cutoffs.as_array();
+    let sigma_cutoffs_slice = sigma_cutoffs_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("sigma_cutoffs must be C-contiguous"))?;
+    let grid_points_view = grid_points.as_array();
+    let grid_points_slice = grid_points_view
+        .as_slice()
+        .ok_or_else(|| PyValueError::new_err("grid_points must be C-contiguous"))?;
+
+    // Per-gp triplet enumeration: sequential, mirrors the single-gp path.
+    let n_grg = (d3[0] as i64) * (d3[1] as i64) * (d3[2] as i64);
+    if n_grg < 0 {
+        return Err(PyValueError::new_err("d_diag must be positive"));
+    }
+    let n_grg_usize = n_grg as usize;
+    let rots = if is_mesh_symmetry {
+        Some(rots_i(&reciprocal_rotations)?)
+    } else {
+        None
+    };
+
+    let mut triplets_owned: Vec<Vec<[i64; 3]>> = Vec::with_capacity(num_gp_batch);
+    let mut weights_owned: Vec<Vec<i64>> = Vec::with_capacity(num_gp_batch);
+    for &gp in grid_points_slice {
+        if gp < 0 || (gp as usize) >= bzg2grg_slice.len() {
+            return Err(PyValueError::new_err("grid_point out of range for bzg2grg"));
+        }
+        let map_triplets: Vec<i64> = if let Some(rots) = rots.as_ref() {
+            let gr_gp = bzg2grg_slice[gp as usize];
+            match triplet_grid::ir_triplets_at_q(gr_gp, d3, rots, is_time_reversal, swappable) {
+                Ok(r) => r.map_triplets,
+                Err(ReciprocalRotationsError::TooManyRotations) => {
+                    return Err(PyValueError::new_err(
+                        "collision_at_grid_points_batched: more than 48 unique rotations",
+                    ));
+                }
+                Err(ReciprocalRotationsError::TooManyForInversion) => {
+                    return Err(PyValueError::new_err(
+                        "collision_at_grid_points_batched: cannot add inversion (count exceeds 24)",
+                    ));
+                }
+            }
+        } else {
+            (0..n_grg).collect()
+        };
+        if map_triplets.len() != n_grg_usize {
+            return Err(PyRuntimeError::new_err(
+                "map_triplets length inconsistent with d_diag",
+            ));
+        }
+        let mut weights_dense = vec![0i64; n_grg_usize];
+        for &g in &map_triplets {
+            if g < 0 || (g as usize) >= n_grg_usize {
+                return Err(PyRuntimeError::new_err("map_triplets out of range"));
+            }
+            weights_dense[g as usize] += 1;
+        }
+        let ir_weights: Vec<i64> = weights_dense.into_iter().filter(|&w| w > 0).collect();
+        let triplets_vec = match triplet_grid::bz_triplets_at_q(
+            gp,
+            addr_slice,
+            bzmap_slice,
+            &map_triplets,
+            d3,
+            bz_trip_q,
+            rec_lat,
+            bz_grid_type,
+        ) {
+            Ok(v) => v,
+            Err(BzTripletsError::BadGridType) => {
+                return Err(PyValueError::new_err("bz_grid_type must be 1 or 2"));
+            }
+        };
+        if triplets_vec.len() != ir_weights.len() {
+            return Err(PyRuntimeError::new_err(
+                "triplets length does not match ir_weights length",
+            ));
+        }
+        triplets_owned.push(triplets_vec);
+        weights_owned.push(ir_weights);
+    }
+
+    let triplets_per_gp: Vec<&[[i64; 3]]> =
+        triplets_owned.iter().map(|v| v.as_slice()).collect();
+    let weights_per_gp: Vec<&[i64]> = weights_owned.iter().map(|v| v.as_slice()).collect();
+
+    let out_slice = collisions
+        .as_slice_mut()
+        .map_err(|_| PyValueError::new_err("collisions must be C-contiguous"))?;
+    let per_sigma_len = if is_n_u {
+        2 * num_temps * num_band0
+    } else {
+        num_temps * num_band0
+    };
+    let per_gp_len = num_sigma * per_sigma_len;
+    if out_slice.len() != num_gp_batch * per_gp_len {
+        return Err(PyRuntimeError::new_err(
+            "collisions buffer length inconsistent with shape",
+        ));
+    }
+
+    py.allow_threads(|| -> Result<(), BzGridError> {
+        let atom_triplets = real_to_reciprocal::AtomTriplets {
+            svecs: svecs_slice,
+            num_satom,
+            num_patom,
+            multiplicity: multi_slice,
+            p2s_map: p2s_slice,
+            s2p_map: s2p_slice,
+            make_r0_average,
+            all_shortest: all_short_slice,
+            nonzero_indices: nonzero_slice,
+        };
+        let bzgrid = BzGridView {
+            d_diag: d3,
+            addresses: addr_slice,
+            gp_map: bzmap_slice,
+            bz_grid_type,
+        };
+        // For each sigma, build per-gp mutable slots by slicing each
+        // gp's per_gp_len chunk at the i_sigma offset.  The sigma_slots
+        // Vec drops at end of iteration, so out_slice is available for
+        // the next sigma pass.
+        for i_sigma in 0..num_sigma {
+            let sigma = sigmas_slice[i_sigma];
+            let sigma_off = i_sigma * per_sigma_len;
+            let mut sigma_slots: Vec<&mut [f64]> = out_slice
+                .chunks_mut(per_gp_len)
+                .map(|chunk| &mut chunk[sigma_off..sigma_off + per_sigma_len])
+                .collect();
+            if sigma.is_nan() {
+                pp_collision::get_pp_collision_multi_gp(
+                    sigma_slots.as_mut_slice(),
+                    &triplets_per_gp,
+                    &weights_per_gp,
+                    &rga,
+                    freqs_slice,
+                    eig_cmplx,
+                    &bzgrid,
+                    d3,
+                    q3,
+                    fc3_slice,
+                    is_compact_fc3,
+                    &atom_triplets,
+                    masses_slice,
+                    band_slice,
+                    temps_slice,
+                    is_n_u,
+                    symmetrize_fc3_q,
+                    cutoff_frequency,
+                    num_band0,
+                    num_band,
+                )?;
+            } else {
+                pp_collision::get_pp_collision_with_sigma_multi_gp(
+                    sigma_slots.as_mut_slice(),
+                    sigma,
+                    sigma_cutoffs_slice[i_sigma],
+                    &triplets_per_gp,
+                    &weights_per_gp,
+                    freqs_slice,
+                    eig_cmplx,
+                    addr_slice,
+                    d3,
+                    q3,
+                    fc3_slice,
+                    is_compact_fc3,
+                    &atom_triplets,
+                    masses_slice,
+                    band_slice,
+                    temps_slice,
+                    is_n_u,
+                    symmetrize_fc3_q,
+                    cutoff_frequency,
+                    num_band0,
+                    num_band,
+                );
+            }
+        }
+        Ok(())
+    })
+    .map_err(|e| match e {
+        BzGridError::BadGridType => PyValueError::new_err("bz_grid_type must be 1 or 2"),
+        BzGridError::BadTpType => PyValueError::new_err("tp_type must be 2, 3, or 4"),
+    })?;
+    Ok(())
+}
+
 /// Gaussian-smearing isotope scattering strength.  Mirrors
 /// ``phono3py._phono3py.isotope_strength``.
 ///
@@ -4402,6 +4780,7 @@ fn phono3py_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_pp_collision, m)?)?;
     m.add_function(wrap_pyfunction!(py_pp_collision_with_sigma, m)?)?;
     m.add_function(wrap_pyfunction!(py_collision_at_grid_point, m)?)?;
+    m.add_function(wrap_pyfunction!(py_collision_at_grid_points_batched, m)?)?;
     m.add_function(wrap_pyfunction!(py_isotope_strength, m)?)?;
     m.add_function(wrap_pyfunction!(py_thm_isotope_strength, m)?)?;
     m.add_function(wrap_pyfunction!(py_real_self_energy_at_bands, m)?)?;

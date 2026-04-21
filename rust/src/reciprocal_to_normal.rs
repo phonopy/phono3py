@@ -13,7 +13,21 @@
 //! `[band, component]` and multiplies by `1 / sqrt(mass_of(component))`,
 //! mirroring the C preamble in `reciprocal_to_normal_squared`.
 
+use rayon::prelude::*;
+
 use crate::common::{cmplx_mul, Cmplx};
+
+/// Send+Sync raw-pointer wrapper for disjoint-index writes from rayon
+/// tasks.  Same pattern as `collision_matrix.rs` / `fc3.rs`.
+struct SyncMutPtr<T>(*mut T);
+unsafe impl<T> Send for SyncMutPtr<T> {}
+unsafe impl<T> Sync for SyncMutPtr<T> {}
+impl<T> SyncMutPtr<T> {
+    #[inline]
+    unsafe fn write(&self, idx: usize, val: T) {
+        std::ptr::write(self.0.add(idx), val);
+    }
+}
 
 /// Pre-scale eigenvectors by `1 / sqrt(mass)` and transpose so the
 /// fast axis is the component axis (for a fixed band).
@@ -37,28 +51,27 @@ fn scale_and_transpose(eigvecs: &[Cmplx], masses: &[f64], num_band: usize) -> Ve
     out
 }
 
-/// Contract fc3 with `e0` at a single target band.
+/// Contract fc3 with `e0` at a single target band and a single `b`
+/// index.
 ///
-/// `fc3_reciprocal` is atom-first `(num_patom, num_patom, num_patom, 3, 3, 3)`.
-/// `e0_band` is the length-`num_band` row of the scaled-and-transposed
-/// `e0` at the target band (i.e. `e0_scaled[band_index_0, :]`).
+/// This produces one `(3, num_band)` slab of the per-band0 band-pair
+/// matrix — the 3 rows whose band index decomposes as `bm = b * 3 + m`.
+/// Distinct `b` values write to disjoint row slabs, which is what lets
+/// `(band0, b)` be used as an independent parallel axis in Phase 1.
 ///
-/// Produces the band-pair matrix
-/// `out[bm, cn] = sum over (a, l) of fc3[a, b, c, l, m, n] * e0_band[a * 3 + l]`
-/// where `bm = b * 3 + m` and `cn = c * 3 + n`, laid out as
-/// `(num_band, num_band)` flat with index `bm * num_band + cn`.
-/// This matches the band-first layout that `get_fc3_sum_atomwise`
-/// consumes, so its inner reduction becomes a row-wise dot product
-/// over contiguous memory.
-fn contract_fc3_e0(
-    out: &mut [Cmplx],
+/// `out_slab` layout: flat `(3, num_band)` row-major with index
+/// `m * num_band + cn`, where `cn = c * 3 + n`.  Computed as
+/// `out_slab[m, cn] = sum over (a, l) of fc3[a, b, c, l, m, n] * e0_band[a * 3 + l]`.
+fn contract_fc3_e0_slab(
+    out_slab: &mut [Cmplx],
     fc3_reciprocal: &[Cmplx],
     e0_band: &[Cmplx],
+    b: usize,
     num_patom: usize,
 ) {
     let num_band = num_patom * 3;
-    debug_assert_eq!(out.len(), num_band * num_band);
-    for entry in out.iter_mut() {
+    debug_assert_eq!(out_slab.len(), 3 * num_band);
+    for entry in out_slab.iter_mut() {
         *entry = [0.0, 0.0];
     }
     for a in 0..num_patom {
@@ -67,21 +80,39 @@ fn contract_fc3_e0(
             if e0_al[0] == 0.0 && e0_al[1] == 0.0 {
                 continue;
             }
-            for b in 0..num_patom {
-                for c in 0..num_patom {
-                    let fc3_base = ((a * num_patom + b) * num_patom + c) * 27 + l * 9;
-                    for m in 0..3 {
-                        let bm = b * 3 + m;
-                        for n in 0..3 {
-                            let cn = c * 3 + n;
-                            let prod = cmplx_mul(fc3_reciprocal[fc3_base + m * 3 + n], e0_al);
-                            out[bm * num_band + cn][0] += prod[0];
-                            out[bm * num_band + cn][1] += prod[1];
-                        }
+            for c in 0..num_patom {
+                let fc3_base = ((a * num_patom + b) * num_patom + c) * 27 + l * 9;
+                for m in 0..3 {
+                    for n in 0..3 {
+                        let cn = c * 3 + n;
+                        let prod = cmplx_mul(fc3_reciprocal[fc3_base + m * 3 + n], e0_al);
+                        out_slab[m * num_band + cn][0] += prod[0];
+                        out_slab[m * num_band + cn][1] += prod[1];
                     }
                 }
             }
         }
+    }
+}
+
+/// Contract fc3 with `e0` at a single target band, producing the full
+/// `(num_band, num_band)` band-pair matrix.
+///
+/// Equivalent to concatenating `num_patom` calls to
+/// `contract_fc3_e0_slab`, one per `b`.  Used by the sequential
+/// Phase 1 path; the parallel path calls `contract_fc3_e0_slab`
+/// directly to expose the `(band0, b)` flat parallel axis.
+fn contract_fc3_e0(
+    out: &mut [Cmplx],
+    fc3_reciprocal: &[Cmplx],
+    e0_band: &[Cmplx],
+    num_patom: usize,
+) {
+    let num_band = num_patom * 3;
+    let slab_size = 3 * num_band;
+    debug_assert_eq!(out.len(), num_band * num_band);
+    for (b, out_slab) in out.chunks_mut(slab_size).enumerate() {
+        contract_fc3_e0_slab(out_slab, fc3_reciprocal, e0_band, b, num_patom);
     }
 }
 
@@ -90,6 +121,11 @@ fn contract_fc3_e0(
 /// the four lanes accumulates 1/4 of the terms independently, then the
 /// lanes are combined at the end.  This exposes ILP to LLVM that the
 /// single-scalar form cannot express without `-ffast-math`.
+///
+/// `#[inline]` (hint, not force): benchmarked `#[inline(always)]` on
+/// NaMgF3 128 threads and it regressed 46.25s → 46.92s (2026-04-21),
+/// likely due to code-size pressure in the Phase 2 par_iter closure
+/// that outweighs prologue/epilogue savings on a 60-element loop.
 #[inline]
 fn cmplx_dot_partial4(a: &[Cmplx], b: &[Cmplx]) -> Cmplx {
     debug_assert_eq!(a.len(), b.len());
@@ -167,8 +203,13 @@ fn get_fc3_sum_atomwise(
 /// - `cutoff_frequency`: entries with any of `freqs0[bi]`, `freqs1[j]`,
 ///   `freqs2[k]` not exceeding this are zeroed.
 ///
-/// The per-band0 and per-`g_pos` loops run sequentially; callers that
-/// need thread-level parallelism parallelize over triplets instead.
+/// When `inner_par` is true, the per-band0 `contract_fc3_e0` loop and
+/// the per-`g_pos` reduction loop are parallelized with rayon.  This is
+/// intended for the regime where the caller's outer triplet-level
+/// parallelism cannot saturate the available cores (typical on
+/// many-core machines with small `num_triplets`).  When `inner_par` is
+/// false both loops run sequentially so the caller's own rayon
+/// parallelism owns all threads.
 #[allow(clippy::too_many_arguments)]
 pub fn reciprocal_to_normal_squared(
     fc3_normal_squared: &mut [f64],
@@ -184,6 +225,7 @@ pub fn reciprocal_to_normal_squared(
     band_indices: &[i64],
     num_patom: usize,
     cutoff_frequency: f64,
+    inner_par: bool,
 ) {
     let num_band = num_patom * 3;
     debug_assert_eq!(fc3_reciprocal.len(), num_patom * num_patom * num_patom * 27);
@@ -207,35 +249,90 @@ pub fn reciprocal_to_normal_squared(
     let entry_size = num_band * num_band;
     let mut fc3_e0 = vec![[0.0f64; 2]; num_band0 * entry_size];
 
-    for (i0, out) in fc3_e0.chunks_mut(entry_size).enumerate() {
-        let bi = band_indices[i0] as usize;
-        let e0_band = &e0[bi * num_band..(bi + 1) * num_band];
-        contract_fc3_e0(out, fc3_reciprocal, e0_band, num_patom);
+    if inner_par {
+        // Flat (band0, b) parallel axis: num_band0 * num_patom tasks
+        // (vs. num_band0 for a per-band0 chunk).  On NaMgF3 20-atom
+        // this lifts Phase 1 tasks from 60 to 1200, so 128 threads no
+        // longer run with idle workers waiting to steal Phase 2 work
+        // from other triplets.  Each slab covers the 3 rows whose
+        // band index is `b * 3 + m`; distinct b values write to
+        // disjoint slots, so slab-level par is safe.
+        let slab_size = 3 * num_band;
+        fc3_e0
+            .par_chunks_mut(slab_size)
+            .enumerate()
+            .for_each(|(task_idx, out_slab)| {
+                let i0 = task_idx / num_patom;
+                let b = task_idx % num_patom;
+                let bi = band_indices[i0] as usize;
+                let e0_band = &e0[bi * num_band..(bi + 1) * num_band];
+                contract_fc3_e0_slab(out_slab, fc3_reciprocal, e0_band, b, num_patom);
+            });
+    } else {
+        for (i0, out) in fc3_e0.chunks_mut(entry_size).enumerate() {
+            let bi = band_indices[i0] as usize;
+            let e0_band = &e0[bi * num_band..(bi + 1) * num_band];
+            contract_fc3_e0(out, fc3_reciprocal, e0_band, num_patom);
+        }
     }
 
-    // Scratch row buffer for get_fc3_sum_atomwise Phase 1; one
-    // allocation per reciprocal_to_normal_squared invocation.
-    let mut scratch = vec![[0.0f64; 2]; num_band];
-
-    for gp in g_pos {
-        let i0 = gp[0] as usize;
-        let j = gp[1] as usize;
-        let k = gp[2] as usize;
-        let dest = gp[3] as usize;
-        let bi = band_indices[i0] as usize;
-        let val = if freqs0[bi] <= cutoff_frequency
-            || freqs1[j] <= cutoff_frequency
-            || freqs2[k] <= cutoff_frequency
-        {
-            0.0
-        } else {
-            let fc3_e0_entry = &fc3_e0[i0 * entry_size..(i0 + 1) * entry_size];
-            let e1_band = &e1[j * num_band..(j + 1) * num_band];
-            let e2_band = &e2[k * num_band..(k + 1) * num_band];
-            let sq = get_fc3_sum_atomwise(fc3_e0_entry, e1_band, e2_band, &mut scratch);
-            sq / (freqs0[bi] * freqs1[j] * freqs2[k])
-        };
-        fc3_normal_squared[dest] = val;
+    if inner_par {
+        // SAFETY: each g_pos entry writes to a distinct `dest` index in
+        // fc3_normal_squared (the caller's contract: g_pos encodes a
+        // one-to-one mapping from (i0, j, k) to dest).  Rayon workers
+        // therefore never collide on the same byte.  The raw-pointer
+        // wrapper sidesteps the borrow checker's whole-slice &mut
+        // uniqueness rule that par_iter on g_pos would otherwise break.
+        let out_ptr = SyncMutPtr(fc3_normal_squared.as_mut_ptr());
+        g_pos.par_iter().for_each_init(
+            || vec![[0.0f64; 2]; num_band],
+            |scratch, gp| {
+                let i0 = gp[0] as usize;
+                let j = gp[1] as usize;
+                let k = gp[2] as usize;
+                let dest = gp[3] as usize;
+                let bi = band_indices[i0] as usize;
+                let val = if freqs0[bi] <= cutoff_frequency
+                    || freqs1[j] <= cutoff_frequency
+                    || freqs2[k] <= cutoff_frequency
+                {
+                    0.0
+                } else {
+                    let fc3_e0_entry = &fc3_e0[i0 * entry_size..(i0 + 1) * entry_size];
+                    let e1_band = &e1[j * num_band..(j + 1) * num_band];
+                    let e2_band = &e2[k * num_band..(k + 1) * num_band];
+                    let sq = get_fc3_sum_atomwise(fc3_e0_entry, e1_band, e2_band, scratch);
+                    sq / (freqs0[bi] * freqs1[j] * freqs2[k])
+                };
+                unsafe {
+                    out_ptr.write(dest, val);
+                }
+            },
+        );
+    } else {
+        // Scratch row buffer for get_fc3_sum_atomwise Phase 1; one
+        // allocation per reciprocal_to_normal_squared invocation.
+        let mut scratch = vec![[0.0f64; 2]; num_band];
+        for gp in g_pos {
+            let i0 = gp[0] as usize;
+            let j = gp[1] as usize;
+            let k = gp[2] as usize;
+            let dest = gp[3] as usize;
+            let bi = band_indices[i0] as usize;
+            let val = if freqs0[bi] <= cutoff_frequency
+                || freqs1[j] <= cutoff_frequency
+                || freqs2[k] <= cutoff_frequency
+            {
+                0.0
+            } else {
+                let fc3_e0_entry = &fc3_e0[i0 * entry_size..(i0 + 1) * entry_size];
+                let e1_band = &e1[j * num_band..(j + 1) * num_band];
+                let e2_band = &e2[k * num_band..(k + 1) * num_band];
+                let sq = get_fc3_sum_atomwise(fc3_e0_entry, e1_band, e2_band, &mut scratch);
+                sq / (freqs0[bi] * freqs1[j] * freqs2[k])
+            };
+            fc3_normal_squared[dest] = val;
+        }
     }
 }
 
@@ -310,6 +407,7 @@ mod tests {
             &band_indices,
             num_patom,
             0.0,
+            false,
         );
         for v in &out {
             assert_eq!(*v, 0.0);
@@ -351,6 +449,7 @@ mod tests {
             &band_indices,
             num_patom,
             0.5,
+            false,
         );
         assert_eq!(out[0], 0.0);
 
@@ -369,6 +468,7 @@ mod tests {
             &band_indices,
             num_patom,
             0.5,
+            false,
         );
         assert!(out[0] > 0.0);
     }
