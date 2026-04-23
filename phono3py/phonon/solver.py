@@ -188,6 +188,10 @@ def run_phonon_solver_rust(
     """
     import phono3py_rs  # type: ignore[import-untyped]
 
+    from phono3py._lang import log_dispatch
+
+    log_dispatch("Rust", "run_phonon_solver_rust")
+
     if frequency_conversion_factor is None:
         _frequency_conversion_factor = get_physical_units().DefaultToTHz
     else:
