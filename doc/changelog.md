@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Apr-24-2026: Version 3.31.0
+
+- Experimental release of the Rust port of the C implementation.
+
 ## Apr-11-2026: Version 3.30.1
 
 - Added external plugin discovery via entry_points to the conductivity factory.
