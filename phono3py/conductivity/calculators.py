@@ -739,8 +739,6 @@ class RTACalculator(ConductivityCalculatorBase):
             ave_pp = scat_result.averaged_pp_interaction
         else:
             ave_pp = None
-            if self._log_level:
-                print("  Gamma is read from file.")
 
         if self._log_level:
             self._show_log(i_gp, self._gv[i_gp], ave_pp)
@@ -951,12 +949,46 @@ class LBTECalculator(ConductivityCalculatorBase):
     def set_kappa_at_sigmas(self) -> None:
         """Finalize kappa from a pre-loaded collision matrix (read-from-file path).
 
-        Calls kappa_solver.finalize().  Use this instead of run() when
-        gamma and collision_matrix have been loaded externally.
+        Mirrors the run() pipeline but replaces the per-grid-point collision
+        computation with the gamma/collision_matrix loaded from file.  Group
+        velocities, heat capacities, isotope and boundary scattering are not
+        stored in the collision file and must be computed here.
 
         """
-        aggregates = self._build_grid_point_aggregates()
-        self._kappa_solver.finalize(aggregates)
+        self._pre_run_check()
+        _prepare_isotope_phonons(self._pp, self._isotope_solver)
+
+        if self._log_level:
+            print("Running heat capacity calculations...")
+        self._cv, hcm = _compute_bulk_heat_capacities(
+            self._cv_solver, self._kappa_settings.grid_points
+        )
+        if hcm is not None:
+            self._heat_capacity_matrix = hcm
+
+        if self._log_level:
+            print("Running velocity calculations...")
+        self._compute_all_velocities()
+
+        self._pre_main_loop()
+        self._compute_isotope_if_needed()
+
+        if self._log_level:
+            for i_gp in range(len(self._kappa_settings.grid_points)):
+                _show_log_header(
+                    i_gp,
+                    self._kappa_settings,
+                    self._isotope_solver,
+                    self._log_level,
+                )
+                self._show_log(i_gp, self._gv[i_gp])
+            print(
+                "=================== End of collection of collisions "
+                "==================="
+            )
+
+        self._post_main_loop()
+        self._finalize()
 
     def delete_gp_collision_and_pp(self) -> None:
         """No-op: memory management compatibility method."""

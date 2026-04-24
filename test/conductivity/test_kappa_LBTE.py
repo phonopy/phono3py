@@ -127,3 +127,32 @@ def test_kappa_LBTE_aln_with_sigma(aln_lda: Phono3py):
     aln_lda.sigma_cutoff = None
     # print(", ".join([f"{k:e}" for k in kappa]))
     np.testing.assert_allclose(ref_kappa, kappa, atol=0.3)
+
+
+def test_kappa_LBTE_read_collision_per_gp(si_pbesol: Phono3py, tmp_path, monkeypatch):
+    """Write per-GP collision files, then --read-collision round-trip.
+
+    Exercises the fallback to per-GP files (``collision-m*-g*.hdf5``) and
+    the gv/cv/isotope recomputation path in ``set_kappa_at_sigmas``.
+
+    """
+    monkeypatch.chdir(tmp_path)
+    si_pbesol.mesh_numbers = [5, 5, 5]
+    si_pbesol.init_phph_interaction()
+
+    si_pbesol.run_thermal_conductivity(
+        is_LBTE=True,
+        temperatures=[300],
+        write_collision=True,
+    )
+    ref_kappa = si_pbesol.thermal_conductivity.kappa.ravel().copy()
+    assert list(tmp_path.glob("collision-m555-g*.hdf5"))
+
+    si_pbesol.run_thermal_conductivity(
+        is_LBTE=True,
+        temperatures=[300],
+        read_collision="all",
+    )
+    read_kappa = si_pbesol.thermal_conductivity.kappa.ravel()
+
+    np.testing.assert_allclose(ref_kappa, read_kappa, atol=1e-3)

@@ -129,11 +129,12 @@ class CollisionFileReader:
         i_sigma: int,
     ) -> bool:
         """Try reading full collision matrix.  Returns True if successful."""
-        data = self.read(sigma)
+        try:
+            data = self.read(sigma)
+        except FileNotFoundError:
+            return False
         if self._log_level:
             sys.stdout.flush()
-        if not data:
-            return False
         colmat_at_sigma, gamma_at_sigma, _temperatures = data
         collision_matrix[i_sigma] = colmat_at_sigma[0]
         gamma[i_sigma] = gamma_at_sigma[0]
@@ -143,18 +144,24 @@ class CollisionFileReader:
         self, sigma: float | None, grid_points: NDArray[np.int64]
     ) -> NDArray[np.double] | Literal[False]:
         """Get temperatures from per-GP or per-band file."""
-        collision = self.read(sigma, grid_point=grid_points[0], only_temperatures=True)
-        if collision is not None:
+        try:
+            collision = self.read(
+                sigma, grid_point=grid_points[0], only_temperatures=True
+            )
             return collision[2]
+        except FileNotFoundError:
+            pass
 
         if self._log_level:
             print("Collision at grid point %d doesn't exist." % grid_points[0])
 
-        collision = self.read(
-            sigma, grid_point=grid_points[0], band_index=0, only_temperatures=True
-        )
-        if collision is not None:
+        try:
+            collision = self.read(
+                sigma, grid_point=grid_points[0], band_index=0, only_temperatures=True
+            )
             return collision[2]
+        except FileNotFoundError:
+            pass
 
         if self._log_level:
             print(
@@ -175,11 +182,12 @@ class CollisionFileReader:
         is_reducible: bool,
     ) -> bool:
         """Collect collision data for one grid point."""
-        data = self.read(sigma, grid_point=gp)
+        try:
+            data = self.read(sigma, grid_point=gp)
+        except FileNotFoundError:
+            return False
         if self._log_level:
             sys.stdout.flush()
-        if not data:
-            return False
         colmat_at_gp, gamma_at_gp, temperatures_at_gp = data
         igp = bzg2grg[gp] if is_reducible else i
         gamma_at_sigma[:, igp] = gamma_at_gp
@@ -200,11 +208,12 @@ class CollisionFileReader:
         is_reducible: bool,
     ) -> bool:
         """Collect collision data for one band."""
-        data = self.read(sigma, grid_point=gp, band_index=j)
+        try:
+            data = self.read(sigma, grid_point=gp, band_index=j)
+        except FileNotFoundError:
+            return False
         if self._log_level:
             sys.stdout.flush()
-        if data is False:
-            return False
         colmat_at_band, gamma_at_band, temperatures_at_band = data
         igp = bzg2grg[gp] if is_reducible else i
         gamma_at_sigma[:, igp, j] = gamma_at_band[0]
