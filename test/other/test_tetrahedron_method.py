@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from phono3py import Phono3py
 from phono3py.other.tetrahedron_method import (
     get_integration_weights,
+    get_tetrahedra_relative_grid_address,
     get_unique_grid_points,
 )
 from phono3py.phonon.grid import BZGrid, get_ir_grid_points
@@ -188,3 +190,82 @@ def test_get_integration_weights(si_pbesol_111: Phono3py):
     ]
     np.testing.assert_allclose(iw_i[0], ref_iw_i, rtol=0, atol=1e-7)
     np.testing.assert_allclose(iw_j[0], ref_iw_j, rtol=0, atol=1e-7)
+
+
+def test_get_unique_grid_points_rust_vs_c(si_pbesol_111: Phono3py):
+    """Compare lang='Rust' and C paths of get_unique_grid_points.
+
+    Exercises both bz_grid_type=2 (dense map) and type=1 (sparse map).
+
+    """
+    pytest.importorskip("phono3py_rs")
+
+    lat = si_pbesol_111.primitive.cell
+    mesh = [4, 4, 4]
+    for store_dense in (True, False):
+        bzgrid = BZGrid(mesh, lattice=lat, store_dense_gp_map=store_dense)
+        ir_grid_points, _, _ = get_ir_grid_points(bzgrid)
+        input_gps = bzgrid.grg2bzg[ir_grid_points[:3]]
+        out_c = get_unique_grid_points(input_gps, bzgrid, lang="C")
+        out_rust = get_unique_grid_points(input_gps, bzgrid, lang="Rust")
+        np.testing.assert_array_equal(out_rust, out_c)
+
+
+def test_get_integration_weights_rust_vs_c(si_pbesol_111: Phono3py):
+    """Compare lang='Rust' and C paths of get_integration_weights.
+
+    Runs both function='I' (derivative) and 'J' (integral).  Per-value
+    FP rounding of one ULP is allowed.
+
+    """
+    pytest.importorskip("phono3py_rs")
+
+    si_pbesol_111.mesh_numbers = [4, 4, 4]
+    si_pbesol_111.init_phph_interaction()
+    si_pbesol_111.run_phonon_solver()
+    frequencies, _, _ = si_pbesol_111.get_phonon_data()
+    bzgrid = si_pbesol_111.grid
+    assert bzgrid is not None
+    grg_frequencies = frequencies[bzgrid.grg2bzg]
+    sampling_points = np.linspace(3, 15, 5)
+
+    for function in ("I", "J"):
+        iw_c = get_integration_weights(
+            sampling_points,
+            grg_frequencies,
+            bzgrid,
+            bzgp2irgp_map=bzgrid.bzg2grg,
+            function=function,
+            lang="C",
+        )
+        iw_rust = get_integration_weights(
+            sampling_points,
+            grg_frequencies,
+            bzgrid,
+            bzgp2irgp_map=bzgrid.bzg2grg,
+            function=function,
+            lang="Rust",
+        )
+        np.testing.assert_allclose(iw_rust, iw_c, rtol=0, atol=1e-14)
+
+
+def test_get_tetrahedra_relative_grid_address_rust_vs_c():
+    """Compare lang='Rust' and C paths of get_tetrahedra_relative_grid_address.
+
+    Exercises the four main-diagonal branches by sweeping lattices whose
+    shortest main diagonal differs.  The Rust core returns a pre-tabulated
+    integer table, so output must be bit-equal to C.
+
+    """
+    pytest.importorskip("phono3py_rs")
+
+    lattices = [
+        np.eye(3) * 1.0,
+        np.diag([1.0, 2.0, 3.0]),
+        np.array([[1.0, 0.5, 0.0], [0.0, 1.0, 0.3], [0.0, 0.0, 1.0]]),
+        np.array([[2.0, 0.5, 0.1], [0.1, 1.0, 0.3], [0.2, 0.1, 0.5]]),
+    ]
+    for lat in lattices:
+        out_c = get_tetrahedra_relative_grid_address(lat, lang="C")
+        out_rust = get_tetrahedra_relative_grid_address(lat, lang="Rust")
+        np.testing.assert_array_equal(out_rust, out_c)

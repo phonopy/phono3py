@@ -65,7 +65,7 @@ def test_allocate_with_fallback_uses_band_path_when_needed(monkeypatch):
     def _fake_read(sigma, *, grid_point=None, band_index=None, only_temperatures=False):
         calls.append(("gp" if band_index is None else "band", grid_point))
         if band_index is None:
-            return None  # GP path fails
+            raise FileNotFoundError
         return None, None, np.array([300.0], dtype="double")
 
     monkeypatch.setattr(reader, "read", _fake_read)
@@ -79,7 +79,11 @@ def test_allocate_with_fallback_uses_band_path_when_needed(monkeypatch):
 def test_allocate_with_fallback_returns_false_when_missing(monkeypatch):
     """Fallback helper returns False when neither allocation path exists."""
     reader = _make_reader()
-    monkeypatch.setattr(reader, "read", lambda sigma, **kw: None)
+
+    def _fake_read(sigma, **kw):
+        raise FileNotFoundError
+
+    monkeypatch.setattr(reader, "read", _fake_read)
 
     result = reader.allocate_with_fallback(None, np.array([11], dtype="int64"))
 

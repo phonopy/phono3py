@@ -63,6 +63,7 @@ def get_triplets_at_q(
     | None = None,
     is_time_reversal: bool = True,
     swappable: bool = True,
+    lang: Literal["C", "Rust"] = "C",
 ) -> tuple[NDArray[np.int64], NDArray[np.int64], NDArray[np.int64], NDArray[np.int64]]:
     """Generate q-point triplets.
 
@@ -116,8 +117,11 @@ def get_triplets_at_q(
         rotations,
         is_time_reversal=is_time_reversal,
         swappable=swappable,
+        lang=lang,
     )
-    triplets_at_q, weights = _get_BZ_triplets_at_q(grid_point, bz_grid, map_triplets)
+    triplets_at_q, weights = _get_BZ_triplets_at_q(
+        grid_point, bz_grid, map_triplets, lang=lang
+    )
 
     assert np.prod(bz_grid.D_diag) == weights.sum(), (
         "Num grid points %d, sum of weight %d"
@@ -127,7 +131,9 @@ def get_triplets_at_q(
     return triplets_at_q, weights, map_triplets, map_q
 
 
-def get_all_triplets(grid_point: int, bz_grid: BZGrid) -> NDArray[np.int64]:
+def get_all_triplets(
+    grid_point: int, bz_grid: BZGrid, lang: Literal["C", "Rust"] = "C"
+) -> NDArray[np.int64]:
     """Return all triplets of a grid point.
 
     Almost equivalent to ``get_nosym_triplets_at_q``.
@@ -135,14 +141,17 @@ def get_all_triplets(grid_point: int, bz_grid: BZGrid) -> NDArray[np.int64]:
 
     """
     triplets_at_q, _ = _get_BZ_triplets_at_q(
-        grid_point, bz_grid, np.arange(np.prod(bz_grid.D_diag), dtype="int64")
+        grid_point,
+        bz_grid,
+        np.arange(np.prod(bz_grid.D_diag), dtype="int64"),
+        lang=lang,
     )
 
     return triplets_at_q
 
 
 def get_nosym_triplets_at_q(
-    grid_point: int, bz_grid: BZGrid
+    grid_point: int, bz_grid: BZGrid, lang: Literal["C", "Rust"] = "C"
 ) -> tuple[NDArray[np.int64], NDArray[np.int64], NDArray[np.int64], NDArray[np.int64]]:
     """Return triplets information without imposing mesh symmetry.
 
@@ -151,7 +160,9 @@ def get_nosym_triplets_at_q(
     """
     map_triplets = np.arange(np.prod(bz_grid.D_diag), dtype="int64")
     map_q = np.arange(np.prod(bz_grid.D_diag), dtype="int64")
-    triplets_at_q, weights = _get_BZ_triplets_at_q(grid_point, bz_grid, map_triplets)
+    triplets_at_q, weights = _get_BZ_triplets_at_q(
+        grid_point, bz_grid, map_triplets, lang=lang
+    )
 
     return triplets_at_q, weights, map_triplets, map_q
 
@@ -162,7 +173,7 @@ def get_triplets_integration_weights(
     sigma: float | None,
     sigma_cutoff: float | None = None,
     is_collision_matrix: bool = False,
-    lang: Literal["C", "Python"] = "C",
+    lang: Literal["C", "Python", "Rust"] = "C",
 ) -> tuple[NDArray[np.double], NDArray[np.byte] | None]:
     """Calculate triplets integration weights.
 
@@ -198,9 +209,7 @@ def get_triplets_integration_weights(
     g[:] = 0
 
     if sigma:
-        if lang == "C":
-            import phono3py._phono3py as phono3c
-
+        if lang in ("C", "Rust"):
             g_zero = np.zeros(g.shape[1:], dtype="byte", order="C")
             cutoff: float
             if sigma_cutoff is None:
@@ -208,9 +217,18 @@ def get_triplets_integration_weights(
             else:
                 cutoff = float(sigma_cutoff)
             # cutoff < 0 disables g_zero feature.
-            phono3c.triplets_integration_weights_with_sigma(
-                g, g_zero, frequency_points, triplets, frequencies, sigma, cutoff
-            )
+            if lang == "Rust":
+                import phono3py_rs
+
+                phono3py_rs.triplets_integration_weights_with_sigma(
+                    g, g_zero, frequency_points, triplets, frequencies, sigma, cutoff
+                )
+            else:
+                import phono3py._phono3py as phono3c
+
+                phono3c.triplets_integration_weights_with_sigma(
+                    g, g_zero, frequency_points, triplets, frequencies, sigma, cutoff
+                )
         else:
             for i, tp in enumerate(triplets):
                 f1s = frequencies[tp[1]]
@@ -226,14 +244,22 @@ def get_triplets_integration_weights(
                     if len(g) == 3:
                         g[2, i, :, j, k] = g0 + g1 + g2
     else:
-        if lang == "C":
+        if lang in ("C", "Rust"):
             g_zero = np.zeros(g.shape[1:], dtype="byte", order="C")
-            _set_triplets_integration_weights_c(
-                g,
-                g_zero,
-                interaction,
-                frequency_points,
-            )
+            if lang == "Rust":
+                _set_triplets_integration_weights_rust(
+                    g,
+                    g_zero,
+                    interaction,
+                    frequency_points,
+                )
+            else:
+                _set_triplets_integration_weights_c(
+                    g,
+                    g_zero,
+                    interaction,
+                    frequency_points,
+                )
         else:
             _set_triplets_integration_weights_py(g, interaction, frequency_points)
 
@@ -246,6 +272,7 @@ def _get_triplets_reciprocal_mesh_at_q(
     rec_rotations: NDArray[np.int64] | Sequence[Sequence[Sequence[int]]],
     is_time_reversal: bool = True,
     swappable: bool = True,
+    lang: Literal["C", "Rust"] = "C",
 ) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
     """Search symmetry reduced triplets fixing one q-point.
 
@@ -281,20 +308,30 @@ def _get_triplets_reciprocal_mesh_at_q(
         shape=(prod(mesh),), dtype='int64'
 
     """
-    import phono3py._phono3py as phono3c
+    if lang == "Rust":
+        import phono3py_rs
 
-    map_triplets = np.zeros(np.prod(D_diag), dtype="int64")
-    map_q = np.zeros(np.prod(D_diag), dtype="int64")
+        map_triplets, map_q, num_triplets = phono3py_rs.ir_triplets_at_q(
+            fixed_grid_number,
+            np.array(D_diag, dtype="int64"),
+            np.array(rec_rotations, dtype="int64", order="C"),
+            is_time_reversal,
+            swappable,
+        )
+    else:
+        import phono3py._phono3py as phono3c
 
-    num_triplets = phono3c.triplets_reciprocal_mesh_at_q(
-        map_triplets,
-        map_q,
-        fixed_grid_number,
-        np.array(D_diag, dtype="int64"),
-        is_time_reversal * 1,
-        np.array(rec_rotations, dtype="int64", order="C"),
-        swappable * 1,
-    )
+        map_triplets = np.zeros(np.prod(D_diag), dtype="int64")
+        map_q = np.zeros(np.prod(D_diag), dtype="int64")
+        num_triplets = phono3c.triplets_reciprocal_mesh_at_q(
+            map_triplets,
+            map_q,
+            fixed_grid_number,
+            np.array(D_diag, dtype="int64"),
+            is_time_reversal * 1,
+            np.array(rec_rotations, dtype="int64", order="C"),
+            swappable * 1,
+        )
     assert num_triplets == len(np.unique(map_triplets))
 
     return map_triplets, map_q
@@ -304,6 +341,7 @@ def _get_BZ_triplets_at_q(
     bz_grid_index: int,
     bz_grid: BZGrid,
     map_triplets: NDArray[np.int64],
+    lang: Literal["C", "Rust"] = "C",
 ) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
     """Grid point triplets are searched considering BZ surface.
 
@@ -342,29 +380,43 @@ def _get_BZ_triplets_at_q(
         shape=(n_triplets,), dtype='int64'
 
     """
-    import phono3py._phono3py as phono3c
-
     weights = np.zeros(len(map_triplets), dtype="int64")
     for g in map_triplets:
         weights[g] += 1
     ir_weights = np.extract(weights > 0, weights)
-    triplets = -np.ones((len(ir_weights), 3), dtype="int64", order="C")
     reduced_basis, tmat_inv_int = get_reduced_bases_and_tmat_inv(
         bz_grid.reciprocal_lattice
     )
-    num_ir_ret = phono3c.BZ_triplets_at_q(
-        triplets,
-        bz_grid_index,
-        bz_grid.addresses,
-        bz_grid.gp_map,
-        map_triplets,
-        bz_grid.D_diag,
-        np.array(tmat_inv_int @ bz_grid.Q, dtype="int64", order="C"),
-        reduced_basis,
-        bz_grid.store_dense_gp_map * 1 + 1,
-    )
+    if lang == "Rust":
+        import phono3py_rs
 
-    assert num_ir_ret == len(ir_weights)
+        triplets = phono3py_rs.bz_triplets_at_q(
+            bz_grid_index,
+            bz_grid.addresses,
+            bz_grid.gp_map,
+            map_triplets,
+            bz_grid.D_diag,
+            np.array(tmat_inv_int @ bz_grid.Q, dtype="int64", order="C"),
+            reduced_basis,
+            bz_grid.store_dense_gp_map * 1 + 1,
+        )
+        assert len(triplets) == len(ir_weights)
+    else:
+        import phono3py._phono3py as phono3c
+
+        triplets = -np.ones((len(ir_weights), 3), dtype="int64", order="C")
+        num_ir_ret = phono3c.BZ_triplets_at_q(
+            triplets,
+            bz_grid_index,
+            bz_grid.addresses,
+            bz_grid.gp_map,
+            map_triplets,
+            bz_grid.D_diag,
+            np.array(tmat_inv_int @ bz_grid.Q, dtype="int64", order="C"),
+            reduced_basis,
+            bz_grid.store_dense_gp_map * 1 + 1,
+        )
+        assert num_ir_ret == len(ir_weights)
 
     return triplets, np.array(ir_weights, dtype="int64")
 
@@ -381,6 +433,33 @@ def _set_triplets_integration_weights_c(
     triplets_at_q = pp.get_triplets_at_q()[0]
     frequencies = pp.get_phonons()[0]
     phono3c.triplets_integration_weights(
+        g,
+        g_zero,
+        frequency_points,  # f0
+        np.array(np.dot(tetrahedra, pp.bz_grid.P.T), dtype="int64", order="C"),
+        pp.bz_grid.D_diag,
+        triplets_at_q,
+        frequencies,  # f1
+        frequencies,  # f2
+        pp.bz_grid.addresses,
+        pp.bz_grid.gp_map,
+        pp.bz_grid.store_dense_gp_map * 1 + 1,
+        g.shape[0],
+    )
+
+
+def _set_triplets_integration_weights_rust(
+    g: NDArray[np.double],
+    g_zero: NDArray[np.byte],
+    pp: Interaction | JointDos,
+    frequency_points: NDArray[np.double],
+) -> None:
+    import phono3py_rs
+
+    tetrahedra = get_tetrahedra_relative_grid_address(pp.bz_grid.microzone_lattice)
+    triplets_at_q = pp.get_triplets_at_q()[0]
+    frequencies = pp.get_phonons()[0]
+    phono3py_rs.triplets_integration_weights(
         g,
         g_zero,
         frequency_points,  # f0

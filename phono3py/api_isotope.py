@@ -66,6 +66,7 @@ class Phono3pyIsotope:
         symprec: float = 1e-5,
         cutoff_frequency: float | None = None,
         lapack_zheev_uplo: Literal["L", "U"] = "L",
+        lang: Literal["C", "Python", "Rust"] = "C",
     ) -> None:
         """Init method."""
         self._sigmas: Sequence[float | None]
@@ -94,6 +95,7 @@ class Phono3pyIsotope:
             symprec=symprec,
             cutoff_frequency=cutoff_frequency,
             lapack_zheev_uplo=lapack_zheev_uplo,
+            lang=lang,
         )
 
     @property
@@ -124,9 +126,12 @@ class Phono3pyIsotope:
     def run(
         self,
         grid_points: Sequence[int] | NDArray[np.int64],
-        lang: Literal["C", "Python"] = "C",
     ) -> None:
-        """Calculate isotope scattering."""
+        """Calculate isotope scattering.
+
+        The backend is selected by ``self._iso._lang`` set at construction.
+
+        """
         gamma = np.zeros(
             (len(self._sigmas), len(grid_points), len(self._iso.band_indices)),
             dtype="double",
@@ -151,7 +156,7 @@ class Phono3pyIsotope:
                     else:
                         print("Sigma: %s" % sigma)
                     self._iso.sigma = sigma
-                    self._iso.run(lang=lang)
+                    self._iso.run()
                     gamma[i, j] = self._iso.gamma
                     frequencies = self._iso.get_phonons()[0]
                     print("")

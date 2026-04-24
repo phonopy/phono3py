@@ -55,6 +55,92 @@ from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.triplets import get_triplets_integration_weights
 
 
+def run_imag_self_energy_with_g_rust(
+    imag_self_energy: NDArray[np.double],
+    pp_strength: NDArray[np.double],
+    triplets_at_q: NDArray[np.int64],
+    weights_at_q: NDArray[np.int64],
+    frequencies: NDArray[np.double],
+    temperature_thz: float,
+    g: NDArray[np.double],
+    g_zero: NDArray[np.byte],
+    cutoff_frequency: float,
+    frequency_point_index: int = -1,
+) -> None:
+    """Compute the imag. self-energy with integration weights using the Rust backend.
+
+    Drop-in replacement for ``phono3c.imag_self_energy_with_g`` at a
+    single temperature.
+
+    - ``imag_self_energy`` (out, ``(num_band0,)``): accumulated in place.
+    - ``pp_strength``: ``(num_triplets, num_band0, num_band, num_band)``.
+    - ``g``: ``(2, num_triplets, num_band0_or_freqpts, num_band, num_band)``.
+    - ``g_zero``: ``(num_triplets, num_band0_or_freqpts, num_band, num_band)``
+      ``byte``; non-zero entries mark zero-weight positions to skip.
+    - ``frequency_point_index``: ``-1`` for band-index mode, otherwise the
+      frequency-point index to sample.
+
+    """
+    import phono3py_rs
+
+    phono3py_rs.imag_self_energy_with_g(
+        imag_self_energy,
+        np.ascontiguousarray(pp_strength, dtype="double"),
+        np.ascontiguousarray(triplets_at_q, dtype="int64"),
+        np.ascontiguousarray(weights_at_q, dtype="int64"),
+        np.ascontiguousarray(frequencies, dtype="double"),
+        float(temperature_thz),
+        np.ascontiguousarray(g, dtype="double"),
+        np.ascontiguousarray(g_zero, dtype="byte"),
+        float(cutoff_frequency),
+        int(frequency_point_index),
+    )
+
+
+def run_detailed_imag_self_energy_with_g_rust(
+    detailed_imag_self_energy: NDArray[np.double],
+    imag_self_energy_N: NDArray[np.double],
+    imag_self_energy_U: NDArray[np.double],
+    pp_strength: NDArray[np.double],
+    triplets_at_q: NDArray[np.int64],
+    weights_at_q: NDArray[np.int64],
+    bz_grid_addresses: NDArray[np.int64],
+    frequencies: NDArray[np.double],
+    temperature_thz: float,
+    g: NDArray[np.double],
+    g_zero: NDArray[np.byte],
+    cutoff_frequency: float,
+) -> None:
+    """Compute the detailed imag. self-energy via the Rust backend.
+
+    Drop-in replacement for ``phono3c.detailed_imag_self_energy_with_g``
+    at a single temperature.  Writes into the three output arrays in
+    place:
+
+    - ``detailed_imag_self_energy``:
+      ``(num_triplets, num_band0, num_band, num_band)``.
+    - ``imag_self_energy_N`` / ``imag_self_energy_U``: ``(num_band0,)``
+      Normal and Umklapp contributions, respectively.
+
+    """
+    import phono3py_rs
+
+    phono3py_rs.detailed_imag_self_energy_with_g(
+        detailed_imag_self_energy,
+        imag_self_energy_N,
+        imag_self_energy_U,
+        np.ascontiguousarray(pp_strength, dtype="double"),
+        np.ascontiguousarray(triplets_at_q, dtype="int64"),
+        np.ascontiguousarray(weights_at_q, dtype="int64"),
+        np.ascontiguousarray(bz_grid_addresses, dtype="int64"),
+        np.ascontiguousarray(frequencies, dtype="double"),
+        float(temperature_thz),
+        np.ascontiguousarray(g, dtype="double"),
+        np.ascontiguousarray(g_zero, dtype="byte"),
+        float(cutoff_frequency),
+    )
+
+
 class ImagSelfEnergy:
     """Class for imaginary-part of self-energy of bubble diagram."""
 
@@ -62,7 +148,7 @@ class ImagSelfEnergy:
         self,
         interaction: Interaction,
         with_detail: bool = False,
-        lang: Literal["C", "Python"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "C",
     ) -> None:
         """Init method.
 
@@ -76,7 +162,11 @@ class ImagSelfEnergy:
             Contributions to gammas for each triplets are computed. Default is
             False.
         lang : str, optional
-            This is used for debugging purpose.
+            Backend selection.  ``"C"`` (default) uses the C extension,
+            ``"Python"`` the slow reference implementation, and ``"Rust"``
+            the Rust backend.  For ``"Rust"``, the ``detailed`` +
+            ``frequency_points`` path is not implemented and falls back
+            to C.
 
         """
         self._pp = interaction
@@ -86,7 +176,10 @@ class ImagSelfEnergy:
         self._frequency_points: NDArray[np.double] | None = None
         self._grid_point: int | None = None
 
-        self._lang: Literal["C", "Python"] = lang
+        self._lang: Literal["C", "Python", "Rust"] = lang
+        from phono3py._lang import log_dispatch
+
+        log_dispatch(lang, "ImagSelfEnergy.__init__")
         self._imag_self_energy: NDArray[np.double] | None = None
         self._detailed_imag_self_energy: NDArray[np.double] | None = None
         self._pp_strength: NDArray[np.double] | None = None
@@ -145,9 +238,9 @@ class ImagSelfEnergy:
     def run_interaction(self, is_full_pp: bool = True) -> None:
         """Calculate ph-ph interaction."""
         if is_full_pp or self._frequency_points is not None:
-            self._pp.run(lang=self._lang)
+            self._pp.run()
         else:
-            self._pp.run(lang=self._lang, g_zero=self._g_zero)
+            self._pp.run(g_zero=self._g_zero)
         self._pp_strength = self._pp.interaction_strength
 
     def run_integration_weights(
@@ -261,7 +354,7 @@ class ImagSelfEnergy:
         else:
             self._pp.set_grid_point(grid_point)
             self._pp_strength = None
-            (self._triplets_at_q, self._weights_at_q) = self._pp.get_triplets_at_q()[:2]
+            self._triplets_at_q, self._weights_at_q = self._pp.get_triplets_at_q()[:2]
             self._grid_point = grid_point
             self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
 
@@ -371,6 +464,11 @@ class ImagSelfEnergy:
                 else:
                     # self._imag_self_energy.shape = (num_band0,)
                     self._run_c_with_band_indices_with_g()
+            elif self._lang == "Rust":
+                if self._with_detail:
+                    self._run_rust_detailed_with_band_indices_with_g()
+                else:
+                    self._run_rust_with_band_indices_with_g()
             else:
                 print("Running into _run_py_with_band_indices_with_g()")
                 print("This routine is super slow and only for the test.")
@@ -391,6 +489,13 @@ class ImagSelfEnergy:
                     self._run_c_detailed_with_frequency_points_with_g()
                 else:
                     self._run_c_with_frequency_points_with_g()
+            elif self._lang == "Rust":
+                if self._with_detail:
+                    # detailed + frequency_points is not yet implemented
+                    # in the Rust backend; fall back to C.
+                    self._run_c_detailed_with_frequency_points_with_g()
+                else:
+                    self._run_rust_with_frequency_points_with_g()
             else:
                 print("Running into _run_py_with_frequency_points_with_g()")
                 print("This routine is super slow and only for the test.")
@@ -554,6 +659,103 @@ class ImagSelfEnergy:
             self._ise_U[i] = ise_at_f_U * self._unit_conversion
             self._imag_self_energy[i] = self._ise_N[i] + self._ise_U[i]
 
+    def _run_rust_with_band_indices_with_g(self) -> None:
+        assert self._pp_strength is not None
+        assert self._temperature is not None
+        assert self._g is not None
+        assert self._imag_self_energy is not None
+        assert self._triplets_at_q is not None
+        assert self._weights_at_q is not None
+        assert self._frequencies is not None
+        if self._g_zero is None:
+            _g_zero = np.zeros(self._pp_strength.shape, dtype="byte", order="C")
+        else:
+            _g_zero = self._g_zero
+
+        run_imag_self_energy_with_g_rust(
+            self._imag_self_energy,
+            self._pp_strength,
+            self._triplets_at_q,
+            self._weights_at_q,
+            self._frequencies,
+            self._temperature * get_physical_units().KB / get_physical_units().THzToEv,
+            self._g,
+            _g_zero,
+            self._cutoff_frequency,
+            -1,
+        )
+        self._imag_self_energy *= self._unit_conversion
+
+    def _run_rust_detailed_with_band_indices_with_g(self) -> None:
+        assert self._pp_strength is not None
+        assert self._temperature is not None
+        assert self._g is not None
+        assert self._detailed_imag_self_energy is not None
+        assert self._ise_N is not None
+        assert self._ise_U is not None
+        assert self._imag_self_energy is not None
+        assert self._triplets_at_q is not None
+        assert self._weights_at_q is not None
+        assert self._frequencies is not None
+        if self._g_zero is None:
+            _g_zero = np.zeros(self._pp_strength.shape, dtype="byte", order="C")
+        else:
+            _g_zero = self._g_zero
+
+        run_detailed_imag_self_energy_with_g_rust(
+            self._detailed_imag_self_energy,
+            self._ise_N,  # Normal
+            self._ise_U,  # Umklapp
+            self._pp_strength,
+            self._triplets_at_q,
+            self._weights_at_q,
+            self._pp.bz_grid.addresses,
+            self._frequencies,
+            self._temperature * get_physical_units().KB / get_physical_units().THzToEv,
+            self._g,
+            _g_zero,
+            self._cutoff_frequency,
+        )
+
+        self._detailed_imag_self_energy *= self._unit_conversion
+        self._ise_N *= self._unit_conversion
+        self._ise_U *= self._unit_conversion
+        self._imag_self_energy = self._ise_N + self._ise_U
+
+    def _run_rust_with_frequency_points_with_g(self) -> None:
+        assert self._pp_strength is not None
+        assert self._temperature is not None
+        assert self._frequency_points is not None
+        assert self._imag_self_energy is not None
+        assert self._triplets_at_q is not None
+        assert self._weights_at_q is not None
+        assert self._frequencies is not None
+        assert self._g is not None
+        num_band0 = self._pp_strength.shape[1]
+        ise_at_f = np.zeros(num_band0, dtype="double")
+        if self._g_zero is None:
+            _g_zero = np.zeros(self._g.shape[1:], dtype="byte", order="C")
+        else:
+            _g_zero = self._g_zero
+
+        for i in range(len(self._frequency_points)):
+            run_imag_self_energy_with_g_rust(
+                ise_at_f,
+                self._pp_strength,
+                self._triplets_at_q,
+                self._weights_at_q,
+                self._frequencies,
+                self._temperature
+                * get_physical_units().KB
+                / get_physical_units().THzToEv,
+                self._g,
+                _g_zero,
+                self._cutoff_frequency,
+                i,
+            )
+            self._imag_self_energy[i] = ise_at_f
+        self._imag_self_energy *= self._unit_conversion
+
     def _run_py_with_band_indices_with_g(self) -> None:
         assert self._temperature is not None
         if self._temperature > 0:
@@ -680,6 +882,7 @@ def get_imag_self_energy(
     return_gamma_detail: bool = False,
     output_filename: str | None = None,
     log_level: int = 0,
+    lang: Literal["C", "Python", "Rust"] = "C",
 ) -> tuple[NDArray[np.double] | None, NDArray[np.double], list[NDArray[np.double]]]:
     """Imaginary-part of self-energy at frequency points.
 
@@ -812,7 +1015,9 @@ def get_imag_self_energy(
     detailed_gamma: list[NDArray[np.double]] = []
 
     ise = ImagSelfEnergy(
-        interaction, with_detail=(write_gamma_detail or return_gamma_detail)
+        interaction,
+        with_detail=(write_gamma_detail or return_gamma_detail),
+        lang=lang,
     )
     for i, gp in enumerate(grid_points):
         ise.set_grid_point(gp)

@@ -33,6 +33,7 @@ Papers that may introduce phono3py:
 ```{toctree}
 :hidden:
 install
+rust-backend
 workflow
 examples
 Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE) <interfaces>

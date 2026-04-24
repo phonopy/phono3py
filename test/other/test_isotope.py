@@ -92,6 +92,7 @@ def test_Phono3pyIsotope(si_pbesol, lang):
         si_pbesol.mesh_numbers,
         si_pbesol.phonon_primitive,
         symprec=si_pbesol.symmetry.tolerance,
+        lang=lang,
     )
     iso.init_dynamical_matrix(
         si_pbesol.fc2,
@@ -99,7 +100,7 @@ def test_Phono3pyIsotope(si_pbesol, lang):
         si_pbesol.phonon_primitive,
         nac_params=si_pbesol.nac_params,
     )
-    iso.run([23, 103], lang=lang)
+    iso.run([23, 103])
     # print(iso.gamma[0])
     np.testing.assert_allclose(si_pbesol_iso, iso.gamma[0], atol=3e-4)
 
@@ -115,6 +116,7 @@ def test_Phono3pyIsotope_with_sigma(si_pbesol, lang):
             0.1,
         ],
         symprec=si_pbesol.symmetry.tolerance,
+        lang=lang,
     )
     iso.init_dynamical_matrix(
         si_pbesol.fc2,
@@ -122,7 +124,7 @@ def test_Phono3pyIsotope_with_sigma(si_pbesol, lang):
         si_pbesol.phonon_primitive,
         nac_params=si_pbesol.nac_params,
     )
-    iso.run([23, 103], lang=lang)
+    iso.run([23, 103])
     # print(iso.gamma[0])
     np.testing.assert_allclose(si_pbesol_iso_sigma, iso.gamma[0], atol=3e-4)
 
@@ -136,6 +138,7 @@ def test_Phono3pyIsotope_grg(si_pbesol_grg, lang):
         ph3.phonon_primitive,
         symprec=ph3.symmetry.tolerance,
         use_grg=True,
+        lang=lang,
     )
     iso.init_dynamical_matrix(
         ph3.fc2,
@@ -146,7 +149,7 @@ def test_Phono3pyIsotope_grg(si_pbesol_grg, lang):
     np.testing.assert_equal(
         iso.grid.grid_matrix, [[-15, 15, 15], [15, -15, 15], [15, 15, -15]]
     )
-    iso.run([23, 103], lang=lang)
+    iso.run([23, 103])
     np.testing.assert_allclose(si_pbesol_grg_iso, iso.gamma[0], atol=3e-3)
 
 
@@ -162,6 +165,7 @@ def test_Phono3pyIsotope_grg_with_sigma(si_pbesol_grg, lang):
         ],
         symprec=ph3.symmetry.tolerance,
         use_grg=True,
+        lang=lang,
     )
     iso.init_dynamical_matrix(
         ph3.fc2,
@@ -169,7 +173,7 @@ def test_Phono3pyIsotope_grg_with_sigma(si_pbesol_grg, lang):
         ph3.phonon_primitive,
         nac_params=ph3.nac_params,
     )
-    iso.run([23, 103], lang=lang)
+    iso.run([23, 103])
     np.testing.assert_equal(
         iso.grid.grid_matrix, [[-15, 15, 15], [15, -15, 15], [15, 15, -15]]
     )

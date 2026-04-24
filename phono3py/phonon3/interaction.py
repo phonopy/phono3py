@@ -17,10 +17,76 @@ from phono3py.phonon.grid import (
     get_grid_points_by_rotations,
     get_ir_grid_points,
 )
-from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
+from phono3py.phonon.solver import (
+    run_phonon_solver_c,
+    run_phonon_solver_py,
+    run_phonon_solver_rust,
+)
 from phono3py.phonon3.real_to_reciprocal import RealToReciprocal
 from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
 from phono3py.phonon3.triplets import get_nosym_triplets_at_q, get_triplets_at_q
+
+
+def run_interaction_rust(
+    interaction_strength: NDArray[np.double],
+    g_zero: NDArray[np.byte],
+    frequencies: NDArray[np.double],
+    eigenvectors: NDArray[np.cdouble],
+    triplets_at_q: NDArray[np.int64],
+    bz_grid_addresses: NDArray[np.int64],
+    d_diag: NDArray[np.int64],
+    q_mat: NDArray[np.int64],
+    fc3: NDArray[np.double],
+    fc3_nonzero_indices: NDArray[np.byte],
+    svecs: NDArray[np.double],
+    multi: NDArray[np.int64],
+    masses: NDArray[np.double],
+    p2s_map: NDArray[np.int64],
+    s2p_map: NDArray[np.int64],
+    band_indices: NDArray[np.int64],
+    symmetrize_fc3_q: bool,
+    make_r0_average: bool,
+    all_shortest: NDArray[np.byte],
+    cutoff_frequency: float,
+) -> None:
+    """Compute ph-ph interaction strength via the Rust backend.
+
+    Drop-in replacement for ``phono3c.interaction``.  Writes
+    ``interaction_strength`` (shape
+    ``(num_triplets, num_band0, num_band, num_band)``) in place.  The
+    caller is responsible for multiplying by the unit-conversion
+    factor, matching the existing ``Interaction._run_c`` convention.
+
+    """
+    import phono3py_rs
+
+    # ``phono3c.interaction`` derives ``is_compact_fc3`` from
+    # ``fc3.shape[0] == fc3.shape[1]``; do the same here.
+    is_compact_fc3 = fc3.shape[0] != fc3.shape[1]
+
+    phono3py_rs.interaction(
+        interaction_strength,
+        np.ascontiguousarray(g_zero, dtype="byte"),
+        np.ascontiguousarray(frequencies, dtype="double"),
+        np.ascontiguousarray(eigenvectors, dtype="complex128"),
+        np.ascontiguousarray(triplets_at_q, dtype="int64"),
+        np.ascontiguousarray(bz_grid_addresses, dtype="int64"),
+        np.ascontiguousarray(d_diag, dtype="int64"),
+        np.ascontiguousarray(q_mat, dtype="int64"),
+        np.ascontiguousarray(fc3, dtype="double"),
+        np.ascontiguousarray(fc3_nonzero_indices, dtype="byte"),
+        np.ascontiguousarray(svecs, dtype="double"),
+        np.ascontiguousarray(multi, dtype="int64"),
+        np.ascontiguousarray(masses, dtype="double"),
+        np.ascontiguousarray(p2s_map, dtype="int64"),
+        np.ascontiguousarray(s2p_map, dtype="int64"),
+        np.ascontiguousarray(band_indices, dtype="int64"),
+        bool(symmetrize_fc3_q),
+        bool(make_r0_average),
+        np.ascontiguousarray(all_shortest, dtype="byte"),
+        float(cutoff_frequency),
+        is_compact_fc3,
+    )
 
 
 class Interaction:
@@ -74,8 +140,17 @@ class Interaction:
         cutoff_frequency: float | None = None,
         lapack_zheev_uplo: Literal["L", "U"] = "L",
         openmp_per_triplets: bool | None = None,
+        lang: Literal["C", "Python", "Rust"] = "C",
     ):
-        """Init method."""
+        """Init method.
+
+        ``lang`` selects the backend used by ``run``, ``run_phonon_solver``,
+        and ``run_phonon_solver_at_gamma``.  It can be overridden on a
+        per-call basis through the ``lang`` argument of ``run``.  ``"Python"``
+        falls back to the C phonon solver since there is no pure-Python
+        grid-wide phonon solver implementation.
+
+        """
         self._primitive = primitive
         self._bz_grid = bz_grid
         self._primitive_symmetry = primitive_symmetry
@@ -119,6 +194,10 @@ class Interaction:
         self._make_r0_average = make_r0_average
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
         self._openmp_per_triplets = openmp_per_triplets
+        self._lang: Literal["C", "Python", "Rust"] = lang
+        from phono3py._lang import log_dispatch
+
+        log_dispatch(lang, "Interaction.__init__")
 
         self._symprec = self._primitive_symmetry.tolerance
 
@@ -153,9 +232,14 @@ class Interaction:
         self._get_all_shortest()
 
     def run(
-        self, lang: Literal["C", "Python"] = "C", g_zero: NDArray[np.byte] | None = None
+        self,
+        g_zero: NDArray[np.byte] | None = None,
     ) -> None:
-        """Run ph-ph interaction calculation."""
+        """Run ph-ph interaction calculation.
+
+        The backend is determined by ``self._lang`` (set at construction).
+
+        """
         if not self._phonon_all_done:
             self.run_phonon_solver()
 
@@ -172,8 +256,10 @@ class Interaction:
         )
         if self._constant_averaged_interaction is None:
             self._interaction_strength[:] = 0
-            if lang == "C":
+            if self._lang == "C":
                 self._run_c(g_zero)
+            elif self._lang == "Rust":
+                self._run_rust(g_zero)
             else:
                 self._run_py()
         else:
@@ -392,12 +478,17 @@ class Interaction:
 
     @property
     def all_shortest(self) -> NDArray[np.byte]:
-        """Return boolean of make_r0_average.
+        """Return the all-shortest flag array.
 
-        This flag is used to activate averaging of fc3 transformation
-        from real space to reciprocal space around three atoms. With False,
-        it is done at the first atom. With True, it is done at three atoms
-        and averaged.
+        Shape ``(num_patom, num_satom, num_satom)``, dtype ``byte``.
+        ``all_shortest[i, j, k] == 1`` iff the three atoms
+        ``(p2s[i], j, k)`` each sit at a unique shortest vector
+        relative to the others (multiplicity 1 on all three legs and
+        the j-k distance matches after mapping).  The r0-average
+        transform from real to reciprocal space uses this flag to
+        avoid triple-counting: the leg-1 contribution is tripled and
+        the leg-2 / leg-3 contributions are skipped where the flag
+        is set.
 
         """
         return self._all_shortest
@@ -902,12 +993,53 @@ class Interaction:
         self._interaction_strength *= self._unit_conversion
         self._g_zero = g_zero
 
+    def _run_rust(self, g_zero: NDArray[np.byte] | None) -> None:
+        assert self._interaction_strength is not None
+        assert self._triplets_at_q is not None
+
+        if g_zero is None or self._symmetrize_fc3q:
+            _g_zero = np.zeros(
+                self._interaction_strength.shape,
+                dtype="byte",
+                order="C",
+            )
+        else:
+            _g_zero = g_zero
+
+        run_interaction_rust(
+            self._interaction_strength,
+            _g_zero,
+            self._frequencies,
+            self._eigenvectors,
+            self._triplets_at_q,
+            self._bz_grid.addresses,
+            self._bz_grid.D_diag,
+            self._bz_grid.Q,
+            self._fc3,
+            self._fc3_nonzero_indices,
+            self._svecs,
+            self._multi,
+            self._masses,
+            self._p2s,
+            self._s2p,
+            self._band_indices,
+            self._symmetrize_fc3q,
+            self._make_r0_average,
+            self._all_shortest,
+            self._cutoff_frequency,
+        )
+        self._interaction_strength *= self._unit_conversion
+        self._g_zero = g_zero
+
     def _run_phonon_solver_c(self, grid_points: NDArray[np.int64]) -> None:
         assert self._dm is not None
         assert self._frequencies is not None
         assert self._eigenvectors is not None
         assert self._phonon_done is not None
-        run_phonon_solver_c(
+        # "Python" falls back to the C phonon solver; there is no pure-Python
+        # grid-wide phonon solver implementation.
+        solver = run_phonon_solver_rust if self._lang == "Rust" else run_phonon_solver_c
+        solver(
             self._dm,
             self._frequencies,
             self._eigenvectors,
@@ -927,7 +1059,12 @@ class Interaction:
         assert self._eigenvectors is not None
 
         r2r = RealToReciprocal(
-            self._fc3, self._primitive, self.mesh_numbers, symprec=self._symprec
+            self._fc3,
+            self._primitive,
+            self.mesh_numbers,
+            symprec=self._symprec,
+            make_r0_average=self._make_r0_average,
+            all_shortest=self._all_shortest if self._make_r0_average else None,
         )
         r2n = ReciprocalToNormal(
             self._primitive,
