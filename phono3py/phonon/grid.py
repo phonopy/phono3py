@@ -173,6 +173,7 @@ class BZGrid:
         force_SNF: bool = False,
         SNF_coordinates: Literal["reciprocal", "direct"] = "reciprocal",
         store_dense_gp_map: bool = True,
+        lang: Literal["C", "Rust"] = "C",
     ):
         """Init method.
 
@@ -212,8 +213,17 @@ class BZGrid:
         store_dense_gp_map : bool, optional
             See the detail in the docstring of `_relocate_BZ_grid_address`.
             Default is True.
+        lang : {"C", "Rust"}, optional
+            Backend selector for grid-related native routines. "C" uses
+            ``phono3py._recgrid``; "Rust" uses ``phono3py_rs``. Default is
+            "C".
 
         """
+        from phono3py._lang import log_dispatch
+
+        log_dispatch(lang, "BZGrid.__init__")
+
+        self._lang: Literal["C", "Rust"] = lang
         if is_shift is None:
             self._is_shift = None
         else:
@@ -258,6 +268,7 @@ class BZGrid:
             use_grg=use_grg,
             force_SNF=force_SNF,
             SNF_coordinates=SNF_coordinates,
+            lang=lang,
         )
         self._symmetry_dataset = gm.grid_symmetry_dataset
         self._grid_matrix = gm.grid_matrix
@@ -444,6 +455,11 @@ class BZGrid:
         """Return minimum symmetry dataset used in this class."""
         return self._symmetry_dataset
 
+    @property
+    def lang(self) -> Literal["C", "Rust"]:
+        """Return backend selector for grid-related native routines."""
+        return self._lang
+
     def get_indices_from_addresses(
         self, addresses: NDArray[np.int64]
     ) -> int | NDArray[np.int64]:
@@ -469,10 +485,17 @@ class BZGrid:
             len(addresses[0])
         except TypeError:
             return int(
-                self._grg2bzg[get_grid_point_from_address(addresses, self._D_diag)]
+                self._grg2bzg[
+                    get_grid_point_from_address(
+                        addresses, self._D_diag, lang=self._lang
+                    )
+                ]
             )
 
-        gps = [get_grid_point_from_address(adrs, self._D_diag) for adrs in addresses]
+        gps = [
+            get_grid_point_from_address(adrs, self._D_diag, lang=self._lang)
+            for adrs in addresses
+        ]
         return np.array(self._grg2bzg[gps], dtype="int64")
 
     def _set_bz_grid(self) -> None:
@@ -483,6 +506,7 @@ class BZGrid:
             self._reciprocal_lattice,  # column vectors
             PS=self.PS,
             store_dense_gp_map=self._store_dense_gp_map,
+            lang=self._lang,
         )
         if self._store_dense_gp_map:
             self._grg2bzg = np.array(self._gp_map[:-1], dtype="int64")
@@ -496,7 +520,9 @@ class BZGrid:
             self._reciprocal_lattice, np.dot(self._QDinv, self._P)
         )
         self._gp_Gamma = int(
-            self._grg2bzg[get_grid_point_from_address([0, 0, 0], self._D_diag)]
+            self._grg2bzg[
+                get_grid_point_from_address([0, 0, 0], self._D_diag, lang=self._lang)
+            ]
         )
 
     def _set_rotations(self) -> None:
@@ -505,18 +531,25 @@ class BZGrid:
         Terminate when symmetry of grid is broken.
 
         """
-        import phono3py._recgrid as recgrid  # type: ignore
+        direct_rotations = np.ascontiguousarray(
+            self._symmetry_dataset.rotations, dtype="int64"
+        )
+        if self._lang == "Rust":
+            import phono3py_rs
 
-        direct_rotations = np.array(
-            self._symmetry_dataset.rotations, dtype="int64", order="C"
-        )
-        rec_rotations = np.zeros((48, 3, 3), dtype="int64", order="C")
-        num_rec_rot = recgrid.reciprocal_rotations(
-            rec_rotations, direct_rotations, self._is_time_reversal
-        )
-        self._reciprocal_operations = np.array(
-            rec_rotations[:num_rec_rot], dtype="int64", order="C"
-        )
+            rec_ops = phono3py_rs.reciprocal_rotations(
+                direct_rotations, bool(self._is_time_reversal)
+            )
+        else:
+            import phono3py._recgrid as recgrid  # type: ignore[import-untyped]
+
+            rec_ops_buf = np.zeros((48, 3, 3), dtype="int64", order="C")
+            num_rec_rot = recgrid.reciprocal_rotations(
+                rec_ops_buf, direct_rotations, int(self._is_time_reversal)
+            )
+            rec_ops = rec_ops_buf[:num_rec_rot]
+
+        self._reciprocal_operations = np.ascontiguousarray(rec_ops, dtype="int64")
         self._rotations = self._get_GRG_rotations()
         self._rotations_cartesian = np.array(
             [
@@ -531,17 +564,21 @@ class BZGrid:
 
     def _get_GRG_rotations(self) -> NDArray[np.int64]:
         """Return rotation matrices in GR-grid."""
-        import phono3py._recgrid as recgrid  # type: ignore
+        rots = np.ascontiguousarray(self._reciprocal_operations, dtype="int64")
+        d_diag = np.ascontiguousarray(self._D_diag, dtype="int64")
+        q = np.ascontiguousarray(self._Q, dtype="int64")
+        if self._lang == "Rust":
+            import phono3py_rs
 
-        rotations = np.zeros(
-            self._reciprocal_operations.shape, dtype="int64", order="C"
-        )
-        if not recgrid.transform_rotations(
-            rotations, self._reciprocal_operations, self._D_diag, self._Q
-        ):
-            msg = "Grid symmetry is broken. Use generalized regular grid."
-            raise RuntimeError(msg)
+            return np.ascontiguousarray(
+                phono3py_rs.transform_rotations(rots, d_diag, q), dtype="int64"
+            )
 
+        import phono3py._recgrid as recgrid  # type: ignore[import-untyped]
+
+        rotations = np.zeros(rots.shape, dtype="int64", order="C")
+        if not recgrid.transform_rotations(rotations, rots, d_diag, q):
+            raise RuntimeError("Grid symmetry is broken. Use generalized regular grid.")
         return rotations
 
 
@@ -575,6 +612,7 @@ class GridMatrix:
         use_grg: bool = True,
         force_SNF: bool = False,
         SNF_coordinates: Literal["reciprocal", "direct"] = "reciprocal",
+        lang: Literal["C", "Rust"] = "C",
     ) -> None:
         """Init method.
 
@@ -603,8 +641,16 @@ class GridMatrix:
             `reciprocal` or `direct`. Space of coordinates to generate grid
             generating matrix either in direct or reciprocal space. The default
             is `reciprocal`.
+        lang : {"C", "Rust"}, optional
+            Backend selector for SNF. "C" uses ``phono3py._recgrid``; "Rust"
+            uses ``phono3py_rs``. Default is "C".
 
         """
+        from phono3py._lang import log_dispatch
+
+        log_dispatch(lang, "GridMatrix.__init__")
+
+        self._lang: Literal["C", "Rust"] = lang
         self._mesh = mesh
         self._lattice = np.asarray(lattice, dtype="double", order="C")
         self._grid_matrix: NDArray[np.int64] | None = None
@@ -793,12 +839,31 @@ class GridMatrix:
         if (np.diag(gm_diag) == _grid_matrix).all() and not force_SNF:
             self._D_diag = np.array(gm_diag, dtype="int64")
         else:
-            import phono3py._recgrid as recgrid  # type: ignore
+            A = np.ascontiguousarray(_grid_matrix, dtype="int64")
+            if self._lang == "Rust":
+                import phono3py_rs
 
-            if not recgrid.snf3x3(self._D_diag, self._P, self._Q, _grid_matrix):
-                msg = "SNF3x3 failed."
-                raise RuntimeError(msg)
+                try:
+                    d_diag, p, q = phono3py_rs.snf3x3(A)
+                except (ValueError, RuntimeError) as exc:
+                    msg = "SNF3x3 failed."
+                    raise RuntimeError(msg) from exc
 
+                self._D_diag[:] = d_diag
+                self._P[:] = p
+                self._Q[:] = q
+            else:
+                from phono3py import _recgrid as recgrid
+
+                D_diag = np.zeros(3, dtype="int64")
+                P = np.zeros((3, 3), dtype="int64", order="C")
+                Q = np.zeros((3, 3), dtype="int64", order="C")
+                if not recgrid.snf3x3(D_diag, P, Q, A.copy()):
+                    msg = "SNF3x3 failed."
+                    raise RuntimeError(msg)
+                self._D_diag[:] = D_diag
+                self._P[:] = P
+                self._Q[:] = Q
             self._grid_matrix = _grid_matrix  # type: ignore[assignment]
 
     def _get_grid_matrix(
@@ -932,6 +997,7 @@ def get_grid_point_from_address_py(
 def get_grid_point_from_address(
     address: Sequence[int] | NDArray[np.int64],
     D_diag: Sequence[int] | NDArray[np.int64],
+    lang: Literal["C", "Rust"] = "C",
 ) -> NDArray[np.int64]:
     """Return GR grid-point indices of grid addresses.
 
@@ -945,6 +1011,9 @@ def get_grid_point_from_address(
         diagonal elements of diagonal matrix of Smith normal form of
         grid generating matrix. See the detail in the docstring of BZGrid.
         shape=(3,), dtype='int64'
+    lang : {"C", "Rust"}
+        Backend selector. "C" uses ``phono3py._recgrid``; "Rust" uses
+        ``phono3py_rs``. Default is "C".
 
     Returns
     -------
@@ -957,27 +1026,34 @@ def get_grid_point_from_address(
         shape=(n, ), dtype='int64'
 
     """
-    import phono3py._recgrid as recgrid  # type: ignore
+    if lang == "Rust":
+        import phono3py_rs as backend
+    else:
+        import phono3py._recgrid as backend  # type: ignore[import-untyped,no-redef]
 
-    adrs_array = np.asarray(address, dtype="int64", order="C")
-    mesh_array = np.asarray(D_diag, dtype="int64")
+    adrs_array = np.ascontiguousarray(address, dtype="int64")
+    mesh_array = np.ascontiguousarray(D_diag, dtype="int64")
 
     if adrs_array.ndim == 1:
-        return recgrid.grid_index_from_address(adrs_array, mesh_array)
+        return backend.grid_index_from_address(adrs_array, mesh_array)
 
     gps = np.zeros(adrs_array.shape[0], dtype="int64")
     for i, adrs in enumerate(adrs_array):
-        gps[i] = recgrid.grid_index_from_address(adrs, mesh_array)
+        gps[i] = backend.grid_index_from_address(np.ascontiguousarray(adrs), mesh_array)
     return gps
 
 
 def get_ir_grid_points(
     bz_grid: BZGrid,
+    lang: Literal["C", "Rust"] | None = None,
 ) -> tuple[NDArray[np.int64], NDArray[np.int64], NDArray[np.int64]]:
     """Return ir-grid-points in generalized regular grid.
 
     bz_grid : BZGrid
         Data structure to represent BZ grid.
+    lang : {"C", "Rust"} or None, optional
+        Backend selector passed to ``_get_ir_grid_map``. If None,
+        ``bz_grid.lang`` is used.
 
     Returns
     -------
@@ -994,7 +1070,10 @@ def get_ir_grid_points(
         shape=(prod(D_diag), ), dtype='int64'
 
     """
-    ir_grid_map = _get_ir_grid_map(bz_grid.D_diag, bz_grid.rotations, PS=bz_grid.PS)
+    _lang = bz_grid.lang if lang is None else lang
+    ir_grid_map = _get_ir_grid_map(
+        bz_grid.D_diag, bz_grid.rotations, PS=bz_grid.PS, lang=_lang
+    )
     ir_grid_points, ir_grid_weights = extract_ir_grid_points(ir_grid_map)
 
     return ir_grid_points, ir_grid_weights, ir_grid_map
@@ -1005,6 +1084,7 @@ def get_grid_points_by_rotations(
     bz_grid: BZGrid,
     reciprocal_rotations: NDArray[np.int64] | None = None,
     with_surface: bool = False,
+    lang: Literal["C", "Rust"] | None = None,
 ) -> NDArray[np.int64]:
     """Return BZ-grid point indices rotated from a BZ-grid point index.
 
@@ -1033,23 +1113,28 @@ def get_grid_points_by_rotations(
         dtype='int64', shape=(rotations,)
 
     """
+    _lang = bz_grid.lang if lang is None else lang
+
     if reciprocal_rotations is not None:
         rec_rots = reciprocal_rotations
     else:
         rec_rots = bz_grid.rotations
 
     if with_surface:
-        return _get_grid_points_by_bz_rotations(bz_gp, bz_grid, rec_rots)
+        return _get_grid_points_by_bz_rotations(bz_gp, bz_grid, rec_rots, lang=_lang)
     else:
-        return _get_grid_points_by_rotations(bz_gp, bz_grid, rec_rots)
+        return _get_grid_points_by_rotations(bz_gp, bz_grid, rec_rots, lang=_lang)
 
 
 def _get_grid_points_by_rotations(
-    bz_gp: int, bz_grid: BZGrid, rotations: NDArray[np.int64]
+    bz_gp: int,
+    bz_grid: BZGrid,
+    rotations: NDArray[np.int64],
+    lang: Literal["C", "Rust"] = "C",
 ) -> NDArray:
     """Grid point rotations without surface treatment."""
     rot_adrs = np.dot(rotations, bz_grid.addresses[bz_gp])
-    grgps = get_grid_point_from_address(rot_adrs, bz_grid.D_diag)
+    grgps = get_grid_point_from_address(rot_adrs, bz_grid.D_diag, lang=lang)
     return bz_grid.grg2bzg[grgps]
 
 
@@ -1057,30 +1142,46 @@ def _get_grid_points_by_bz_rotations(
     bz_gp: int,
     bz_grid: BZGrid,
     rotations: NDArray[np.int64],
-    lang: Literal["C", "Python"] = "C",
+    lang: Literal["C", "Python", "Rust"] = "C",
 ) -> NDArray[np.int64]:
-    """Grid point rotations with surface treatment."""
-    if lang == "C":
-        return _get_grid_points_by_bz_rotations_c(bz_gp, bz_grid, rotations)
-    else:
+    """Grid point rotations with surface treatment.
+
+    ``lang="C"`` dispatches to the C extension backend,
+    ``lang="Rust"`` to ``phono3py_rs``, and ``lang="Python"`` uses the
+    pure-Python reference implementation.
+
+    """
+    if lang == "Python":
         return _get_grid_points_by_bz_rotations_py(bz_gp, bz_grid, rotations)
+    return _get_grid_points_by_bz_rotations_c(bz_gp, bz_grid, rotations, lang=lang)
 
 
 def _get_grid_points_by_bz_rotations_c(
-    bz_gp: int, bz_grid: BZGrid, rotations: NDArray
+    bz_gp: int,
+    bz_grid: BZGrid,
+    rotations: NDArray,
+    lang: Literal["C", "Rust"] = "C",
 ) -> NDArray[np.int64]:
-    import phono3py._recgrid as recgrid  # type: ignore
+    if lang == "Rust":
+        import phono3py_rs as backend
+    else:
+        import phono3py._recgrid as backend  # type: ignore[import-untyped,no-redef]
 
+    addresses = np.ascontiguousarray(bz_grid.addresses, dtype="int64")
+    gp_map = np.ascontiguousarray(bz_grid.gp_map, dtype="int64")
+    d_diag = np.ascontiguousarray(bz_grid.D_diag, dtype="int64")
+    ps = np.ascontiguousarray(bz_grid.PS, dtype="int64")
+    bz_grid_type = int(bz_grid.store_dense_gp_map) + 1
     bzgps = np.zeros(len(rotations), dtype="int64")
     for i, r in enumerate(rotations):
-        bzgps[i] = recgrid.rotate_bz_grid_index(
-            bz_gp,
-            r,
-            bz_grid.addresses,
-            bz_grid.gp_map,
-            bz_grid.D_diag,
-            bz_grid.PS,
-            bz_grid.store_dense_gp_map * 1 + 1,
+        bzgps[i] = backend.rotate_bz_grid_index(
+            int(bz_gp),
+            np.ascontiguousarray(r, dtype="int64"),
+            addresses,
+            gp_map,
+            d_diag,
+            ps,
+            bz_grid_type,
         )
     return bzgps
 
@@ -1132,7 +1233,10 @@ def _get_grid_points_by_bz_rotations_py(
     return bzgps
 
 
-def _get_grid_address(D_diag: NDArray[np.int64] | Sequence[int]) -> NDArray[np.int64]:
+def _get_grid_address(
+    D_diag: NDArray[np.int64] | Sequence[int],
+    lang: Literal["C", "Rust"] = "C",
+) -> NDArray[np.int64]:
     """Return generalized regular grid addresses.
 
     Parameters
@@ -1140,6 +1244,8 @@ def _get_grid_address(D_diag: NDArray[np.int64] | Sequence[int]) -> NDArray[np.i
     D_diag : array_like
         Three integers that represent the generalized regular grid.
         shape=(3, ), dtype='int64'
+    lang : {"C", "Rust"}
+        Backend selector. Default is "C".
 
     Returns
     -------
@@ -1149,10 +1255,16 @@ def _get_grid_address(D_diag: NDArray[np.int64] | Sequence[int]) -> NDArray[np.i
         shape=(prod(D_diag), 3), dtype='int64'
 
     """
-    import phono3py._recgrid as recgrid  # type: ignore
+    d_diag = np.ascontiguousarray(D_diag, dtype="int64")
+    if lang == "Rust":
+        import phono3py_rs
 
-    gr_grid_addresses = np.zeros((np.prod(D_diag), 3), dtype="int64")
-    recgrid.gr_grid_addresses(gr_grid_addresses, np.array(D_diag, dtype="int64"))
+        return np.asarray(phono3py_rs.gr_grid_addresses(d_diag), dtype="int64")
+
+    import phono3py._recgrid as recgrid  # type: ignore[import-untyped]
+
+    gr_grid_addresses = np.zeros((int(np.prod(d_diag)), 3), dtype="int64", order="C")
+    recgrid.gr_grid_addresses(gr_grid_addresses, d_diag)
     return gr_grid_addresses
 
 
@@ -1162,6 +1274,7 @@ def _relocate_BZ_grid_address(
     reciprocal_lattice: NDArray[np.double],  # column vectors
     PS: NDArray[np.int64] | None = None,
     store_dense_gp_map: bool = False,
+    lang: Literal["C", "Rust"] = "C",
 ) -> tuple[NDArray[np.int64], NDArray[np.int64], NDArray[np.int64]]:
     """Grid addresses are relocated to be inside first Brillouin zone.
 
@@ -1218,34 +1331,49 @@ def _relocate_BZ_grid_address(
     shape=(prod(mesh) + 1, )
 
     """
-    import phono3py._recgrid as recgrid  # type: ignore
-
     if PS is None:
-        _PS = np.zeros(3, dtype="int64")
+        ps = np.zeros(3, dtype="int64")
     else:
-        _PS = np.array(PS, dtype="int64")
-    bz_grid_addresses = np.zeros((np.prod(D_diag) * 8, 3), dtype="int64", order="C")
-    bzg2grg = np.zeros(len(bz_grid_addresses), dtype="int64")
-
-    if store_dense_gp_map:
-        bz_map = np.zeros(np.prod(D_diag) + 1, dtype="int64")
-    else:
-        bz_map = np.zeros(np.prod(D_diag) * 9 + 1, dtype="int64")
+        ps = np.ascontiguousarray(PS, dtype="int64")
 
     reduced_basis, tmat_inv_int = get_reduced_bases_and_tmat_inv(reciprocal_lattice)
+    q_eff = np.ascontiguousarray(tmat_inv_int @ Q, dtype="int64")
+    d_diag = np.ascontiguousarray(D_diag, dtype="int64")
+    rec = np.ascontiguousarray(reduced_basis, dtype="float64")
+    bz_grid_type = int(store_dense_gp_map) + 1
+
+    if lang == "Rust":
+        import phono3py_rs
+
+        addresses, bz_map, bzg2grg = phono3py_rs.bz_grid_addresses(
+            d_diag, q_eff, ps, rec, bz_grid_type
+        )
+        bz_grid_addresses = np.ascontiguousarray(addresses, dtype="int64")
+        bz_map = np.asarray(bz_map, dtype="int64")
+        bzg2grg = np.asarray(bzg2grg, dtype="int64")
+        return bz_grid_addresses, bz_map, bzg2grg
+
+    import phono3py._recgrid as recgrid  # type: ignore[import-untyped]
+
+    num_grg = int(np.prod(d_diag))
+    bz_grid_addresses = np.zeros((num_grg * 8, 3), dtype="int64", order="C")
+    bzg2grg = np.zeros(len(bz_grid_addresses), dtype="int64")
+    if store_dense_gp_map:
+        bz_map = np.zeros(num_grg + 1, dtype="int64")
+    else:
+        bz_map = np.zeros(num_grg * 9 + 1, dtype="int64")
     num_gp = recgrid.bz_grid_addresses(
         bz_grid_addresses,
         bz_map,
         bzg2grg,
-        np.array(D_diag, dtype="int64"),
-        np.array(tmat_inv_int @ Q, dtype="int64", order="C"),
-        _PS,
-        reduced_basis,
-        store_dense_gp_map * 1 + 1,
+        d_diag,
+        q_eff,
+        ps,
+        rec,
+        bz_grid_type,
     )
-
-    bz_grid_addresses = np.array(bz_grid_addresses[:num_gp], dtype="int64", order="C")
-    bzg2grg = np.array(bzg2grg[:num_gp], dtype="int64")
+    bz_grid_addresses = np.ascontiguousarray(bz_grid_addresses[:num_gp], dtype="int64")
+    bzg2grg = np.asarray(bzg2grg[:num_gp], dtype="int64")
     return bz_grid_addresses, bz_map, bzg2grg
 
 
@@ -1288,6 +1416,7 @@ def _get_ir_grid_map(
     D_diag: NDArray[np.int64] | Sequence[int],
     grg_rotations: NDArray[np.int64],
     PS: NDArray[np.int64] | None = None,
+    lang: Literal["C", "Rust"] = "C",
 ) -> NDArray[np.int64]:
     """Return mapping to irreducible grid points in GR-grid.
 
@@ -1304,6 +1433,8 @@ def _get_ir_grid_map(
     PS : array_like
         GR-grid shift defined.
         dtype='int64', shape=(3,)
+    lang : {"C", "Rust"}
+        Backend selector. Default is "C".
 
     Returns
     -------
@@ -1312,25 +1443,28 @@ def _get_ir_grid_map(
         dtype='int64', shape=(prod(mesh),)
 
     """
-    import phono3py._recgrid as recgrid  # type: ignore
-
-    ir_grid_map = np.zeros(np.prod(D_diag), dtype="int64")
+    d_diag = np.ascontiguousarray(D_diag, dtype="int64")
     if PS is None:
-        _PS = np.zeros(3, dtype="int64")
+        ps = np.zeros(3, dtype="int64")
     else:
-        _PS = np.array(PS, dtype="int64")
+        ps = np.ascontiguousarray(PS, dtype="int64")
+    rots = np.ascontiguousarray(grg_rotations, dtype="int64")
 
-    num_ir = recgrid.ir_grid_map(
-        ir_grid_map,
-        np.array(D_diag, dtype="int64"),
-        _PS,
-        np.array(grg_rotations, dtype="int64", order="C"),
-    )
+    if lang == "Rust":
+        import phono3py_rs
 
+        map_vec, num_ir = phono3py_rs.ir_grid_map(rots, d_diag, ps)
+        if num_ir > 0:
+            return np.asarray(map_vec, dtype="int64")
+        raise RuntimeError("_get_ir_grid_map failed to find ir-grid-points.")
+
+    import phono3py._recgrid as recgrid  # type: ignore[import-untyped]
+
+    ir_grid_map = np.zeros(int(np.prod(d_diag)), dtype="int64")
+    num_ir = recgrid.ir_grid_map(ir_grid_map, d_diag, ps, rots)
     if num_ir > 0:
         return ir_grid_map
-    else:
-        raise RuntimeError("_get_ir_grid_map failed to find ir-grid-points.")
+    raise RuntimeError("_get_ir_grid_map failed to find ir-grid-points.")
 
 
 def _can_use_std_lattice(

@@ -148,7 +148,7 @@ class CollisionMatrixKernel:
         pinv_cutoff: float = 1.0e-8,
         pinv_solver: int = 0,
         pinv_method: int = 0,
-        lang: Literal["C", "Python"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "C",
         log_level: int = 0,
     ) -> None:
         """Init method."""
@@ -159,7 +159,7 @@ class CollisionMatrixKernel:
         self._pinv_cutoff = pinv_cutoff
         self._pinv_solver = pinv_solver
         self._pinv_method = pinv_method
-        self._lang: Literal["C", "Python"] = lang
+        self._lang: Literal["C", "Python", "Rust"] = lang
         self._log_level = log_level
         _, self._rotations_cartesian = get_kappa_star_operations(
             kappa_settings.bz_grid, kappa_settings.is_kappa_star
@@ -490,7 +490,14 @@ class CollisionMatrixKernel:
     def _symmetrize_collision_matrix(self) -> None:
         """Symmetrize collision matrix as (Omega + Omega^T) / 2."""
         start = time.time()
-        if self._can_use_builtin_symmetrizer():
+        if self._lang == "Rust":
+            if self._log_level:
+                sys.stdout.write("- Making collision matrix symmetric (Rust) ")
+                sys.stdout.flush()
+            import phono3py_rs
+
+            phono3py_rs.symmetrize_collision_matrix(self._collision_matrix)
+        elif self._lang == "C" and self._can_use_builtin_symmetrizer():
             if self._log_level:
                 sys.stdout.write("- Making collision matrix symmetric (built-in) ")
                 sys.stdout.flush()
@@ -1265,6 +1272,14 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
             import phono3py._phono3py as phono3c
 
             phono3c.expand_collision_matrix(
+                self._collision_matrix,
+                ir_gr_grid_points,
+                rot_grid_points,
+            )
+        elif self._lang == "Rust":
+            import phono3py_rs
+
+            phono3py_rs.expand_collision_matrix(
                 self._collision_matrix,
                 ir_gr_grid_points,
                 rot_grid_points,

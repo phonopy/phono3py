@@ -248,6 +248,7 @@ def get_thermal_conductivity_RTA(
     input_filename: str | None = None,
     output_filename: str | None = None,
     log_level: int = 0,
+    lang: Literal["C", "Python", "Rust"] = "C",
 ) -> RTACalculator:
     """Run RTA thermal conductivity calculation."""
     _sigmas = [None] if sigmas is None else list(sigmas)
@@ -294,6 +295,7 @@ def get_thermal_conductivity_RTA(
         input_filename=input_filename,
         output_filename=output_filename,
         log_level=log_level,
+        lang=lang,
     )
 
 
@@ -324,6 +326,7 @@ def _run_standard_rta(
     input_filename: str | None,
     output_filename: str | None,
     log_level: int,
+    lang: Literal["C", "Python", "Rust"],
 ) -> RTACalculator:
     """Run RTA (standard or its variants) using RTACalculator."""
     calc = conductivity_calculator(
@@ -346,6 +349,7 @@ def _run_standard_rta(
         is_N_U=is_N_U,
         is_gamma_detail=write_gamma_detail,
         log_level=log_level,
+        lang=lang,
     )
 
     if read_gamma:

@@ -48,6 +48,7 @@ from phono3py.phonon.grid import BZGrid
 def get_unique_grid_points(
     grid_points: NDArray[np.int64],
     bz_grid: BZGrid,
+    lang: Literal["C", "Rust"] = "C",
 ) -> NDArray[np.int64]:
     """Collect grid points on tetrahedron vertices around input grid points.
 
@@ -68,8 +69,6 @@ def get_unique_grid_points(
         shape=(unique_grid_points, ), dtype='int64'.
 
     """
-    import phono3py._phono3py as phono3c  # type: ignore
-
     if _check_ndarray_state(grid_points, "int64"):
         _grid_points = grid_points
     else:
@@ -83,7 +82,7 @@ def get_unique_grid_points(
     neighboring_grid_points = np.zeros(
         len(unique_vertices) * len(_grid_points), dtype="int64"
     )
-    phono3c.neighboring_grid_points(
+    args = (
         neighboring_grid_points,
         _grid_points,
         unique_vertices,
@@ -92,6 +91,15 @@ def get_unique_grid_points(
         bz_grid.gp_map,
         bz_grid.store_dense_gp_map * 1 + 1,
     )
+    if lang == "Rust":
+        import phono3py_rs  # type: ignore[import-untyped]
+
+        phono3py_rs.neighboring_grid_points(*args)
+    else:
+        import phono3py._phono3py as phono3c  # type: ignore
+
+        phono3c.neighboring_grid_points(*args)
+
     unique_grid_points = np.array(np.unique(neighboring_grid_points), dtype="int64")
     return unique_grid_points
 
@@ -103,6 +111,7 @@ def get_integration_weights(
     grid_points: NDArray[np.int64] | None = None,
     bzgp2irgp_map: NDArray[np.int64] | None = None,
     function: Literal["I", "J"] = "I",
+    lang: Literal["C", "Rust"] = "C",
 ) -> NDArray[np.double]:
     """Return tetrahedron method integration weights.
 
@@ -133,8 +142,6 @@ def get_integration_weights(
         order='C'
 
     """
-    import phono3py._phono3py as phono3c  # type: ignore
-
     relative_grid_addresses = np.array(
         np.dot(
             get_tetrahedra_relative_grid_address(bz_grid.microzone_lattice), bz_grid.P.T
@@ -168,7 +175,7 @@ def get_integration_weights(
     integration_weights = np.zeros(
         (num_grid_points, len(_sampling_points), num_band), dtype="double", order="C"
     )
-    phono3c.integration_weights_at_grid_points(
+    args = (
         integration_weights,
         _sampling_points,
         relative_grid_addresses,
@@ -181,11 +188,21 @@ def get_integration_weights(
         bz_grid.store_dense_gp_map * 1 + 1,
         function,
     )
+    if lang == "Rust":
+        import phono3py_rs  # type: ignore[import-untyped]
+
+        phono3py_rs.integration_weights_at_grid_points(*args)
+    else:
+        import phono3py._phono3py as phono3c  # type: ignore
+
+        phono3c.integration_weights_at_grid_points(*args)
+
     return integration_weights
 
 
 def get_tetrahedra_relative_grid_address(
     microzone_lattice: NDArray[np.double],
+    lang: Literal["C", "Rust"] = "C",
 ) -> NDArray[np.int64]:
     """Return relative (differences of) grid addresses from the central.
 
@@ -196,12 +213,18 @@ def get_tetrahedra_relative_grid_address(
         microzone_lattice = np.linalg.inv(cell.get_cell()) / mesh
 
     """
+    relative_grid_address = np.zeros((24, 4, 3), dtype="int64", order="C")
+    lattice = np.array(microzone_lattice, dtype="double", order="C")
+
+    if lang == "Rust":
+        import phono3py_rs  # type: ignore[import-untyped]
+
+        phono3py_rs.tetrahedra_relative_grid_address(relative_grid_address, lattice)
+        return relative_grid_address
+
     import phono3py._phono3py as phono3c  # type: ignore
 
-    relative_grid_address = np.zeros((24, 4, 3), dtype="int64", order="C")
-    phono3c.tetrahedra_relative_grid_address(
-        relative_grid_address, np.array(microzone_lattice, dtype="double", order="C")
-    )
+    phono3c.tetrahedra_relative_grid_address(relative_grid_address, lattice)
 
     return relative_grid_address
 

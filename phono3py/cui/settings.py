@@ -112,6 +112,7 @@ class Phono3pySettings(Settings):
         self.transport_type: str | None = None
         self.use_ave_pp: bool = False
         self.use_grg: bool = False
+        self.use_rust: bool = False
         self.write_collision: bool = False
         self.write_gamma_detail: bool = False
         self.write_gamma: bool = False
@@ -463,6 +464,12 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
             elif args.use_grg is False:
                 self._confs["use_grg"] = ".false."
 
+        if "use_rust" in arg_list:
+            if args.use_rust:
+                self._confs["use_rust"] = ".true."
+            elif args.use_rust is False:
+                self._confs["use_rust"] = ".false."
+
         if "write_gamma_detail" in arg_list:
             if args.write_gamma_detail:
                 self._confs["write_gamma_detail"] = ".true."
@@ -513,6 +520,7 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
                 "read_pp",
                 "use_ave_pp",
                 "use_grg",
+                "use_rust",
                 "collective_phonon",
                 "write_gamma_detail",
                 "write_gamma",
@@ -909,6 +917,10 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
         # Use generalized regular grid
         if "use_grg" in params:
             settings.use_grg = params["use_grg"]
+
+        # Use experimental Rust backend
+        if "use_rust" in params:
+            settings.use_rust = params["use_rust"]
 
         # Write detailed imag-part of self energy to hdf5
         if "write_gamma_detail" in params:

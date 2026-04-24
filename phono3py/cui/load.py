@@ -110,6 +110,7 @@ def load(
     make_r0_average: bool = True,
     symprec: float = 1e-5,
     log_level: int = 0,
+    lang: Literal["C", "Rust"] = "C",
 ) -> Phono3py:
     """Create Phono3py instance from parameters and/or input files.
 
@@ -270,6 +271,10 @@ def load(
         Tolerance used to find crystal symmetry. Default is 1e-5.
     log_level : int, optional
         Verbosity control. Default is 0.
+    lang : Literal["C", "Rust"], optional
+        Backend implementation for compute-heavy kernels. "C" (default)
+        uses the existing C extension. "Rust" selects the experimental
+        phono3py-rs backend.
 
     """
     if (
@@ -340,6 +345,7 @@ def load(
         use_grg=use_grg,
         make_r0_average=make_r0_average,
         log_level=log_level,
+        lang=lang,
     )
     if factor is not None:
         warnings.warn(

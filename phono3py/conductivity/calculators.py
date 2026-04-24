@@ -11,8 +11,9 @@ _post_main_loop, _finalize).
 from __future__ import annotations
 
 import abc
+import os
 from collections.abc import Callable, Sequence
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 from numpy.typing import NDArray
@@ -20,6 +21,7 @@ from numpy.typing import NDArray
 from phono3py.conductivity.build_components import KappaSettings
 from phono3py.conductivity.grid_point_data import (
     GridPointAggregates,
+    ScatteringResult,
     compute_effective_gamma,
 )
 from phono3py.conductivity.heat_capacity_solvers import ModeHeatCapacitySolver
@@ -43,6 +45,7 @@ from phono3py.phonon.grid import (
     get_qpoints_from_bz_grid_points,
 )
 from phono3py.phonon3.interaction import Interaction
+from phono3py.phonon3.triplets import get_triplets_at_q
 
 # ------------------------------------------------------------------
 # Shared helper functions
@@ -54,6 +57,7 @@ def _build_isotope_solver(
     kappa_settings: KappaSettings,
     log_level: int,
     mass_variances: Sequence[float] | NDArray[np.double] | None,
+    lang: Literal["C", "Python", "Rust"] = "C",
 ) -> IsotopeScatteringSolver:
     """Build an IsotopeScatteringSolver from Interaction and KappaSettings."""
     isotope = Isotope(
@@ -65,6 +69,7 @@ def _build_isotope_solver(
         symprec=pp.primitive_symmetry.tolerance,
         cutoff_frequency=kappa_settings.cutoff_frequency,
         lapack_zheev_uplo=pp.lapack_zheev_uplo,
+        lang=lang,
     )
     return IsotopeScatteringSolver(isotope, kappa_settings.sigmas, log_level=log_level)
 
@@ -170,6 +175,7 @@ class ConductivityCalculatorBase(abc.ABC):
         mass_variances: Sequence[float] | NDArray[np.double] | None = None,
         sigma_cutoff_width: float | None = None,
         log_level: int = 0,
+        lang: Literal["C", "Python", "Rust"] = "C",
     ):
         self._pp = pp
         self._velocity_solver = velocity_solver
@@ -184,7 +190,7 @@ class ConductivityCalculatorBase(abc.ABC):
         self._isotope_solver: IsotopeScatteringSolver | None = None
         if is_isotope or mass_variances is not None:
             self._isotope_solver = _build_isotope_solver(
-                pp, kappa_settings, log_level, mass_variances
+                pp, kappa_settings, log_level, mass_variances, lang=lang
             )
 
         # Shared per-grid-point arrays (allocated by subclass _allocate_values).
@@ -252,11 +258,7 @@ class ConductivityCalculatorBase(abc.ABC):
 
         # (5) Main loop.
         self._grid_point_count = 0
-        for i_gp in range(len(self._kappa_settings.grid_points)):
-            self._compute_at_grid_point(i_gp)
-            self._grid_point_count = i_gp + 1
-            if on_grid_point is not None:
-                on_grid_point(i_gp)
+        self._iterate_grid_points(on_grid_point)
 
         if self._log_level:
             print(
@@ -474,6 +476,18 @@ class ConductivityCalculatorBase(abc.ABC):
         """Run post-main-loop computation (e.g. counting ignored modes)."""
 
     # ------------------------------------------------------------------
+    # Main-loop iteration hook
+    # ------------------------------------------------------------------
+
+    def _iterate_grid_points(self, on_grid_point: Callable[[int], None] | None) -> None:
+        """Default per-gp iteration; subclasses may override for batching."""
+        for i_gp in range(len(self._kappa_settings.grid_points)):
+            self._compute_at_grid_point(i_gp)
+            self._grid_point_count = i_gp + 1
+            if on_grid_point is not None:
+                on_grid_point(i_gp)
+
+    # ------------------------------------------------------------------
     # Abstract methods
     # ------------------------------------------------------------------
 
@@ -518,12 +532,15 @@ class RTACalculator(ConductivityCalculatorBase):
         is_gamma_detail: bool = False,
         sigma_cutoff_width: float | None = None,
         log_level: int = 0,
+        lang: Literal["C", "Python", "Rust"] = "C",
+        rust_gp_batch_size: int | None = None,
     ):
         """Init method."""
         self._scattering_solver = scattering_solver
         self._kappa_solver = kappa_solver
         self._is_N_U = is_N_U
         self._is_gamma_detail = is_gamma_detail
+        self._rust_gp_batch_size = rust_gp_batch_size
 
         # Read flags (set via property setters when gamma is loaded from file).
         self._read_gamma = False
@@ -544,6 +561,7 @@ class RTACalculator(ConductivityCalculatorBase):
             mass_variances=mass_variances,
             sigma_cutoff_width=sigma_cutoff_width,
             log_level=log_level,
+            lang=lang,
         )
 
         if self._kappa_settings.temperatures is not None:
@@ -711,26 +729,108 @@ class RTACalculator(ConductivityCalculatorBase):
         if not self._read_gamma:
             grid_point = int(self._kappa_settings.grid_points[i_gp])
             scat_result = self._scattering_solver.compute(grid_point)
-            gamma = scat_result.gamma
-            ave_pp = scat_result.averaged_pp_interaction
-            if self._is_N_U or self._is_gamma_detail:
-                g_N = self._scattering_solver.gamma_N
-                g_U = self._scattering_solver.gamma_U
-                if g_N is not None and self._gamma_N is not None:
-                    self._gamma_N[:, :, i_gp, :] = g_N
-                if g_U is not None and self._gamma_U is not None:
-                    self._gamma_U[:, :, i_gp, :] = g_U
+            self._store_scattering_result(
+                i_gp,
+                scat_result,
+                self._scattering_solver.gamma_N,
+                self._scattering_solver.gamma_U,
+            )
             self._gamma_detail_at_q = self._scattering_solver.gamma_detail_at_q
-            self._gamma[:, :, i_gp, :] = gamma
-            if ave_pp is not None and self._averaged_pp_interaction is not None:
-                self._averaged_pp_interaction[i_gp] = ave_pp
+            ave_pp = scat_result.averaged_pp_interaction
         else:
             ave_pp = None
-            if self._log_level:
-                print("  Gamma is read from file.")
 
         if self._log_level:
             self._show_log(i_gp, self._gv[i_gp], ave_pp)
+
+    def _store_scattering_result(
+        self,
+        i_gp: int,
+        scat_result: ScatteringResult,
+        gamma_N: NDArray[np.double] | None,
+        gamma_U: NDArray[np.double] | None,
+    ) -> None:
+        """Store a precomputed per-gp scattering result into per-gp arrays."""
+        if self._is_N_U or self._is_gamma_detail:
+            if gamma_N is not None and self._gamma_N is not None:
+                self._gamma_N[:, :, i_gp, :] = gamma_N
+            if gamma_U is not None and self._gamma_U is not None:
+                self._gamma_U[:, :, i_gp, :] = gamma_U
+        self._gamma[:, :, i_gp, :] = scat_result.gamma
+        ave_pp = scat_result.averaged_pp_interaction
+        if ave_pp is not None and self._averaged_pp_interaction is not None:
+            self._averaged_pp_interaction[i_gp] = ave_pp
+
+    def _iterate_grid_points(self, on_grid_point: Callable[[int], None] | None) -> None:
+        """Batched main loop when the Rust low-memory path is active.
+
+        Batch size is resolved in this order:
+        1. ``rust_gp_batch_size`` constructor argument (if not None).
+        2. ``PHONO3PY_RUST_GP_BATCH_SIZE`` env var (default ``0``).
+
+        A value of ``0`` (or negative) falls back to the per-gp
+        ``_compute_at_grid_point`` loop; a positive integer enables
+        batched ``compute_batched`` calls of that size.
+        """
+        if self._rust_gp_batch_size is not None:
+            batch_size_resolved = self._rust_gp_batch_size
+        else:
+            batch_size_resolved = int(
+                os.environ.get("PHONO3PY_RUST_GP_BATCH_SIZE", "0")
+            )
+        if (
+            batch_size_resolved <= 0
+            or self._read_gamma
+            or not getattr(self._scattering_solver, "supports_rust_batching", False)
+        ):
+            super()._iterate_grid_points(on_grid_point)
+            return
+
+        batch_size = max(1, batch_size_resolved)
+        n_gp = len(self._kappa_settings.grid_points)
+        i = 0
+        while i < n_gp:
+            end = min(i + batch_size, n_gp)
+            i_gp_list = list(range(i, end))
+            gp_list = [int(self._kappa_settings.grid_points[j]) for j in i_gp_list]
+            num_triplets_list: list[int] = []
+            if self._log_level:
+                num_triplets_list = [
+                    len(get_triplets_at_q(gp, self._kappa_settings.bz_grid)[0])
+                    for gp in gp_list
+                ]
+                print(
+                    "Batch: %d grid points, %d triplets."
+                    % (len(gp_list), sum(num_triplets_list)),
+                    flush=True,
+                )
+            batched = self._scattering_solver.compute_batched(gp_list)
+            for idx, i_gp in enumerate(i_gp_list):
+                payload = batched[idx]
+                if self._log_level:
+                    _show_log_header(
+                        i_gp,
+                        self._kappa_settings,
+                        self._isotope_solver,
+                        self._log_level,
+                    )
+                    print(
+                        "Number of triplets: %d" % num_triplets_list[idx],
+                        flush=True,
+                    )
+                self._store_scattering_result(
+                    i_gp,
+                    payload["result"],
+                    payload["gamma_N"],
+                    payload["gamma_U"],
+                )
+                self._gamma_detail_at_q = None
+                if self._log_level:
+                    self._show_log(i_gp, self._gv[i_gp], None)
+                self._grid_point_count = i_gp + 1
+                if on_grid_point is not None:
+                    on_grid_point(i_gp)
+            i = end
 
     def _finalize(self) -> None:
         aggregates = self._build_grid_point_aggregates()
@@ -820,6 +920,7 @@ class LBTECalculator(ConductivityCalculatorBase):
         is_full_pp: bool = False,
         sigma_cutoff_width: float | None = None,
         log_level: int = 0,
+        lang: Literal["C", "Python", "Rust"] = "C",
     ) -> None:
         """Init method."""
         self._collision_solver = collision_solver
@@ -835,6 +936,7 @@ class LBTECalculator(ConductivityCalculatorBase):
             mass_variances=mass_variances,
             sigma_cutoff_width=sigma_cutoff_width,
             log_level=log_level,
+            lang=lang,
         )
 
         # Allocate arrays.
@@ -847,12 +949,46 @@ class LBTECalculator(ConductivityCalculatorBase):
     def set_kappa_at_sigmas(self) -> None:
         """Finalize kappa from a pre-loaded collision matrix (read-from-file path).
 
-        Calls kappa_solver.finalize().  Use this instead of run() when
-        gamma and collision_matrix have been loaded externally.
+        Mirrors the run() pipeline but replaces the per-grid-point collision
+        computation with the gamma/collision_matrix loaded from file.  Group
+        velocities, heat capacities, isotope and boundary scattering are not
+        stored in the collision file and must be computed here.
 
         """
-        aggregates = self._build_grid_point_aggregates()
-        self._kappa_solver.finalize(aggregates)
+        self._pre_run_check()
+        _prepare_isotope_phonons(self._pp, self._isotope_solver)
+
+        if self._log_level:
+            print("Running heat capacity calculations...")
+        self._cv, hcm = _compute_bulk_heat_capacities(
+            self._cv_solver, self._kappa_settings.grid_points
+        )
+        if hcm is not None:
+            self._heat_capacity_matrix = hcm
+
+        if self._log_level:
+            print("Running velocity calculations...")
+        self._compute_all_velocities()
+
+        self._pre_main_loop()
+        self._compute_isotope_if_needed()
+
+        if self._log_level:
+            for i_gp in range(len(self._kappa_settings.grid_points)):
+                _show_log_header(
+                    i_gp,
+                    self._kappa_settings,
+                    self._isotope_solver,
+                    self._log_level,
+                )
+                self._show_log(i_gp, self._gv[i_gp])
+            print(
+                "=================== End of collection of collisions "
+                "==================="
+            )
+
+        self._post_main_loop()
+        self._finalize()
 
     def delete_gp_collision_and_pp(self) -> None:
         """No-op: memory management compatibility method."""

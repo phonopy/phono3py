@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from phono3py import Phono3py
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.real_to_reciprocal import RealToReciprocal
-from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
+from phono3py.phonon3.reciprocal_to_normal import (
+    ReciprocalToNormal,
+    run_reciprocal_to_normal_squared_rust,
+)
 
 
 def _get_interaction(ph3: Phono3py, mesh: list[int]) -> Interaction:
@@ -74,7 +78,7 @@ def test_reciprocal_to_normal_vs_c(si_pbesol: Phono3py):
     """Python ReciprocalToNormal matches C interaction strength for first triplet."""
     itr = _get_interaction(si_pbesol, [4, 4, 4])
     itr.set_grid_point(1)
-    itr.run(lang="C")
+    itr.run()
 
     c_interaction = itr.interaction_strength
     assert c_interaction is not None
@@ -123,3 +127,54 @@ def test_reciprocal_to_normal_cutoff(si_pbesol: Phono3py):
     result = r2n.get_reciprocal_to_normal()
     assert result is not None
     np.testing.assert_array_equal(result, 0)
+
+
+def test_reciprocal_to_normal_rust_vs_python(si_pbesol: Phono3py):
+    """Rust |fc3_normal|^2 / (f0*f1*f2) matches the Python reference."""
+    pytest.importorskip("phono3py_rs")
+
+    itr = _get_interaction(si_pbesol, [4, 4, 4])
+    itr.set_grid_point(1)
+    cutoff = 1e-4
+
+    r2n, grid_triplet = _run_r2n(si_pbesol, itr, cutoff_frequency=cutoff)
+    fc3_normal = r2n.get_reciprocal_to_normal()
+    assert fc3_normal is not None
+    # ReciprocalToNormal stores fc3_elem / sqrt(f0*f1*f2); the square
+    # is |fc3_elem|^2 / (f0*f1*f2), which is what the Rust path
+    # returns directly.
+    ref_squared = np.abs(fc3_normal) ** 2
+
+    frequencies, eigenvectors, _ = itr.get_phonons()
+    assert frequencies is not None and eigenvectors is not None
+
+    r2r = RealToReciprocal(si_pbesol.fc3, si_pbesol.primitive, itr.mesh_numbers)
+    r2r.run(itr.bz_grid.addresses[grid_triplet])
+    fc3_reciprocal = r2r.get_fc3_reciprocal()
+    assert fc3_reciprocal is not None
+
+    num_patom = len(si_pbesol.primitive)
+    num_band = num_patom * 3
+    band_indices = np.asarray(itr.band_indices, dtype="int64")
+    num_band0 = len(band_indices)
+    g_pos = np.array(
+        [
+            [i0, j, k, i0 * num_band * num_band + j * num_band + k]
+            for i0 in range(num_band0)
+            for j in range(num_band)
+            for k in range(num_band)
+        ],
+        dtype="int64",
+    )
+    out = run_reciprocal_to_normal_squared_rust(
+        fc3_reciprocal,
+        frequencies[grid_triplet],
+        eigenvectors[grid_triplet],
+        np.asarray(si_pbesol.primitive.masses, dtype="double"),
+        band_indices,
+        g_pos,
+        cutoff_frequency=cutoff,
+        n_out=num_band0 * num_band * num_band,
+    )
+    rust_squared = out.reshape((num_band0, num_band, num_band))
+    np.testing.assert_allclose(rust_squared, ref_squared, rtol=1e-10, atol=1e-18)

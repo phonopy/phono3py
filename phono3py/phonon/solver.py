@@ -162,6 +162,146 @@ def run_phonon_solver_c(
         )
 
 
+def run_phonon_solver_rust(
+    dm: DynamicalMatrix,
+    frequencies: NDArray[np.double],
+    eigenvectors: NDArray[np.cdouble],
+    phonon_done: NDArray[np.byte],
+    grid_points: Sequence[int] | NDArray[np.int64],
+    grid_address: NDArray[np.int64],
+    QDinv: NDArray[np.double],
+    frequency_conversion_factor: float | None = None,
+    nac_q_direction: Sequence[float]
+    | NDArray[np.double]
+    | None = None,  # in reduced coordinates
+    lapack_zheev_uplo: Literal["L", "U"] = "L",
+) -> None:
+    """Build and solve dynamical matrices on grid in Rust + python.
+
+    Dynamical matrices are constructed in Rust via
+    ``phono3py_rs.dynamical_matrices_at_gridpoints`` (and its Gonze NAC
+    variant).  Eigen-decomposition is performed in python with
+    ``numpy.linalg.eigh`` since LAPACK is not linked in Rust.
+
+    See ``run_phonon_solver_c`` for parameter documentation.
+
+    """
+    import phono3py_rs  # type: ignore[import-untyped]
+
+    from phono3py._lang import log_dispatch
+
+    log_dispatch("Rust", "run_phonon_solver_rust")
+
+    if frequency_conversion_factor is None:
+        _frequency_conversion_factor = get_physical_units().DefaultToTHz
+    else:
+        _frequency_conversion_factor = frequency_conversion_factor
+
+    assert lapack_zheev_uplo in ("L", "U")
+
+    requested = np.asarray(grid_points, dtype="int64")
+    undone = np.unique(requested[phonon_done[requested] == 0])
+    if len(undone) == 0:
+        return
+
+    (
+        svecs,
+        multi,
+        masses,
+        rec_lattice,
+        positions,
+        born,
+        nac_factor,
+        dielectric,
+    ) = _extract_params(dm)
+
+    if isinstance(dm, DynamicalMatrixGL):
+        if dm.short_range_force_constants is None:
+            dm.make_Gonze_nac_dataset()
+        (
+            gonze_fc,
+            dd_q0,
+            _G_cutoff,
+            G_list,
+            Lambda,
+        ) = dm.Gonze_nac_dataset
+        assert Lambda is not None
+        fc = gonze_fc
+        use_GL_NAC = True
+    else:
+        use_GL_NAC = False
+        fc = dm.force_constants
+
+    _nac_q_direction = (
+        np.ascontiguousarray(nac_q_direction, dtype="double")
+        if nac_q_direction is not None
+        else None
+    )
+
+    fc_p2s, fc_s2p = _get_fc_elements_mapping(dm, fc)
+    grid_address_c = np.ascontiguousarray(grid_address, dtype="int64")
+    QDinv_c = np.ascontiguousarray(QDinv, dtype="double")
+    fc_c = np.ascontiguousarray(fc, dtype="double")
+    svecs_c = np.ascontiguousarray(svecs, dtype="double")
+    multi_c = np.ascontiguousarray(multi, dtype="int64")
+    masses_c = np.ascontiguousarray(masses, dtype="double")
+    fc_p2s_c = np.ascontiguousarray(fc_p2s, dtype="int64")
+    fc_s2p_c = np.ascontiguousarray(fc_s2p, dtype="int64")
+    rec_lattice_c = np.ascontiguousarray(rec_lattice, dtype="double")
+    positions_c = np.ascontiguousarray(positions, dtype="double")
+
+    if use_GL_NAC:
+        phono3py_rs.dynamical_matrices_at_gridpoints_gonze(
+            eigenvectors,
+            undone,
+            grid_address_c,
+            QDinv_c,
+            fc_c,
+            svecs_c,
+            multi_c,
+            masses_c,
+            fc_p2s_c,
+            fc_s2p_c,
+            np.ascontiguousarray(born, dtype="double"),
+            np.ascontiguousarray(dielectric, dtype="double"),
+            rec_lattice_c,
+            positions_c,
+            np.ascontiguousarray(dd_q0, dtype="cdouble"),
+            np.ascontiguousarray(G_list, dtype="double"),
+            float(nac_factor),
+            float(Lambda),
+            _nac_q_direction,
+        )
+    else:
+        phono3py_rs.dynamical_matrices_at_gridpoints(
+            eigenvectors,
+            undone,
+            grid_address_c,
+            QDinv_c,
+            fc_c,
+            svecs_c,
+            multi_c,
+            masses_c,
+            fc_p2s_c,
+            fc_s2p_c,
+            np.ascontiguousarray(born, dtype="double") if born is not None else None,
+            np.ascontiguousarray(dielectric, dtype="double")
+            if born is not None
+            else None,
+            rec_lattice_c if born is not None else None,
+            _nac_q_direction if born is not None else None,
+            float(nac_factor),
+        )
+
+    for gp in undone:
+        eigvals, vecs = np.linalg.eigh(eigenvectors[gp], UPLO=lapack_zheev_uplo)
+        frequencies[gp] = (
+            np.sign(eigvals) * np.sqrt(np.abs(eigvals)) * _frequency_conversion_factor
+        )
+        eigenvectors[gp] = vecs
+    phonon_done[undone] = 1
+
+
 def run_phonon_solver_py(
     grid_point: int,
     phonon_done: NDArray[np.byte],

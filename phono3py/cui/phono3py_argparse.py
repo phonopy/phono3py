@@ -740,6 +740,13 @@ def get_parser(
         help="Calculate real part of self energy",
     )
     parser.add_argument(
+        "--rust",
+        dest="use_rust",
+        action="store_true",
+        default=None,
+        help="Use experimental Rust backend instead of the C extension",
+    )
+    parser.add_argument(
         "--sp",
         "--save-params",
         dest="save_params",
@@ -1006,6 +1013,7 @@ class Phono3pyMockArgs:
     temperatures: Sequence[str] | None = None
     transport_type: str | None = None
     use_pypolymlp: bool | None = None
+    use_rust: bool | None = None
     write_gamma: bool | None = None
     write_gamma_detail: bool | None = None
     write_grid_points: bool | None = None
