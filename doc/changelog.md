@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Apr-25-2026: Version 3.31.1
+
+- Improved conductivity computation performance.
+
 ## Apr-24-2026: Version 3.31.0
 
 - Experimental release of the Rust port of the C implementation.
