@@ -4,7 +4,7 @@
 //! integer unimodular matrices `P` and `Q` and a diagonal matrix
 //! `D` such that `P * A * Q = D`.
 
-use crate::common::{det_i, matmul_i, transpose_i, IDENTITY, MatI};
+use crate::common::{det_i, matmul_i, transpose_i, MatI, IDENTITY};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Snf3x3 {

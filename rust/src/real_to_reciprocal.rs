@@ -321,12 +321,21 @@ pub fn real_to_reciprocal(
     for i in 0..num_patom {
         for j in 0..num_satom {
             let adrs_vec = j * num_patom + i;
-            phase_factor0[i * num_satom + j] =
-                get_phase_factor(q_vecs[0], atom_triplets.svecs, atom_triplets.multiplicity[adrs_vec]);
-            phase_factor1[i * num_satom + j] =
-                get_phase_factor(q_vecs[1], atom_triplets.svecs, atom_triplets.multiplicity[adrs_vec]);
-            phase_factor2[i * num_satom + j] =
-                get_phase_factor(q_vecs[2], atom_triplets.svecs, atom_triplets.multiplicity[adrs_vec]);
+            phase_factor0[i * num_satom + j] = get_phase_factor(
+                q_vecs[0],
+                atom_triplets.svecs,
+                atom_triplets.multiplicity[adrs_vec],
+            );
+            phase_factor1[i * num_satom + j] = get_phase_factor(
+                q_vecs[1],
+                atom_triplets.svecs,
+                atom_triplets.multiplicity[adrs_vec],
+            );
+            phase_factor2[i * num_satom + j] = get_phase_factor(
+                q_vecs[2],
+                atom_triplets.svecs,
+                atom_triplets.multiplicity[adrs_vec],
+            );
         }
     }
 
