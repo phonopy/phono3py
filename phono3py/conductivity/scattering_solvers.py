@@ -817,25 +817,25 @@ class RTAScatteringSolver:
         else:
             col = collisions
 
-        for k in range(len(self._temperatures)):
-            gamma[i_sigma, k] = average_by_degeneracy(
-                col[k] * col_unit_conv * pp_unit_conv,
+        unit_conv = col_unit_conv * pp_unit_conv
+        gamma[i_sigma] = average_by_degeneracy(
+            col * unit_conv,
+            band_indices,
+            freq_at_gp,
+        )
+        if self._is_N_U:
+            assert self._gamma_N is not None
+            assert self._gamma_U is not None
+            self._gamma_N[i_sigma] = average_by_degeneracy(
+                col_N * unit_conv,
                 band_indices,
                 freq_at_gp,
             )
-            if self._is_N_U:
-                assert self._gamma_N is not None
-                assert self._gamma_U is not None
-                self._gamma_N[i_sigma, k] = average_by_degeneracy(
-                    col_N[k] * col_unit_conv * pp_unit_conv,
-                    band_indices,
-                    freq_at_gp,
-                )
-                self._gamma_U[i_sigma, k] = average_by_degeneracy(
-                    col_U[k] * col_unit_conv * pp_unit_conv,
-                    band_indices,
-                    freq_at_gp,
-                )
+            self._gamma_U[i_sigma] = average_by_degeneracy(
+                col_U * unit_conv,
+                band_indices,
+                freq_at_gp,
+            )
 
     # ------------------------------------------------------------------
     # Rust fast path: set_grid_point + triplets + per-sigma pp_collision
