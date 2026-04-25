@@ -157,10 +157,7 @@ run log.
 
 The RTA low-memory scattering path can optionally process several grid points
 per Rust call. This is disabled by default. It is useful on many-core machines
-where individual per-grid-point calls do not fully saturate the thread pool; on
-typical workloads the gain is small (around 5% on the
-[NaMgF3](https://mdr.nims.go.jp/datasets/93fe6da8-ea25-4239-8cd9-c299b53c9854)
-20-atom benchmark at 128 threads on AMD EPYC 9754 128-Core Processor).
+where individual per-grid-point calls do not fully saturate the thread pool.
 
 The batch size can be set either through
 `conductivity_calculator(..., rust_gp_batch_size=<int>)` or through

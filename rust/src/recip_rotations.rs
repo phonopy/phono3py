@@ -2,7 +2,7 @@
 //!
 //! Port of `grg_get_reciprocal_point_group` in `c/grgrid.c`.
 
-use crate::common::{negate_i, transpose_i, INVERSION, MatI};
+use crate::common::{negate_i, transpose_i, MatI, INVERSION};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ReciprocalRotationsError {

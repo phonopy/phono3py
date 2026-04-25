@@ -103,18 +103,7 @@ fn fill_dynmat_block_ij(
             continue;
         }
         accumulate_block(
-            &mut block,
-            fc,
-            q,
-            svecs,
-            multi,
-            p2s_map,
-            charge_sum,
-            num_patom,
-            num_satom,
-            i,
-            j,
-            k,
+            &mut block, fc, q, svecs, multi, p2s_map, charge_sum, num_patom, num_satom, i, j, k,
         );
     }
 
@@ -348,12 +337,7 @@ fn multiply_borns_at_ij(
 /// `multiply_borns` in `c/dynmat.c`.  Each (i, j) entry of `dd` is
 /// independent so this is naturally parallel; we keep it
 /// sequential here to match the existing scalar path.
-fn multiply_borns(
-    dd: &mut [Cmplx],
-    dd_in: &[Cmplx],
-    num_patom: usize,
-    born: &[[[f64; 3]; 3]],
-) {
+fn multiply_borns(dd: &mut [Cmplx], dd_in: &[Cmplx], num_patom: usize, born: &[[[f64; 3]; 3]]) {
     for i in 0..num_patom {
         for j in 0..num_patom {
             multiply_borns_at_ij(dd, i, j, dd_in, num_patom, born);
@@ -414,8 +398,7 @@ pub fn get_recip_dipole_dipole_q0(
             for l in 0..3 {
                 let adrs = i * 9 + k * 3 + l;
                 for j in 0..num_patom {
-                    let adrs_tmp =
-                        i * num_patom * 9 + k * num_patom * 3 + j * 3 + l;
+                    let adrs_tmp = i * num_patom * 9 + k * num_patom * 3 + j * 3 + l;
                     dd_q0[adrs][0] += dd_tmp2[adrs_tmp][0];
                     dd_q0[adrs][1] += dd_tmp2[adrs_tmp][1];
                 }
@@ -580,8 +563,7 @@ fn wang_charge_sum_with_factor(
     let q_for_cart = params.q_direction.unwrap_or(q);
     let q_cart = matvec_dd(&params.reciprocal_lattice, q_for_cart);
     let eps_q_q = dielectric_part(q_cart, &params.dielectric);
-    let factor =
-        params.nac_factor / eps_q_q / (num_satom as f64) * (num_patom as f64);
+    let factor = params.nac_factor / eps_q_q / (num_satom as f64) * (num_patom as f64);
     get_charge_sum(charge_sum, factor, q_cart, params.born);
 }
 
@@ -611,13 +593,21 @@ fn build_dm_with_wang_nac_at_q(
         let mut charge_sum = vec![[[0.0f64; 3]; 3]; num_patom * num_patom];
         wang_charge_sum_with_factor(&mut charge_sum, num_patom, num_satom, q, params);
         get_dynamical_matrix_at_q(
-            dm, fc, q, svecs, multi, mass, s2p_map, p2s_map,
-            Some(&charge_sum), num_patom, num_satom,
+            dm,
+            fc,
+            q,
+            svecs,
+            multi,
+            mass,
+            s2p_map,
+            p2s_map,
+            Some(&charge_sum),
+            num_patom,
+            num_satom,
         );
     } else {
         get_dynamical_matrix_at_q(
-            dm, fc, q, svecs, multi, mass, s2p_map, p2s_map, None,
-            num_patom, num_satom,
+            dm, fc, q, svecs, multi, mass, s2p_map, p2s_map, None, num_patom, num_satom,
         );
     }
 }
@@ -641,8 +631,7 @@ fn build_dm_with_gonze_nac_at_q(
     gonze: &GonzeNacParams,
 ) {
     get_dynamical_matrix_at_q(
-        dm, fc, q, svecs, multi, mass, s2p_map, p2s_map, None,
-        num_patom, num_satom,
+        dm, fc, q, svecs, multi, mass, s2p_map, p2s_map, None, num_patom, num_satom,
     );
 
     let q_cart = matvec_dd(&gonze.reciprocal_lattice, q);
@@ -710,8 +699,7 @@ fn split_dynmats_per_gp<'a>(
         );
     }
 
-    let mut out: Vec<(usize, &mut [Cmplx])> =
-        Vec::with_capacity(undone_grid_points.len());
+    let mut out: Vec<(usize, &mut [Cmplx])> = Vec::with_capacity(undone_grid_points.len());
     let mut rest: &mut [Cmplx] = dynmats;
     let mut consumed = 0usize;
     for &gp_i64 in undone_grid_points {
@@ -758,8 +746,18 @@ pub fn dynamical_matrices_at_gridpoints(
         let grid_address = grid_addresses[gp];
         let q = matvec_di(qd_inv, grid_address);
         build_dm_with_wang_nac_at_q(
-            dm, q, grid_address, fc, svecs, multi, mass,
-            s2p_map, p2s_map, num_patom, num_satom, wang,
+            dm,
+            q,
+            grid_address,
+            fc,
+            svecs,
+            multi,
+            mass,
+            s2p_map,
+            p2s_map,
+            num_patom,
+            num_satom,
+            wang,
         );
     });
 }
@@ -791,8 +789,7 @@ pub fn dynamical_matrices_at_gridpoints_gonze(
     chunks.into_par_iter().for_each(|(gp, dm)| {
         let q = matvec_di(qd_inv, grid_addresses[gp]);
         build_dm_with_gonze_nac_at_q(
-            dm, q, fc, svecs, multi, mass, s2p_map, p2s_map,
-            num_patom, num_satom, gonze,
+            dm, q, fc, svecs, multi, mass, s2p_map, p2s_map, num_patom, num_satom, gonze,
         );
     });
 }
