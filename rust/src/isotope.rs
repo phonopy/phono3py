@@ -21,13 +21,7 @@ const M_2PI: f64 = std::f64::consts::TAU;
 /// to the imaginary part, but since only `a*a + b*b` is used downstream
 /// the sign is irrelevant.
 #[inline]
-fn atom_overlap(
-    e0: &[Cmplx],
-    e1: &[Cmplx],
-    num_band: usize,
-    k: usize,
-    l: usize,
-) -> (f64, f64) {
+fn atom_overlap(e0: &[Cmplx], e1: &[Cmplx], num_band: usize, k: usize, l: usize) -> (f64, f64) {
     let mut a = 0.0;
     let mut b = 0.0;
     for m in 0..3 {
@@ -110,7 +104,13 @@ pub(crate) fn isotope_strength(
     cutoff_frequency: f64,
 ) {
     let num_band0 = band_indices.len();
-    let (f0, e0) = load_band0_data(frequencies, eigenvectors, grid_point, band_indices, num_band);
+    let (f0, e0) = load_band0_data(
+        frequencies,
+        eigenvectors,
+        grid_point,
+        band_indices,
+        num_band,
+    );
 
     for g in gamma.iter_mut().take(num_band0) {
         *g = 0.0;
@@ -126,7 +126,8 @@ pub(crate) fn isotope_strength(
             .par_iter()
             .map(|&gp| {
                 let gp_u = gp as usize;
-                let e1 = &eigenvectors[gp_u * num_band * num_band..(gp_u + 1) * num_band * num_band];
+                let e1 =
+                    &eigenvectors[gp_u * num_band * num_band..(gp_u + 1) * num_band * num_band];
                 let mut sum_k = 0.0;
                 for k in 0..num_band {
                     let f = frequencies[gp_u * num_band + k];
@@ -134,8 +135,8 @@ pub(crate) fn isotope_strength(
                         continue;
                     }
                     let dist = gaussian(f - f0[i], sigma);
-                    sum_k += atoms_overlap_squared(e0_band0, e1, mass_variances, num_band, k)
-                        * dist;
+                    sum_k +=
+                        atoms_overlap_squared(e0_band0, e1, mass_variances, num_band, k) * dist;
                 }
                 sum_k * weights[gp_u]
             })
@@ -165,7 +166,13 @@ pub(crate) fn thm_isotope_strength(
 ) {
     let num_band0 = band_indices.len();
     let num_grid_points = ir_grid_points.len();
-    let (f0, e0) = load_band0_data(frequencies, eigenvectors, grid_point, band_indices, num_band);
+    let (f0, e0) = load_band0_data(
+        frequencies,
+        eigenvectors,
+        grid_point,
+        band_indices,
+        num_band,
+    );
     let f0_ref: &[f64] = &f0;
     let e0_ref: &[Cmplx] = &e0;
 
@@ -177,8 +184,8 @@ pub(crate) fn thm_isotope_strength(
             let w_gp = weights[gp];
             // integration_weights is indexed by BZ grid point, so use `gp`
             // rather than `i`, matching the C convention.
-            let iw_gp = &integration_weights
-                [gp * num_band0 * num_band..(gp + 1) * num_band0 * num_band];
+            let iw_gp =
+                &integration_weights[gp * num_band0 * num_band..(gp + 1) * num_band0 * num_band];
             let freqs_gp = &frequencies[gp * num_band..(gp + 1) * num_band];
             (0..num_band0).map(move |j| {
                 if f0_ref[j] < cutoff_frequency {
@@ -191,8 +198,8 @@ pub(crate) fn thm_isotope_strength(
                         continue;
                     }
                     let dist = iw_gp[j * num_band + k];
-                    sum_k += atoms_overlap_squared(e0_band0, e1, mass_variances, num_band, k)
-                        * dist;
+                    sum_k +=
+                        atoms_overlap_squared(e0_band0, e1, mass_variances, num_band, k) * dist;
                 }
                 sum_k * w_gp
             })

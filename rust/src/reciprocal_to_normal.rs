@@ -404,7 +404,9 @@ mod tests {
         let masses = vec![1.0];
         let band_indices = vec![0i64, 1, 2];
         let g_pos: Vec<[i64; 4]> = (0..3)
-            .flat_map(|i| (0..3).flat_map(move |j| (0..3).map(move |k| [i, j, k, i * 9 + j * 3 + k])))
+            .flat_map(|i| {
+                (0..3).flat_map(move |j| (0..3).map(move |k| [i, j, k, i * 9 + j * 3 + k]))
+            })
             .collect();
         let mut out = vec![1.0f64; band_indices.len() * num_band * num_band];
         reciprocal_to_normal_squared(

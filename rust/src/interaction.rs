@@ -179,9 +179,8 @@ fn real_to_normal_sym_q(
             let l = gp[2] as usize;
             let j = band_indices[band0] as usize;
             let bands = [j, k, l];
-            let src_idx = bands[perm[0]] * num_band * num_band
-                + bands[perm[1]] * num_band
-                + bands[perm[2]];
+            let src_idx =
+                bands[perm[0]] * num_band * num_band + bands[perm[1]] * num_band + bands[perm[2]];
             let dst_idx = band0 * num_band * num_band + k * num_band + l;
             fc3_normal_squared[dst_idx] += tmp[src_idx] / 6.0;
         }
@@ -230,8 +229,11 @@ pub fn get_interaction_at_triplet(
     let g_pos = set_g_pos(g_zero_triplet, num_band0, num_band);
 
     if symmetrize_fc3_q {
-        let mut freqs_arr: [Vec<f64>; 3] =
-            [vec![0.0; num_band], vec![0.0; num_band], vec![0.0; num_band]];
+        let mut freqs_arr: [Vec<f64>; 3] = [
+            vec![0.0; num_band],
+            vec![0.0; num_band],
+            vec![0.0; num_band],
+        ];
         let mut evecs_arr: [Vec<Cmplx>; 3] = [
             vec![[0.0, 0.0]; num_band * num_band],
             vec![[0.0, 0.0]; num_band * num_band],

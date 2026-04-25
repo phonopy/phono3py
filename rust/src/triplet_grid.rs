@@ -22,11 +22,7 @@ pub struct IrTripletsAtQ {
 
 /// Filter rotations to those that stabilize `grid_point`
 /// (i.e. R * q === q mod D_diag).
-fn get_stabilizer_rotations(
-    rotations: &[MatI],
-    d_diag: Vec3I,
-    grid_point: i64,
-) -> Vec<MatI> {
+fn get_stabilizer_rotations(rotations: &[MatI], d_diag: Vec3I, grid_point: i64) -> Vec<MatI> {
     let adrs = grgrid::grid_address_from_index(grid_point, d_diag);
     let mut result = Vec::new();
 
@@ -43,11 +39,7 @@ fn get_stabilizer_rotations(
 
 /// Swappable case: q1 and q2 can be exchanged, reducing the number
 /// of irreducible triplets further.
-fn ir_triplets_at_q_perm_q1q2(
-    map_q: &[i64],
-    grid_point: i64,
-    d_diag: Vec3I,
-) -> (Vec<i64>, i64) {
+fn ir_triplets_at_q_perm_q1q2(map_q: &[i64], grid_point: i64, d_diag: Vec3I) -> (Vec<i64>, i64) {
     let num_grid = (d_diag[0] * d_diag[1] * d_diag[2]) as usize;
     let adrs0 = grgrid::grid_address_from_index(grid_point, d_diag);
     let mut map_triplets = vec![0i64; num_grid];
