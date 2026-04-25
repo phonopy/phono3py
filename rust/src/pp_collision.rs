@@ -209,57 +209,56 @@ pub fn get_pp_collision(
 
     let mut ise_per_triplet = vec![0.0f64; num_triplets * per_triplet_stride];
 
-    let run_one =
-        |scratch: &mut CollisionScratch,
-         (i, ise_slot): (usize, &mut [f64])|
-         -> Result<(), BzGridError> {
-            let triplet = triplets[i];
-            scratch.reset();
-            {
-                let (g1_slot, g2_3_slot) = scratch.g_buf.split_at_mut(num_band_prod);
-                let mut iw_ch: Vec<&mut [f64]> = vec![g1_slot, g2_3_slot];
-                integration_weight_per_triplet(
-                    &mut iw_ch,
-                    &mut scratch.g_zero,
-                    &freqs_at_gp,
-                    num_band0 as i64,
-                    &tp_relative,
-                    triplet,
-                    bzgrid,
-                    frequencies,
-                    num_band as i64,
-                    frequencies,
-                    num_band as i64,
-                    TpType::Type2,
-                )?;
-            }
-            evaluate_collision_at_triplet(
-                ise_slot,
-                &mut scratch.fc3_normal_squared,
+    let run_one = |scratch: &mut CollisionScratch,
+                   (i, ise_slot): (usize, &mut [f64])|
+     -> Result<(), BzGridError> {
+        let triplet = triplets[i];
+        scratch.reset();
+        {
+            let (g1_slot, g2_3_slot) = scratch.g_buf.split_at_mut(num_band_prod);
+            let mut iw_ch: Vec<&mut [f64]> = vec![g1_slot, g2_3_slot];
+            integration_weight_per_triplet(
+                &mut iw_ch,
+                &mut scratch.g_zero,
+                &freqs_at_gp,
+                num_band0 as i64,
+                &tp_relative,
                 triplet,
-                triplet_weights[i],
-                &scratch.g_buf,
-                &scratch.g_zero,
-                num_band0,
-                num_band,
-                num_temps,
-                temperatures_thz,
+                bzgrid,
                 frequencies,
-                eigenvectors,
-                bzgrid.addresses,
-                d_diag,
-                q_mat,
-                fc3,
-                is_compact_fc3,
-                atom_triplets,
-                masses,
-                band_indices,
-                symmetrize_fc3_q,
-                cutoff_frequency,
-                inner_par,
-            );
-            Ok(())
-        };
+                num_band as i64,
+                frequencies,
+                num_band as i64,
+                TpType::Type2,
+            )?;
+        }
+        evaluate_collision_at_triplet(
+            ise_slot,
+            &mut scratch.fc3_normal_squared,
+            triplet,
+            triplet_weights[i],
+            &scratch.g_buf,
+            &scratch.g_zero,
+            num_band0,
+            num_band,
+            num_temps,
+            temperatures_thz,
+            frequencies,
+            eigenvectors,
+            bzgrid.addresses,
+            d_diag,
+            q_mat,
+            fc3,
+            is_compact_fc3,
+            atom_triplets,
+            masses,
+            band_indices,
+            symmetrize_fc3_q,
+            cutoff_frequency,
+            inner_par,
+        );
+        Ok(())
+    };
 
     ise_per_triplet
         .par_chunks_mut(per_triplet_stride)

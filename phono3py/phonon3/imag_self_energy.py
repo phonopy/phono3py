@@ -1327,10 +1327,8 @@ def average_by_degeneracy(
     deg_sets = degenerate_sets(freqs_at_gp)
     imag_se = np.zeros_like(imag_self_energy)
     for dset in deg_sets:
-        bi_set = []
-        for i, bi in enumerate(band_indices):
-            if bi in dset:
-                bi_set.append(i)
+        dset_s = set(dset)
+        bi_set = [i for i, bi in enumerate(band_indices) if bi in dset_s]
         for i in bi_set:
             if imag_self_energy.ndim == 1:
                 imag_se[i] = imag_self_energy[bi_set].sum() / len(bi_set)

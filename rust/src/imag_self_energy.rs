@@ -36,11 +36,7 @@ pub(crate) fn set_g_pos(g_zero: &[i8], num_band0: usize, num_band: usize) -> Vec
 /// fourth entry encodes the (band0, j, k) linear index as if `g_zero`
 /// were `(num_band0, num_band, num_band)`, matching the C layout used
 /// to index the `fc3_normal_squared` array downstream.
-fn set_g_pos_at_frequency_point(
-    g_zero: &[i8],
-    num_band0: usize,
-    num_band: usize,
-) -> Vec<[i64; 4]> {
+fn set_g_pos_at_frequency_point(g_zero: &[i8], num_band0: usize, num_band: usize) -> Vec<[i64; 4]> {
     let mut out = Vec::with_capacity(num_band0 * num_band * num_band);
     let mut jkl: i64 = 0;
     for j in 0..num_band0 {
@@ -369,7 +365,10 @@ pub fn get_detailed_imag_self_energy_with_g(
     let num_band_prod = num_band0 * num_band * num_band;
     let g_layer_stride = num_triplets * num_band_prod;
     debug_assert_eq!(fc3_normal_squared.len(), num_triplets * num_band_prod);
-    debug_assert_eq!(detailed_imag_self_energy.len(), num_triplets * num_band_prod);
+    debug_assert_eq!(
+        detailed_imag_self_energy.len(),
+        num_triplets * num_band_prod
+    );
     debug_assert_eq!(g.len(), 2 * g_layer_stride);
     debug_assert_eq!(g_zero.len(), g_layer_stride);
 
@@ -380,12 +379,10 @@ pub fn get_detailed_imag_self_energy_with_g(
         .zip(ise_per_triplet.par_chunks_mut(num_band0))
         .enumerate()
         .for_each(|(i, (detailed_slot, ise_slot))| {
-            let fc3_slice =
-                &fc3_normal_squared[i * num_band_prod..(i + 1) * num_band_prod];
+            let fc3_slice = &fc3_normal_squared[i * num_band_prod..(i + 1) * num_band_prod];
             let g_base = i * num_band_prod;
             let g1 = &g[g_base..g_base + num_band_prod];
-            let g2_3 =
-                &g[g_layer_stride + g_base..g_layer_stride + g_base + num_band_prod];
+            let g2_3 = &g[g_layer_stride + g_base..g_layer_stride + g_base + num_band_prod];
             let gz = &g_zero[g_base..g_base + num_band_prod];
             detailed_imag_self_energy_at_triplet(
                 detailed_slot,
@@ -458,8 +455,7 @@ mod tests {
     #[test]
     fn tpl_is_n_normal_and_umklapp() {
         // Grid addresses for 5 imaginary grid points.
-        let addrs: Vec<[i64; 3]> =
-            vec![[0, 0, 0], [1, 0, 0], [-1, 0, 0], [0, 2, 0], [0, -1, 0]];
+        let addrs: Vec<[i64; 3]> = vec![[0, 0, 0], [1, 0, 0], [-1, 0, 0], [0, 2, 0], [0, -1, 0]];
         // (0, 1, -1) sums to (0, 0, 0) on every axis -> Normal.
         assert!(tpl_is_n([0, 1, 2], &addrs));
         // (0, 3, 4) sums on axis 1 to 0+2+(-1) = 1 -> Umklapp.

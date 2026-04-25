@@ -13,8 +13,8 @@ use rayon::prelude::*;
 use crate::common::Vec3I;
 use crate::triplet_iw::{
     integration_weight_per_triplet, integration_weight_per_triplet_inner_par,
-    integration_weight_with_sigma_per_triplet,
-    integration_weight_with_sigma_per_triplet_inner_par, BzGridError, BzGridView, TpType,
+    integration_weight_with_sigma_per_triplet, integration_weight_with_sigma_per_triplet_inner_par,
+    BzGridError, BzGridView, TpType,
 };
 
 /// Tetrahedron-method relative addresses: 24 tetrahedra,

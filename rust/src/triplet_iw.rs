@@ -521,10 +521,7 @@ fn max_tetra_channels(tp_type: TpType) -> usize {
 /// 4 vertices.  Only the first `max_i` entries are populated.  Hoisted
 /// out of the `f0` loop so the per-`f0` in-tetrahedron test reduces
 /// from a 96-entry min/max scan to a pair of comparisons.
-fn freq_vertices_bboxes(
-    freq_vertices: &[[[f64; 4]; 24]; 3],
-    max_i: usize,
-) -> [(f64, f64); 3] {
+fn freq_vertices_bboxes(freq_vertices: &[[[f64; 4]; 24]; 3], max_i: usize) -> [(f64, f64); 3] {
     let mut out = [(0.0f64, 0.0f64); 3];
     for i in 0..max_i {
         let mut fmin = freq_vertices[i][0][0];

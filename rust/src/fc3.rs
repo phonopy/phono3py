@@ -40,10 +40,7 @@ fn tensor3_rotation_elem(tensor: &[f64], r: &[f64], pos: usize) -> f64 {
     for i in 0..3usize {
         for j in 0..3usize {
             for k in 0..3usize {
-                sum += r[l * 3 + i]
-                    * r[m * 3 + j]
-                    * r[n * 3 + k]
-                    * tensor[i * 9 + j * 3 + k];
+                sum += r[l * 3 + i] * r[m * 3 + j] * r[n * 3 + k] * tensor[i * 9 + j * 3 + k];
             }
         }
     }
@@ -71,9 +68,8 @@ pub(crate) fn distribute_fc3(
     for i in 0..num_atom {
         for j in 0..num_atom {
             let adrs_out = tgt_base + i * stride_i + j * 27;
-            let adrs_in = src_base
-                + (atom_mapping[i] as usize) * stride_i
-                + (atom_mapping[j] as usize) * 27;
+            let adrs_in =
+                src_base + (atom_mapping[i] as usize) * stride_i + (atom_mapping[j] as usize) * 27;
             // Source and target addresses never overlap (target != source
             // is guaranteed by the caller); copy via a local buffer to
             // satisfy the borrow checker without unsafe.
@@ -175,9 +171,9 @@ pub(crate) fn transpose_compact_fc3(
     t_type: i64,
 ) {
     match t_type {
-        0 | 1 => transpose_compact_fc3_type01(
-            fc3, p2s, s2pp, nsym_list, perms, n_satom, n_patom, t_type,
-        ),
+        0 | 1 => {
+            transpose_compact_fc3_type01(fc3, p2s, s2pp, nsym_list, perms, n_satom, n_patom, t_type)
+        }
         2 => transpose_compact_fc3_type2(fc3, n_satom, n_patom),
         _ => {}
     }
@@ -209,13 +205,11 @@ fn transpose_compact_fc3_type01(
                 let k_trans = perms[nsym * n_satom + k] as usize;
                 if t_type == 0 {
                     let adrs = (i_p * n_satom * n_satom + j * n_satom + k) * 27;
-                    let adrs_t =
-                        (j_p * n_satom * n_satom + i_trans * n_satom + k_trans) * 27;
+                    let adrs_t = (j_p * n_satom * n_satom + i_trans * n_satom + k_trans) * 27;
                     swap_blocks_lm(fc3, adrs, adrs_t);
                 } else {
                     let adrs = (i_p * n_satom * n_satom + k * n_satom + j) * 27;
-                    let adrs_t =
-                        (j_p * n_satom * n_satom + k_trans * n_satom + i_trans) * 27;
+                    let adrs_t = (j_p * n_satom * n_satom + k_trans * n_satom + i_trans) * 27;
                     swap_blocks_ln(fc3, adrs, adrs_t);
                 }
             }
@@ -300,8 +294,7 @@ fn transpose_compact_fc3_type2(fc3: &mut [f64], n_satom: usize, n_patom: usize) 
                             for m in 0..3 {
                                 for n in 0..3 {
                                     // fc3[adrs][l, m, n] = fc3[adrs_t][l, n, m]
-                                    *p.add(adrs + l * 9 + m * 3 + n) =
-                                        elem_dst[l * 9 + n * 3 + m];
+                                    *p.add(adrs + l * 9 + m * 3 + n) = elem_dst[l * 9 + n * 3 + m];
                                 }
                             }
                         }
@@ -310,8 +303,7 @@ fn transpose_compact_fc3_type2(fc3: &mut [f64], n_satom: usize, n_patom: usize) 
                         for m in 0..3 {
                             for n in 0..3 {
                                 // fc3[adrs_t][l, n, m] = elem_src[l, m, n]
-                                *p.add(adrs_t + l * 9 + n * 3 + m) =
-                                    elem_src[l * 9 + m * 3 + n];
+                                *p.add(adrs_t + l * 9 + n * 3 + m) = elem_src[l * 9 + m * 3 + n];
                             }
                         }
                     }
@@ -560,18 +552,18 @@ mod tests {
                     for i in 0..3 {
                         for j in 0..3 {
                             for k in 0..3 {
-                                let v_abc = fc3
-                                    [a * stride_a + b * stride_b + c * 27 + i * 9 + j * 3 + k];
-                                let v_acb = fc3
-                                    [a * stride_a + c * stride_b + b * 27 + i * 9 + k * 3 + j];
-                                let v_bac = fc3
-                                    [b * stride_a + a * stride_b + c * 27 + j * 9 + i * 3 + k];
-                                let v_bca = fc3
-                                    [b * stride_a + c * stride_b + a * 27 + j * 9 + k * 3 + i];
-                                let v_cab = fc3
-                                    [c * stride_a + a * stride_b + b * 27 + k * 9 + i * 3 + j];
-                                let v_cba = fc3
-                                    [c * stride_a + b * stride_b + a * 27 + k * 9 + j * 3 + i];
+                                let v_abc =
+                                    fc3[a * stride_a + b * stride_b + c * 27 + i * 9 + j * 3 + k];
+                                let v_acb =
+                                    fc3[a * stride_a + c * stride_b + b * 27 + i * 9 + k * 3 + j];
+                                let v_bac =
+                                    fc3[b * stride_a + a * stride_b + c * 27 + j * 9 + i * 3 + k];
+                                let v_bca =
+                                    fc3[b * stride_a + c * stride_b + a * 27 + j * 9 + k * 3 + i];
+                                let v_cab =
+                                    fc3[c * stride_a + a * stride_b + b * 27 + k * 9 + i * 3 + j];
+                                let v_cba =
+                                    fc3[c * stride_a + b * stride_b + a * 27 + k * 9 + j * 3 + i];
                                 for v in [v_acb, v_bac, v_bca, v_cab, v_cba] {
                                     assert!((v - v_abc).abs() < 1e-14);
                                 }
@@ -600,24 +592,10 @@ mod tests {
         let nsym_list = [0i64; 3];
         let perms = [0i64, 1, 2];
         transpose_compact_fc3(
-            &mut fc3,
-            &p2s,
-            &s2pp,
-            &nsym_list,
-            &perms,
-            n_satom,
-            n_patom,
-            2,
+            &mut fc3, &p2s, &s2pp, &nsym_list, &perms, n_satom, n_patom, 2,
         );
         transpose_compact_fc3(
-            &mut fc3,
-            &p2s,
-            &s2pp,
-            &nsym_list,
-            &perms,
-            n_satom,
-            n_patom,
-            2,
+            &mut fc3, &p2s, &s2pp, &nsym_list, &perms, n_satom, n_patom, 2,
         );
         for (a, b) in original.iter().zip(fc3.iter()) {
             assert!((a - b).abs() < 1e-15);
@@ -640,12 +618,8 @@ mod tests {
                 *v = ((i * 7 + t_type as usize * 5) % 59) as f64 - 29.0;
             }
             let original = fc3.clone();
-            transpose_compact_fc3(
-                &mut fc3, &p2s, &s2pp, &nsym_list, &perms, n, n, t_type,
-            );
-            transpose_compact_fc3(
-                &mut fc3, &p2s, &s2pp, &nsym_list, &perms, n, n, t_type,
-            );
+            transpose_compact_fc3(&mut fc3, &p2s, &s2pp, &nsym_list, &perms, n, n, t_type);
+            transpose_compact_fc3(&mut fc3, &p2s, &s2pp, &nsym_list, &perms, n, n, t_type);
             for (a, b) in original.iter().zip(fc3.iter()) {
                 assert!((a - b).abs() < 1e-15, "t_type {} not involutive", t_type);
             }
@@ -668,13 +642,9 @@ mod tests {
         for (i, v) in fc3.iter_mut().enumerate() {
             *v = ((i * 19) % 89) as f64 - 44.0;
         }
-        set_permutation_symmetry_compact_fc3(
-            &mut fc3, &p2s, &s2pp, &nsym_list, &perms, n, n,
-        );
+        set_permutation_symmetry_compact_fc3(&mut fc3, &p2s, &s2pp, &nsym_list, &perms, n, n);
         let snapshot = fc3.clone();
-        set_permutation_symmetry_compact_fc3(
-            &mut fc3, &p2s, &s2pp, &nsym_list, &perms, n, n,
-        );
+        set_permutation_symmetry_compact_fc3(&mut fc3, &p2s, &s2pp, &nsym_list, &perms, n, n);
         for (a, b) in snapshot.iter().zip(fc3.iter()) {
             assert!((a - b).abs() < 1e-15);
         }
@@ -753,8 +723,7 @@ mod tests {
                 for k in 0..3 {
                     for l in 0..3 {
                         for m in 0..3 {
-                            let expected =
-                                inv_u[k * total] * delta_fc2s[src_base + l * 3 + m];
+                            let expected = inv_u[k * total] * delta_fc2s[src_base + l * 3 + m];
                             let got = fc3[out_base + k * 9 + l * 3 + m];
                             assert!((got - expected).abs() < 1e-14);
                         }
