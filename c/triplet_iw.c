@@ -48,8 +48,12 @@ static void set_freq_vertices(double freq_vertices[3][24][4],
                               const int64_t num_band1, const int64_t num_band2,
                               const int64_t b1, const int64_t b2,
                               const int64_t tp_type);
+static void compute_bboxes(double fmin[3], double fmax[3],
+                           const double freq_vertices[3][24][4],
+                           const int64_t max_i);
 static int64_t set_g(double g[3], const double f0,
-                     const double freq_vertices[3][24][4], const int64_t max_i);
+                     const double freq_vertices[3][24][4], const double fmin[3],
+                     const double fmax[3], const int64_t max_i);
 static void get_triplet_tetrahedra_vertices(
     int64_t vertices[2][24][4],
     const int64_t tp_relative_grid_address[2][24][4][3],
@@ -76,6 +80,7 @@ void tpi_get_integration_weight(
     int64_t vertices[2][24][4];
     double g[3];
     double freq_vertices[3][24][4];
+    double fmin[3], fmax[3];
 
     get_triplet_tetrahedra_vertices(vertices, tp_relative_grid_address,
                                     triplets, bzgrid);
@@ -102,17 +107,18 @@ void tpi_get_integration_weight(
 
 #ifdef _OPENMP
 #pragma omp parallel for private(j, b1, b2, adrs_shift, g, \
-                                     freq_vertices) if (!openmp_per_triplets)
+                                     freq_vertices, fmin, fmax) if (!openmp_per_triplets)
 #endif
     for (b12 = 0; b12 < num_band1 * num_band2; b12++) {
         b1 = b12 / num_band2;
         b2 = b12 % num_band2;
         set_freq_vertices(freq_vertices, frequencies1, frequencies2, vertices,
                           num_band1, num_band2, b1, b2, tp_type);
+        compute_bboxes(fmin, fmax, freq_vertices, max_i);
         for (j = 0; j < num_band0; j++) {
             adrs_shift = j * num_band1 * num_band2 + b1 * num_band2 + b2;
             iw_zero[adrs_shift] =
-                set_g(g, frequency_points[j], freq_vertices, max_i);
+                set_g(g, frequency_points[j], freq_vertices, fmin, fmax, max_i);
             if (tp_type == 2) {
                 iw[adrs_shift] = g[2];
                 adrs_shift += num_band_prod;
@@ -261,15 +267,34 @@ static void set_freq_vertices(double freq_vertices[3][24][4],
 /* iw_zero=1 information can be used to omit to compute particles */
 /* interaction strength that is often heaviest part in throughout */
 /* calculation. */
+static void compute_bboxes(double fmin[3], double fmax[3],
+                           const double freq_vertices[3][24][4],
+                           const int64_t max_i) {
+    int64_t i, j, k;
+    double v;
+
+    for (i = 0; i < max_i; i++) {
+        fmin[i] = freq_vertices[i][0][0];
+        fmax[i] = freq_vertices[i][0][0];
+        for (j = 0; j < 24; j++) {
+            for (k = 0; k < 4; k++) {
+                v = freq_vertices[i][j][k];
+                if (v < fmin[i]) fmin[i] = v;
+                if (v > fmax[i]) fmax[i] = v;
+            }
+        }
+    }
+}
+
 static int64_t set_g(double g[3], const double f0,
-                     const double freq_vertices[3][24][4],
-                     const int64_t max_i) {
+                     const double freq_vertices[3][24][4], const double fmin[3],
+                     const double fmax[3], const int64_t max_i) {
     int64_t i, iw_zero;
 
     iw_zero = 1;
 
     for (i = 0; i < max_i; i++) {
-        if (thm_in_tetrahedra(f0, freq_vertices[i])) {
+        if (fmin[i] <= f0 && f0 <= fmax[i]) {
             g[i] = thm_get_integration_weight(f0, freq_vertices[i], 'I');
             iw_zero = 0;
         } else {
