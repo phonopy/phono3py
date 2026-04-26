@@ -427,7 +427,7 @@ Python API. The C backend remains the default.</p>
 <section id="command-line">
 <h3><a class="toc-backref" href="#id6" role="doc-backlink">Command line</a><a class="headerlink" href="#command-line" title="Link to this heading">#</a></h3>
 <p>Pass <code class="docutils literal notranslate"><span class="pre">--rust</span></code> to the <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--rust<span class="w"> </span>...
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--rust<span class="w"> </span>...
 </pre></div>
 </div>
 <p>When the flag is set, the <em>General settings</em> block of the run log
@@ -461,7 +461,7 @@ plumbing from the user side is required.</p>
 which uses its own thread pool. The thread count is controlled by
 <code class="docutils literal notranslate"><span class="pre">RAYON_NUM_THREADS</span></code> (not <code class="docutils literal notranslate"><span class="pre">OMP_NUM_THREADS</span></code>, which only affects the C
 path):</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span><span class="nv">RAYON_NUM_THREADS</span><span class="o">=</span><span class="m">8</span><span class="w"> </span>phono3py<span class="w"> </span>--rust<span class="w"> </span>...
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span><span class="nv">RAYON_NUM_THREADS</span><span class="o">=</span><span class="m">8</span><span class="w"> </span>phono3py-load<span class="w"> </span>--rust<span class="w"> </span>...
 </pre></div>
 </div>
 <p>NumPy/SciPy BLAS multithreading used by phonon diagonalization is
@@ -472,7 +472,7 @@ independent and is controlled by the BLAS library’s own variables
 <h3><a class="toc-backref" href="#id9" role="doc-backlink">Dispatch tracing</a><a class="headerlink" href="#dispatch-tracing" title="Link to this heading">#</a></h3>
 <p>To verify that a given code path is actually running on the Rust
 backend, set <code class="docutils literal notranslate"><span class="pre">PHONO3PY_TRACE_LANG=1</span></code> before launching:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span><span class="nv">PHONO3PY_TRACE_LANG</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>phono3py<span class="w"> </span>--rust<span class="w"> </span>...
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span><span class="nv">PHONO3PY_TRACE_LANG</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>phono3py-load<span class="w"> </span>--rust<span class="w"> </span>...
 </pre></div>
 </div>
 <p>Each lang-aware call site emits one line to stderr, for example:</p>
@@ -509,7 +509,7 @@ order:</p>
 <li><p>A value <code class="docutils literal notranslate"><span class="pre">&lt;=</span> <span class="pre">0</span></code> falls back to the per-grid-point loop.</p></li>
 </ol>
 <p>Example:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span><span class="nv">PHONO3PY_RUST_GP_BATCH_SIZE</span><span class="o">=</span><span class="m">8</span><span class="w"> </span>phono3py<span class="w"> </span>--rust<span class="w"> </span>...
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span><span class="nv">PHONO3PY_RUST_GP_BATCH_SIZE</span><span class="o">=</span><span class="m">8</span><span class="w"> </span>phono3py-load<span class="w"> </span>--rust<span class="w"> </span>...
 </pre></div>
 </div>
 <p>The batched path applies only to the low-memory RTA solver and is
