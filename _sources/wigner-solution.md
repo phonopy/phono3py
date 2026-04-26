@@ -40,7 +40,7 @@ a plugin, which can be installed as follows:
 ```
 pip install phono3py
 git clone https://github.com/MSimoncelli/phono3py-wte.git
-cd phono3py-wte.git
+cd phono3py-wte
 pip install -e . -v
 cd examples/Wigner_La2Zr2O7
 bash command.sh
