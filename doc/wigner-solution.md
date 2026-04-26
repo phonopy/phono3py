@@ -34,14 +34,20 @@ As discussed in the references above, the term $\kappa_{\rm P}^{\alpha \beta}$ c
 
 ## How to install
 
+The `--wigner` option is deprecated. The same functionality will be provided as
+a plugin, which can be installed as follows:
+
 ```
 pip install phono3py
-git clone https://github.com/atztogo/phono3py-wte.git
+git clone https://github.com/MSimoncelli/phono3py-wte.git
 cd phono3py-wte.git
 pip install -e . -v
 cd examples/Wigner_La2Zr2O7
 bash command.sh
 ```
+
+Once this plugin is installed, the `--tt wte` option will replace the `--wigner`
+option.
 
 ## How to use
 

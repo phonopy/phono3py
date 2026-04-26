@@ -67,45 +67,24 @@ class RTAKappaSolver:
         gv_by_gv = aggregates.gv_by_gv
         cv = aggregates.mode_heat_capacities
         gamma_eff = compute_effective_gamma(aggregates)
-        num_sigma, num_temp, num_gp, num_band0 = gamma_eff.shape
 
-        self._mode_kappa = np.zeros(
-            (num_sigma, num_temp, num_gp, num_band0, 6), dtype="double", order="C"
+        freq_valid = (
+            self._frequencies[self._kappa_settings.grid_points][
+                :, self._kappa_settings.band_indices
+            ]
+            >= self._kappa_settings.cutoff_frequency
         )
 
-        for i_gp in range(num_gp):
-            gp = self._kappa_settings.grid_points[i_gp]
-            frequencies = self._frequencies[gp][self._kappa_settings.band_indices]
-            for ll in range(num_band0):
-                if frequencies[ll] < self._kappa_settings.cutoff_frequency:
-                    continue
-                for j in range(num_sigma):
-                    for k in range(num_temp):
-                        g = gamma_eff[j, k, i_gp, ll]
-                        old_settings = np.seterr(all="raise")
-                        try:
-                            self._mode_kappa[j, k, i_gp, ll] = (
-                                gv_by_gv[i_gp, ll]
-                                * cv[k, i_gp, ll]
-                                / (g * 2)
-                                * self._kappa_settings.conversion_factor
-                            )
-                        except FloatingPointError:
-                            pass
-                        except Exception:
-                            print("=" * 26 + " Warning " + "=" * 26)
-                            print(
-                                " Unexpected physical condition"
-                                " of ph-ph interaction"
-                                " calculation was found."
-                            )
-                            print(
-                                " g=%f at gp=%d, band=%d,"
-                                " freq=%f" % (g, gp, ll + 1, frequencies[ll])
-                            )
-                            print("=" * 61)
-                        finally:
-                            np.seterr(**old_settings)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            self._mode_kappa = (
+                gv_by_gv[np.newaxis, np.newaxis, :, :, :]
+                * cv[np.newaxis, :, :, :, np.newaxis]
+                / (gamma_eff[:, :, :, :, np.newaxis] * 2)
+                * self._kappa_settings.conversion_factor
+            )
+            np.nan_to_num(self._mode_kappa, copy=False)
+
+        self._mode_kappa *= freq_valid[np.newaxis, np.newaxis, :, :, np.newaxis]
 
     def log_kappa(
         self,
