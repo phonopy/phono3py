@@ -75,7 +75,7 @@ Python API. The C backend remains the default.
 Pass `--rust` to the `phono3py` command:
 
 ```bash
-% phono3py --rust ...
+% phono3py-load --rust ...
 ```
 
 When the flag is set, the *General settings* block of the run log
@@ -116,7 +116,7 @@ which uses its own thread pool. The thread count is controlled by
 path):
 
 ```bash
-% RAYON_NUM_THREADS=8 phono3py --rust ...
+% RAYON_NUM_THREADS=8 phono3py-load --rust ...
 ```
 
 NumPy/SciPy BLAS multithreading used by phonon diagonalization is
@@ -129,7 +129,7 @@ To verify that a given code path is actually running on the Rust
 backend, set `PHONO3PY_TRACE_LANG=1` before launching:
 
 ```bash
-% PHONO3PY_TRACE_LANG=1 phono3py --rust ...
+% PHONO3PY_TRACE_LANG=1 phono3py-load --rust ...
 ```
 
 Each lang-aware call site emits one line to stderr, for example:
@@ -171,7 +171,7 @@ order:
 Example:
 
 ```bash
-% PHONO3PY_RUST_GP_BATCH_SIZE=8 phono3py --rust ...
+% PHONO3PY_RUST_GP_BATCH_SIZE=8 phono3py-load --rust ...
 ```
 
 The batched path applies only to the low-memory RTA solver and is
