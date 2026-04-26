@@ -89,7 +89,7 @@ class VelocityMatrix(GroupVelocity):
             # Give an random direction to break symmetry
             self._directions[0] = np.array([1, 2, 3])
         else:
-            self._directions[0] = np.dot(self._reciprocal_lattice, perturbation)
+            self._directions[0] = self._reciprocal_lattice @ perturbation
         self._directions[0] /= np.linalg.norm(self._directions[0])
         vm = [
             self._calculate_velocity_matrix_at_q(q)
@@ -180,8 +180,8 @@ class VelocityMatrix(GroupVelocity):
             shape=(num_band, num_degenerates), dtype=complex
 
         """
-        _, eigvecs = np.linalg.eigh(np.dot(eigsets.T.conj(), np.dot(ddm, eigsets)))
-        rot_eigsets = np.dot(eigsets, eigvecs)
+        _, eigvecs = np.linalg.eigh(eigsets.T.conj() @ ddm @ eigsets)
+        rot_eigsets = eigsets @ eigvecs
 
         return rot_eigsets
 
@@ -197,7 +197,7 @@ class VelocityMatrix(GroupVelocity):
             self._reciprocal_operations, self._rotations_cartesian, strict=True
         ):
             q_in_BZ = q - np.rint(q)
-            diff = q_in_BZ - np.dot(r, q_in_BZ)
+            diff = q_in_BZ - r @ q_in_BZ
             if (np.abs(diff) < LITTLE_GROUP_TOLERANCE).all():
                 projector += r_cart
                 order += 1
@@ -214,7 +214,7 @@ class VelocityMatrix(GroupVelocity):
             self._reciprocal_operations, self._rotations_cartesian, strict=True
         ):
             q_in_BZ = q - np.rint(q)
-            diff = q_in_BZ - np.dot(r, q_in_BZ)
+            diff = q_in_BZ - r @ q_in_BZ
             if (np.abs(diff) < LITTLE_GROUP_TOLERANCE).all():
                 rotations.append(r_cart)
         return rotations
