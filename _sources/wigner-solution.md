@@ -32,6 +32,17 @@ As discussed in the references above, the term $\kappa_{\rm P}^{\alpha \beta}$ c
 :local:
 ```
 
+## How to install
+
+```
+pip install phono3py
+git clone https://github.com/atztogo/phono3py-wte.git
+cd phono3py-wte.git
+pip install -e . -v
+cd examples/Wigner_La2Zr2O7
+bash command.sh
+```
+
 ## How to use
 
 ### Solution of the WTE, scattering in the RTA approximation
