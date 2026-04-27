@@ -1,20 +1,20 @@
-"""Tests for NJC23-LBTE thermal conductivity."""
+"""Tests for SMM19-LBTE thermal conductivity."""
 
 import numpy as np
 
 from phono3py.api_phono3py import Phono3py
 
 
-def test_kappa_njc23_lbte_si(si_pbesol: Phono3py):
-    """Test NJC23-LBTE by Si."""
+def test_kappa_smm19_lbte_si(si_pbesol: Phono3py):
+    """Test SMM19-LBTE by Si."""
     ref_kappa_intra_exact = [110.846, 110.846, 110.846, 0, 0, 0]
-    ref_kappa_inter = [0.531, 0.531, 0.531, 0, 0, 0]
+    ref_kappa_inter = [0.537, 0.537, 0.537, 0, 0, 0]
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
     si_pbesol.run_thermal_conductivity(
         is_LBTE=True,
         temperatures=[300],
-        transport_type="NJC23",
+        transport_type="SMM19",
     )
     tc = si_pbesol.thermal_conductivity
     kappa_intra = tc.kappa_intra_exact.ravel()
@@ -23,8 +23,8 @@ def test_kappa_njc23_lbte_si(si_pbesol: Phono3py):
     np.testing.assert_allclose(ref_kappa_inter, kappa_inter, atol=0.02)
 
 
-def test_kappa_njc23_lbte_si_multi_temp(si_pbesol: Phono3py):
-    """Test NJC23-LBTE with multiple temperatures by Si.
+def test_kappa_smm19_lbte_si_multi_temp(si_pbesol: Phono3py):
+    """Test SMM19-LBTE with multiple temperatures by Si.
 
     Regression test for a bug where heat_capacity_matrix had wrong axis
     order (num_ir, num_temp, ...) instead of (num_temp, num_ir, ...),
@@ -38,16 +38,16 @@ def test_kappa_njc23_lbte_si_multi_temp(si_pbesol: Phono3py):
         [79.0, 79.0, 79.0, 0, 0, 0],
     ]
     ref_kappa_inter = [
-        [0.794, 0.794, 0.794, 0, 0, 0],
-        [0.531, 0.531, 0.531, 0, 0, 0],
-        [0.480, 0.480, 0.480, 0, 0, 0],
+        [0.800, 0.800, 0.800, 0, 0, 0],
+        [0.537, 0.537, 0.537, 0, 0, 0],
+        [0.472, 0.472, 0.472, 0, 0, 0],
     ]
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
     si_pbesol.run_thermal_conductivity(
         is_LBTE=True,
         temperatures=[200, 300, 400],
-        transport_type="NJC23",
+        transport_type="SMM19",
     )
     tc = si_pbesol.thermal_conductivity
 
@@ -62,7 +62,7 @@ def test_kappa_njc23_lbte_si_multi_temp(si_pbesol: Phono3py):
     si_pbesol.run_thermal_conductivity(
         is_LBTE=True,
         temperatures=[300],
-        transport_type="NJC23",
+        transport_type="SMM19",
     )
     tc_single = si_pbesol.thermal_conductivity
     np.testing.assert_allclose(

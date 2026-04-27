@@ -63,6 +63,7 @@ class VelocityMatrix(GroupVelocity):
         self._rotations_cartesian = rotations_cartesian
 
         self._velocity_matrices = None
+        self._group_velocities = None
 
     def run(
         self,
@@ -91,11 +92,13 @@ class VelocityMatrix(GroupVelocity):
         else:
             self._directions[0] = self._reciprocal_lattice @ perturbation
         self._directions[0] /= np.linalg.norm(self._directions[0])
-        vm = [
-            self._calculate_velocity_matrix_at_q(q)
-            for q in np.asarray(q_points, dtype="double")
-        ]
+        _q_points = np.asarray(q_points, dtype="double")
+        vm = [self._calculate_velocity_matrix_at_q(q) for q in _q_points]
         self._velocity_matrices = np.array(vm, dtype="cdouble", order="C")
+        gv = np.einsum("qaii->qia", self._velocity_matrices).real
+        for i, q in enumerate(_q_points):
+            gv[i] = gv[i] @ self._get_projector(q).T
+        self._group_velocities = np.ascontiguousarray(gv, dtype="double")
 
     @property
     def velocity_matrices(self) -> NDArray[np.cdouble] | None:
@@ -115,13 +118,7 @@ class VelocityMatrix(GroupVelocity):
         self,
     ) -> NDArray[np.double] | None:
         """Return group velocities."""
-        if self._velocity_matrices is None:
-            return None
-        return np.array(
-            np.einsum("qaii->qia", self._velocity_matrices).real,
-            dtype="double",
-            order="C",
-        )
+        return self._group_velocities
 
     def _calculate_velocity_matrix_at_q(
         self, q: NDArray[np.double]
@@ -143,8 +140,9 @@ class VelocityMatrix(GroupVelocity):
         rot_eigvecs *= scale
 
         vm = np.zeros((3,) + eigvecs.shape, dtype="cdouble", order="C")
-        projector = self._get_projector(q)
-        for i, ddm in enumerate(np.einsum("ij,jkl->ikl", projector, ddms[1:])):
+        # projector = self._get_projector(q)
+        # for i, ddm in enumerate(np.einsum("ij,jkl->ikl", projector, ddms[1:])):
+        for i, ddm in enumerate(ddms[1:]):
             vm[i] = rot_eigvecs.T.conj() @ ddm @ rot_eigvecs
 
         return self._hermitian_velocity_matrix(vm) * self._factor**2
