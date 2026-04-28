@@ -29,6 +29,33 @@ impl<T> SyncMutPtr<T> {
     }
 }
 
+/// Per-call scratch for `reciprocal_to_normal_squared`.  Buffers are
+/// resized lazily on first use and reused on subsequent calls with the
+/// same shape.  Owned by the caller (typically a per-rayon-worker
+/// `for_each_init`) so that allocation cost is paid once per worker
+/// rather than once per triplet.
+#[derive(Default)]
+pub struct R2NScratch {
+    /// Eigenvectors at vertex 0, scaled by `1/sqrt(mass)` and transposed
+    /// to `[band, component]`.  Length `num_band * num_band`.
+    pub e0: Vec<Cmplx>,
+    /// Same as `e0` for vertex 1.
+    pub e1: Vec<Cmplx>,
+    /// Same as `e0` for vertex 2.
+    pub e2: Vec<Cmplx>,
+    /// Phase 1 cache `(num_band0, num_band, num_band)` flat.
+    pub fc3_e0: Vec<Cmplx>,
+    /// Phase 2 row buffer of length `num_band` (used only by the
+    /// `inner_par = false` branch).
+    pub row: Vec<Cmplx>,
+}
+
+impl R2NScratch {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
 /// Pre-scale eigenvectors by `1 / sqrt(mass)` and transpose so the
 /// fast axis is the component axis (for a fixed band).
 ///
@@ -38,8 +65,8 @@ impl<T> SyncMutPtr<T> {
 /// Output layout: `out[band * num_band + component]`
 /// (`[band, component]` row-major), with each element multiplied by
 /// `1 / sqrt(masses[component / 3])`.
-fn scale_and_transpose(eigvecs: &[Cmplx], masses: &[f64], num_band: usize) -> Vec<Cmplx> {
-    let mut out = vec![[0.0f64; 2]; num_band * num_band];
+fn scale_and_transpose(out: &mut Vec<Cmplx>, eigvecs: &[Cmplx], masses: &[f64], num_band: usize) {
+    out.resize(num_band * num_band, [0.0f64; 2]);
     for comp in 0..num_band {
         let atom = comp / 3;
         let inv_sqrt_mass = 1.0 / masses[atom].sqrt();
@@ -48,7 +75,6 @@ fn scale_and_transpose(eigvecs: &[Cmplx], masses: &[f64], num_band: usize) -> Ve
             out[band * num_band + comp] = [src[0] * inv_sqrt_mass, src[1] * inv_sqrt_mass];
         }
     }
-    out
 }
 
 /// Contract fc3 with `e0` at a single target band and a single `b`
@@ -240,6 +266,7 @@ pub fn reciprocal_to_normal_squared(
     num_patom: usize,
     cutoff_frequency: f64,
     inner_par: bool,
+    scratch: &mut R2NScratch,
 ) {
     let num_band = num_patom * 3;
     debug_assert_eq!(fc3_reciprocal.len(), num_patom * num_patom * num_patom * 27);
@@ -251,9 +278,23 @@ pub fn reciprocal_to_normal_squared(
     debug_assert_eq!(freqs1.len(), num_band);
     debug_assert_eq!(freqs2.len(), num_band);
 
-    let e0 = scale_and_transpose(eigvecs0, masses, num_band);
-    let e1 = scale_and_transpose(eigvecs1, masses, num_band);
-    let e2 = scale_and_transpose(eigvecs2, masses, num_band);
+    // Destructure scratch up front so each field has its own mutable
+    // borrow.  This lets Phase 1's `&mut fc3_e0` coexist with Phase 2's
+    // `&mut row` (and with the immutable reads of `e0/e1/e2`) without
+    // tripping the borrow checker.
+    let R2NScratch {
+        e0,
+        e1,
+        e2,
+        fc3_e0,
+        row,
+    } = scratch;
+    scale_and_transpose(e0, eigvecs0, masses, num_band);
+    scale_and_transpose(e1, eigvecs1, masses, num_band);
+    scale_and_transpose(e2, eigvecs2, masses, num_band);
+    let e0: &[Cmplx] = e0.as_slice();
+    let e1: &[Cmplx] = e1.as_slice();
+    let e2: &[Cmplx] = e2.as_slice();
 
     // fc3_e0 caches the contraction over (a, l) at each target band0
     // index as a (num_band, num_band) band-pair matrix.  Shape:
@@ -261,7 +302,7 @@ pub fn reciprocal_to_normal_squared(
     // num_band * num_band (= num_patom * num_patom * 9).
     let num_band0 = band_indices.len();
     let entry_size = num_band * num_band;
-    let mut fc3_e0 = vec![[0.0f64; 2]; num_band0 * entry_size];
+    fc3_e0.resize(num_band0 * entry_size, [0.0f64; 2]);
 
     if inner_par {
         // Flat (band0, b) parallel axis: num_band0 * num_patom tasks
@@ -290,6 +331,11 @@ pub fn reciprocal_to_normal_squared(
         }
     }
 
+    // Downgrade fc3_e0 to a shared slice for Phase 2 so the par_iter
+    // closure captures by `&[Cmplx]` (Sync) instead of `&mut [Cmplx]`
+    // (not Sync).
+    let fc3_e0: &[Cmplx] = fc3_e0.as_slice();
+
     if inner_par {
         // SAFETY: each g_pos entry writes to a distinct `dest` index in
         // fc3_normal_squared (the caller's contract: g_pos encodes a
@@ -300,7 +346,7 @@ pub fn reciprocal_to_normal_squared(
         let out_ptr = SyncMutPtr(fc3_normal_squared.as_mut_ptr());
         g_pos.par_iter().for_each_init(
             || vec![[0.0f64; 2]; num_band],
-            |scratch, gp| {
+            |row_scratch, gp| {
                 let i0 = gp[0] as usize;
                 let j = gp[1] as usize;
                 let k = gp[2] as usize;
@@ -315,7 +361,7 @@ pub fn reciprocal_to_normal_squared(
                     let fc3_e0_entry = &fc3_e0[i0 * entry_size..(i0 + 1) * entry_size];
                     let e1_band = &e1[j * num_band..(j + 1) * num_band];
                     let e2_band = &e2[k * num_band..(k + 1) * num_band];
-                    let sq = get_fc3_sum_atomwise(fc3_e0_entry, e1_band, e2_band, scratch);
+                    let sq = get_fc3_sum_atomwise(fc3_e0_entry, e1_band, e2_band, row_scratch);
                     sq / (freqs0[bi] * freqs1[j] * freqs2[k])
                 };
                 unsafe {
@@ -324,9 +370,9 @@ pub fn reciprocal_to_normal_squared(
             },
         );
     } else {
-        // Scratch row buffer for get_fc3_sum_atomwise Phase 1; one
-        // allocation per reciprocal_to_normal_squared invocation.
-        let mut scratch = vec![[0.0f64; 2]; num_band];
+        // Phase 2 row buffer for get_fc3_sum_atomwise; reused across
+        // calls via the caller-provided scratch.
+        row.resize(num_band, [0.0f64; 2]);
         for gp in g_pos {
             let i0 = gp[0] as usize;
             let j = gp[1] as usize;
@@ -342,7 +388,7 @@ pub fn reciprocal_to_normal_squared(
                 let fc3_e0_entry = &fc3_e0[i0 * entry_size..(i0 + 1) * entry_size];
                 let e1_band = &e1[j * num_band..(j + 1) * num_band];
                 let e2_band = &e2[k * num_band..(k + 1) * num_band];
-                let sq = get_fc3_sum_atomwise(fc3_e0_entry, e1_band, e2_band, &mut scratch);
+                let sq = get_fc3_sum_atomwise(fc3_e0_entry, e1_band, e2_band, row);
                 sq / (freqs0[bi] * freqs1[j] * freqs2[k])
             };
             fc3_normal_squared[dest] = val;
@@ -370,7 +416,8 @@ mod tests {
         let num_band = 3;
         let eigvecs = make_identity_eigvecs(num_band);
         let masses = vec![1.0];
-        let out = scale_and_transpose(&eigvecs, &masses, num_band);
+        let mut out = Vec::new();
+        scale_and_transpose(&mut out, &eigvecs, &masses, num_band);
         for i in 0..num_band {
             for j in 0..num_band {
                 let expected = if i == j { [1.0, 0.0] } else { [0.0, 0.0] };
@@ -385,7 +432,8 @@ mod tests {
         let num_band = 3;
         let eigvecs = make_identity_eigvecs(num_band);
         let masses = vec![4.0];
-        let out = scale_and_transpose(&eigvecs, &masses, num_band);
+        let mut out = Vec::new();
+        scale_and_transpose(&mut out, &eigvecs, &masses, num_band);
         for i in 0..num_band {
             assert!((out[i * num_band + i][0] - 0.5).abs() < 1e-15);
             assert!(out[i * num_band + i][1].abs() < 1e-15);
@@ -409,6 +457,7 @@ mod tests {
             })
             .collect();
         let mut out = vec![1.0f64; band_indices.len() * num_band * num_band];
+        let mut scratch = R2NScratch::new();
         reciprocal_to_normal_squared(
             &mut out,
             &g_pos,
@@ -424,6 +473,7 @@ mod tests {
             num_patom,
             0.0,
             false,
+            &mut scratch,
         );
         for v in &out {
             assert_eq!(*v, 0.0);
@@ -450,6 +500,7 @@ mod tests {
         let band_indices = vec![0i64];
         let g_pos: Vec<[i64; 4]> = vec![[0, 0, 0, 0]];
 
+        let mut scratch = R2NScratch::new();
         let mut out = vec![-1.0f64; 1];
         reciprocal_to_normal_squared(
             &mut out,
@@ -466,6 +517,7 @@ mod tests {
             num_patom,
             0.5,
             false,
+            &mut scratch,
         );
         assert_eq!(out[0], 0.0);
 
@@ -485,6 +537,7 @@ mod tests {
             num_patom,
             0.5,
             false,
+            &mut scratch,
         );
         assert!(out[0] > 0.0);
     }

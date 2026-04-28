@@ -1629,6 +1629,7 @@ fn py_reciprocal_to_normal_squared<'py>(
         .map_err(|_| PyValueError::new_err("fc3_normal_squared must be C-contiguous"))?;
 
     py.detach(|| {
+        let mut scratch = reciprocal_to_normal::R2NScratch::new();
         reciprocal_to_normal::reciprocal_to_normal_squared(
             out_slice,
             g_pos_slice,
@@ -1644,6 +1645,7 @@ fn py_reciprocal_to_normal_squared<'py>(
             num_patom,
             cutoff_frequency,
             true,
+            &mut scratch,
         );
     });
 
@@ -2243,6 +2245,25 @@ fn py_detailed_imag_self_energy_with_g<'py>(
 ///   / ``masses`` / ``p2s_map`` / ``s2p_map`` / ``band_indices``
 ///   / ``all_shortest``: same layouts as in ``interaction``.
 /// - ``temperatures_thz``: ``(num_temps,)`` ``float64``.
+/// Release the per-rayon-worker collision scratch back to the
+/// allocator.  Each rayon worker thread holds a ~250 MiB scratch (at
+/// num_patom = 56) for the lifetime of the process; this function
+/// drops them all.  The next ``pp_collision`` / ``collision_at_grid_point``
+/// call will lazily re-allocate.
+///
+/// Intended for memory-heavy follow-up steps (e.g. the LBTE kappa-solve
+/// diagonalization) that need every byte after the collision kernel
+/// has finished.  Must only be called when no Rust collision kernel
+/// is in flight; calling it from inside a rayon parallel context
+/// would deadlock.
+#[pyfunction]
+#[pyo3(name = "release_collision_scratch")]
+fn py_release_collision_scratch(py: Python<'_>) {
+    py.detach(|| {
+        pp_collision::release_scratch();
+    });
+}
+
 #[pyfunction]
 #[pyo3(name = "pp_collision")]
 #[allow(clippy::too_many_arguments)]
@@ -4717,6 +4738,7 @@ fn phono3py_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_imag_self_energy_with_g, m)?)?;
     m.add_function(wrap_pyfunction!(py_detailed_imag_self_energy_with_g, m)?)?;
     m.add_function(wrap_pyfunction!(py_interaction, m)?)?;
+    m.add_function(wrap_pyfunction!(py_release_collision_scratch, m)?)?;
     m.add_function(wrap_pyfunction!(py_pp_collision, m)?)?;
     m.add_function(wrap_pyfunction!(py_pp_collision_with_sigma, m)?)?;
     m.add_function(wrap_pyfunction!(py_collision_at_grid_point, m)?)?;
