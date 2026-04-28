@@ -8,11 +8,13 @@
 //! This mirrors `ppc_get_pp_collision` (tetrahedron method) and
 //! `ppc_get_pp_collision_with_sigma` (Gaussian smearing).
 
+use std::cell::RefCell;
+
 use rayon::prelude::*;
 
 use crate::common::Cmplx;
-use crate::imag_self_energy::{imag_self_energy_at_triplet, set_g_pos};
-use crate::interaction::get_interaction_at_triplet;
+use crate::imag_self_energy::imag_self_energy_at_triplet;
+use crate::interaction::{get_interaction_at_triplet, InteractionScratch};
 use crate::real_to_reciprocal::AtomTriplets;
 use crate::triplet::{is_n, set_relative_grid_address, RelativeGridAddress};
 use crate::triplet_iw::{
@@ -21,28 +23,76 @@ use crate::triplet_iw::{
 };
 
 /// Scratch buffers reused across triplets to avoid per-triplet heap
-/// churn.  One instance per rayon worker (or one total for the
-/// sequential path).
+/// churn.  Held in a thread-local cell (see `COLLISION_SCRATCH`) so
+/// each rayon worker thread allocates its ~250 MiB scratch (at
+/// num_patom = 56) once at first use and reuses it for the rest of
+/// the program lifetime, across all driver invocations and batches.
+/// Compared to `for_each_init`, this fixes the alloc count to
+/// `num_workers` rather than scaling with rayon's adaptive job
+/// split count.
+#[derive(Default)]
 struct CollisionScratch {
     fc3_normal_squared: Vec<f64>,
     g_buf: Vec<f64>,
     g_zero: Vec<i8>,
+    interaction: InteractionScratch,
 }
 
 impl CollisionScratch {
-    fn new(num_band_prod: usize) -> Self {
-        Self {
-            fc3_normal_squared: vec![0.0; num_band_prod],
-            g_buf: vec![0.0; 2 * num_band_prod],
-            g_zero: vec![0; num_band_prod],
-        }
-    }
-
-    fn reset(&mut self) {
+    /// Resize all per-triplet buffers to match the current shape and
+    /// zero them.  Called once per triplet at the top of the kernel.
+    /// Vec::resize is a no-op when the size is unchanged (the common
+    /// case after the first call on each worker), so amortized cost is
+    /// just the fill.
+    fn reset(&mut self, num_band_prod: usize) {
+        self.fc3_normal_squared.resize(num_band_prod, 0.0);
         self.fc3_normal_squared.fill(0.0);
+        self.g_buf.resize(2 * num_band_prod, 0.0);
         self.g_buf.fill(0.0);
+        self.g_zero.resize(num_band_prod, 0);
         self.g_zero.fill(0);
     }
+}
+
+thread_local! {
+    /// Per-rayon-worker persistent scratch.  `None` until first use on
+    /// each worker; populated lazily via `get_or_insert_with`.
+    static COLLISION_SCRATCH: RefCell<Option<CollisionScratch>> =
+        const { RefCell::new(None) };
+}
+
+/// Acquire the calling thread's `CollisionScratch`, run `f`, and
+/// release the borrow.  Panics if called recursively (which would
+/// indicate two collision kernels stacked on the same thread).
+fn with_scratch<F, R>(num_band_prod: usize, f: F) -> R
+where
+    F: FnOnce(&mut CollisionScratch) -> R,
+{
+    COLLISION_SCRATCH.with(|cell| {
+        let mut opt = cell.borrow_mut();
+        let scratch = opt.get_or_insert_with(CollisionScratch::default);
+        scratch.reset(num_band_prod);
+        f(scratch)
+    })
+}
+
+/// Release the per-rayon-worker `CollisionScratch` instances back to
+/// the allocator.  Visits every worker thread in the global rayon
+/// pool via `rayon::broadcast` and drops the held `Option<Scratch>`.
+///
+/// **Must not be called from inside a rayon parallel iterator** — it
+/// would deadlock waiting for workers that are themselves blocked
+/// inside the broadcast.  Intended to be called from Python after a
+/// collision kernel has returned, e.g. before LBTE's memory-heavy
+/// kappa-solve diagonalization, when the ~250 MiB-per-worker
+/// (num_patom = 56) scratch is no longer needed.  The next collision
+/// kernel will lazily re-allocate on first use.
+pub fn release_scratch() {
+    rayon::broadcast(|_ctx| {
+        COLLISION_SCRATCH.with(|cell| {
+            *cell.borrow_mut() = None;
+        });
+    });
 }
 
 /// Per-triplet evaluator: compute interaction, then imag-self-energy
@@ -77,6 +127,7 @@ fn evaluate_collision_at_triplet(
     symmetrize_fc3_q: bool,
     cutoff_frequency: f64,
     inner_par: bool,
+    interaction_scratch: &mut InteractionScratch,
 ) {
     let num_band_prod = num_band0 * num_band * num_band;
 
@@ -99,9 +150,13 @@ fn evaluate_collision_at_triplet(
         symmetrize_fc3_q,
         cutoff_frequency,
         inner_par,
+        interaction_scratch,
     );
 
-    let g_pos = set_g_pos(g_zero, num_band0, num_band);
+    // get_interaction_at_triplet has populated `interaction_scratch.g_pos`
+    // (writes via set_g_pos at entry, restores at exit).  Reuse it
+    // directly instead of re-running set_g_pos here.
+    let g_pos = interaction_scratch.g_pos.as_slice();
     let (g1, g2_3) = g_buf.split_at(num_band_prod);
 
     for (t, &temperature_thz) in temperatures_thz.iter().enumerate().take(num_temps) {
@@ -116,7 +171,7 @@ fn evaluate_collision_at_triplet(
             triplet_weight,
             g1,
             g2_3,
-            &g_pos,
+            g_pos,
             temperature_thz,
             cutoff_frequency,
             false,
@@ -213,7 +268,7 @@ pub fn get_pp_collision(
                    (i, ise_slot): (usize, &mut [f64])|
      -> Result<(), BzGridError> {
         let triplet = triplets[i];
-        scratch.reset();
+        // scratch already reset+sized by `with_scratch` wrapper.
         {
             let (g1_slot, g2_3_slot) = scratch.g_buf.split_at_mut(num_band_prod);
             let mut iw_ch: Vec<&mut [f64]> = vec![g1_slot, g2_3_slot];
@@ -256,6 +311,7 @@ pub fn get_pp_collision(
             symmetrize_fc3_q,
             cutoff_frequency,
             inner_par,
+            &mut scratch.interaction,
         );
         Ok(())
     };
@@ -263,7 +319,7 @@ pub fn get_pp_collision(
     ise_per_triplet
         .par_chunks_mut(per_triplet_stride)
         .enumerate()
-        .try_for_each_init(|| CollisionScratch::new(num_band_prod), run_one)?;
+        .try_for_each(|item| with_scratch(num_band_prod, |scratch| run_one(scratch, item)))?;
 
     finalize(
         collisions,
@@ -320,7 +376,7 @@ pub fn get_pp_collision_with_sigma(
 
     let run_one = |scratch: &mut CollisionScratch, (i, ise_slot): (usize, &mut [f64])| {
         let triplet = triplets[i];
-        scratch.reset();
+        // scratch already reset+sized by `with_scratch` wrapper.
         {
             let (g1_slot, g2_3_slot) = scratch.g_buf.split_at_mut(num_band_prod);
             let mut iw_ch: Vec<&mut [f64]> = vec![g1_slot, g2_3_slot];
@@ -361,13 +417,14 @@ pub fn get_pp_collision_with_sigma(
             symmetrize_fc3_q,
             cutoff_frequency,
             inner_par,
+            &mut scratch.interaction,
         );
     };
 
     ise_per_triplet
         .par_chunks_mut(per_triplet_stride)
         .enumerate()
-        .for_each_init(|| CollisionScratch::new(num_band_prod), run_one);
+        .for_each(|item| with_scratch(num_band_prod, |scratch| run_one(scratch, item)));
 
     finalize(
         collisions,
@@ -485,7 +542,7 @@ pub fn get_pp_collision_multi_gp(
      -> Result<(), BzGridError> {
         let (gp_idx, triplet, weight) = flat_work[flat_idx];
         let freqs_at_gp = &freqs_per_gp[gp_idx];
-        scratch.reset();
+        // scratch already reset+sized by `with_scratch` wrapper.
         {
             let (g1_slot, g2_3_slot) = scratch.g_buf.split_at_mut(num_band_prod);
             let mut iw_ch: Vec<&mut [f64]> = vec![g1_slot, g2_3_slot];
@@ -528,6 +585,7 @@ pub fn get_pp_collision_multi_gp(
             symmetrize_fc3_q,
             cutoff_frequency,
             false, // batched outer par saturates the pool; no inner par.
+            &mut scratch.interaction,
         );
         Ok(())
     };
@@ -535,7 +593,7 @@ pub fn get_pp_collision_multi_gp(
     ise_all
         .par_chunks_mut(per_triplet_stride)
         .enumerate()
-        .try_for_each_init(|| CollisionScratch::new(num_band_prod), run_one)?;
+        .try_for_each(|item| with_scratch(num_band_prod, |scratch| run_one(scratch, item)))?;
 
     // Per-gp finalize.  Sequential (cheap; finalize is a O(num_triplets *
     // per_triplet_stride) add-reduction, dwarfed by the kernel work).
@@ -633,7 +691,7 @@ pub fn get_pp_collision_with_sigma_multi_gp(
     let run_one = |scratch: &mut CollisionScratch, (flat_idx, ise_slot): (usize, &mut [f64])| {
         let (gp_idx, triplet, weight) = flat_work[flat_idx];
         let freqs_at_gp = &freqs_per_gp[gp_idx];
-        scratch.reset();
+        // scratch already reset+sized by `with_scratch` wrapper.
         {
             let (g1_slot, g2_3_slot) = scratch.g_buf.split_at_mut(num_band_prod);
             let mut iw_ch: Vec<&mut [f64]> = vec![g1_slot, g2_3_slot];
@@ -674,13 +732,14 @@ pub fn get_pp_collision_with_sigma_multi_gp(
             symmetrize_fc3_q,
             cutoff_frequency,
             false,
+            &mut scratch.interaction,
         );
     };
 
     ise_all
         .par_chunks_mut(per_triplet_stride)
         .enumerate()
-        .for_each_init(|| CollisionScratch::new(num_band_prod), run_one);
+        .for_each(|item| with_scratch(num_band_prod, |scratch| run_one(scratch, item)));
 
     let mut offset = 0usize;
     for g in 0..num_gps {

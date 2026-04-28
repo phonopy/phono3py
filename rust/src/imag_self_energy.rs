@@ -14,9 +14,16 @@ use crate::funcs::bose_einstein;
 
 /// Build the non-zero entries of `g_zero` as `(band0, j, k, flat_idx)`
 /// tuples.  `g_zero` is `(num_band0, num_band, num_band)` flat for
-/// the band-index mode.  Returns the positions where `g_zero[...] == 0`.
-pub(crate) fn set_g_pos(g_zero: &[i8], num_band0: usize, num_band: usize) -> Vec<[i64; 4]> {
-    let mut out = Vec::with_capacity(g_zero.len());
+/// the band-index mode.  Writes the positions where `g_zero[...] == 0`
+/// into `out`, preserving capacity for reuse across calls.
+pub(crate) fn set_g_pos(
+    out: &mut Vec<[i64; 4]>,
+    g_zero: &[i8],
+    num_band0: usize,
+    num_band: usize,
+) {
+    out.clear();
+    out.reserve(g_zero.len());
     let mut jkl: i64 = 0;
     for j in 0..num_band0 {
         for k in 0..num_band {
@@ -28,7 +35,6 @@ pub(crate) fn set_g_pos(g_zero: &[i8], num_band0: usize, num_band: usize) -> Vec
             }
         }
     }
-    out
 }
 
 /// Frequency-point mode variant.  `g_zero` here is
@@ -226,7 +232,9 @@ pub fn get_imag_self_energy_with_g(
             let g_pos = if at_a_frequency_point {
                 set_g_pos_at_frequency_point(gz, num_band0, num_band)
             } else {
-                set_g_pos(gz, num_band0, num_band)
+                let mut g_pos = Vec::new();
+                set_g_pos(&mut g_pos, gz, num_band0, num_band);
+                g_pos
             };
             imag_self_energy_at_triplet(
                 slot,
@@ -429,7 +437,8 @@ mod tests {
         // num_band0 = 1, num_band = 2, shape (1, 2, 2) = 4 entries.
         // g_zero = [0, 1, 0, 0] -> keep indices 0, 2, 3.
         let g_zero = vec![0i8, 1, 0, 0];
-        let pos = set_g_pos(&g_zero, 1, 2);
+        let mut pos = Vec::new();
+        set_g_pos(&mut pos, &g_zero, 1, 2);
         assert_eq!(pos.len(), 3);
         assert_eq!(pos[0], [0, 0, 0, 0]);
         assert_eq!(pos[1], [0, 1, 0, 2]);
