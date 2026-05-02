@@ -16,6 +16,14 @@ use crate::funcs::bose_einstein;
 /// tuples.  `g_zero` is `(num_band0, num_band, num_band)` flat for
 /// the band-index mode.  Writes the positions where `g_zero[...] == 0`
 /// into `out`, preserving capacity for reuse across calls.
+///
+/// Iteration order is `(band0, k, j)` so entries sharing the same
+/// `(band0, k)` pair are contiguous in `out`.  This lets
+/// `reciprocal_to_normal_squared` memoize the Phase 2a row-wise
+/// contraction once per `(band0, k)` group rather than per g_pos
+/// entry.  The pushed quadruple `[band0, j, k, flat_idx]` and the
+/// flat_idx layout (`band0 * num_band^2 + j * num_band + k`) are
+/// unchanged; only the visit order differs.
 pub(crate) fn set_g_pos(
     out: &mut Vec<[i64; 4]>,
     g_zero: &[i8],
@@ -24,14 +32,13 @@ pub(crate) fn set_g_pos(
 ) {
     out.clear();
     out.reserve(g_zero.len());
-    let mut jkl: i64 = 0;
-    for j in 0..num_band0 {
+    for b0 in 0..num_band0 {
         for k in 0..num_band {
-            for l in 0..num_band {
-                if g_zero[jkl as usize] == 0 {
-                    out.push([j as i64, k as i64, l as i64, jkl]);
+            for j in 0..num_band {
+                let jkl = b0 * num_band * num_band + j * num_band + k;
+                if g_zero[jkl] == 0 {
+                    out.push([b0 as i64, j as i64, k as i64, jkl as i64]);
                 }
-                jkl += 1;
             }
         }
     }
@@ -42,18 +49,19 @@ pub(crate) fn set_g_pos(
 /// fourth entry encodes the (band0, j, k) linear index as if `g_zero`
 /// were `(num_band0, num_band, num_band)`, matching the C layout used
 /// to index the `fc3_normal_squared` array downstream.
+///
+/// Iteration order is `(band0, k, j)` to match `set_g_pos` (entries
+/// sharing `(band0, k)` are contiguous).
 fn set_g_pos_at_frequency_point(g_zero: &[i8], num_band0: usize, num_band: usize) -> Vec<[i64; 4]> {
     let mut out = Vec::with_capacity(num_band0 * num_band * num_band);
-    let mut jkl: i64 = 0;
-    for j in 0..num_band0 {
-        let mut kl: usize = 0;
+    for b0 in 0..num_band0 {
         for k in 0..num_band {
-            for l in 0..num_band {
+            for j in 0..num_band {
+                let kl = j * num_band + k;
+                let jkl = b0 * num_band * num_band + kl;
                 if g_zero[kl] == 0 {
-                    out.push([j as i64, k as i64, l as i64, jkl]);
+                    out.push([b0 as i64, j as i64, k as i64, jkl as i64]);
                 }
-                jkl += 1;
-                kl += 1;
             }
         }
     }

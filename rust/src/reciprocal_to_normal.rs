@@ -193,36 +193,6 @@ fn cmplx_dot_partial4(a: &[Cmplx], b: &[Cmplx]) -> Cmplx {
     [re, im]
 }
 
-/// Inner contraction over `(bm, cn)` at a single `(j, k)` band pair.
-///
-/// `fc3_e0` is the `(num_band, num_band)` band-pair matrix produced by
-/// `contract_fc3_e0`.  Returns `|sum|^2` where
-/// `sum = sum over (bm, cn) of fc3_e0[bm, cn] * e1_band[bm] * e2_band[cn]`.
-///
-/// The reduction is split in two phases: first contract `cn` away
-/// into `scratch[bm]` as a row-wise dot product, then contract `bm`
-/// away into a scalar.  Each dot product is computed with
-/// `cmplx_dot_partial4` so the inner loop has four independent
-/// accumulator lanes.
-fn get_fc3_sum_atomwise(
-    fc3_e0: &[Cmplx],
-    e1_band: &[Cmplx],
-    e2_band: &[Cmplx],
-    scratch: &mut [Cmplx],
-) -> f64 {
-    let num_band = e1_band.len();
-    debug_assert_eq!(fc3_e0.len(), num_band * num_band);
-    debug_assert_eq!(e2_band.len(), num_band);
-    debug_assert_eq!(scratch.len(), num_band);
-
-    for bm in 0..num_band {
-        let row = &fc3_e0[bm * num_band..(bm + 1) * num_band];
-        scratch[bm] = cmplx_dot_partial4(row, e2_band);
-    }
-    let sum = cmplx_dot_partial4(scratch, e1_band);
-    sum[0] * sum[0] + sum[1] * sum[1]
-}
-
 /// Compute `|M|^2 / (f0 * f1 * f2)` for each `g_pos` entry.
 ///
 /// Inputs:
@@ -336,6 +306,19 @@ pub fn reciprocal_to_normal_squared(
     // (not Sync).
     let fc3_e0: &[Cmplx] = fc3_e0.as_slice();
 
+    // Phase 2a (`scratch[bm] = dot(fc3_e0[i0, bm, :], e2[k, :])`)
+    // depends on `(i0, k)` but not on the q1 band `j`, so g_pos
+    // entries that share the same `(i0, k)` can reuse one Phase 2a
+    // result and only differ in Phase 2b (`dot(scratch, e1[j, :])`).
+    // `set_g_pos` orders entries so each `(i0, k)` run is a
+    // contiguous slice of `g_pos`; `find_b0_q2_runs` scans for the
+    // run boundaries in a single linear pass.
+    //
+    // Empirical run length on NaMgF3 20-atom is ~4.2 entries on
+    // average (max ~38), so Phase 2a calls are reduced by roughly 4x
+    // versus the per-g_pos baseline.
+    let b0_q2_runs = find_b0_q2_runs(g_pos);
+
     if inner_par {
         // SAFETY: each g_pos entry writes to a distinct `dest` index in
         // fc3_normal_squared (the caller's contract: g_pos encodes a
@@ -344,55 +327,133 @@ pub fn reciprocal_to_normal_squared(
         // wrapper sidesteps the borrow checker's whole-slice &mut
         // uniqueness rule that par_iter on g_pos would otherwise break.
         let out_ptr = SyncMutPtr(fc3_normal_squared.as_mut_ptr());
-        g_pos.par_iter().for_each_init(
+        b0_q2_runs.par_iter().for_each_init(
             || vec![[0.0f64; 2]; num_band],
-            |row_scratch, gp| {
-                let i0 = gp[0] as usize;
-                let j = gp[1] as usize;
-                let k = gp[2] as usize;
-                let dest = gp[3] as usize;
-                let bi = band_indices[i0] as usize;
-                let val = if freqs0[bi] <= cutoff_frequency
-                    || freqs1[j] <= cutoff_frequency
-                    || freqs2[k] <= cutoff_frequency
-                {
-                    0.0
-                } else {
-                    let fc3_e0_entry = &fc3_e0[i0 * entry_size..(i0 + 1) * entry_size];
-                    let e1_band = &e1[j * num_band..(j + 1) * num_band];
-                    let e2_band = &e2[k * num_band..(k + 1) * num_band];
-                    let sq = get_fc3_sum_atomwise(fc3_e0_entry, e1_band, e2_band, row_scratch);
-                    sq / (freqs0[bi] * freqs1[j] * freqs2[k])
-                };
-                unsafe {
-                    out_ptr.write(dest, val);
-                }
+            |row_scratch, &(start, end)| {
+                eval_v_squared_at_b0_q2(
+                    row_scratch,
+                    &g_pos[start..end],
+                    fc3_e0,
+                    e1,
+                    e2,
+                    freqs0,
+                    freqs1,
+                    freqs2,
+                    band_indices,
+                    num_band,
+                    entry_size,
+                    cutoff_frequency,
+                    |dest, val| unsafe { out_ptr.write(dest, val) },
+                );
             },
         );
     } else {
-        // Phase 2 row buffer for get_fc3_sum_atomwise; reused across
-        // calls via the caller-provided scratch.
+        // Phase 2a row buffer; reused across `(i0, k)` runs via the
+        // caller-provided scratch.
         row.resize(num_band, [0.0f64; 2]);
-        for gp in g_pos {
-            let i0 = gp[0] as usize;
-            let j = gp[1] as usize;
-            let k = gp[2] as usize;
-            let dest = gp[3] as usize;
-            let bi = band_indices[i0] as usize;
-            let val = if freqs0[bi] <= cutoff_frequency
-                || freqs1[j] <= cutoff_frequency
-                || freqs2[k] <= cutoff_frequency
-            {
-                0.0
-            } else {
-                let fc3_e0_entry = &fc3_e0[i0 * entry_size..(i0 + 1) * entry_size];
-                let e1_band = &e1[j * num_band..(j + 1) * num_band];
-                let e2_band = &e2[k * num_band..(k + 1) * num_band];
-                let sq = get_fc3_sum_atomwise(fc3_e0_entry, e1_band, e2_band, row);
-                sq / (freqs0[bi] * freqs1[j] * freqs2[k])
-            };
-            fc3_normal_squared[dest] = val;
+        for &(start, end) in &b0_q2_runs {
+            eval_v_squared_at_b0_q2(
+                row,
+                &g_pos[start..end],
+                fc3_e0,
+                e1,
+                e2,
+                freqs0,
+                freqs1,
+                freqs2,
+                band_indices,
+                num_band,
+                entry_size,
+                cutoff_frequency,
+                |dest, val| fc3_normal_squared[dest] = val,
+            );
         }
+    }
+}
+
+/// Scan `g_pos` for runs of consecutive entries sharing the same
+/// `(i0, k)` = `(gp[0], gp[2])` pair.  Returns one `(start, end)` per
+/// run, where `g_pos[start..end]` is the contiguous slice.  Relies on
+/// `set_g_pos` ordering entries so each `(i0, k)` pair forms a single
+/// contiguous run.
+fn find_b0_q2_runs(g_pos: &[[i64; 4]]) -> Vec<(usize, usize)> {
+    let mut runs = Vec::with_capacity(g_pos.len() / 4 + 1);
+    if g_pos.is_empty() {
+        return runs;
+    }
+    let mut start = 0usize;
+    for i in 1..g_pos.len() {
+        if g_pos[i][0] != g_pos[start][0] || g_pos[i][2] != g_pos[start][2] {
+            runs.push((start, i));
+            start = i;
+        }
+    }
+    runs.push((start, g_pos.len()));
+    runs
+}
+
+/// Evaluate `|V|^2 / (f0 f1 f2)` for the `q1`-fan at fixed
+/// `(b0, q2_band) = (entries[0][0], entries[0][2])`.  All `entries`
+/// must share the same `(b0, q2_band)`; only the `q1_band` index
+/// `entries[i][1]` varies.
+///
+/// `row_scratch` (length `num_band`) caches Phase 2a
+/// (`scratch[bm] = dot(fc3_e0[b0, bm, :], e2[q2_band, :])`).  This is
+/// computed once for the whole call and reused across all entries;
+/// each entry then evaluates Phase 2b
+/// (`|dot(scratch, e1[q1_band, :])|^2 / (f0 f1 f2)`).
+///
+/// `write` receives `(dest, val)` per entry — the sequential path
+/// writes into a `&mut [f64]` slice directly; the parallel path
+/// writes through a `SyncMutPtr` to bypass the borrow checker.
+#[allow(clippy::too_many_arguments)]
+#[inline]
+fn eval_v_squared_at_b0_q2<W: FnMut(usize, f64)>(
+    row_scratch: &mut Vec<Cmplx>,
+    entries: &[[i64; 4]],
+    fc3_e0: &[Cmplx],
+    e1: &[Cmplx],
+    e2: &[Cmplx],
+    freqs0: &[f64],
+    freqs1: &[f64],
+    freqs2: &[f64],
+    band_indices: &[i64],
+    num_band: usize,
+    entry_size: usize,
+    cutoff_frequency: f64,
+    mut write: W,
+) {
+    let first = entries[0];
+    let i0 = first[0] as usize;
+    let k = first[2] as usize;
+    let bi = band_indices[i0] as usize;
+    let f0 = freqs0[bi];
+    let f2 = freqs2[k];
+    row_scratch.resize(num_band, [0.0f64; 2]);
+
+    // Phase 2a: row-wise dot fc3_e0[i0, bm, :] . e2[k, :], once for
+    // the whole (i0, k) call.
+    let fc3_e0_entry = &fc3_e0[i0 * entry_size..(i0 + 1) * entry_size];
+    let e2_band = &e2[k * num_band..(k + 1) * num_band];
+    for (bm, slot) in row_scratch.iter_mut().enumerate() {
+        let row = &fc3_e0_entry[bm * num_band..(bm + 1) * num_band];
+        *slot = cmplx_dot_partial4(row, e2_band);
+    }
+
+    // Phase 2b per entry.  f0 and f2 are call-invariant; only f1
+    // (and the cutoff branch on it) varies with the q1 band j.
+    for gp in entries {
+        let j = gp[1] as usize;
+        let dest = gp[3] as usize;
+        let f1 = freqs1[j];
+        let val = if f0 <= cutoff_frequency || f1 <= cutoff_frequency || f2 <= cutoff_frequency {
+            0.0
+        } else {
+            let e1_band = &e1[j * num_band..(j + 1) * num_band];
+            let sum = cmplx_dot_partial4(row_scratch, e1_band);
+            (sum[0] * sum[0] + sum[1] * sum[1]) / (f0 * f1 * f2)
+        };
+        write(dest, val);
     }
 }
 
