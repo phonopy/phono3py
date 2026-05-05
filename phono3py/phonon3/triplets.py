@@ -218,9 +218,9 @@ def get_triplets_integration_weights(
                 cutoff = float(sigma_cutoff)
             # cutoff < 0 disables g_zero feature.
             if lang == "Rust":
-                import phono3py_rs
+                import phonors
 
-                phono3py_rs.triplets_integration_weights_with_sigma(
+                phonors.triplets_integration_weights_with_sigma(
                     g, g_zero, frequency_points, triplets, frequencies, sigma, cutoff
                 )
             else:
@@ -309,9 +309,9 @@ def _get_triplets_reciprocal_mesh_at_q(
 
     """
     if lang == "Rust":
-        import phono3py_rs
+        import phonors
 
-        map_triplets, map_q, num_triplets = phono3py_rs.ir_triplets_at_q(
+        map_triplets, map_q, num_triplets = phonors.ir_triplets_at_q(
             fixed_grid_number,
             np.array(D_diag, dtype="int64"),
             np.array(rec_rotations, dtype="int64", order="C"),
@@ -388,9 +388,9 @@ def _get_BZ_triplets_at_q(
         bz_grid.reciprocal_lattice
     )
     if lang == "Rust":
-        import phono3py_rs
+        import phonors
 
-        triplets = phono3py_rs.bz_triplets_at_q(
+        triplets = phonors.bz_triplets_at_q(
             bz_grid_index,
             bz_grid.addresses,
             bz_grid.gp_map,
@@ -454,12 +454,12 @@ def _set_triplets_integration_weights_rust(
     pp: Interaction | JointDos,
     frequency_points: NDArray[np.double],
 ) -> None:
-    import phono3py_rs
+    import phonors
 
     tetrahedra = get_tetrahedra_relative_grid_address(pp.bz_grid.microzone_lattice)
     triplets_at_q = pp.get_triplets_at_q()[0]
     frequencies = pp.get_phonons()[0]
-    phono3py_rs.triplets_integration_weights(
+    phonors.triplets_integration_weights(
         g,
         g_zero,
         frequency_points,  # f0

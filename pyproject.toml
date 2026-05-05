@@ -21,6 +21,9 @@ dependencies = [
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
 
+[project.optional-dependencies]
+rust = ["phonors>=0.1,<0.2"]
+
 [project.urls]
 Homepage = "https://phonopy.github.io/phono3py/"
 Repository = "https://github.com/phonopy/phono3py"

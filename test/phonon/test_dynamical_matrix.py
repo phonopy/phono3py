@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix
 
-phono3py_rs = pytest.importorskip("phono3py_rs")
+phonors = pytest.importorskip("phonors")
 
 
 def _extract_inputs(dm: DynamicalMatrix):
@@ -44,7 +44,7 @@ def _rust_dm(dm: DynamicalMatrix, q: Sequence[float]) -> np.ndarray:
     fc, svecs, multi, masses, fc_s2p, fc_p2s = _extract_inputs(dm)
     num_band = len(fc_p2s) * 3
     out = np.zeros((num_band, num_band), dtype="complex128")
-    phono3py_rs.dynamical_matrix_at_q(
+    phonors.dynamical_matrix_at_q(
         out,
         fc,
         np.ascontiguousarray(q, dtype="double"),
@@ -153,7 +153,7 @@ def test_recip_dipole_dipole_matches_phonopy(nacl_dm_gl, q: list[float]) -> None
     dd = np.zeros((num_atom, 3, num_atom, 3), dtype="cdouble", order="C")
     volume = nacl_dm_gl.primitive.volume
     factor = nacl_dm_gl._unit_conversion * 4.0 * np.pi / volume
-    phono3py_rs.recip_dipole_dipole(
+    phonors.recip_dipole_dipole(
         dd,
         np.ascontiguousarray(nacl_dm_gl._dd_q0, dtype="cdouble"),
         np.ascontiguousarray(nacl_dm_gl._G_list, dtype="double"),
@@ -174,7 +174,7 @@ def test_recip_dipole_dipole_q0_matches_phonopy(nacl_dm_gl) -> None:
     """Rust dd_q0 equals phonopy's C-side dd_q0 to machine precision."""
     pos = np.ascontiguousarray(nacl_dm_gl.primitive.positions, dtype="double")
     dd_q0 = np.zeros((len(pos), 3, 3), dtype="cdouble", order="C")
-    phono3py_rs.recip_dipole_dipole_q0(
+    phonors.recip_dipole_dipole_q0(
         dd_q0,
         np.ascontiguousarray(nacl_dm_gl._G_list, dtype="double"),
         np.ascontiguousarray(nacl_dm_gl._born, dtype="double"),
@@ -250,7 +250,7 @@ def test_dynamical_matrices_at_gridpoints_no_nac_matches_phonopy(si_pbesol) -> N
 
     dynmats = np.zeros((num_phonons, num_band, num_band), dtype="cdouble")
     undone = np.arange(num_phonons, dtype="int64")
-    phono3py_rs.dynamical_matrices_at_gridpoints(
+    phonors.dynamical_matrices_at_gridpoints(
         dynmats,
         undone,
         inp["grid_address"],
@@ -290,7 +290,7 @@ def test_dynamical_matrices_at_gridpoints_gonze_matches_phonopy(
 
     dynmats = np.zeros((num_phonons, num_band, num_band), dtype="cdouble")
     undone = np.arange(num_phonons, dtype="int64")
-    phono3py_rs.dynamical_matrices_at_gridpoints_gonze(
+    phonors.dynamical_matrices_at_gridpoints_gonze(
         dynmats,
         undone,
         inp["grid_address"],
@@ -323,6 +323,6 @@ def test_charge_sum_matches_reference(seed: int) -> None:
     q_cart = np.ascontiguousarray(rng.standard_normal(3))
     factor = 0.7
     out = np.zeros((num_patom, num_patom, 3, 3), dtype="double")
-    phono3py_rs.charge_sum(out, factor, q_cart, born)
+    phonors.charge_sum(out, factor, q_cart, born)
     ref = _ref_charge_sum(factor, q_cart, born)
     np.testing.assert_allclose(out, ref, atol=1e-15, rtol=1e-15)

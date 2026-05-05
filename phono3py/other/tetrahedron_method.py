@@ -92,9 +92,9 @@ def get_unique_grid_points(
         bz_grid.store_dense_gp_map * 1 + 1,
     )
     if lang == "Rust":
-        import phono3py_rs  # type: ignore[import-untyped]
+        import phonors  # type: ignore[import-untyped]
 
-        phono3py_rs.neighboring_grid_points(*args)
+        phonors.neighboring_grid_points(*args)
     else:
         import phono3py._phono3py as phono3c  # type: ignore
 
@@ -189,9 +189,9 @@ def get_integration_weights(
         function,
     )
     if lang == "Rust":
-        import phono3py_rs  # type: ignore[import-untyped]
+        import phonors  # type: ignore[import-untyped]
 
-        phono3py_rs.integration_weights_at_grid_points(*args)
+        phonors.integration_weights_at_grid_points(*args)
     else:
         import phono3py._phono3py as phono3c  # type: ignore
 
@@ -217,9 +217,9 @@ def get_tetrahedra_relative_grid_address(
     lattice = np.array(microzone_lattice, dtype="double", order="C")
 
     if lang == "Rust":
-        import phono3py_rs  # type: ignore[import-untyped]
+        import phonors  # type: ignore[import-untyped]
 
-        phono3py_rs.tetrahedra_relative_grid_address(relative_grid_address, lattice)
+        phonors.tetrahedra_relative_grid_address(relative_grid_address, lattice)
         return relative_grid_address
 
     import phono3py._phono3py as phono3c  # type: ignore

@@ -215,7 +215,7 @@ class BZGrid:
             Default is True.
         lang : {"C", "Rust"}, optional
             Backend selector for grid-related native routines. "C" uses
-            ``phono3py._recgrid``; "Rust" uses ``phono3py_rs``. Default is
+            ``phono3py._recgrid``; "Rust" uses ``phonors``. Default is
             "C".
 
         """
@@ -535,9 +535,9 @@ class BZGrid:
             self._symmetry_dataset.rotations, dtype="int64"
         )
         if self._lang == "Rust":
-            import phono3py_rs
+            import phonors
 
-            rec_ops = phono3py_rs.reciprocal_rotations(
+            rec_ops = phonors.reciprocal_rotations(
                 direct_rotations, bool(self._is_time_reversal)
             )
         else:
@@ -568,10 +568,10 @@ class BZGrid:
         d_diag = np.ascontiguousarray(self._D_diag, dtype="int64")
         q = np.ascontiguousarray(self._Q, dtype="int64")
         if self._lang == "Rust":
-            import phono3py_rs
+            import phonors
 
             return np.ascontiguousarray(
-                phono3py_rs.transform_rotations(rots, d_diag, q), dtype="int64"
+                phonors.transform_rotations(rots, d_diag, q), dtype="int64"
             )
 
         import phono3py._recgrid as recgrid  # type: ignore[import-untyped]
@@ -643,7 +643,7 @@ class GridMatrix:
             is `reciprocal`.
         lang : {"C", "Rust"}, optional
             Backend selector for SNF. "C" uses ``phono3py._recgrid``; "Rust"
-            uses ``phono3py_rs``. Default is "C".
+            uses ``phonors``. Default is "C".
 
         """
         from phono3py._lang import log_dispatch
@@ -841,10 +841,10 @@ class GridMatrix:
         else:
             A = np.ascontiguousarray(_grid_matrix, dtype="int64")
             if self._lang == "Rust":
-                import phono3py_rs
+                import phonors
 
                 try:
-                    d_diag, p, q = phono3py_rs.snf3x3(A)
+                    d_diag, p, q = phonors.snf3x3(A)
                 except (ValueError, RuntimeError) as exc:
                     msg = "SNF3x3 failed."
                     raise RuntimeError(msg) from exc
@@ -1013,7 +1013,7 @@ def get_grid_point_from_address(
         shape=(3,), dtype='int64'
     lang : {"C", "Rust"}
         Backend selector. "C" uses ``phono3py._recgrid``; "Rust" uses
-        ``phono3py_rs``. Default is "C".
+        ``phonors``. Default is "C".
 
     Returns
     -------
@@ -1027,7 +1027,7 @@ def get_grid_point_from_address(
 
     """
     if lang == "Rust":
-        import phono3py_rs as backend
+        import phonors as backend
     else:
         import phono3py._recgrid as backend  # type: ignore[import-untyped,no-redef]
 
@@ -1147,7 +1147,7 @@ def _get_grid_points_by_bz_rotations(
     """Grid point rotations with surface treatment.
 
     ``lang="C"`` dispatches to the C extension backend,
-    ``lang="Rust"`` to ``phono3py_rs``, and ``lang="Python"`` uses the
+    ``lang="Rust"`` to ``phonors``, and ``lang="Python"`` uses the
     pure-Python reference implementation.
 
     """
@@ -1163,7 +1163,7 @@ def _get_grid_points_by_bz_rotations_c(
     lang: Literal["C", "Rust"] = "C",
 ) -> NDArray[np.int64]:
     if lang == "Rust":
-        import phono3py_rs as backend
+        import phonors as backend
     else:
         import phono3py._recgrid as backend  # type: ignore[import-untyped,no-redef]
 
@@ -1257,9 +1257,9 @@ def _get_grid_address(
     """
     d_diag = np.ascontiguousarray(D_diag, dtype="int64")
     if lang == "Rust":
-        import phono3py_rs
+        import phonors
 
-        return np.asarray(phono3py_rs.gr_grid_addresses(d_diag), dtype="int64")
+        return np.asarray(phonors.gr_grid_addresses(d_diag), dtype="int64")
 
     import phono3py._recgrid as recgrid  # type: ignore[import-untyped]
 
@@ -1343,9 +1343,9 @@ def _relocate_BZ_grid_address(
     bz_grid_type = int(store_dense_gp_map) + 1
 
     if lang == "Rust":
-        import phono3py_rs
+        import phonors
 
-        addresses, bz_map, bzg2grg = phono3py_rs.bz_grid_addresses(
+        addresses, bz_map, bzg2grg = phonors.bz_grid_addresses(
             d_diag, q_eff, ps, rec, bz_grid_type
         )
         bz_grid_addresses = np.ascontiguousarray(addresses, dtype="int64")
@@ -1451,9 +1451,9 @@ def _get_ir_grid_map(
     rots = np.ascontiguousarray(grg_rotations, dtype="int64")
 
     if lang == "Rust":
-        import phono3py_rs
+        import phonors
 
-        map_vec, num_ir = phono3py_rs.ir_grid_map(rots, d_diag, ps)
+        map_vec, num_ir = phonors.ir_grid_map(rots, d_diag, ps)
         if num_ir > 0:
             return np.asarray(map_vec, dtype="int64")
         raise RuntimeError("_get_ir_grid_map failed to find ir-grid-points.")

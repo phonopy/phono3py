@@ -131,7 +131,7 @@ def test_reciprocal_to_normal_cutoff(si_pbesol: Phono3py):
 
 def test_reciprocal_to_normal_rust_vs_python(si_pbesol: Phono3py):
     """Rust |fc3_normal|^2 / (f0*f1*f2) matches the Python reference."""
-    pytest.importorskip("phono3py_rs")
+    pytest.importorskip("phonors")
 
     itr = _get_interaction(si_pbesol, [4, 4, 4])
     itr.set_grid_point(1)

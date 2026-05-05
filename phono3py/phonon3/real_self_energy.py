@@ -285,7 +285,7 @@ class RealSelfEnergy:
         )
 
     def _run_rust_with_band_indices(self) -> None:
-        import phono3py_rs  # type: ignore
+        import phonors  # type: ignore
 
         assert self._real_self_energies is not None
         assert self._pp_strength is not None
@@ -294,7 +294,7 @@ class RealSelfEnergy:
         assert self._frequencies is not None
         assert self._band_indices is not None
         assert self._temperature is not None
-        phono3py_rs.real_self_energy_at_bands(
+        phonors.real_self_energy_at_bands(
             self._real_self_energies,
             self._pp_strength,
             self._triplets_at_q,
@@ -363,7 +363,7 @@ class RealSelfEnergy:
             self._real_self_energies[i][:] = shifts
 
     def _run_rust_with_frequency_points(self) -> None:
-        import phono3py_rs  # type: ignore
+        import phonors  # type: ignore
 
         assert self._frequency_points is not None
         assert self._real_self_energies is not None
@@ -375,7 +375,7 @@ class RealSelfEnergy:
         assert self._temperature is not None
         for i, fpoint in enumerate(self._frequency_points):
             shifts = np.zeros(self._real_self_energies.shape[1], dtype="double")
-            phono3py_rs.real_self_energy_at_frequency_point(
+            phonors.real_self_energy_at_frequency_point(
                 shifts,
                 float(fpoint),
                 self._pp_strength,

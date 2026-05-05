@@ -51,11 +51,11 @@ def run_pp_collision_rust(
     ``(2, num_temps, num_band0)`` when ``is_N_U`` is True.
 
     """
-    import phono3py_rs
+    import phonors
 
     is_compact_fc3 = fc3.shape[0] != fc3.shape[1]
 
-    phono3py_rs.pp_collision(
+    phonors.pp_collision(
         collisions,
         np.ascontiguousarray(relative_grid_address, dtype="int64"),
         np.ascontiguousarray(frequencies, dtype="double"),
@@ -118,11 +118,11 @@ def run_pp_collision_with_sigma_rust(
     optimisation (matches the C backend).
 
     """
-    import phono3py_rs
+    import phonors
 
     is_compact_fc3 = fc3.shape[0] != fc3.shape[1]
 
-    phono3py_rs.pp_collision_with_sigma(
+    phonors.pp_collision_with_sigma(
         collisions,
         float(sigma),
         float(sigma_cutoff),
@@ -203,11 +203,11 @@ def run_collision_at_grid_points_batched_rust(
     path for that slot; finite values pick Gaussian smearing.
 
     """
-    import phono3py_rs
+    import phonors
 
     is_compact_fc3 = fc3.shape[0] != fc3.shape[1]
 
-    phono3py_rs.collision_at_grid_points_batched(
+    phonors.collision_at_grid_points_batched(
         collisions,
         np.ascontiguousarray(grid_points, dtype="int64"),
         np.ascontiguousarray(sigmas, dtype="double"),
@@ -293,11 +293,11 @@ def run_collision_at_grid_point_rust(
     ``sigma_cutoffs[i]`` (``<= 0`` disables cutoff-skip, matching C).
 
     """
-    import phono3py_rs
+    import phonors
 
     is_compact_fc3 = fc3.shape[0] != fc3.shape[1]
 
-    phono3py_rs.collision_at_grid_point(
+    phonors.collision_at_grid_point(
         collisions,
         int(grid_point),
         np.ascontiguousarray(sigmas, dtype="double"),

@@ -14,7 +14,7 @@ from phono3py import Phono3py
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.real_to_reciprocal import run_real_to_reciprocal_rust
 
-pytest.importorskip("phono3py_rs")
+pytest.importorskip("phonors")
 
 
 def _make_itr(ph3: Phono3py, mesh=(4, 4, 4)) -> Interaction:

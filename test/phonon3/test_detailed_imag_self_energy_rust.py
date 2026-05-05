@@ -9,7 +9,7 @@ from phono3py.phonon3.imag_self_energy import (
     run_detailed_imag_self_energy_with_g_rust,
 )
 
-pytest.importorskip("phono3py_rs")
+pytest.importorskip("phonors")
 
 
 def _random_inputs(

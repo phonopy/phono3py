@@ -5,8 +5,10 @@
 The computationally heavy parts of phono3py have been implemented as C extension
 modules called from Python through the Python/C API. An alternative Rust
 implementation is now available experimentally. The Rust path is distributed as
-a separate Python extension module, `phono3py_rs`, built with
-[maturin](https://www.maturin.rs/) and [PyO3](https://pyo3.rs/). It is
+a separate Python extension module, `phonors`, maintained in its own
+top-level repository at
+[github.com/phonopy/phonors](https://github.com/phonopy/phonors) and built
+with [maturin](https://www.maturin.rs/) and [PyO3](https://pyo3.rs/). It is
 experimental: behaviour is validated against the C path by the regression tests
 under `test/`, but the C extension remains the default and both paths are kept
 in the source tree for cross-checking.
@@ -19,7 +21,9 @@ in the source tree for cross-checking.
 ## Installation
 
 The Rust backend is not bundled with the standard phono3py wheel and conda
-package. It has to be built from the source tree under `rust/`.
+package. It is installed as the separate `phonors` package, which has to
+be built from a clone of the
+[phonors repository](https://github.com/phonopy/phonors).
 
 ### Requirements
 
@@ -34,21 +38,22 @@ package. It has to be built from the source tree under `rust/`.
 
 ### Build and install
 
-Build the `phono3py_rs` extension in editable mode with `maturin
-develop`:
+Clone the `phonors` repository alongside phono3py and build the
+extension in editable mode with `maturin develop`:
 
 ```bash
-% cd rust
+% git clone https://github.com/phonopy/phonors.git
+% cd phonors
 % maturin develop --release
 ```
 
 After a successful build, the module should import from any Python process
 
 ```python
-import phono3py_rs
+import phonors
 ```
 
-The phono3py Python layer imports `phono3py_rs` lazily and only when
+The phono3py Python layer imports `phonors` lazily and only when
 the Rust backend is selected, so installations without the extension
 continue to work on the C path.
 
@@ -66,7 +71,7 @@ instruction set can recover a few percent of wall-clock:
 
 ## Usage
 
-Once `phono3py_rs` is installed, the Rust backend is selected through
+Once `phonors` is installed, the Rust backend is selected through
 the `--rust` flag on the command line or the `lang` keyword on the
 Python API. The C backend remains the default.
 
@@ -195,7 +200,7 @@ backend:
 ### Known limitations
 
 - **Force constants.** A Rust implementation of the fc3 kernel exists
-  in `phono3py_rs`, but `Phono3py.produce_fc3` still runs on the C /
+  in `phonors`, but `Phono3py.produce_fc3` still runs on the C /
   Python path because it goes through phonopy's `FCSolver`, whose
   signature does not yet accept a `lang` hint. The `lang` parameter
   therefore does not yet reach this step.

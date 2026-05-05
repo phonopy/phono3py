@@ -8,7 +8,7 @@ import pytest
 from phono3py import Phono3py
 from phono3py.phonon3.interaction import Interaction, run_interaction_rust
 
-pytest.importorskip("phono3py_rs")
+pytest.importorskip("phonors")
 
 
 def _make_interaction(
