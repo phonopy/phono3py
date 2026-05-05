@@ -363,7 +363,7 @@ def test_distribute_fc3_rust_vs_c():
     with both backends and require exact (bit-equal) agreement.
 
     """
-    pytest.importorskip("phono3py_rs")
+    pytest.importorskip("phonors")
 
     n_satom = 4
     rng = np.random.default_rng(42)
@@ -410,7 +410,7 @@ def test_distribute_fc3_rust_vs_c_rotated_lattice():
     identity / swap permutations).
 
     """
-    pytest.importorskip("phono3py_rs")
+    pytest.importorskip("phonors")
 
     n_satom = 2
     rng = np.random.default_rng(7)
@@ -445,7 +445,7 @@ def test_set_translational_invariance_compact_fc3_rust_vs_c(si_pbesol: Phono3py)
     transpose kernel is exercised against genuine symmetry tables.
 
     """
-    pytest.importorskip("phono3py_rs")
+    pytest.importorskip("phonors")
 
     assert si_pbesol.fc3 is not None
     # Emulate compact fc3 by contracting the first axis to primitive atoms.
@@ -463,7 +463,7 @@ def test_set_translational_invariance_compact_fc3_rust_vs_c(si_pbesol: Phono3py)
 
 def test_get_drift_fc3_compact_rust_vs_c(si_pbesol: Phono3py):
     """Compare lang='Rust' and C paths of get_drift_fc3 on a compact fc3."""
-    pytest.importorskip("phono3py_rs")
+    pytest.importorskip("phonors")
 
     assert si_pbesol.fc3 is not None
     primitive = si_pbesol.primitive
@@ -483,7 +483,7 @@ def test_get_drift_fc3_compact_rust_vs_c(si_pbesol: Phono3py):
 
 def test_set_permutation_symmetry_compact_fc3_rust_vs_c(si_pbesol: Phono3py):
     """Compare lang='Rust' and C paths of set_permutation_symmetry_compact_fc3."""
-    pytest.importorskip("phono3py_rs")
+    pytest.importorskip("phonors")
 
     assert si_pbesol.fc3 is not None
     primitive = si_pbesol.primitive
@@ -505,7 +505,7 @@ def test_get_fc3_rust_vs_c(si_pbesol_111: Phono3py):
     release builds, so use a tight tolerance instead of bit-equal.
 
     """
-    pytest.importorskip("phono3py_rs")
+    pytest.importorskip("phonors")
 
     ph = si_pbesol_111
     _, fc3_c = get_fc3(
@@ -533,7 +533,7 @@ def test_set_permutation_symmetry_fc3_rust_vs_c():
     C must produce bit-identical output.
 
     """
-    pytest.importorskip("phono3py_rs")
+    pytest.importorskip("phonors")
 
     num_atom = 5
     rng = np.random.default_rng(2024)

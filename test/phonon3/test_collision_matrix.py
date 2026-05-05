@@ -10,7 +10,7 @@ from phono3py import Phono3py
 from phono3py.phonon3.collision_matrix import CollisionMatrix
 from phono3py.phonon3.interaction import Interaction
 
-_HAS_RUST = importlib.util.find_spec("phono3py_rs") is not None
+_HAS_RUST = importlib.util.find_spec("phonors") is not None
 _LANGS: tuple[str, ...] = ("C", "Python", "Rust") if _HAS_RUST else ("C", "Python")
 
 

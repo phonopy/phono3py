@@ -13,7 +13,7 @@ import pytest
 
 from phono3py import Phono3py, Phono3pyIsotope
 
-pytest.importorskip("phono3py_rs")
+pytest.importorskip("phonors")
 
 
 def _build_iso(

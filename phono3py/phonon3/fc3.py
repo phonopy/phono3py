@@ -244,9 +244,9 @@ def distribute_fc3(
             sys.stdout.flush()
 
         if lang == "Rust":
-            import phono3py_rs  # type: ignore[import-untyped]
+            import phonors  # type: ignore[import-untyped]
 
-            phono3py_rs.distribute_fc3(
+            phonors.distribute_fc3(
                 fc3, s2compact[i_target], s2compact[i_done], atom_mapping, rot_cart_inv
             )
             continue
@@ -274,9 +274,9 @@ def set_permutation_symmetry_fc3(
 ) -> None:
     """Enforce permutation symmetry to full fc3."""
     if lang == "Rust":
-        import phono3py_rs  # type: ignore[import-untyped]
+        import phonors  # type: ignore[import-untyped]
 
-        phono3py_rs.permutation_symmetry_fc3(fc3)
+        phonors.permutation_symmetry_fc3(fc3)
         return
 
     try:
@@ -306,9 +306,9 @@ def set_permutation_symmetry_compact_fc3(
     s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map, p2p_map, permutations)
 
     if lang == "Rust":
-        import phono3py_rs  # type: ignore[import-untyped]
+        import phonors  # type: ignore[import-untyped]
 
-        phono3py_rs.permutation_symmetry_compact_fc3(
+        phonors.permutation_symmetry_compact_fc3(
             fc3, permutations, s2pp_map, p2s_map, nsym_list
         )
         return
@@ -374,9 +374,9 @@ def set_translational_invariance_compact_fc3(
     s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map, p2p_map, permutations)
 
     if lang == "Rust":
-        import phono3py_rs  # type: ignore[import-untyped]
+        import phonors  # type: ignore[import-untyped]
 
-        transpose = phono3py_rs.transpose_compact_fc3
+        transpose = phonors.transpose_compact_fc3
     else:
         try:
             import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
@@ -571,11 +571,9 @@ def _solve_fc3(
     logger.debug("rotate_delta_fc2s")
 
     if lang == "Rust":
-        import phono3py_rs  # type: ignore[import-untyped]
+        import phonors  # type: ignore[import-untyped]
 
-        phono3py_rs.rotate_delta_fc2s(
-            fc3, delta_fc2s, inv_U, site_sym_cart, rot_map_syms
-        )
+        phonors.rotate_delta_fc2s(fc3, delta_fc2s, inv_U, site_sym_cart, rot_map_syms)
         return fc3
 
     try:
@@ -712,9 +710,9 @@ def get_drift_fc3(
         xyz2 = [0, 0, 0]
         xyz3 = [0, 0, 0]
         if lang == "Rust":
-            import phono3py_rs  # type: ignore[import-untyped]
+            import phonors  # type: ignore[import-untyped]
 
-            transpose = phono3py_rs.transpose_compact_fc3
+            transpose = phonors.transpose_compact_fc3
         else:
             try:
                 import phono3py._phono3py as phono3c  # type: ignore[import-untyped]

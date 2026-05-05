@@ -58,13 +58,13 @@ def run_interaction_rust(
     factor, matching the existing ``Interaction._run_c`` convention.
 
     """
-    import phono3py_rs
+    import phonors
 
     # ``phono3c.interaction`` derives ``is_compact_fc3`` from
     # ``fc3.shape[0] == fc3.shape[1]``; do the same here.
     is_compact_fc3 = fc3.shape[0] != fc3.shape[1]
 
-    phono3py_rs.interaction(
+    phonors.interaction(
         interaction_strength,
         np.ascontiguousarray(g_zero, dtype="byte"),
         np.ascontiguousarray(frequencies, dtype="double"),

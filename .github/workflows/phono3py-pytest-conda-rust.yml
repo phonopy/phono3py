@@ -42,20 +42,22 @@ jobs:
         cd phonopy
         pip install -e . -vvv
         cd ..
-    - name: Build and install phono3py_rs
+    - name: Clone phonors repository
+      run: |
+        git clone --depth 1 https://github.com/phonopy/phonors.git ../phonors
+    - name: Build and install phonors
       run: |
         conda activate test
-        cd rust
+        cd ../phonors
         maturin develop --release
-        cd ..
     - name: Install phono3py
       run: |
         conda activate test
         pip install -e . -vvv
-    - name: Verify phono3py_rs import
+    - name: Verify phonors import
       run: |
         conda activate test
-        python -c "import phono3py_rs; print('phono3py_rs import OK')"
+        python -c "import phonors; print('phonors import OK')"
     - name: Run Rust parity tests
       env:
         PHONO3PY_TRACE_LANG: "1"

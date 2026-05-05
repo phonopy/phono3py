@@ -63,7 +63,7 @@ def run_real_to_reciprocal_rust(
     ``fc3.shape[:3]``, both ``byte``.
 
     """
-    import phono3py_rs
+    import phonors
 
     svecs, multi = primitive.get_smallest_vectors()
     p2s = np.asarray(primitive.p2s_map, dtype="int64")
@@ -75,7 +75,7 @@ def run_real_to_reciprocal_rust(
         (num_patom, num_patom, num_patom, 3, 3, 3), dtype="complex128"
     )
 
-    phono3py_rs.real_to_reciprocal(
+    phonors.real_to_reciprocal(
         fc3_reciprocal,
         q_vecs,
         np.ascontiguousarray(fc3, dtype="double"),

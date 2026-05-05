@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-phono3py_rs = pytest.importorskip("phono3py_rs")
+phonors = pytest.importorskip("phonors")
 recgrid_c = pytest.importorskip("phono3py._recgrid")
 
 FIXED_CASES: list[np.ndarray] = [
@@ -18,7 +18,7 @@ FIXED_CASES: list[np.ndarray] = [
 
 
 def _rust_snf(a: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    d, p, q = phono3py_rs.snf3x3(np.ascontiguousarray(a, dtype="int64"))
+    d, p, q = phonors.snf3x3(np.ascontiguousarray(a, dtype="int64"))
     return (
         np.asarray(d, dtype="int64"),
         np.asarray(p, dtype="int64"),

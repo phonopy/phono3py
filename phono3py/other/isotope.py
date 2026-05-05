@@ -313,19 +313,19 @@ class Isotope:
     def _run_rust(self) -> None:
         """Run isotope scattering via the Rust backend.
 
-        Mirrors ``_run_c`` but dispatches to ``phono3py_rs``.
+        Mirrors ``_run_c`` but dispatches to ``phonors``.
 
         """
         assert self._grid_points is not None
 
         self._run_phonon_solver_c(self._grid_points)
-        import phono3py_rs  # type: ignore
+        import phonors  # type: ignore
 
         gamma = np.zeros(len(self._band_indices), dtype="double")
         weights_in_bzgp = np.ones(len(self._grid_points), dtype="double")
         if self._sigma is None:
             self._set_integration_weights()
-            phono3py_rs.thm_isotope_strength(
+            phonors.thm_isotope_strength(
                 gamma,
                 self._grid_point,
                 self._bz_grid.grg2bzg,
@@ -338,7 +338,7 @@ class Isotope:
                 self._cutoff_frequency,
             )
         else:
-            phono3py_rs.isotope_strength(
+            phonors.isotope_strength(
                 gamma,
                 self._grid_point,
                 self._bz_grid.grg2bzg,

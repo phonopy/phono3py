@@ -494,9 +494,9 @@ class CollisionMatrixKernel:
             if self._log_level:
                 sys.stdout.write("- Making collision matrix symmetric (Rust) ")
                 sys.stdout.flush()
-            import phono3py_rs
+            import phonors
 
-            phono3py_rs.symmetrize_collision_matrix(self._collision_matrix)
+            phonors.symmetrize_collision_matrix(self._collision_matrix)
         elif self._lang == "C" and self._can_use_builtin_symmetrizer():
             if self._log_level:
                 sys.stdout.write("- Making collision matrix symmetric (built-in) ")
@@ -1277,9 +1277,9 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
                 rot_grid_points,
             )
         elif self._lang == "Rust":
-            import phono3py_rs
+            import phonors
 
-            phono3py_rs.expand_collision_matrix(
+            phonors.expand_collision_matrix(
                 self._collision_matrix,
                 ir_gr_grid_points,
                 rot_grid_points,

@@ -81,9 +81,9 @@ def run_imag_self_energy_with_g_rust(
       frequency-point index to sample.
 
     """
-    import phono3py_rs
+    import phonors
 
-    phono3py_rs.imag_self_energy_with_g(
+    phonors.imag_self_energy_with_g(
         imag_self_energy,
         np.ascontiguousarray(pp_strength, dtype="double"),
         np.ascontiguousarray(triplets_at_q, dtype="int64"),
@@ -123,9 +123,9 @@ def run_detailed_imag_self_energy_with_g_rust(
       Normal and Umklapp contributions, respectively.
 
     """
-    import phono3py_rs
+    import phonors
 
-    phono3py_rs.detailed_imag_self_energy_with_g(
+    phonors.detailed_imag_self_energy_with_g(
         detailed_imag_self_energy,
         imag_self_energy_N,
         imag_self_energy_U,
