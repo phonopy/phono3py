@@ -12,12 +12,12 @@ import h5py  # type: ignore[import-untyped]
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.cui.collect_cell_info import collect_cell_info
+from phonopy.other.kaccum import GammaDOSsmearing, get_mfp, run_mfp_dos, run_prop_dos
+from phonopy.phonon.grid import BZGrid, get_ir_grid_points
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.symmetry import Symmetry
 
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
-from phono3py.other.kaccum import GammaDOSsmearing, get_mfp, run_mfp_dos, run_prop_dos
-from phono3py.phonon.grid import BZGrid, get_ir_grid_points
 
 epsilon = 1.0e-8
 

@@ -77,6 +77,7 @@ from phonopy.interface.symfc import (
     parse_symfc_options,
     symmetrize_by_projector,
 )
+from phonopy.phonon.grid import BZGrid
 from phonopy.physical_units import get_calculator_physical_units, get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import (
@@ -97,7 +98,6 @@ from phono3py.interface.fc_calculator import (
     extract_fc2_fc3_calculators_options,
 )
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
-from phono3py.phonon.grid import BZGrid
 from phono3py.phonon3.dataset import forces_in_dataset
 from phono3py.phonon3.displacement_fc3 import (
     Fc3DisplacementDataset,

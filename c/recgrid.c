@@ -40,7 +40,6 @@
 
 #include "bzgrid.h"
 #include "grgrid.h"
-#include "gridsys.h"
 #include "lagrid.h"
 
 #define GRID_TOLERANCE_FACTOR 0.01

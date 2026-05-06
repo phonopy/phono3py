@@ -17,6 +17,10 @@ from typing import Any, Literal
 
 import numpy as np
 from numpy.typing import NDArray
+from phonopy.phonon.grid import (
+    BZGrid,
+    get_qpoints_from_bz_grid_points,
+)
 
 from phono3py.conductivity.build_components import KappaSettings
 from phono3py.conductivity.grid_point_data import (
@@ -40,10 +44,6 @@ from phono3py.conductivity.utils import (
 )
 from phono3py.conductivity.velocity_solvers import GroupVelocitySolver
 from phono3py.other.isotope import Isotope
-from phono3py.phonon.grid import (
-    BZGrid,
-    get_qpoints_from_bz_grid_points,
-)
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.triplets import get_triplets_at_q
 

@@ -71,6 +71,7 @@ from phonopy.interface.calculator import get_calculator_physical_units
 from phonopy.interface.pypolymlp import get_change_in_positions, relax_atomic_positions
 from phonopy.interface.symfc import estimate_symfc_cutoff_from_memsize
 from phonopy.phonon.band_structure import get_band_qpoints
+from phonopy.phonon.grid import BZGrid, get_grid_point_from_address, get_ir_grid_points
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.atomic_data import get_atomic_data
 from phonopy.structure.atoms import PhonopyAtoms
@@ -116,7 +117,6 @@ from phono3py.interface.fc_calculator import (
     get_fc_calculator_params,
 )
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
-from phono3py.phonon.grid import BZGrid, get_grid_point_from_address, get_ir_grid_points
 from phono3py.phonon3.dataset import forces_in_dataset
 from phono3py.phonon3.fc3 import show_drift_fc3
 from phono3py.phonon3.gruneisen import run_gruneisen_parameters

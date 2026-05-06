@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
+from phonopy.phonon.grid import (
+    get_grid_points_by_rotations,
+    get_qpoints_from_bz_grid_points,
+)
 from phonopy.phonon.group_velocity import GroupVelocity
 
 from phono3py.conductivity.grid_point_data import VelocityResult
 from phono3py.conductivity.utils import VOIGT_INDEX_PAIRS, get_kappa_star_operations
-from phono3py.phonon.grid import (
-    get_grid_points_by_rotations,
-    get_qpoints_from_bz_grid_points,
-)
 from phono3py.phonon.velocity_matrix import VelocityMatrix
 from phono3py.phonon3.interaction import Interaction
 

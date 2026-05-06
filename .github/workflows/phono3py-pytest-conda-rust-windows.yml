@@ -73,7 +73,6 @@ jobs:
             test/other/test_isotope_rust.py \
             test/other/test_tetrahedron_method.py \
             test/phonon/test_dynamical_matrix.py \
-            test/phonon/test_snf3x3.py \
             test/phonon3/test_detailed_imag_self_energy_rust.py \
             test/phonon3/test_fc3.py \
             test/phonon3/test_imag_self_energy_rust.py \

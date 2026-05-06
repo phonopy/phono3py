@@ -42,14 +42,14 @@ from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
 
 import numpy as np
 from numpy.typing import NDArray
-from phonopy.physical_units import get_physical_units
-
-from phono3py.file_IO import write_pp_to_hdf5
-from phono3py.phonon.grid import (
+from phonopy.phonon.grid import (
     BZGrid,
     get_grid_points_by_rotations,
     get_qpoints_from_bz_grid_points,
 )
+from phonopy.physical_units import get_physical_units
+
+from phono3py.file_IO import write_pp_to_hdf5
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.triplets import get_all_triplets
 

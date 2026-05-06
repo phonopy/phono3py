@@ -6,16 +6,16 @@ from typing import Optional
 
 import numpy as np
 import pytest
-
-from phono3py import Phono3py
-from phono3py.other.kaccum import (
+from phonopy.other.kaccum import (
     GammaDOSsmearing,
     KappaDOSTHM,
     get_mfp,
     run_mfp_dos,
     run_prop_dos,
 )
-from phono3py.phonon.grid import get_ir_grid_points
+from phonopy.phonon.grid import get_ir_grid_points
+
+from phono3py import Phono3py
 
 
 def test_kappados_si(si_pbesol: Phono3py):

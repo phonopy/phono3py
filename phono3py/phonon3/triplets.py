@@ -40,15 +40,17 @@ from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 from numpy.typing import NDArray
-from phonopy.structure.tetrahedron_method import TetrahedronMethod
-
-from phono3py.other.tetrahedron_method import get_tetrahedra_relative_grid_address
-from phono3py.phonon.func import gaussian
-from phono3py.phonon.grid import (
+from phonopy.phonon.grid import (
     BZGrid,
     get_grid_point_from_address_py,
     get_reduced_bases_and_tmat_inv,
 )
+from phonopy.phonon.tetrahedron_method import (
+    TetrahedronMethod,
+    get_tetrahedra_relative_grid_address,
+)
+
+from phono3py.phonon.func import gaussian
 
 if TYPE_CHECKING:
     from phono3py.phonon3.interaction import Interaction

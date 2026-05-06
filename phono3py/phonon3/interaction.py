@@ -8,15 +8,15 @@ from typing import Literal
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
-from phonopy.physical_units import get_physical_units
-from phonopy.structure.cells import Primitive, Supercell
-from phonopy.structure.symmetry import Symmetry
-
-from phono3py.phonon.grid import (
+from phonopy.phonon.grid import (
     BZGrid,
     get_grid_points_by_rotations,
     get_ir_grid_points,
 )
+from phonopy.physical_units import get_physical_units
+from phonopy.structure.cells import Primitive, Supercell
+from phonopy.structure.symmetry import Symmetry
+
 from phono3py.phonon.solver import (
     run_phonon_solver_c,
     run_phonon_solver_py,

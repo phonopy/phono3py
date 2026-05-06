@@ -44,12 +44,12 @@ from typing import Literal
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix
+from phonopy.phonon.grid import BZGrid
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.cells import Primitive, Supercell
 from phonopy.structure.symmetry import Symmetry
 
 from phono3py.file_IO import write_joint_dos_at_t
-from phono3py.phonon.grid import BZGrid
 from phono3py.phonon3.imag_self_energy import (
     get_freq_points_batches,
     get_frequency_points,

@@ -61,6 +61,8 @@ from phonopy.physical_units import get_physical_units
 
 if TYPE_CHECKING:
     from phono3py.conductivity.build_components import KappaSettings
+from phonopy.phonon.grid import get_grid_points_by_rotations
+
 from phono3py.conductivity.grid_point_data import GridPointAggregates
 from phono3py.conductivity.lbte_collision_solver import LBTECollisionResult
 from phono3py.conductivity.utils import (
@@ -68,7 +70,6 @@ from phono3py.conductivity.utils import (
     get_kappa_star_operations,
     select_colmat_solver,
 )
-from phono3py.phonon.grid import get_grid_points_by_rotations
 
 
 @dataclass
