@@ -44,11 +44,11 @@ from typing import Literal
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
+from phonopy.phonon.grid import BZGrid, get_grid_point_from_address
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.cells import Primitive, Supercell
 
 from phono3py.phonon.func import bose_einstein
-from phono3py.phonon.grid import BZGrid, get_grid_point_from_address
 from phono3py.phonon.solver import run_phonon_solver_c
 from phono3py.phonon3.triplets import (
     get_nosym_triplets_at_q,

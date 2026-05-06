@@ -47,16 +47,15 @@ from phonopy.harmonic.dynamical_matrix import (
     DynamicalMatrixNAC,
     get_dynamical_matrix,
 )
-from phonopy.physical_units import get_physical_units
-from phonopy.structure.atoms import PhonopyAtoms
-from phonopy.structure.cells import Primitive
-from phonopy.structure.symmetry import Symmetry
-
-from phono3py.phonon.grid import (
+from phonopy.phonon.grid import (
     BZGrid,
     get_ir_grid_points,
     get_qpoints_from_bz_grid_points,
 )
+from phonopy.physical_units import get_physical_units
+from phonopy.structure.atoms import PhonopyAtoms
+from phonopy.structure.cells import Primitive
+from phonopy.structure.symmetry import Symmetry
 
 
 def run_gruneisen_parameters(

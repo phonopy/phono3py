@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
-from phono3py import Phono3py
-from phono3py.other.tetrahedron_method import (
+from phonopy.other.tetrahedron_method import (
     get_integration_weights,
     get_tetrahedra_relative_grid_address,
     get_unique_grid_points,
 )
-from phono3py.phonon.grid import BZGrid, get_ir_grid_points
+from phonopy.phonon.grid import BZGrid, get_ir_grid_points
+
+from phono3py import Phono3py
 
 
 def test_get_unique_grid_points(si_pbesol_111: Phono3py):

@@ -42,6 +42,11 @@ from typing import Literal
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
+from phonopy.other.tetrahedron_method import (
+    get_integration_weights,
+    get_unique_grid_points,
+)
+from phonopy.phonon.grid import BZGrid
 from phonopy.phonon.tetrahedron_mesh import get_tetrahedra_frequencies
 from phonopy.structure.atomic_data import get_atomic_data
 from phonopy.structure.atoms import PhonopyAtoms
@@ -49,12 +54,7 @@ from phonopy.structure.cells import Primitive
 from phonopy.structure.symmetry import Symmetry
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 
-from phono3py.other.tetrahedron_method import (
-    get_integration_weights,
-    get_unique_grid_points,
-)
 from phono3py.phonon.func import gaussian
-from phono3py.phonon.grid import BZGrid
 from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
 
 

@@ -608,7 +608,7 @@ class RTAScatteringSolver:
 
         tetrahedra: NDArray[np.int64] | None = None
         if None in self._sigmas:
-            from phono3py.other.tetrahedron_method import (
+            from phonopy.other.tetrahedron_method import (
                 get_tetrahedra_relative_grid_address,
             )
 
@@ -1049,10 +1049,10 @@ class RTAScatteringSolver:
         if self._rust_cache is not None:
             return self._rust_cache
 
-        from phono3py.other.tetrahedron_method import (
+        from phonopy.other.tetrahedron_method import (
             get_tetrahedra_relative_grid_address,
         )
-        from phono3py.phonon.grid import get_reduced_bases_and_tmat_inv
+        from phonopy.phonon.grid import get_reduced_bases_and_tmat_inv
 
         pp = self._pp
         svecs, multi = pp.primitive.get_smallest_vectors()

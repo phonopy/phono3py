@@ -18,13 +18,13 @@ from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 from numpy.typing import NDArray
-
-from phono3py.conductivity.utils import get_unit_to_WmK
-from phono3py.phonon.grid import (
+from phonopy.phonon.grid import (
     BZGrid,
     get_grid_points_by_rotations,
     get_ir_grid_points,
 )
+
+from phono3py.conductivity.utils import get_unit_to_WmK
 from phono3py.phonon3.interaction import Interaction
 
 if TYPE_CHECKING:

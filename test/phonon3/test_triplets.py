@@ -5,11 +5,11 @@ from typing import Literal
 import numpy as np
 import pytest
 from phonopy import Phonopy
+from phonopy.phonon.grid import BZGrid, get_grid_point_from_address
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.symmetry import Symmetry
 
 from phono3py import Phono3py
-from phono3py.phonon.grid import BZGrid, get_grid_point_from_address
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.triplets import (
     _get_BZ_triplets_at_q,
