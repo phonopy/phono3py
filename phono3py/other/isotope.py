@@ -42,20 +42,74 @@ from typing import Literal
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
-from phonopy.other.tetrahedron_method import (
-    get_integration_weights,
-    get_unique_grid_points,
-)
 from phonopy.phonon.grid import BZGrid
 from phonopy.phonon.tetrahedron_mesh import get_tetrahedra_frequencies
+from phonopy.phonon.tetrahedron_method import (
+    TetrahedronMethod,
+    get_integration_weights,
+)
 from phonopy.structure.atomic_data import get_atomic_data
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive
 from phonopy.structure.symmetry import Symmetry
-from phonopy.structure.tetrahedron_method import TetrahedronMethod
 
 from phono3py.phonon.func import gaussian
 from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
+
+
+def get_unique_grid_points(
+    grid_points: NDArray[np.int64],
+    bz_grid: BZGrid,
+    lang: Literal["C", "Rust"] = "C",
+) -> NDArray[np.int64]:
+    """Collect grid points on tetrahedron vertices around input grid points.
+
+    Find grid points of 24 tetrahedra around each grid point and
+    collect those grid points that are unique.
+
+    Parameters
+    ----------
+    grid_points : array_like
+        Grid point indices.
+    bz_grid : BZGrid
+        Grid information in reciprocal space.
+
+    Returns
+    -------
+    ndarray
+        Unique grid points on tetrahedron vertices around input grid points.
+        shape=(unique_grid_points, ), dtype='int64'.
+
+    """
+    _grid_points = np.ascontiguousarray(grid_points, dtype="int64")
+    thm = TetrahedronMethod(bz_grid.microzone_lattice)
+    unique_vertices = np.array(
+        np.dot(thm.get_unique_tetrahedra_vertices(), bz_grid.P.T),
+        dtype="int64",
+        order="C",
+    )
+    neighboring_grid_points = np.zeros(
+        len(unique_vertices) * len(_grid_points), dtype="int64"
+    )
+    args = (
+        neighboring_grid_points,
+        _grid_points,
+        unique_vertices,
+        bz_grid.D_diag,
+        bz_grid.addresses,
+        bz_grid.gp_map,
+        bz_grid.store_dense_gp_map * 1 + 1,
+    )
+    if lang == "Rust":
+        import phonors  # type: ignore[import-untyped]
+
+        phonors.neighboring_grid_points(*args)
+    else:
+        import phono3py._phono3py as phono3c  # type: ignore
+
+        phono3c.neighboring_grid_points(*args)
+
+    return np.array(np.unique(neighboring_grid_points), dtype="int64")
 
 
 def get_mass_variances(
@@ -281,7 +335,7 @@ class Isotope:
         gamma = np.zeros(len(self._band_indices), dtype="double")
         weights_in_bzgp = np.ones(len(self._grid_points), dtype="double")
         if self._sigma is None:
-            self._set_integration_weights()
+            self._set_integration_weights(lang=self._lang)
             phono3c.thm_isotope_strength(
                 gamma,
                 self._grid_point,
@@ -324,7 +378,7 @@ class Isotope:
         gamma = np.zeros(len(self._band_indices), dtype="double")
         weights_in_bzgp = np.ones(len(self._grid_points), dtype="double")
         if self._sigma is None:
-            self._set_integration_weights()
+            self._set_integration_weights(lang=self._lang)
             phonors.thm_isotope_strength(
                 gamma,
                 self._grid_point,
@@ -353,13 +407,15 @@ class Isotope:
 
         self._gamma = gamma / np.prod(self._bz_grid.D_diag)
 
-    def _set_integration_weights(self, lang: Literal["C", "Python"] = "C") -> None:
-        if lang == "C":
-            self._set_integration_weights_c()
-        else:
+    def _set_integration_weights(
+        self, lang: Literal["C", "Python", "Rust"] = "C"
+    ) -> None:
+        if lang == "Python":
             self._set_integration_weights_py()
+        else:
+            self._set_integration_weights_c(lang=lang)
 
-    def _set_integration_weights_c(self) -> None:
+    def _set_integration_weights_c(self, lang: Literal["C", "Rust"] = "C") -> None:
         """Set tetrahedron method integration weights.
 
         self._frequencies are those on all BZ-grid. So all those grid points in
@@ -369,7 +425,9 @@ class Isotope:
         assert self._frequencies is not None
         assert self._grid_points is not None
 
-        unique_grid_points = get_unique_grid_points(self._grid_points, self._bz_grid)
+        unique_grid_points = get_unique_grid_points(
+            self._grid_points, self._bz_grid, lang=lang
+        )
         self._run_phonon_solver_c(unique_grid_points)
         freq_points = np.array(
             self._frequencies[self._grid_point, self._band_indices],
@@ -377,7 +435,11 @@ class Isotope:
             order="C",
         )
         self._integration_weights = get_integration_weights(
-            freq_points, self._frequencies, self._bz_grid, grid_points=self._grid_points
+            freq_points,
+            self._frequencies,
+            self._bz_grid,
+            grid_points=self._grid_points,
+            lang=lang,
         )
 
     def _set_integration_weights_py(self) -> None:
@@ -433,7 +495,7 @@ class Isotope:
             self._run_phonon_solver_py(gp)
 
         if self._sigma is None:
-            self._set_integration_weights(lang="Python")
+            self._set_integration_weights(lang=self._lang)
 
         t_inv = []
         for bi in self._band_indices:
