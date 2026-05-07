@@ -440,6 +440,7 @@ class JointDos:
             self._primitive,
             nac_params=self._nac_params,
             frequency_scale_factor=self._frequency_scale_factor,
+            lang="Rust" if self._lang == "Rust" else "C",
         )
         self._allocate_phonons()
 

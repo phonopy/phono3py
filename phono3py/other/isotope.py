@@ -314,6 +314,7 @@ class Isotope:
             nac_params=nac_params,
             frequency_scale_factor=frequency_scale_factor,
             decimals=decimals,
+            lang="Rust" if self._lang == "Rust" else "C",
         )
 
     def set_nac__qdirection(

@@ -163,7 +163,6 @@ def test_recip_dipole_dipole_matches_phonopy(nacl_dm_gl, q: list[float]) -> None
         pos,
         factor,
         nacl_dm_gl._Lambda,
-        nacl_dm_gl.Q_DIRECTION_TOLERANCE,
         None,
     )
     ref = nacl_dm_gl._get_c_recip_dipole_dipole(q_cart, None)
@@ -181,7 +180,6 @@ def test_recip_dipole_dipole_q0_matches_phonopy(nacl_dm_gl) -> None:
         np.ascontiguousarray(nacl_dm_gl._dielectric, dtype="double"),
         pos,
         nacl_dm_gl._Lambda,
-        nacl_dm_gl.Q_DIRECTION_TOLERANCE,
     )
     np.testing.assert_allclose(dd_q0, nacl_dm_gl._dd_q0, atol=1e-13, rtol=1e-13)
 

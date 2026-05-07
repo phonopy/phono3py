@@ -633,6 +633,7 @@ class Interaction:
 
         """
         self._nac_params = nac_params
+        _dm_lang: Literal["C", "Rust"] = "Rust" if self._lang == "Rust" else "C"
         self._dm = get_dynamical_matrix(
             fc2,
             supercell,
@@ -640,6 +641,7 @@ class Interaction:
             nac_params=nac_params,
             frequency_scale_factor=self._frequency_scale_factor,
             decimals=decimals,
+            lang=_dm_lang,
         )
         self._allocate_phonon()
 
