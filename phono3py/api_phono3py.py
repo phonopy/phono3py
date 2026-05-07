@@ -1645,6 +1645,7 @@ class Phono3py:
             orders=[2, 3],
             options=fc_calculator_options,
             log_level=self._log_level,
+            lang=self._lang,
         )
         fc2 = fc_solver.force_constants[2]
         fc3 = fc_solver.force_constants[3]
@@ -1750,10 +1751,14 @@ class Phono3py:
             for _ in range(level):
                 if self._fc3.shape[0] == self._fc3.shape[1]:
                     set_translational_invariance_fc3(self._fc3)
-                    set_permutation_symmetry_fc3(self._fc3)
+                    set_permutation_symmetry_fc3(self._fc3, lang=self._lang)
                 else:
-                    set_translational_invariance_compact_fc3(self._fc3, self._primitive)
-                    set_permutation_symmetry_compact_fc3(self._fc3, self._primitive)
+                    set_translational_invariance_compact_fc3(
+                        self._fc3, self._primitive, lang=self._lang
+                    )
+                    set_permutation_symmetry_compact_fc3(
+                        self._fc3, self._primitive, lang=self._lang
+                    )
 
     def produce_fc2(
         self,
@@ -1812,6 +1817,7 @@ class Phono3py:
             is_compact_fc=is_compact_fc,
             symmetry=self._phonon_supercell_symmetry,
             log_level=self._log_level,
+            lang=self._lang,
         )
         self._fc2 = fc_solver.force_constants[2]  # type: ignore[assignment]
 
@@ -1892,9 +1898,11 @@ class Phono3py:
                 )
             for _ in range(level):
                 if self._fc2.shape[0] == self._fc2.shape[1]:
-                    symmetrize_force_constants(self._fc2)
+                    symmetrize_force_constants(self._fc2, lang=self._lang)
                 else:
-                    symmetrize_compact_force_constants(self._fc2, primitive)
+                    symmetrize_compact_force_constants(
+                        self._fc2, primitive, lang=self._lang
+                    )
 
     def cutoff_fc3_by_zero(
         self,
@@ -1933,7 +1941,7 @@ class Phono3py:
         if self._fc2 is not None:
             set_permutation_symmetry(self._fc2)
         if self._fc3 is not None:
-            set_permutation_symmetry_fc3(self._fc3)
+            set_permutation_symmetry_fc3(self._fc3, lang=self._lang)
 
     def set_translational_invariance(self) -> None:
         """Enforce translation invariance.
@@ -2691,12 +2699,18 @@ class Phono3py:
     ###################
     def _search_symmetry(self) -> None:
         self._symmetry = Symmetry(
-            self._supercell, symprec=self._symprec, is_symmetry=self._is_symmetry
+            self._supercell,
+            symprec=self._symprec,
+            is_symmetry=self._is_symmetry,
+            lang=self._lang,
         )
 
     def _search_primitive_symmetry(self) -> None:
         self._primitive_symmetry = Symmetry(
-            self._primitive, self._symprec, self._is_symmetry
+            self._primitive,
+            self._symprec,
+            self._is_symmetry,
+            lang=self._lang,
         )
         if len(self._symmetry.pointgroup_operations) != len(
             self._primitive_symmetry.pointgroup_operations
@@ -2714,6 +2728,7 @@ class Phono3py:
                 self._phonon_supercell,
                 symprec=self._symprec,
                 is_symmetry=self._is_symmetry,
+                lang=self._lang,
             )
 
     def _build_supercell(self) -> None:
@@ -2863,7 +2878,9 @@ class Phono3py:
         else:
             t_mat = np.dot(inv_supercell_matrix, primitive_matrix)
 
-        return get_primitive(supercell, t_mat, self._symprec, store_dense_svecs=True)
+        return get_primitive(
+            supercell, t_mat, self._symprec, store_dense_svecs=True, lang=self._lang
+        )
 
     def _set_mesh_numbers(
         self,

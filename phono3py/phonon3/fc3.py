@@ -57,6 +57,7 @@ from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive, compute_all_sg_permutations
 from phonopy.structure.symmetry import Symmetry
 
+from phono3py._lang import log_dispatch
 from phono3py.phonon3.displacement_fc3 import (
     Fc3Type1DisplacementDataset,
     SecondAtomDisplacementWithForces,
@@ -99,6 +100,7 @@ def get_fc3(
         primitive=primitive,
         is_compact_fc=False,
         symmetry=symmetry,
+        lang=lang,
     )
     fc3 = _get_fc3_least_atoms(
         supercell,
@@ -143,6 +145,7 @@ def get_fc3(
             permutations,
             s2compact,
             verbose=verbose,
+            lang=lang,
         )
         first_disp_atoms = np.unique(np.concatenate((first_disp_atoms, p2s_map)))
         target_atoms = [i for i in s2compact if i not in first_disp_atoms]
@@ -156,6 +159,7 @@ def get_fc3(
         permutations,
         s2compact,
         verbose=verbose,
+        lang=lang,
     )
 
     if "cutoff_distance" in disp_dataset:
@@ -218,6 +222,8 @@ def distribute_fc3(
     identity = np.eye(3, dtype=int)
     pure_trans_indices = [i for i, r in enumerate(rotations) if (r == identity).all()]
 
+    log_dispatch(lang, "distribute_fc3")
+
     n_satom = fc3.shape[1]
     for i_target in target_atoms:
         for i_done in first_disp_atoms:
@@ -276,12 +282,14 @@ def set_permutation_symmetry_fc3(
     if lang == "Rust":
         import phonors  # type: ignore[import-untyped]
 
+        log_dispatch(lang, "set_permutation_symmetry_fc3")
         phonors.permutation_symmetry_fc3(fc3)
         return
 
     try:
         import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
+        log_dispatch(lang, "set_permutation_symmetry_fc3")
         phono3c.permutation_symmetry_fc3(fc3)
     except ImportError:
         print("Phono3py C-routine is not compiled correctly.")
@@ -308,6 +316,7 @@ def set_permutation_symmetry_compact_fc3(
     if lang == "Rust":
         import phonors  # type: ignore[import-untyped]
 
+        log_dispatch(lang, "set_permutation_symmetry_compact_fc3")
         phonors.permutation_symmetry_compact_fc3(
             fc3, permutations, s2pp_map, p2s_map, nsym_list
         )
@@ -316,6 +325,7 @@ def set_permutation_symmetry_compact_fc3(
     try:
         import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
+        log_dispatch(lang, "set_permutation_symmetry_compact_fc3")
         phono3c.permutation_symmetry_compact_fc3(
             fc3, permutations, s2pp_map, p2s_map, nsym_list
         )
@@ -376,11 +386,13 @@ def set_translational_invariance_compact_fc3(
     if lang == "Rust":
         import phonors  # type: ignore[import-untyped]
 
+        log_dispatch(lang, "set_translational_invariance_compact_fc3")
         transpose = phonors.transpose_compact_fc3
     else:
         try:
             import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
+            log_dispatch(lang, "set_translational_invariance_compact_fc3")
             transpose = phono3c.transpose_compact_fc3
         except ImportError as exc:
             text = (
@@ -437,10 +449,17 @@ def _get_delta_fc2(
     supercell: PhonopyAtoms,
     reduced_site_sym: NDArray[np.int64],
     symprec: float,
+    lang: Literal["C", "Rust"] = "C",
 ) -> NDArray[np.double]:
     logger.debug("get_delta_fc2")
     disp_fc2 = _get_constrained_fc2(
-        supercell, dataset_second_atoms, atom1, forces1, reduced_site_sym, symprec
+        supercell,
+        dataset_second_atoms,
+        atom1,
+        forces1,
+        reduced_site_sym,
+        symprec,
+        lang=lang,
     )
     return disp_fc2 - fc2
 
@@ -452,6 +471,7 @@ def _get_constrained_fc2(
     forces1: NDArray[np.double],
     reduced_site_sym: NDArray[np.int64],
     symprec: float,
+    lang: Literal["C", "Rust"] = "C",
 ) -> NDArray[np.double]:
     """Return fc2 under reduced (broken) site symmetry by first displacement.
 
@@ -481,7 +501,7 @@ def _get_constrained_fc2(
             sets_of_forces.append(disps_second["forces"] - forces1)
 
         solve_force_constants(
-            fc2, atom2, disps2, sets_of_forces, supercell, bond_sym, symprec
+            fc2, atom2, disps2, sets_of_forces, supercell, bond_sym, symprec, lang=lang
         )
 
     # Shift positions according to set atom1 is at origin
@@ -490,9 +510,11 @@ def _get_constrained_fc2(
     rotations = np.array(reduced_site_sym, dtype="int64", order="C")
     translations = np.zeros((len(reduced_site_sym), 3), dtype="double", order="C")
     permutations = compute_all_sg_permutations(
-        positions, rotations, translations, lattice, symprec
+        positions, rotations, translations, lattice, symprec, lang=lang
     )
-    distribute_force_constants(fc2, atom_list, lattice, rotations, permutations)
+    distribute_force_constants(
+        fc2, atom_list, lattice, rotations, permutations, lang=lang
+    )
     return fc2
 
 
@@ -551,7 +573,7 @@ def _solve_fc3(
     logger.debug("get_positions_sent_by_rot_inv")
 
     rot_map_syms = get_positions_sent_by_rot_inv(
-        lattice, positions, site_symmetry, symprec
+        lattice, positions, site_symmetry, symprec, lang=lang
     )
     rot_map_syms = np.array(rot_map_syms, dtype="int64", order="C")
     rot_disps = get_rotated_displacement(displacements_first, site_sym_cart)  # type: ignore[arg-type]
@@ -573,12 +595,14 @@ def _solve_fc3(
     if lang == "Rust":
         import phonors  # type: ignore[import-untyped]
 
+        log_dispatch(lang, "_solve_fc3.rotate_delta_fc2s")
         phonors.rotate_delta_fc2s(fc3, delta_fc2s, inv_U, site_sym_cart, rot_map_syms)
         return fc3
 
     try:
         import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
+        log_dispatch(lang, "_solve_fc3.rotate_delta_fc2s")
         phono3c.rotate_delta_fc2s(fc3, delta_fc2s, inv_U, site_sym_cart, rot_map_syms)
     except ImportError:
         for i, j in np.ndindex(num_atom, num_atom):
@@ -840,6 +864,7 @@ def _get_fc3_least_atoms(
                         supercell,
                         reduced_site_sym,
                         symprec,
+                        lang=lang,
                     )
                 )
 
