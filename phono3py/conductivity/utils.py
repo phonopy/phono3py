@@ -70,6 +70,26 @@ VOIGT_INDEX_PAIRS: tuple[tuple[int, int], ...] = (
 )
 
 
+def get_mfp(
+    g: NDArray[np.double],
+    gv: NDArray[np.double],
+) -> NDArray[np.double]:
+    """Calculate phonon mean free path from inverse lifetime and group velocity.
+
+    The phonon lifetime is ``tau = 1 / (2 * 2 * pi * gamma)``: one factor of 2
+    converts the HWHM ``gamma`` into FWHM, the second converts the linewidth
+    into the lifetime ``tau = hbar / (2 * gamma_linewidth)`` (with hbar = 1
+    in the units used here), and ``2 * pi`` converts cyclic to angular
+    frequency.  MFP is then ``|gv| * tau``.  Modes with non-positive
+    ``gamma`` are returned as zero.
+
+    """
+    g = np.where(g > 0, g, -1)
+    gv_norm = np.sqrt((gv**2).sum(axis=2))
+    mean_freepath = np.where(g > 0, gv_norm / (2 * 2 * np.pi * g), 0)
+    return mean_freepath
+
+
 def get_kappa_star_operations(
     bz_grid: BZGrid, is_kappa_star: bool
 ) -> tuple[NDArray[np.int64], NDArray[np.double]]:

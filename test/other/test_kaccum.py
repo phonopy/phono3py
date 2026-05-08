@@ -1,4 +1,4 @@
-"""Test for kaccum.py."""
+"""Test for kappa-spectrum / DOS aggregation."""
 
 from __future__ import annotations
 
@@ -6,16 +6,14 @@ from typing import Optional
 
 import numpy as np
 import pytest
-from phonopy.other.kaccum import (
-    GammaDOSsmearing,
-    KappaDOSTHM,
-    get_mfp,
-    run_mfp_dos,
-    run_prop_dos,
-)
 from phonopy.phonon.grid import get_ir_grid_points
+from phonopy.phonon.spectrum import (
+    SmearingDOSAccumulator,
+    TetrahedronDOSAccumulator,
+)
 
 from phono3py import Phono3py
+from phono3py.conductivity.utils import get_mfp
 
 
 def test_kappados_si(si_pbesol: Phono3py):
@@ -189,7 +187,7 @@ def test_kappados_nacl(nacl_pbe: Phono3py):
 
 
 def test_GammaDOSsmearing(nacl_pbe: Phono3py):
-    """Test for GammaDOSsmearing by computing phonon-DOS."""
+    """Test for SmearingDOSAccumulator by computing phonon-DOS."""
     ph3 = nacl_pbe
     ph3.mesh_numbers = [21, 21, 21]
     ph3.init_phph_interaction()
@@ -198,11 +196,9 @@ def test_GammaDOSsmearing(nacl_pbe: Phono3py):
     frequencies, _, _ = ph3.get_phonon_data()
     ir_grid_points, ir_weights, _ = get_ir_grid_points(bz_grid)
     ir_frequencies = frequencies[bz_grid.grg2bzg[ir_grid_points]]
-    phonon_states = np.ones((1,) + ir_frequencies.shape, dtype="double", order="C")
-    gdos = GammaDOSsmearing(
-        phonon_states, ir_frequencies, ir_weights, num_sampling_points=10
-    )
-    fpoints, gdos_vals = gdos.get_gdos()
+    res = SmearingDOSAccumulator(
+        ir_frequencies, ir_weights, num_sampling_points=10
+    ).result
 
     gdos_ref = [
         [-1.30357573e-07, 1.74828946e-03],
@@ -218,7 +214,7 @@ def test_GammaDOSsmearing(nacl_pbe: Phono3py):
     ]
 
     np.testing.assert_allclose(
-        np.c_[fpoints, gdos_vals[0, :, 1]], gdos_ref, rtol=0, atol=1e-5
+        np.c_[res.sampling_points, res.density[0]], gdos_ref, rtol=0, atol=1e-5
     )
 
 
@@ -258,7 +254,7 @@ def test_GammaDOSsmearing(nacl_pbe: Phono3py):
     ],
 )
 def test_GammaDOSsmearing_with_sigma(nacl_pbe: Phono3py, sigma: float, gdos_ref: list):
-    """Test for GammaDOSsmearing with user-specified sigma.
+    """Test for SmearingDOSAccumulator with user-specified sigma.
 
     Verifies that the sigma parameter is actually used (regression test for
     a bug where sigma was silently ignored and 0.1 was used instead).
@@ -271,18 +267,16 @@ def test_GammaDOSsmearing_with_sigma(nacl_pbe: Phono3py, sigma: float, gdos_ref:
     frequencies, _, _ = ph3.get_phonon_data()
     ir_grid_points, ir_weights, _ = get_ir_grid_points(bz_grid)
     ir_frequencies = frequencies[bz_grid.grg2bzg[ir_grid_points]]
-    phonon_states = np.ones((1,) + ir_frequencies.shape, dtype="double", order="C")
-    gdos = GammaDOSsmearing(
-        phonon_states, ir_frequencies, ir_weights, sigma=sigma, num_sampling_points=10
-    )
-    fpoints, gdos_vals = gdos.get_gdos()
+    res = SmearingDOSAccumulator(
+        ir_frequencies, ir_weights, sigma=sigma, num_sampling_points=10
+    ).result
     np.testing.assert_allclose(
-        np.c_[fpoints, gdos_vals[0, :, 1]], gdos_ref, rtol=0, atol=1e-5
+        np.c_[res.sampling_points, res.density[0]], gdos_ref, rtol=0, atol=1e-5
     )
 
 
 def test_run_prop_dos(si_pbesol: Phono3py):
-    """Test of run_prop_dos."""
+    """Test TetrahedronDOSAccumulator on the kappa(omega) and kappa(MFP) paths."""
     ph3 = si_pbesol
     ph3.mesh_numbers = [7, 7, 7]
     ph3.init_phph_interaction()
@@ -295,13 +289,23 @@ def test_run_prop_dos(si_pbesol: Phono3py):
     ir_grid_points, _, ir_grid_map = get_ir_grid_points(bz_grid)
     tc = ph3.thermal_conductivity
 
-    kdos, sampling_points = run_prop_dos(
-        tc.frequencies, tc.mode_kappa[0], ir_grid_map, ir_grid_points, 10, bz_grid
-    )
+    res_freq = TetrahedronDOSAccumulator(
+        tc.frequencies,
+        bz_grid,
+        mode_property=tc.mode_kappa[0],
+        ir_grid_points=ir_grid_points,
+        ir_grid_map=ir_grid_map,
+        num_sampling_points=10,
+    ).result
     mean_freepath = get_mfp(tc.gamma[0], tc.group_velocities)
-    mfp, sampling_points_mfp = run_mfp_dos(
-        mean_freepath, tc.mode_kappa[0], ir_grid_map, ir_grid_points, 10, bz_grid
-    )
+    res_mfp = TetrahedronDOSAccumulator(
+        mean_freepath,
+        bz_grid,
+        mode_property=tc.mode_kappa[0],
+        ir_grid_points=ir_grid_points,
+        ir_grid_map=ir_grid_map,
+        num_sampling_points=10,
+    ).result
 
     # print(",".join([f"{v:10.5f}" for v in kdos[0, :, :, 0].ravel()]))
     ref_kdos = [
@@ -375,10 +379,18 @@ def test_run_prop_dos(si_pbesol: Phono3py):
         6426.26499,
         7229.54811,
     ]
-    np.testing.assert_allclose(ref_kdos, kdos[0, :, :, 0].ravel(), atol=0.5)
-    np.testing.assert_allclose(ref_mfp, mfp[0, :, :, 0].ravel(), atol=0.5)
-    np.testing.assert_allclose(ref_sampling_points, sampling_points[0], atol=1e-4)
-    np.testing.assert_allclose(ref_sampling_points_mfp, sampling_points_mfp[0], rtol=10)
+    kdos_freq = np.stack(
+        [res_freq.cumulative[0, :, 0], res_freq.density[0, :, 0]], axis=-1
+    ).ravel()
+    kdos_mfp = np.stack(
+        [res_mfp.cumulative[0, :, 0], res_mfp.density[0, :, 0]], axis=-1
+    ).ravel()
+    np.testing.assert_allclose(ref_kdos, kdos_freq, atol=0.5)
+    np.testing.assert_allclose(ref_mfp, kdos_mfp, atol=0.5)
+    np.testing.assert_allclose(ref_sampling_points, res_freq.sampling_points, atol=1e-4)
+    np.testing.assert_allclose(
+        ref_sampling_points_mfp, res_mfp.sampling_points[0], rtol=10
+    )
 
 
 def _calculate_kappados(
@@ -389,19 +401,20 @@ def _calculate_kappados(
     tc = ph3.thermal_conductivity
     bz_grid = ph3.grid
     ir_grid_points, _, ir_grid_map = get_ir_grid_points(bz_grid)
-    kappados = KappaDOSTHM(
-        mode_prop,
+    res = TetrahedronDOSAccumulator(
         tc.frequencies,
         bz_grid,
-        bz_grid.bzg2grg[tc.grid_points],
+        mode_property=mode_prop,
+        ir_grid_points=bz_grid.bzg2grg[tc.grid_points],
         ir_grid_map=ir_grid_map,
-        frequency_points=freq_points,
-    )
-    ir_freq_points, ir_kdos = kappados.get_kdos()
+        sampling_points=freq_points,
+    ).result
     np.testing.assert_equal(bz_grid.bzg2grg[tc.grid_points], ir_grid_points)
-    np.testing.assert_allclose(ir_freq_points, freq_points, rtol=0, atol=1e-5)
+    np.testing.assert_allclose(res.sampling_points, freq_points, rtol=0, atol=1e-5)
 
-    return freq_points, ir_kdos[0, :, :, 0]
+    return freq_points, np.stack(
+        [res.cumulative[0, :, 0], res.density[0, :, 0]], axis=-1
+    )
 
 
 def _calculate_mfpdos(
@@ -412,15 +425,16 @@ def _calculate_mfpdos(
     bz_grid = ph3.grid
     mean_freepath = get_mfp(tc.gamma[0], tc.group_velocities)
     _, _, ir_grid_map = get_ir_grid_points(bz_grid)
-    mfpdos = KappaDOSTHM(
-        tc.mode_kappa[0],
+    res = TetrahedronDOSAccumulator(
         mean_freepath[0],
         bz_grid,
-        bz_grid.bzg2grg[tc.grid_points],
+        mode_property=tc.mode_kappa[0],
+        ir_grid_points=bz_grid.bzg2grg[tc.grid_points],
         ir_grid_map=ir_grid_map,
-        frequency_points=mfp_points,
+        sampling_points=mfp_points,
         num_sampling_points=10,
-    )
-    freq_points, kdos = mfpdos.get_kdos()
+    ).result
 
-    return freq_points, kdos[0, :, :, 0]
+    return res.sampling_points, np.stack(
+        [res.cumulative[0, :, 0], res.density[0, :, 0]], axis=-1
+    )
