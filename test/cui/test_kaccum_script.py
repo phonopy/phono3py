@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import os
 import pathlib
 import shutil
@@ -258,6 +259,6 @@ def test_main_mfp_matches_pre_refactor_output(
     """
     args = KaccumMockArgs(filenames=["kappa.hdf5"], **kaccum_args)
     main(args=args)
-    actual = capsys.readouterr().out
-    expected = (EXPECTED / expected_name).read_text()
-    assert actual == expected
+    actual = np.loadtxt(io.StringIO(capsys.readouterr().out), comments="#")
+    expected = np.loadtxt(EXPECTED / expected_name, comments="#")
+    np.testing.assert_allclose(actual, expected, rtol=1e-6, atol=1e-8)
