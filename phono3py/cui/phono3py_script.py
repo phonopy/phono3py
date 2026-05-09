@@ -45,6 +45,7 @@ from typing import Any, Literal, NoReturn, TypeAlias, cast, get_args
 
 import numpy as np
 from numpy.typing import NDArray
+from phonopy._lang import rust_rayon_max_threads
 from phonopy.api_phonopy import Phonopy
 from phonopy.cui.phonopy_argparse import show_deprecated_option_warnings
 from phonopy.cui.phonopy_script import (
@@ -78,6 +79,11 @@ from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import isclose as cells_isclose
 
 from phono3py import Phono3py, Phono3pyIsotope, Phono3pyJointDos
+from phono3py._lang import (
+    c_include_lapacke,
+    c_omp_max_threads,
+    have_c_ext,
+)
 from phono3py.cui.create_force_constants import (
     develop_or_load_pypolymlp,
     generate_displacements_and_evaluate_pypolymlp,
@@ -277,13 +283,19 @@ def _start_phono3py(**argparse_control: Any) -> tuple[argparse.Namespace, int]:
     # Title
     if log_level:
         print_phono3py()
-        import phono3py._phono3py as phono3c  # type: ignore[import]
-
-        max_threads = phono3c.omp_max_threads()
-        if max_threads > 0:
-            print(f"Compiled with OpenMP support (max {max_threads} threads).")
-        if phono3c.include_lapacke():
-            print("Compiled with LAPACKE.")
+        # When --rust was requested, or when the C extension is missing
+        # (and we are about to fall back to Rust), report rayon threads.
+        # Otherwise report OpenMP threads from the C extension.
+        if args.use_rust or not have_c_ext():
+            rust_threads = rust_rayon_max_threads()
+            if rust_threads > 0:
+                print(f"Rust backend (phonors) using rayon ({rust_threads} threads).")
+        else:
+            max_threads = c_omp_max_threads()
+            if max_threads > 0:
+                print(f"Compiled with OpenMP support (max {max_threads} threads).")
+            if c_include_lapacke():
+                print("Compiled with LAPACKE.")
 
         if argparse_control.get("load_phono3py_yaml", False):
             print("Running in phono3py.load mode.")

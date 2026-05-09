@@ -49,6 +49,7 @@ from phonopy.phonon.grid import (
 )
 from phonopy.physical_units import get_physical_units
 
+from phono3py._lang import c_default_colmat_solver, c_include_lapacke
 from phono3py.file_IO import write_pp_to_hdf5
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.triplets import get_all_triplets
@@ -339,15 +340,8 @@ def build_options(_options_type: type[_TOptions], **kwargs: Any) -> _TOptions:
 
 def select_colmat_solver(pinv_solver: int) -> int:
     """Return collision matrix solver id."""
-    try:
-        import phono3py._phono3py as phono3c
-
-        default_solver = phono3c.default_colmat_solver()
-    except ImportError:
-        print("Phono3py C-routine is not compiled correctly.")
-        default_solver = 4
-
-    if not phono3c.include_lapacke():
+    default_solver = c_default_colmat_solver()
+    if not c_include_lapacke():
         if pinv_solver in (1, 2, 6):
             raise RuntimeError(
                 "Use pinv-solver 3, 4, or 5 because "

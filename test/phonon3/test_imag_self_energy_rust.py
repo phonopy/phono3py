@@ -12,6 +12,7 @@ from phono3py.phonon3.imag_self_energy import (
 )
 
 pytest.importorskip("phonors")
+pytest.importorskip("phono3py._phono3py")
 
 
 def _random_inputs(

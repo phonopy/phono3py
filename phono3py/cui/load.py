@@ -52,6 +52,7 @@ from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import determinant
 
 from phono3py import Phono3py
+from phono3py._lang import resolve_lang
 from phono3py.cui.create_force_constants import (
     develop_or_load_pypolymlp,
     parse_forces,
@@ -277,6 +278,7 @@ def load(
         phono3py-rs backend.
 
     """
+    lang = resolve_lang(lang)
     if (
         supercell is not None
         or supercell_filename is not None

@@ -1929,6 +1929,10 @@ def test_get_triplets_integration_weights_tetrahedron(
     si_pbesol: Phono3py, lang: Literal["C", "Python"]
 ):
     """Test get_triplets_integration_weights with tetrahedron method (no sigma)."""
+    # The Python path internally uses the C scalar
+    # ``get_tetrahedra_integration_weight`` helper, so it also needs the C
+    # extension.
+    pytest.importorskip("phonopy._phonopy")
     itr = _setup_interaction(si_pbesol, [4, 4, 4], grid_point=1)
     frequencies = itr.get_phonons()[0]
     assert frequencies is not None
@@ -1957,6 +1961,7 @@ def test_get_triplets_integration_weights_tetrahedron_c_equals_python(
     si_pbesol: Phono3py,
 ):
     """Test that C and Python tetrahedron paths give the same integration weights."""
+    pytest.importorskip("phonopy._phonopy")
     itr = _setup_interaction(si_pbesol, [4, 4, 4], grid_point=1)
     frequency_points = np.linspace(0, 20, 11)
 

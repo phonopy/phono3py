@@ -21,6 +21,7 @@ from phono3py.conductivity.factory import conductivity_calculator
 from phono3py.phonon3.interaction import Interaction
 
 pytest.importorskip("phonors")
+pytest.importorskip("phono3py._phono3py")
 
 
 def _build_interaction(

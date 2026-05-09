@@ -53,8 +53,13 @@ from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive
 from phonopy.structure.symmetry import Symmetry
 
+from phono3py._lang import log_dispatch, resolve_lang
 from phono3py.phonon.func import gaussian
-from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
+from phono3py.phonon.solver import (
+    run_phonon_solver_c,
+    run_phonon_solver_py,
+    run_phonon_solver_rust,
+)
 
 
 def get_unique_grid_points(
@@ -81,6 +86,7 @@ def get_unique_grid_points(
         shape=(unique_grid_points, ), dtype='int64'.
 
     """
+    lang = resolve_lang(lang)
     _grid_points = np.ascontiguousarray(grid_points, dtype="int64")
     thm = TetrahedronMethod(bz_grid.microzone_lattice)
     unique_vertices = np.array(
@@ -183,9 +189,9 @@ class Isotope:
             self._cutoff_frequency = cutoff_frequency
         self._frequency_factor_to_THz = frequency_factor_to_THz
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
+        if lang in ("C", "Rust"):
+            lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
-        from phono3py._lang import log_dispatch
-
         log_dispatch(lang, "Isotope.__init__")
         self._nac_q_direction: NDArray[np.double] | None = None
 
@@ -527,7 +533,8 @@ class Isotope:
         assert self._frequencies is not None
         assert self._eigenvectors is not None
         assert self._phonon_done is not None
-        run_phonon_solver_c(
+        solver = run_phonon_solver_rust if self._lang == "Rust" else run_phonon_solver_c
+        solver(
             self._dm,
             self._frequencies,
             self._eigenvectors,

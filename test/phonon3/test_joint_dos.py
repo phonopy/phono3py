@@ -406,6 +406,7 @@ def test_jdos_nac_direction_phonon_NaCl_second_no_error(nacl_pbe: Phono3py):
 
 def test_jdos_nac_NaCl_300K_C(nacl_pbe: Phono3py):
     """Test running JDOS of NaCl in C mode."""
+    pytest.importorskip("phono3py._phono3py")
     jdos = _get_jdos(
         nacl_pbe,
         [9, 9, 9],
@@ -442,6 +443,9 @@ def test_jdos_nac_NaCl_300K_Py(nacl_pbe: Phono3py):
 
 def test_jdos_nac_NaCl_300K_PyPy(nacl_pbe: Phono3py):
     """Test running JDOS of NaCl in Py (JDOS) and Py (tetrahedron) mode."""
+    # Python integration_weights uses the C scalar
+    # ``get_tetrahedra_integration_weight`` helper.
+    pytest.importorskip("phonopy._phonopy")
     jdos = _get_jdos(
         nacl_pbe,
         [9, 9, 9],

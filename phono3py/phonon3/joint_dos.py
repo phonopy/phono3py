@@ -48,8 +48,9 @@ from phonopy.phonon.grid import BZGrid, get_grid_point_from_address
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.cells import Primitive, Supercell
 
+from phono3py._lang import log_dispatch, resolve_lang
 from phono3py.phonon.func import bose_einstein
-from phono3py.phonon.solver import run_phonon_solver_c
+from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_rust
 from phono3py.phonon3.triplets import (
     get_nosym_triplets_at_q,
     get_triplets_at_q,
@@ -106,9 +107,9 @@ class JointDos:
         self._filename = filename
         self._log_level = log_level
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
+        if lang in ("C", "Rust"):
+            lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
-        from phono3py._lang import log_dispatch
-
         log_dispatch(lang, "JointDos.__init__")
 
         self._num_band = len(self._primitive) * 3
@@ -268,7 +269,8 @@ class JointDos:
         else:
             _grid_points = grid_points
 
-        run_phonon_solver_c(
+        solver = run_phonon_solver_rust if self._lang == "Rust" else run_phonon_solver_c
+        solver(
             self._dm,
             self._frequencies,
             self._eigenvectors,
@@ -308,14 +310,12 @@ class JointDos:
     def run(self) -> None:
         """Calculate joint-density-of-states."""
         self.run_phonon_solver()
-        try:
-            import phono3py._phono3py as phono3c  # noqa F401 # type: ignore
-
-            self.run_integration_weights(lang=self._lang)
-            self.run_jdos()
-        except ImportError:
-            print("Joint density of states in python is not implemented.")
-            return
+        self.run_integration_weights(lang=self._lang)
+        # run_jdos has only C and Python paths; ``self._lang == "Rust"``
+        # means the C extension is unavailable, so the Python kernel is
+        # the only option there.
+        jdos_lang: Literal["C", "Python"] = "C" if self._lang == "C" else "Python"
+        self.run_jdos(lang=jdos_lang)
 
     def run_integration_weights(
         self, lang: Literal["C", "Python", "Rust"] = "C"

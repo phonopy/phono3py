@@ -556,6 +556,9 @@ def test_imag_self_energy_detailed(si_pbesol: Phono3py):
     * contribution from each triplet is returned.
 
     """
+    # detailed + frequency_points uses the C kernel directly; Rust falls
+    # back to C for this combination (see imag_self_energy.py).
+    pytest.importorskip("phono3py._phono3py")
     ref_detailed_gamma = [
         0.00000000,
         0.00653802,

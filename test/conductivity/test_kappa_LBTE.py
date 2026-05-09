@@ -1,10 +1,11 @@
 """Tests for direct solution of LBTE."""
 
 import numpy as np
-import phono3py._phono3py as phono3c
 import pytest
 
-from phono3py.api_phono3py import Phono3py
+phono3c = pytest.importorskip("phono3py._phono3py")
+
+from phono3py.api_phono3py import Phono3py  # noqa: E402
 
 
 @pytest.mark.skipif(
