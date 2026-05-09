@@ -184,8 +184,12 @@ class LBTECollisionSolver:
         if self._read_pp:
             self._read_interaction_from_file(sigma, grid_point)
         elif i_sigma != 0 and (self._is_full_pp or self._sigma_cutoff is None):
+            # The pp_strength computed at i_sigma == 0 is sigma-independent
+            # under is_full_pp=True or when no sigma_cutoff is in play, so
+            # the existing _pp_strength is reused for i_sigma > 0.
             if self._log_level:
                 print("Existing ph-ph interaction is used.")
+        else:
             self._collision.run_interaction(is_full_pp=self._is_full_pp)
 
     def _read_interaction_from_file(self, sigma: float | None, grid_point: int) -> None:

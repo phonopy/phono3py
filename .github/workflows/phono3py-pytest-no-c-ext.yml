@@ -45,7 +45,10 @@ jobs:
           git clone --depth 1 https://github.com/symfc/symfc.git
           cd symfc
           pip install -e . -vvv
-      - name: Install phonopy develop branch
+      - name: Install phonopy develop branch without C extension
+        env:
+          PHONOPY_NO_C_EXT: "1"
+          CMAKE_GENERATOR: "Unix Makefiles"
         run: |
           conda activate test
           git clone https://github.com/phonopy/phonopy.git
@@ -69,16 +72,17 @@ jobs:
         run: |
           conda activate test
           pip install -e . -vvv
-      - name: Verify _phono3py is absent
+      - name: Verify C extensions are absent
         run: |
           conda activate test
           python -c "
-          try:
-              import phono3py._phono3py
-          except ImportError:
-              print('OK: phono3py._phono3py is absent.')
-          else:
-              raise SystemExit('phono3py._phono3py was unexpectedly built.')
+          for mod in ('phonopy._phonopy', 'phonopy._recgrid', 'phono3py._phono3py', 'phono3py._phononcalc'):
+              try:
+                  __import__(mod)
+              except ImportError:
+                  print(f'OK: {mod} is absent.')
+              else:
+                  raise SystemExit(f'{mod} was unexpectedly built.')
           "
       - name: Test with pytest (Rust backend)
         run: |
