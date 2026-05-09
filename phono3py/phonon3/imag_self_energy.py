@@ -46,6 +46,7 @@ from numpy.typing import NDArray
 from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.physical_units import get_physical_units
 
+from phono3py._lang import log_dispatch, resolve_lang
 from phono3py.file_IO import (
     write_gamma_detail_to_hdf5,
     write_imag_self_energy_at_grid_point,
@@ -176,9 +177,9 @@ class ImagSelfEnergy:
         self._frequency_points: NDArray[np.double] | None = None
         self._grid_point: int | None = None
 
+        if lang in ("C", "Rust"):
+            lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
-        from phono3py._lang import log_dispatch
-
         log_dispatch(lang, "ImagSelfEnergy.__init__")
         self._imag_self_energy: NDArray[np.double] | None = None
         self._detailed_imag_self_energy: NDArray[np.double] | None = None

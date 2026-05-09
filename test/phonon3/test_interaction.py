@@ -16,6 +16,9 @@ from phono3py.phonon3.interaction import Interaction
 @pytest.mark.parametrize("lang", ["C", "Python"])
 def test_interaction_RTA_si(si_pbesol: Phono3py, lang: Literal["C", "Python"]):
     """Test interaction_strength of Si."""
+    # Both C and Python paths reach the C ``imag_self_energy`` /
+    # ``triplets_integration_weights`` kernels.
+    pytest.importorskip("phono3py._phono3py")
     ref_itr_RTA_Si = [
         4.522052e-08,
         4.896362e-08,

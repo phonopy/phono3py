@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import numpy as np
-import phono3py._phono3py as phono3c
 import pytest
 
-from phono3py import Phono3py
-from phono3py.phonon3.fc3 import (
+phono3c = pytest.importorskip("phono3py._phono3py")
+
+from phono3py import Phono3py  # noqa: E402
+from phono3py.phonon3.fc3 import (  # noqa: E402
     cutoff_fc3_by_zero,
     distribute_fc3,
     get_drift_fc3,
@@ -400,6 +401,69 @@ def test_distribute_fc3_rust_vs_c():
     )
 
     np.testing.assert_array_equal(fc3_rust, fc3_c)
+
+
+def test_distribute_fc3_compact_rust_vs_c(si_pbesol: Phono3py):
+    """Compare Rust and C paths of distribute_fc3 on a compact fc3.
+
+    The Rust binding uses ``atom_mapping.len()`` as the inner-block stride
+    so the same kernel handles both full ``(n_satom,)*3`` and compact
+    ``(n_patom, n_satom, n_satom)`` first-dim layouts.  This test exercises
+    the compact case end-to-end against the C backend.
+
+    """
+    pytest.importorskip("phonors")
+
+    assert si_pbesol.fc3 is not None
+    primitive = si_pbesol.primitive
+    supercell = si_pbesol.supercell
+    symmetry = si_pbesol.symmetry
+    p2s_map = primitive.p2s_map
+    s2p_map = primitive.s2p_map
+    p2p_map = primitive.p2p_map
+
+    # Compact slab keyed on first-displaced (= primitive) atoms.
+    compact = np.ascontiguousarray(si_pbesol.fc3[p2s_map])
+
+    rotations = symmetry.symmetry_operations["rotations"]
+    permutations = symmetry.atomic_permutations
+    lattice = supercell.cell.T
+    first_disp_atoms = np.asarray([p2s_map[0]], dtype="int64")
+    target_atoms = np.asarray(
+        [i for i in p2s_map if i != first_disp_atoms[0]], dtype="int64"
+    )
+    s2compact = np.asarray([p2p_map[i] for i in s2p_map], dtype="int64")
+
+    # Zero out non-first-disp slabs so the redistribution is the only thing
+    # both backends do.
+    base = compact.copy(order="C")
+    for i in p2s_map:
+        if i not in first_disp_atoms:
+            base[s2compact[i]] = 0.0
+    fc3_c = base.copy(order="C")
+    fc3_rust = base.copy(order="C")
+
+    distribute_fc3(
+        fc3_c,
+        first_disp_atoms,
+        target_atoms,
+        lattice,
+        rotations,
+        permutations,
+        s2compact,
+    )
+    distribute_fc3(
+        fc3_rust,
+        first_disp_atoms,
+        target_atoms,
+        lattice,
+        rotations,
+        permutations,
+        s2compact,
+        lang="Rust",
+    )
+
+    np.testing.assert_allclose(fc3_rust, fc3_c, rtol=1e-14, atol=1e-14)
 
 
 def test_distribute_fc3_rust_vs_c_rotated_lattice():

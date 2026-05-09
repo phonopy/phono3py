@@ -17,6 +17,7 @@ from phonopy.physical_units import get_physical_units
 from phonopy.structure.cells import Primitive, Supercell
 from phonopy.structure.symmetry import Symmetry
 
+from phono3py._lang import log_dispatch, resolve_lang
 from phono3py.phonon.solver import (
     run_phonon_solver_c,
     run_phonon_solver_py,
@@ -194,9 +195,9 @@ class Interaction:
         self._make_r0_average = make_r0_average
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
         self._openmp_per_triplets = openmp_per_triplets
+        if lang in ("C", "Rust"):
+            lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
-        from phono3py._lang import log_dispatch
-
         log_dispatch(lang, "Interaction.__init__")
 
         self._symprec = self._primitive_symmetry.tolerance

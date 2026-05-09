@@ -63,6 +63,7 @@ if TYPE_CHECKING:
     from phono3py.conductivity.build_components import KappaSettings
 from phonopy.phonon.grid import get_grid_points_by_rotations
 
+from phono3py._lang import resolve_lang
 from phono3py.conductivity.grid_point_data import GridPointAggregates
 from phono3py.conductivity.lbte_collision_solver import LBTECollisionResult
 from phono3py.conductivity.utils import (
@@ -160,6 +161,8 @@ class CollisionMatrixKernel:
         self._pinv_cutoff = pinv_cutoff
         self._pinv_solver = pinv_solver
         self._pinv_method = pinv_method
+        if lang in ("C", "Rust"):
+            lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
         self._log_level = log_level
         _, self._rotations_cartesian = get_kappa_star_operations(

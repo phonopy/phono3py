@@ -90,6 +90,7 @@ from phonopy.structure.cells import (
 )
 from phonopy.structure.symmetry import Symmetry
 
+from phono3py._lang import resolve_lang
 from phono3py.conductivity.calculators import LBTECalculator, RTACalculator
 from phono3py.conductivity.lbte_init import get_thermal_conductivity_LBTE
 from phono3py.conductivity.rta_init import get_thermal_conductivity_RTA
@@ -283,7 +284,7 @@ class Phono3py:
         self._cutoff_frequency = cutoff_frequency
         self._calculator = calculator
         self._log_level = log_level
-        self._lang: Literal["C", "Rust"] = lang
+        self._lang: Literal["C", "Rust"] = resolve_lang(lang)
 
         # Create supercell and primitive cell
         self._unitcell = unitcell

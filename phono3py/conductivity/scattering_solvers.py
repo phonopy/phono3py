@@ -10,6 +10,7 @@ import numpy as np
 from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
 
+from phono3py._lang import resolve_lang
 from phono3py.conductivity.grid_point_data import ScatteringResult
 from phono3py.other.isotope import Isotope
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy, average_by_degeneracy
@@ -409,6 +410,8 @@ class RTAScatteringSolver:
         self._is_N_U = is_N_U
         self._is_gamma_detail = is_gamma_detail
         self._log_level = log_level
+        if lang in ("C", "Rust"):
+            lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
 
         self._collision = ImagSelfEnergy(

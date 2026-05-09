@@ -57,7 +57,7 @@ from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive, compute_all_sg_permutations
 from phonopy.structure.symmetry import Symmetry
 
-from phono3py._lang import log_dispatch
+from phono3py._lang import log_dispatch, resolve_lang
 from phono3py.phonon3.displacement_fc3 import (
     Fc3Type1DisplacementDataset,
     SecondAtomDisplacementWithForces,
@@ -92,6 +92,7 @@ def get_fc3(
         `is_compact_fc`. See Phono3py.produce_fc3.
 
     """
+    lang = resolve_lang(lang)
     # fc2 has to be full matrix to compute delta-fc2
     # p2s_map elements are extracted if is_compact_fc=True at the last part.
     fc2 = get_fc2(
@@ -219,6 +220,7 @@ def distribute_fc3(
         dtype=int64
 
     """
+    lang = resolve_lang(lang)
     identity = np.eye(3, dtype=int)
     pure_trans_indices = [i for i, r in enumerate(rotations) if (r == identity).all()]
 
@@ -279,6 +281,7 @@ def set_permutation_symmetry_fc3(
     lang: Literal["C", "Rust"] = "C",
 ) -> None:
     """Enforce permutation symmetry to full fc3."""
+    lang = resolve_lang(lang)
     if lang == "Rust":
         import phonors  # type: ignore[import-untyped]
 
@@ -307,6 +310,7 @@ def set_permutation_symmetry_compact_fc3(
     lang: Literal["C", "Rust"] = "C",
 ) -> None:
     """Enforce permulation symmetry to compact fc3."""
+    lang = resolve_lang(lang)
     s2p_map = primitive.s2p_map
     p2s_map = primitive.p2s_map
     p2p_map = primitive.p2p_map
@@ -377,6 +381,7 @@ def set_translational_invariance_compact_fc3(
     lang: Literal["C", "Rust"] = "C",
 ) -> None:
     """Enforce translational symmetry to compact fc3."""
+    lang = resolve_lang(lang)
     s2p_map = primitive.s2p_map
     p2s_map = primitive.p2s_map
     p2p_map = primitive.p2p_map
@@ -694,6 +699,7 @@ def get_drift_fc3(
     lang: Literal["C", "Rust"] = "C",
 ) -> tuple[float, float, float, list[int], list[int], list[int]]:
     """Return max drift of fc3."""
+    lang = resolve_lang(lang)
     if fc3.shape[0] == fc3.shape[1]:
         num_atom = fc3.shape[0]
         maxval1 = 0

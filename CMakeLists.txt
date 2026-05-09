@@ -1,5 +1,14 @@
 cmake_minimum_required(VERSION 3.20)
 
+if(DEFINED ENV{PHONO3PY_NO_C_EXT} AND NOT "$ENV{PHONO3PY_NO_C_EXT}" STREQUAL "0")
+    # Declare project with no language so CMake skips C/C++ compiler detection.
+    # scikit-build-core's build step still calls CMake even with no targets, so the
+    # project() call has to happen before we bail out.
+    project(${SKBUILD_PROJECT_NAME} NONE)
+    message(STATUS "PHONO3PY_NO_C_EXT is set; skipping _phono3py and _phononcalc")
+    return()
+endif()
+
 option(BUILD_PHPHCALC_LIB "Option to build phph calculation module" OFF)
 option(BUILD_PHONONCALC_LIB "Option to build phonon calculation module" OFF)
 option(BUILD_RECGRID_LIB "Option to build reciprocal space grid module" OFF)

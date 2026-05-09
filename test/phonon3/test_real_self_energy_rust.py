@@ -15,6 +15,7 @@ from phono3py import Phono3py
 from phono3py.phonon3.real_self_energy import RealSelfEnergy
 
 pytest.importorskip("phonors")
+pytest.importorskip("phono3py._phono3py")
 
 
 def _build_interaction(ph3: Phono3py) -> None:

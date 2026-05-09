@@ -50,6 +50,7 @@ from phonopy.phonon.tetrahedron_method import (
     get_tetrahedra_relative_grid_address,
 )
 
+from phono3py._lang import resolve_lang
 from phono3py.phonon.func import gaussian
 
 if TYPE_CHECKING:
@@ -107,6 +108,7 @@ def get_triplets_at_q(
         shape=(prod(mesh),), dtype='int64'
 
     """
+    lang = resolve_lang(lang)
     rotations: Sequence[Sequence[Sequence[int]]] | NDArray[np.int64]
     if reciprocal_rotations is None:
         rotations = bz_grid.rotations
@@ -189,6 +191,9 @@ def get_triplets_integration_weights(
         shape=(triplets, freq_points, bands, bands), dtype='byte'
 
     """
+    if lang in ("C", "Rust"):
+        lang = resolve_lang(lang)
+
     triplets = interaction.get_triplets_at_q()[0]
     assert triplets is not None
     frequencies = interaction.get_phonons()[0]
@@ -310,6 +315,7 @@ def _get_triplets_reciprocal_mesh_at_q(
         shape=(prod(mesh),), dtype='int64'
 
     """
+    lang = resolve_lang(lang)
     if lang == "Rust":
         import phonors
 
@@ -382,6 +388,7 @@ def _get_BZ_triplets_at_q(
         shape=(n_triplets,), dtype='int64'
 
     """
+    lang = resolve_lang(lang)
     weights = np.zeros(len(map_triplets), dtype="int64")
     for g in map_triplets:
         weights[g] += 1
