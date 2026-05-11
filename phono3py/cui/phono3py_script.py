@@ -1161,17 +1161,21 @@ def _install_cli_warning_formatter() -> None:
     """Render selected library warnings nicely instead of the default format.
 
     Currently ``CompactFCDefaultWarning`` (phono3py) and
-    ``MeshSymmetryFallbackWarning`` (phonopy) are special-cased: the
-    default Python format prepends the source file path and line number,
-    which clutters CLI output.  All other warnings keep their default
-    formatting.
+    ``MeshSymmetryFallbackWarning`` / ``MeshGRGridFallbackWarning``
+    (phonopy) are special-cased: the default Python format prepends the
+    source file path and line number, which clutters CLI output.  All
+    other warnings keep their default formatting.
 
     """
+    import textwrap
     import warnings
 
-    from phonopy.cui.phonopy_script import _MESH_SYMMETRY_FALLBACK_LINES
-    from phonopy.phonon.mesh import MeshSymmetryFallbackWarning
+    from phonopy.phonon.mesh import (
+        MeshGRGridFallbackWarning,
+        MeshSymmetryFallbackWarning,
+    )
 
+    notice_classes = (MeshSymmetryFallbackWarning, MeshGRGridFallbackWarning)
     default_showwarning = warnings.showwarning
 
     def showwarning(message, category, filename, lineno, file=None, line=None):
@@ -1185,13 +1189,12 @@ def _install_cli_warning_formatter() -> None:
                 print(f"  {body}", file=stream)
             print("", file=stream)
             return
-        if isinstance(message, MeshSymmetryFallbackWarning) or (
-            isinstance(category, type)
-            and issubclass(category, MeshSymmetryFallbackWarning)
+        if isinstance(message, notice_classes) or (
+            isinstance(category, type) and issubclass(category, notice_classes)
         ):
             print("", file=stream)
             print("WARNING:", file=stream)
-            for body in _MESH_SYMMETRY_FALLBACK_LINES:
+            for body in textwrap.wrap(str(message), width=76):
                 print(f"  {body}", file=stream)
             print("", file=stream)
             return
