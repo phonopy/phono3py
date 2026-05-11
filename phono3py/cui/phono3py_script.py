@@ -779,7 +779,7 @@ def _produce_force_constants(
             cutoff_pair_distance=cutoff_pair_distance,
             symmetrize_fc=settings.fc_symmetry,
             is_compact_fc=settings.is_compact_fc,
-            load_phono3py_yaml=load_phono3py_yaml,
+            use_symfc_projector=load_phono3py_yaml,
         )
     except ForceCalculatorRequiredError as e:
         if load_phono3py_yaml:

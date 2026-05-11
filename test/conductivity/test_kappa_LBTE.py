@@ -58,7 +58,7 @@ def test_kappa_LBTE_witout_lapacke(si_pbesol: Phono3py, pinv_solver: int):
 
 def test_kappa_LBTE_full_colmat(si_pbesol: Phono3py):
     """Test for full collision matrix."""
-    ref_kappa = [62.497, 62.497, 62.497, 0, 0, 0]
+    ref_kappa = [62.415, 62.415, 62.415, 0, 0, 0]
     si_pbesol.mesh_numbers = [5, 5, 5]
     si_pbesol.init_phph_interaction()
     si_pbesol.run_thermal_conductivity(

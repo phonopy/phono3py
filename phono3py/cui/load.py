@@ -405,6 +405,7 @@ def load(
             fc_calculator_options=fc_calculator_options,
             symmetrize_fc=symmetrize_fc,
             is_compact_fc=is_compact_fc,
+            use_symfc_projector=True,
         )
 
     if log_level and ph3py.fc3 is not None:
@@ -440,7 +441,7 @@ def compute_force_constants_from_datasets(
     cutoff_pair_distance: float | None = None,
     symmetrize_fc: bool = True,
     is_compact_fc: bool = True,
-    load_phono3py_yaml: bool = False,
+    use_symfc_projector: bool = False,
 ) -> None:
     """Compute force constants from datasets.
 
@@ -467,7 +468,7 @@ def compute_force_constants_from_datasets(
             is_compact_fc=is_compact_fc,
             fc_calculator=fc3_calculator,
             fc_calculator_options=fc3_calc_opts,
-            use_symfc_projector=load_phono3py_yaml,
+            use_symfc_projector=use_symfc_projector,
         )
 
     if ph3py.fc2 is None or fc3_calculator != fc2_calculator:
@@ -482,7 +483,7 @@ def compute_force_constants_from_datasets(
                 is_compact_fc=is_compact_fc,
                 fc_calculator=fc2_calculator,
                 fc_calculator_options=fc2_calc_opts,
-                use_symfc_projector=load_phono3py_yaml,
+                use_symfc_projector=use_symfc_projector,
             )
 
 

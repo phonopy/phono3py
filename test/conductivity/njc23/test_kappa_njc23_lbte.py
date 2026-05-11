@@ -8,7 +8,7 @@ from phono3py.api_phono3py import Phono3py
 def test_kappa_njc23_lbte_si(si_pbesol: Phono3py):
     """Test NJC23-LBTE by Si."""
     ref_kappa_intra_exact = [110.846, 110.846, 110.846, 0, 0, 0]
-    ref_kappa_inter = [0.531, 0.531, 0.531, 0, 0, 0]
+    ref_kappa_inter = [0.518, 0.518, 0.518, 0, 0, 0]
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
     si_pbesol.run_thermal_conductivity(
@@ -38,9 +38,9 @@ def test_kappa_njc23_lbte_si_multi_temp(si_pbesol: Phono3py):
         [79.0, 79.0, 79.0, 0, 0, 0],
     ]
     ref_kappa_inter = [
-        [0.794, 0.794, 0.794, 0, 0, 0],
-        [0.531, 0.531, 0.531, 0, 0, 0],
-        [0.480, 0.480, 0.480, 0, 0, 0],
+        [0.792, 0.792, 0.792, 0, 0, 0],
+        [0.518, 0.518, 0.518, 0, 0, 0],
+        [0.431, 0.431, 0.431, 0, 0, 0],
     ]
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
