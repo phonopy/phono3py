@@ -1001,6 +1001,7 @@ class Phono3pyMockArgs:
     is_bterta: bool | None = None
     is_displacement: bool | None = None
     is_fc3_r0_average: bool | None = None
+    is_full_fc: bool | None = None
     is_isotope: bool | None = None
     is_N_U: bool | None = None
     is_lbte: bool | None = None

@@ -391,6 +391,7 @@ def test_fc3_lapacke_solver(si_pbesol_111: Phono3py):
             ph.primitive,
             ph.dataset,
             ph.symmetry,
+            is_compact_fc=False,
             pinv_solver=pinv_solver,
             verbose=True,
         )
