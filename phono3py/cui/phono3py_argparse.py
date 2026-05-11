@@ -178,7 +178,14 @@ def get_parser(
         dest="is_compact_fc",
         action="store_true",
         default=None,
-        help="Use compact force constants",
+        help="(deprecated) No effect; compact force constants are now the default",
+    )
+    parser.add_argument(
+        "--full-fc",
+        dest="is_full_fc",
+        action="store_true",
+        default=None,
+        help="Calculate full supercell force constants matrix",
     )
     parser.add_argument(
         "--cfs",

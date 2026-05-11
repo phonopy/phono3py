@@ -104,7 +104,7 @@ def load(
     is_symmetry: bool = True,
     symmetrize_fc: bool = True,
     is_mesh_symmetry: bool = True,
-    is_compact_fc: bool = False,
+    is_compact_fc: bool = True,
     use_pypolymlp: bool = False,
     mlp_params: dict | None = None,
     use_grg: bool = False,
@@ -251,12 +251,13 @@ def load(
         True.
     is_compact_fc : bool, optional
         fc3 are created in the array whose shape is
-            True: (primitive, supercell, supercell, 3, 3, 3) False: (supercell,
-            supercell, supercell, 3, 3, 3)
+            True: (primitive, supercell, supercell, 3, 3, 3)
+            False: (supercell, supercell, supercell, 3, 3, 3)
         and for fc2
-            True: (primitive, supercell, 3, 3) False: (supercell, supercell, 3, 3)
+            True: (primitive, supercell, 3, 3)
+            False: (supercell, supercell, 3, 3)
         where 'supercell' and 'primitive' indicate number of atoms in these
-        cells. Default is False.
+        cells. Default is True.
     use_pypolymlp : bool, optional
         Use pypolymlp for generating force constants. Default is False.
     mlp_params : dict, optional

@@ -69,7 +69,7 @@ class FDFC3Solver:
         primitive: Primitive,
         symmetry: Symmetry,
         dataset: Fc3Type1DisplacementDataset,
-        is_compact_fc: bool = False,
+        is_compact_fc: bool = True,
         log_level: int = 0,  # currently not used
         lang: Literal["C", "Rust"] = "C",
     ) -> None:

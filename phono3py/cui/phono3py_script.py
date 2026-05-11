@@ -105,7 +105,11 @@ from phono3py.cui.load import (
     select_and_load_phonon_dataset,
 )
 from phono3py.cui.phono3py_argparse import get_parser
-from phono3py.cui.settings import Phono3pyConfParser, Phono3pySettings
+from phono3py.cui.settings import (
+    CompactFCDefaultWarning,
+    Phono3pyConfParser,
+    Phono3pySettings,
+)
 from phono3py.cui.show_log import (
     show_general_settings,
     show_phono3py_cells,
@@ -1146,11 +1150,59 @@ def _load_dataset_and_phonon_dataset(
             ph3py.phonon_dataset = phonon_dataset
 
 
+_COMPACT_FC_DEFAULT_LINES = (
+    "--cfc/--compact-fc is deprecated and has no effect.",
+    "Compact force constants are now the default.",
+    "Use --full-fc to switch to the full-array format.",
+)
+
+
+def _install_cli_warning_formatter() -> None:
+    """Render selected library warnings nicely instead of the default format.
+
+    Currently ``CompactFCDefaultWarning`` (phono3py) and
+    ``MeshSymmetryFallbackWarning`` (phonopy) are special-cased: the
+    default Python format prepends the source file path and line number,
+    which clutters CLI output.  All other warnings keep their default
+    formatting.
+
+    """
+    import warnings
+
+    from phonopy.cui.phonopy_script import _MESH_SYMMETRY_FALLBACK_LINES
+    from phonopy.phonon.mesh import MeshSymmetryFallbackWarning
+
+    default_showwarning = warnings.showwarning
+
+    def showwarning(message, category, filename, lineno, file=None, line=None):
+        stream = file if file is not None else sys.stderr
+        if isinstance(message, CompactFCDefaultWarning) or (
+            isinstance(category, type) and issubclass(category, CompactFCDefaultWarning)
+        ):
+            print("", file=stream)
+            print("WARNING:", file=stream)
+            for body in _COMPACT_FC_DEFAULT_LINES:
+                print(f"  {body}", file=stream)
+            print("", file=stream)
+            return
+        if isinstance(message, MeshSymmetryFallbackWarning) or (
+            isinstance(category, type)
+            and issubclass(category, MeshSymmetryFallbackWarning)
+        ):
+            print("", file=stream)
+            print("WARNING:", file=stream)
+            for body in _MESH_SYMMETRY_FALLBACK_LINES:
+                print(f"  {body}", file=stream)
+            print("", file=stream)
+            return
+        default_showwarning(message, category, filename, lineno, file, line)
+
+    warnings.showwarning = showwarning
+
+
 def main(**argparse_control: Any) -> None:
     """Phono3py main part of command line interface."""
-    # import warnings
-
-    # warnings.simplefilter("error")
+    _install_cli_warning_formatter()
     load_phono3py_yaml = argparse_control.get("load_phono3py_yaml", False)
 
     if "args" in argparse_control:  # This is for pytest.
