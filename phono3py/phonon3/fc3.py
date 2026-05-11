@@ -74,7 +74,7 @@ def get_fc3(
     primitive: Primitive,
     disp_dataset: Fc3Type1DisplacementDataset,
     symmetry: Symmetry,
-    is_compact_fc: bool = False,
+    is_compact_fc: bool = True,
     pinv_solver: str = "numpy",
     verbose: bool = False,
     lang: Literal["C", "Rust"] = "C",
@@ -196,28 +196,69 @@ def distribute_fc3(
     verbose: bool = False,
     lang: Literal["C", "Rust"] = "C",
 ) -> None:
-    """Distribute fc3.
+    """Distribute fc3 to symmetrically equivalent first-index atoms (in place).
 
-    fc3[i, :, :, 0:3, 0:3, 0:3] where i=indices done are distributed to
-    symmetrically equivalent fc3 elements by tensor rotations.
+    For each ``i_target`` in ``target_atoms``, this routine finds an
+    ``i_done`` in ``first_disp_atoms`` and a symmetry operation (R, t)
+    that maps ``i_target -> i_done``, and writes::
 
-    Search symmetry operation (R, t) that performs
-        i_target -> i_done
-    and
-        atom_mapping[i_target] = i_done
-        fc3[i_target, j_target, k_target] = R_inv[i_done, j, k]
-    When multiple (R, t) can be found, the pure translation operation is
-    preferred.
+        fc3[i_target, j_target, k_target]
+            = R_inv . fc3[i_done, atom_mapping[j_target],
+                                  atom_mapping[k_target]]
+
+    where ``atom_mapping`` is the permutation of supercell atoms induced
+    by (R, t).  When multiple (R, t) satisfy the mapping, the pure
+    translation (R = I) is preferred to avoid accumulating round-off from
+    tensor rotations.
+
+    The compact-fc3 layout is supported via ``s2compact``: any read or
+    write that uses a supercell-atom index ``i`` for the first axis is
+    redirected to ``s2compact[i]``.  For full-fc3, pass
+    ``s2compact = np.arange(n_satom)``.
 
     Parameters
     ----------
-    target_atoms: list or ndarray
-        Supercell atom indices to which fc3 are distributed.
-    s2compact: ndarray
-        Maps supercell index to compact index. For full-fc3,
-        s2compact=np.arange(n_satom).
-        shape=(n_satom,)
-        dtype=int64
+    fc3 : ndarray
+        Force constants array, modified in place.  Shape is either
+        ``(n_satom, n_satom, n_satom, 3, 3, 3)`` (full) or
+        ``(n_patom, n_satom, n_satom, 3, 3, 3)`` (compact); the
+        first-axis size is implied by ``s2compact``.
+        dtype=double, order=C
+    first_disp_atoms : list or ndarray
+        Supercell atom indices whose ``fc3[i, :, :, ...]`` rows are
+        already populated and act as the source of distribution.
+    target_atoms : list or ndarray
+        Supercell atom indices to which fc3 are distributed.  These
+        rows of ``fc3`` are overwritten.
+    lattice : ndarray
+        Supercell basis vectors as columns.
+        shape=(3, 3), dtype=double
+    rotations : ndarray
+        Rotation parts of the symmetry operations searched over.
+        shape=(n_op, 3, 3), dtype=int64
+    permutations : ndarray
+        Atom permutation table induced by each symmetry operation, i.e.
+        ``permutations[op, i]`` gives the supercell atom that atom ``i``
+        is sent to by operation ``op``.
+        shape=(n_op, n_satom), dtype=int64
+    s2compact : ndarray
+        Maps supercell index to first-axis index of ``fc3``.  For
+        full-fc3, ``s2compact = np.arange(n_satom)``; for compact-fc3,
+        ``s2compact = np.array([p2p_map[s2p_map[i]] for i in
+        range(n_satom)])``.
+        shape=(n_satom,), dtype=int64
+    verbose : bool, optional
+        When ``> 2``, print each ``i_done -> i_target`` mapping.
+        Default is False.
+    lang : {"C", "Rust"}, optional
+        Backend used for the per-target inner loop.  ``"Rust"`` requires
+        the ``phonors`` extension; ``"C"`` falls back to a slow Python
+        loop if the C extension is unavailable.  Default is ``"C"``.
+
+    Raises
+    ------
+    RuntimeError
+        If no symmetry operation maps ``i_target`` to any ``i_done``.
 
     """
     lang = resolve_lang(lang)
@@ -274,6 +315,81 @@ def distribute_fc3(
                     fc3[i_target, j, k] = _third_rank_tensor_rotation(
                         rot_cart_inv, fc3[i_done, j_rot, k_rot]
                     )
+
+
+def distribute_fc3_by_translations(
+    fc3: NDArray[np.double],
+    primitive: Primitive,
+    lang: Literal["C", "Rust"] = "C",
+) -> None:
+    """Distribute compact fc3 data to full fc3 by pure translations.
+
+    For example, the input fc3 has to be prepared in the following way
+    in advance:
+
+    fc3 = np.zeros(
+        (compact_fc3.shape[1], compact_fc3.shape[1], compact_fc3.shape[1],
+         3, 3, 3),
+        dtype='double', order='C',
+    )
+    fc3[primitive.p2s_map] = compact_fc3
+
+    """
+    p2s = primitive.p2s_map
+    permutations = primitive.atomic_permutations
+    lattice = primitive.cell.T @ np.linalg.inv(primitive.primitive_matrix)
+    rotations = np.array(
+        [np.eye(3, dtype="int64")] * permutations.shape[0],
+        dtype="int64",
+        order="C",
+    )
+    n_satom = fc3.shape[1]
+    target_atoms = [i for i in range(n_satom) if i not in p2s]
+    distribute_fc3(
+        fc3,
+        p2s,
+        target_atoms,
+        lattice,
+        rotations,
+        permutations,
+        np.arange(n_satom, dtype="int64"),
+        lang=lang,
+    )
+
+
+def compact_fc3_to_full_fc3(
+    primitive: Primitive,
+    compact_fc3: NDArray[np.double],
+    log_level: int = 0,
+    lang: Literal["C", "Rust"] = "C",
+) -> NDArray[np.double]:
+    """Transform compact fc3 to full fc3.
+
+    Compact fc3 has shape (n_patom, n_satom, n_satom, 3, 3, 3) and full fc3
+    has shape (n_satom, n_satom, n_satom, 3, 3, 3), where n_patom and n_satom
+    are the numbers of atoms in the primitive cell and supercell.
+
+    """
+    n_satom = compact_fc3.shape[1]
+    fc3 = np.zeros((n_satom, n_satom, n_satom, 3, 3, 3), dtype="double", order="C")
+    fc3[primitive.p2s_map] = compact_fc3
+    distribute_fc3_by_translations(fc3, primitive, lang=lang)
+    if log_level:
+        print("fc3 was expanded to full format.")
+    return fc3
+
+
+def full_fc3_to_compact_fc3(
+    primitive: Primitive,
+    full_fc3: NDArray[np.double],
+    log_level: int = 0,
+) -> NDArray[np.double]:
+    """Transform full fc3 to compact fc3."""
+    p2s_map = primitive.p2s_map
+    fc3 = np.array(full_fc3[p2s_map], dtype="double", order="C")
+    if log_level:
+        print("fc3 format was transformed to compact format.")
+    return fc3
 
 
 def set_permutation_symmetry_fc3(
@@ -810,7 +926,7 @@ def _get_fc3_least_atoms(
     disp_dataset: Fc3Type1DisplacementDataset,
     fc2: NDArray[np.double],
     symmetry: Symmetry,
-    is_compact_fc: bool = False,
+    is_compact_fc: bool = True,
     pinv_solver: str = "numpy",
     verbose: bool = True,
     lang: Literal["C", "Rust"] = "C",

@@ -38,11 +38,20 @@ from __future__ import annotations
 
 import argparse
 import os
+import warnings
 from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.cui.settings import ConfParser, Settings, fracval
+
+
+class CompactFCDefaultWarning(RuntimeWarning):
+    """Notify that --cfc/--compact-fc is no longer needed.
+
+    Compact force constants are now the default; use --full-fc to opt out.
+
+    """
 
 
 class Phono3pySettings(Settings):
@@ -65,7 +74,7 @@ class Phono3pySettings(Settings):
         self.grid_matrix: NDArray[np.int64] | None = None
         self.ion_clamped: bool = False
         self.is_bterta: bool = False
-        self.is_compact_fc: bool = False
+        self.is_compact_fc: bool = True
         self.is_fc3_r0_average: bool = True
         self.is_full_pp: bool = False
         self.is_gruneisen: bool = False
@@ -218,9 +227,18 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
 
         if "is_compact_fc" in arg_list:
             if args.is_compact_fc:
+                warnings.warn(
+                    "--cfc/--compact-fc is deprecated and has no effect.",
+                    CompactFCDefaultWarning,
+                    stacklevel=2,
+                )
                 self._confs["compact_fc"] = ".true."
-            elif args.is_compact_fc is False:
+
+        if "is_full_fc" in arg_list:
+            if args.is_full_fc:
                 self._confs["compact_fc"] = ".false."
+            else:
+                self._confs["compact_fc"] = ".true."
 
         if "is_gruneisen" in arg_list:
             if args.is_gruneisen:

@@ -1604,7 +1604,7 @@ class Phono3py:
     def produce_fc3(
         self,
         symmetrize_fc3r: bool = False,
-        is_compact_fc: bool = False,
+        is_compact_fc: bool = True,
         fc_calculator: Literal["traditional", "symfc", "alm"] | None = None,
         fc_calculator_options: str | None = None,
         use_symfc_projector: bool = False,
@@ -1622,10 +1622,10 @@ class Phono3py:
             False.
         is_compact_fc : bool, optional
             fc3 shape is
-                False: (supercell, supercell, supercell, 3, 3, 3) True:
-                (primitive, supercell, supercell, 3, 3, 3)
+                True: (primitive, supercell, supercell, 3, 3, 3)
+                False: (supercell, supercell, supercell, 3, 3, 3)
             where 'supercell' and 'primitive' indicate number of atoms in these
-            cells. Default is False.
+            cells. Default is True.
         fc_calculator : str, optional
             Force constants calculator given by str.
         fc_calculator_options : str, optional
@@ -1764,7 +1764,7 @@ class Phono3py:
     def produce_fc2(
         self,
         symmetrize_fc2: bool = False,
-        is_compact_fc: bool = False,
+        is_compact_fc: bool = True,
         fc_calculator: Literal["traditional", "symfc", "alm"] | None = None,
         fc_calculator_options: str | None = None,
         use_symfc_projector: bool = False,
@@ -1782,10 +1782,10 @@ class Phono3py:
             calculator such as ALM. Default is False.
         is_compact_fc : bool
             fc2 shape is
-                False: (supercell, supercell, 3, 3)
                 True: (primitive, supercell, 3, 3)
+                False: (supercell, supercell, 3, 3)
             where 'supercell' and 'primitive' indicate number of atoms in these
-            cells. Default is False.
+            cells. Default is True.
         fc_calculator : str or None
             Force constants calculator given by str.
         fc_calculator_options : str or None

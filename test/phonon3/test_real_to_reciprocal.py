@@ -11,6 +11,7 @@ import numpy as np
 import pytest
 
 from phono3py import Phono3py
+from phono3py.phonon3.fc3 import compact_fc3_to_full_fc3
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.real_to_reciprocal import run_real_to_reciprocal_rust
 
@@ -89,8 +90,9 @@ def test_real_to_reciprocal_rust_vs_python_si(si_pbesol_no_r0avg: Phono3py):
 
     mesh = np.asarray(itr.mesh_numbers, dtype="int64")
     q_vecs = triplet.astype("double") / mesh
-    fc3 = itr.fc3
     primitive = itr.primitive
+    # _python_reference assumes full fc3; expand whatever the fixture provides.
+    fc3 = compact_fc3_to_full_fc3(primitive, itr.fc3)
 
     ref = _python_reference(fc3, primitive, q_vecs)
 

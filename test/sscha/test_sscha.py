@@ -2,9 +2,14 @@
 
 import numpy as np
 import pytest
+from numpy.typing import NDArray
+from phonopy import Phonopy
+from phonopy.harmonic.force_constants import compact_fc_to_full_fc
 from phonopy.phonon.qpoints import QpointsPhonon
 from phonopy.phonon.random_displacements import RandomDisplacements
+from phonopy.structure.cells import Primitive
 
+from phono3py import Phono3py
 from phono3py.sscha.sscha import (
     DispCorrMatrix,
     DispCorrMatrixMesh,
@@ -47,11 +52,22 @@ si_pbesol_111_freqs = [
 ]
 
 
-def get_supercell_phonon(ph3):
+def _compact_fc_to_full_fc(
+    primitive: Primitive, force_constants: NDArray[np.double]
+) -> NDArray[np.double]:
+    shape = force_constants.shape
+    if shape[0] != shape[1]:
+        return compact_fc_to_full_fc(primitive, force_constants)
+    else:
+        return force_constants
+
+
+def get_supercell_phonon(ph3: Phono3py):
     """Return SupercellPhonon class instance."""
     ph3.mesh_numbers = [1, 1, 1]
     ph3.init_phph_interaction()
-    fc2 = ph3.dynamical_matrix.force_constants
+    assert ph3.dynamical_matrix is not None
+    fc2 = _compact_fc_to_full_fc(ph3.primitive, ph3.dynamical_matrix.force_constants)
     supercell = ph3.phonon_supercell
     factor = ph3.unit_conversion_factor
     return SupercellPhonon(supercell, fc2, frequency_factor_to_THz=factor)
@@ -229,12 +245,15 @@ def test_get_sscha_matrices(si_pbesol_111):
     n_snapshots = 2
 
     ph3 = si_pbesol_111
-    uu = get_sscha_matrices(ph3.supercell, ph3.fc2)
+    assert ph3.dynamical_matrix is not None
+    fc2 = _compact_fc_to_full_fc(ph3.primitive, ph3.fc2)
+    uu = get_sscha_matrices(ph3.supercell, fc2)
     # _rd = RandomDisplacements(ph3.supercell, ph3.primitive, ph3.fc2)
     for temp, prob_ref, rd in zip(
         (300, 400), (prob_300, prob_400), (rd_300, rd_400), strict=True
     ):
         uu.run(temp)
+        assert uu.upsilon_matrix is not None
         # _rd.run(temp, number_of_snapshots=n_snapshots)
         # dmat = _rd.u.reshape(n_snapshots, -1)
         dmat = np.reshape(rd, (n_snapshots, -1))
@@ -259,22 +278,27 @@ def test_disp_corr_matrix_nacl(nacl_pbe):
     _test_disp_corr_matrix(nacl_pbe)
 
 
-def _test_disp_corr_matrix(ph3):
+def _test_disp_corr_matrix(ph3: Phono3py):
     supercell_phonon = get_supercell_phonon(ph3)
     uu = DispCorrMatrix(supercell_phonon)
     uu.run(300.0)
 
     sqrt_masses = np.repeat(np.sqrt(ph3.supercell.masses), 3)
+    assert uu.psi_matrix is not None
+    assert uu.upsilon_matrix is not None
     uu_inv = mass_inv(uu.psi_matrix, sqrt_masses)
     np.testing.assert_allclose(uu.upsilon_matrix, uu_inv, atol=1e-8, rtol=0)
 
-    rd = RandomDisplacements(ph3.supercell, ph3.primitive, ph3.fc2)
+    assert ph3.fc2 is not None
+    fc2 = _compact_fc_to_full_fc(ph3.primitive, ph3.fc2)
+    rd = RandomDisplacements(ph3.supercell, ph3.primitive, fc2)
     rd.run_correlation_matrix(300)
+    assert rd.uu_inv is not None
     rd_uu_inv = np.transpose(rd.uu_inv, axes=[0, 2, 1, 3]).reshape(uu_inv.shape)
     np.testing.assert_allclose(uu.upsilon_matrix, rd_uu_inv, atol=1e-8, rtol=0)
 
 
-def test_fc3(si_pbesol_iterha_111):
+def test_fc3(si_pbesol_iterha_111: Phonopy):
     """Test of ThirdOrderFC class."""
     pytest.importorskip("symfc")
 
@@ -282,10 +306,12 @@ def test_fc3(si_pbesol_iterha_111):
     ph.produce_force_constants(
         calculate_full_force_constants=True, fc_calculator="symfc"
     )
+    assert ph.force_constants is not None
     supercell_phonon = SupercellPhonon(
         ph.supercell,
         ph.force_constants,
         frequency_factor_to_THz=ph.unit_conversion_factor,
     )
+    assert isinstance(ph.displacements, np.ndarray)
     fc3 = ThirdOrderFC(ph.displacements, ph.forces, supercell_phonon)
     fc3.run(T=300)

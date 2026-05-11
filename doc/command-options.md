@@ -419,26 +419,36 @@ the Phonopy documentation for additional details.
 
 ## Force constants
 
-(compact_fc_option)=
+(full_fc_option)=
 
-### `--cfc` or `--compact-fc` (`COMPACT_FC = .TRUE.`)
+### `--full-fc` (`COMPACT_FC = .FALSE.`)
 
-When creating force constants from `FORCES_FC3` and/or `FORCES_FC2`, force
-constants that use smaller data size are created. The shape of the data array is
+When creating force constants from `FORCES_FC3` and/or `FORCES_FC2`, the
+compact-array format is used by default. The shape of the data array is
 `(num_patom, num_satom)` for fc2 and `(num_patom, num_satom, num_satom)` for
-fc3, where `num_patom` and `num_satom` are the numbers of atoms in primitive cell
-and supercell. In the full size force constants case, `num_patom` is replaced by
-`num_satom`. Therefore if the supercell dimension is large, this reduction of
-data size becomes large. If the input crystal structure has centring
-{ref}`--pa <pa_option>` is necessary to have smallest data size. In this case,
-`--pa` option has to be specified on reading. Otherwise phono3py can recognize
-if `fc2.hdf5` and `fc3.hdf5` are compact or full automatically. When using with
-`--fc-symmetry`, the calculated results will become slightly different due to
-imperfect symmetrization scheme that phono3py employs.
+fc3, where `num_patom` and `num_satom` are the numbers of atoms in the primitive
+cell and supercell. With `--full-fc`, the full-size arrays are computed instead,
+where `num_patom` is replaced by `num_satom`. The compact form reduces data
+size, and the reduction grows with supercell dimension. If the input crystal
+structure has centring, {ref}`--pa <pa_option>` is necessary to have the
+smallest data size. In this case, `--pa` option has to be specified on reading.
+Otherwise phono3py can recognize if `fc2.hdf5` and `fc3.hdf5` are compact or
+full automatically. When using with `--fc-symmetry`, the calculated results will
+become slightly different due to the imperfect symmetrization scheme that
+phono3py employs.
 
 ```bash
-% phono3py-load --compact-fc
+% phono3py-load --full-fc
 ```
+
+(compact_fc_option)=
+
+### `--cfc` or `--compact-fc` (`COMPACT_FC = .TRUE.`) (deprecated)
+
+Compact force constants are now the default, so this option has no effect and
+is retained only for backward compatibility. Specifying `--cfc` or
+`--compact-fc` on the command line emits a deprecation notice. Use `--full-fc`
+to opt back into the full-array format.
 
 (symmetrization_option)=
 

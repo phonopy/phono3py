@@ -98,7 +98,7 @@ def test_kappa_RTA_si_nomeshsym(si_pbesol: Phono3py, si_pbesol_nomeshsym: Phono3
 
 def test_kappa_RTA_si_grg(si_pbesol_grg: Phono3py):
     """Test RTA by Si with GR-grid."""
-    ref_kappa_RTA_grg = [111.204, 111.204, 111.204, 0, 0, 0]
+    ref_kappa_RTA_grg = [110.891, 110.891, 110.891, 0, 0, 0]
     mesh = 30
     ph3 = si_pbesol_grg
     ph3.mesh_numbers = mesh

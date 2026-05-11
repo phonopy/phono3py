@@ -2,6 +2,15 @@
 
 # Change Log
 
+## Unreleased
+
+- Compact force constants are now the default; `--cfc` / `--compact-fc` is
+  deprecated. Use `--full-fc` for the full-array format.
+- For `phono3py.load`, symfc-projector is now used to symmetrize force
+  constants calculated by the traditional fc-solver, matching the existing
+  default of `phono3py-load`. Pass `fc_calculator="traditional"` to recover
+  the previous behaviour.
+
 ## Apr-25-2026: Version 3.31.1
 
 - Improved conductivity computation performance.
