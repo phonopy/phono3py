@@ -185,7 +185,7 @@ class Phono3py:
         primitive_matrix: Literal["P", "F", "I", "A", "C", "R", "auto"]
         | Sequence[Sequence[float]]
         | NDArray[np.double]
-        | None = None,
+        | None = "auto",
         phonon_supercell_matrix: Sequence[int]
         | Sequence[Sequence[int]]
         | NDArray[np.int64]
@@ -216,12 +216,13 @@ class Phono3py:
             `supercell_matrix` explicitly.
         primitive_matrix : array_like or str, optional
             Primitive matrix multiplied to input cell basis vectors. Default is
-            the identity matrix. When given as array_like, shape=(3, 3),
-            dtype=float. When 'F', 'I', 'A', 'C', or 'R' is given instead of a
-            3x3 matrix, the primitive matrix defined at
-            https://spglib.github.io/spglib/definition.html is used. When 'auto'
-            is given, the centring type ('F', 'I', 'A', 'C', 'R', or primitive
-            'P') is automatically chosen.
+            'auto', which automatically chooses the centring type ('F', 'I',
+            'A', 'C', 'R', or primitive 'P') from crystal symmetry. None is
+            treated the same as 'auto'. To use the unit cell as the primitive
+            cell (identity transformation), pass 'P'. When given as array_like,
+            shape=(3, 3), dtype=float. When 'F', 'I', 'A', 'C', or 'R' is
+            given instead of a 3x3 matrix, the primitive matrix defined at
+            https://spglib.github.io/spglib/definition.html is used.
         phonon_supercell_matrix : array_like, optional
             Supercell matrix used for fc2. In phono3py, supercell matrix for fc3
             and fc2 can be different to support longer range interaction of fc2
@@ -291,6 +292,8 @@ class Phono3py:
         self._supercell_matrix = np.array(
             shape_supercell_matrix(supercell_matrix), dtype="int64", order="C"
         )
+        if primitive_matrix is None:
+            primitive_matrix = "auto"
         self._primitive_matrix = get_primitive_matrix_with_auto(
             self._unitcell, primitive_matrix, symprec=self._symprec
         )
