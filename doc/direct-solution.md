@@ -20,7 +20,7 @@ recommended to specify {ref}`--ts option <ts_option>`. An example to run with
 the direct solution of LBTE for `example/Si-PBEsol` is as follows:
 
 ```bash
-% phono3py-load --mesh 11 11 11 --lbte --ts 300
+% phono3py --mesh 11 11 11 --lbte --ts 300
 ...
 
 =================== End of collection of collisions ===================
@@ -65,7 +65,7 @@ option, estimated memory space needed for storing collision matrix is presented.
 An example for `example/Si-PBEsol` is as follows:
 
 ```bash
-% phono3py-load --mesh 40 40 40 --lbte --wgp
+% phono3py --mesh 40 40 40 --lbte --wgp
 ...
 
 Memory requirements:
@@ -82,7 +82,7 @@ With {ref}`--stp option <stp_option>`, estimated memory space needed for ph-ph
 interaction strengths is shown such as
 
 ```bash
-% phono3py-load --mesh 40 40 40 --lbte --stp
+% phono3py --mesh 40 40 40 --lbte --stp
 ```
 
 ## Work load distribution
@@ -142,20 +142,20 @@ Examples of command options are shown below using `Si-PBE` example. Irreducible
 grid point indices are obtained by {ref}`--wgp option<wgp_option>`:
 
 ```bash
-% phono3py-load --mesh 19 19 19 --lbte --wgp
+% phono3py --mesh 19 19 19 --lbte --wgp
 ```
 
 and the information is given in `ir_grid_points.yaml`. For distribution of
 collision matrix calculation (see also {ref}`workload_distribution`):
 
 ```bash
-% phono3py-load --mesh 19 19 19 --lbte --ts 300 --write-collision --gp="grid_point_numbers..."
+% phono3py --mesh 19 19 19 --lbte --ts 300 --write-collision --gp="grid_point_numbers..."
 ```
 
 To collect distributed pieces of the collision matrix:
 
 ```bash
-% phono3py-load --mesh 19 19 19 --lbte --read-collision 0
+% phono3py --mesh 19 19 19 --lbte --read-collision 0
 ```
 
 where `--read-collision 0` indicates to read the first result in the list of
@@ -198,21 +198,21 @@ Examples of command options are shown below using `Si-PBE` example. Irreducible
 grid point indices are obtained by {ref}`--wgp option<wgp_option>`
 
 ```bash
-% phono3py-load --mesh "19 19 19" --lbte --wgp
+% phono3py --mesh "19 19 19" --lbte --wgp
 ```
 
 and the grid point information is provided in `ir_grid_points.yaml`. All phonons
 on mesh grid points are saved by
 
 ```bash
-% phono3py-load --mesh "19 19 19" --write-phonon
+% phono3py --mesh "19 19 19" --write-phonon
 ```
 
 For distribution of ph-ph interaction strength calculation (see also
 {ref}`workload_distribution`)
 
 ```bash
-% phono3py-load --mesh "19 19 19" --lbte --ts 300 --write-pp --gp "grid_point_numbers..." --read-phonon
+% phono3py --mesh "19 19 19" --lbte --ts 300 --write-pp --gp "grid_point_numbers..." --read-phonon
 ```
 
 Here one temperature has to be specified but any one of temperatures is OK since
@@ -221,7 +221,7 @@ independent. Then the computed ph-ph interaction strengths are read and used to
 compute collision matrix and lattice thermal conductivity at a temperature by
 
 ```bash
-% phono3py-load --mesh "19 19 19" --lbte --ts 300 --read-pp --read-phonon
+% phono3py --mesh "19 19 19" --lbte --ts 300 --read-pp --read-phonon
 ```
 
 This last command is repeated at different temperatures to obtain the properties

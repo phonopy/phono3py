@@ -4,11 +4,17 @@
 
 ## Unreleased
 
+- CLI split into `phono3py-init` (setup: displacements, FORCES_FC3 /
+  FORCES_FC2 / FORCE_SETS file creation, `--cfs`, `--fs2f2`) and
+  `phono3py` (phonon and thermal-conductivity calculation). `phono3py-load`
+  is kept as a deprecated alias of `phono3py`. The `phono3py` argument
+  parser now rejects setup flags (`--cf3`, `--cf3-file`, `--cf2`, `--cfs`,
+  `--fs2f2`, `--rd-fc2`) and points the user to `phono3py-init`.
 - Compact force constants are now the default; `--cfc` / `--compact-fc` is
   deprecated. Use `--full-fc` for the full-array format.
 - For `phono3py.load`, symfc-projector is now used to symmetrize force
   constants calculated by the traditional fc-solver, matching the existing
-  default of `phono3py-load`. Pass `fc_calculator="traditional"` to recover
+  default of `phono3py`. Pass `fc_calculator="traditional"` to recover
   the previous behaviour.
 
 ## Apr-25-2026: Version 3.31.1
@@ -112,8 +118,8 @@
 ## Jun-26-2025: Version 3.17.0
 
 - Major refactoring of command-user interface. Most of routines behind the
-  `phono3py` and `phono3py-load` commands were unified.
-- For `phono3py-load`, symfc-projector is used to symmetrize force constants
+  `phono3py` and `phono3py` commands were unified.
+- For `phono3py`, symfc-projector is used to symmetrize force constants
   calculated by finite difference approach as the default behavior. The previous
   behavior of the symmetrization can be recovered by `--fc-calculator
   traditional` option.
@@ -164,7 +170,7 @@
 
 - `-i`, `-o`, `--io` options have been deprecated.
 - The `--amplitude` option can now be used to specify the displacement distance
-  for `phono3py-load --pypolymlp`.
+  for `phono3py --pypolymlp`.
 
 ## Jan-2-2025: Version 3.11.0
 
@@ -335,7 +341,7 @@ This is a major version release. There are backward-incompatible changes.
 ## Apr-3-2023: Version 2.6.0
 
 - Release to follow the change of phonopy at v2.18, which fixes to be able to
-  read `phono3py*.yaml` file with `phono3py-load`.
+  read `phono3py*.yaml` file with `phono3py`.
 
 ## Dec-31-2022: Version 2.5.1
 
@@ -430,7 +436,7 @@ loader.
 ## Sep-30-2020: Version 1.21.0
 
 - Maintenance release to follow the change of phonopy at v2.8.1
-- Improvements of phono3py loader (`phono3py.load`), `phono3py-load` command,
+- Improvements of phono3py loader (`phono3py.load`), `phono3py` command,
   API, and `phono3py_disp.yaml`.
 - Harmonic phonon calculation on mesh was multithreaded. This is effective when
   using very dense mesh with non-analytical term correction (probably rare

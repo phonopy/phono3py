@@ -159,7 +159,7 @@ assert len(forces) == num_supercells
 ## Force constants calculation
 
 The pair of the displacement dataset and force sets is required to calculate
-force constants. {ref}`api-phono3py-load` is the convenient function to load
+force constants. {ref}`api-phono3py` is the convenient function to load
 these data from files and to set up them in the `Phono3py` class instance.
 However, in the case when only displacement dataset is expected, the low-level
 phono3py-yaml parser in `Phono3pyYaml` is useful.
@@ -422,7 +422,7 @@ Phono3py.phonon_supercells_with_displacements
 The meanings of them are found in their docstrings though they may be guessed
 easily.
 
-(api-phono3py-load)=
+(api-phono3py)=
 
 ## `phono3py.load`
 

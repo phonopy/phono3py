@@ -11,7 +11,7 @@
    This is the same way as usual phonopy:
 
    ```bash
-   % phono3py -d --dim 2 2 2 --pa F -c POSCAR-unitcell
+   % phono3py-init -d --dim 2 2 2 --pa F -c POSCAR-unitcell
    ```
 
    `phono3py_disp.yaml` and `POSCAR-xxxxx` files are created.
@@ -21,7 +21,7 @@
    for third-order force constants (fc3) calculation:
 
    ```bash
-   % phono3py -d --dim-fc2 4 4 4 --dim 2 2 2 --pa F -c POSCAR-unitcell
+   % phono3py-init -d --dim-fc2 4 4 4 --dim 2 2 2 --pa F -c POSCAR-unitcell
    ```
 
    In this case, `POSCAR_FC2-xxxxx` files are also created.
@@ -42,7 +42,7 @@
    fc3 and fc2 are created as follows.
 
    ```bash
-   % phono3py --cf3 disp-{00001..00755}/vasprun.xml
+   % phono3py-init --cf3 disp-{00001..00755}/vasprun.xml
    ```
 
    where 0755 is an example of the index of the last displacement
@@ -52,26 +52,13 @@
    When you use larger supercell for fc2 calculation:
 
    ```bash
-   % phono3py --cf2 disp_fc2-{00001..00002}/vasprun.xml
+   % phono3py-init --cf2 disp_fc2-{00001..00002}/vasprun.xml
    ```
 
    `phono3py_displ.yaml` is necessary in this case and `FORCES_FC2` is
    created.
 
-4. Create `fc2.hdf` and `fc3.hdf`
-
-   ```bash
-   % phono3py --fc-symmetry
-   ```
-
-   `--fc-symmetry` symmetrizes fc3 and fc2. `fc2.hdf5` and `fc3.hdf5`
-   are created from `FORCES_FC3` (and
-   optionally `FORCES_FC2`) and `phono3py_disp.yaml`. This step is
-   not mandatory, but you can avoid calculating fc2 and fc3 at every
-   run time when reading force constants from these files with
-   `--fc3` and `--fc2` options.
-
-5. Thermal conductivity calculation
+4. Thermal conductivity calculation
 
    An example of thermal conductivity calculation is:
 
@@ -93,7 +80,7 @@
    First run the same command with the addition option of `--wgp`:
 
    ```
-   % phono3py --fc3 --fc2 --mesh 11 11 11 --br --wgp
+   % phono3py --mesh 11 11 11 --br --wgp
    ```
 
    `ir_grid_points.yaml` is obtained. Irreducible q-points are found in this
@@ -116,7 +103,7 @@
    (0, 1, ..., 310), run with `--read-gamma` option:
 
    ```
-   % phono3py --fc3 --fc2 --mesh 11 11 11 --br --read-gamma
+   % phono3py --mesh 11 11 11 --br --read-gamma
    ```
 
    Once this calculation runs without problem, separately calculated

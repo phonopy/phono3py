@@ -48,7 +48,8 @@ pypolymlp
 cutoff-pair
 external-tools
 phono3py-api
-phono3py-load
+phono3py
+phono3py-init
 hdf5_howto
 grid
 citation
