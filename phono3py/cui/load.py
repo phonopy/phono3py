@@ -80,7 +80,7 @@ def load(
     primitive_matrix: Literal["P", "F", "I", "A", "C", "R", "auto"]
     | Sequence[Sequence[float]]
     | NDArray[np.double]
-    | None = None,
+    | None = "auto",
     phonon_supercell_matrix: Sequence[int]
     | Sequence[Sequence[int]]
     | NDArray[np.int64]
@@ -174,13 +174,16 @@ def load(
         (3, 3), where the former is considered a diagonal matrix. Default is the
         unit matrix. dtype=int
     primitive_matrix : array_like or str, optional
-        Primitive matrix multiplied to input cell basis vectors. Default is the
-        identity matrix. When given as array_like, shape=(3, 3), dtype=float.
-        When 'F', 'I', 'A', 'C', or 'R' is given instead of a 3x3 matrix, the
+        Primitive matrix multiplied to input cell basis vectors. Default is
+        'auto', which automatically chooses the centring type ('F', 'I', 'A',
+        'C', 'R', or primitive 'P'). None is treated the same as 'auto'. To
+        use the unit cell as the primitive cell (identity transformation),
+        pass 'P'. When given as array_like, shape=(3, 3), dtype=float. When
+        'F', 'I', 'A', 'C', or 'R' is given instead of a 3x3 matrix, the
         primitive matrix defined at
-        https://spglib.github.io/spglib/definition.html is used. When 'auto' is
-        given, the centring type ('F', 'I', 'A', 'C', 'R', or primitive 'P') is
-        automatically chosen. Default is 'auto'.
+        https://spglib.github.io/spglib/definition.html is used. When a
+        "phono3py.yaml"-like file is loaded and it has a primitive_matrix
+        stored, that value takes priority over the default 'auto'.
     phonon_supercell_matrix : array_like, optional
         Supercell matrix used for fc2. In phono3py, supercell matrix for fc3
         and fc2 can be different to support longer range interaction of fc2 than
@@ -280,6 +283,8 @@ def load(
 
     """
     lang = resolve_lang(lang)
+    if primitive_matrix is None:
+        primitive_matrix = "auto"
     if (
         supercell is not None
         or supercell_filename is not None
@@ -319,10 +324,13 @@ def load(
         ph_smat = ph3py_yaml.phonon_supercell_matrix
         if smat is None:
             smat = np.eye(3, dtype="int64", order="C")
-        if primitive_matrix == "auto":
-            pmat = "auto"
-        else:
+        # When the caller leaves primitive_matrix at the default "auto",
+        # a value stored in the yaml takes priority (preserves the cell
+        # transformation that was used originally).
+        if primitive_matrix == "auto" and ph3py_yaml.primitive_matrix is not None:
             pmat = ph3py_yaml.primitive_matrix
+        else:
+            pmat = primitive_matrix
 
         if nac_params is not None:
             _nac_params = nac_params
