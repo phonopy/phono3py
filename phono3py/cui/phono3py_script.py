@@ -1157,6 +1157,37 @@ _COMPACT_FC_DEFAULT_LINES = (
 )
 
 
+def _detect_init_operation(args, settings) -> str | None:
+    """Return a label of the setup ('init') operation requested, or None.
+
+    The setup operations are everything performed before phonon and
+    thermal-conductivity calculation that exits the program once done:
+    displacement generation and FORCES_FC3 / FORCES_FC2 / FORCE_SETS file
+    creation. Pypolymlp-driven random displacements need phonon
+    information and are therefore not setup operations.
+
+    """
+    if getattr(args, "force_sets_to_forces_fc2_mode", False):
+        return "--fs2f2"
+    if getattr(args, "force_sets_mode", False):
+        return "--cfs"
+    if settings.create_forces_fc3:
+        return "--cf3"
+    if settings.create_forces_fc3_file:
+        return "--cf3-file"
+    if settings.create_forces_fc2:
+        return "--cf2"
+    if settings.use_pypolymlp:
+        return None
+    if settings.create_displacements:
+        return "-d"
+    if settings.random_displacements is not None:
+        return "--rd"
+    if settings.random_displacements_fc2 is not None:
+        return "--rd-fc2"
+    return None
+
+
 def _install_cli_warning_formatter() -> None:
     """Render selected library warnings nicely instead of the default format.
 
@@ -1208,11 +1239,22 @@ def main(**argparse_control: Any) -> None:
     _install_cli_warning_formatter()
     load_phono3py_yaml = argparse_control.get("load_phono3py_yaml", False)
 
+    # CLI mode. "init" handles operations that run before phonon calculation
+    # and exit (displacement generation, FORCES_FC3/FC2 collection). "run"
+    # is the phonon and thermal-conductivity calculation workflow. When
+    # unset (e.g. from pytest harnesses) no mode-based enforcement happens.
+    mode: Literal["init", "run"] | None = argparse_control.get("mode")
+    deprecated_command = argparse_control.get("deprecated_command")
+    if deprecated_command is not None:
+        print("")
+        print(f"WARNING: '{deprecated_command}' is deprecated. Use 'phono3py' instead.")
+        print("")
+
     if "args" in argparse_control:  # This is for pytest.
         args = argparse_control["args"]
         log_level = args.log_level
     else:
-        args, log_level = _start_phono3py(**argparse_control)
+        args, log_level = _start_phono3py(load_phono3py_yaml=load_phono3py_yaml)
 
     output_yaml_filename: str | None
     if load_phono3py_yaml:
@@ -1223,6 +1265,26 @@ def main(**argparse_control: Any) -> None:
     settings, confs_dict, cell_filename = _read_phono3py_settings(
         args, argparse_control, log_level
     )
+
+    init_op_label = _detect_init_operation(args, settings)
+    if mode == "run" and init_op_label is not None:
+        print_error_message(
+            f"'{init_op_label}' is a setup operation. "
+            "Use 'phono3py-init' for setup operations."
+        )
+        if log_level:
+            print_error()
+        sys.exit(1)
+    if mode == "init" and init_op_label is None:
+        print_error_message(
+            "No setup operation requested. 'phono3py-init' requires one of: "
+            "-d, --rd, --rd-fc2, --cf3, --cf3-file, --cf2, --cfs, or "
+            "--fs2f2. For phonon and thermal-conductivity calculations, "
+            "use 'phono3py'."
+        )
+        if log_level:
+            print_error()
+        sys.exit(1)
 
     if args.force_sets_to_forces_fc2_mode:
         create_FORCES_FC2_from_FORCE_SETS(log_level)

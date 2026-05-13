@@ -89,7 +89,7 @@ Yang et al., J. Eur. Ceram. Soc. 36, 3809 (2016); Zhang et al., Ceramics Interna
 As a second example, we show how to compute the solution of the Wigner transport equation treating scattering in the RTA approximation for `example/Si-PBEsol`; the command is:
 
 ```bash
-% phono3py-load --mesh 11 11 11 --ts 1600 --br --wigner
+% phono3py --mesh 11 11 11 --ts 1600 --br --wigner
 ```
 and the output is
 ```bash
@@ -109,7 +109,7 @@ K_T    1600.0      20.335     20.335     20.335      0.000      0.000      0.000
 To compute the Wigner conductivity treating scattering exactly, specify `--lbte` and `--wigner`. For `example/Si-PBEsol`, the command is:
 
 ```bash
-% phono3py-load --mesh 11 11 11 --ts 1600 --lbte --wigner
+% phono3py --mesh 11 11 11 --ts 1600 --lbte --wigner
 ```
 and the output is
 ```bash

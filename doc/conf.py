@@ -30,6 +30,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "myst_parser",
     "sphinxcontrib.bibtex",
+    "sphinxcontrib.mermaid",
 ]
 myst_enable_extensions = ["linkify", "dollarmath", "amsmath"]
 

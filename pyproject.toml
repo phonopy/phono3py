@@ -30,6 +30,7 @@ Repository = "https://github.com/phonopy/phono3py"
 
 [project.scripts]
 phono3py = "phono3py.scripts.phono3py:run"
+phono3py-init = "phono3py.scripts.phono3py_init:run"
 phono3py-load = "phono3py.scripts.phono3py_load:run"
 phono3py-coleigplot = "phono3py.scripts.phono3py_coleigplot:run"
 phono3py-kaccum = "phono3py.scripts.phono3py_kaccum:run"

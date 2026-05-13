@@ -156,7 +156,7 @@ Three grid point indices are used to represent a q-point triplet. For example
 the following command generates `gamma_detail-m111111-g5.hdf5`,
 
 ```bash
-% phono3py-load phono3py.yaml --gp 5 --br --mesh 11 11 11 --write-gamma-detail
+% phono3py phono3py.yaml --gp 5 --br --mesh 11 11 11 --write-gamma-detail
 ```
 
 This file contains various information:
