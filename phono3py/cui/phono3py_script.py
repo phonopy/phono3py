@@ -106,7 +106,6 @@ from phono3py.cui.load import (
 )
 from phono3py.cui.phono3py_argparse import get_parser
 from phono3py.cui.settings import (
-    CompactFCDefaultWarning,
     Phono3pyConfParser,
     Phono3pySettings,
 )
@@ -239,9 +238,9 @@ def _finalize_phono3py(
 
 def _get_run_mode(settings: Phono3pySettings, args: argparse.Namespace) -> RunMode:
     """Extract run mode from settings."""
-    if args.write_grid_points:
+    if getattr(args, "write_grid_points", False):
         run_mode = "write_grid_info"
-    elif args.show_num_triplets:
+    elif getattr(args, "show_num_triplets", False):
         run_mode = "show_triplets_info"
     elif settings.is_gruneisen:
         run_mode = "gruneisen"
@@ -290,7 +289,7 @@ def _start_phono3py(**argparse_control: Any) -> tuple[argparse.Namespace, int]:
         # When --rust was requested, or when the C extension is missing
         # (and we are about to fall back to Rust), report rayon threads.
         # Otherwise report OpenMP threads from the C extension.
-        if args.use_rust or not have_c_ext():
+        if getattr(args, "use_rust", False) or not have_c_ext():
             rust_threads = rust_rayon_max_threads()
             if rust_threads > 0:
                 print(f"Rust backend (phonors) using rayon ({rust_threads} threads).")
@@ -1150,13 +1149,6 @@ def _load_dataset_and_phonon_dataset(
             ph3py.phonon_dataset = phonon_dataset
 
 
-_COMPACT_FC_DEFAULT_LINES = (
-    "--cfc/--compact-fc is deprecated and has no effect.",
-    "Compact force constants are now the default.",
-    "Use --full-fc to switch to the full-array format.",
-)
-
-
 def _detect_init_operation(args, settings) -> str | None:
     """Return a label of the setup ('init') operation requested, or None.
 
@@ -1191,11 +1183,11 @@ def _detect_init_operation(args, settings) -> str | None:
 def _install_cli_warning_formatter() -> None:
     """Render selected library warnings nicely instead of the default format.
 
-    Currently ``CompactFCDefaultWarning`` (phono3py) and
-    ``MeshSymmetryFallbackWarning`` / ``MeshGRGridFallbackWarning``
-    (phonopy) are special-cased: the default Python format prepends the
-    source file path and line number, which clutters CLI output.  All
-    other warnings keep their default formatting.
+    ``MeshSymmetryFallbackWarning`` / ``MeshGRGridFallbackWarning`` /
+    ``PrimitiveMatrixAutoDefaultWarning`` (phonopy) are special-cased:
+    the default Python format prepends the source file path and line
+    number, which clutters CLI output.  All other warnings keep their
+    default formatting.
 
     """
     import textwrap
@@ -1205,28 +1197,31 @@ def _install_cli_warning_formatter() -> None:
         MeshGRGridFallbackWarning,
         MeshSymmetryFallbackWarning,
     )
+    from phonopy.structure.cells import PrimitiveMatrixAutoDefaultWarning
 
-    notice_classes = (MeshSymmetryFallbackWarning, MeshGRGridFallbackWarning)
+    notice_classes = (
+        MeshSymmetryFallbackWarning,
+        MeshGRGridFallbackWarning,
+        PrimitiveMatrixAutoDefaultWarning,
+    )
     default_showwarning = warnings.showwarning
 
     def showwarning(message, category, filename, lineno, file=None, line=None):
         stream = file if file is not None else sys.stderr
-        if isinstance(message, CompactFCDefaultWarning) or (
-            isinstance(category, type) and issubclass(category, CompactFCDefaultWarning)
-        ):
-            print("", file=stream)
-            print("WARNING:", file=stream)
-            for body in _COMPACT_FC_DEFAULT_LINES:
-                print(f"  {body}", file=stream)
-            print("", file=stream)
-            return
         if isinstance(message, notice_classes) or (
             isinstance(category, type) and issubclass(category, notice_classes)
         ):
             print("", file=stream)
             print("WARNING:", file=stream)
-            for body in textwrap.wrap(str(message), width=76):
-                print(f"  {body}", file=stream)
+            for raw_line in str(message).splitlines():
+                if raw_line.startswith("  "):
+                    # Preserve pre-formatted indented blocks (e.g. matrix rows).
+                    print(f"  {raw_line}", file=stream)
+                elif raw_line.strip() == "":
+                    print("", file=stream)
+                else:
+                    for body in textwrap.wrap(raw_line, width=76):
+                        print(f"  {body}", file=stream)
             print("", file=stream)
             return
         default_showwarning(message, category, filename, lineno, file, line)
@@ -1286,12 +1281,12 @@ def main(**argparse_control: Any) -> None:
             print_error()
         sys.exit(1)
 
-    if args.force_sets_to_forces_fc2_mode:
+    if getattr(args, "force_sets_to_forces_fc2_mode", False):
         create_FORCES_FC2_from_FORCE_SETS(log_level)
         if log_level:
             print_end_phono3py()
         sys.exit(0)
-    if args.force_sets_mode:
+    if getattr(args, "force_sets_mode", False):
         create_FORCE_SETS_from_FORCES_FCx(
             settings.phonon_supercell_matrix, cell_filename, log_level
         )

@@ -285,13 +285,6 @@ def _add_init_options(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="Create FORCES_FC2 from FORCE_SETS",
     )
-    parser.add_argument(
-        "--nac",
-        dest="is_nac",
-        action="store_true",
-        default=None,
-        help="Non-analytical term correction",
-    )
 
 
 def _add_run_options(parser: argparse.ArgumentParser) -> None:
@@ -359,14 +352,6 @@ def _add_run_options(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         default=None,
         help="Calculate thermal conductivity in BTE-RTA",
-    )
-    parser.add_argument(
-        "--cfc",
-        "--compact-fc",
-        dest="is_compact_fc",
-        action="store_true",
-        default=None,
-        help="(deprecated) No effect; compact force constants are now the default",
     )
     parser.add_argument(
         "--full-fc",
@@ -948,6 +933,105 @@ def _add_run_options(parser: argparse.ArgumentParser) -> None:
     )
 
 
+class _MigratedToInitAction(argparse.Action):
+    """Reject setup-only flags that moved to 'phono3py-init' in v4."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        parser.exit(
+            2,
+            f"phono3py: error: '{option_string}' is a setup operation that "
+            "moved to 'phono3py-init' in v4.\n"
+            "Replace 'phono3py' with 'phono3py-init' in your command.\n"
+            "See https://phonopy.github.io/phono3py/migration-v4.html\n",
+        )
+
+
+def _make_removed_action(message: str) -> type[argparse.Action]:
+    """Build an argparse Action that rejects a removed-in-v4 flag."""
+
+    class _RemovedAction(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            parser.exit(
+                2,
+                f"phono3py: error: {message}\n"
+                "See https://phonopy.github.io/phono3py/migration-v4.html\n",
+            )
+
+    return _RemovedAction
+
+
+# Flags removed in phono3py v4. Mapping: option_strings -> (nargs, message).
+_REMOVED_OPTIONS: dict[tuple[str, ...], tuple[int | str, str]] = {
+    ("--nac",): (
+        0,
+        "'--nac' was removed in phono3py v4. NAC is now enabled "
+        "automatically when a BORN file is present or nac_params are "
+        "stored in phono3py.yaml. Use '--nonac' to disable NAC.",
+    ),
+    ("--cfc", "--compact-fc"): (
+        0,
+        "'--cfc' / '--compact-fc' was removed in phono3py v4. Compact "
+        "force constants are now the default. Use '--full-fc' to switch "
+        "to the full-array layout.",
+    ),
+}
+
+
+def _reject_removed_options(parser: argparse.ArgumentParser) -> None:
+    """Register removed-in-v4 flags so both parsers emit a friendly error."""
+    for option_strings, (nargs, message) in _REMOVED_OPTIONS.items():
+        kwargs: dict = {
+            "action": _make_removed_action(message),
+            "nargs": nargs,
+            "help": argparse.SUPPRESS,
+            "default": argparse.SUPPRESS,
+        }
+        if nargs == 0:
+            kwargs["const"] = True
+        parser.add_argument(*option_strings, **kwargs)
+
+
+def _reject_init_options(parser: argparse.ArgumentParser) -> None:
+    """Register setup-only flags so phono3py emits a migration error.
+
+    Without this, argparse rejects unknown setup flags with a generic
+    'unrecognized arguments' message and a long usage dump. ``-d`` and
+    ``--rd`` are intentionally not included because they are also valid
+    on the run parser (pypolymlp workflow); v3-style setup invocations
+    are caught here via the companion ``--dim`` flag instead.
+
+    """
+    specs: list[tuple[tuple[str, ...], int | str]] = [
+        (("-c", "--cell"), 1),
+        (("--dim",), "+"),
+        (("--dim-fc2",), "+"),
+        (("--rd-fc2", "--random-displacements-fc2"), 1),
+        (("--rd-auto-factor",), 1),
+        (("--amplitude",), 1),
+        (("--pm",), 0),
+        (("--pm-fc2",), 0),
+        (("--nodiag",), 0),
+        (("--cutoff-pair", "--cutoff-pair-distance"), 1),
+        (("--cf3", "--create-f3"), "+"),
+        (("--cf3-file", "--create-f3-from-file"), 1),
+        (("--cf2", "--create-f2"), "+"),
+        (("--cfz", "--subtract-forces"), 1),
+        (("--cfz-fc2", "--subtract-forces-fc2"), 1),
+        (("--cfs", "--create-force-sets"), 0),
+        (("--fs2f2", "--force-sets-to-forces-fc2"), 0),
+    ]
+    for option_strings, nargs in specs:
+        kwargs: dict = {
+            "action": _MigratedToInitAction,
+            "nargs": nargs,
+            "help": argparse.SUPPRESS,
+            "default": argparse.SUPPRESS,
+        }
+        if nargs == 0:
+            kwargs["const"] = True
+        parser.add_argument(*option_strings, **kwargs)
+
+
 def get_init_parser() -> tuple[argparse.ArgumentParser, list[str]]:
     """Return argument parser for the phono3py-init command."""
     deprecated = fix_deprecated_option_names(sys.argv)
@@ -959,6 +1043,7 @@ def get_init_parser() -> tuple[argparse.ArgumentParser, list[str]]:
     )
     _add_shared_options(parser)
     _add_init_options(parser)
+    _reject_removed_options(parser)
     parser.add_argument("filename", nargs="*", help="Phono3py configure file")
     return parser, deprecated
 
@@ -974,6 +1059,8 @@ def get_run_parser() -> tuple[argparse.ArgumentParser, list[str]]:
     )
     _add_shared_options(parser)
     _add_run_options(parser)
+    _reject_init_options(parser)
+    _reject_removed_options(parser)
     parser.add_argument("filename", nargs="*", help="phono3py.yaml like file")
     return parser, deprecated
 
