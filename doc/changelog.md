@@ -4,18 +4,33 @@
 
 ## Unreleased
 
+Major breaking changes. See {ref}`migration_v4` for the upgrade guide.
+
 - CLI split into `phono3py-init` (setup: displacements, FORCES_FC3 /
   FORCES_FC2 / FORCE_SETS file creation, `--cfs`, `--fs2f2`) and
   `phono3py` (phonon and thermal-conductivity calculation). `phono3py-load`
   is kept as a deprecated alias of `phono3py`. The `phono3py` argument
   parser now rejects setup flags (`--cf3`, `--cf3-file`, `--cf2`, `--cfs`,
-  `--fs2f2`, `--rd-fc2`) and points the user to `phono3py-init`.
-- Compact force constants are now the default; `--cfc` / `--compact-fc` is
-  deprecated. Use `--full-fc` for the full-array format.
+  `--fs2f2`, `--rd-fc2`, `--dim`, `--dim-fc2`, `-c`, etc.) and points the
+  user to `phono3py-init`.
+- The default of `primitive_matrix` in `Phono3py(...)` /
+  `phono3py.load(...)` and of `--pa` on the CLI changed from the 3x3
+  identity matrix to `"auto"`. When auto-detection returns a non-identity
+  matrix a `PrimitiveMatrixAutoDefaultWarning` is emitted. Pass
+  `primitive_matrix="P"` (or `--pa P`) to restore the v3 behaviour.
+- Compact force constants are now the default; `--cfc` / `--compact-fc`
+  was removed. Use `--full-fc` for the full-array format.
+- `--nac` was removed. NAC is now enabled automatically when a `BORN`
+  file is present or `nac_params` is stored in `phono3py.yaml`. Pass
+  `--nonac` to disable NAC explicitly.
 - For `phono3py.load`, symfc-projector is now used to symmetrize force
   constants calculated by the traditional fc-solver, matching the existing
   default of `phono3py`. Pass `fc_calculator="traditional"` to recover
   the previous behaviour.
+- Grid, tetrahedron-method, and kaccum modules migrated from phono3py to
+  phonopy. The new import paths are `phonopy.phonon.grid.BZGrid`,
+  `phonopy.phonon.tetrahedron_method`, and the
+  `phonopy.phonon.spectrum` accumulator API.
 
 ## Apr-25-2026: Version 3.31.1
 

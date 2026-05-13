@@ -1,5 +1,13 @@
 # Welcome to phono3py
 
+```{important}
+**Upgrading from phono3py v3?** Version 4 introduces several breaking
+changes, including a CLI split (`phono3py` and `phono3py-init`), a new
+default `primitive_matrix="auto"`, compact force constants as the
+default, and removal of `--nac`. See {ref}`migration_v4` before running
+existing scripts.
+```
+
 This software calculates phonon-phonon interaction and related properties using
 the supercell approach. For example, the following physical values are obtained:
 
@@ -54,6 +62,7 @@ hdf5_howto
 grid
 citation
 reference
+migration-v4
 changelog
 ```
 

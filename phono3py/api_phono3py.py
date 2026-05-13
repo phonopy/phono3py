@@ -87,6 +87,7 @@ from phonopy.structure.cells import (
     get_primitive_matrix_with_auto,
     get_supercell,
     shape_supercell_matrix,
+    warn_if_primitive_matrix_auto_changed_cell,
 )
 from phonopy.structure.symmetry import Symmetry
 
@@ -292,10 +293,11 @@ class Phono3py:
         self._supercell_matrix = np.array(
             shape_supercell_matrix(supercell_matrix), dtype="int64", order="C"
         )
-        if primitive_matrix is None:
-            primitive_matrix = "auto"
         self._primitive_matrix = get_primitive_matrix_with_auto(
             self._unitcell, primitive_matrix, symprec=self._symprec
+        )
+        warn_if_primitive_matrix_auto_changed_cell(
+            primitive_matrix, self._primitive_matrix
         )
         self._nac_params: dict | None = None
         if phonon_supercell_matrix is not None:
