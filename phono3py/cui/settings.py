@@ -324,11 +324,6 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
             elif args.is_tetrahedron_method is False:
                 self._confs["tetrahedron"] = ".false."
 
-        # M. Simoncelli, N. Marzari, F. Mauri; Nat. Phys. 15, 809 (2019)
-        if "is_wigner_kappa" in arg_list:
-            if args.is_wigner_kappa:
-                self._confs["transport_type"] = "MS-SMM19"
-
         if "transport_type" in arg_list:
             if args.transport_type:
                 self._confs["transport_type"] = args.transport_type

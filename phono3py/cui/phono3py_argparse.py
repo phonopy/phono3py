@@ -882,13 +882,6 @@ def _add_run_options(parser: argparse.ArgumentParser) -> None:
         ),
     )
     parser.add_argument(
-        "--wigner",
-        dest="is_wigner_kappa",
-        action="store_true",
-        default=None,
-        help="Choose Wigner lattice thermal conductivity.",
-    )
-    parser.add_argument(
         "--write-collision",
         dest="write_collision",
         action="store_true",
@@ -946,42 +939,54 @@ class _MigratedToInitAction(argparse.Action):
         )
 
 
-def _make_removed_action(message: str) -> type[argparse.Action]:
+def _make_removed_action(message: str, url: str | None = None) -> type[argparse.Action]:
     """Build an argparse Action that rejects a removed-in-v4 flag."""
+    if url is None:
+        url = "https://phonopy.github.io/phono3py/migration-v4.html"
 
     class _RemovedAction(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
             parser.exit(
                 2,
-                f"phono3py: error: {message}\n"
-                "See https://phonopy.github.io/phono3py/migration-v4.html\n",
+                f"phono3py: error: {message}\nSee {url}\n",
             )
 
     return _RemovedAction
 
 
-# Flags removed in phono3py v4. Mapping: option_strings -> (nargs, message).
-_REMOVED_OPTIONS: dict[tuple[str, ...], tuple[int | str, str]] = {
+# Flags removed in phono3py v4. Mapping: option_strings -> (nargs, message, url).
+# url is None to fall back to the generic migration page.
+_REMOVED_OPTIONS: dict[tuple[str, ...], tuple[int | str, str, str | None]] = {
     ("--nac",): (
         0,
         "'--nac' was removed in phono3py v4. NAC is now enabled "
         "automatically when a BORN file is present or nac_params are "
         "stored in phono3py.yaml. Use '--nonac' to disable NAC.",
+        None,
     ),
     ("--cfc", "--compact-fc"): (
         0,
         "'--cfc' / '--compact-fc' was removed in phono3py v4. Compact "
         "force constants are now the default. Use '--full-fc' to switch "
         "to the full-array layout.",
+        None,
+    ),
+    ("--wigner",): (
+        0,
+        "'--wigner' was removed in phono3py v4. The Wigner transport "
+        "equation solver is now provided as a separate plugin, "
+        "'phono3py-wte' (https://github.com/MSimoncelli/phono3py-wte), "
+        "invoked via '--tt wte'.",
+        "https://phonopy.github.io/phono3py/wigner-solution.html",
     ),
 }
 
 
 def _reject_removed_options(parser: argparse.ArgumentParser) -> None:
     """Register removed-in-v4 flags so both parsers emit a friendly error."""
-    for option_strings, (nargs, message) in _REMOVED_OPTIONS.items():
+    for option_strings, (nargs, message, url) in _REMOVED_OPTIONS.items():
         kwargs: dict = {
-            "action": _make_removed_action(message),
+            "action": _make_removed_action(message, url),
             "nargs": nargs,
             "help": argparse.SUPPRESS,
             "default": argparse.SUPPRESS,
@@ -1109,7 +1114,6 @@ class Phono3pyMockArgs:
     is_isotope: bool | None = None
     is_N_U: bool | None = None
     is_lbte: bool | None = None
-    is_wigner_kappa: bool | None = None
     mesh_numbers: Sequence[str] | None = None
     mlp_params: str | None = None
     phonon_supercell_dimension: Sequence[str] | None = None

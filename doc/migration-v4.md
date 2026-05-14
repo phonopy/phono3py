@@ -60,8 +60,8 @@ phono3py-init --cfs
 phono3py-init --fs2f2
 ```
 
-For thermal-conductivity calculation (`--br`, `--lbte`, `--wigner`,
-`-t`, etc.) nothing changes:
+For thermal-conductivity calculation (`--br`, `--lbte`, `-t`, etc.)
+nothing changes:
 
 ```bash
 phono3py --br --mesh 11 11 11

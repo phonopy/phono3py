@@ -6,10 +6,10 @@ Built-in methods
     Standard BTE in the relaxation time approximation.
 "std-lbte"
     Standard BTE via direct LBTE solution.
-"MS-SMM19-rta"
-    MS-SMM19 transport equation in RTA.
-"MS-SMM19-lbte"
-    MS-SMM19 transport equation via direct solution.
+"SMM19-rta"
+    SMM19 transport equation in RTA (experimental).
+"SMM19-lbte"
+    SMM19 transport equation via direct solution (experimental).
 "NJC23-rta"
     Green-Kubo formula in RTA.
 "NJC23-lbte"
@@ -226,7 +226,7 @@ def register_variant(
     Parameters
     ----------
     name : str
-        Variant name (e.g. ``"std"``, ``"MS-SMM19"``, ``"NJC23"``).  Becomes
+        Variant name (e.g. ``"std"``, ``"SMM19"``, ``"NJC23"``).  Becomes
         the prefix of the registered method names.
     make_velocity_solver : callable
         ``(ctx: VariantContext) -> VelocitySolver``.
@@ -320,8 +320,8 @@ def conductivity_calculator(
     sigmas : sequence of (float or None)
         Smearing widths.  A None entry selects the tetrahedron method.
     method : str, optional
-        Calculation method.  Built-in: "std-rta", "std-lbte", "MS-SMM19-rta",
-        "MS-SMM19-lbte", "NJC23-rta", "NJC23-lbte".  Default "std-rta".
+        Calculation method.  Built-in: "std-rta", "std-lbte", "SMM19-rta",
+        "SMM19-lbte", "NJC23-rta", "NJC23-lbte".  Default "std-rta".
     grid_points : array-like or None, optional
         BZ grid point indices.  None uses irreducible grid points.  Default None.
     sigma_cutoff : float or None, optional
@@ -466,11 +466,6 @@ except ImportError:
 
 try:
     import phono3py.conductivity.smm19  # noqa: F401, E402
-except ImportError:
-    pass
-
-try:
-    import phono3py.conductivity.ms_smm19  # noqa: F401, E402
 except ImportError:
     pass
 
