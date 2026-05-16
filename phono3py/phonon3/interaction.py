@@ -8,15 +8,16 @@ from typing import Literal
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
-from phonopy.physical_units import get_physical_units
-from phonopy.structure.cells import Primitive, Supercell
-from phonopy.structure.symmetry import Symmetry
-
-from phono3py.phonon.grid import (
+from phonopy.phonon.grid import (
     BZGrid,
     get_grid_points_by_rotations,
     get_ir_grid_points,
 )
+from phonopy.physical_units import get_physical_units
+from phonopy.structure.cells import Primitive, Supercell
+from phonopy.structure.symmetry import Symmetry
+
+from phono3py._lang import log_dispatch, resolve_lang
 from phono3py.phonon.solver import (
     run_phonon_solver_c,
     run_phonon_solver_py,
@@ -58,13 +59,13 @@ def run_interaction_rust(
     factor, matching the existing ``Interaction._run_c`` convention.
 
     """
-    import phono3py_rs
+    import phonors
 
     # ``phono3c.interaction`` derives ``is_compact_fc3`` from
     # ``fc3.shape[0] == fc3.shape[1]``; do the same here.
     is_compact_fc3 = fc3.shape[0] != fc3.shape[1]
 
-    phono3py_rs.interaction(
+    phonors.interaction(
         interaction_strength,
         np.ascontiguousarray(g_zero, dtype="byte"),
         np.ascontiguousarray(frequencies, dtype="double"),
@@ -140,7 +141,7 @@ class Interaction:
         cutoff_frequency: float | None = None,
         lapack_zheev_uplo: Literal["L", "U"] = "L",
         openmp_per_triplets: bool | None = None,
-        lang: Literal["C", "Python", "Rust"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "Rust",
     ):
         """Init method.
 
@@ -194,9 +195,9 @@ class Interaction:
         self._make_r0_average = make_r0_average
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
         self._openmp_per_triplets = openmp_per_triplets
+        if lang in ("C", "Rust"):
+            lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
-        from phono3py._lang import log_dispatch
-
         log_dispatch(lang, "Interaction.__init__")
 
         self._symprec = self._primitive_symmetry.tolerance
@@ -633,6 +634,7 @@ class Interaction:
 
         """
         self._nac_params = nac_params
+        _dm_lang: Literal["C", "Rust"] = "Rust" if self._lang == "Rust" else "C"
         self._dm = get_dynamical_matrix(
             fc2,
             supercell,
@@ -640,6 +642,7 @@ class Interaction:
             nac_params=nac_params,
             frequency_scale_factor=self._frequency_scale_factor,
             decimals=decimals,
+            lang=_dm_lang,
         )
         self._allocate_phonon()
 

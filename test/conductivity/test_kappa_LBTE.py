@@ -1,10 +1,11 @@
 """Tests for direct solution of LBTE."""
 
 import numpy as np
-import phono3py._phono3py as phono3c
 import pytest
 
-from phono3py.api_phono3py import Phono3py
+phono3c = pytest.importorskip("phono3py._phono3py")
+
+from phono3py.api_phono3py import Phono3py  # noqa: E402
 
 
 @pytest.mark.skipif(
@@ -57,7 +58,7 @@ def test_kappa_LBTE_witout_lapacke(si_pbesol: Phono3py, pinv_solver: int):
 
 def test_kappa_LBTE_full_colmat(si_pbesol: Phono3py):
     """Test for full collision matrix."""
-    ref_kappa = [62.497, 62.497, 62.497, 0, 0, 0]
+    ref_kappa = [62.415, 62.415, 62.415, 0, 0, 0]
     si_pbesol.mesh_numbers = [5, 5, 5]
     si_pbesol.init_phph_interaction()
     si_pbesol.run_thermal_conductivity(

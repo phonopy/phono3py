@@ -391,7 +391,7 @@ The data are stored in `kappa-mxxx(-gx-sx-sdx).hdf5` file and accessed by
 below:
 
 ```bash
-% phono3py-load --mesh 11 11 11 --fc3 --fc2 --br --nu
+% phono3py --mesh 11 11 11 --fc3 --fc2 --br --nu
 ...
 % ipython
 ```
@@ -560,7 +560,7 @@ file, it is recommended to generate with `--full-pp` option because the data
 structure to access becomes simpler.
 
 ```bash
-% phono3py-load phono3py.yaml --gp 5 --br --mesh 11 11 11 --write-pp --full-pp
+% phono3py phono3py.yaml --gp 5 --br --mesh 11 11 11 --write-pp --full-pp
 ```
 
 ```python

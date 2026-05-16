@@ -179,14 +179,14 @@ def run_phonon_solver_rust(
     """Build and solve dynamical matrices on grid in Rust + python.
 
     Dynamical matrices are constructed in Rust via
-    ``phono3py_rs.dynamical_matrices_at_gridpoints`` (and its Gonze NAC
+    ``phonors.dynamical_matrices_at_gridpoints`` (and its Gonze NAC
     variant).  Eigen-decomposition is performed in python with
     ``numpy.linalg.eigh`` since LAPACK is not linked in Rust.
 
     See ``run_phonon_solver_c`` for parameter documentation.
 
     """
-    import phono3py_rs  # type: ignore[import-untyped]
+    import phonors  # type: ignore[import-untyped]
 
     from phono3py._lang import log_dispatch
 
@@ -251,7 +251,7 @@ def run_phonon_solver_rust(
     positions_c = np.ascontiguousarray(positions, dtype="double")
 
     if use_GL_NAC:
-        phono3py_rs.dynamical_matrices_at_gridpoints_gonze(
+        phonors.dynamical_matrices_at_gridpoints_gonze(
             eigenvectors,
             undone,
             grid_address_c,
@@ -273,7 +273,7 @@ def run_phonon_solver_rust(
             _nac_q_direction,
         )
     else:
-        phono3py_rs.dynamical_matrices_at_gridpoints(
+        phonors.dynamical_matrices_at_gridpoints(
             eigenvectors,
             undone,
             grid_address_c,

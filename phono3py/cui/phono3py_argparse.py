@@ -45,26 +45,149 @@ from collections.abc import Sequence
 from phonopy.cui.phonopy_argparse import fix_deprecated_option_names
 
 
-def get_parser(
-    load_phono3py_yaml: bool = False,
-) -> tuple[argparse.ArgumentParser, list[str]]:
-    """Return ArgumentParser instance."""
-    deprecated = fix_deprecated_option_names(sys.argv)
+def _add_shared_options(parser: argparse.ArgumentParser) -> None:
+    """Add options accepted by both phono3py-init and phono3py."""
+    parser.add_argument(
+        "--pa",
+        "--primitive-axis",
+        "--primitive-axes",
+        nargs="+",
+        dest="primitive_axes",
+        default=None,
+        help="Same as PRIMITIVE_AXES tags",
+    )
+    parser.add_argument(
+        "--magmom",
+        nargs="+",
+        dest="magmoms",
+        default=None,
+        help="Same as MAGMOM tag",
+    )
+    parser.add_argument(
+        "--mass",
+        nargs="+",
+        dest="masses",
+        default=None,
+        help="Same as MASS tag",
+    )
+    parser.add_argument(
+        "--nosym",
+        dest="is_nosym",
+        action="store_true",
+        default=None,
+        help="Symmetry is not imposed.",
+    )
+    parser.add_argument(
+        "--tolerance",
+        dest="symmetry_tolerance",
+        type=float,
+        default=None,
+        help="Symmetry tolerance to search",
+    )
+    parser.add_argument(
+        "--hdf5-compression",
+        dest="hdf5_compression",
+        default=None,
+        help="hdf5 compression filter (default: gzip)",
+    )
+    parser.add_argument(
+        "--sp",
+        "--save-params",
+        dest="save_params",
+        action="store_true",
+        default=None,
+        help="Save parameters that can run phono3py in phono3py_params.yaml.",
+    )
+    parser.add_argument(
+        "-d",
+        "--disp",
+        dest="is_displacement",
+        action="store_true",
+        default=None,
+        help="As first stage, get least displacements",
+    )
+    parser.add_argument(
+        "--rd",
+        "--random-displacements",
+        dest="random_displacements",
+        default=None,
+        help='Number of supercells with random displacements or "auto"',
+    )
+    parser.add_argument(
+        "--random-seed",
+        dest="random_seed",
+        type=int,
+        default=None,
+        help="Random seed by a 32 bit unsigned integer",
+    )
+    parser.add_argument(
+        "--loglevel",
+        dest="log_level",
+        type=int,
+        default=None,
+        help="Log level",
+    )
+    parser.add_argument(
+        "-q",
+        "--quiet",
+        dest="quiet",
+        action="store_true",
+        default=None,
+        help="Print out smallest information",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        default=None,
+        help="Detailed run-time information is displayed",
+    )
 
+
+def _add_init_options(parser: argparse.ArgumentParser) -> None:
+    """Add options that only apply to phono3py-init."""
     from phonopy.interface.calculator import add_arguments_of_calculators
 
     from phono3py.interface.calculator import calculator_info
 
-    parser = argparse.ArgumentParser(description="Phono3py command-line-tool")
-
     add_arguments_of_calculators(parser, calculator_info)
 
     parser.add_argument(
-        "--alm",
-        dest="use_alm",
-        action="store_true",
+        "-c",
+        "--cell",
+        dest="cell_filename",
+        metavar="FILE",
         default=None,
-        help=("Use ALM for generating 2nd and 3rd force constants in one fitting"),
+        help="Read unit cell",
+    )
+    parser.add_argument(
+        "--dim",
+        nargs="+",
+        dest="supercell_dimension",
+        default=None,
+        help="Supercell dimension",
+    )
+    parser.add_argument(
+        "--dim-fc2",
+        nargs="+",
+        dest="phonon_supercell_dimension",
+        default=None,
+        help="Supercell dimension for extra fc2",
+    )
+    parser.add_argument(
+        "--rd-fc2",
+        "--random-displacements-fc2",
+        dest="random_displacements_fc2",
+        default=None,
+        help='Number of phonon supercells with random displacements or "auto"',
+    )
+    parser.add_argument(
+        "--rd-auto-factor",
+        dest="rd_number_estimation_factor",
+        type=float,
+        default=None,
+        help="Factor to estimate number of supercells with random displacements",
     )
     parser.add_argument(
         "--amplitude",
@@ -72,6 +195,113 @@ def get_parser(
         type=float,
         default=None,
         help="Distance of displacements",
+    )
+    parser.add_argument(
+        "--pm",
+        dest="is_plusminus_displacements",
+        action="store_true",
+        default=None,
+        help="Set plus minus displacements",
+    )
+    parser.add_argument(
+        "--pm-fc2",
+        dest="is_plusminus_displacements_fc2",
+        action="store_true",
+        default=None,
+        help="Set plus minus displacements for extra fc2",
+    )
+    parser.add_argument(
+        "--nodiag",
+        dest="is_nodiag",
+        action="store_true",
+        default=None,
+        help="Set displacements parallel to axes",
+    )
+    parser.add_argument(
+        "--cutoff-pair",
+        "--cutoff-pair-distance",
+        dest="cutoff_pair_distance",
+        type=float,
+        default=None,
+        help=(
+            "Cutoff distance between pairs of displaced atoms used for "
+            "supercell creation with displacements and making third-order "
+            "force constants"
+        ),
+    )
+    parser.add_argument(
+        "--cf3",
+        "--create-f3",
+        dest="create_forces_fc3",
+        nargs="+",
+        default=None,
+        help="Create FORCES_FC3",
+    )
+    parser.add_argument(
+        "--cf3-file",
+        "--create-f3-from-file",
+        metavar="FILE",
+        dest="create_forces_fc3_file",
+        default=None,
+        help="Create FORCES_FC3 from file name list",
+    )
+    parser.add_argument(
+        "--cf2",
+        "--create-f2",
+        dest="create_forces_fc2",
+        nargs="+",
+        default=None,
+        help="Create FORCES_FC2",
+    )
+    parser.add_argument(
+        "--cfz",
+        "--subtract-forces",
+        metavar="FILE",
+        dest="subtract_forces",
+        default=None,
+        help="Subtract residual forces from supercell forces",
+    )
+    parser.add_argument(
+        "--cfz-fc2",
+        "--subtract-forces-fc2",
+        metavar="FILE",
+        dest="subtract_forces_fc2",
+        default=None,
+        help="Subtract residual forces from supercell forces for fc2",
+    )
+    parser.add_argument(
+        "--cfs",
+        "--create-force-sets",
+        dest="force_sets_mode",
+        action="store_true",
+        default=None,
+        help="Create phonopy FORCE_SETS from FORCES_FC2",
+    )
+    parser.add_argument(
+        "--fs2f2",
+        "--force-sets-to-forces-fc2",
+        dest="force_sets_to_forces_fc2_mode",
+        default=None,
+        action="store_true",
+        help="Create FORCES_FC2 from FORCE_SETS",
+    )
+
+
+def _add_run_options(parser: argparse.ArgumentParser) -> None:
+    """Add options that only apply to phono3py (phonon + thermal calc)."""
+    parser.add_argument(
+        "--config",
+        dest="conf_filename",
+        metavar="FILE",
+        default=None,
+        help="Phono3py configuration file",
+    )
+    parser.add_argument(
+        "--alm",
+        dest="use_alm",
+        action="store_true",
+        default=None,
+        help=("Use ALM for generating 2nd and 3rd force constants in one fitting"),
     )
     parser.add_argument(
         "--ave-pp",
@@ -123,70 +353,12 @@ def get_parser(
         default=None,
         help="Calculate thermal conductivity in BTE-RTA",
     )
-    if not load_phono3py_yaml:
-        parser.add_argument(
-            "-c",
-            "--cell",
-            dest="cell_filename",
-            metavar="FILE",
-            default=None,
-            help="Read unit cell",
-        )
     parser.add_argument(
-        "--cf2",
-        "--create-f2",
-        dest="create_forces_fc2",
-        nargs="+",
-        default=None,
-        help="Create FORCES_FC2",
-    )
-    parser.add_argument(
-        "--cf3",
-        "--create-f3",
-        dest="create_forces_fc3",
-        nargs="+",
-        default=None,
-        help="Create FORCES_FC3",
-    )
-    parser.add_argument(
-        "--cf3-file",
-        "--create-f3-from-file",
-        metavar="FILE",
-        dest="create_forces_fc3_file",
-        default=None,
-        help="Create FORCES_FC3 from file name list",
-    )
-    parser.add_argument(
-        "--cfz",
-        "--subtract-forces",
-        metavar="FILE",
-        dest="subtract_forces",
-        default=None,
-        help="Subtract residual forces from supercell forces",
-    )
-    parser.add_argument(
-        "--cfz-fc2",
-        "--subtract-forces-fc2",
-        metavar="FILE",
-        dest="subtract_forces_fc2",
-        default=None,
-        help="Subtract residual forces from supercell forces for fc2",
-    )
-    parser.add_argument(
-        "--cfc",
-        "--compact-fc",
-        dest="is_compact_fc",
+        "--full-fc",
+        dest="is_full_fc",
         action="store_true",
         default=None,
-        help="Use compact force constants",
-    )
-    parser.add_argument(
-        "--cfs",
-        "--create-force-sets",
-        dest="force_sets_mode",
-        action="store_true",
-        default=None,
-        help="Create phonopy FORCE_SETS from FORCES_FC2",
+        help="Calculate full supercell force constants matrix",
     )
     parser.add_argument(
         "--cph",
@@ -196,14 +368,6 @@ def get_parser(
         default=None,
         help="Solve collective phonons",
     )
-    if load_phono3py_yaml:
-        parser.add_argument(
-            "--config",
-            dest="conf_filename",
-            metavar="FILE",
-            default=None,
-            help="Phono3py configuration file",
-        )
     parser.add_argument(
         "--const-ave-pp",
         dest="const_ave_pp",
@@ -232,62 +396,12 @@ def get_parser(
         help="Phonon modes below this frequency are ignored.",
     )
     parser.add_argument(
-        "--cutoff-pair",
-        "--cutoff-pair-distance",
-        dest="cutoff_pair_distance",
-        type=float,
-        default=None,
-        help=(
-            "Cutoff distance between pairs of displaced atoms used for "
-            "supercell creation with displacements and making third-order "
-            "force constants"
-        ),
-    )
-    parser.add_argument(
-        "-d",
-        "--disp",
-        dest="is_displacement",
-        action="store_true",
-        default=None,
-        help="As first stage, get least displacements",
-    )
-    if not load_phono3py_yaml:
-        parser.add_argument(
-            "--dim",
-            nargs="+",
-            dest="supercell_dimension",
-            default=None,
-            help="Supercell dimension",
-        )
-        parser.add_argument(
-            "--dim-fc2",
-            nargs="+",
-            dest="phonon_supercell_dimension",
-            default=None,
-            help="Supercell dimension for extra fc2",
-        )
-    parser.add_argument(
         "--factor",
         dest="frequency_conversion_factor",
         type=float,
         default=None,
         help="Frequency unit conversion factor",
     )
-    if not load_phono3py_yaml:
-        parser.add_argument(
-            "--fc2",
-            dest="read_fc2",
-            action="store_true",
-            default=None,
-            help="Read second order force constants",
-        )
-        parser.add_argument(
-            "--fc3",
-            dest="read_fc3",
-            action="store_true",
-            default=None,
-            help="Read third order force constants",
-        )
     parser.add_argument(
         "--fc-calc",
         "--fc-calculator",
@@ -305,15 +419,6 @@ def get_parser(
             "string with the style of key = values"
         ),
     )
-    if not load_phono3py_yaml:
-        parser.add_argument(
-            "--fc-symmetry",
-            "--sym-fc",
-            dest="fc_symmetry",
-            action="store_true",
-            default=None,
-            help="Symmetrize force constants",
-        )
     parser.add_argument(
         "--freq-scale",
         dest="frequency_scale_factor",
@@ -331,14 +436,6 @@ def get_parser(
         type=float,
         default=None,
         help="Pitch in frequency for spectrum",
-    )
-    parser.add_argument(
-        "--fs2f2",
-        "--force-sets-to-forces-fc2",
-        dest="force_sets_to_forces_fc2_mode",
-        default=None,
-        action="store_true",
-        help="Create FORCES_FC2 from FORCE_SETS",
     )
     parser.add_argument(
         "--full-pp",
@@ -399,12 +496,6 @@ def get_parser(
         help="Delta-q distance used for group velocity calculation",
     )
     parser.add_argument(
-        "--hdf5-compression",
-        dest="hdf5_compression",
-        default=None,
-        help="hdf5 compression filter (default: gzip)",
-    )
-    parser.add_argument(
         "--ion-clamped",
         dest="ion_clamped",
         action="store_true",
@@ -442,16 +533,11 @@ def get_parser(
         help="Calculate thermal conductivity LBTE with Chaput's method",
     )
     parser.add_argument(
-        "--loglevel", dest="log_level", type=int, default=None, help="Log level"
-    )
-    parser.add_argument(
-        "--mass", nargs="+", dest="masses", default=None, help="Same as MASS tag"
-    )
-    parser.add_argument(
-        "--magmom", nargs="+", dest="magmoms", default=None, help="Same as MAGMOM tag"
-    )
-    parser.add_argument(
-        "--mesh", nargs="+", dest="mesh_numbers", default=None, help="Mesh numbers"
+        "--mesh",
+        nargs="+",
+        dest="mesh_numbers",
+        default=None,
+        help="Mesh numbers",
     )
     parser.add_argument(
         "--mlp-params",
@@ -470,50 +556,33 @@ def get_parser(
         default=None,
         help="Mass variance parameters for isotope scattering",
     )
-    if not load_phono3py_yaml:
-        parser.add_argument(
-            "--nac",
-            dest="is_nac",
-            action="store_true",
-            default=None,
-            help="Non-analytical term correction",
-        )
     parser.add_argument(
         "--nac-method",
         dest="nac_method",
         default=None,
         help="Non-analytical term correction method: Gonze (default) or Wang",
     )
-    if load_phono3py_yaml:
-        parser.add_argument(
-            "--no-fc-symmetry",
-            "--no-sym-fc",
-            dest="fc_symmetry",
-            action="store_false",
-            default=None,
-            help="Do not symmetrize force constants",
-        )
-        parser.add_argument(
-            "--no-read-fc2",
-            dest="read_fc2",
-            action="store_false",
-            default=None,
-            help="Read second order force constants",
-        )
-        parser.add_argument(
-            "--no-read-fc3",
-            dest="read_fc3",
-            action="store_false",
-            default=None,
-            help="Read third order force constants",
-        )
-
     parser.add_argument(
-        "--nodiag",
-        dest="is_nodiag",
-        action="store_true",
+        "--no-fc-symmetry",
+        "--no-sym-fc",
+        dest="fc_symmetry",
+        action="store_false",
         default=None,
-        help="Set displacements parallel to axes",
+        help="Do not symmetrize force constants",
+    )
+    parser.add_argument(
+        "--no-read-fc2",
+        dest="read_fc2",
+        action="store_false",
+        default=None,
+        help="Read second order force constants",
+    )
+    parser.add_argument(
+        "--no-read-fc3",
+        dest="read_fc3",
+        action="store_false",
+        default=None,
+        help="Read third order force constants",
     )
     parser.add_argument(
         "--noks",
@@ -530,20 +599,12 @@ def get_parser(
         default=None,
         help="No symmetrization of triplets is made.",
     )
-    if load_phono3py_yaml:
-        parser.add_argument(
-            "--nonac",
-            dest="is_nac",
-            action="store_false",
-            default=None,
-            help="Non-analytical term correction",
-        )
     parser.add_argument(
-        "--nosym",
-        dest="is_nosym",
-        action="store_true",
+        "--nonac",
+        dest="is_nac",
+        action="store_false",
         default=None,
-        help="Symmetry is not imposed.",
+        help="Non-analytical term correction",
     )
     parser.add_argument(
         "--nu",
@@ -569,21 +630,11 @@ def get_parser(
             "sampling modes of imag-self-energy calculation"
         ),
     )
-    if load_phono3py_yaml:
-        parser.add_argument(
-            "-o",
-            dest="output_yaml_filename",
-            default=None,
-            help="Output yaml filename instead of default filename of phono3py.yaml",
-        )
     parser.add_argument(
-        "--pa",
-        "--primitive-axis",
-        "--primitive-axes",
-        nargs="+",
-        dest="primitive_axes",
+        "-o",
+        dest="output_yaml_filename",
         default=None,
-        help="Same as PRIMITIVE_AXES tags",
+        help="Output yaml filename instead of default filename of phono3py.yaml",
     )
     parser.add_argument(
         "--pinv-cutoff",
@@ -605,20 +656,6 @@ def get_parser(
         type=int,
         default=None,
         help="Switch of LBTE pinv method",
-    )
-    parser.add_argument(
-        "--pm",
-        dest="is_plusminus_displacements",
-        action="store_true",
-        default=None,
-        help="Set plus minus displacements",
-    )
-    parser.add_argument(
-        "--pm-fc2",
-        dest="is_plusminus_displacements_fc2",
-        action="store_true",
-        default=None,
-        help="Set plus minus displacements for extra fc2",
     )
     parser.add_argument(
         "--pp-unit-conversion",
@@ -647,42 +684,6 @@ def get_parser(
         dest="nac_q_direction",
         default=None,
         help="q-vector direction at q->0 for non-analytical term correction",
-    )
-    parser.add_argument(
-        "-q",
-        "--quiet",
-        dest="quiet",
-        action="store_true",
-        default=None,
-        help="Print out smallest information",
-    )
-    parser.add_argument(
-        "--random-seed",
-        dest="random_seed",
-        type=int,
-        default=None,
-        help="Random seed by a 32 bit unsigned integer",
-    )
-    parser.add_argument(
-        "--rd",
-        "--random-displacements",
-        dest="random_displacements",
-        default=None,
-        help='Number of supercells with random displacements or "auto"',
-    )
-    parser.add_argument(
-        "--rd-auto-factor",
-        dest="rd_number_estimation_factor",
-        type=float,
-        default=None,
-        help="Factor to estimate number of supercells with random displacements",
-    )
-    parser.add_argument(
-        "--rd-fc2",
-        "--random-displacements-fc2",
-        dest="random_displacements_fc2",
-        default=None,
-        help='Number of phonon supercells with random displacements or "auto"',
     )
     parser.add_argument(
         "--read-collision",
@@ -744,15 +745,18 @@ def get_parser(
         dest="use_rust",
         action="store_true",
         default=None,
-        help="Use experimental Rust backend instead of the C extension",
+        help=(
+            "Deprecated no-op: the Rust backend (phonors) is the default in "
+            "phono3py v4. Pass --legacy-backend to opt back into the C "
+            "extension."
+        ),
     )
     parser.add_argument(
-        "--sp",
-        "--save-params",
-        dest="save_params",
+        "--legacy-backend",
+        dest="use_legacy_backend",
         action="store_true",
         default=None,
-        help="Save parameters that can run phono3py in phono3py_params.yaml.",
+        help="Use the legacy C-extension backend instead of the default Rust backend",
     )
     parser.add_argument(
         "--scattering-event-class",
@@ -785,14 +789,13 @@ def get_parser(
         default=None,
         help="Use symfc for generating force constants",
     )
-    if load_phono3py_yaml:
-        parser.add_argument(
-            "--symfc-memshow",
-            dest="show_symfc_memory_usage",
-            action="store_true",
-            default=None,
-            help="Show symfc memory usage with respect to cutoff distance",
-        )
+    parser.add_argument(
+        "--symfc-memshow",
+        dest="show_symfc_memory_usage",
+        action="store_true",
+        default=None,
+        help="Show symfc memory usage with respect to cutoff distance",
+    )
     parser.add_argument(
         "--symfc-memsize",
         dest="symfc_memory_size",
@@ -817,21 +820,6 @@ def get_parser(
             "Show reduced number of triplets to be calculated at specified grid points"
         ),
     )
-    if not load_phono3py_yaml:
-        parser.add_argument(
-            "--sym-fc2",
-            dest="is_symmetrize_fc2",
-            action="store_true",
-            default=None,
-            help="Symmetrize fc2 by index exchange",
-        )
-        parser.add_argument(
-            "--sym-fc3r",
-            dest="is_symmetrize_fc3_r",
-            action="store_true",
-            default=None,
-            help="Symmetrize fc3 in real space by index exchange",
-        )
     parser.add_argument(
         "--sym-fc3q",
         dest="is_symmetrize_fc3_q",
@@ -848,10 +836,16 @@ def get_parser(
         help="Use tetrahedron method.",
     )
     parser.add_argument(
-        "--tmax", dest="tmax", default=None, help="Maximum calculated temperature"
+        "--tmax",
+        dest="tmax",
+        default=None,
+        help="Maximum calculated temperature",
     )
     parser.add_argument(
-        "--tmin", dest="tmin", default=None, help="Minimum calculated temperature"
+        "--tmin",
+        dest="tmin",
+        default=None,
+        help="Minimum calculated temperature",
     )
     parser.add_argument(
         "--tt",
@@ -869,28 +863,16 @@ def get_parser(
         help="Temperatures for damping functions",
     )
     parser.add_argument(
-        "--tstep", dest="tstep", default=None, help="Calculated temperature step"
-    )
-    parser.add_argument(
-        "--tolerance",
-        dest="symmetry_tolerance",
-        type=float,
+        "--tstep",
+        dest="tstep",
         default=None,
-        help="Symmetry tolerance to search",
+        help="Calculated temperature step",
     )
     parser.add_argument(
         "--uplo",
         dest="lapack_zheev_uplo",
         default=None,
         help="Lapack zheev UPLO for phonon solver (default: L)",
-    )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        dest="verbose",
-        action="store_true",
-        default=None,
-        help="Detailed run-time information is displayed",
     )
     parser.add_argument(
         "--v2",
@@ -909,13 +891,6 @@ def get_parser(
             "Write grid address of irreducible grid points for specified "
             "mesh numbers to ir_grid_address.yaml"
         ),
-    )
-    parser.add_argument(
-        "--wigner",
-        dest="is_wigner_kappa",
-        action="store_true",
-        default=None,
-        help="Choose Wigner lattice thermal conductivity.",
     )
     parser.add_argument(
         "--write-collision",
@@ -960,12 +935,164 @@ def get_parser(
         default=None,
         help="Write direct solution of LBTE to hdf5 files",
     )
-    if load_phono3py_yaml:
-        parser.add_argument("filename", nargs="*", help="phono3py.yaml like file")
-    else:
-        parser.add_argument("filename", nargs="*", help="Phono3py configure file")
 
+
+class _MigratedToInitAction(argparse.Action):
+    """Reject setup-only flags that moved to 'phono3py-init' in v4."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        parser.exit(
+            2,
+            f"phono3py: error: '{option_string}' is a setup operation that "
+            "moved to 'phono3py-init' in v4.\n"
+            "Replace 'phono3py' with 'phono3py-init' in your command.\n"
+            "See https://phonopy.github.io/phono3py/migration-v4.html\n",
+        )
+
+
+def _make_removed_action(message: str, url: str | None = None) -> type[argparse.Action]:
+    """Build an argparse Action that rejects a removed-in-v4 flag."""
+    if url is None:
+        url = "https://phonopy.github.io/phono3py/migration-v4.html"
+
+    class _RemovedAction(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            parser.exit(
+                2,
+                f"phono3py: error: {message}\nSee {url}\n",
+            )
+
+    return _RemovedAction
+
+
+# Flags removed in phono3py v4. Mapping: option_strings -> (nargs, message, url).
+# url is None to fall back to the generic migration page.
+_REMOVED_OPTIONS: dict[tuple[str, ...], tuple[int | str, str, str | None]] = {
+    ("--nac",): (
+        0,
+        "'--nac' was removed in phono3py v4. NAC is now enabled "
+        "automatically when a BORN file is present or nac_params are "
+        "stored in phono3py.yaml. Use '--nonac' to disable NAC.",
+        None,
+    ),
+    ("--cfc", "--compact-fc"): (
+        0,
+        "'--cfc' / '--compact-fc' was removed in phono3py v4. Compact "
+        "force constants are now the default. Use '--full-fc' to switch "
+        "to the full-array layout.",
+        None,
+    ),
+    ("--wigner",): (
+        0,
+        "'--wigner' was removed in phono3py v4. The Wigner transport "
+        "equation solver is now provided as a separate plugin, "
+        "'phono3py-wte' (https://github.com/MSimoncelli/phono3py-wte), "
+        "invoked via '--tt wte'.",
+        "https://phonopy.github.io/phono3py/wigner-solution.html",
+    ),
+}
+
+
+def _reject_removed_options(parser: argparse.ArgumentParser) -> None:
+    """Register removed-in-v4 flags so both parsers emit a friendly error."""
+    for option_strings, (nargs, message, url) in _REMOVED_OPTIONS.items():
+        kwargs: dict = {
+            "action": _make_removed_action(message, url),
+            "nargs": nargs,
+            "help": argparse.SUPPRESS,
+            "default": argparse.SUPPRESS,
+        }
+        if nargs == 0:
+            kwargs["const"] = True
+        parser.add_argument(*option_strings, **kwargs)
+
+
+def _reject_init_options(parser: argparse.ArgumentParser) -> None:
+    """Register setup-only flags so phono3py emits a migration error.
+
+    Without this, argparse rejects unknown setup flags with a generic
+    'unrecognized arguments' message and a long usage dump. ``-d`` and
+    ``--rd`` are intentionally not included because they are also valid
+    on the run parser (pypolymlp workflow); v3-style setup invocations
+    are caught here via the companion ``--dim`` flag instead.
+
+    """
+    specs: list[tuple[tuple[str, ...], int | str]] = [
+        (("-c", "--cell"), 1),
+        (("--dim",), "+"),
+        (("--dim-fc2",), "+"),
+        (("--rd-fc2", "--random-displacements-fc2"), 1),
+        (("--rd-auto-factor",), 1),
+        (("--amplitude",), 1),
+        (("--pm",), 0),
+        (("--pm-fc2",), 0),
+        (("--nodiag",), 0),
+        (("--cutoff-pair", "--cutoff-pair-distance"), 1),
+        (("--cf3", "--create-f3"), "+"),
+        (("--cf3-file", "--create-f3-from-file"), 1),
+        (("--cf2", "--create-f2"), "+"),
+        (("--cfz", "--subtract-forces"), 1),
+        (("--cfz-fc2", "--subtract-forces-fc2"), 1),
+        (("--cfs", "--create-force-sets"), 0),
+        (("--fs2f2", "--force-sets-to-forces-fc2"), 0),
+    ]
+    for option_strings, nargs in specs:
+        kwargs: dict = {
+            "action": _MigratedToInitAction,
+            "nargs": nargs,
+            "help": argparse.SUPPRESS,
+            "default": argparse.SUPPRESS,
+        }
+        if nargs == 0:
+            kwargs["const"] = True
+        parser.add_argument(*option_strings, **kwargs)
+
+
+def get_init_parser() -> tuple[argparse.ArgumentParser, list[str]]:
+    """Return argument parser for the phono3py-init command."""
+    deprecated = fix_deprecated_option_names(sys.argv)
+    parser = argparse.ArgumentParser(
+        description=(
+            "phono3py-init: set up supercells, displacements, and "
+            "FORCES_FC3 / FORCES_FC2 / FORCE_SETS files."
+        )
+    )
+    _add_shared_options(parser)
+    _add_init_options(parser)
+    _reject_removed_options(parser)
+    parser.add_argument("filename", nargs="*", help="Phono3py configure file")
     return parser, deprecated
+
+
+def get_run_parser() -> tuple[argparse.ArgumentParser, list[str]]:
+    """Return argument parser for the phono3py command (phonon + thermal calc)."""
+    deprecated = fix_deprecated_option_names(sys.argv)
+    parser = argparse.ArgumentParser(
+        description=(
+            "phono3py: phonon and thermal-conductivity calculation from a "
+            "phono3py.yaml-like file."
+        )
+    )
+    _add_shared_options(parser)
+    _add_run_options(parser)
+    _reject_init_options(parser)
+    _reject_removed_options(parser)
+    parser.add_argument("filename", nargs="*", help="phono3py.yaml like file")
+    return parser, deprecated
+
+
+def get_parser(
+    load_phono3py_yaml: bool = False,
+) -> tuple[argparse.ArgumentParser, list[str]]:
+    """Return ArgumentParser instance for the requested command flavor.
+
+    This is kept for backward compatibility. New code should call
+    ``get_init_parser`` or ``get_run_parser`` directly.
+
+    """
+    if load_phono3py_yaml:
+        return get_run_parser()
+    return get_init_parser()
 
 
 @dataclasses.dataclass
@@ -994,10 +1121,10 @@ class Phono3pyMockArgs:
     is_bterta: bool | None = None
     is_displacement: bool | None = None
     is_fc3_r0_average: bool | None = None
+    is_full_fc: bool | None = None
     is_isotope: bool | None = None
     is_N_U: bool | None = None
     is_lbte: bool | None = None
-    is_wigner_kappa: bool | None = None
     mesh_numbers: Sequence[str] | None = None
     mlp_params: str | None = None
     phonon_supercell_dimension: Sequence[str] | None = None
@@ -1014,6 +1141,7 @@ class Phono3pyMockArgs:
     transport_type: str | None = None
     use_pypolymlp: bool | None = None
     use_rust: bool | None = None
+    use_legacy_backend: bool | None = None
     write_gamma: bool | None = None
     write_gamma_detail: bool | None = None
     write_grid_points: bool | None = None

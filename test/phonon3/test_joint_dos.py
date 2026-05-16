@@ -2,10 +2,10 @@
 
 import numpy as np
 import pytest
+from phonopy.phonon.grid import BZGrid
 
 from phono3py import Phono3py
 from phono3py.api_jointdos import Phono3pyJointDos
-from phono3py.phonon.grid import BZGrid
 from phono3py.phonon3.joint_dos import JointDos
 
 si_freq_points = [
@@ -406,6 +406,7 @@ def test_jdos_nac_direction_phonon_NaCl_second_no_error(nacl_pbe: Phono3py):
 
 def test_jdos_nac_NaCl_300K_C(nacl_pbe: Phono3py):
     """Test running JDOS of NaCl in C mode."""
+    pytest.importorskip("phono3py._phono3py")
     jdos = _get_jdos(
         nacl_pbe,
         [9, 9, 9],
@@ -417,6 +418,24 @@ def test_jdos_nac_NaCl_300K_C(nacl_pbe: Phono3py):
     jdos.run_phonon_solver()
     jdos.run_integration_weights()
     jdos.run_jdos()
+    np.testing.assert_allclose(
+        nacl_jdos_12_at_300K[2:], jdos.joint_dos.ravel()[2:], rtol=1e-2, atol=1e-5
+    )
+
+
+def test_jdos_nac_NaCl_300K_Rust(nacl_pbe: Phono3py):
+    """Test running JDOS of NaCl in Rust mode."""
+    jdos = _get_jdos(
+        nacl_pbe,
+        [9, 9, 9],
+        nac_params=nacl_pbe.nac_params,
+    )
+    jdos.set_grid_point(105)
+    jdos.frequency_points = nacl_freq_points_at_300K
+    jdos.temperature = 300
+    jdos.run_phonon_solver()
+    jdos.run_integration_weights(lang="Rust")
+    jdos.run_jdos(lang="Rust")
     np.testing.assert_allclose(
         nacl_jdos_12_at_300K[2:], jdos.joint_dos.ravel()[2:], rtol=1e-2, atol=1e-5
     )
@@ -442,6 +461,9 @@ def test_jdos_nac_NaCl_300K_Py(nacl_pbe: Phono3py):
 
 def test_jdos_nac_NaCl_300K_PyPy(nacl_pbe: Phono3py):
     """Test running JDOS of NaCl in Py (JDOS) and Py (tetrahedron) mode."""
+    # Python integration_weights uses the C scalar
+    # ``get_tetrahedra_integration_weight`` helper.
+    pytest.importorskip("phonopy._phonopy")
     jdos = _get_jdos(
         nacl_pbe,
         [9, 9, 9],

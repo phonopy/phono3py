@@ -1,5 +1,14 @@
 cmake_minimum_required(VERSION 3.20)
 
+if(DEFINED ENV{PHONO3PY_NO_C_EXT} AND NOT "$ENV{PHONO3PY_NO_C_EXT}" STREQUAL "0")
+    # Declare project with no language so CMake skips C/C++ compiler detection.
+    # scikit-build-core's build step still calls CMake even with no targets, so the
+    # project() call has to happen before we bail out.
+    project(${SKBUILD_PROJECT_NAME} NONE)
+    message(STATUS "PHONO3PY_NO_C_EXT is set; skipping _phono3py and _phononcalc")
+    return()
+endif()
+
 option(BUILD_PHPHCALC_LIB "Option to build phph calculation module" OFF)
 option(BUILD_PHONONCALC_LIB "Option to build phonon calculation module" OFF)
 option(BUILD_RECGRID_LIB "Option to build reciprocal space grid module" OFF)
@@ -479,12 +488,9 @@ if(BUILD_NANOBIND_MODULE)
                         ${PROJECT_SOURCE_DIR}/c/_phono3py.cpp)
     nanobind_add_module(_phononcalc STABLE_ABI ${PROJECT_SOURCE_DIR}/c/phononcalc.h
                         ${PROJECT_SOURCE_DIR}/c/_phononcalc.cpp)
-    nanobind_add_module(_recgrid STABLE_ABI ${PROJECT_SOURCE_DIR}/c/recgrid.h
-                        ${PROJECT_SOURCE_DIR}/c/_recgrid.cpp)
 
     target_link_libraries(_phono3py PRIVATE phphcalc_lib)
     target_link_libraries(_phononcalc PRIVATE phononcalc_lib)
-    target_link_libraries(_recgrid PRIVATE recgrid_lib)
 
     if(BUILD_WITHOUT_LAPACKE)
         target_compile_definitions(_phono3py PRIVATE NO_INCLUDE_LAPACKE
@@ -499,5 +505,4 @@ if(BUILD_NANOBIND_MODULE)
 
     install(TARGETS _phono3py LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME})
     install(TARGETS _phononcalc LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME})
-    install(TARGETS _recgrid LIBRARY DESTINATION ${SKBUILD_PROJECT_NAME})
 endif()

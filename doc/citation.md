@@ -70,7 +70,9 @@ following article:
   }
   ```
 
-## Citation of solution of the Wigner transport equation (`--wigner`)
+(wigner_citation)=
+
+## Citation of solution of the Wigner transport equation
 
 If you have used the solution of the Wigner transport equation in phono3py, please cite the
 following articles:

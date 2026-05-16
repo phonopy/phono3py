@@ -22,7 +22,7 @@ from phono3py.conductivity.factory import conductivity_calculator
 from phono3py.conductivity.scattering_solvers import RTAScatteringSolver
 from phono3py.phonon3.interaction import Interaction
 
-pytest.importorskip("phono3py_rs")
+pytest.importorskip("phonors")
 
 
 def _build_interaction(
@@ -236,4 +236,4 @@ def test_kappa_RTA_rust_vs_c_full_rust(si_pbesol: Phono3py):
     """
     kappa_c = _run_rta(si_pbesol, [11, 11, 11], lang="C", interaction_lang="C")
     kappa_rust = _run_rta(si_pbesol, [11, 11, 11], lang="Rust", interaction_lang="Rust")
-    np.testing.assert_allclose(kappa_rust, kappa_c, rtol=5e-3, atol=0.0)
+    np.testing.assert_allclose(kappa_rust, kappa_c, rtol=5e-3, atol=1e-10)

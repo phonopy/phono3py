@@ -12,12 +12,16 @@ import h5py  # type: ignore[import-untyped]
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.cui.collect_cell_info import collect_cell_info
+from phonopy.phonon.grid import BZGrid, get_ir_grid_points
+from phonopy.phonon.spectrum import (
+    SmearingDOSAccumulator,
+    TetrahedronDOSAccumulator,
+)
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.symmetry import Symmetry
 
+from phono3py.conductivity.utils import get_mfp
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
-from phono3py.other.kaccum import GammaDOSsmearing, get_mfp, run_mfp_dos, run_prop_dos
-from phono3py.phonon.grid import BZGrid, get_ir_grid_points
 
 epsilon = 1.0e-8
 
@@ -45,43 +49,63 @@ class KaccumMockArgs:
 
 
 def _show_tensor(
-    kdos: NDArray[np.double],
+    cumulative: NDArray[np.double],
+    density: NDArray[np.double],
     temperatures: NDArray[np.double],
     sampling_points: NDArray[np.double],
     args: KaccumMockArgs | argparse.Namespace,
 ) -> None:
-    """Show 2nd rank tensors."""
-    for i, kdos_t in enumerate(kdos):
+    """Show 2nd rank tensors.
+
+    cumulative, density : shape (n_batch, n_sampling, 6)
+    sampling_points : shape (n_sampling,) for shared axis (frequency case),
+        or (n_batch, n_sampling) for per-batch axis (MFP-per-T case).
+
+    """
+    per_batch_sp = sampling_points.ndim == 2
+    for i in range(cumulative.shape[0]):
         if not args.gv:
             print("# %d K" % temperatures[i])
-
-        for f, k in zip(sampling_points[i], kdos_t, strict=True):  # show kappa_xx
+        sp_i = sampling_points[i] if per_batch_sp else sampling_points
+        for j, f in enumerate(sp_i):
+            c = cumulative[i, j]
+            d = density[i, j]
             if args.average:
-                print(("%13.5f " * 3) % (f, k[0][:3].sum() / 3, k[1][:3].sum() / 3))
+                print(("%13.5f " * 3) % (f, c[:3].sum() / 3, d[:3].sum() / 3))
             elif args.trace:
-                print(("%13.5f " * 3) % (f, k[0][:3].sum(), k[1][:3].sum()))
+                print(("%13.5f " * 3) % (f, c[:3].sum(), d[:3].sum()))
             else:
-                print(("%f " * 13) % ((f,) + tuple(k[0]) + tuple(k[1])))
-
+                print(("%f " * 13) % ((f,) + tuple(c) + tuple(d)))
         print("")
         print("")
 
 
 def _show_scalar(
-    gdos: NDArray[np.double],
+    cumulative: NDArray[np.double] | None,
+    density: NDArray[np.double],
     temperatures: NDArray[np.double],
     sampling_points: NDArray[np.double],
     args: KaccumMockArgs | argparse.Namespace,
 ) -> None:
-    """Show scalar values."""
+    """Show scalar values.
+
+    cumulative : shape (n_batch, n_sampling) or None.  ``None`` (smearing path)
+        means no cumulative integral is available; a zero column is printed in
+        its place to preserve the historical 3-column output format.
+    density : shape (n_batch, n_sampling)
+    sampling_points : shape (n_sampling,)
+
+    """
+    if cumulative is None:
+        cumulative = np.zeros_like(density)
     if args.pqj or args.gruneisen or args.gv_norm:
-        for f, g in zip(sampling_points, gdos[0], strict=True):
-            print("%f %e %e" % (f, g[0], g[1]))
+        for f, c, d in zip(sampling_points, cumulative[0], density[0], strict=True):
+            print("%f %e %e" % (f, c, d))
     else:
-        for i, gdos_t in enumerate(gdos):
+        for i in range(density.shape[0]):
             print("# %d K" % temperatures[i])
-            for f, g in zip(sampling_points[i], gdos_t, strict=True):
-                print("%f %f %f" % (f, g[0], g[1]))
+            for f, c, d in zip(sampling_points, cumulative[i], density[i], strict=True):
+                print("%f %f %f" % (f, c, d))
             print("")
             print("")
 
@@ -382,27 +406,30 @@ def _run_scalar(
         mode_prop = mode_prop[index : index + 1, :, :]
 
     if args.smearing:
-        mode_prop_dos = GammaDOSsmearing(
-            mode_prop,
+        smear = SmearingDOSAccumulator(
             frequencies,
             ir_weights,
+            mode_property=mode_prop,
             num_sampling_points=args.num_sampling_points,
-        )
-        sampling_points, gdos = mode_prop_dos.get_gdos()
-        sampling_points = np.tile(sampling_points, (len(gdos), 1))
-        _show_scalar(gdos[:, :, :], temperatures, sampling_points, args)
+        ).result
+        _show_scalar(None, smear.density, temperatures, smear.sampling_points, args)
     else:
-        for i, w in enumerate(ir_weights):
-            mode_prop[:, i, :] *= w
-        kdos, sampling_points = run_prop_dos(
+        thm = TetrahedronDOSAccumulator(
             frequencies,
-            mode_prop[:, :, :, None],
-            ir_grid_map,
-            ir_grid_points,
-            args.num_sampling_points,
             bz_grid,
+            mode_property=mode_prop[:, :, :, None],
+            ir_grid_points=ir_grid_points,
+            ir_grid_weights=ir_weights,
+            ir_grid_map=ir_grid_map,
+            num_sampling_points=args.num_sampling_points,
+        ).result
+        _show_scalar(
+            thm.cumulative[..., 0],
+            thm.density[..., 0],
+            temperatures,
+            thm.sampling_points,
+            args,
         )
-        _show_scalar(kdos[:, :, :, 0], temperatures, sampling_points, args)
 
 
 def _run_tensor(
@@ -439,30 +466,34 @@ def _run_tensor(
             mode_prop = mode_prop[index : index + 1, :, :]
             mean_freepath = mean_freepath[index : index + 1]
 
-        kdos, sampling_points = run_mfp_dos(
+        res = TetrahedronDOSAccumulator(
             mean_freepath,
-            mode_prop,
-            ir_grid_map,
-            ir_grid_points,
-            args.num_sampling_points,
             bz_grid,
+            mode_property=mode_prop,
+            ir_grid_points=ir_grid_points,
+            ir_grid_map=ir_grid_map,
+            num_sampling_points=args.num_sampling_points,
+        ).result
+        _show_tensor(
+            res.cumulative, res.density, temperatures, res.sampling_points, args
         )
-        _show_tensor(kdos, temperatures, sampling_points, args)
     else:
         if args.temperature is not None and not args.gv:
             index = _get_T_target_index(temperatures, args.temperature)
             temperatures = temperatures[index : index + 1]
             mode_prop = mode_prop[index : index + 1, :, :]
 
-        kdos, sampling_points = run_prop_dos(
+        res = TetrahedronDOSAccumulator(
             frequencies,
-            mode_prop,
-            ir_grid_map,
-            ir_grid_points,
-            args.num_sampling_points,
             bz_grid,
+            mode_property=mode_prop,
+            ir_grid_points=ir_grid_points,
+            ir_grid_map=ir_grid_map,
+            num_sampling_points=args.num_sampling_points,
+        ).result
+        _show_tensor(
+            res.cumulative, res.density, temperatures, res.sampling_points, args
         )
-        _show_tensor(kdos, temperatures, sampling_points, args)
 
 
 def main(**argparse_control: KaccumMockArgs) -> None:

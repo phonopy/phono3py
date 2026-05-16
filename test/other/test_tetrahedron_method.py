@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
-from phono3py import Phono3py
-from phono3py.other.tetrahedron_method import (
+from phonopy.phonon.grid import BZGrid, get_ir_grid_points
+from phonopy.phonon.tetrahedron_method import (
     get_integration_weights,
     get_tetrahedra_relative_grid_address,
-    get_unique_grid_points,
 )
-from phono3py.phonon.grid import BZGrid, get_ir_grid_points
+
+from phono3py import Phono3py
+from phono3py.other.isotope import get_unique_grid_points
 
 
 def test_get_unique_grid_points(si_pbesol_111: Phono3py):
@@ -198,7 +198,7 @@ def test_get_unique_grid_points_rust_vs_c(si_pbesol_111: Phono3py):
     Exercises both bz_grid_type=2 (dense map) and type=1 (sparse map).
 
     """
-    pytest.importorskip("phono3py_rs")
+    pytest.importorskip("phonors")
 
     lat = si_pbesol_111.primitive.cell
     mesh = [4, 4, 4]
@@ -218,7 +218,7 @@ def test_get_integration_weights_rust_vs_c(si_pbesol_111: Phono3py):
     FP rounding of one ULP is allowed.
 
     """
-    pytest.importorskip("phono3py_rs")
+    pytest.importorskip("phonors")
 
     si_pbesol_111.mesh_numbers = [4, 4, 4]
     si_pbesol_111.init_phph_interaction()
@@ -257,7 +257,7 @@ def test_get_tetrahedra_relative_grid_address_rust_vs_c():
     integer table, so output must be bit-equal to C.
 
     """
-    pytest.importorskip("phono3py_rs")
+    pytest.importorskip("phonors")
 
     lattices = [
         np.eye(3) * 1.0,

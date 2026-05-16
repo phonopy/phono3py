@@ -28,7 +28,7 @@ only limited number of keywords that are shown in the phonopy web site
 1. Create supercells with displacements
 
    ```bash
-   % phono3py --qe -d --dim="2 2 2" --pa="F" -c Si.in
+   % phono3py-init --qe -d --dim="2 2 2" --pa="F" -c Si.in
    ```
 
    In this example, probably 111 different supercells with
@@ -50,30 +50,23 @@ only limited number of keywords that are shown in the phonopy web site
    forces on atoms in QE (pw) calculation results:
 
    ```bash
-   % phono3py --cf3 disp-00001/Si-supercell.out disp-00002/Si-supercell.out ...
+   % phono3py-init --cf3 disp-00001/Si-supercell.out disp-00002/Si-supercell.out ...
    ```
 
    or in recent bash or zsh:
 
    ```bash
-   % phono3py --cf3 disp-{00001..00111}/Si-supercell.out
+   % phono3py-init --cf3 disp-{00001..00111}/Si-supercell.out
    ```
 
    `phono3py_disp.yaml` is used to create `FORCES_FC3`, therefore it
    must exist in current directory.
 
-4) Calculate 3rd and 2nd order force constants
-
-   `fc3.hdf5` and `fc2.hdf5` files are created by:
+4) Calculate lattice thermal conductivity, e.g., by:
 
    ```bash
-   % phono3py --fc-symmetry
+   % phono3py --mesh="11 11 11" --br
    ```
 
-   where `--fc-symmetry` symmetrizes fc3 and fc2.
-
-5) Calculate lattice thermal conductivity, e.g., by:
-
-   ```bash
-   % phono3py --mesh="11 11 11" --fc3 --fc2 --br
-   ```
+   Force constants are automatically calculated from `FORCES_FC3` (and
+   `FORCES_FC2` if available), symmetrized, and reused on later runs.

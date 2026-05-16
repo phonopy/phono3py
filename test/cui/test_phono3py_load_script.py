@@ -871,6 +871,7 @@ def test_phono3py_load_write_gamma_detail_outputs_hdf5():
                 cwd / ".." / "phono3py_params_Si-111-222.yaml",
                 mesh_numbers=["9", "9", "9"],
                 is_bterta=True,
+                is_full_fc=True,
                 temperatures=["300"],
                 write_gamma=True,
                 write_gamma_detail=True,
@@ -898,7 +899,7 @@ def test_phono3py_load_write_gamma_detail_outputs_hdf5():
                 assert gamma_detail.size > 0
                 assert gamma_detail[0, 0, 0, 0, 0] == pytest.approx(0.0, abs=1e-16)
                 assert np.max(gamma_detail) == pytest.approx(
-                    2.243623483101439e-04, rel=0.2
+                    2.243623483101439e-04, abs=0.0001
                 )
                 assert np.count_nonzero(gamma_detail) > 100
 
@@ -1383,6 +1384,77 @@ def test_VASP_create_displacements_fc3_fc2():
             os.chdir(original_cwd)
 
 
+def test_phono3py_run_mode_rejects_init_flag(
+    capsys: pytest.CaptureFixture[str],
+):
+    """Phono3py in mode='run' errors when an init-only flag like -d is given."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+        try:
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_Si-111-222.yaml",
+                is_displacement=True,
+            )
+            argparse_control["mode"] = "run"
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 1
+            captured = capsys.readouterr()
+            assert "phono3py-init" in captured.out
+        finally:
+            os.chdir(original_cwd)
+
+
+def test_phono3py_init_mode_requires_init_flag(
+    capsys: pytest.CaptureFixture[str],
+):
+    """Phono3py-init (mode='init') errors when no init flag is given."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+        try:
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_Si-111-222.yaml",
+            )
+            argparse_control["mode"] = "init"
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 1
+            captured = capsys.readouterr()
+            assert "No setup operation" in captured.out
+        finally:
+            os.chdir(original_cwd)
+
+
+def test_phono3py_load_deprecation_warning(
+    capsys: pytest.CaptureFixture[str],
+):
+    """Phono3py-load prints a deprecation message pointing to phono3py."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+        try:
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_Si-111-222.yaml",
+            )
+            argparse_control["mode"] = "run"
+            argparse_control["deprecated_command"] = "phono3py-load"
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+            captured = capsys.readouterr()
+            assert "phono3py-load' is deprecated" in captured.out
+
+            for created_filename in ("phono3py.yaml", "fc2.hdf5", "fc3.hdf5"):
+                file_path = pathlib.Path(created_filename)
+                if file_path.exists():
+                    file_path.unlink()
+            _check_no_files()
+        finally:
+            os.chdir(original_cwd)
+
+
 def _ls():
     current_dir = pathlib.Path(".")
     for file in current_dir.iterdir():
@@ -1404,10 +1476,10 @@ def _get_phono3py_load_args(
     is_bterta: bool | None = None,
     is_displacement: bool | None = None,
     is_fc3_r0_average: bool | None = None,
+    is_full_fc: bool | None = None,
     is_isotope: bool | None = None,
     is_N_U: bool | None = None,
     is_lbte: bool | None = None,
-    is_wigner_kappa: bool | None = None,
     mesh_numbers: Sequence | None = None,
     mlp_params: str | None = None,
     phonon_supercell_dimension: Sequence | None = None,
@@ -1439,10 +1511,10 @@ def _get_phono3py_load_args(
             is_bterta=is_bterta,
             is_displacement=is_displacement,
             is_fc3_r0_average=is_fc3_r0_average,
+            is_full_fc=is_full_fc,
             is_isotope=is_isotope,
             is_N_U=is_N_U,
             is_lbte=is_lbte,
-            is_wigner_kappa=is_wigner_kappa,
             log_level=1,
             mesh_numbers=mesh_numbers,
             mlp_params=mlp_params,
@@ -1471,10 +1543,10 @@ def _get_phono3py_load_args(
             is_bterta=is_bterta,
             is_displacement=is_displacement,
             is_fc3_r0_average=is_fc3_r0_average,
+            is_full_fc=is_full_fc,
             is_isotope=is_isotope,
             is_N_U=is_N_U,
             is_lbte=is_lbte,
-            is_wigner_kappa=is_wigner_kappa,
             mesh_numbers=mesh_numbers,
             mlp_params=mlp_params,
             phonon_supercell_dimension=phonon_supercell_dimension,

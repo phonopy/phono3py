@@ -5,11 +5,11 @@ from typing import Literal
 import numpy as np
 import pytest
 from phonopy import Phonopy
+from phonopy.phonon.grid import BZGrid, get_grid_point_from_address
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.symmetry import Symmetry
 
 from phono3py import Phono3py
-from phono3py.phonon.grid import BZGrid, get_grid_point_from_address
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.triplets import (
     _get_BZ_triplets_at_q,
@@ -1929,6 +1929,10 @@ def test_get_triplets_integration_weights_tetrahedron(
     si_pbesol: Phono3py, lang: Literal["C", "Python"]
 ):
     """Test get_triplets_integration_weights with tetrahedron method (no sigma)."""
+    # The Python path internally uses the C scalar
+    # ``get_tetrahedra_integration_weight`` helper, so it also needs the C
+    # extension.
+    pytest.importorskip("phonopy._phonopy")
     itr = _setup_interaction(si_pbesol, [4, 4, 4], grid_point=1)
     frequencies = itr.get_phonons()[0]
     assert frequencies is not None
@@ -1957,6 +1961,7 @@ def test_get_triplets_integration_weights_tetrahedron_c_equals_python(
     si_pbesol: Phono3py,
 ):
     """Test that C and Python tetrahedron paths give the same integration weights."""
+    pytest.importorskip("phonopy._phonopy")
     itr = _setup_interaction(si_pbesol, [4, 4, 4], grid_point=1)
     frequency_points = np.linspace(0, 20, 11)
 

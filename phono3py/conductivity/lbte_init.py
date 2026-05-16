@@ -43,6 +43,7 @@ from typing import Literal, TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
+from phonopy.phonon.grid import get_ir_grid_points
 
 from phono3py.conductivity.calculators import LBTECalculator
 from phono3py.conductivity.exceptions import LBTECollisionReadError
@@ -50,7 +51,6 @@ from phono3py.conductivity.factory import conductivity_calculator
 from phono3py.conductivity.output import ConductivityLBTEWriter
 from phono3py.conductivity.utils import write_pp_interaction
 from phono3py.file_IO import read_collision_from_hdf5
-from phono3py.phonon.grid import get_ir_grid_points
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
 
 _CollisionReadSource: TypeAlias = Literal["full_matrix", "grid_points"]
@@ -289,7 +289,7 @@ def get_thermal_conductivity_LBTE(
     input_filename: str | os.PathLike | None = None,
     output_filename: str | os.PathLike | None = None,
     log_level: int = 0,
-    lang: Literal["C", "Python", "Rust"] = "C",
+    lang: Literal["C", "Python", "Rust"] = "Rust",
 ) -> LBTECalculator:
     """Calculate lattice thermal conductivity by direct solution."""
     _sigmas = [None] if sigmas is None else list(sigmas)

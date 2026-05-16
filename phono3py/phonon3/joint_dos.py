@@ -44,12 +44,13 @@ from typing import Literal
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
+from phonopy.phonon.grid import BZGrid, get_grid_point_from_address
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.cells import Primitive, Supercell
 
+from phono3py._lang import log_dispatch, resolve_lang
 from phono3py.phonon.func import bose_einstein
-from phono3py.phonon.grid import BZGrid, get_grid_point_from_address
-from phono3py.phonon.solver import run_phonon_solver_c
+from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_rust
 from phono3py.phonon3.triplets import (
     get_nosym_triplets_at_q,
     get_triplets_at_q,
@@ -78,7 +79,7 @@ class JointDos:
         filename: str | os.PathLike | None = None,
         log_level: int = 0,
         lapack_zheev_uplo: Literal["L", "U"] = "L",
-        lang: Literal["C", "Python", "Rust"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "Rust",
     ) -> None:
         """Init method."""
         self._grid_point: int | None = None
@@ -106,9 +107,9 @@ class JointDos:
         self._filename = filename
         self._log_level = log_level
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
+        if lang in ("C", "Rust"):
+            lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
-        from phono3py._lang import log_dispatch
-
         log_dispatch(lang, "JointDos.__init__")
 
         self._num_band = len(self._primitive) * 3
@@ -268,7 +269,8 @@ class JointDos:
         else:
             _grid_points = grid_points
 
-        run_phonon_solver_c(
+        solver = run_phonon_solver_rust if self._lang == "Rust" else run_phonon_solver_c
+        solver(
             self._dm,
             self._frequencies,
             self._eigenvectors,
@@ -308,17 +310,11 @@ class JointDos:
     def run(self) -> None:
         """Calculate joint-density-of-states."""
         self.run_phonon_solver()
-        try:
-            import phono3py._phono3py as phono3c  # noqa F401 # type: ignore
-
-            self.run_integration_weights(lang=self._lang)
-            self.run_jdos()
-        except ImportError:
-            print("Joint density of states in python is not implemented.")
-            return
+        self.run_integration_weights(lang=self._lang)
+        self.run_jdos(lang=self._lang)
 
     def run_integration_weights(
-        self, lang: Literal["C", "Python", "Rust"] = "C"
+        self, lang: Literal["C", "Python", "Rust"] = "Rust"
     ) -> None:
         """Compute triplets integration weights."""
         assert self._frequency_points is not None
@@ -331,15 +327,17 @@ class JointDos:
             lang=lang,
         )
 
-    def run_jdos(self, lang: Literal["C", "Python"] = "C") -> None:
+    def run_jdos(self, lang: Literal["C", "Python", "Rust"] = "Rust") -> None:
         """Run JDOS calculation with having integration weights.
 
-        lang="Py" is the original implementation.
-        lang="C" calculates JDOS using C routine for imag-free-energy.
-        Computational efficiency is roughly determined by tetraherdon method, but not
-        integration in JDOS. Although performance benefit using lang="C" is limited,
-        using the same routine as imag-free-energy is considered a good idea.
-        So here, the implementation in C is used for the integration of JDOS.
+        lang="Python" is the original numpy implementation.
+        lang="C" / "Rust" call the imag-self-energy-with-g kernel
+        (``phono3c.imag_self_energy_with_g`` or
+        ``phonors.imag_self_energy_with_g``) with a unit ph-ph interaction
+        strength.  Computational efficiency is roughly determined by the
+        tetrahedron method rather than this integration, so the speed-up
+        is limited, but using the same kernel as imag-self-energy is
+        considered cleaner.
 
         """
         assert self._frequency_points is not None
@@ -359,7 +357,7 @@ class JointDos:
                     np.tensordot(gx[:, i], self._weights_at_q, axes=(0, 0))
                 )
         else:
-            if lang == "C":
+            if lang in ("C", "Rust"):
                 assert self._triplets_at_q is not None
                 num_band = len(self._primitive) * 3
                 self._ones_pp_strength = np.ones(  # type: ignore[call-overload]
@@ -370,7 +368,7 @@ class JointDos:
                 for k in range(2):
                     g = self._g.copy()
                     g[k] = 0
-                    self._run_c_with_g_at_temperature(jdos, g, k)
+                    self._run_kernel_with_g_at_temperature(jdos, g, k, lang)
             else:
                 self._run_occupation()
                 for i, _ in enumerate(self._frequency_points):
@@ -378,33 +376,55 @@ class JointDos:
 
         self._joint_dos = jdos / np.prod(self._bz_grid.D_diag)
 
-    def _run_c_with_g_at_temperature(
+    def _run_kernel_with_g_at_temperature(
         self,
         jdos: NDArray[np.double],
         g: NDArray[np.double],
         k: int,
+        lang: Literal["C", "Rust"],
     ) -> None:
-        import phono3py._phono3py as phono3c  # type: ignore
-
         assert self._temperature is not None
         assert self._frequency_points is not None
+        temperature_thz = (
+            self._temperature * get_physical_units().KB / get_physical_units().THzToEv
+        )
         jdos_elem = np.zeros(1, dtype="double")
-        for i, _ in enumerate(self._frequency_points):
-            phono3c.imag_self_energy_with_g(
-                jdos_elem,
-                self._ones_pp_strength,
-                self._triplets_at_q,
-                self._weights_at_q,
-                self._frequencies,
-                self._temperature
-                * get_physical_units().KB
-                / get_physical_units().THzToEv,
-                g,
-                self._g_zero,
-                self._cutoff_frequency,
-                i,
+        if lang == "Rust":
+            from phono3py.phonon3.imag_self_energy import (
+                run_imag_self_energy_with_g_rust,
             )
-            jdos[i, k] = jdos_elem[0]
+
+            for i, _ in enumerate(self._frequency_points):
+                run_imag_self_energy_with_g_rust(
+                    jdos_elem,
+                    self._ones_pp_strength,
+                    self._triplets_at_q,
+                    self._weights_at_q,
+                    self._frequencies,
+                    temperature_thz,
+                    g,
+                    self._g_zero,
+                    self._cutoff_frequency,
+                    i,
+                )
+                jdos[i, k] = jdos_elem[0]
+        else:
+            import phono3py._phono3py as phono3c  # type: ignore
+
+            for i, _ in enumerate(self._frequency_points):
+                phono3c.imag_self_energy_with_g(
+                    jdos_elem,
+                    self._ones_pp_strength,
+                    self._triplets_at_q,
+                    self._weights_at_q,
+                    self._frequencies,
+                    temperature_thz,
+                    g,
+                    self._g_zero,
+                    self._cutoff_frequency,
+                    i,
+                )
+                jdos[i, k] = jdos_elem[0]
 
     def _run_occupation(self) -> None:
         assert self._temperature is not None
@@ -440,6 +460,7 @@ class JointDos:
             self._primitive,
             nac_params=self._nac_params,
             frequency_scale_factor=self._frequency_scale_factor,
+            lang="Rust" if self._lang == "Rust" else "C",
         )
         self._allocate_phonons()
 

@@ -1,39 +1,5 @@
 """Calculate group velocity matrix."""
 
-# Copyright (C) 2021 Atsushi Togo
-# All rights reserved.
-#
-# This file is part of phonopy.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# * Redistributions of source code must retain the above copyright
-#   notice, this list of conditions and the following disclaimer.
-#
-# * Redistributions in binary form must reproduce the above copyright
-#   notice, this list of conditions and the following disclaimer in
-#   the documentation and/or other materials provided with the
-#   distribution.
-#
-# * Neither the name of the phonopy project nor the names of its
-#   contributors may be used to endorse or promote products derived
-#   from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -97,6 +63,7 @@ class VelocityMatrix(GroupVelocity):
         self._rotations_cartesian = rotations_cartesian
 
         self._velocity_matrices = None
+        self._group_velocities = None
 
     def run(
         self,
@@ -123,13 +90,15 @@ class VelocityMatrix(GroupVelocity):
             # Give an random direction to break symmetry
             self._directions[0] = np.array([1, 2, 3])
         else:
-            self._directions[0] = np.dot(self._reciprocal_lattice, perturbation)
+            self._directions[0] = self._reciprocal_lattice @ perturbation
         self._directions[0] /= np.linalg.norm(self._directions[0])
-        vm = [
-            self._calculate_velocity_matrix_at_q(q)
-            for q in np.asarray(q_points, dtype="double")
-        ]
+        _q_points = np.asarray(q_points, dtype="double")
+        vm = [self._calculate_velocity_matrix_at_q(q) for q in _q_points]
         self._velocity_matrices = np.array(vm, dtype="cdouble", order="C")
+        gv = np.einsum("qaii->qia", self._velocity_matrices).real
+        for i, q in enumerate(_q_points):
+            gv[i] = gv[i] @ self._get_projector(q).T
+        self._group_velocities = np.ascontiguousarray(gv, dtype="double")
 
     @property
     def velocity_matrices(self) -> NDArray[np.cdouble] | None:
@@ -149,42 +118,34 @@ class VelocityMatrix(GroupVelocity):
         self,
     ) -> NDArray[np.double] | None:
         """Return group velocities."""
-        if self._velocity_matrices is None:
-            return None
-        shape = self._velocity_matrices.shape
-        gv = np.zeros((shape[0], shape[2], 3), dtype="double", order="C")
-        for i_q, vm in enumerate(self._velocity_matrices):
-            for i, vm_a in enumerate(vm):
-                gv[i_q, :, i] = np.diag(vm_a.real)
-
-        return gv
+        return self._group_velocities
 
     def _calculate_velocity_matrix_at_q(
         self, q: NDArray[np.double]
     ) -> NDArray[np.cdouble]:
-
         self._dynmat.run(q)
         dm = self._dynmat.dynamical_matrix
         assert dm is not None
         eigvals, eigvecs = np.linalg.eigh(dm)
         eigvals = eigvals.real  # type: ignore
         freqs = np.sqrt(abs(eigvals)) * np.sign(eigvals) * self._factor
-        deg_sets = degenerate_sets(freqs)
         ddms = self._get_dD(q)
+
         rot_eigvecs = np.zeros_like(eigvecs)
+        for deg in degenerate_sets(freqs):
+            rot_eigvecs[:, deg] = self._rot_eigsets(ddms[0], eigvecs[:, deg])
+        mask = freqs > self._cutoff_frequency
+        scale = np.zeros_like(freqs)
+        scale[mask] = 1 / np.sqrt(2 * freqs[mask])
+        rot_eigvecs *= scale
 
-        for deg in deg_sets:
-            rot_eigvecs[:, deg] = self._rot_eigsets(ddms, eigvecs[:, deg])
-        condition = freqs > self._cutoff_frequency
-        freqs = np.where(condition, freqs, 1)
-        rot_eigvecs = rot_eigvecs * np.where(condition, 1 / np.sqrt(2 * freqs), 0)
+        vm = np.zeros((3,) + eigvecs.shape, dtype="cdouble", order="C")
+        # projector = self._get_projector(q)
+        # for i, ddm in enumerate(np.einsum("ij,jkl->ikl", projector, ddms[1:])):
+        for i, ddm in enumerate(ddms[1:]):
+            vm[i] = rot_eigvecs.T.conj() @ ddm @ rot_eigvecs
 
-        vm = np.zeros((3,) + eigvecs.shape, dtype="cdouble")
-        projector = self._get_projector(q)
-        for i, ddm in enumerate(np.einsum("ij,jkl->ikl", projector, ddms[1:])):
-            vm[i] += rot_eigvecs.T.conj() @ ddm @ rot_eigvecs
-
-        return self._hermitian_velocity_matrix(vm) * (self._factor**2)
+        return self._hermitian_velocity_matrix(vm) * self._factor**2
 
     def _hermitian_velocity_matrix(
         self, vm: NDArray[np.cdouble]
@@ -193,7 +154,7 @@ class VelocityMatrix(GroupVelocity):
         return vm
 
     def _rot_eigsets(
-        self, ddms: NDArray[np.cdouble], eigsets: NDArray[np.cdouble]
+        self, ddm: NDArray[np.cdouble], eigsets: NDArray[np.cdouble]
     ) -> NDArray[np.cdouble]:
         """Treat degeneracy.
 
@@ -202,10 +163,10 @@ class VelocityMatrix(GroupVelocity):
 
         Parameters
         ----------
-        ddms : list of ndarray
-            List of delta (derivative or finite difference) of dynamical
-            matrices along several q-directions for perturbation.
-            shape=(len(self._directions), num_band, num_band), dtype=complex
+        ddm : ndarray
+            Delta (derivative or finite difference) of dynamical
+            matrix along a specified q-direction for perturbation.
+            shape=(num_band, num_band), dtype=complex
         eigsets : ndarray
             List of phonon eigenvectors of degenerate bands.
             shape=(num_band, num_degenerates), dtype=complex
@@ -217,8 +178,8 @@ class VelocityMatrix(GroupVelocity):
             shape=(num_band, num_degenerates), dtype=complex
 
         """
-        _, eigvecs = np.linalg.eigh(np.dot(eigsets.T.conj(), np.dot(ddms[0], eigsets)))
-        rot_eigsets = np.dot(eigsets, eigvecs)
+        _, eigvecs = np.linalg.eigh(eigsets.T.conj() @ ddm @ eigsets)
+        rot_eigsets = eigsets @ eigvecs
 
         return rot_eigsets
 
@@ -234,7 +195,7 @@ class VelocityMatrix(GroupVelocity):
             self._reciprocal_operations, self._rotations_cartesian, strict=True
         ):
             q_in_BZ = q - np.rint(q)
-            diff = q_in_BZ - np.dot(r, q_in_BZ)
+            diff = q_in_BZ - r @ q_in_BZ
             if (np.abs(diff) < LITTLE_GROUP_TOLERANCE).all():
                 projector += r_cart
                 order += 1
@@ -251,7 +212,7 @@ class VelocityMatrix(GroupVelocity):
             self._reciprocal_operations, self._rotations_cartesian, strict=True
         ):
             q_in_BZ = q - np.rint(q)
-            diff = q_in_BZ - np.dot(r, q_in_BZ)
+            diff = q_in_BZ - r @ q_in_BZ
             if (np.abs(diff) < LITTLE_GROUP_TOLERANCE).all():
                 rotations.append(r_cart)
         return rotations

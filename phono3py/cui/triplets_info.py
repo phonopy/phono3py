@@ -42,10 +42,10 @@ from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
+from phonopy.phonon.grid import BZGrid, get_ir_grid_points
 from phonopy.structure.atoms import PhonopyAtoms
 
 from phono3py.file_IO import write_grid_address_to_hdf5, write_ir_grid_points
-from phono3py.phonon.grid import BZGrid, get_ir_grid_points
 from phono3py.phonon3.triplets import get_triplets_at_q
 
 

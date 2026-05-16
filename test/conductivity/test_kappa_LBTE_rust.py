@@ -20,7 +20,8 @@ from phono3py.conductivity.calculators import LBTECalculator
 from phono3py.conductivity.factory import conductivity_calculator
 from phono3py.phonon3.interaction import Interaction
 
-pytest.importorskip("phono3py_rs")
+pytest.importorskip("phonors")
+pytest.importorskip("phono3py._phono3py")
 
 
 def _build_interaction(
@@ -51,6 +52,7 @@ def _run_lbte(
     is_reducible: bool = False,
     sigmas: Sequence[float | None] = (None,),
     is_isotope: bool = False,
+    is_full_pp: bool = False,
 ) -> np.ndarray:
     """Run one LBTE solve and return the kappa tensor."""
     itr = _build_interaction(ph3, mesh, lang=interaction_lang)
@@ -61,6 +63,7 @@ def _run_lbte(
         method="std-lbte",
         is_reducible_collision_matrix=is_reducible,
         is_isotope=is_isotope,
+        is_full_pp=is_full_pp,
         pinv_solver=5,
         lang=lang,
     )
@@ -95,6 +98,39 @@ def test_kappa_LBTE_rust_vs_c_isotope(si_pbesol: Phono3py):
     kappa_c = _run_lbte(si_pbesol, [5, 5, 5], lang="C", is_isotope=True)
     kappa_rust = _run_lbte(si_pbesol, [5, 5, 5], lang="Rust", is_isotope=True)
     np.testing.assert_allclose(kappa_rust, kappa_c, rtol=1e-10, atol=1e-10)
+
+
+def test_kappa_LBTE_rust_vs_c_full_pp(si_pbesol: Phono3py):
+    """Irreducible LBTE with is_full_pp=True: Rust kappa matches C.
+
+    Regression test for the bug where ``LBTECollisionSolver._run_interaction``
+    skipped the ``run_interaction`` call at i_sigma=0 and then crashed
+    accessing ``self._pp.averaged_interaction`` (only triggered with
+    ``is_full_pp=True``).
+
+    """
+    kappa_c = _run_lbte(si_pbesol, [5, 5, 5], lang="C", is_full_pp=True)
+    kappa_rust = _run_lbte(si_pbesol, [5, 5, 5], lang="Rust", is_full_pp=True)
+    np.testing.assert_allclose(kappa_rust, kappa_c, rtol=1e-10, atol=1e-10)
+
+
+def test_kappa_LBTE_rust_vs_c_multi_sigma(si_pbesol: Phono3py):
+    """Irreducible LBTE with multiple sigmas in one call.
+
+    Exercises the ``i_sigma > 0`` branch of
+    ``LBTECollisionSolver._run_interaction`` (existing pp_strength is
+    reused across sigmas).  Combined with ``is_full_pp=True`` so that
+    ``averaged_pp`` is captured at i_sigma=0 and the per-sigma loop
+    advances past it.
+
+    """
+    sigmas: Sequence[float | None] = [None, 0.1]
+    kappa_c = _run_lbte(si_pbesol, [5, 5, 5], lang="C", sigmas=sigmas, is_full_pp=True)
+    kappa_rust = _run_lbte(
+        si_pbesol, [5, 5, 5], lang="Rust", sigmas=sigmas, is_full_pp=True
+    )
+    np.testing.assert_allclose(kappa_rust, kappa_c, rtol=1e-10, atol=1e-10)
+    assert kappa_c.shape[0] == len(sigmas)
 
 
 def test_kappa_LBTE_rust_vs_c_full_rust(si_pbesol: Phono3py):

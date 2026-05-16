@@ -11,7 +11,8 @@ from phono3py.phonon3.imag_self_energy import (
     run_imag_self_energy_with_g_rust,
 )
 
-pytest.importorskip("phono3py_rs")
+pytest.importorskip("phonors")
+pytest.importorskip("phono3py._phono3py")
 
 
 def _random_inputs(

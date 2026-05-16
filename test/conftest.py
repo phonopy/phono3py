@@ -47,7 +47,7 @@ def si_pbesol() -> Phono3py:
     """Return Phono3py instance of Si 2x2x2.
 
     * with symmetry
-    * full fc
+    * compact fc
 
     """
     yaml_filename = cwd / "phono3py_si_pbesol.yaml"
@@ -66,7 +66,7 @@ def si_pbesol_no_r0avg() -> Phono3py:
     """Return Phono3py instance of Si 2x2x2.
 
     * with symmetry
-    * full fc
+    * compact fc
     * make_r0_average=False
 
     """
@@ -101,7 +101,7 @@ def si_pbesol_grg() -> Phono3py:
     """Return Phono3py instance of Si 2x2x2.
 
     * with symmetry
-    * full fc
+    * compact fc
     * GR-grid
 
     """
@@ -184,7 +184,7 @@ def si_pbesol_111() -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
-    * full fc
+    * compact fc
 
     """
     yaml_filename = cwd / "phono3py_params_Si111.yaml"
@@ -201,7 +201,7 @@ def si_pbesol_111_symfc() -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
-    * full fc
+    * compact fc
     * use symfc if available on test side
 
     """
@@ -234,7 +234,7 @@ def si_pbesol_111_222_fd() -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
-    * full fc
+    * compact fc
     * use symfc if available on test side
 
     """
@@ -252,7 +252,7 @@ def si_pbesol_111_222_symfc() -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
-    * full fc
+    * compact fc
     * use symfc if available on test side
 
     """
@@ -273,7 +273,7 @@ def si_pbesol_111_222_symfc_fd() -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
-    * full fc
+    * compact fc
     * use symfc for fc2 if available on test side
 
     """
@@ -294,7 +294,7 @@ def si_pbesol_111_222_fd_symfc() -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
-    * full fc
+    * compact fc
     * use symfc for fc3 if available on test side
 
     """
@@ -315,7 +315,7 @@ def si_pbesol_111_222_alm_cutoff() -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
-    * full fc
+    * compact fc
     * use alm if available on test side
     * cutoff=3
 
@@ -338,7 +338,7 @@ def si_pbesol_111_222_symfc_cutoff() -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
-    * full fc
+    * compact fc
     * use symfc if available on test side
     * cutoff=3
 
@@ -381,7 +381,7 @@ def si_pbesol_111_222_alm_cutoff_fc2() -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
-    * full fc
+    * compact fc
     * use alm if available on test side
     * cutoff=3 only for fc2
 
@@ -404,7 +404,7 @@ def si_pbesol_111_222_alm_cutoff_fc3() -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
-    * full fc
+    * compact fc
     * use alm if available on test side
     * cutoff=3 only for fc3
 
@@ -427,7 +427,7 @@ def nacl_pbe() -> Phono3py:
     """Return Phono3py instance of NaCl 2x2x2.
 
     * with symmetry
-    * full fc
+    * compact fc
 
     """
     yaml_filename = cwd / "phono3py_params_NaCl222.yaml.xz"
@@ -444,7 +444,7 @@ def nacl_pbe_no_r0avg() -> Phono3py:
     """Return Phono3py instance of NaCl 2x2x2.
 
     * with symmetry
-    * full fc
+    * compact fc
     * make_r0_average=False
 
     """
@@ -559,7 +559,7 @@ def aln_lda() -> Phono3py:
     """Return Phono3py instance of AlN 3x3x2.
 
     * with symmetry
-    * full fc.
+    * compact fc.
 
     """
     yaml_filename = cwd / "phono3py_params_AlN332.yaml.xz"
@@ -576,7 +576,7 @@ def aln_lda_no_r0avg() -> Phono3py:
     """Return Phono3py instance of AlN 3x3x2.
 
     * with symmetry
-    * full fc
+    * compact fc
     * make_r0_average=False
 
     """
@@ -639,7 +639,7 @@ def mgo_222rd_444rd_symfc_compact_fc() -> Phono3py:
     """Return Phono3py instance of MgO-2x2x2-4x4x4 RD-RD.
 
     * with symmetry
-    * full fc
+    * compact fc
     * use symfc if available on test side
 
     """

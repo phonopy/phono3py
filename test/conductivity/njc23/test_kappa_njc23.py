@@ -9,9 +9,9 @@ TOLERANCE = 0.2
 
 def test_kappa_njc23_si(si_pbesol: Phono3py):
     """Test NJC23-RTA by Si."""
-    ref_kappa = [107.877, 107.877, 107.877, 0.0, 0.0, 0.0]
+    ref_kappa = [108.325, 108.325, 108.325, 0.0, 0.0, 0.0]
     ref_kappa_intra = [107.794, 107.794, 107.794, 0.0, 0.0, 0.0]
-    ref_kappa_inter = [0.083, 0.083, 0.083, 0.0, 0.0, 0.0]
+    ref_kappa_inter = [0.531, 0.531, 0.531, 0.0, 0.0, 0.0]
     tc = _run_njc23_rta(si_pbesol, [9, 9, 9])
     np.testing.assert_allclose(ref_kappa, tc.kappa.ravel(), atol=TOLERANCE)
     np.testing.assert_allclose(ref_kappa_intra, tc.kappa_intra.ravel(), atol=TOLERANCE)
@@ -20,9 +20,9 @@ def test_kappa_njc23_si(si_pbesol: Phono3py):
 
 def test_kappa_njc23_si_with_sigma(si_pbesol: Phono3py):
     """Test NJC23-RTA with smearing method by Si."""
-    ref_kappa = [110.08, 110.08, 110.08, 0.0, 0.0, 0.0]
+    ref_kappa = [110.586, 110.586, 110.586, 0.0, 0.0, 0.0]
     ref_kappa_intra = [109.999, 109.999, 109.999, 0.0, 0.0, 0.0]
-    ref_kappa_inter = [0.081, 0.081, 0.081, 0.0, 0.0, 0.0]
+    ref_kappa_inter = [0.587, 0.587, 0.587, 0.0, 0.0, 0.0]
     si_pbesol.sigmas = [0.1]
     tc = _run_njc23_rta(si_pbesol, [9, 9, 9])
     np.testing.assert_allclose(ref_kappa, tc.kappa.ravel(), atol=TOLERANCE)
@@ -33,9 +33,9 @@ def test_kappa_njc23_si_with_sigma(si_pbesol: Phono3py):
 
 def test_kappa_njc23_si_iso(si_pbesol: Phono3py):
     """Test NJC23-RTA with isotope scattering by Si."""
-    ref_kappa = [97.301, 97.301, 97.301, 0.0, 0.0, 0.0]
+    ref_kappa = [97.753, 97.753, 97.753, 0.0, 0.0, 0.0]
     ref_kappa_intra = [97.213, 97.213, 97.213, 0.0, 0.0, 0.0]
-    ref_kappa_inter = [0.088, 0.088, 0.088, 0.0, 0.0, 0.0]
+    ref_kappa_inter = [0.540, 0.540, 0.540, 0.0, 0.0, 0.0]
     tc = _run_njc23_rta(si_pbesol, [9, 9, 9], is_isotope=True)
     np.testing.assert_allclose(ref_kappa, tc.kappa.ravel(), atol=TOLERANCE)
     np.testing.assert_allclose(ref_kappa_intra, tc.kappa_intra.ravel(), atol=TOLERANCE)

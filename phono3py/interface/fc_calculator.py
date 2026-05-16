@@ -69,8 +69,9 @@ class FDFC3Solver:
         primitive: Primitive,
         symmetry: Symmetry,
         dataset: Fc3Type1DisplacementDataset,
-        is_compact_fc: bool = False,
+        is_compact_fc: bool = True,
         log_level: int = 0,  # currently not used
+        lang: Literal["C", "Rust"] = "Rust",
     ) -> None:
         self._fc2, self._fc3 = self._run(
             supercell,
@@ -79,6 +80,7 @@ class FDFC3Solver:
             dataset,
             is_compact_fc,
             log_level,
+            lang,
         )
 
     @property
@@ -101,6 +103,7 @@ class FDFC3Solver:
         dataset: Fc3Type1DisplacementDataset,
         is_compact_fc: bool,
         log_level: int,
+        lang: Literal["C", "Rust"],
     ) -> tuple[NDArray[np.double], NDArray[np.double]]:
         return get_fc3(
             supercell,
@@ -109,6 +112,7 @@ class FDFC3Solver:
             symmetry,
             is_compact_fc=is_compact_fc,
             verbose=log_level > 0,
+            lang=lang,
         )
 
 

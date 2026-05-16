@@ -47,16 +47,18 @@ from phonopy.harmonic.dynamical_matrix import (
     DynamicalMatrixNAC,
     get_dynamical_matrix,
 )
+from phonopy.harmonic.force_constants import compact_fc_to_full_fc
+from phonopy.phonon.grid import (
+    BZGrid,
+    get_ir_grid_points,
+    get_qpoints_from_bz_grid_points,
+)
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive
 from phonopy.structure.symmetry import Symmetry
 
-from phono3py.phonon.grid import (
-    BZGrid,
-    get_ir_grid_points,
-    get_qpoints_from_bz_grid_points,
-)
+from phono3py.phonon3.fc3 import compact_fc3_to_full_fc3
 
 
 def run_gruneisen_parameters(
@@ -152,8 +154,15 @@ class Gruneisen:
         symprec: float = 1e-5,
     ) -> None:
         """Init method."""
-        self._fc2 = fc2
-        self._fc3 = fc3
+        # Support only full-fc2 and full-fc3.
+        if fc2.shape[0] != fc2.shape[1]:
+            self._fc2 = compact_fc_to_full_fc(primitive, fc2)
+        else:
+            self._fc2 = fc2
+        if fc3.shape[0] != fc3.shape[1]:
+            self._fc3 = compact_fc3_to_full_fc3(primitive, fc3)
+        else:
+            self._fc3 = fc3
         self._scell = supercell
         self._pcell = primitive
         self._ion_clamped = ion_clamped

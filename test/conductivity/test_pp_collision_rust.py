@@ -16,7 +16,8 @@ from phono3py import Phono3py
 from phono3py.conductivity.scattering_solvers import RTAScatteringSolver
 from phono3py.phonon3.interaction import Interaction
 
-pytest.importorskip("phono3py_rs")
+pytest.importorskip("phonors")
+pytest.importorskip("phono3py._phono3py")
 
 
 def _build_interaction(ph3: Phono3py) -> Interaction:
