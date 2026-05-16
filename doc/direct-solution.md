@@ -276,8 +276,10 @@ ARM64, MKL can not be used. How to choose the BLAS library in installation via
 conda-forge is written {ref}`here<install_an_example>`.
 
 Phono3py has two different interfaces to the LAPACK library. One is via scipy
-(or numpy), and the other is via LAPACKE as shown below. How to switch between
-interfaces is described in the
+(or numpy), and the other is via LAPACKE as shown below. The LAPACKE interface
+is deprecated in v4 and is only available through the legacy C-extension
+backend; the default Rust backend uses the scipy/numpy interface. How to
+switch between interfaces is described in the
 {ref}`next section<direct_solution_solver_choice>`.
 
 ### OpenBLAS or MKL linked scipy and numpy
@@ -286,7 +288,15 @@ Scipy and numpy have interfaces to LAPACK `dsyevd`, and scipy also has the
 interface to `dsyev`. OpenBLAS and MKL linked scipy and numpy are provided by
 conda-forge.
 
-### OpenBLAS or MKL via LAPACKE
+### OpenBLAS or MKL via LAPACKE (deprecated, C extension only)
+
+```{deprecated} v4
+The LAPACKE interface is only available through the C-extension backend
+(`--legacy-backend` / `lang="C"`) and is not exposed on the default Rust
+backend. It is kept for backward compatibility and may be removed in a
+future release. Prefer the scipy/numpy interfaces, which work with both
+backends.
+```
 
 LAPACK `dsyev` and `dsyevd` can be accessed via LAPACKE in the phono3py's C
 language implementation through the python C-API.
@@ -306,16 +316,21 @@ The default choice of the diagonalization solver is `scipy.linalg.lapack.dsyev`
 (`--pinv-solver=4`). Using `--pinv-solver NUMBER`, one of the following solvers
 is specified:
 
-1. (Only available when {ref}`compiling with LAPACKE <install_with_lapacke>`)
-   Lapacke `dsyev`: Smaller memory consumption than `dsyevd`, but slower. This
-   is the default solver when MKL LAPACKE is integrated or scipy is not
+1. **(Deprecated; C extension only)** Lapacke `dsyev`: Only available when
+   {ref}`compiling with LAPACKE <install_with_lapacke>` and running with
+   the legacy C-extension backend (`--legacy-backend` / `lang="C"`).
+   Smaller memory consumption than `dsyevd`, but slower. This was the
+   default solver when MKL LAPACKE was integrated or scipy was not
    installed.
-2. (Only available when {ref}`compiling with LAPACKE <install_with_lapacke>`)
-   Lapacke `dsyevd`: Larger memory consumption than `dsyev`, but faster. This is
-   not considered as stable as `dsyev` but can be significantly faster than
-   `dsyev` for solving large collision matrix. It is recommended to compare the
-   result with that by `dsyev` solver using smaller collision matrix (e.g.,
-   sparser sampling mesh) before starting solving large collision matrix.
+2. **(Deprecated; C extension only)** Lapacke `dsyevd`: Only available when
+   {ref}`compiling with LAPACKE <install_with_lapacke>` and running with
+   the legacy C-extension backend (`--legacy-backend` / `lang="C"`).
+   Larger memory consumption than `dsyev`, but faster. This is not
+   considered as stable as `dsyev` but can be significantly faster than
+   `dsyev` for solving large collision matrix. It is recommended to
+   compare the result with that by `dsyev` solver using smaller collision
+   matrix (e.g., sparser sampling mesh) before starting solving large
+   collision matrix.
 3. Numpy's `dsyevd` (`linalg.eigh`). Similar to solver (2), this solver should
    be used carefully.
 4. Scipy's `dsyev`: This is the default solver when scipy is installed and MKL

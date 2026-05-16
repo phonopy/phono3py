@@ -84,7 +84,7 @@ class RealSelfEnergy:
         grid_point: int | None = None,
         temperature: float | None = None,
         epsilon: float | None = None,
-        lang: Literal["C", "Python", "Rust"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "Rust",
     ) -> None:
         """Init method.
 
@@ -622,7 +622,7 @@ def get_real_self_energy(
     write_hdf5: bool = True,
     output_filename: str | os.PathLike | None = None,
     log_level: int = 0,
-    lang: Literal["C", "Python", "Rust"] = "C",
+    lang: Literal["C", "Python", "Rust"] = "Rust",
 ) -> tuple[NDArray[np.double] | None, NDArray[np.double]]:
     """Real part of self energy at frequency points.
 

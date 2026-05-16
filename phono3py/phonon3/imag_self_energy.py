@@ -149,7 +149,7 @@ class ImagSelfEnergy:
         self,
         interaction: Interaction,
         with_detail: bool = False,
-        lang: Literal["C", "Python", "Rust"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "Rust",
     ) -> None:
         """Init method.
 
@@ -883,7 +883,7 @@ def get_imag_self_energy(
     return_gamma_detail: bool = False,
     output_filename: str | None = None,
     log_level: int = 0,
-    lang: Literal["C", "Python", "Rust"] = "C",
+    lang: Literal["C", "Python", "Rust"] = "Rust",
 ) -> tuple[NDArray[np.double] | None, NDArray[np.double], list[NDArray[np.double]]]:
     """Imaginary-part of self-energy at frequency points.
 

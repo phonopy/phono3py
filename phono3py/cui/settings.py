@@ -112,7 +112,7 @@ class Phono3pySettings(Settings):
         self.transport_type: str | None = None
         self.use_ave_pp: bool = False
         self.use_grg: bool = False
-        self.use_rust: bool = False
+        self.use_legacy_backend: bool = False
         self.write_collision: bool = False
         self.write_gamma_detail: bool = False
         self.write_gamma: bool = False
@@ -459,11 +459,22 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
             elif args.use_grg is False:
                 self._confs["use_grg"] = ".false."
 
-        if "use_rust" in arg_list:
-            if args.use_rust:
-                self._confs["use_rust"] = ".true."
-            elif args.use_rust is False:
-                self._confs["use_rust"] = ".false."
+        if "use_rust" in arg_list and args.use_rust:
+            import warnings
+
+            warnings.warn(
+                "--rust is a deprecated no-op in phono3py v4; the Rust backend "
+                "is now the default. Pass --legacy-backend to opt back into "
+                "the C extension.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        if "use_legacy_backend" in arg_list:
+            if args.use_legacy_backend:
+                self._confs["use_legacy_backend"] = ".true."
+            elif args.use_legacy_backend is False:
+                self._confs["use_legacy_backend"] = ".false."
 
         if "write_gamma_detail" in arg_list:
             if args.write_gamma_detail:
@@ -515,7 +526,7 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
                 "read_pp",
                 "use_ave_pp",
                 "use_grg",
-                "use_rust",
+                "use_legacy_backend",
                 "collective_phonon",
                 "write_gamma_detail",
                 "write_gamma",
@@ -913,9 +924,9 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
         if "use_grg" in params:
             settings.use_grg = params["use_grg"]
 
-        # Use experimental Rust backend
-        if "use_rust" in params:
-            settings.use_rust = params["use_rust"]
+        # Opt back into the legacy C-extension backend
+        if "use_legacy_backend" in params:
+            settings.use_legacy_backend = params["use_legacy_backend"]
 
         # Write detailed imag-part of self energy to hdf5
         if "write_gamma_detail" in params:

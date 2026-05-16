@@ -57,7 +57,7 @@ def _build_isotope_solver(
     kappa_settings: KappaSettings,
     log_level: int,
     mass_variances: Sequence[float] | NDArray[np.double] | None,
-    lang: Literal["C", "Python", "Rust"] = "C",
+    lang: Literal["C", "Python", "Rust"] = "Rust",
 ) -> IsotopeScatteringSolver:
     """Build an IsotopeScatteringSolver from Interaction and KappaSettings."""
     isotope = Isotope(
@@ -175,7 +175,7 @@ class ConductivityCalculatorBase(abc.ABC):
         mass_variances: Sequence[float] | NDArray[np.double] | None = None,
         sigma_cutoff_width: float | None = None,
         log_level: int = 0,
-        lang: Literal["C", "Python", "Rust"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "Rust",
     ):
         self._pp = pp
         self._velocity_solver = velocity_solver
@@ -532,7 +532,7 @@ class RTACalculator(ConductivityCalculatorBase):
         is_gamma_detail: bool = False,
         sigma_cutoff_width: float | None = None,
         log_level: int = 0,
-        lang: Literal["C", "Python", "Rust"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "Rust",
         rust_gp_batch_size: int | None = None,
     ):
         """Init method."""
@@ -920,7 +920,7 @@ class LBTECalculator(ConductivityCalculatorBase):
         is_full_pp: bool = False,
         sigma_cutoff_width: float | None = None,
         log_level: int = 0,
-        lang: Literal["C", "Python", "Rust"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "Rust",
     ) -> None:
         """Init method."""
         self._collision_solver = collision_solver

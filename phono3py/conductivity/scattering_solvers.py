@@ -394,7 +394,7 @@ class RTAScatteringSolver:
         is_N_U: bool = False,
         is_gamma_detail: bool = False,
         log_level: int = 0,
-        lang: Literal["C", "Python", "Rust"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "Rust",
     ):
         """Init method."""
         self._pp = pp

@@ -100,8 +100,8 @@ def resolve_lang(lang: Literal["C", "Rust"]) -> Literal["C", "Rust"]:
         if not have_phonors():
             raise ImportError(
                 "lang='Rust' was requested but the `phonors` package is not "
-                "installed.  Install it (e.g. `cd ../phonors && maturin "
-                "develop --release`) or use lang='C'."
+                "installed.  Install it (e.g. `pip install phonors`) or use "
+                "lang='C'."
             )
         return "Rust"
 

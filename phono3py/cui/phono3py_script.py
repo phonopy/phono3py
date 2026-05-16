@@ -286,19 +286,20 @@ def _start_phono3py(**argparse_control: Any) -> tuple[argparse.Namespace, int]:
     # Title
     if log_level:
         print_phono3py()
-        # When --rust was requested, or when the C extension is missing
-        # (and we are about to fall back to Rust), report rayon threads.
-        # Otherwise report OpenMP threads from the C extension.
-        if getattr(args, "use_rust", False) or not have_c_ext():
-            rust_threads = rust_rayon_max_threads()
-            if rust_threads > 0:
-                print(f"Rust backend (phonors) using rayon ({rust_threads} threads).")
-        else:
+        # Rust (phonors) is the default backend in v4. Only report OpenMP
+        # threads when --legacy-backend was requested and the C extension
+        # is available; otherwise report rayon threads from phonors.
+        use_legacy = getattr(args, "use_legacy_backend", False)
+        if use_legacy and have_c_ext():
             max_threads = c_omp_max_threads()
             if max_threads > 0:
                 print(f"Compiled with OpenMP support (max {max_threads} threads).")
             if c_include_lapacke():
                 print("Compiled with LAPACKE.")
+        else:
+            rust_threads = rust_rayon_max_threads()
+            if rust_threads > 0:
+                print(f"Rust backend (phonors) using rayon ({rust_threads} threads).")
 
         if argparse_control.get("load_phono3py_yaml", False):
             print("Running in phono3py.load mode.")
@@ -547,7 +548,7 @@ def _init_phono3py(
         make_r0_average=settings.is_fc3_r0_average,
         symprec=symprec,
         log_level=log_level,
-        lang="Rust" if settings.use_rust else "C",
+        lang="C" if settings.use_legacy_backend else "Rust",
     )
     phono3py.masses = settings.masses
     phono3py.band_indices = settings.band_indices

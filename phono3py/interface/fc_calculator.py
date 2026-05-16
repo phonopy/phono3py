@@ -71,7 +71,7 @@ class FDFC3Solver:
         dataset: Fc3Type1DisplacementDataset,
         is_compact_fc: bool = True,
         log_level: int = 0,  # currently not used
-        lang: Literal["C", "Rust"] = "C",
+        lang: Literal["C", "Rust"] = "Rust",
     ) -> None:
         self._fc2, self._fc3 = self._run(
             supercell,
