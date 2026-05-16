@@ -27,21 +27,25 @@ jobs:
         run: |
           conda activate test
           conda install --yes python=${{ matrix.python-version }}
-          conda install --yes matplotlib-base pyyaml "libblas=*=*openblas" openblas h5py scipy pytest spglib alm cmake c-compiler cxx-compiler "pypolymlp<0.9"
+          conda install --yes matplotlib-base pyyaml "libblas=*=*openblas" openblas h5py scipy pytest spglib alm cmake c-compiler cxx-compiler "pypolymlp<0.9" maturin
       - name: Install symfc develop branch
         run: |
           conda activate test
           git clone https://github.com/symfc/symfc.git
           cd symfc
           pip install -e . -vvv
-          cd ..
+      - name: Build and install phonors
+        run: |
+          conda activate test
+          git clone https://github.com/phonopy/phonors.git
+          cd phonors
+          maturin develop --release
       - name: Install phonopy develop branch
         run: |
           conda activate test
           git clone https://github.com/phonopy/phonopy.git
           cd phonopy
           pip install -e . -vvv
-          cd ..
       - name: Install phono3py
         run: |
           conda activate test

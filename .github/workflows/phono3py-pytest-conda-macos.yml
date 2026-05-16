@@ -1,12 +1,12 @@
-name: Pytest with Rust backend
+name: Pytest with Rust backend on macOS
 
 on:
   pull_request:
     branches: [develop]
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
+  build-macos:
+    runs-on: macos-latest
     defaults:
       run:
         shell: bash -l {0}
@@ -29,54 +29,30 @@ jobs:
         run: |
           conda activate test
           conda install --yes python=${{ matrix.python-version }}
-          conda install --yes matplotlib-base pyyaml h5py numpy scipy pytest spglib alm cmake c-compiler cxx-compiler pypolymlp
-          pip install maturin
+          conda install --yes matplotlib-base pyyaml h5py numpy scipy pytest spglib cmake c-compiler cxx-compiler maturin
       - name: Install symfc develop branch
         run: |
           conda activate test
           git clone --depth 1 https://github.com/symfc/symfc.git
           cd symfc
           pip install -e . -vvv
-          cd ..
       - name: Install phonopy develop branch
         run: |
           conda activate test
           git clone https://github.com/phonopy/phonopy.git
           cd phonopy
           pip install -e . -vvv
-          cd ..
-      - name: Clone phonors repository
-        run: |
-          git clone --depth 1 https://github.com/phonopy/phonors.git ../phonors
       - name: Build and install phonors
         run: |
           conda activate test
-          cd ../phonors
+          git clone https://github.com/phonopy/phonors.git
+          cd phonors
           maturin develop --release
       - name: Install phono3py
         run: |
           conda activate test
           pip install -e . -vvv
-      - name: Verify phonors import
+      - name: Run pytest
         run: |
           conda activate test
-          python -c "import phonors; print('phonors import OK')"
-      - name: Run Rust parity tests
-        env:
-          PHONO3PY_TRACE_LANG: "1"
-        run: |
-          conda activate test
-          pytest -sv \
-            test/conductivity/test_kappa_RTA_rust.py \
-            test/conductivity/test_kappa_LBTE_rust.py \
-            test/conductivity/test_pp_collision_rust.py \
-            test/other/test_isotope_rust.py \
-            test/other/test_tetrahedron_method.py \
-            test/phonon/test_dynamical_matrix.py \
-            test/phonon3/test_detailed_imag_self_energy_rust.py \
-            test/phonon3/test_fc3.py \
-            test/phonon3/test_imag_self_energy_rust.py \
-            test/phonon3/test_interaction_rust.py \
-            test/phonon3/test_real_self_energy_rust.py \
-            test/phonon3/test_real_to_reciprocal.py \
-            test/phonon3/test_reciprocal_to_normal.py
+          pytest -v test
