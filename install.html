@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Installation &#8212; Phono3py v.3.31.1</title>
+    <title>Installation &#8212; Phono3py v.4.0.0</title>
   
   
   
@@ -39,18 +39,18 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=a8a178d9"></script>
+    <script src="_static/documentation_options.js?v=a1c85040"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'install';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Rust backend (experimental)" href="rust-backend.html" />
+    <link rel="next" title="Rust backend" href="rust-backend.html" />
     <link rel="prev" title="Welcome to phono3py" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="3.31" />
+  <meta name="docsearch:version" content="4.0" />
   </head>
   
   
@@ -125,7 +125,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.31.1</p>
+    <p class="title logo__title">Phono3py v.4.0.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -139,7 +139,7 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rust-backend.html">Rust backend (experimental)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rust-backend.html">Rust backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -160,11 +160,13 @@
 <li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Force constants calculation with cutoff pair-distance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="phono3py-api.html">Phono3py API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="phono3py-load.html">phono3py-load command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py.html">phono3py command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-init.html">phono3py-init command</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">Using phono3py hdf5 files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="grid.html">Grids in reciprocal space</a></li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration-v4.html">Migrating from phono3py v3 to v4</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
 </ul>
 
@@ -322,7 +324,7 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gcc-on-ubuntu">GCC on Ubuntu</a></li>
 </ul>
 </li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lapacke">LAPACKE</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lapacke-deprecated-legacy-c-extension-backend-only">LAPACKE (deprecated, legacy C-extension backend only)</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#building-with-linking-lapacke">Building with linking LAPACKE</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-provided-by-conda">OpenBLAS provided by conda</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas">Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)</a></li>
@@ -479,8 +481,16 @@ system. If you don’t have it and you use Ubuntu linux, it is installed by:</p>
 </div>
 </section>
 </section>
-<section id="lapacke">
-<span id="install-lapacke"></span><h3>LAPACKE<a class="headerlink" href="#lapacke" title="Link to this heading">#</a></h3>
+<section id="lapacke-deprecated-legacy-c-extension-backend-only">
+<span id="install-lapacke"></span><h3>LAPACKE (deprecated, legacy C-extension backend only)<a class="headerlink" href="#lapacke-deprecated-legacy-c-extension-backend-only" title="Link to this heading">#</a></h3>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version v4: </span>The LAPACKE-linked C build is only useful when running with the legacy
+C-extension backend (<code class="docutils literal notranslate"><span class="pre">--legacy-backend</span></code> / <code class="docutils literal notranslate"><span class="pre">lang=&quot;C&quot;</span></code>). The default Rust
+backend uses scipy/numpy for diagonalization and does not call into
+LAPACKE. The LAPACKE-specific <code class="docutils literal notranslate"><span class="pre">--pinv-solver=1</span></code> and <code class="docutils literal notranslate"><span class="pre">--pinv-solver=2</span></code>
+solvers are also deprecated; the default <code class="docutils literal notranslate"><span class="pre">--pinv-solver=4</span></code>
+(<code class="docutils literal notranslate"><span class="pre">scipy.linalg.lapack.dsyev</span></code>) works with both backends.</p>
+</div>
 <p>LAPACK library is used in a few parts of the code to diagonalize matrices.
 LAPACK<em>E</em> is the C-wrapper of LAPACK and LAPACK relies on BLAS. Both
 single-thread or multithread BLAS can be used in phono3py. In the following,
@@ -492,7 +502,8 @@ compilation setting. However, it is also possible to compile Phono3py with
 LAPACKE support. When compiled this way, the diagonalization of the dynamical
 matrix is handled by LAPACK routines within the C code of Phono3py.
 Additionally, LAPACK is used for the diagonalization of the collision matrix
-in the direct solution.</p>
+in the direct solution. The LAPACKE-using code paths are only reachable via
+the legacy C-extension backend (<code class="docutils literal notranslate"><span class="pre">--legacy-backend</span></code> / <code class="docutils literal notranslate"><span class="pre">lang=&quot;C&quot;</span></code>).</p>
 <p>To compile phono3py with linking LAPACKE in C, use the following command:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">BUILD_WITHOUT_LAPACKE</span><span class="o">=</span><span class="n">OFF</span> <span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span> <span class="o">-</span><span class="n">vvv</span>
 </pre></div>
@@ -578,7 +589,7 @@ multithreadings are unnecessary to be deactivated. -->
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Rust backend (experimental)</p>
+        <p class="prev-next-title">Rust backend</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -611,7 +622,7 @@ multithreadings are unnecessary to be deactivated. -->
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gcc-on-ubuntu">GCC on Ubuntu</a></li>
 </ul>
 </li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lapacke">LAPACKE</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lapacke-deprecated-legacy-c-extension-backend-only">LAPACKE (deprecated, legacy C-extension backend only)</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#building-with-linking-lapacke">Building with linking LAPACKE</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-provided-by-conda">OpenBLAS provided by conda</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas">Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)</a></li>

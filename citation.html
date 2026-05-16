@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>How to cite phono3py &#8212; Phono3py v.3.31.1</title>
+    <title>How to cite phono3py &#8212; Phono3py v.4.0.0</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=a8a178d9"></script>
+    <script src="_static/documentation_options.js?v=a1c85040"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -50,7 +50,7 @@
     <link rel="prev" title="Grids in reciprocal space" href="grid.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="3.31" />
+  <meta name="docsearch:version" content="4.0" />
   </head>
   
   
@@ -125,7 +125,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.31.1</p>
+    <p class="title logo__title">Phono3py v.4.0.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -139,7 +139,7 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rust-backend.html">Rust backend (experimental)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rust-backend.html">Rust backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -160,11 +160,13 @@
 <li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Force constants calculation with cutoff pair-distance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="phono3py-api.html">Phono3py API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="phono3py-load.html">phono3py-load command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py.html">phono3py command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-init.html">phono3py-init command</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">Using phono3py hdf5 files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="grid.html">Grids in reciprocal space</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">How to cite phono3py</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration-v4.html">Migrating from phono3py v3 to v4</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
 </ul>
 
@@ -313,7 +315,7 @@
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#citation-of-phono3py">Citation of phono3py</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#citation-of-direct-solution-of-lbte-lbte">Citation of direct solution of LBTE (<code class="docutils literal notranslate"><span class="pre">--lbte</span></code>)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#citation-of-solution-of-the-wigner-transport-equation-wigner">Citation of solution of the Wigner transport equation (<code class="docutils literal notranslate"><span class="pre">--wigner</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#citation-of-solution-of-the-wigner-transport-equation">Citation of solution of the Wigner transport equation</a></li>
 </ul>
             </nav>
         </div>
@@ -394,8 +396,8 @@ Laurent Chaput, Phys. Rev. Lett., <strong>110</strong>, 265506 (2013)</p>
 </li>
 </ul>
 </section>
-<section id="citation-of-solution-of-the-wigner-transport-equation-wigner">
-<h2>Citation of solution of the Wigner transport equation (<code class="docutils literal notranslate"><span class="pre">--wigner</span></code>)<a class="headerlink" href="#citation-of-solution-of-the-wigner-transport-equation-wigner" title="Link to this heading">#</a></h2>
+<section id="citation-of-solution-of-the-wigner-transport-equation">
+<span id="wigner-citation"></span><h2>Citation of solution of the Wigner transport equation<a class="headerlink" href="#citation-of-solution-of-the-wigner-transport-equation" title="Link to this heading">#</a></h2>
 <p>If you have used the solution of the Wigner transport equation in phono3py, please cite the
 following articles:</p>
 <ul id="citation-unified-theory">
@@ -488,7 +490,7 @@ Michele Simoncelli, Nicola Marzari, and Francesco Mauri, Physical Review X <stro
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#citation-of-phono3py">Citation of phono3py</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#citation-of-direct-solution-of-lbte-lbte">Citation of direct solution of LBTE (<code class="docutils literal notranslate"><span class="pre">--lbte</span></code>)</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#citation-of-solution-of-the-wigner-transport-equation-wigner">Citation of solution of the Wigner transport equation (<code class="docutils literal notranslate"><span class="pre">--wigner</span></code>)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#citation-of-solution-of-the-wigner-transport-equation">Citation of solution of the Wigner transport equation</a></li>
 </ul>
   </nav></div>
 

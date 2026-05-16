@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>phono3py-load command &#8212; Phono3py v.3.31.1</title>
+    <title>phono3py command &#8212; Phono3py v.4.0.0</title>
   
   
   
@@ -39,18 +39,18 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=a8a178d9"></script>
+    <script src="_static/documentation_options.js?v=a1c85040"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'phono3py-load';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'phono3py';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Using phono3py hdf5 files" href="hdf5_howto.html" />
+    <link rel="next" title="phono3py-init command" href="phono3py-init.html" />
     <link rel="prev" title="Phono3py API" href="phono3py-api.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="3.31" />
+  <meta name="docsearch:version" content="4.0" />
   </head>
   
   
@@ -125,7 +125,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.31.1</p>
+    <p class="title logo__title">Phono3py v.4.0.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -139,7 +139,7 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rust-backend.html">Rust backend (experimental)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rust-backend.html">Rust backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -160,11 +160,13 @@
 <li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Force constants calculation with cutoff pair-distance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="phono3py-api.html">Phono3py API</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">phono3py-load command</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">phono3py command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-init.html">phono3py-init command</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">Using phono3py hdf5 files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="grid.html">Grids in reciprocal space</a></li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration-v4.html">Migrating from phono3py v3 to v4</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
 </ul>
 
@@ -225,7 +227,7 @@
       
       
       
-      <li><a href="_sources/phono3py-load.md" target="_blank"
+      <li><a href="_sources/phono3py.md" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Download source file"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -288,7 +290,9 @@
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <i class="fa-solid fa-magnifying-glass fa-lg"></i>
 </button>
-
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
 </div></div>
       
     </div>
@@ -299,11 +303,21 @@
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>phono3py-load command</h1>
+    <h1>phono3py command</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
             
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#behaviour">Behaviour</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#relation-to-phono3py-load">Relation to <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code></a></li>
+</ul>
+            </nav>
         </div>
     </div>
 </div>
@@ -313,49 +327,64 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="phono3py-load-command">
-<span id="id1"></span><h1>phono3py-load command<a class="headerlink" href="#phono3py-load-command" title="Link to this heading">#</a></h1>
-<p>After phono3py v2.3.2, <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code> command is installed. This behaves
-similarly to <code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code> (<a class="reference internal" href="phono3py-api.html#api-phono3py-load"><span class="std std-ref">phono3py.load</span></a>) in the phono3py python
-module. The main aim of introducing this command is to provide uniform usage
-over many different force calculators. Once <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> is created, the
-following operations will be the same using this command.</p>
-<p>This is used almost in the same way as <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command, e.g., but there are
-some differences. The following default behaviors are different from that of
-those of <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command:</p>
-<ol class="arabic">
-<li><p><code class="docutils literal notranslate"><span class="pre">phono3py_xxx.yaml</span></code> type file is always necessary in either of two ways:</p>
-<ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">phono3py_xxx.yaml</span></code> type file is given as the first argument of the
-command, e.g.,</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>phono3py_xxx.yaml<span class="w"> </span>--br<span class="w"> </span>--ts<span class="w"> </span><span class="m">300</span><span class="w"> </span>--mesh<span class="w"> </span><span class="m">50</span>
+  <section class="tex2jax_ignore mathjax_ignore" id="phono3py-command">
+<span id="id1"></span><h1>phono3py command<a class="headerlink" href="#phono3py-command" title="Link to this heading">#</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command runs the phonon and thermal-conductivity calculation
+step of the workflow.  It reads a <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code>-like file, constructs the
+phonon and ph-ph interaction, and computes the requested property
+(thermal conductivity, imaginary self energy, joint DOS, …).</p>
+<p>To prepare displacements and to collect calculator results into
+<code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> / <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> / <code class="docutils literal notranslate"><span class="pre">FORCE_SETS</span></code> files use
+<a class="reference internal" href="phono3py-init.html#phono3py-init-command"><span class="std std-ref">phono3py-init command</span></a>.</p>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading">#</a></h2>
+<p>In the NaCl example for the VASP calculator,</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>-d<span class="w"> </span>--dim<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>--dim-fc2<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell
+%<span class="w"> </span>phono3py-init<span class="w"> </span>--cf3<span class="w"> </span>disp-<span class="o">{</span><span class="m">00001</span>..00146<span class="o">}</span>/vasprun.xml
+%<span class="w"> </span>phono3py-init<span class="w"> </span>--cf2<span class="w"> </span>disp_fc2-<span class="o">{</span><span class="m">00001</span>..00002<span class="o">}</span>/vasprun.xml
 </pre></div>
 </div>
-</li>
-<li><p>With first argument unspecified, <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> or <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code>
-file is read if it is found in the current directory. If both found,
-<code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> is read. For example, having <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code>
-under the current directory,</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--br<span class="w"> </span>--ts<span class="w"> </span><span class="m">300</span><span class="w"> </span>--mesh<span class="w"> </span><span class="m">50</span>
+<p>After this, run the thermal-conductivity calculation as the post-process:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--br<span class="w"> </span>--ts<span class="w"> </span><span class="m">300</span><span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span>
 </pre></div>
 </div>
-</li>
-</ul>
-</li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-c</span></code> option (read crystal structure) does not exist.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-d</span></code> option (create displacements) does not exist. Please use <code class="docutils literal notranslate"><span class="pre">phono3py</span></code>
-command.</p></li>
-<li><p>Phono3py configuration file can be read through <code class="docutils literal notranslate"><span class="pre">--config</span></code> option. See
-<a class="reference internal" href="command-options.html#use-config-with-option"><span class="std std-ref">Use of configuration file</span></a>.</p></li>
-<li><p>If parameters for non-analytical term correction (NAC) are found, NAC is
-automatically enabled. This can be disabled by <code class="docutils literal notranslate"><span class="pre">--nonac</span></code> option.</p></li>
-<li><p>When force constants are calculated from displacements and forces dataset,
-force constants are automatically symmetrized. To disable this, <code class="docutils literal notranslate"><span class="pre">--no-sym-fc</span></code>
-option can be used.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">-o</span></code> option works differently from <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command. This option requires
-one argument of string. The string is used as the output yaml filename that
-replaces the default output yaml filename of <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code>.</p></li>
+<p><code class="docutils literal notranslate"><span class="pre">phono3py</span></code> reads <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> (or <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code>) automatically when
+the file is present in the current directory.  It can also be given as the
+first argument; the file can be compressed (<code class="docutils literal notranslate"><span class="pre">xz</span></code>, <code class="docutils literal notranslate"><span class="pre">lzma</span></code>, <code class="docutils literal notranslate"><span class="pre">gz</span></code>, <code class="docutils literal notranslate"><span class="pre">bz2</span></code>).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>phono3py_params.yaml.xz<span class="w"> </span>--br<span class="w"> </span>--ts<span class="w"> </span><span class="m">300</span><span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span>
+</pre></div>
+</div>
+</section>
+<section id="behaviour">
+<span id="phono3py-command-behaviour"></span><h2>Behaviour<a class="headerlink" href="#behaviour" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">phono3py_xxx.yaml</span></code>-like file is always required, provided in either of two
+ways:</p>
+<ol class="arabic simple">
+<li><p>as the first argument of the command, or</p></li>
+<li><p>found in the current directory as <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> or
+<code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> (<code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> takes precedence).</p></li>
 </ol>
+</li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">-c</span></code> option (read crystal structure separately) does not exist — the
+crystal structure is read from the yaml file.</p></li>
+<li><p>A phono3py configuration file (<a class="reference internal" href="command-options.html#use-config-with-option"><span class="std std-ref">Use of configuration file</span></a>) can be read
+through <code class="docutils literal notranslate"><span class="pre">--config</span></code> option.</p></li>
+<li><p>If parameters for non-analytical term correction (NAC) are found, NAC is
+automatically enabled.  Use <code class="docutils literal notranslate"><span class="pre">--nonac</span></code> to disable.</p></li>
+<li><p>When force constants are calculated from displacements and forces dataset,
+force constants are automatically symmetrized.  Use <code class="docutils literal notranslate"><span class="pre">--no-sym-fc</span></code> to opt
+out.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-o</span></code> takes one argument: the output yaml filename that replaces the
+default <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code>.</p></li>
+</ul>
+</section>
+<section id="relation-to-phono3py-load">
+<h2>Relation to <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code><a class="headerlink" href="#relation-to-phono3py-load" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code> is the historical name of this command and is kept as a
+deprecated alias.  It emits a warning and otherwise behaves identically to
+<code class="docutils literal notranslate"><span class="pre">phono3py</span></code>.  Use <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> in new scripts.</p>
+</section>
 </section>
 
 
@@ -379,11 +408,11 @@ replaces the default output yaml filename of <code class="docutils literal notra
       </div>
     </a>
     <a class="right-next"
-       href="hdf5_howto.html"
+       href="phono3py-init.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Using phono3py hdf5 files</p>
+        <p class="prev-next-title">phono3py-init command</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -393,6 +422,25 @@ replaces the default output yaml filename of <code class="docutils literal notra
             </div>
             
             
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#behaviour">Behaviour</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#relation-to-phono3py-load">Relation to <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code></a></li>
+</ul>
+  </nav></div>
+
+</div></div>
               
             
           </div>

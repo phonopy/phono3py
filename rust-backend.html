@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Rust backend (experimental) &#8212; Phono3py v.3.31.1</title>
+    <title>Rust backend &#8212; Phono3py v.4.0.0</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=a8a178d9"></script>
+    <script src="_static/documentation_options.js?v=a1c85040"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -50,7 +50,7 @@
     <link rel="prev" title="Installation" href="install.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="3.31" />
+  <meta name="docsearch:version" content="4.0" />
   </head>
   
   
@@ -125,7 +125,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.31.1</p>
+    <p class="title logo__title">Phono3py v.4.0.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -139,7 +139,7 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Rust backend (experimental)</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Rust backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -160,11 +160,13 @@
 <li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Force constants calculation with cutoff pair-distance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="phono3py-api.html">Phono3py API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="phono3py-load.html">phono3py-load command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py.html">phono3py command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-init.html">phono3py-init command</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">Using phono3py hdf5 files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="grid.html">Grids in reciprocal space</a></li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration-v4.html">Migrating from phono3py v3 to v4</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
 </ul>
 
@@ -301,7 +303,7 @@
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Rust backend (experimental)</h1>
+    <h1>Rust backend</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -312,8 +314,7 @@
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#requirements">Requirements</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-and-install">Build and install</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#building-phonors-from-source-optional">Building <code class="docutils literal notranslate"><span class="pre">phonors</span></code> from source (optional)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optional-native-cpu-tuning">Optional: native CPU tuning</a></li>
 </ul>
 </li>
@@ -325,6 +326,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#batched-grid-point-path-opt-in">Batched grid-point path (opt-in)</a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#building-phono3py-without-the-c-extension">Building phono3py without the C extension</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scope">Scope</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#known-limitations">Known limitations</a></li>
 </ul>
@@ -340,22 +342,20 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section class="tex2jax_ignore mathjax_ignore" id="rust-backend-experimental">
-<span id="rust-backend"></span><h1>Rust backend (experimental)<a class="headerlink" href="#rust-backend-experimental" title="Link to this heading">#</a></h1>
-<p>The computationally heavy parts of phono3py have been implemented as C extension
-modules called from Python through the Python/C API. An alternative Rust
-implementation is now available experimentally. The Rust path is distributed as
-a separate Python extension module, <code class="docutils literal notranslate"><span class="pre">phono3py_rs</span></code>, built with
-<a class="reference external" href="https://www.maturin.rs/">maturin</a> and <a class="reference external" href="https://pyo3.rs/">PyO3</a>. It is
-experimental: behaviour is validated against the C path by the regression tests
-under <code class="docutils literal notranslate"><span class="pre">test/</span></code>, but the C extension remains the default and both paths are kept
-in the source tree for cross-checking.</p>
+  <section class="tex2jax_ignore mathjax_ignore" id="rust-backend">
+<span id="id1"></span><h1>Rust backend<a class="headerlink" href="#rust-backend" title="Link to this heading">#</a></h1>
+<p>The computationally heavy parts of phono3py are implemented twice: as a
+C extension module and as a Rust extension module. The Rust path lives in
+the separate <a class="reference external" href="https://github.com/phonopy/phonors">phonors</a> package
+(built with <a class="reference external" href="https://www.maturin.rs/">maturin</a> and
+<a class="reference external" href="https://pyo3.rs/">PyO3</a>) and is the <strong>default backend</strong> in phono3py v4.
+The C extension is still built and kept as a legacy backend that users
+can opt back into per call.</p>
 <nav class="contents local" id="contents">
 <ul class="simple">
-<li><p><a class="reference internal" href="#installation" id="id1">Installation</a></p>
+<li><p><a class="reference internal" href="#installation" id="id2">Installation</a></p>
 <ul>
-<li><p><a class="reference internal" href="#requirements" id="id2">Requirements</a></p></li>
-<li><p><a class="reference internal" href="#build-and-install" id="id3">Build and install</a></p></li>
+<li><p><a class="reference internal" href="#building-phonors-from-source-optional" id="id3">Building <code class="docutils literal notranslate"><span class="pre">phonors</span></code> from source (optional)</a></p></li>
 <li><p><a class="reference internal" href="#optional-native-cpu-tuning" id="id4">Optional: native CPU tuning</a></p></li>
 </ul>
 </li>
@@ -368,19 +368,33 @@ in the source tree for cross-checking.</p>
 <li><p><a class="reference internal" href="#batched-grid-point-path-opt-in" id="id10">Batched grid-point path (opt-in)</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#scope" id="id11">Scope</a></p>
+<li><p><a class="reference internal" href="#building-phono3py-without-the-c-extension" id="id11">Building phono3py without the C extension</a></p></li>
+<li><p><a class="reference internal" href="#scope" id="id12">Scope</a></p>
 <ul>
-<li><p><a class="reference internal" href="#known-limitations" id="id12">Known limitations</a></p></li>
+<li><p><a class="reference internal" href="#known-limitations" id="id13">Known limitations</a></p></li>
 </ul>
 </li>
 </ul>
 </nav>
 <section id="installation">
-<h2><a class="toc-backref" href="#id1" role="doc-backlink">Installation</a><a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
-<p>The Rust backend is not bundled with the standard phono3py wheel and conda
-package. It has to be built from the source tree under <code class="docutils literal notranslate"><span class="pre">rust/</span></code>.</p>
-<section id="requirements">
-<h3><a class="toc-backref" href="#id2" role="doc-backlink">Requirements</a><a class="headerlink" href="#requirements" title="Link to this heading">#</a></h3>
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Installation</a><a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">phonors</span></code> is a required runtime dependency of phono3py and is installed
+automatically by <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">phono3py</span></code> and by the
+<a class="reference external" href="https://anaconda.org/conda-forge/phono3py">conda-forge phono3py package</a>.
+Pre-built wheels and conda packages are published for Linux, macOS, and
+Windows on the supported Python versions, so no Rust toolchain is needed
+for typical installations.</p>
+<section id="building-phonors-from-source-optional">
+<h3><a class="toc-backref" href="#id3" role="doc-backlink">Building <code class="docutils literal notranslate"><span class="pre">phonors</span></code> from source (optional)</a><a class="headerlink" href="#building-phonors-from-source-optional" title="Link to this heading">#</a></h3>
+<p>To work against an unreleased <code class="docutils literal notranslate"><span class="pre">phonors</span></code> revision, clone the repository
+alongside phono3py and build the extension in editable mode with
+<code class="docutils literal notranslate"><span class="pre">maturin</span> <span class="pre">develop</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/phonopy/phonors.git
+%<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>phonors
+%<span class="w"> </span>maturin<span class="w"> </span>develop<span class="w"> </span>--release
+</pre></div>
+</div>
+<p>Requirements for a source build:</p>
 <ul class="simple">
 <li><p>A Rust toolchain (stable, edition 2021, <code class="docutils literal notranslate"><span class="pre">rustc</span> <span class="pre">&gt;=</span> <span class="pre">1.75</span></code>). The
 easiest way to install it is via <a class="reference external" href="https://rustup.rs/">rustup</a>.</p></li>
@@ -388,24 +402,7 @@ easiest way to install it is via <a class="reference external" href="https://rus
 and conda-forge).</p></li>
 <li><p>Python 3.10 or newer. The extension is built against the stable ABI
 (<code class="docutils literal notranslate"><span class="pre">abi3-py310</span></code>), so one build works for all Python 3.10+ interpreters.</p></li>
-<li><p>A working phono3py source checkout and its usual build/runtime
-dependencies (see <a class="reference internal" href="install.html#install-from-source-code"><span class="std std-ref">Installation from source code</span></a>).</p></li>
 </ul>
-</section>
-<section id="build-and-install">
-<h3><a class="toc-backref" href="#id3" role="doc-backlink">Build and install</a><a class="headerlink" href="#build-and-install" title="Link to this heading">#</a></h3>
-<p>Build the <code class="docutils literal notranslate"><span class="pre">phono3py_rs</span></code> extension in editable mode with <code class="docutils literal notranslate"><span class="pre">maturin</span> <span class="pre">develop</span></code>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>rust
-%<span class="w"> </span>maturin<span class="w"> </span>develop<span class="w"> </span>--release
-</pre></div>
-</div>
-<p>After a successful build, the module should import from any Python process</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">phono3py_rs</span>
-</pre></div>
-</div>
-<p>The phono3py Python layer imports <code class="docutils literal notranslate"><span class="pre">phono3py_rs</span></code> lazily and only when
-the Rust backend is selected, so installations without the extension
-continue to work on the C path.</p>
 </section>
 <section id="optional-native-cpu-tuning">
 <h3><a class="toc-backref" href="#id4" role="doc-backlink">Optional: native CPU tuning</a><a class="headerlink" href="#optional-native-cpu-tuning" title="Link to this heading">#</a></h3>
@@ -421,21 +418,21 @@ instruction set can recover a few percent of wall-clock:</p>
 </section>
 <section id="usage">
 <h2><a class="toc-backref" href="#id5" role="doc-backlink">Usage</a><a class="headerlink" href="#usage" title="Link to this heading">#</a></h2>
-<p>Once <code class="docutils literal notranslate"><span class="pre">phono3py_rs</span></code> is installed, the Rust backend is selected through
-the <code class="docutils literal notranslate"><span class="pre">--rust</span></code> flag on the command line or the <code class="docutils literal notranslate"><span class="pre">lang</span></code> keyword on the
-Python API. The C backend remains the default.</p>
+<p>The Rust backend is the default; no flag or keyword is required. To
+opt back into the legacy C extension, pass <code class="docutils literal notranslate"><span class="pre">--legacy-backend</span></code> on the
+command line or <code class="docutils literal notranslate"><span class="pre">lang=&quot;C&quot;</span></code> on the Python API. See
+<a class="reference internal" href="migration-v4.html#migration-v4"><span class="std std-ref">Migrating from phono3py v3 to v4</span></a> for the full v3 -&gt; v4 migration notes.</p>
 <section id="command-line">
 <h3><a class="toc-backref" href="#id6" role="doc-backlink">Command line</a><a class="headerlink" href="#command-line" title="Link to this heading">#</a></h3>
-<p>Pass <code class="docutils literal notranslate"><span class="pre">--rust</span></code> to the <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--rust<span class="w"> </span>...
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--br<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w">                  </span><span class="c1"># default: Rust</span>
+%<span class="w"> </span>phono3py<span class="w"> </span>--legacy-backend<span class="w"> </span>--br<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="c1"># opt back into C</span>
 </pre></div>
 </div>
-<p>When the flag is set, the <em>General settings</em> block of the run log
-prints</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Experimental</span> <span class="n">Rust</span> <span class="n">backend</span> <span class="n">enabled</span> <span class="p">(</span><span class="n">lang</span><span class="o">=</span><span class="n">Rust</span><span class="p">)</span>
+<p>When the Rust backend is active, the run header prints</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Rust</span> <span class="n">backend</span> <span class="p">(</span><span class="n">phonors</span><span class="p">)</span> <span class="n">using</span> <span class="n">rayon</span> <span class="p">(</span><span class="n">N</span> <span class="n">threads</span><span class="p">)</span><span class="o">.</span>
 </pre></div>
 </div>
-<p>as a reminder.</p>
+<p>where <code class="docutils literal notranslate"><span class="pre">N</span></code> follows rayon’s defaults.</p>
 </section>
 <section id="python-api">
 <h3><a class="toc-backref" href="#id7" role="doc-backlink">Python API</a><a class="headerlink" href="#python-api" title="Link to this heading">#</a></h3>
@@ -443,11 +440,12 @@ prints</p>
 a <code class="docutils literal notranslate"><span class="pre">lang</span></code> keyword:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">phono3py</span>
 
-<span class="n">ph3</span> <span class="o">=</span> <span class="n">phono3py</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;phono3py.yaml&quot;</span><span class="p">,</span> <span class="n">lang</span><span class="o">=</span><span class="s2">&quot;Rust&quot;</span><span class="p">)</span>
+<span class="n">ph3</span> <span class="o">=</span> <span class="n">phono3py</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;phono3py.yaml&quot;</span><span class="p">)</span>             <span class="c1"># default: Rust</span>
+<span class="n">ph3</span> <span class="o">=</span> <span class="n">phono3py</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;phono3py.yaml&quot;</span><span class="p">,</span> <span class="n">lang</span><span class="o">=</span><span class="s2">&quot;C&quot;</span><span class="p">)</span>   <span class="c1"># opt back into C</span>
 </pre></div>
 </div>
 <p>The current value is exposed as the read-only <code class="docutils literal notranslate"><span class="pre">Phono3py.lang</span></code>
-property. Valid values are <code class="docutils literal notranslate"><span class="pre">&quot;C&quot;</span></code> (default) and <code class="docutils literal notranslate"><span class="pre">&quot;Rust&quot;</span></code>.</p>
+property. Valid values are <code class="docutils literal notranslate"><span class="pre">&quot;C&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;Rust&quot;</span></code> (default <code class="docutils literal notranslate"><span class="pre">&quot;Rust&quot;</span></code>).</p>
 <p><code class="docutils literal notranslate"><span class="pre">lang</span></code> is threaded internally to every lang-aware consumer, including
 <code class="docutils literal notranslate"><span class="pre">BZGrid</span></code> / <code class="docutils literal notranslate"><span class="pre">GridMatrix</span></code>, <code class="docutils literal notranslate"><span class="pre">Interaction</span></code>, the phonon solver
 (dynamical-matrix construction; the <code class="docutils literal notranslate"><span class="pre">eigh</span></code> diagonalization stays in
@@ -461,7 +459,7 @@ plumbing from the user side is required.</p>
 which uses its own thread pool. The thread count is controlled by
 <code class="docutils literal notranslate"><span class="pre">RAYON_NUM_THREADS</span></code> (not <code class="docutils literal notranslate"><span class="pre">OMP_NUM_THREADS</span></code>, which only affects the C
 path):</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span><span class="nv">RAYON_NUM_THREADS</span><span class="o">=</span><span class="m">8</span><span class="w"> </span>phono3py-load<span class="w"> </span>--rust<span class="w"> </span>...
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span><span class="nv">RAYON_NUM_THREADS</span><span class="o">=</span><span class="m">8</span><span class="w"> </span>phono3py<span class="w"> </span>...
 </pre></div>
 </div>
 <p>NumPy/SciPy BLAS multithreading used by phonon diagonalization is
@@ -470,9 +468,9 @@ independent and is controlled by the BLAS library’s own variables
 </section>
 <section id="dispatch-tracing">
 <h3><a class="toc-backref" href="#id9" role="doc-backlink">Dispatch tracing</a><a class="headerlink" href="#dispatch-tracing" title="Link to this heading">#</a></h3>
-<p>To verify that a given code path is actually running on the Rust
-backend, set <code class="docutils literal notranslate"><span class="pre">PHONO3PY_TRACE_LANG=1</span></code> before launching:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span><span class="nv">PHONO3PY_TRACE_LANG</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>phono3py-load<span class="w"> </span>--rust<span class="w"> </span>...
+<p>To verify which backend a given code path is actually running on, set
+<code class="docutils literal notranslate"><span class="pre">PHONO3PY_TRACE_LANG=1</span></code> before launching:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span><span class="nv">PHONO3PY_TRACE_LANG</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>phono3py<span class="w"> </span>...
 </pre></div>
 </div>
 <p>Each lang-aware call site emits one line to stderr, for example:</p>
@@ -509,17 +507,42 @@ order:</p>
 <li><p>A value <code class="docutils literal notranslate"><span class="pre">&lt;=</span> <span class="pre">0</span></code> falls back to the per-grid-point loop.</p></li>
 </ol>
 <p>Example:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span><span class="nv">PHONO3PY_RUST_GP_BATCH_SIZE</span><span class="o">=</span><span class="m">8</span><span class="w"> </span>phono3py-load<span class="w"> </span>--rust<span class="w"> </span>...
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span><span class="nv">PHONO3PY_RUST_GP_BATCH_SIZE</span><span class="o">=</span><span class="m">8</span><span class="w"> </span>phono3py<span class="w"> </span>...
 </pre></div>
 </div>
 <p>The batched path applies only to the low-memory RTA solver and is
 skipped automatically when <code class="docutils literal notranslate"><span class="pre">read_gamma</span></code> is set.</p>
 </section>
 </section>
+<section id="building-phono3py-without-the-c-extension">
+<span id="rust-backend-no-c-ext"></span><h2><a class="toc-backref" href="#id11" role="doc-backlink">Building phono3py without the C extension</a><a class="headerlink" href="#building-phono3py-without-the-c-extension" title="Link to this heading">#</a></h2>
+<p>For Rust-only deployments (or to validate that every dispatch site has
+a Rust path), phono3py can be installed with the C extension skipped:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span><span class="nv">PHONO3PY_NO_C_EXT</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="w"> </span>-vvv
+</pre></div>
+</div>
+<p>When the env var is set, <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code> returns early and
+<code class="docutils literal notranslate"><span class="pre">phono3py._phono3py</span></code> / <code class="docutils literal notranslate"><span class="pre">phono3py._phononcalc</span></code> are not built. At runtime,
+<code class="docutils literal notranslate"><span class="pre">Phono3py()</span></code> and <code class="docutils literal notranslate"><span class="pre">phono3py.load()</span></code> detect the missing C extension, emit
+a one-time <code class="docutils literal notranslate"><span class="pre">[phono3py]</span> <span class="pre">C</span> <span class="pre">extension</span> <span class="pre">...</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">available;</span> <span class="pre">falling</span> <span class="pre">back</span> <span class="pre">to</span> <span class="pre">lang='Rust'</span> <span class="pre">...</span></code> message, and silently flip <code class="docutils literal notranslate"><span class="pre">lang=&quot;C&quot;</span></code> requests to
+<code class="docutils literal notranslate"><span class="pre">lang=&quot;Rust&quot;</span></code>. Since <code class="docutils literal notranslate"><span class="pre">phonors</span></code> is a required dependency, it is always
+present; an informative <code class="docutils literal notranslate"><span class="pre">ImportError</span></code> is raised only if it has been
+manually uninstalled.</p>
+<p>To restore the C extension, simply rebuild without the env var:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="w"> </span>-vvv
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This option is intended for testing the Rust path and for packagers
+who want a Rust-only wheel. For day-to-day use the regular install
+(with the C extension) remains the recommended path.</p>
+</div>
+</section>
 <section id="scope">
-<h2><a class="toc-backref" href="#id11" role="doc-backlink">Scope</a><a class="headerlink" href="#scope" title="Link to this heading">#</a></h2>
-<p>Most of the 3-phonon scattering runtime is available on the Rust
-backend:</p>
+<h2><a class="toc-backref" href="#id12" role="doc-backlink">Scope</a><a class="headerlink" href="#scope" title="Link to this heading">#</a></h2>
+<p>Rust kernels are wired through the lang dispatch for the following
+groups:</p>
 <ul class="simple">
 <li><p>Grid construction (<code class="docutils literal notranslate"><span class="pre">BZGrid</span></code>, <code class="docutils literal notranslate"><span class="pre">GridMatrix</span></code>: SNF, grid addresses and
 maps, reciprocal / transform rotations).</p></li>
@@ -532,10 +555,10 @@ LBTE (both irreducible and reducible) run end-to-end on Rust.</p></li>
 <li><p>Isotope scattering and joint DOS.</p></li>
 </ul>
 <section id="known-limitations">
-<h3><a class="toc-backref" href="#id12" role="doc-backlink">Known limitations</a><a class="headerlink" href="#known-limitations" title="Link to this heading">#</a></h3>
+<h3><a class="toc-backref" href="#id13" role="doc-backlink">Known limitations</a><a class="headerlink" href="#known-limitations" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>Force constants.</strong> A Rust implementation of the fc3 kernel exists
-in <code class="docutils literal notranslate"><span class="pre">phono3py_rs</span></code>, but <code class="docutils literal notranslate"><span class="pre">Phono3py.produce_fc3</span></code> still runs on the C /
+in <code class="docutils literal notranslate"><span class="pre">phonors</span></code>, but <code class="docutils literal notranslate"><span class="pre">Phono3py.produce_fc3</span></code> still runs on the C /
 Python path because it goes through phonopy’s <code class="docutils literal notranslate"><span class="pre">FCSolver</span></code>, whose
 signature does not yet accept a <code class="docutils literal notranslate"><span class="pre">lang</span></code> hint. The <code class="docutils literal notranslate"><span class="pre">lang</span></code> parameter
 therefore does not yet reach this step.</p></li>
@@ -546,9 +569,8 @@ part of the Rust port.</p></li>
 </ul>
 <p>If any of these code paths is reached with <code class="docutils literal notranslate"><span class="pre">lang=&quot;Rust&quot;</span></code>, phono3py
 transparently uses the C (or Python) implementation for that step.</p>
-<p>The Rust backend is exercised by dedicated pull-request CI on Linux,
-macOS, and Windows (see
-<code class="docutils literal notranslate"><span class="pre">.github/workflows/phono3py-pytest-conda-rust*.yml</span></code>).</p>
+<p>The Rust backend is exercised by the regular phono3py CI matrix on
+Linux, macOS, and Windows.</p>
 </section>
 </section>
 </section>
@@ -601,8 +623,7 @@ macOS, and Windows (see
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#requirements">Requirements</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-and-install">Build and install</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#building-phonors-from-source-optional">Building <code class="docutils literal notranslate"><span class="pre">phonors</span></code> from source (optional)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#optional-native-cpu-tuning">Optional: native CPU tuning</a></li>
 </ul>
 </li>
@@ -614,6 +635,7 @@ macOS, and Windows (see
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#batched-grid-point-path-opt-in">Batched grid-point path (opt-in)</a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#building-phono3py-without-the-c-extension">Building phono3py without the C extension</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scope">Scope</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#known-limitations">Known limitations</a></li>
 </ul>

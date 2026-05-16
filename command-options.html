@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Command options / Setting tags &#8212; Phono3py v.3.31.1</title>
+    <title>Command options / Setting tags &#8212; Phono3py v.4.0.0</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=a8a178d9"></script>
+    <script src="_static/documentation_options.js?v=a1c85040"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -52,7 +52,7 @@
     <link rel="prev" title="TURBOMOLE &amp; phono3py calculation" href="turbomole.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="3.31" />
+  <meta name="docsearch:version" content="4.0" />
   </head>
   
   
@@ -127,7 +127,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.31.1</p>
+    <p class="title logo__title">Phono3py v.4.0.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -141,7 +141,7 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rust-backend.html">Rust backend (experimental)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rust-backend.html">Rust backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -162,11 +162,13 @@
 <li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Force constants calculation with cutoff pair-distance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="phono3py-api.html">Phono3py API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="phono3py-load.html">phono3py-load command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py.html">phono3py command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-init.html">phono3py-init command</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">Using phono3py hdf5 files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="grid.html">Grids in reciprocal space</a></li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration-v4.html">Migrating from phono3py v3 to v4</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
 </ul>
 
@@ -356,7 +358,8 @@
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#force-constants">Force constants</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cfc-or-compact-fc-compact-fc-true"><code class="docutils literal notranslate"><span class="pre">--cfc</span></code> or <code class="docutils literal notranslate"><span class="pre">--compact-fc</span></code> (<code class="docutils literal notranslate"><span class="pre">COMPACT_FC</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#full-fc-compact-fc-false"><code class="docutils literal notranslate"><span class="pre">--full-fc</span></code> (<code class="docutils literal notranslate"><span class="pre">COMPACT_FC</span> <span class="pre">=</span> <span class="pre">.FALSE.</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cfc-or-compact-fc-compact-fc-true-deprecated"><code class="docutils literal notranslate"><span class="pre">--cfc</span></code> or <code class="docutils literal notranslate"><span class="pre">--compact-fc</span></code> (<code class="docutils literal notranslate"><span class="pre">COMPACT_FC</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>) (deprecated)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fc-symmetry-fc-symmetry-true"><code class="docutils literal notranslate"><span class="pre">--fc-symmetry</span></code> (<code class="docutils literal notranslate"><span class="pre">FC_SYMMETRY</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cutoff-fc3-or-cutoff-fc3-distance-cutoff-fc3-distance"><code class="docutils literal notranslate"><span class="pre">--cutoff-fc3</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-fc3-distance</span></code> (<code class="docutils literal notranslate"><span class="pre">CUTOFF_FC3_DISTANCE</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cutoff-pair-or-cutoff-pair-distance-cutoff-pair-distance"><code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-pair-distance</span></code> (<code class="docutils literal notranslate"><span class="pre">CUTOFF_PAIR_DISTANCE</span></code>)</a></li>
@@ -382,7 +385,6 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#methods-to-solve-phonon-boltzmann-equation-and-wigner-formulation">Methods to solve phonon Boltzmann equation and Wigner formulation</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#br-bterta-true"><code class="docutils literal notranslate"><span class="pre">--br</span></code> (<code class="docutils literal notranslate"><span class="pre">BTERTA</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lbte-lbte-true"><code class="docutils literal notranslate"><span class="pre">--lbte</span></code> (<code class="docutils literal notranslate"><span class="pre">LBTE</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#wigner"><code class="docutils literal notranslate"><span class="pre">--wigner</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scattering">Scattering</a><ul class="nav section-nav flex-column">
@@ -480,8 +482,8 @@ file <code class="docutils literal notranslate"><span class="pre">setting.conf</
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>--<span class="w"> </span>setting.conf
 </pre></div>
 </div>
-<p>When using <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code> (see also <a class="reference internal" href="phono3py-load.html#phono3py-load-command"><span class="std std-ref">phono3py-load command</span></a>)</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--config<span class="w"> </span>setting.conf<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+<p>When using <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> (see also <a class="reference internal" href="phono3py.html#phono3py-command"><span class="std std-ref">phono3py command</span></a>)</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--config<span class="w"> </span>setting.conf<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 </section>
@@ -490,7 +492,7 @@ file <code class="docutils literal notranslate"><span class="pre">setting.conf</
 <section id="c-cell-filename">
 <h3><code class="docutils literal notranslate"><span class="pre">-c</span></code> (<code class="docutils literal notranslate"><span class="pre">CELL_FILENAME</span></code>)<a class="headerlink" href="#c-cell-filename" title="Link to this heading">#</a></h3>
 <p>This specifies input unit cell filename.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </pre></div>
 </div>
 </section>
@@ -519,10 +521,10 @@ file <code class="docutils literal notranslate"><span class="pre">setting.conf</
 <p>This is used to create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> from <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> and force
 calculator outputs containing forces in supercells. <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> has to
 be located at the current directory.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cf3<span class="w"> </span>disp-<span class="o">{</span><span class="m">00001</span>..00755<span class="o">}</span>/vasprun.xml
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>--cf3<span class="w"> </span>disp-<span class="o">{</span><span class="m">00001</span>..00755<span class="o">}</span>/vasprun.xml
 </pre></div>
 </div>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cf3<span class="w"> </span>supercell_out/disp-<span class="o">{</span><span class="m">00001</span>..00111<span class="o">}</span>/Si.out
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>--cf3<span class="w"> </span>supercell_out/disp-<span class="o">{</span><span class="m">00001</span>..00111<span class="o">}</span>/Si.out
 </pre></div>
 </div>
 <div class="admonition note">
@@ -543,7 +545,7 @@ update the <code class="docutils literal notranslate"><span class="pre">phono3py
 calculator output file names. <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> has to be located at the
 current directory. The calculator interface is unnecessary to specify, see the
 note at <a class="reference internal" href="#cf3-option"><span class="std std-ref">–cf3</span></a>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cf3-file<span class="w"> </span>file_list.dat
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>--cf3-file<span class="w"> </span>file_list.dat
 </pre></div>
 </div>
 <p>where <code class="docutils literal notranslate"><span class="pre">file_list.dat</span></code> contains file names that can be recognized from the
@@ -564,7 +566,7 @@ together with <code class="docutils literal notranslate"><span class="pre">--cut
 <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> has to be located at the current directory. This is
 optional. <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> is necessary to run with <code class="docutils literal notranslate"><span class="pre">--dim-fc2</span></code> option. The
 calculator interface is unnecessary to specify, see the note at <a class="reference internal" href="#cf3-option"><span class="std std-ref">–cf3</span></a>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cf2<span class="w"> </span>disp_fc2-<span class="o">{</span><span class="m">00001</span>..00002<span class="o">}</span>/vasprun.xml
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>--cf2<span class="w"> </span>disp_fc2-<span class="o">{</span><span class="m">00001</span>..00002<span class="o">}</span>/vasprun.xml
 </pre></div>
 </div>
 </section>
@@ -577,8 +579,8 @@ unnecessary to specify, see the note at <a class="reference internal" href="#cf3
 <code class="docutils literal notranslate"><span class="pre">disp2-00000/vasprun.xml</span></code> contain the forces of the perfect supercells. In ideal
 case, these forces are zero, but often they are not. Here, this is called
 “residual forces”. Sometimes quality of force constants is improved in this way.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cf3<span class="w"> </span>disp3-<span class="o">{</span><span class="m">00001</span>..01254<span class="o">}</span>/vasprun.xml<span class="w"> </span>--cfz<span class="w"> </span>disp3-00000/vasprun.xml
-%<span class="w"> </span>phono3py<span class="w"> </span>--cf2<span class="w"> </span>disp2-<span class="o">{</span><span class="m">00001</span>..00006<span class="o">}</span>/vasprun.xml<span class="w"> </span>--cfz<span class="w"> </span>disp2-00000/vasprun.xml
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>--cf3<span class="w"> </span>disp3-<span class="o">{</span><span class="m">00001</span>..01254<span class="o">}</span>/vasprun.xml<span class="w"> </span>--cfz<span class="w"> </span>disp3-00000/vasprun.xml
+%<span class="w"> </span>phono3py-init<span class="w"> </span>--cf2<span class="w"> </span>disp2-<span class="o">{</span><span class="m">00001</span>..00006<span class="o">}</span>/vasprun.xml<span class="w"> </span>--cfz<span class="w"> </span>disp2-00000/vasprun.xml
 </pre></div>
 </div>
 </section>
@@ -586,20 +588,20 @@ case, these forces are zero, but often they are not. Here, this is called
 <span id="fs2f2-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--fs2f2</span></code> or <code class="docutils literal notranslate"><span class="pre">--force-sets-to-forces-fc2</span></code> (command option only)<a class="headerlink" href="#fs2f2-or-force-sets-to-forces-fc2-command-option-only" title="Link to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> is created from phonopy’s <code class="docutils literal notranslate"><span class="pre">FORCE_SETS</span></code> file. Necessary yaml lines
 for <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> is displayed as text.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--fs2f2
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>--fs2f2
 </pre></div>
 </div>
 </section>
 <section id="cfs-or-create-force-sets-command-option-only">
 <span id="cfs-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--cfs</span></code> or <code class="docutils literal notranslate"><span class="pre">--create-force-sets</span></code> (command option only)<a class="headerlink" href="#cfs-or-create-force-sets-command-option-only" title="Link to this heading">#</a></h3>
 <p>Phonopy’s <code class="docutils literal notranslate"><span class="pre">FORCE_SETS</span></code> is created from <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cfs
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>--cfs
 </pre></div>
 </div>
 <p>In conjunction with <a class="reference internal" href="#dim-fc2-option"><span class="std std-ref">–dim-fc2</span></a>, phonopy’s <code class="docutils literal notranslate"><span class="pre">FORCE_SETS</span></code> is
 created from <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> and <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> instead of <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and
 <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cfs<span class="w"> </span>--dim-fc2<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>--cfs<span class="w"> </span>--dim-fc2<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span>
 </pre></div>
 </div>
 </section>
@@ -610,11 +612,11 @@ be used with <code class="docutils literal notranslate"><span class="pre">--cf3<
 supports reading energy of supercell, those are written into
 <code class="docutils literal notranslate"><span class="pre">phono3y_params.yaml</span></code>. These energies are necessary for using <code class="docutils literal notranslate"><span class="pre">--pypolymlp</span></code>
 option.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cf3<span class="w"> </span>disp-<span class="o">{</span><span class="m">00001</span>..00755<span class="o">}</span>/vasprun.xml<span class="w"> </span>--sp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>--cf3<span class="w"> </span>disp-<span class="o">{</span><span class="m">00001</span>..00755<span class="o">}</span>/vasprun.xml<span class="w"> </span>--sp
 </pre></div>
 </div>
 <p>When using with <code class="docutils literal notranslate"><span class="pre">--cf2</span></code>, <code class="docutils literal notranslate"><span class="pre">--cf3</span></code> has to be specified simultaneously as below,</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cf3<span class="w"> </span>disp-<span class="o">{</span><span class="m">00001</span>..00755<span class="o">}</span>/vasprun.xml<span class="w"> </span>--cf2<span class="w"> </span>disp_fc2-<span class="o">{</span><span class="m">00001</span>..00002<span class="o">}</span>/vasprun.xml<span class="w"> </span>--sp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>--cf3<span class="w"> </span>disp-<span class="o">{</span><span class="m">00001</span>..00755<span class="o">}</span>/vasprun.xml<span class="w"> </span>--cf2<span class="w"> </span>disp_fc2-<span class="o">{</span><span class="m">00001</span>..00002<span class="o">}</span>/vasprun.xml<span class="w"> </span>--sp
 </pre></div>
 </div>
 </section>
@@ -623,7 +625,7 @@ option.</p>
 <h2>Supercell, primitive cell, masses, magnetic moments<a class="headerlink" href="#supercell-primitive-cell-masses-magnetic-moments" title="Link to this heading">#</a></h2>
 <section id="dim-dim">
 <span id="dim-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--dim</span></code> (<code class="docutils literal notranslate"><span class="pre">DIM</span></code>)<a class="headerlink" href="#dim-dim" title="Link to this heading">#</a></h3>
-<p><strong><code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code> doesn’t have this option.</strong></p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">phono3py</span></code> doesn’t have this option.</strong></p>
 <p>Supercell dimension is specified. See the detail at
 <a class="reference external" href="http://phonopy.github.io/phonopy/setting-tags.html#dim">http://phonopy.github.io/phonopy/setting-tags.html#dim</a>. When
 <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> is found in the current directory, it is read
@@ -640,7 +642,7 @@ unnecessary to specify. For example, just</p>
 </section>
 <section id="dim-fc2-dim-fc2">
 <span id="dim-fc2-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--dim-fc2</span></code> (<code class="docutils literal notranslate"><span class="pre">DIM_FC2</span></code>)<a class="headerlink" href="#dim-fc2-dim-fc2" title="Link to this heading">#</a></h3>
-<p><strong><code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code> doesn’t have this option.</strong></p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">phono3py</span></code> doesn’t have this option.</strong></p>
 <p>Supercell dimension for 2nd order force constants (for harmonic phonons) is
 specified. This is optional. When a proper <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> exists in the
 current directory, this is unnecessary to be specified.</p>
@@ -655,11 +657,11 @@ or equivalent files for the other interfaces) and <code class="docutils literal 
 created. These are used to calculate 2nd order force constants for the larger
 supercell size and these force calculations have to be done in addition to the
 usual force calculations for 3rd order force constants.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-d<span class="w"> </span>--dim<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>--dim-fc2<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span>--pa<span class="w"> </span>auto<span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>-d<span class="w"> </span>--dim<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>--dim-fc2<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span>--pa<span class="w"> </span>auto<span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell
 </pre></div>
 </div>
 <p>After the force calculations, <code class="docutils literal notranslate"><span class="pre">--cf2</span></code> option is used to create <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cf2<span class="w"> </span>disp-<span class="o">{</span><span class="m">001</span>,002<span class="o">}</span>/vasprun.xml
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>--cf2<span class="w"> </span>disp-<span class="o">{</span><span class="m">001</span>,002<span class="o">}</span>/vasprun.xml
 </pre></div>
 </div>
 <p>To calculate 2nd order force constants for the larger supercell size,
@@ -678,7 +680,7 @@ that created in the usual phono3py run without <code class="docutils literal not
 phonopy <code class="docutils literal notranslate"><span class="pre">PRIMITIVE_AXES</span></code> tag (<code class="docutils literal notranslate"><span class="pre">--pa</span></code> option) at <a class="reference external" href="https://phonopy.github.io/phonopy/setting-tags.html#primitive-axes-or-primitive-axis">primitive-axis
 (phonopy)</a>.
 When <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> contains this information and <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> is
-read when running <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> or <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code> command, this is unnecessary to
+read when running <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> or <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command, this is unnecessary to
 be specified.</p>
 </section>
 <section id="mass-mass">
@@ -696,7 +698,7 @@ web page</a>.</p>
 <h2>Displacement creation<a class="headerlink" href="#displacement-creation" title="Link to this heading">#</a></h2>
 <section id="d-create-displacements-true">
 <span id="create-displacements-option"></span><h3><code class="docutils literal notranslate"><span class="pre">-d</span></code> (<code class="docutils literal notranslate"><span class="pre">CREATE_DISPLACEMENTS</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)<a class="headerlink" href="#d-create-displacements-true" title="Link to this heading">#</a></h3>
-<p><strong><code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code> doesn’t have this option.</strong></p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">phono3py</span></code> doesn’t have this option.</strong></p>
 <p>Supercells with displacements and <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> are created. Using with
 <code class="docutils literal notranslate"><span class="pre">--amplitude</span></code> option, atomic displacement distances are controlled. With this
 option, files for supercells with displacements and <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> file
@@ -704,7 +706,7 @@ are created.</p>
 <p>It is recommended to use this option with <code class="docutils literal notranslate"><span class="pre">--pa</span> <span class="pre">auto</span></code> option to store
 information about primitive cell (<code class="docutils literal notranslate"><span class="pre">primitive_matrix</span></code> key) in
 <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code>, e.g.,</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>-d<span class="w"> </span>--dim<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>--dim-fc2<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span>--pa<span class="w"> </span>auto
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>-d<span class="w"> </span>--dim<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>--dim-fc2<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span>--pa<span class="w"> </span>auto
 </pre></div>
 </div>
 </section>
@@ -719,7 +721,7 @@ in the equivalent way to <a class="reference external" href="https://phonopy.git
 phonopy</a>.</p>
 <p>Like <code class="docutils literal notranslate"><span class="pre">-d</span></code> option, it is recommended to specify <code class="docutils literal notranslate"><span class="pre">--pa</span> <span class="pre">auto</span></code> together with <code class="docutils literal notranslate"><span class="pre">--rd</span></code>
 and/or <code class="docutils literal notranslate"><span class="pre">--rd-fc2</span></code>,</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>--dim<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>--dim-fc2<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span>--rd<span class="w"> </span><span class="m">100</span><span class="w"> </span>--rd-fc2<span class="w"> </span><span class="m">2</span><span class="w"> </span>--pa<span class="w"> </span>auto
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>--dim<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>--dim-fc2<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span>--rd<span class="w"> </span><span class="m">100</span><span class="w"> </span>--rd-fc2<span class="w"> </span><span class="m">2</span><span class="w"> </span>--pa<span class="w"> </span>auto
 </pre></div>
 </div>
 </section>
@@ -732,7 +734,7 @@ factor.</p>
 </section>
 <section id="amplitude-displacement-distance">
 <span id="amplitude-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--amplitude</span></code> (<code class="docutils literal notranslate"><span class="pre">DISPLACEMENT_DISTANCE</span></code>)<a class="headerlink" href="#amplitude-displacement-distance" title="Link to this heading">#</a></h3>
-<p><strong><code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code> doesn’t have this option.</strong></p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">phono3py</span></code> doesn’t have this option.</strong></p>
 <p>Atomic displacement distance is specified. This value may be increased for the
 weak interaction systems and decreased when the force calculator is numerically
 very accurate.</p>
@@ -742,11 +744,11 @@ very accurate.</p>
 <section id="fc-calc-fc-calculator-fc-calculator">
 <span id="fc-calculator-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--fc-calc</span></code>, <code class="docutils literal notranslate"><span class="pre">--fc-calculator</span></code> (<code class="docutils literal notranslate"><span class="pre">FC_CALCULATOR</span></code>)<a class="headerlink" href="#fc-calc-fc-calculator-fc-calculator" title="Link to this heading">#</a></h3>
 <p>Choice of force constants calculator.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--fc-calc<span class="w"> </span>symfc<span class="w"> </span>...
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--fc-calc<span class="w"> </span>symfc<span class="w"> </span>...
 </pre></div>
 </div>
 <p>To use different force constants calculators for fc2 and fc3</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--fc-calc<span class="w"> </span><span class="s2">&quot;symfc|&quot;</span><span class="w"> </span>...
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--fc-calc<span class="w"> </span><span class="s2">&quot;symfc|&quot;</span><span class="w"> </span>...
 </pre></div>
 </div>
 <p>Those for fc2 and fc3 are separated by <code class="docutils literal notranslate"><span class="pre">|</span></code> such as <code class="docutils literal notranslate"><span class="pre">symfc|</span></code> . Blank means to
@@ -756,7 +758,7 @@ the option <code class="docutils literal notranslate"><span class="pre">-d</span
 <section id="fc-calc-opt-fc-calculator-options-fc-calculator-options">
 <span id="fc-calculator-options-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--fc-calc-opt</span></code>, <code class="docutils literal notranslate"><span class="pre">--fc-calculator-options</span></code> (<code class="docutils literal notranslate"><span class="pre">FC_CALCULATOR_OPTIONS</span></code>)<a class="headerlink" href="#fc-calc-opt-fc-calculator-options-fc-calculator-options" title="Link to this heading">#</a></h3>
 <p>Special options for force constants calculators.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--fc-calc-opt<span class="w"> </span><span class="s2">&quot;cutoff=8&quot;</span><span class="w"> </span>...
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--fc-calc-opt<span class="w"> </span><span class="s2">&quot;cutoff=8&quot;</span><span class="w"> </span>...
 </pre></div>
 </div>
 <p>Similarly to <code class="docutils literal notranslate"><span class="pre">--fc-calc</span></code>, <code class="docutils literal notranslate"><span class="pre">|</span></code> can be used to separated those for fc2 and fc3.</p>
@@ -781,23 +783,31 @@ the Phonopy documentation for additional details.</p>
 </section>
 <section id="force-constants">
 <h2>Force constants<a class="headerlink" href="#force-constants" title="Link to this heading">#</a></h2>
-<section id="cfc-or-compact-fc-compact-fc-true">
-<span id="compact-fc-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--cfc</span></code> or <code class="docutils literal notranslate"><span class="pre">--compact-fc</span></code> (<code class="docutils literal notranslate"><span class="pre">COMPACT_FC</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)<a class="headerlink" href="#cfc-or-compact-fc-compact-fc-true" title="Link to this heading">#</a></h3>
-<p>When creating force constants from <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and/or <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code>, force
-constants that use smaller data size are created. The shape of the data array is
+<section id="full-fc-compact-fc-false">
+<span id="full-fc-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--full-fc</span></code> (<code class="docutils literal notranslate"><span class="pre">COMPACT_FC</span> <span class="pre">=</span> <span class="pre">.FALSE.</span></code>)<a class="headerlink" href="#full-fc-compact-fc-false" title="Link to this heading">#</a></h3>
+<p>When creating force constants from <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and/or <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code>, the
+compact-array format is used by default. The shape of the data array is
 <code class="docutils literal notranslate"><span class="pre">(num_patom,</span> <span class="pre">num_satom)</span></code> for fc2 and <code class="docutils literal notranslate"><span class="pre">(num_patom,</span> <span class="pre">num_satom,</span> <span class="pre">num_satom)</span></code> for
-fc3, where <code class="docutils literal notranslate"><span class="pre">num_patom</span></code> and <code class="docutils literal notranslate"><span class="pre">num_satom</span></code> are the numbers of atoms in primitive cell
-and supercell. In the full size force constants case, <code class="docutils literal notranslate"><span class="pre">num_patom</span></code> is replaced by
-<code class="docutils literal notranslate"><span class="pre">num_satom</span></code>. Therefore if the supercell dimension is large, this reduction of
-data size becomes large. If the input crystal structure has centring
-<a class="reference internal" href="#pa-option"><span class="std std-ref">–pa</span></a> is necessary to have smallest data size. In this case,
-<code class="docutils literal notranslate"><span class="pre">--pa</span></code> option has to be specified on reading. Otherwise phono3py can recognize
-if <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code> and <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code> are compact or full automatically. When using with
-<code class="docutils literal notranslate"><span class="pre">--fc-symmetry</span></code>, the calculated results will become slightly different due to
-imperfect symmetrization scheme that phono3py employs.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--compact-fc
+fc3, where <code class="docutils literal notranslate"><span class="pre">num_patom</span></code> and <code class="docutils literal notranslate"><span class="pre">num_satom</span></code> are the numbers of atoms in the primitive
+cell and supercell. With <code class="docutils literal notranslate"><span class="pre">--full-fc</span></code>, the full-size arrays are computed instead,
+where <code class="docutils literal notranslate"><span class="pre">num_patom</span></code> is replaced by <code class="docutils literal notranslate"><span class="pre">num_satom</span></code>. The compact form reduces data
+size, and the reduction grows with supercell dimension. If the input crystal
+structure has centring, <a class="reference internal" href="#pa-option"><span class="std std-ref">–pa</span></a> is necessary to have the
+smallest data size. In this case, <code class="docutils literal notranslate"><span class="pre">--pa</span></code> option has to be specified on reading.
+Otherwise phono3py can recognize if <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code> and <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code> are compact or
+full automatically. When using with <code class="docutils literal notranslate"><span class="pre">--fc-symmetry</span></code>, the calculated results will
+become slightly different due to the imperfect symmetrization scheme that
+phono3py employs.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--full-fc
 </pre></div>
 </div>
+</section>
+<section id="cfc-or-compact-fc-compact-fc-true-deprecated">
+<span id="compact-fc-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--cfc</span></code> or <code class="docutils literal notranslate"><span class="pre">--compact-fc</span></code> (<code class="docutils literal notranslate"><span class="pre">COMPACT_FC</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>) (deprecated)<a class="headerlink" href="#cfc-or-compact-fc-compact-fc-true-deprecated" title="Link to this heading">#</a></h3>
+<p>Compact force constants are now the default, so this option has no effect and
+is retained only for backward compatibility. Specifying <code class="docutils literal notranslate"><span class="pre">--cfc</span></code> or
+<code class="docutils literal notranslate"><span class="pre">--compact-fc</span></code> on the command line emits a deprecation notice. Use <code class="docutils literal notranslate"><span class="pre">--full-fc</span></code>
+to opt back into the full-array format.</p>
 </section>
 <section id="fc-symmetry-fc-symmetry-true">
 <span id="symmetrization-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--fc-symmetry</span></code> (<code class="docutils literal notranslate"><span class="pre">FC_SYMMETRY</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)<a class="headerlink" href="#fc-symmetry-fc-symmetry-true" title="Link to this heading">#</a></h3>
@@ -865,7 +875,7 @@ q-points (see <a class="reference internal" href="workload-distribution.html#wor
 <p>Indices of grid points are specified by space or comma (<code class="docutils literal notranslate"><span class="pre">,</span></code>) separated numbers.
 The mapping table between grid points to its indices is obtained by running with
 <code class="docutils literal notranslate"><span class="pre">--loglevel=2</span></code> option.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--br<span class="w"> </span>--write-gamma<span class="w"> </span>--gp<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">5</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--br<span class="w"> </span>--write-gamma<span class="w"> </span>--gp<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">5</span>
 </pre></div>
 </div>
 <p>where <code class="docutils literal notranslate"><span class="pre">--gp</span> <span class="pre">0</span> <span class="pre">1</span> <span class="pre">2</span> <span class="pre">3</span> <span class="pre">4</span> <span class="pre">5</span></code> can be also written <code class="docutils literal notranslate"><span class="pre">--gp=&quot;0,1,2,3,4,5&quot;</span></code>. <code class="docutils literal notranslate"><span class="pre">--ga</span></code>
@@ -889,7 +899,7 @@ are averaged, and those separated by comma are separately calculated. The output
 file name will be, e.g., <code class="docutils literal notranslate"><span class="pre">gammas-mxxx-gxx(-sx)-bx.dat</span></code> where <code class="docutils literal notranslate"><span class="pre">bxbx...</span></code> shows the
 band indices where the values are calculated and summed and averaged over those
 bands.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--gp<span class="w"> </span><span class="m">34</span><span class="w"> </span>--bi<span class="w"> </span><span class="s2">&quot;4 5, 6&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--gp<span class="w"> </span><span class="m">34</span><span class="w"> </span>--bi<span class="w"> </span><span class="s2">&quot;4 5, 6&quot;</span>
 </pre></div>
 </div>
 <p>This option may be also useful to distribute the computational demand such like
@@ -907,7 +917,7 @@ points to calculate imaginary part of self energy, for which
 and their grid addresses in integers. Q-points corresponding to grid points are
 calculated divided these integers by sampling mesh numbers for respective
 reciprocal axes.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--wgp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--wgp
 </pre></div>
 </div>
 </section>
@@ -917,7 +927,7 @@ reciprocal axes.</p>
 specified sampling mesh numbers are shown. This can be used to estimate how
 large a calculation is. Only those for specific grid points are shown by using
 with <code class="docutils literal notranslate"><span class="pre">--gp</span></code> or <code class="docutils literal notranslate"><span class="pre">--ga</span></code> option.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--stp<span class="w"> </span>--gp<span class="w"> </span><span class="m">20</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--stp<span class="w"> </span>--gp<span class="w"> </span><span class="m">20</span>
 </pre></div>
 </div>
 </section>
@@ -995,20 +1005,6 @@ linearized phonon Boltzmann equation. The basis usage of this option is
 equivalent to that of <code class="docutils literal notranslate"><span class="pre">--br</span></code>. More detail is documented at
 <a class="reference internal" href="direct-solution.html#direct-solution"><span class="std std-ref">Direct solution of linearized phonon Boltzmann equation</span></a>.</p>
 </section>
-<section id="wigner">
-<h3><code class="docutils literal notranslate"><span class="pre">--wigner</span></code><a class="headerlink" href="#wigner" title="Link to this heading">#</a></h3>
-<p>Run calculation of lattice thermal conductivity tensor computing the coherences
-(wave-like) contribution to the thermal conductivity, obtained solving the
-Wigner transport equation equation. This option can be combined with <code class="docutils literal notranslate"><span class="pre">--lbte</span></code> or
-<code class="docutils literal notranslate"><span class="pre">--br</span></code>; in the former case the populations conductivity (particle-like,
-equivalent to the conductivity obtained solving the LBTE) is computed exactly,
-in the latter case the populations conductivity is computed in the
-relaxation-time approximation (RTA). The coherences contribution to the
-conductivity is always computed exactly. The coherences conductivity is usually
-non-negligible compared to the particle-like conductivity in materials with
-ultralow or glass-like conductivity. More details can be found at
-<a class="reference internal" href="wigner-solution.html#wigner-solution"><span class="std std-ref">Solution of the Wigner transport equation</span></a>.</p>
-</section>
 </section>
 <section id="scattering">
 <h2>Scattering<a class="headerlink" href="#scattering" title="Link to this heading">#</a></h2>
@@ -1018,7 +1014,7 @@ ultralow or glass-like conductivity. More details can be found at
 Tamura, Phys. Rev. B, <strong>27</strong>, 858 (1983). Mass variance parameters are read from
 database of the natural abundance data for elements, which refers Laeter <em>et
 al.</em>, Pure Appl. Chem., <strong>75</strong>, 683 (2003).</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>-v<span class="w"> </span>--mesh<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">20</span><span class="w"> </span>--br<span class="w"> </span>--isotope
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-v<span class="w"> </span>--mesh<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">20</span><span class="w"> </span>--br<span class="w"> </span>--isotope
 </pre></div>
 </div>
 </section>
@@ -1030,7 +1026,7 @@ this may be set like <code class="docutils literal notranslate"><span class="pre
 correspond to the number of atoms in the primitive cell.</p>
 <p>Isotope effect to thermal conductivity may be checked first running without
 isotope calculation:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>-v<span class="w"> </span>--mesh<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">20</span><span class="w"> </span>--br
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-v<span class="w"> </span>--mesh<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">20</span><span class="w"> </span>--br
 </pre></div>
 </div>
 <p>Then running with isotope calculation:</p>
@@ -1079,11 +1075,11 @@ averaged phonon-phonon interaction has to be stored before using this option
 <code class="docutils literal notranslate"><span class="pre">kappa-mxxx(-sx-sdx).hdf5</span></code> file. Therefore the original
 <code class="docutils literal notranslate"><span class="pre">kappa-mxxx(-sx-sdx).hdf5</span></code> file should be backed up.</p>
 <p>First, run full conductivity calculation,</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>-v<span class="w"> </span>--mesh<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">20</span><span class="w"> </span>--br
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-v<span class="w"> </span>--mesh<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">20</span><span class="w"> </span>--br
 </pre></div>
 </div>
 <p>Then</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>-v<span class="w"> </span>--mesh<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">20</span><span class="w"> </span>--br<span class="w"> </span>--read-gamma<span class="w"> </span>--ave-pp<span class="w"> </span>-o<span class="w"> </span>ave_pp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-v<span class="w"> </span>--mesh<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">20</span><span class="w"> </span>--br<span class="w"> </span>--read-gamma<span class="w"> </span>--ave-pp<span class="w"> </span>-o<span class="w"> </span>ave_pp
 </pre></div>
 </div>
 </section>
@@ -1098,7 +1094,7 @@ constants are not necessary to input. The physical unit of the value is
 <span class="math notranslate nohighlight">\(\text{eV}^2\)</span>.</p>
 <!-- See also references {cite}`Togo-PRB-2015,Mizokami-PRB-2018`. -->
 <p>See also <a class="reference internal" href="reference.html#ave-pp-reference"><span class="std std-ref">reference papers</span></a>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>-v<span class="w"> </span>--mesh<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">20</span><span class="w"> </span>--br<span class="w"> </span>--const-ave-pp<span class="w"> </span>1e-10
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-v<span class="w"> </span>--mesh<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">20</span><span class="w"> </span>--br<span class="w"> </span>--const-ave-pp<span class="w"> </span>1e-10
 </pre></div>
 </div>
 </section>
@@ -1156,7 +1152,7 @@ given by</p>
 <section id="ts-temperatures-temperatures">
 <span id="ts-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--ts</span></code> (<code class="docutils literal notranslate"><span class="pre">TEMPERATURES</span></code>): Temperatures<a class="headerlink" href="#ts-temperatures-temperatures" title="Link to this heading">#</a></h3>
 <p>Specific temperatures are specified by <code class="docutils literal notranslate"><span class="pre">--ts</span></code>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>-v<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>--br<span class="w"> </span>--ts<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="m">300</span><span class="w"> </span><span class="m">400</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-v<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>--br<span class="w"> </span>--ts<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="m">300</span><span class="w"> </span><span class="m">400</span>
 </pre></div>
 </div>
 </section>
@@ -1165,7 +1161,7 @@ given by</p>
 <p>Temperatures at equal interval are specified by <code class="docutils literal notranslate"><span class="pre">--tmax</span></code>, <code class="docutils literal notranslate"><span class="pre">--tmin</span></code>, <code class="docutils literal notranslate"><span class="pre">--tstep</span></code>.
 See phonopy’s document for the same tags at
 <a class="reference external" href="http://phonopy.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep">http://phonopy.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep</a>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>-v<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--br<span class="w"> </span>--tmin<span class="w"> </span><span class="m">100</span><span class="w"> </span>--tmax<span class="w"> </span><span class="m">1000</span><span class="w"> </span>--tstep<span class="w"> </span><span class="m">50</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-v<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--br<span class="w"> </span>--tmin<span class="w"> </span><span class="m">100</span><span class="w"> </span>--tmax<span class="w"> </span><span class="m">1000</span><span class="w"> </span>--tstep<span class="w"> </span><span class="m">50</span>
 </pre></div>
 </div>
 </section>
@@ -1243,7 +1239,7 @@ respect to frequency <span class="math notranslate nohighlight">\(\omega\)</span
 <a class="reference internal" href="#freq-sampling-option"><span class="std std-ref">--num-freq-points, --freq-pitch (NUM_FREQUENCY_POINTS)</span></a>. The output of <span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega)\)</span> is written
 to <code class="docutils literal notranslate"><span class="pre">gammas-mxxx-gx(-sx)-tx-bx.dat</span></code> in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>) with respect to
 samplied frequency points of <span class="math notranslate nohighlight">\(\omega\)</span> in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>).</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--q-direction<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>--gp<span class="w"> </span><span class="m">0</span><span class="w"> </span>--ise<span class="w"> </span>--bi<span class="w"> </span><span class="s2">&quot;4 5, 6&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--q-direction<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>--gp<span class="w"> </span><span class="m">0</span><span class="w"> </span>--ise<span class="w"> </span>--bi<span class="w"> </span><span class="s2">&quot;4 5, 6&quot;</span>
 </pre></div>
 </div>
 </section>
@@ -1266,7 +1262,7 @@ principal value as <span class="math notranslate nohighlight">\(\varepsilon\)</s
 <span class="math notranslate nohighlight">\(\Delta_\lambda(\omega)\)</span> is written to <code class="docutils literal notranslate"><span class="pre">deltas-mxxx-gx-sx-tx-bx.dat</span></code> in THz
 (without <span class="math notranslate nohighlight">\(2\pi\)</span>) with respect to samplied frequency points of <span class="math notranslate nohighlight">\(\omega\)</span> in THz
 (without <span class="math notranslate nohighlight">\(2\pi\)</span>).</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--q-direction<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>--gp<span class="w"> </span><span class="m">0</span><span class="w"> </span>--rse<span class="w"> </span>--sigma<span class="w"> </span><span class="m">0</span>.1<span class="w"> </span>--bi<span class="w"> </span><span class="s2">&quot;4 5, 6&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--q-direction<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>--gp<span class="w"> </span><span class="m">0</span><span class="w"> </span>--rse<span class="w"> </span>--sigma<span class="w"> </span><span class="m">0</span>.1<span class="w"> </span>--bi<span class="w"> </span><span class="s2">&quot;4 5, 6&quot;</span>
 </pre></div>
 </div>
 </section>
@@ -1298,7 +1294,7 @@ and then the real part is calculated using the Kramers–Kronig relation. The
 output of <span class="math notranslate nohighlight">\(A_\lambda(\omega)\)</span> is written to <code class="docutils literal notranslate"><span class="pre">spectral-mxxx-gx(-sx)-tx-bx.dat</span></code> in
 THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>) with respect to samplied frequency points of <span class="math notranslate nohighlight">\(\omega\)</span> in
 THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>), and <code class="docutils literal notranslate"><span class="pre">spectral-mxxx-gx.hdf5</span></code>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--q-direction<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>--gp<span class="w"> </span><span class="m">0</span><span class="w"> </span>--spf
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--q-direction<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>--gp<span class="w"> </span><span class="m">0</span><span class="w"> </span>--spf
 </pre></div>
 </div>
 <div class="admonition note">
@@ -1338,7 +1334,7 @@ values given as follows, respectively,</p>
 \end{align}
 \end{split}\]</div>
 <p>See also <a class="reference internal" href="reference.html#spectral-function-reference"><span class="std std-ref">reference papers</span></a>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--jdos<span class="w"> </span>--ga<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="m">8</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--jdos<span class="w"> </span>--ga<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="m">8</span>
 </pre></div>
 </div>
 <p>When temperatures are specified, two classes of weighted JDOS are calculated.
@@ -1361,7 +1357,7 @@ and the second and third columns are the values given as follows, respectively,<
 \end{align}
 \end{split}\]</div>
 <p>See also <a class="reference internal" href="reference.html#spectral-function-reference"><span class="std std-ref">reference papers</span></a>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--jdos<span class="w"> </span>--ga<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="m">8</span><span class="w"> </span>--ts<span class="w"> </span><span class="m">300</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--jdos<span class="w"> </span>--ga<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="m">8</span><span class="w"> </span>--ts<span class="w"> </span><span class="m">300</span>
 </pre></div>
 </div>
 <p>This is an example of <code class="docutils literal notranslate"><span class="pre">Si-PBEsol</span></code>.</p>
@@ -1385,11 +1381,11 @@ default value of <code class="docutils literal notranslate"><span class="pre">--
 <h3><code class="docutils literal notranslate"><span class="pre">--gruneisen</span></code> (<code class="docutils literal notranslate"><span class="pre">GRUNEISEN</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)<a class="headerlink" href="#gruneisen-gruneisen-true" title="Link to this heading">#</a></h3>
 <p>Mode-Gruneisen-parameters are calculated from fc3.</p>
 <p>Mesh sampling mode:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>-v<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--gruneisen
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-v<span class="w"> </span>--mesh<span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">16</span><span class="w"> </span>--gruneisen
 </pre></div>
 </div>
 <p>Band path mode:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>-v<span class="w"> </span>--gruneisen<span class="w"> </span>--band<span class="w"> </span><span class="s2">&quot;0 0 0  0 0 1/2&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-v<span class="w"> </span>--gruneisen<span class="w"> </span>--band<span class="w"> </span><span class="s2">&quot;0 0 0  0 0 1/2&quot;</span>
 </pre></div>
 </div>
 </section>
@@ -1433,7 +1429,7 @@ large file. See <a class="reference internal" href="input-output-files.html#iofi
 <p>Phonon frequencies, eigenvectors, and grid point addresses are stored in
 <code class="docutils literal notranslate"><span class="pre">phonon-mxxx.hdf5</span></code> file. <a class="reference internal" href="#pa-option"><span class="std std-ref">–pa</span></a> and <a class="reference internal" href="#nac-option"><span class="std std-ref">–nac</span></a>
 may be required depending on calculation setting. See <a class="reference internal" href="input-output-files.html#iofile-phonon-hdf5"><span class="std std-ref">phonon-*.hdf5</span></a>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--write-phoonon
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--write-phoonon
 </pre></div>
 </div>
 </section>
@@ -1445,7 +1441,7 @@ values. This is useful when we want to use fixed phonon eigenvectors that can be
 different for degenerate bands when using different eigenvalue solvers or
 different CPU architectures. <a class="reference internal" href="#pa-option"><span class="std std-ref">–pa</span></a> and
 <a class="reference internal" href="#nac-option"><span class="std std-ref">–nac</span></a> may be required depending on calculation setting.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--read-phoonon<span class="w"> </span>--br
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--read-phoonon<span class="w"> </span>--br
 </pre></div>
 </div>
 </section>
@@ -1460,10 +1456,10 @@ in a simple manner, but in the later case, only necessary elements to calculate
 collisions are stored in a complicated way. In the case of RTA conductivity
 calculation, in writing and reading, ph-ph interaction strength has to be stored
 in memory, so there is overhead in memory than usual RTA calculation.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--write-pp<span class="w"> </span>--br<span class="w"> </span>--gp<span class="w"> </span><span class="m">1</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--write-pp<span class="w"> </span>--br<span class="w"> </span>--gp<span class="w"> </span><span class="m">1</span>
 </pre></div>
 </div>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--read-pp<span class="w"> </span>--br<span class="w"> </span>--gp<span class="w"> </span><span class="m">1</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--read-pp<span class="w"> </span>--br<span class="w"> </span>--gp<span class="w"> </span><span class="m">1</span>
 </pre></div>
 </div>
 </section>
@@ -1613,7 +1609,8 @@ This is equivalent to setting `-i` and `-o` simultaneously. -->
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#force-constants">Force constants</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cfc-or-compact-fc-compact-fc-true"><code class="docutils literal notranslate"><span class="pre">--cfc</span></code> or <code class="docutils literal notranslate"><span class="pre">--compact-fc</span></code> (<code class="docutils literal notranslate"><span class="pre">COMPACT_FC</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#full-fc-compact-fc-false"><code class="docutils literal notranslate"><span class="pre">--full-fc</span></code> (<code class="docutils literal notranslate"><span class="pre">COMPACT_FC</span> <span class="pre">=</span> <span class="pre">.FALSE.</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cfc-or-compact-fc-compact-fc-true-deprecated"><code class="docutils literal notranslate"><span class="pre">--cfc</span></code> or <code class="docutils literal notranslate"><span class="pre">--compact-fc</span></code> (<code class="docutils literal notranslate"><span class="pre">COMPACT_FC</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>) (deprecated)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fc-symmetry-fc-symmetry-true"><code class="docutils literal notranslate"><span class="pre">--fc-symmetry</span></code> (<code class="docutils literal notranslate"><span class="pre">FC_SYMMETRY</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cutoff-fc3-or-cutoff-fc3-distance-cutoff-fc3-distance"><code class="docutils literal notranslate"><span class="pre">--cutoff-fc3</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-fc3-distance</span></code> (<code class="docutils literal notranslate"><span class="pre">CUTOFF_FC3_DISTANCE</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cutoff-pair-or-cutoff-pair-distance-cutoff-pair-distance"><code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-pair-distance</span></code> (<code class="docutils literal notranslate"><span class="pre">CUTOFF_PAIR_DISTANCE</span></code>)</a></li>
@@ -1639,7 +1636,6 @@ This is equivalent to setting `-i` and `-o` simultaneously. -->
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#methods-to-solve-phonon-boltzmann-equation-and-wigner-formulation">Methods to solve phonon Boltzmann equation and Wigner formulation</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#br-bterta-true"><code class="docutils literal notranslate"><span class="pre">--br</span></code> (<code class="docutils literal notranslate"><span class="pre">BTERTA</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lbte-lbte-true"><code class="docutils literal notranslate"><span class="pre">--lbte</span></code> (<code class="docutils literal notranslate"><span class="pre">LBTE</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#wigner"><code class="docutils literal notranslate"><span class="pre">--wigner</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scattering">Scattering</a><ul class="nav section-nav flex-column">

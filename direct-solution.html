@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Direct solution of linearized phonon Boltzmann equation &#8212; Phono3py v.3.31.1</title>
+    <title>Direct solution of linearized phonon Boltzmann equation &#8212; Phono3py v.4.0.0</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=a8a178d9"></script>
+    <script src="_static/documentation_options.js?v=a1c85040"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -52,7 +52,7 @@
     <link rel="prev" title="Auxiliary tools" href="auxiliary-tools.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="3.31" />
+  <meta name="docsearch:version" content="4.0" />
   </head>
   
   
@@ -127,7 +127,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.31.1</p>
+    <p class="title logo__title">Phono3py v.4.0.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -141,7 +141,7 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rust-backend.html">Rust backend (experimental)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rust-backend.html">Rust backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -162,11 +162,13 @@
 <li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Force constants calculation with cutoff pair-distance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="phono3py-api.html">Phono3py API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="phono3py-load.html">phono3py-load command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py.html">phono3py command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-init.html">phono3py-init command</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">Using phono3py hdf5 files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="grid.html">Grids in reciprocal space</a></li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration-v4.html">Migrating from phono3py v3 to v4</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
 </ul>
 
@@ -323,7 +325,7 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cutoff-parameter-of-pseudo-inversion">Cutoff parameter of pseudo inversion</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#diagonalization-solver-interfaces">Diagonalization solver interfaces</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-or-mkl-linked-scipy-and-numpy">OpenBLAS or MKL linked scipy and numpy</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-or-mkl-via-lapacke">OpenBLAS or MKL via LAPACKE</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-or-mkl-via-lapacke-deprecated-c-extension-only">OpenBLAS or MKL via LAPACKE (deprecated, C extension only)</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#solver-choice-for-diagonalization">Solver choice for diagonalization</a></li>
@@ -357,7 +359,7 @@
 <li><p><a class="reference internal" href="#diagonalization-solver-interfaces" id="id7">Diagonalization solver interfaces</a></p>
 <ul>
 <li><p><a class="reference internal" href="#openblas-or-mkl-linked-scipy-and-numpy" id="id8">OpenBLAS or MKL linked scipy and numpy</a></p></li>
-<li><p><a class="reference internal" href="#openblas-or-mkl-via-lapacke" id="id9">OpenBLAS or MKL via LAPACKE</a></p></li>
+<li><p><a class="reference internal" href="#openblas-or-mkl-via-lapacke-deprecated-c-extension-only" id="id9">OpenBLAS or MKL via LAPACKE (deprecated, C extension only)</a></p></li>
 </ul>
 </li>
 <li><p><a class="reference internal" href="#solver-choice-for-diagonalization" id="id10">Solver choice for diagonalization</a></p></li>
@@ -370,7 +372,7 @@ space. When running multiple temperature points, simply the memory space needed
 is multiplied by the number of the temperature points. Therefore it is normally
 recommended to specify <a class="reference internal" href="command-options.html#ts-option"><span class="std std-ref">–ts option</span></a>. An example to run with
 the direct solution of LBTE for <code class="docutils literal notranslate"><span class="pre">example/Si-PBEsol</span></code> is as follows:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--lbte<span class="w"> </span>--ts<span class="w"> </span><span class="m">300</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--lbte<span class="w"> </span>--ts<span class="w"> </span><span class="m">300</span>
 ...
 
 <span class="o">===================</span><span class="w"> </span>End<span class="w"> </span>of<span class="w"> </span>collection<span class="w"> </span>of<span class="w"> </span><span class="nv">collisions</span><span class="w"> </span><span class="o">===================</span>
@@ -411,7 +413,7 @@ LAPACK <code class="docutils literal notranslate"><span class="pre">dsyev</span>
 <p>When phono3py runs with <a class="reference internal" href="command-options.html#wgp-option"><span class="std std-ref">–wgp option</span></a> together with <code class="docutils literal notranslate"><span class="pre">--lbte</span></code>
 option, estimated memory space needed for storing collision matrix is presented.
 An example for <code class="docutils literal notranslate"><span class="pre">example/Si-PBEsol</span></code> is as follows:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">40</span><span class="w"> </span><span class="m">40</span><span class="w"> </span><span class="m">40</span><span class="w"> </span>--lbte<span class="w"> </span>--wgp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">40</span><span class="w"> </span><span class="m">40</span><span class="w"> </span><span class="m">40</span><span class="w"> </span>--lbte<span class="w"> </span>--wgp
 ...
 
 Memory<span class="w"> </span>requirements:
@@ -426,7 +428,7 @@ Memory<span class="w"> </span>requirements:
 </div>
 <p>With <a class="reference internal" href="command-options.html#stp-option"><span class="std std-ref">–stp option</span></a>, estimated memory space needed for ph-ph
 interaction strengths is shown such as</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">40</span><span class="w"> </span><span class="m">40</span><span class="w"> </span><span class="m">40</span><span class="w"> </span>--lbte<span class="w"> </span>--stp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">40</span><span class="w"> </span><span class="m">40</span><span class="w"> </span><span class="m">40</span><span class="w"> </span>--lbte<span class="w"> </span>--stp
 </pre></div>
 </div>
 </section>
@@ -480,16 +482,16 @@ to distinguish the file names of the results at different temperatures.</p></li>
 </ol>
 <p>Examples of command options are shown below using <code class="docutils literal notranslate"><span class="pre">Si-PBE</span></code> example. Irreducible
 grid point indices are obtained by <a class="reference internal" href="command-options.html#wgp-option"><span class="std std-ref">–wgp option</span></a>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--lbte<span class="w"> </span>--wgp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--lbte<span class="w"> </span>--wgp
 </pre></div>
 </div>
 <p>and the information is given in <code class="docutils literal notranslate"><span class="pre">ir_grid_points.yaml</span></code>. For distribution of
 collision matrix calculation (see also <a class="reference internal" href="workload-distribution.html#workload-distribution"><span class="std std-ref">Workload distribution</span></a>):</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--lbte<span class="w"> </span>--ts<span class="w"> </span><span class="m">300</span><span class="w"> </span>--write-collision<span class="w"> </span>--gp<span class="o">=</span><span class="s2">&quot;grid_point_numbers...&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--lbte<span class="w"> </span>--ts<span class="w"> </span><span class="m">300</span><span class="w"> </span>--write-collision<span class="w"> </span>--gp<span class="o">=</span><span class="s2">&quot;grid_point_numbers...&quot;</span>
 </pre></div>
 </div>
 <p>To collect distributed pieces of the collision matrix:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--lbte<span class="w"> </span>--read-collision<span class="w"> </span><span class="m">0</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--lbte<span class="w"> </span>--read-collision<span class="w"> </span><span class="m">0</span>
 </pre></div>
 </div>
 <p>where <code class="docutils literal notranslate"><span class="pre">--read-collision</span> <span class="pre">0</span></code> indicates to read the first result in the list of
@@ -528,24 +530,24 @@ results at different temperatures.</p></li>
 </ol>
 <p>Examples of command options are shown below using <code class="docutils literal notranslate"><span class="pre">Si-PBE</span></code> example. Irreducible
 grid point indices are obtained by <a class="reference internal" href="command-options.html#wgp-option"><span class="std std-ref">–wgp option</span></a></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--lbte<span class="w"> </span>--wgp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--lbte<span class="w"> </span>--wgp
 </pre></div>
 </div>
 <p>and the grid point information is provided in <code class="docutils literal notranslate"><span class="pre">ir_grid_points.yaml</span></code>. All phonons
 on mesh grid points are saved by</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--write-phonon
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--write-phonon
 </pre></div>
 </div>
 <p>For distribution of ph-ph interaction strength calculation (see also
 <a class="reference internal" href="workload-distribution.html#workload-distribution"><span class="std std-ref">Workload distribution</span></a>)</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--lbte<span class="w"> </span>--ts<span class="w"> </span><span class="m">300</span><span class="w"> </span>--write-pp<span class="w"> </span>--gp<span class="w"> </span><span class="s2">&quot;grid_point_numbers...&quot;</span><span class="w"> </span>--read-phonon
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--lbte<span class="w"> </span>--ts<span class="w"> </span><span class="m">300</span><span class="w"> </span>--write-pp<span class="w"> </span>--gp<span class="w"> </span><span class="s2">&quot;grid_point_numbers...&quot;</span><span class="w"> </span>--read-phonon
 </pre></div>
 </div>
 <p>Here one temperature has to be specified but any one of temperatures is OK since
 ph-ph interaction strength computed here is assumed to be temperature
 independent. Then the computed ph-ph interaction strengths are read and used to
 compute collision matrix and lattice thermal conductivity at a temperature by</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--lbte<span class="w"> </span>--ts<span class="w"> </span><span class="m">300</span><span class="w"> </span>--read-pp<span class="w"> </span>--read-phonon
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--lbte<span class="w"> </span>--ts<span class="w"> </span><span class="m">300</span><span class="w"> </span>--read-pp<span class="w"> </span>--read-phonon
 </pre></div>
 </div>
 <p>This last command is repeated at different temperatures to obtain the properties
@@ -596,8 +598,10 @@ MKL are considered most popular choices. For non-INTEL (or AMD) systems such as
 ARM64, MKL can not be used. How to choose the BLAS library in installation via
 conda-forge is written <a class="reference internal" href="install.html#install-an-example"><span class="std std-ref">here</span></a>.</p>
 <p>Phono3py has two different interfaces to the LAPACK library. One is via scipy
-(or numpy), and the other is via LAPACKE as shown below. How to switch between
-interfaces is described in the
+(or numpy), and the other is via LAPACKE as shown below. The LAPACKE interface
+is deprecated in v4 and is only available through the legacy C-extension
+backend; the default Rust backend uses the scipy/numpy interface. How to
+switch between interfaces is described in the
 <a class="reference internal" href="#direct-solution-solver-choice"><span class="std std-ref">next section</span></a>.</p>
 <section id="openblas-or-mkl-linked-scipy-and-numpy">
 <h3><a class="toc-backref" href="#id8" role="doc-backlink">OpenBLAS or MKL linked scipy and numpy</a><a class="headerlink" href="#openblas-or-mkl-linked-scipy-and-numpy" title="Link to this heading">#</a></h3>
@@ -605,8 +609,15 @@ interfaces is described in the
 interface to <code class="docutils literal notranslate"><span class="pre">dsyev</span></code>. OpenBLAS and MKL linked scipy and numpy are provided by
 conda-forge.</p>
 </section>
-<section id="openblas-or-mkl-via-lapacke">
-<h3><a class="toc-backref" href="#id9" role="doc-backlink">OpenBLAS or MKL via LAPACKE</a><a class="headerlink" href="#openblas-or-mkl-via-lapacke" title="Link to this heading">#</a></h3>
+<section id="openblas-or-mkl-via-lapacke-deprecated-c-extension-only">
+<h3><a class="toc-backref" href="#id9" role="doc-backlink">OpenBLAS or MKL via LAPACKE (deprecated, C extension only)</a><a class="headerlink" href="#openblas-or-mkl-via-lapacke-deprecated-c-extension-only" title="Link to this heading">#</a></h3>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version v4: </span>The LAPACKE interface is only available through the C-extension backend
+(<code class="docutils literal notranslate"><span class="pre">--legacy-backend</span></code> / <code class="docutils literal notranslate"><span class="pre">lang=&quot;C&quot;</span></code>) and is not exposed on the default Rust
+backend. It is kept for backward compatibility and may be removed in a
+future release. Prefer the scipy/numpy interfaces, which work with both
+backends.</p>
+</div>
 <p>LAPACK <code class="docutils literal notranslate"><span class="pre">dsyev</span></code> and <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code> can be accessed via LAPACKE in the phono3py’s C
 language implementation through the python C-API.</p>
 </section>
@@ -623,16 +634,21 @@ supports diagonalization via scipy, numpy, and LAPACKE as LAPACK wrappers.</p>
 (<code class="docutils literal notranslate"><span class="pre">--pinv-solver=4</span></code>). Using <code class="docutils literal notranslate"><span class="pre">--pinv-solver</span> <span class="pre">NUMBER</span></code>, one of the following solvers
 is specified:</p>
 <ol class="arabic simple">
-<li><p>(Only available when <a class="reference internal" href="install.html#install-with-lapacke"><span class="std std-ref">compiling with LAPACKE</span></a>)
-Lapacke <code class="docutils literal notranslate"><span class="pre">dsyev</span></code>: Smaller memory consumption than <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code>, but slower. This
-is the default solver when MKL LAPACKE is integrated or scipy is not
+<li><p><strong>(Deprecated; C extension only)</strong> Lapacke <code class="docutils literal notranslate"><span class="pre">dsyev</span></code>: Only available when
+<a class="reference internal" href="install.html#install-with-lapacke"><span class="std std-ref">compiling with LAPACKE</span></a> and running with
+the legacy C-extension backend (<code class="docutils literal notranslate"><span class="pre">--legacy-backend</span></code> / <code class="docutils literal notranslate"><span class="pre">lang=&quot;C&quot;</span></code>).
+Smaller memory consumption than <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code>, but slower. This was the
+default solver when MKL LAPACKE was integrated or scipy was not
 installed.</p></li>
-<li><p>(Only available when <a class="reference internal" href="install.html#install-with-lapacke"><span class="std std-ref">compiling with LAPACKE</span></a>)
-Lapacke <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code>: Larger memory consumption than <code class="docutils literal notranslate"><span class="pre">dsyev</span></code>, but faster. This is
-not considered as stable as <code class="docutils literal notranslate"><span class="pre">dsyev</span></code> but can be significantly faster than
-<code class="docutils literal notranslate"><span class="pre">dsyev</span></code> for solving large collision matrix. It is recommended to compare the
-result with that by <code class="docutils literal notranslate"><span class="pre">dsyev</span></code> solver using smaller collision matrix (e.g.,
-sparser sampling mesh) before starting solving large collision matrix.</p></li>
+<li><p><strong>(Deprecated; C extension only)</strong> Lapacke <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code>: Only available when
+<a class="reference internal" href="install.html#install-with-lapacke"><span class="std std-ref">compiling with LAPACKE</span></a> and running with
+the legacy C-extension backend (<code class="docutils literal notranslate"><span class="pre">--legacy-backend</span></code> / <code class="docutils literal notranslate"><span class="pre">lang=&quot;C&quot;</span></code>).
+Larger memory consumption than <code class="docutils literal notranslate"><span class="pre">dsyev</span></code>, but faster. This is not
+considered as stable as <code class="docutils literal notranslate"><span class="pre">dsyev</span></code> but can be significantly faster than
+<code class="docutils literal notranslate"><span class="pre">dsyev</span></code> for solving large collision matrix. It is recommended to
+compare the result with that by <code class="docutils literal notranslate"><span class="pre">dsyev</span></code> solver using smaller collision
+matrix (e.g., sparser sampling mesh) before starting solving large
+collision matrix.</p></li>
 <li><p>Numpy’s <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code> (<code class="docutils literal notranslate"><span class="pre">linalg.eigh</span></code>). Similar to solver (2), this solver should
 be used carefully.</p></li>
 <li><p>Scipy’s <code class="docutils literal notranslate"><span class="pre">dsyev</span></code>: This is the default solver when scipy is installed and MKL
@@ -700,7 +716,7 @@ carefully.</p></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cutoff-parameter-of-pseudo-inversion">Cutoff parameter of pseudo inversion</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#diagonalization-solver-interfaces">Diagonalization solver interfaces</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-or-mkl-linked-scipy-and-numpy">OpenBLAS or MKL linked scipy and numpy</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-or-mkl-via-lapacke">OpenBLAS or MKL via LAPACKE</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-or-mkl-via-lapacke-deprecated-c-extension-only">OpenBLAS or MKL via LAPACKE (deprecated, C extension only)</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#solver-choice-for-diagonalization">Solver choice for diagonalization</a></li>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Force constants calculation with random displacements of atoms &#8212; Phono3py v.3.31.1</title>
+    <title>Force constants calculation with random displacements of atoms &#8212; Phono3py v.4.0.0</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=a8a178d9"></script>
+    <script src="_static/documentation_options.js?v=a1c85040"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -50,7 +50,7 @@
     <link rel="prev" title="Workload distribution" href="workload-distribution.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="3.31" />
+  <meta name="docsearch:version" content="4.0" />
   </head>
   
   
@@ -125,7 +125,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.31.1</p>
+    <p class="title logo__title">Phono3py v.4.0.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -139,7 +139,7 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rust-backend.html">Rust backend (experimental)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rust-backend.html">Rust backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -160,11 +160,13 @@
 <li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Force constants calculation with cutoff pair-distance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="phono3py-api.html">Phono3py API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="phono3py-load.html">phono3py-load command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py.html">phono3py command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-init.html">phono3py-init command</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">Using phono3py hdf5 files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="grid.html">Grids in reciprocal space</a></li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration-v4.html">Migrating from phono3py v3 to v4</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
 </ul>
 
@@ -364,20 +366,20 @@ number <code class="docutils literal notranslate"><span class="pre">--rd</span> 
 <h2>Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code><a class="headerlink" href="#create-forces-fc3-and-forces-fc2" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and optionally <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code>, which contains forces corresponding to
 displacements, can be created by</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cf3<span class="w"> </span>vasprun_xmls/vasprun-00<span class="o">{</span><span class="m">001</span>..100<span class="o">}</span>.xml
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>--cf3<span class="w"> </span>vasprun_xmls/vasprun-00<span class="o">{</span><span class="m">001</span>..100<span class="o">}</span>.xml
 </pre></div>
 </div>
 <p>Here it is assumed that the forces were calculated by VASP, and the output files
 (<code class="docutils literal notranslate"><span class="pre">vasprun.xml</span></code>) are stored in <code class="docutils literal notranslate"><span class="pre">vasprun_xmls</span></code> directory after renaming. When
 running this command, <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> is automatically read. For the
-different file name, e.g. <code class="docutils literal notranslate"><span class="pre">phono3py_disp_rd.yaml</span></code>, it is specified with <code class="docutils literal notranslate"><span class="pre">-c</span></code>
-option:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-c<span class="w"> </span>phono3py_disp_rd.yaml<span class="w"> </span>--cf3<span class="w"> </span>vasprun_xmls/vasprun-00<span class="o">{</span><span class="m">001</span>..100<span class="o">}</span>.xml
+different file name, e.g. <code class="docutils literal notranslate"><span class="pre">phono3py_disp_rd.yaml</span></code>, it is passed as the first
+positional argument:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>phono3py_disp_rd.yaml<span class="w"> </span>--cf3<span class="w"> </span>vasprun_xmls/vasprun-00<span class="o">{</span><span class="m">001</span>..100<span class="o">}</span>.xml
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> is created similarly, e.g., from the VASP output stored as
 <code class="docutils literal notranslate"><span class="pre">vasprun_xmls/vasprun-ph000{1,2}.xml</span></code>,</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cf2<span class="w"> </span>vasprun_xmls/vasprun-ph000<span class="o">{</span><span class="m">1</span>,2<span class="o">}</span>.xml
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>--cf2<span class="w"> </span>vasprun_xmls/vasprun-ph000<span class="o">{</span><span class="m">1</span>,2<span class="o">}</span>.xml
 </pre></div>
 </div>
 </section>
@@ -385,24 +387,24 @@ option:</p>
 <h2>Create <code class="docutils literal notranslate"><span class="pre">phono3py_params.yaml</span></code><a class="headerlink" href="#create-phono3py-params-yaml" title="Link to this heading">#</a></h2>
 <p>Instead of creating <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code>, more convenient data file to
 store displacement-force dataset is created by <code class="docutils literal notranslate"><span class="pre">--sp</span></code> option:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cf3<span class="w"> </span>vasprun_xmls/vasprun-00<span class="o">{</span><span class="m">001</span>..100<span class="o">}</span>.xml<span class="w"> </span>--cf2<span class="w"> </span>vasprun_xmls/vasprun-ph0000<span class="o">{</span><span class="m">1</span>,2<span class="o">}</span>.xml<span class="w"> </span>--sp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-init<span class="w"> </span>--cf3<span class="w"> </span>vasprun_xmls/vasprun-00<span class="o">{</span><span class="m">001</span>..100<span class="o">}</span>.xml<span class="w"> </span>--cf2<span class="w"> </span>vasprun_xmls/vasprun-ph0000<span class="o">{</span><span class="m">1</span>,2<span class="o">}</span>.xml<span class="w"> </span>--sp
 </pre></div>
 </div>
 <p>The advantage to employ <code class="docutils literal notranslate"><span class="pre">phono3py_params.yaml</span></code> is that this file can contain all
 the information required to run phono3py such as crystal structure, supercell
 information, displacements, forces, and parameters for non-analytical term
-correction. This file is immediately usable for <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code> command (<a class="reference internal" href="phono3py-load.html#phono3py-load-command"><span class="std std-ref">phono3py-load command</span></a>).</p>
+correction. This file is immediately usable for <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command (<a class="reference internal" href="phono3py.html#phono3py-command"><span class="std std-ref">phono3py command</span></a>).</p>
 </section>
 <section id="calculation-of-force-constants">
 <h2>Calculation of force constants<a class="headerlink" href="#calculation-of-force-constants" title="Link to this heading">#</a></h2>
 <p>If <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> is located in current directory, force constants are
 calculated from <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> (and optionally <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code>) and
 <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> by</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--symfc<span class="w"> </span>-v
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--symfc<span class="w"> </span>-v
 </pre></div>
 </div>
 <p>or</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>phono3py_params.yaml<span class="w"> </span>--symfc<span class="w"> </span>-v
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>phono3py_params.yaml<span class="w"> </span>--symfc<span class="w"> </span>-v
 </pre></div>
 </div>
 <p>Similarly, it is performed by also using <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command,</p>
@@ -410,7 +412,7 @@ calculated from <code class="docutils literal notranslate"><span class="pre">FOR
 </pre></div>
 </div>
 <p>or with <code class="docutils literal notranslate"><span class="pre">phono3py_params.yaml</span></code></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-c<span class="w"> </span>phono3py_params.yaml<span class="w"> </span>--symfc<span class="w"> </span>-v
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>phono3py_params.yaml<span class="w"> </span>--symfc<span class="w"> </span>-v
 </pre></div>
 </div>
 </section>
@@ -422,7 +424,7 @@ number can be very large. In addition, the required computational time and
 memory space can also become large. In such case, it may be good to consider
 introducing cutoff distance for pairs of atoms. It is performed by
 <code class="docutils literal notranslate"><span class="pre">--fc-calc-opt</span></code> option as</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--symfc<span class="w"> </span>-v<span class="w"> </span>--fc-calc-opt<span class="w"> </span><span class="s2">&quot;cutoff=8&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--symfc<span class="w"> </span>-v<span class="w"> </span>--fc-calc-opt<span class="w"> </span><span class="s2">&quot;cutoff=8&quot;</span>
 </pre></div>
 </div>
 <p>The shortcut of <code class="docutils literal notranslate"><span class="pre">--fc-calc-opt</span> <span class="pre">&quot;cutoff=8&quot;</span></code> is <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span> <span class="pre">8</span></code>.</p>

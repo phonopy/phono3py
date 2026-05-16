@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Change Log &#8212; Phono3py v.3.31.1</title>
+    <title>Change Log &#8212; Phono3py v.4.0.0</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=a8a178d9"></script>
+    <script src="_static/documentation_options.js?v=a1c85040"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -48,10 +48,10 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'changelog';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="References" href="reference.html" />
+    <link rel="prev" title="Migrating from phono3py v3 to v4" href="migration-v4.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="3.31" />
+  <meta name="docsearch:version" content="4.0" />
   </head>
   
   
@@ -126,7 +126,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.3.31.1</p>
+    <p class="title logo__title">Phono3py v.4.0.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -140,7 +140,7 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="rust-backend.html">Rust backend (experimental)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rust-backend.html">Rust backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -161,11 +161,13 @@
 <li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Force constants calculation with cutoff pair-distance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="phono3py-api.html">Phono3py API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="phono3py-load.html">phono3py-load command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py.html">phono3py command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-init.html">phono3py-init command</a></li>
 <li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">Using phono3py hdf5 files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="grid.html">Grids in reciprocal space</a></li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration-v4.html">Migrating from phono3py v3 to v4</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Change Log</a></li>
 </ul>
 
@@ -312,6 +314,7 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#may-16-2026-version-4-0-0">May-16-2026: Version 4.0.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apr-25-2026-version-3-31-1">Apr-25-2026: Version 3.31.1</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apr-24-2026-version-3-31-0">Apr-24-2026: Version 3.31.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apr-11-2026-version-3-30-1">Apr-11-2026: Version 3.30.1</a></li>
@@ -446,6 +449,50 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="change-log">
 <span id="changelog"></span><h1>Change Log<a class="headerlink" href="#change-log" title="Link to this heading">#</a></h1>
+<section id="may-16-2026-version-4-0-0">
+<h2>May-16-2026: Version 4.0.0<a class="headerlink" href="#may-16-2026-version-4-0-0" title="Link to this heading">#</a></h2>
+<p>Major breaking changes. See <a class="reference internal" href="migration-v4.html#migration-v4"><span class="std std-ref">Migrating from phono3py v3 to v4</span></a> for the upgrade guide.</p>
+<ul class="simple">
+<li><p>CLI split into <code class="docutils literal notranslate"><span class="pre">phono3py-init</span></code> (setup: displacements, FORCES_FC3 /
+FORCES_FC2 / FORCE_SETS file creation, <code class="docutils literal notranslate"><span class="pre">--cfs</span></code>, <code class="docutils literal notranslate"><span class="pre">--fs2f2</span></code>) and
+<code class="docutils literal notranslate"><span class="pre">phono3py</span></code> (phonon and thermal-conductivity calculation). <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code>
+is kept as a deprecated alias of <code class="docutils literal notranslate"><span class="pre">phono3py</span></code>. The <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> argument
+parser now rejects setup flags (<code class="docutils literal notranslate"><span class="pre">--cf3</span></code>, <code class="docutils literal notranslate"><span class="pre">--cf3-file</span></code>, <code class="docutils literal notranslate"><span class="pre">--cf2</span></code>, <code class="docutils literal notranslate"><span class="pre">--cfs</span></code>,
+<code class="docutils literal notranslate"><span class="pre">--fs2f2</span></code>, <code class="docutils literal notranslate"><span class="pre">--rd-fc2</span></code>, <code class="docutils literal notranslate"><span class="pre">--dim</span></code>, <code class="docutils literal notranslate"><span class="pre">--dim-fc2</span></code>, <code class="docutils literal notranslate"><span class="pre">-c</span></code>, etc.) and points the
+user to <code class="docutils literal notranslate"><span class="pre">phono3py-init</span></code>.</p></li>
+<li><p>The default of <code class="docutils literal notranslate"><span class="pre">primitive_matrix</span></code> in <code class="docutils literal notranslate"><span class="pre">Phono3py(...)</span></code> /
+<code class="docutils literal notranslate"><span class="pre">phono3py.load(...)</span></code> and of <code class="docutils literal notranslate"><span class="pre">--pa</span></code> on the CLI changed from the 3x3
+identity matrix to <code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>. When auto-detection returns a non-identity
+matrix a <code class="docutils literal notranslate"><span class="pre">PrimitiveMatrixAutoDefaultWarning</span></code> is emitted. Pass
+<code class="docutils literal notranslate"><span class="pre">primitive_matrix=&quot;P&quot;</span></code> (or <code class="docutils literal notranslate"><span class="pre">--pa</span> <span class="pre">P</span></code>) to restore the v3 behaviour.</p></li>
+<li><p>Compact force constants are now the default; <code class="docutils literal notranslate"><span class="pre">--cfc</span></code> / <code class="docutils literal notranslate"><span class="pre">--compact-fc</span></code>
+was removed. Use <code class="docutils literal notranslate"><span class="pre">--full-fc</span></code> for the full-array format.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--nac</span></code> was removed. NAC is now enabled automatically when a <code class="docutils literal notranslate"><span class="pre">BORN</span></code>
+file is present or <code class="docutils literal notranslate"><span class="pre">nac_params</span></code> is stored in <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code>. Pass
+<code class="docutils literal notranslate"><span class="pre">--nonac</span></code> to disable NAC explicitly.</p></li>
+<li><p>For <code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code>, symfc-projector is now used to symmetrize force
+constants calculated by the traditional fc-solver, matching the existing
+default of <code class="docutils literal notranslate"><span class="pre">phono3py</span></code>. Pass <code class="docutils literal notranslate"><span class="pre">fc_calculator=&quot;traditional&quot;</span></code> to recover
+the previous behaviour.</p></li>
+<li><p>Grid, tetrahedron-method, and kaccum modules migrated from phono3py to
+phonopy. The new import paths are <code class="docutils literal notranslate"><span class="pre">phonopy.phonon.grid.BZGrid</span></code>,
+<code class="docutils literal notranslate"><span class="pre">phonopy.phonon.tetrahedron_method</span></code>, and the
+<code class="docutils literal notranslate"><span class="pre">phonopy.phonon.spectrum</span></code> accumulator API.</p></li>
+<li><p>Rust backend (<code class="docutils literal notranslate"><span class="pre">phonors</span></code>) is now the default. <code class="docutils literal notranslate"><span class="pre">phonors</span></code> is a required
+runtime dependency and is installed automatically with phono3py.
+<code class="docutils literal notranslate"><span class="pre">Phono3py(...)</span></code>, <code class="docutils literal notranslate"><span class="pre">phono3py.load(...)</span></code>, and the CLI all run on the Rust
+backend out of the box. The C extension is still built and remains
+selectable per call via <code class="docutils literal notranslate"><span class="pre">lang=&quot;C&quot;</span></code> / <code class="docutils literal notranslate"><span class="pre">--legacy-backend</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--rust</span></code> is a deprecated no-op (the Rust backend is already active)
+and emits a <code class="docutils literal notranslate"><span class="pre">DeprecationWarning</span></code>. <code class="docutils literal notranslate"><span class="pre">--legacy-backend</span></code> opts back into
+the C kernels; the conf-file equivalent is <code class="docutils literal notranslate"><span class="pre">LEGACY_BACKEND</span> <span class="pre">=</span> <span class="pre">.true.</span></code>.</p></li>
+<li><p>LAPACKE-based pseudo-inversion solvers (<code class="docutils literal notranslate"><span class="pre">--pinv-solver=1</span></code>,
+<code class="docutils literal notranslate"><span class="pre">--pinv-solver=2</span></code>) are deprecated and remain available only on the
+legacy C-extension backend (<code class="docutils literal notranslate"><span class="pre">--legacy-backend</span></code> / <code class="docutils literal notranslate"><span class="pre">lang=&quot;C&quot;</span></code>). The
+default <code class="docutils literal notranslate"><span class="pre">--pinv-solver=4</span></code> (<code class="docutils literal notranslate"><span class="pre">scipy.linalg.lapack.dsyev</span></code>) works on both
+backends.</p></li>
+</ul>
+</section>
 <section id="apr-25-2026-version-3-31-1">
 <h2>Apr-25-2026: Version 3.31.1<a class="headerlink" href="#apr-25-2026-version-3-31-1" title="Link to this heading">#</a></h2>
 <ul class="simple">
@@ -590,8 +637,8 @@ permutation symmetries alternately 3 times in succession (previously once).</p><
 <h2>Jun-26-2025: Version 3.17.0<a class="headerlink" href="#jun-26-2025-version-3-17-0" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Major refactoring of command-user interface. Most of routines behind the
-<code class="docutils literal notranslate"><span class="pre">phono3py</span></code> and <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code> commands were unified.</p></li>
-<li><p>For <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code>, symfc-projector is used to symmetrize force constants
+<code class="docutils literal notranslate"><span class="pre">phono3py</span></code> and <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> commands were unified.</p></li>
+<li><p>For <code class="docutils literal notranslate"><span class="pre">phono3py</span></code>, symfc-projector is used to symmetrize force constants
 calculated by finite difference approach as the default behavior. The previous
 behavior of the symmetrization can be recovered by <code class="docutils literal notranslate"><span class="pre">--fc-calculator</span> <span class="pre">traditional</span></code> option.</p></li>
 </ul>
@@ -663,7 +710,7 @@ C, <code class="docutils literal notranslate"><span class="pre">long</span></cod
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">-i</span></code>, <code class="docutils literal notranslate"><span class="pre">-o</span></code>, <code class="docutils literal notranslate"><span class="pre">--io</span></code> options have been deprecated.</p></li>
 <li><p>The <code class="docutils literal notranslate"><span class="pre">--amplitude</span></code> option can now be used to specify the displacement distance
-for <code class="docutils literal notranslate"><span class="pre">phono3py-load</span> <span class="pre">--pypolymlp</span></code>.</p></li>
+for <code class="docutils literal notranslate"><span class="pre">phono3py</span> <span class="pre">--pypolymlp</span></code>.</p></li>
 </ul>
 </section>
 <section id="jan-2-2025-version-3-11-0">
@@ -897,7 +944,7 @@ computational demand. In phono3py-v3, <code class="docutils literal notranslate"
 <h2>Apr-3-2023: Version 2.6.0<a class="headerlink" href="#apr-3-2023-version-2-6-0" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Release to follow the change of phonopy at v2.18, which fixes to be able to
-read <code class="docutils literal notranslate"><span class="pre">phono3py*.yaml</span></code> file with <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code>.</p></li>
+read <code class="docutils literal notranslate"><span class="pre">phono3py*.yaml</span></code> file with <code class="docutils literal notranslate"><span class="pre">phono3py</span></code>.</p></li>
 </ul>
 </section>
 <section id="dec-31-2022-version-2-5-1">
@@ -1023,7 +1070,7 @@ loader.</p>
 <h2>Sep-30-2020: Version 1.21.0<a class="headerlink" href="#sep-30-2020-version-1-21-0" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Maintenance release to follow the change of phonopy at v2.8.1</p></li>
-<li><p>Improvements of phono3py loader (<code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code>), <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code> command,
+<li><p>Improvements of phono3py loader (<code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code>), <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command,
 API, and <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code>.</p></li>
 <li><p>Harmonic phonon calculation on mesh was multithreaded. This is effective when
 using very dense mesh with non-analytical term correction (probably rare
@@ -1135,7 +1182,7 @@ values as linewidths in <code class="docutils literal notranslate"><span class="
 <section id="may-17-2018-version-1-13-1">
 <h2>May-17-2018: version 1.13.1<a class="headerlink" href="#may-17-2018-version-1-13-1" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p>Compact force constants are implemented (See <a class="reference internal" href="command-options.html#compact-fc-option"><span class="std std-ref">--cfc or --compact-fc (COMPACT_FC = .TRUE.)</span></a>).</p></li>
+<li><p>Compact force constants are implemented (See <a class="reference internal" href="command-options.html#compact-fc-option"><span class="std std-ref">--cfc or --compact-fc (COMPACT_FC = .TRUE.) (deprecated)</span></a>).</p></li>
 </ul>
 </section>
 <section id="mar-16-2018-version-1-12-9">
@@ -1456,12 +1503,12 @@ a mesh number is an even number, it is more carefully treated.</p></li>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="reference.html"
+       href="migration-v4.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">References</p>
+        <p class="prev-next-title">Migrating from phono3py v3 to v4</p>
       </div>
     </a>
 </div>
@@ -1482,6 +1529,7 @@ a mesh number is an even number, it is more carefully treated.</p></li>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#may-16-2026-version-4-0-0">May-16-2026: Version 4.0.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apr-25-2026-version-3-31-1">Apr-25-2026: Version 3.31.1</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apr-24-2026-version-3-31-0">Apr-24-2026: Version 3.31.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apr-11-2026-version-3-30-1">Apr-11-2026: Version 3.30.1</a></li>
