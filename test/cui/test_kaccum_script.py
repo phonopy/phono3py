@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import os
 import pathlib
 import shutil
@@ -20,6 +21,7 @@ from phono3py.cui.kaccum_script import (
 cwd = pathlib.Path(__file__).parent
 KAPPA_HDF5 = cwd / ".." / "kappa-m111111_si_pbesol.hdf5"
 PHONO3PY_YAML = cwd / ".." / "phono3py_si_pbesol.yaml"
+EXPECTED = cwd / "expected"
 
 # Temperatures in kappa-m111111_si_pbesol.hdf5: [100, 200, 300, 400, 500] K
 TEMPERATURES = [100.0, 200.0, 300.0, 400.0, 500.0]
@@ -75,12 +77,13 @@ def test_get_T_target_index_each_temperature(T_target):
 def test_show_tensor_average(capsys):
     """_show_tensor with --average outputs 3 columns per data line."""
     n_temps, n_samp, n_elem = 1, 3, 6
-    kdos = np.zeros((n_temps, n_samp, 2, n_elem), dtype="double")
+    cumulative = np.zeros((n_temps, n_samp, n_elem), dtype="double")
+    density = np.zeros((n_temps, n_samp, n_elem), dtype="double")
     temperatures = np.array([T_DEFAULT])
-    sampling_points = np.linspace(0, 10, n_samp).reshape(n_temps, n_samp)
+    sampling_points = np.linspace(0, 10, n_samp)
 
     args = KaccumMockArgs(average=True)
-    _show_tensor(kdos, temperatures, sampling_points, args)  # type: ignore[arg-type]
+    _show_tensor(cumulative, density, temperatures, sampling_points, args)  # type: ignore[arg-type]
 
     captured = capsys.readouterr()
     data_lines = [line for line in captured.out.splitlines() if line.strip()]
@@ -90,12 +93,13 @@ def test_show_tensor_average(capsys):
 def test_show_scalar_default(capsys):
     """_show_scalar outputs one block per temperature."""
     n_temps, n_samp = 2, 4
-    gdos = np.zeros((n_temps, n_samp, 2), dtype="double")
+    cumulative = np.zeros((n_temps, n_samp), dtype="double")
+    density = np.zeros((n_temps, n_samp), dtype="double")
     temperatures = np.array([100.0, 200.0])
-    sampling_points = np.linspace(0, 10, n_samp * n_temps).reshape(n_temps, n_samp)
+    sampling_points = np.linspace(0, 10, n_samp)
 
     args = KaccumMockArgs()
-    _show_scalar(gdos, temperatures, sampling_points, args)  # type: ignore[arg-type]
+    _show_scalar(cumulative, density, temperatures, sampling_points, args)  # type: ignore[arg-type]
 
     captured = capsys.readouterr()
     lines = [line for line in captured.out.splitlines() if line.strip()]
@@ -224,3 +228,37 @@ def test_main_too_many_filenames():
     args = KaccumMockArgs(filenames=["a.hdf5", "b.hdf5"])
     with pytest.raises(RuntimeError):
         main(args=args)
+
+
+# ---------------------------------------------------------------------------
+# Regression tests: --mfp output (captured from pre-refactor run)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "expected_name,kaccum_args",
+    [
+        ("kaccum_mfp_si_300K.txt", {"mfp": True, "temperature": T_DEFAULT}),
+        ("kaccum_mfp_si_all_T.txt", {"mfp": True}),
+        (
+            "kaccum_mfp_si_300K_avg.txt",
+            {"mfp": True, "average": True, "temperature": T_DEFAULT},
+        ),
+    ],
+)
+def test_main_mfp_matches_pre_refactor_output(
+    kaccum_env, capsys, expected_name, kaccum_args
+):
+    """``phono3py-kaccum --mfp`` output is byte-identical to pre-refactor.
+
+    The expected-output files were captured by running the script against
+    ``kappa-m111111_si_pbesol.hdf5`` before the spectrum.py refactor.  Any
+    divergence means the refactor changed user-visible behaviour for the
+    ``--mfp`` path.
+
+    """
+    args = KaccumMockArgs(filenames=["kappa.hdf5"], **kaccum_args)
+    main(args=args)
+    actual = np.loadtxt(io.StringIO(capsys.readouterr().out), comments="#")
+    expected = np.loadtxt(EXPECTED / expected_name, comments="#")
+    np.testing.assert_allclose(actual, expected, rtol=1e-6, atol=1e-8)

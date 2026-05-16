@@ -40,7 +40,6 @@ import dataclasses
 import os
 from collections.abc import Sequence
 
-import numpy as np
 from numpy.typing import NDArray
 from phonopy.cui.collect_cell_info import CellInfoResult
 from phonopy.cui.collect_cell_info import get_cell_info as phonopy_get_cell_info
@@ -229,22 +228,5 @@ def create_phono3py_supercells(
 
         if log_level:
             print("Number of displacements for special fc2: %d" % num_disps)
-
-    if log_level:
-        identity = np.eye(3, dtype=int)
-        n_pure_trans = sum(
-            [
-                (r == identity).all()
-                for r in ph3.symmetry.symmetry_operations["rotations"]
-            ]
-        )
-
-        if len(ph3.supercell) // len(ph3.primitive) != n_pure_trans:
-            print("*" * 72)
-            print(
-                "Note: "
-                'A better primitive cell can be chosen by using "--pa auto" option.'
-            )
-            print("*" * 72)
 
     return ph3

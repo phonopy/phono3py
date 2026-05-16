@@ -60,7 +60,7 @@ class CollisionMatrix(ImagSelfEnergy):
         rot_grid_points: NDArray[np.int64] | None = None,
         is_kappa_star: bool = True,
         log_level: int = 0,
-        lang: Literal["C", "Python", "Rust"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "Rust",
     ) -> None:
         """Init method.
 
@@ -200,10 +200,10 @@ class CollisionMatrix(ImagSelfEnergy):
         )
 
     def _run_rust_collision_matrix(self) -> None:
-        import phono3py_rs  # type: ignore[import-untyped]
+        import phonors  # type: ignore[import-untyped]
 
         assert self._temperature is not None
-        phono3py_rs.collision_matrix(
+        phonors.collision_matrix(
             self._collision_matrix,
             self._pp_strength,
             self._frequencies,
@@ -219,10 +219,10 @@ class CollisionMatrix(ImagSelfEnergy):
         )
 
     def _run_rust_reducible_collision_matrix(self) -> None:
-        import phono3py_rs  # type: ignore[import-untyped]
+        import phonors  # type: ignore[import-untyped]
 
         assert self._temperature is not None
-        phono3py_rs.reducible_collision_matrix(
+        phonors.reducible_collision_matrix(
             self._collision_matrix,
             self._pp_strength,
             self._frequencies,

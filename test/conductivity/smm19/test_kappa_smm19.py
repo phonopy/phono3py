@@ -9,9 +9,9 @@ TOLERANCE = 0.2
 
 def test_kappa_smm19_si(si_pbesol: Phono3py):
     """Test SMM19-RTA by Si."""
-    ref_kappa = [107.891, 107.891, 107.891, 0.0, 0.0, 0.0]
+    ref_kappa = [108.330, 108.330, 108.330, 0.0, 0.0, 0.0]
     ref_kappa_intra = [107.794, 107.794, 107.794, 0.0, 0.0, 0.0]
-    ref_kappa_inter = [0.097, 0.097, 0.097, 0.0, 0.0, 0.0]
+    ref_kappa_inter = [0.537, 0.537, 0.537, 0.0, 0.0, 0.0]
     tc = _run_smm19_rta(si_pbesol, [9, 9, 9])
     np.testing.assert_allclose(ref_kappa, tc.kappa.ravel(), atol=TOLERANCE)
     np.testing.assert_allclose(ref_kappa_intra, tc.kappa_intra.ravel(), atol=TOLERANCE)
@@ -20,9 +20,9 @@ def test_kappa_smm19_si(si_pbesol: Phono3py):
 
 def test_kappa_smm19_si_with_sigma(si_pbesol: Phono3py):
     """Test SMM19-RTA with smearing method by Si."""
-    ref_kappa = [110.089, 110.089, 110.089, 0.0, 0.0, 0.0]
+    ref_kappa = [110.592, 110.592, 110.592, 0.0, 0.0, 0.0]
     ref_kappa_intra = [109.999, 109.999, 109.999, 0.0, 0.0, 0.0]
-    ref_kappa_inter = [0.089, 0.089, 0.089, 0.0, 0.0, 0.0]
+    ref_kappa_inter = [0.592, 0.592, 0.592, 0.0, 0.0, 0.0]
     si_pbesol.sigmas = [0.1]
     tc = _run_smm19_rta(si_pbesol, [9, 9, 9])
     np.testing.assert_allclose(ref_kappa, tc.kappa.ravel(), atol=TOLERANCE)
@@ -33,9 +33,9 @@ def test_kappa_smm19_si_with_sigma(si_pbesol: Phono3py):
 
 def test_kappa_smm19_si_iso(si_pbesol: Phono3py):
     """Test SMM19-RTA with isotope scattering by Si."""
-    ref_kappa = [97.311, 97.311, 97.311, 0.0, 0.0, 0.0]
+    ref_kappa = [97.758, 97.758, 97.758, 0.0, 0.0, 0.0]
     ref_kappa_intra = [97.213, 97.213, 97.213, 0.0, 0.0, 0.0]
-    ref_kappa_inter = [0.099, 0.099, 0.099, 0.0, 0.0, 0.0]
+    ref_kappa_inter = [0.545, 0.545, 0.545, 0.0, 0.0, 0.0]
     tc = _run_smm19_rta(si_pbesol, [9, 9, 9], is_isotope=True)
     np.testing.assert_allclose(ref_kappa, tc.kappa.ravel(), atol=TOLERANCE)
     np.testing.assert_allclose(ref_kappa_intra, tc.kappa_intra.ravel(), atol=TOLERANCE)

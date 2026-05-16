@@ -61,6 +61,9 @@ from phonopy.physical_units import get_physical_units
 
 if TYPE_CHECKING:
     from phono3py.conductivity.build_components import KappaSettings
+from phonopy.phonon.grid import get_grid_points_by_rotations
+
+from phono3py._lang import resolve_lang
 from phono3py.conductivity.grid_point_data import GridPointAggregates
 from phono3py.conductivity.lbte_collision_solver import LBTECollisionResult
 from phono3py.conductivity.utils import (
@@ -68,7 +71,6 @@ from phono3py.conductivity.utils import (
     get_kappa_star_operations,
     select_colmat_solver,
 )
-from phono3py.phonon.grid import get_grid_points_by_rotations
 
 
 @dataclass
@@ -148,7 +150,7 @@ class CollisionMatrixKernel:
         pinv_cutoff: float = 1.0e-8,
         pinv_solver: int = 0,
         pinv_method: int = 0,
-        lang: Literal["C", "Python", "Rust"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "Rust",
         log_level: int = 0,
     ) -> None:
         """Init method."""
@@ -159,6 +161,8 @@ class CollisionMatrixKernel:
         self._pinv_cutoff = pinv_cutoff
         self._pinv_solver = pinv_solver
         self._pinv_method = pinv_method
+        if lang in ("C", "Rust"):
+            lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
         self._log_level = log_level
         _, self._rotations_cartesian = get_kappa_star_operations(
@@ -494,9 +498,9 @@ class CollisionMatrixKernel:
             if self._log_level:
                 sys.stdout.write("- Making collision matrix symmetric (Rust) ")
                 sys.stdout.flush()
-            import phono3py_rs
+            import phonors
 
-            phono3py_rs.symmetrize_collision_matrix(self._collision_matrix)
+            phonors.symmetrize_collision_matrix(self._collision_matrix)
         elif self._lang == "C" and self._can_use_builtin_symmetrizer():
             if self._log_level:
                 sys.stdout.write("- Making collision matrix symmetric (built-in) ")
@@ -848,7 +852,7 @@ class IrreducibleCollisionMatrixKernel(CollisionMatrixKernel):
         pinv_cutoff: float = 1.0e-8,
         pinv_solver: int = 0,
         pinv_method: int = 0,
-        lang: Literal["C", "Python"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "Rust",
         log_level: int = 0,
     ) -> None:
         """Init method."""
@@ -1130,7 +1134,7 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
         pinv_cutoff: float = 1.0e-8,
         pinv_solver: int = 0,
         pinv_method: int = 0,
-        lang: Literal["C", "Python"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "Rust",
         log_level: int = 0,
     ) -> None:
         """Init method."""
@@ -1277,9 +1281,9 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
                 rot_grid_points,
             )
         elif self._lang == "Rust":
-            import phono3py_rs
+            import phonors
 
-            phono3py_rs.expand_collision_matrix(
+            phonors.expand_collision_matrix(
                 self._collision_matrix,
                 ir_gr_grid_points,
                 rot_grid_points,
@@ -1470,7 +1474,7 @@ def create_collision_matrix_kernel(
     pinv_cutoff: float = 1.0e-8,
     pinv_solver: int = 0,
     pinv_method: int = 0,
-    lang: Literal["C", "Python"] = "C",
+    lang: Literal["C", "Python", "Rust"] = "Rust",
     log_level: int = 0,
 ) -> CollisionMatrixKernel:
     """Create the appropriate CollisionMatrixKernel subclass.

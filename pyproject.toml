@@ -16,7 +16,8 @@ dependencies = [
     "matplotlib",
     "h5py",
     "spglib>=2.5.0",
-    "phonopy>=3.5.0,<3.6.0",
+    "phonopy>=4.0.0,<4.1.0",
+    "phonors",
 ]
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
@@ -27,6 +28,7 @@ Repository = "https://github.com/phonopy/phono3py"
 
 [project.scripts]
 phono3py = "phono3py.scripts.phono3py:run"
+phono3py-init = "phono3py.scripts.phono3py_init:run"
 phono3py-load = "phono3py.scripts.phono3py_load:run"
 phono3py-coleigplot = "phono3py.scripts.phono3py_coleigplot:run"
 phono3py-kaccum = "phono3py.scripts.phono3py_kaccum:run"

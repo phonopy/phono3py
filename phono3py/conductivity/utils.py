@@ -42,14 +42,15 @@ from typing import TYPE_CHECKING, Any, Literal, TypeVar, cast
 
 import numpy as np
 from numpy.typing import NDArray
-from phonopy.physical_units import get_physical_units
-
-from phono3py.file_IO import write_pp_to_hdf5
-from phono3py.phonon.grid import (
+from phonopy.phonon.grid import (
     BZGrid,
     get_grid_points_by_rotations,
     get_qpoints_from_bz_grid_points,
 )
+from phonopy.physical_units import get_physical_units
+
+from phono3py._lang import c_default_colmat_solver, c_include_lapacke
+from phono3py.file_IO import write_pp_to_hdf5
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.triplets import get_all_triplets
 
@@ -68,6 +69,26 @@ VOIGT_INDEX_PAIRS: tuple[tuple[int, int], ...] = (
     (0, 2),
     (0, 1),
 )
+
+
+def get_mfp(
+    g: NDArray[np.double],
+    gv: NDArray[np.double],
+) -> NDArray[np.double]:
+    """Calculate phonon mean free path from inverse lifetime and group velocity.
+
+    The phonon lifetime is ``tau = 1 / (2 * 2 * pi * gamma)``: one factor of 2
+    converts the HWHM ``gamma`` into FWHM, the second converts the linewidth
+    into the lifetime ``tau = hbar / (2 * gamma_linewidth)`` (with hbar = 1
+    in the units used here), and ``2 * pi`` converts cyclic to angular
+    frequency.  MFP is then ``|gv| * tau``.  Modes with non-positive
+    ``gamma`` are returned as zero.
+
+    """
+    g = np.where(g > 0, g, -1)
+    gv_norm = np.sqrt((gv**2).sum(axis=2))
+    mean_freepath = np.where(g > 0, gv_norm / (2 * 2 * np.pi * g), 0)
+    return mean_freepath
 
 
 def get_kappa_star_operations(
@@ -319,15 +340,8 @@ def build_options(_options_type: type[_TOptions], **kwargs: Any) -> _TOptions:
 
 def select_colmat_solver(pinv_solver: int) -> int:
     """Return collision matrix solver id."""
-    try:
-        import phono3py._phono3py as phono3c
-
-        default_solver = phono3c.default_colmat_solver()
-    except ImportError:
-        print("Phono3py C-routine is not compiled correctly.")
-        default_solver = 4
-
-    if not phono3c.include_lapacke():
+    default_solver = c_default_colmat_solver()
+    if not c_include_lapacke():
         if pinv_solver in (1, 2, 6):
             raise RuntimeError(
                 "Use pinv-solver 3, 4, or 5 because "

@@ -2,6 +2,49 @@
 
 # Change Log
 
+## May-16-2026: Version 4.0.0
+
+Major breaking changes. See {ref}`migration_v4` for the upgrade guide.
+
+- CLI split into `phono3py-init` (setup: displacements, FORCES_FC3 /
+  FORCES_FC2 / FORCE_SETS file creation, `--cfs`, `--fs2f2`) and
+  `phono3py` (phonon and thermal-conductivity calculation). `phono3py-load`
+  is kept as a deprecated alias of `phono3py`. The `phono3py` argument
+  parser now rejects setup flags (`--cf3`, `--cf3-file`, `--cf2`, `--cfs`,
+  `--fs2f2`, `--rd-fc2`, `--dim`, `--dim-fc2`, `-c`, etc.) and points the
+  user to `phono3py-init`.
+- The default of `primitive_matrix` in `Phono3py(...)` /
+  `phono3py.load(...)` and of `--pa` on the CLI changed from the 3x3
+  identity matrix to `"auto"`. When auto-detection returns a non-identity
+  matrix a `PrimitiveMatrixAutoDefaultWarning` is emitted. Pass
+  `primitive_matrix="P"` (or `--pa P`) to restore the v3 behaviour.
+- Compact force constants are now the default; `--cfc` / `--compact-fc`
+  was removed. Use `--full-fc` for the full-array format.
+- `--nac` was removed. NAC is now enabled automatically when a `BORN`
+  file is present or `nac_params` is stored in `phono3py.yaml`. Pass
+  `--nonac` to disable NAC explicitly.
+- For `phono3py.load`, symfc-projector is now used to symmetrize force
+  constants calculated by the traditional fc-solver, matching the existing
+  default of `phono3py`. Pass `fc_calculator="traditional"` to recover
+  the previous behaviour.
+- Grid, tetrahedron-method, and kaccum modules migrated from phono3py to
+  phonopy. The new import paths are `phonopy.phonon.grid.BZGrid`,
+  `phonopy.phonon.tetrahedron_method`, and the
+  `phonopy.phonon.spectrum` accumulator API.
+- Rust backend (`phonors`) is now the default. `phonors` is a required
+  runtime dependency and is installed automatically with phono3py.
+  `Phono3py(...)`, `phono3py.load(...)`, and the CLI all run on the Rust
+  backend out of the box. The C extension is still built and remains
+  selectable per call via `lang="C"` / `--legacy-backend`.
+- `--rust` is a deprecated no-op (the Rust backend is already active)
+  and emits a `DeprecationWarning`. `--legacy-backend` opts back into
+  the C kernels; the conf-file equivalent is `LEGACY_BACKEND = .true.`.
+- LAPACKE-based pseudo-inversion solvers (`--pinv-solver=1`,
+  `--pinv-solver=2`) are deprecated and remain available only on the
+  legacy C-extension backend (`--legacy-backend` / `lang="C"`). The
+  default `--pinv-solver=4` (`scipy.linalg.lapack.dsyev`) works on both
+  backends.
+
 ## Apr-25-2026: Version 3.31.1
 
 - Improved conductivity computation performance.
@@ -103,8 +146,8 @@
 ## Jun-26-2025: Version 3.17.0
 
 - Major refactoring of command-user interface. Most of routines behind the
-  `phono3py` and `phono3py-load` commands were unified.
-- For `phono3py-load`, symfc-projector is used to symmetrize force constants
+  `phono3py` and `phono3py` commands were unified.
+- For `phono3py`, symfc-projector is used to symmetrize force constants
   calculated by finite difference approach as the default behavior. The previous
   behavior of the symmetrization can be recovered by `--fc-calculator
   traditional` option.
@@ -155,7 +198,7 @@
 
 - `-i`, `-o`, `--io` options have been deprecated.
 - The `--amplitude` option can now be used to specify the displacement distance
-  for `phono3py-load --pypolymlp`.
+  for `phono3py --pypolymlp`.
 
 ## Jan-2-2025: Version 3.11.0
 
@@ -326,7 +369,7 @@ This is a major version release. There are backward-incompatible changes.
 ## Apr-3-2023: Version 2.6.0
 
 - Release to follow the change of phonopy at v2.18, which fixes to be able to
-  read `phono3py*.yaml` file with `phono3py-load`.
+  read `phono3py*.yaml` file with `phono3py`.
 
 ## Dec-31-2022: Version 2.5.1
 
@@ -421,7 +464,7 @@ loader.
 ## Sep-30-2020: Version 1.21.0
 
 - Maintenance release to follow the change of phonopy at v2.8.1
-- Improvements of phono3py loader (`phono3py.load`), `phono3py-load` command,
+- Improvements of phono3py loader (`phono3py.load`), `phono3py` command,
   API, and `phono3py_disp.yaml`.
 - Harmonic phonon calculation on mesh was multithreaded. This is effective when
   using very dense mesh with non-analytical term correction (probably rare

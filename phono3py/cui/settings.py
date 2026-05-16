@@ -65,7 +65,7 @@ class Phono3pySettings(Settings):
         self.grid_matrix: NDArray[np.int64] | None = None
         self.ion_clamped: bool = False
         self.is_bterta: bool = False
-        self.is_compact_fc: bool = False
+        self.is_compact_fc: bool = True
         self.is_fc3_r0_average: bool = True
         self.is_full_pp: bool = False
         self.is_gruneisen: bool = False
@@ -112,7 +112,7 @@ class Phono3pySettings(Settings):
         self.transport_type: str | None = None
         self.use_ave_pp: bool = False
         self.use_grg: bool = False
-        self.use_rust: bool = False
+        self.use_legacy_backend: bool = False
         self.write_collision: bool = False
         self.write_gamma_detail: bool = False
         self.write_gamma: bool = False
@@ -216,11 +216,11 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
             elif args.is_bterta is False:
                 self._confs["bterta"] = ".false."
 
-        if "is_compact_fc" in arg_list:
-            if args.is_compact_fc:
-                self._confs["compact_fc"] = ".true."
-            elif args.is_compact_fc is False:
+        if "is_full_fc" in arg_list:
+            if args.is_full_fc:
                 self._confs["compact_fc"] = ".false."
+            else:
+                self._confs["compact_fc"] = ".true."
 
         if "is_gruneisen" in arg_list:
             if args.is_gruneisen:
@@ -323,11 +323,6 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
                 self._confs["tetrahedron"] = ".true."
             elif args.is_tetrahedron_method is False:
                 self._confs["tetrahedron"] = ".false."
-
-        # M. Simoncelli, N. Marzari, F. Mauri; Nat. Phys. 15, 809 (2019)
-        if "is_wigner_kappa" in arg_list:
-            if args.is_wigner_kappa:
-                self._confs["transport_type"] = "MS-SMM19"
 
         if "transport_type" in arg_list:
             if args.transport_type:
@@ -464,11 +459,22 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
             elif args.use_grg is False:
                 self._confs["use_grg"] = ".false."
 
-        if "use_rust" in arg_list:
-            if args.use_rust:
-                self._confs["use_rust"] = ".true."
-            elif args.use_rust is False:
-                self._confs["use_rust"] = ".false."
+        if "use_rust" in arg_list and args.use_rust:
+            import warnings
+
+            warnings.warn(
+                "--rust is a deprecated no-op in phono3py v4; the Rust backend "
+                "is now the default. Pass --legacy-backend to opt back into "
+                "the C extension.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        if "use_legacy_backend" in arg_list:
+            if args.use_legacy_backend:
+                self._confs["use_legacy_backend"] = ".true."
+            elif args.use_legacy_backend is False:
+                self._confs["use_legacy_backend"] = ".false."
 
         if "write_gamma_detail" in arg_list:
             if args.write_gamma_detail:
@@ -520,7 +526,7 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
                 "read_pp",
                 "use_ave_pp",
                 "use_grg",
-                "use_rust",
+                "use_legacy_backend",
                 "collective_phonon",
                 "write_gamma_detail",
                 "write_gamma",
@@ -918,9 +924,9 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
         if "use_grg" in params:
             settings.use_grg = params["use_grg"]
 
-        # Use experimental Rust backend
-        if "use_rust" in params:
-            settings.use_rust = params["use_rust"]
+        # Opt back into the legacy C-extension backend
+        if "use_legacy_backend" in params:
+            settings.use_legacy_backend = params["use_legacy_backend"]
 
         # Write detailed imag-part of self energy to hdf5
         if "write_gamma_detail" in params:

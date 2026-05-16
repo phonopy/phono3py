@@ -52,6 +52,7 @@ from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import determinant
 
 from phono3py import Phono3py
+from phono3py._lang import resolve_lang
 from phono3py.cui.create_force_constants import (
     develop_or_load_pypolymlp,
     parse_forces,
@@ -79,7 +80,7 @@ def load(
     primitive_matrix: Literal["P", "F", "I", "A", "C", "R", "auto"]
     | Sequence[Sequence[float]]
     | NDArray[np.double]
-    | None = None,
+    | None = "auto",
     phonon_supercell_matrix: Sequence[int]
     | Sequence[Sequence[int]]
     | NDArray[np.int64]
@@ -103,14 +104,14 @@ def load(
     is_symmetry: bool = True,
     symmetrize_fc: bool = True,
     is_mesh_symmetry: bool = True,
-    is_compact_fc: bool = False,
+    is_compact_fc: bool = True,
     use_pypolymlp: bool = False,
     mlp_params: dict | None = None,
     use_grg: bool = False,
     make_r0_average: bool = True,
     symprec: float = 1e-5,
     log_level: int = 0,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> Phono3py:
     """Create Phono3py instance from parameters and/or input files.
 
@@ -173,13 +174,16 @@ def load(
         (3, 3), where the former is considered a diagonal matrix. Default is the
         unit matrix. dtype=int
     primitive_matrix : array_like or str, optional
-        Primitive matrix multiplied to input cell basis vectors. Default is the
-        identity matrix. When given as array_like, shape=(3, 3), dtype=float.
-        When 'F', 'I', 'A', 'C', or 'R' is given instead of a 3x3 matrix, the
+        Primitive matrix multiplied to input cell basis vectors. Default is
+        'auto', which automatically chooses the centring type ('F', 'I', 'A',
+        'C', 'R', or primitive 'P'). None is treated the same as 'auto'. To
+        use the unit cell as the primitive cell (identity transformation),
+        pass 'P'. When given as array_like, shape=(3, 3), dtype=float. When
+        'F', 'I', 'A', 'C', or 'R' is given instead of a 3x3 matrix, the
         primitive matrix defined at
-        https://spglib.github.io/spglib/definition.html is used. When 'auto' is
-        given, the centring type ('F', 'I', 'A', 'C', 'R', or primitive 'P') is
-        automatically chosen. Default is 'auto'.
+        https://spglib.github.io/spglib/definition.html is used. When a
+        "phono3py.yaml"-like file is loaded and it has a primitive_matrix
+        stored, that value takes priority over the default 'auto'.
     phonon_supercell_matrix : array_like, optional
         Supercell matrix used for fc2. In phono3py, supercell matrix for fc3
         and fc2 can be different to support longer range interaction of fc2 than
@@ -250,12 +254,13 @@ def load(
         True.
     is_compact_fc : bool, optional
         fc3 are created in the array whose shape is
-            True: (primitive, supercell, supercell, 3, 3, 3) False: (supercell,
-            supercell, supercell, 3, 3, 3)
+            True: (primitive, supercell, supercell, 3, 3, 3)
+            False: (supercell, supercell, supercell, 3, 3, 3)
         and for fc2
-            True: (primitive, supercell, 3, 3) False: (supercell, supercell, 3, 3)
+            True: (primitive, supercell, 3, 3)
+            False: (supercell, supercell, 3, 3)
         where 'supercell' and 'primitive' indicate number of atoms in these
-        cells. Default is False.
+        cells. Default is True.
     use_pypolymlp : bool, optional
         Use pypolymlp for generating force constants. Default is False.
     mlp_params : dict, optional
@@ -277,6 +282,9 @@ def load(
         phono3py-rs backend.
 
     """
+    lang = resolve_lang(lang)
+    if primitive_matrix is None:
+        primitive_matrix = "auto"
     if (
         supercell is not None
         or supercell_filename is not None
@@ -316,10 +324,13 @@ def load(
         ph_smat = ph3py_yaml.phonon_supercell_matrix
         if smat is None:
             smat = np.eye(3, dtype="int64", order="C")
-        if primitive_matrix == "auto":
-            pmat = "auto"
-        else:
+        # When the caller leaves primitive_matrix at the default "auto",
+        # a value stored in the yaml takes priority (preserves the cell
+        # transformation that was used originally).
+        if primitive_matrix == "auto" and ph3py_yaml.primitive_matrix is not None:
             pmat = ph3py_yaml.primitive_matrix
+        else:
+            pmat = primitive_matrix
 
         if nac_params is not None:
             _nac_params = nac_params
@@ -402,6 +413,7 @@ def load(
             fc_calculator_options=fc_calculator_options,
             symmetrize_fc=symmetrize_fc,
             is_compact_fc=is_compact_fc,
+            use_symfc_projector=True,
         )
 
     if log_level and ph3py.fc3 is not None:
@@ -437,7 +449,7 @@ def compute_force_constants_from_datasets(
     cutoff_pair_distance: float | None = None,
     symmetrize_fc: bool = True,
     is_compact_fc: bool = True,
-    load_phono3py_yaml: bool = False,
+    use_symfc_projector: bool = False,
 ) -> None:
     """Compute force constants from datasets.
 
@@ -464,7 +476,7 @@ def compute_force_constants_from_datasets(
             is_compact_fc=is_compact_fc,
             fc_calculator=fc3_calculator,
             fc_calculator_options=fc3_calc_opts,
-            use_symfc_projector=load_phono3py_yaml,
+            use_symfc_projector=use_symfc_projector,
         )
 
     if ph3py.fc2 is None or fc3_calculator != fc2_calculator:
@@ -479,7 +491,7 @@ def compute_force_constants_from_datasets(
                 is_compact_fc=is_compact_fc,
                 fc_calculator=fc2_calculator,
                 fc_calculator_options=fc2_calc_opts,
-                use_symfc_projector=load_phono3py_yaml,
+                use_symfc_projector=use_symfc_projector,
             )
 
 

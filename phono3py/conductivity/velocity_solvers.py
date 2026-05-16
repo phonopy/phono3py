@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
+from phonopy.phonon.grid import (
+    get_grid_points_by_rotations,
+    get_qpoints_from_bz_grid_points,
+)
 from phonopy.phonon.group_velocity import GroupVelocity
 
 from phono3py.conductivity.grid_point_data import VelocityResult
 from phono3py.conductivity.utils import VOIGT_INDEX_PAIRS, get_kappa_star_operations
-from phono3py.phonon.grid import (
-    get_grid_points_by_rotations,
-    get_qpoints_from_bz_grid_points,
-)
 from phono3py.phonon.velocity_matrix import VelocityMatrix
 from phono3py.phonon3.interaction import Interaction
 
@@ -236,14 +236,12 @@ class VelocityMatrixSolver:
         q_point = get_qpoints_from_bz_grid_points(grid_point, self._pp.bz_grid)
         self._velocity_obj.run([q_point])
         assert self._velocity_obj.velocity_matrices is not None
+        assert self._velocity_obj.group_velocities is not None
         gv = self._velocity_obj.group_velocities[0]
         vm_by_vm = self._get_vm_by_vm(
             grid_point, self._velocity_obj.velocity_matrices[0]
         )
-        return VelocityResult(
-            group_velocities=gv,
-            vm_by_vm=vm_by_vm,
-        )
+        return VelocityResult(group_velocities=gv, vm_by_vm=vm_by_vm)
 
     # ------------------------------------------------------------------
     # Private helpers
@@ -272,12 +270,13 @@ class VelocityMatrixSolver:
             gps_rotated = get_grid_points_by_rotations(
                 grid_point, self._pp.bz_grid, with_surface=False
             )
-            multi = len(np.where(gps_rotated[0] == gps_rotated)[0])
+            unique_gps = np.unique(gps_rotated)
+            multi = len(gps_rotated) // len(unique_gps)
+            assert multi * len(unique_gps) == len(gps_rotated)
         else:
             multi = 1
 
         vm_by_vm = np.zeros(vm.shape[1:] + (6,), order="C", dtype="complex128")
-
         for r in self._rotations_cartesian:
             # vm: (3, nat3, nat3) complex
             _vm = np.einsum("ab, bcd -> acd", r, vm)

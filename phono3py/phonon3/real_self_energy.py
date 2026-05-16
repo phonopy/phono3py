@@ -46,6 +46,7 @@ from numpy.typing import NDArray
 from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.physical_units import get_physical_units
 
+from phono3py._lang import log_dispatch, resolve_lang
 from phono3py.file_IO import (
     write_real_self_energy_at_grid_point,
     write_real_self_energy_to_hdf5,
@@ -83,7 +84,7 @@ class RealSelfEnergy:
         grid_point: int | None = None,
         temperature: float | None = None,
         epsilon: float | None = None,
-        lang: Literal["C", "Python", "Rust"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "Rust",
     ) -> None:
         """Init method.
 
@@ -108,9 +109,9 @@ class RealSelfEnergy:
             self.temperature = temperature
         self.grid_point = grid_point
 
+        if lang in ("C", "Rust"):
+            lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
-        from phono3py._lang import log_dispatch
-
         log_dispatch(lang, "RealSelfEnergy.__init__")
         self._frequency_: None = None
         self._pp_strength: NDArray[np.double] | None = None
@@ -285,7 +286,7 @@ class RealSelfEnergy:
         )
 
     def _run_rust_with_band_indices(self) -> None:
-        import phono3py_rs  # type: ignore
+        import phonors  # type: ignore
 
         assert self._real_self_energies is not None
         assert self._pp_strength is not None
@@ -294,7 +295,7 @@ class RealSelfEnergy:
         assert self._frequencies is not None
         assert self._band_indices is not None
         assert self._temperature is not None
-        phono3py_rs.real_self_energy_at_bands(
+        phonors.real_self_energy_at_bands(
             self._real_self_energies,
             self._pp_strength,
             self._triplets_at_q,
@@ -363,7 +364,7 @@ class RealSelfEnergy:
             self._real_self_energies[i][:] = shifts
 
     def _run_rust_with_frequency_points(self) -> None:
-        import phono3py_rs  # type: ignore
+        import phonors  # type: ignore
 
         assert self._frequency_points is not None
         assert self._real_self_energies is not None
@@ -375,7 +376,7 @@ class RealSelfEnergy:
         assert self._temperature is not None
         for i, fpoint in enumerate(self._frequency_points):
             shifts = np.zeros(self._real_self_energies.shape[1], dtype="double")
-            phono3py_rs.real_self_energy_at_frequency_point(
+            phonors.real_self_energy_at_frequency_point(
                 shifts,
                 float(fpoint),
                 self._pp_strength,
@@ -621,7 +622,7 @@ def get_real_self_energy(
     write_hdf5: bool = True,
     output_filename: str | os.PathLike | None = None,
     log_level: int = 0,
-    lang: Literal["C", "Python", "Rust"] = "C",
+    lang: Literal["C", "Python", "Rust"] = "Rust",
 ) -> tuple[NDArray[np.double] | None, NDArray[np.double]]:
     """Real part of self energy at frequency points.
 

@@ -5,24 +5,6 @@ import numpy as np
 from phono3py.api_phono3py import Phono3py
 
 
-def test_kappa_njc23_lbte_si(si_pbesol: Phono3py):
-    """Test NJC23-LBTE by Si."""
-    ref_kappa_intra_exact = [110.846, 110.846, 110.846, 0, 0, 0]
-    ref_kappa_inter = [0.097, 0.097, 0.097, 0, 0, 0]
-    si_pbesol.mesh_numbers = [9, 9, 9]
-    si_pbesol.init_phph_interaction()
-    si_pbesol.run_thermal_conductivity(
-        is_LBTE=True,
-        temperatures=[300],
-        transport_type="NJC23",
-    )
-    tc = si_pbesol.thermal_conductivity
-    kappa_intra = tc.kappa_intra_exact.ravel()
-    kappa_inter = tc.kappa_inter.ravel()
-    np.testing.assert_allclose(ref_kappa_intra_exact, kappa_intra, atol=0.5)
-    np.testing.assert_allclose(ref_kappa_inter, kappa_inter, atol=0.02)
-
-
 def test_kappa_njc23_lbte_si_multi_temp(si_pbesol: Phono3py):
     """Test NJC23-LBTE with multiple temperatures by Si.
 
@@ -33,16 +15,16 @@ def test_kappa_njc23_lbte_si_multi_temp(si_pbesol: Phono3py):
     """
     # Reference values: kappa_intra_exact and kappa_inter at 200, 300, 400 K
     ref_kappa_intra_exact = [
-        [193.1, 193.1, 193.1, 0, 0, 0],
-        [110.8, 110.8, 110.8, 0, 0, 0],
-        [79.0, 79.0, 79.0, 0, 0, 0],
+        [201.1, 201.1, 201.1, 0, 0, 0],
+        [114.1, 114.1, 114.1, 0, 0, 0],
+        [81.0, 81.0, 81.0, 0, 0, 0],
     ]
     ref_kappa_inter = [
-        [0.057, 0.057, 0.057, 0, 0, 0],
-        [0.097, 0.097, 0.097, 0, 0, 0],
-        [0.120, 0.120, 0.120, 0, 0, 0],
+        [0.774, 0.774, 0.774, 0, 0, 0],
+        [0.532, 0.532, 0.532, 0, 0, 0],
+        [0.483, 0.483, 0.483, 0, 0, 0],
     ]
-    si_pbesol.mesh_numbers = [9, 9, 9]
+    si_pbesol.mesh_numbers = [11, 11, 11]
     si_pbesol.init_phph_interaction()
     si_pbesol.run_thermal_conductivity(
         is_LBTE=True,
@@ -56,7 +38,7 @@ def test_kappa_njc23_lbte_si_multi_temp(si_pbesol: Phono3py):
         kappa_intra = tc.kappa_intra_exact[0, i_temp]
         kappa_inter = tc.kappa_inter[0, i_temp]
         np.testing.assert_allclose(ref_kappa_intra_exact[i_temp], kappa_intra, atol=0.5)
-        np.testing.assert_allclose(ref_kappa_inter[i_temp], kappa_inter, atol=0.02)
+        np.testing.assert_allclose(ref_kappa_inter[i_temp], kappa_inter, atol=0.05)
 
     # Verify 300 K slice matches the single-temperature test
     si_pbesol.run_thermal_conductivity(

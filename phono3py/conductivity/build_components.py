@@ -18,13 +18,13 @@ from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 from numpy.typing import NDArray
-
-from phono3py.conductivity.utils import get_unit_to_WmK
-from phono3py.phonon.grid import (
+from phonopy.phonon.grid import (
     BZGrid,
     get_grid_points_by_rotations,
     get_ir_grid_points,
 )
+
+from phono3py.conductivity.utils import get_unit_to_WmK
 from phono3py.phonon3.interaction import Interaction
 
 if TYPE_CHECKING:
@@ -208,7 +208,7 @@ class CalculatorConfig:
     pinv_cutoff: float = 1.0e-8
     pinv_solver: int = 0
     pinv_method: int = 0
-    lang: Literal["C", "Python", "Rust"] = "C"
+    lang: Literal["C", "Python", "Rust"] = "Rust"
     log_level: int = 0
     rust_gp_batch_size: int | None = None
 

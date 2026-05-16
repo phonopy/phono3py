@@ -57,6 +57,7 @@ from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive, compute_all_sg_permutations
 from phonopy.structure.symmetry import Symmetry
 
+from phono3py._lang import log_dispatch, resolve_lang
 from phono3py.phonon3.displacement_fc3 import (
     Fc3Type1DisplacementDataset,
     SecondAtomDisplacementWithForces,
@@ -73,10 +74,10 @@ def get_fc3(
     primitive: Primitive,
     disp_dataset: Fc3Type1DisplacementDataset,
     symmetry: Symmetry,
-    is_compact_fc: bool = False,
+    is_compact_fc: bool = True,
     pinv_solver: str = "numpy",
     verbose: bool = False,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> tuple[NDArray[np.double], NDArray[np.double]]:
     """Calculate fc3.
 
@@ -91,6 +92,7 @@ def get_fc3(
         `is_compact_fc`. See Phono3py.produce_fc3.
 
     """
+    lang = resolve_lang(lang)
     # fc2 has to be full matrix to compute delta-fc2
     # p2s_map elements are extracted if is_compact_fc=True at the last part.
     fc2 = get_fc2(
@@ -99,6 +101,7 @@ def get_fc3(
         primitive=primitive,
         is_compact_fc=False,
         symmetry=symmetry,
+        lang=lang,
     )
     fc3 = _get_fc3_least_atoms(
         supercell,
@@ -143,6 +146,7 @@ def get_fc3(
             permutations,
             s2compact,
             verbose=verbose,
+            lang=lang,
         )
         first_disp_atoms = np.unique(np.concatenate((first_disp_atoms, p2s_map)))
         target_atoms = [i for i in s2compact if i not in first_disp_atoms]
@@ -156,6 +160,7 @@ def get_fc3(
         permutations,
         s2compact,
         verbose=verbose,
+        lang=lang,
     )
 
     if "cutoff_distance" in disp_dataset:
@@ -189,34 +194,78 @@ def distribute_fc3(
     permutations: NDArray[np.int64],
     s2compact: NDArray[np.int64],
     verbose: bool = False,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> None:
-    """Distribute fc3.
+    """Distribute fc3 to symmetrically equivalent first-index atoms (in place).
 
-    fc3[i, :, :, 0:3, 0:3, 0:3] where i=indices done are distributed to
-    symmetrically equivalent fc3 elements by tensor rotations.
+    For each ``i_target`` in ``target_atoms``, this routine finds an
+    ``i_done`` in ``first_disp_atoms`` and a symmetry operation (R, t)
+    that maps ``i_target -> i_done``, and writes::
 
-    Search symmetry operation (R, t) that performs
-        i_target -> i_done
-    and
-        atom_mapping[i_target] = i_done
-        fc3[i_target, j_target, k_target] = R_inv[i_done, j, k]
-    When multiple (R, t) can be found, the pure translation operation is
-    preferred.
+        fc3[i_target, j_target, k_target]
+            = R_inv . fc3[i_done, atom_mapping[j_target],
+                                  atom_mapping[k_target]]
+
+    where ``atom_mapping`` is the permutation of supercell atoms induced
+    by (R, t).  When multiple (R, t) satisfy the mapping, the pure
+    translation (R = I) is preferred to avoid accumulating round-off from
+    tensor rotations.
+
+    The compact-fc3 layout is supported via ``s2compact``: any read or
+    write that uses a supercell-atom index ``i`` for the first axis is
+    redirected to ``s2compact[i]``.  For full-fc3, pass
+    ``s2compact = np.arange(n_satom)``.
 
     Parameters
     ----------
-    target_atoms: list or ndarray
-        Supercell atom indices to which fc3 are distributed.
-    s2compact: ndarray
-        Maps supercell index to compact index. For full-fc3,
-        s2compact=np.arange(n_satom).
-        shape=(n_satom,)
-        dtype=int64
+    fc3 : ndarray
+        Force constants array, modified in place.  Shape is either
+        ``(n_satom, n_satom, n_satom, 3, 3, 3)`` (full) or
+        ``(n_patom, n_satom, n_satom, 3, 3, 3)`` (compact); the
+        first-axis size is implied by ``s2compact``.
+        dtype=double, order=C
+    first_disp_atoms : list or ndarray
+        Supercell atom indices whose ``fc3[i, :, :, ...]`` rows are
+        already populated and act as the source of distribution.
+    target_atoms : list or ndarray
+        Supercell atom indices to which fc3 are distributed.  These
+        rows of ``fc3`` are overwritten.
+    lattice : ndarray
+        Supercell basis vectors as columns.
+        shape=(3, 3), dtype=double
+    rotations : ndarray
+        Rotation parts of the symmetry operations searched over.
+        shape=(n_op, 3, 3), dtype=int64
+    permutations : ndarray
+        Atom permutation table induced by each symmetry operation, i.e.
+        ``permutations[op, i]`` gives the supercell atom that atom ``i``
+        is sent to by operation ``op``.
+        shape=(n_op, n_satom), dtype=int64
+    s2compact : ndarray
+        Maps supercell index to first-axis index of ``fc3``.  For
+        full-fc3, ``s2compact = np.arange(n_satom)``; for compact-fc3,
+        ``s2compact = np.array([p2p_map[s2p_map[i]] for i in
+        range(n_satom)])``.
+        shape=(n_satom,), dtype=int64
+    verbose : bool, optional
+        When ``> 2``, print each ``i_done -> i_target`` mapping.
+        Default is False.
+    lang : {"C", "Rust"}, optional
+        Backend used for the per-target inner loop.  ``"Rust"`` requires
+        the ``phonors`` extension; ``"C"`` falls back to a slow Python
+        loop if the C extension is unavailable.  Default is ``"C"``.
+
+    Raises
+    ------
+    RuntimeError
+        If no symmetry operation maps ``i_target`` to any ``i_done``.
 
     """
+    lang = resolve_lang(lang)
     identity = np.eye(3, dtype=int)
     pure_trans_indices = [i for i, r in enumerate(rotations) if (r == identity).all()]
+
+    log_dispatch(lang, "distribute_fc3")
 
     n_satom = fc3.shape[1]
     for i_target in target_atoms:
@@ -244,9 +293,9 @@ def distribute_fc3(
             sys.stdout.flush()
 
         if lang == "Rust":
-            import phono3py_rs  # type: ignore[import-untyped]
+            import phonors  # type: ignore[import-untyped]
 
-            phono3py_rs.distribute_fc3(
+            phonors.distribute_fc3(
                 fc3, s2compact[i_target], s2compact[i_done], atom_mapping, rot_cart_inv
             )
             continue
@@ -268,20 +317,98 @@ def distribute_fc3(
                     )
 
 
+def distribute_fc3_by_translations(
+    fc3: NDArray[np.double],
+    primitive: Primitive,
+    lang: Literal["C", "Rust"] = "Rust",
+) -> None:
+    """Distribute compact fc3 data to full fc3 by pure translations.
+
+    For example, the input fc3 has to be prepared in the following way
+    in advance:
+
+    fc3 = np.zeros(
+        (compact_fc3.shape[1], compact_fc3.shape[1], compact_fc3.shape[1],
+         3, 3, 3),
+        dtype='double', order='C',
+    )
+    fc3[primitive.p2s_map] = compact_fc3
+
+    """
+    p2s = primitive.p2s_map
+    permutations = primitive.atomic_permutations
+    lattice = primitive.cell.T @ np.linalg.inv(primitive.primitive_matrix)
+    rotations = np.array(
+        [np.eye(3, dtype="int64")] * permutations.shape[0],
+        dtype="int64",
+        order="C",
+    )
+    n_satom = fc3.shape[1]
+    target_atoms = [i for i in range(n_satom) if i not in p2s]
+    distribute_fc3(
+        fc3,
+        p2s,
+        target_atoms,
+        lattice,
+        rotations,
+        permutations,
+        np.arange(n_satom, dtype="int64"),
+        lang=lang,
+    )
+
+
+def compact_fc3_to_full_fc3(
+    primitive: Primitive,
+    compact_fc3: NDArray[np.double],
+    log_level: int = 0,
+    lang: Literal["C", "Rust"] = "Rust",
+) -> NDArray[np.double]:
+    """Transform compact fc3 to full fc3.
+
+    Compact fc3 has shape (n_patom, n_satom, n_satom, 3, 3, 3) and full fc3
+    has shape (n_satom, n_satom, n_satom, 3, 3, 3), where n_patom and n_satom
+    are the numbers of atoms in the primitive cell and supercell.
+
+    """
+    n_satom = compact_fc3.shape[1]
+    fc3 = np.zeros((n_satom, n_satom, n_satom, 3, 3, 3), dtype="double", order="C")
+    fc3[primitive.p2s_map] = compact_fc3
+    distribute_fc3_by_translations(fc3, primitive, lang=lang)
+    if log_level:
+        print("fc3 was expanded to full format.")
+    return fc3
+
+
+def full_fc3_to_compact_fc3(
+    primitive: Primitive,
+    full_fc3: NDArray[np.double],
+    log_level: int = 0,
+) -> NDArray[np.double]:
+    """Transform full fc3 to compact fc3."""
+    p2s_map = primitive.p2s_map
+    fc3 = np.array(full_fc3[p2s_map], dtype="double", order="C")
+    if log_level:
+        print("fc3 format was transformed to compact format.")
+    return fc3
+
+
 def set_permutation_symmetry_fc3(
     fc3: NDArray[np.double],
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> None:
     """Enforce permutation symmetry to full fc3."""
+    lang = resolve_lang(lang)
     if lang == "Rust":
-        import phono3py_rs  # type: ignore[import-untyped]
+        import phonors  # type: ignore[import-untyped]
 
-        phono3py_rs.permutation_symmetry_fc3(fc3)
+        log_dispatch(lang, "set_permutation_symmetry_fc3")
+        phonors.permutation_symmetry_fc3(fc3)
         return
 
     try:
         import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
+        log_dispatch(lang, "set_permutation_symmetry_fc3")
         phono3c.permutation_symmetry_fc3(fc3)
     except ImportError:
         print("Phono3py C-routine is not compiled correctly.")
@@ -296,9 +423,10 @@ def set_permutation_symmetry_fc3(
 def set_permutation_symmetry_compact_fc3(
     fc3: NDArray[np.double],
     primitive: Primitive,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> None:
     """Enforce permulation symmetry to compact fc3."""
+    lang = resolve_lang(lang)
     s2p_map = primitive.s2p_map
     p2s_map = primitive.p2s_map
     p2p_map = primitive.p2p_map
@@ -306,9 +434,10 @@ def set_permutation_symmetry_compact_fc3(
     s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map, p2p_map, permutations)
 
     if lang == "Rust":
-        import phono3py_rs  # type: ignore[import-untyped]
+        import phonors  # type: ignore[import-untyped]
 
-        phono3py_rs.permutation_symmetry_compact_fc3(
+        log_dispatch(lang, "set_permutation_symmetry_compact_fc3")
+        phonors.permutation_symmetry_compact_fc3(
             fc3, permutations, s2pp_map, p2s_map, nsym_list
         )
         return
@@ -316,6 +445,7 @@ def set_permutation_symmetry_compact_fc3(
     try:
         import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
+        log_dispatch(lang, "set_permutation_symmetry_compact_fc3")
         phono3c.permutation_symmetry_compact_fc3(
             fc3, permutations, s2pp_map, p2s_map, nsym_list
         )
@@ -364,9 +494,10 @@ def set_translational_invariance_fc3(fc3: NDArray[np.double]) -> None:
 def set_translational_invariance_compact_fc3(
     fc3: NDArray[np.double],
     primitive: Primitive,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> None:
     """Enforce translational symmetry to compact fc3."""
+    lang = resolve_lang(lang)
     s2p_map = primitive.s2p_map
     p2s_map = primitive.p2s_map
     p2p_map = primitive.p2p_map
@@ -374,13 +505,15 @@ def set_translational_invariance_compact_fc3(
     s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map, p2p_map, permutations)
 
     if lang == "Rust":
-        import phono3py_rs  # type: ignore[import-untyped]
+        import phonors  # type: ignore[import-untyped]
 
-        transpose = phono3py_rs.transpose_compact_fc3
+        log_dispatch(lang, "set_translational_invariance_compact_fc3")
+        transpose = phonors.transpose_compact_fc3
     else:
         try:
             import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
+            log_dispatch(lang, "set_translational_invariance_compact_fc3")
             transpose = phono3c.transpose_compact_fc3
         except ImportError as exc:
             text = (
@@ -437,10 +570,17 @@ def _get_delta_fc2(
     supercell: PhonopyAtoms,
     reduced_site_sym: NDArray[np.int64],
     symprec: float,
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> NDArray[np.double]:
     logger.debug("get_delta_fc2")
     disp_fc2 = _get_constrained_fc2(
-        supercell, dataset_second_atoms, atom1, forces1, reduced_site_sym, symprec
+        supercell,
+        dataset_second_atoms,
+        atom1,
+        forces1,
+        reduced_site_sym,
+        symprec,
+        lang=lang,
     )
     return disp_fc2 - fc2
 
@@ -452,6 +592,7 @@ def _get_constrained_fc2(
     forces1: NDArray[np.double],
     reduced_site_sym: NDArray[np.int64],
     symprec: float,
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> NDArray[np.double]:
     """Return fc2 under reduced (broken) site symmetry by first displacement.
 
@@ -481,7 +622,7 @@ def _get_constrained_fc2(
             sets_of_forces.append(disps_second["forces"] - forces1)
 
         solve_force_constants(
-            fc2, atom2, disps2, sets_of_forces, supercell, bond_sym, symprec
+            fc2, atom2, disps2, sets_of_forces, supercell, bond_sym, symprec, lang=lang
         )
 
     # Shift positions according to set atom1 is at origin
@@ -490,9 +631,11 @@ def _get_constrained_fc2(
     rotations = np.array(reduced_site_sym, dtype="int64", order="C")
     translations = np.zeros((len(reduced_site_sym), 3), dtype="double", order="C")
     permutations = compute_all_sg_permutations(
-        positions, rotations, translations, lattice, symprec
+        positions, rotations, translations, lattice, symprec, lang=lang
     )
-    distribute_force_constants(fc2, atom_list, lattice, rotations, permutations)
+    distribute_force_constants(
+        fc2, atom_list, lattice, rotations, permutations, lang=lang
+    )
     return fc2
 
 
@@ -505,7 +648,7 @@ def _solve_fc3(
     symprec: float,
     pinv_solver: str = "numpy",
     verbose: bool = False,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> NDArray[np.double]:
     logger.debug("solve_fc3")
 
@@ -551,7 +694,7 @@ def _solve_fc3(
     logger.debug("get_positions_sent_by_rot_inv")
 
     rot_map_syms = get_positions_sent_by_rot_inv(
-        lattice, positions, site_symmetry, symprec
+        lattice, positions, site_symmetry, symprec, lang=lang
     )
     rot_map_syms = np.array(rot_map_syms, dtype="int64", order="C")
     rot_disps = get_rotated_displacement(displacements_first, site_sym_cart)  # type: ignore[arg-type]
@@ -571,16 +714,16 @@ def _solve_fc3(
     logger.debug("rotate_delta_fc2s")
 
     if lang == "Rust":
-        import phono3py_rs  # type: ignore[import-untyped]
+        import phonors  # type: ignore[import-untyped]
 
-        phono3py_rs.rotate_delta_fc2s(
-            fc3, delta_fc2s, inv_U, site_sym_cart, rot_map_syms
-        )
+        log_dispatch(lang, "_solve_fc3.rotate_delta_fc2s")
+        phonors.rotate_delta_fc2s(fc3, delta_fc2s, inv_U, site_sym_cart, rot_map_syms)
         return fc3
 
     try:
         import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
 
+        log_dispatch(lang, "_solve_fc3.rotate_delta_fc2s")
         phono3c.rotate_delta_fc2s(fc3, delta_fc2s, inv_U, site_sym_cart, rot_map_syms)
     except ImportError:
         for i, j in np.ndindex(num_atom, num_atom):
@@ -669,9 +812,10 @@ def show_drift_fc3(
 def get_drift_fc3(
     fc3: NDArray[np.double],
     primitive: Primitive | None = None,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> tuple[float, float, float, list[int], list[int], list[int]]:
     """Return max drift of fc3."""
+    lang = resolve_lang(lang)
     if fc3.shape[0] == fc3.shape[1]:
         num_atom = fc3.shape[0]
         maxval1 = 0
@@ -712,9 +856,9 @@ def get_drift_fc3(
         xyz2 = [0, 0, 0]
         xyz3 = [0, 0, 0]
         if lang == "Rust":
-            import phono3py_rs  # type: ignore[import-untyped]
+            import phonors  # type: ignore[import-untyped]
 
-            transpose = phono3py_rs.transpose_compact_fc3
+            transpose = phonors.transpose_compact_fc3
         else:
             try:
                 import phono3py._phono3py as phono3c  # type: ignore[import-untyped]
@@ -782,10 +926,10 @@ def _get_fc3_least_atoms(
     disp_dataset: Fc3Type1DisplacementDataset,
     fc2: NDArray[np.double],
     symmetry: Symmetry,
-    is_compact_fc: bool = False,
+    is_compact_fc: bool = True,
     pinv_solver: str = "numpy",
     verbose: bool = True,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> NDArray[np.double]:
     symprec = symmetry.tolerance
     num_satom = len(supercell)
@@ -842,6 +986,7 @@ def _get_fc3_least_atoms(
                         supercell,
                         reduced_site_sym,
                         symprec,
+                        lang=lang,
                     )
                 )
 

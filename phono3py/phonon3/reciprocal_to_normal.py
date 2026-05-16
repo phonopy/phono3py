@@ -69,13 +69,13 @@ def run_reciprocal_to_normal_squared_rust(
     ``n_out``; entries not touched by ``g_pos`` are zero.
 
     """
-    import phono3py_rs
+    import phonors
 
     fc3_normal_squared = np.zeros(n_out, dtype="double")
     f0, f1, f2 = np.ascontiguousarray(frequencies, dtype="double")
     e0, e1, e2 = (np.ascontiguousarray(e, dtype="complex128") for e in eigenvectors)
 
-    phono3py_rs.reciprocal_to_normal_squared(
+    phonors.reciprocal_to_normal_squared(
         fc3_normal_squared,
         np.ascontiguousarray(g_pos, dtype="int64"),
         np.ascontiguousarray(fc3_reciprocal, dtype="complex128"),

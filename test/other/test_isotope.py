@@ -87,6 +87,9 @@ def test_get_mass_variances_no_args_raises():
 @pytest.mark.parametrize("lang", ["C", "Python"])
 def test_Phono3pyIsotope(si_pbesol, lang):
     """Phono3pyIsotope with tetrahedron method."""
+    # Tetrahedron isotope kernel is C-only (Python path uses the C
+    # scalar ``get_tetrahedra_integration_weight`` helper).
+    pytest.importorskip("phonopy._phonopy")
     si_pbesol.mesh_numbers = [21, 21, 21]
     iso = Phono3pyIsotope(
         si_pbesol.mesh_numbers,
@@ -132,6 +135,7 @@ def test_Phono3pyIsotope_with_sigma(si_pbesol, lang):
 @pytest.mark.parametrize("lang", ["C", "Python"])
 def test_Phono3pyIsotope_grg(si_pbesol_grg, lang):
     """Phono3pyIsotope with tetrahedron method and GR-grid."""
+    pytest.importorskip("phonopy._phonopy")
     ph3 = si_pbesol_grg
     iso = Phono3pyIsotope(
         80,

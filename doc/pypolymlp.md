@@ -157,7 +157,7 @@ The `phono3py_params.yaml` file contains the training data required for
 developing polynomial MLPs when running with the `--pypolymlp` option.
 
 ```
-% phono3py-load --pypolymlp phono3py_params.yaml
+% phono3py --pypolymlp phono3py_params.yaml
         _                      _____
   _ __ | |__   ___  _ __   ___|___ / _ __  _   _
  | '_ \| '_ \ / _ \| '_ \ / _ \ |_ \| '_ \| | | |
@@ -226,7 +226,7 @@ no longer required, and files such as `phono3py.yaml` can be used as the input
 structure file.
 
 ```
-% phono3py-load --pypolymlp -d phono3py.yaml
+% phono3py --pypolymlp -d phono3py.yaml
         _                      _____
   _ __ | |__   ___  _ __   ___|___ / _ __  _   _
  | '_ \| '_ \ / _ \| '_ \ / _ \ |_ \| '_ \| | | |
@@ -315,7 +315,7 @@ training data is no longer required, and files such as `phono3py.yaml` can be
 used as the input structure file.
 
 ```
- % phono3py-load --pypolymlp --rd auto phono3py.yaml
+ % phono3py --pypolymlp --rd auto phono3py.yaml
         _                      _____
   _ __ | |__   ___  _ __   ___|___ / _ __  _   _
  | '_ \| '_ \ / _ \| '_ \ / _ \ |_ \| '_ \| | | |
@@ -412,7 +412,7 @@ force constants are calculated using supercells with 0.005 Angstrom systematic
 displacements.
 
 ```
-% phono3py-load phonopy_params_mp-661.yaml.xz --pypolymlp --relax-atomic-positions -d
+% phono3py phonopy_params_mp-661.yaml.xz --pypolymlp --relax-atomic-positions -d
 
         _                      _____
   _ __ | |__   ___  _ __   ___|___ / _ __  _   _
@@ -514,7 +514,7 @@ A few parameters can be specified using the `--mlp-params` option for the
 development of MLPs. The parameters are provided as a string, e.g.,
 
 ```bash
-% phono3py-load phono3py_params.yaml --pypolymlp --mlp-params="ntrain=80, ntest=20"
+% phono3py phono3py_params.yaml --pypolymlp --mlp-params="ntrain=80, ntest=20"
 ```
 
 Parameters are separated by commas for configuration. A brief explanation of the
@@ -558,10 +558,10 @@ can then be performed by varying the size of the training dataset while keeping
 the test dataset unchanged as follows:
 
 ```bash
-% phono3py-load --pypolymlp --mlp-params="ntrain=20, ntest=20" --br --mesh 40 phono3py_params.yaml | tee log-20
-% phono3py-load --pypolymlp --mlp-params="ntrain=40, ntest=20" --br --mesh 40 phono3py_params.yaml | tee log-40
-% phono3py-load --pypolymlp --mlp-params="ntrain=60, ntest=20" --br --mesh 40 phono3py_params.yaml | tee log-60
-% phono3py-load --pypolymlp --mlp-params="ntrain=80, ntest=20" --br --mesh 40 phono3py_params.yaml | tee log-80
+% phono3py --pypolymlp --mlp-params="ntrain=20, ntest=20" --br --mesh 40 phono3py_params.yaml | tee log-20
+% phono3py --pypolymlp --mlp-params="ntrain=40, ntest=20" --br --mesh 40 phono3py_params.yaml | tee log-40
+% phono3py --pypolymlp --mlp-params="ntrain=60, ntest=20" --br --mesh 40 phono3py_params.yaml | tee log-60
+% phono3py --pypolymlp --mlp-params="ntrain=80, ntest=20" --br --mesh 40 phono3py_params.yaml | tee log-80
 ```
 
 The computed lattice thermal conductivities (LTCs) are plotted against the size
@@ -603,7 +603,7 @@ the 100 results you've already calculated. Here is the procedure:
 
 ```bash
 % mv phono3py_disp.yaml phono3py_disp_orig.yaml
-% phono3py -c phono3py_disp_orig.yaml --rd 200
+% phono3py-init phono3py_disp_orig.yaml --rd 200
 % rm POSCAR-{00001..00100}
 % mv phono3py_disp.yaml phono3py_disp_200.yaml
 ```

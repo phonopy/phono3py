@@ -39,5 +39,8 @@ from phono3py.cui.phono3py_script import main
 
 def run() -> None:
     """Run phono3py script."""
-    argparse_control = {"load_phono3py_yaml": False}
+    argparse_control = {
+        "load_phono3py_yaml": True,
+        "mode": "run",
+    }
     main(**argparse_control)

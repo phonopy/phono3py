@@ -77,6 +77,7 @@ from phonopy.interface.symfc import (
     parse_symfc_options,
     symmetrize_by_projector,
 )
+from phonopy.phonon.grid import BZGrid
 from phonopy.physical_units import get_calculator_physical_units, get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import (
@@ -86,9 +87,11 @@ from phonopy.structure.cells import (
     get_primitive_matrix_with_auto,
     get_supercell,
     shape_supercell_matrix,
+    warn_if_primitive_matrix_auto_changed_cell,
 )
 from phonopy.structure.symmetry import Symmetry
 
+from phono3py._lang import resolve_lang
 from phono3py.conductivity.calculators import LBTECalculator, RTACalculator
 from phono3py.conductivity.lbte_init import get_thermal_conductivity_LBTE
 from phono3py.conductivity.rta_init import get_thermal_conductivity_RTA
@@ -97,7 +100,6 @@ from phono3py.interface.fc_calculator import (
     extract_fc2_fc3_calculators_options,
 )
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
-from phono3py.phonon.grid import BZGrid
 from phono3py.phonon3.dataset import forces_in_dataset
 from phono3py.phonon3.displacement_fc3 import (
     Fc3DisplacementDataset,
@@ -184,7 +186,7 @@ class Phono3py:
         primitive_matrix: Literal["P", "F", "I", "A", "C", "R", "auto"]
         | Sequence[Sequence[float]]
         | NDArray[np.double]
-        | None = None,
+        | None = "auto",
         phonon_supercell_matrix: Sequence[int]
         | Sequence[Sequence[int]]
         | NDArray[np.int64]
@@ -199,7 +201,7 @@ class Phono3py:
         symprec: float = 1e-5,
         calculator: str | None = None,
         log_level: int = 0,
-        lang: Literal["C", "Rust"] = "C",
+        lang: Literal["C", "Rust"] = "Rust",
     ):
         """Init method.
 
@@ -215,12 +217,13 @@ class Phono3py:
             `supercell_matrix` explicitly.
         primitive_matrix : array_like or str, optional
             Primitive matrix multiplied to input cell basis vectors. Default is
-            the identity matrix. When given as array_like, shape=(3, 3),
-            dtype=float. When 'F', 'I', 'A', 'C', or 'R' is given instead of a
-            3x3 matrix, the primitive matrix defined at
-            https://spglib.github.io/spglib/definition.html is used. When 'auto'
-            is given, the centring type ('F', 'I', 'A', 'C', 'R', or primitive
-            'P') is automatically chosen.
+            'auto', which automatically chooses the centring type ('F', 'I',
+            'A', 'C', 'R', or primitive 'P') from crystal symmetry. None is
+            treated the same as 'auto'. To use the unit cell as the primitive
+            cell (identity transformation), pass 'P'. When given as array_like,
+            shape=(3, 3), dtype=float. When 'F', 'I', 'A', 'C', or 'R' is
+            given instead of a 3x3 matrix, the primitive matrix defined at
+            https://spglib.github.io/spglib/definition.html is used.
         phonon_supercell_matrix : array_like, optional
             Supercell matrix used for fc2. In phono3py, supercell matrix for fc3
             and fc2 can be different to support longer range interaction of fc2
@@ -283,7 +286,7 @@ class Phono3py:
         self._cutoff_frequency = cutoff_frequency
         self._calculator = calculator
         self._log_level = log_level
-        self._lang: Literal["C", "Rust"] = lang
+        self._lang: Literal["C", "Rust"] = resolve_lang(lang)
 
         # Create supercell and primitive cell
         self._unitcell = unitcell
@@ -292,6 +295,9 @@ class Phono3py:
         )
         self._primitive_matrix = get_primitive_matrix_with_auto(
             self._unitcell, primitive_matrix, symprec=self._symprec
+        )
+        warn_if_primitive_matrix_auto_changed_cell(
+            primitive_matrix, self._primitive_matrix
         )
         self._nac_params: dict | None = None
         if phonon_supercell_matrix is not None:
@@ -1603,7 +1609,7 @@ class Phono3py:
     def produce_fc3(
         self,
         symmetrize_fc3r: bool = False,
-        is_compact_fc: bool = False,
+        is_compact_fc: bool = True,
         fc_calculator: Literal["traditional", "symfc", "alm"] | None = None,
         fc_calculator_options: str | None = None,
         use_symfc_projector: bool = False,
@@ -1621,10 +1627,10 @@ class Phono3py:
             False.
         is_compact_fc : bool, optional
             fc3 shape is
-                False: (supercell, supercell, supercell, 3, 3, 3) True:
-                (primitive, supercell, supercell, 3, 3, 3)
+                True: (primitive, supercell, supercell, 3, 3, 3)
+                False: (supercell, supercell, supercell, 3, 3, 3)
             where 'supercell' and 'primitive' indicate number of atoms in these
-            cells. Default is False.
+            cells. Default is True.
         fc_calculator : str, optional
             Force constants calculator given by str.
         fc_calculator_options : str, optional
@@ -1645,6 +1651,7 @@ class Phono3py:
             orders=[2, 3],
             options=fc_calculator_options,
             log_level=self._log_level,
+            lang=self._lang,
         )
         fc2 = fc_solver.force_constants[2]
         fc3 = fc_solver.force_constants[3]
@@ -1750,15 +1757,19 @@ class Phono3py:
             for _ in range(level):
                 if self._fc3.shape[0] == self._fc3.shape[1]:
                     set_translational_invariance_fc3(self._fc3)
-                    set_permutation_symmetry_fc3(self._fc3)
+                    set_permutation_symmetry_fc3(self._fc3, lang=self._lang)
                 else:
-                    set_translational_invariance_compact_fc3(self._fc3, self._primitive)
-                    set_permutation_symmetry_compact_fc3(self._fc3, self._primitive)
+                    set_translational_invariance_compact_fc3(
+                        self._fc3, self._primitive, lang=self._lang
+                    )
+                    set_permutation_symmetry_compact_fc3(
+                        self._fc3, self._primitive, lang=self._lang
+                    )
 
     def produce_fc2(
         self,
         symmetrize_fc2: bool = False,
-        is_compact_fc: bool = False,
+        is_compact_fc: bool = True,
         fc_calculator: Literal["traditional", "symfc", "alm"] | None = None,
         fc_calculator_options: str | None = None,
         use_symfc_projector: bool = False,
@@ -1776,10 +1787,10 @@ class Phono3py:
             calculator such as ALM. Default is False.
         is_compact_fc : bool
             fc2 shape is
-                False: (supercell, supercell, 3, 3)
                 True: (primitive, supercell, 3, 3)
+                False: (supercell, supercell, 3, 3)
             where 'supercell' and 'primitive' indicate number of atoms in these
-            cells. Default is False.
+            cells. Default is True.
         fc_calculator : str or None
             Force constants calculator given by str.
         fc_calculator_options : str or None
@@ -1812,6 +1823,7 @@ class Phono3py:
             is_compact_fc=is_compact_fc,
             symmetry=self._phonon_supercell_symmetry,
             log_level=self._log_level,
+            lang=self._lang,
         )
         self._fc2 = fc_solver.force_constants[2]  # type: ignore[assignment]
 
@@ -1892,9 +1904,11 @@ class Phono3py:
                 )
             for _ in range(level):
                 if self._fc2.shape[0] == self._fc2.shape[1]:
-                    symmetrize_force_constants(self._fc2)
+                    symmetrize_force_constants(self._fc2, lang=self._lang)
                 else:
-                    symmetrize_compact_force_constants(self._fc2, primitive)
+                    symmetrize_compact_force_constants(
+                        self._fc2, primitive, lang=self._lang
+                    )
 
     def cutoff_fc3_by_zero(
         self,
@@ -1933,7 +1947,7 @@ class Phono3py:
         if self._fc2 is not None:
             set_permutation_symmetry(self._fc2)
         if self._fc3 is not None:
-            set_permutation_symmetry_fc3(self._fc3)
+            set_permutation_symmetry_fc3(self._fc3, lang=self._lang)
 
     def set_translational_invariance(self) -> None:
         """Enforce translation invariance.
@@ -2378,7 +2392,7 @@ class Phono3py:
             and Umklapp scattering is made and imaginary parts of self energy
             for them are separated.
         transport_type : str, optional
-            "MS-SMM19", "NJC23", or None. Default is None.
+            "SMM19", "NJC23", or None. Default is None.
         write_kappa : bool, optional, default is False
             With True, thermal conductivity and related properties are
             written into a file. With multiple `sigmas`, respective files
@@ -2691,12 +2705,18 @@ class Phono3py:
     ###################
     def _search_symmetry(self) -> None:
         self._symmetry = Symmetry(
-            self._supercell, symprec=self._symprec, is_symmetry=self._is_symmetry
+            self._supercell,
+            symprec=self._symprec,
+            is_symmetry=self._is_symmetry,
+            lang=self._lang,
         )
 
     def _search_primitive_symmetry(self) -> None:
         self._primitive_symmetry = Symmetry(
-            self._primitive, self._symprec, self._is_symmetry
+            self._primitive,
+            self._symprec,
+            self._is_symmetry,
+            lang=self._lang,
         )
         if len(self._symmetry.pointgroup_operations) != len(
             self._primitive_symmetry.pointgroup_operations
@@ -2714,6 +2734,7 @@ class Phono3py:
                 self._phonon_supercell,
                 symprec=self._symprec,
                 is_symmetry=self._is_symmetry,
+                lang=self._lang,
             )
 
     def _build_supercell(self) -> None:
@@ -2863,7 +2884,9 @@ class Phono3py:
         else:
             t_mat = np.dot(inv_supercell_matrix, primitive_matrix)
 
-        return get_primitive(supercell, t_mat, self._symprec, store_dense_svecs=True)
+        return get_primitive(
+            supercell, t_mat, self._symprec, store_dense_svecs=True, lang=self._lang
+        )
 
     def _set_mesh_numbers(
         self,

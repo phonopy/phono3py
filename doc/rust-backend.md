@@ -1,15 +1,14 @@
 (rust_backend)=
 
-# Rust backend (experimental)
+# Rust backend
 
-The computationally heavy parts of phono3py have been implemented as C extension
-modules called from Python through the Python/C API. An alternative Rust
-implementation is now available experimentally. The Rust path is distributed as
-a separate Python extension module, `phono3py_rs`, built with
-[maturin](https://www.maturin.rs/) and [PyO3](https://pyo3.rs/). It is
-experimental: behaviour is validated against the C path by the regression tests
-under `test/`, but the C extension remains the default and both paths are kept
-in the source tree for cross-checking.
+The computationally heavy parts of phono3py are implemented twice: as a
+C extension module and as a Rust extension module. The Rust path lives in
+the separate [phonors](https://github.com/phonopy/phonors) package
+(built with [maturin](https://www.maturin.rs/) and
+[PyO3](https://pyo3.rs/)) and is the **default backend** in phono3py v4.
+The C extension is still built and kept as a legacy backend that users
+can opt back into per call.
 
 ```{contents}
 :depth: 2
@@ -18,10 +17,26 @@ in the source tree for cross-checking.
 
 ## Installation
 
-The Rust backend is not bundled with the standard phono3py wheel and conda
-package. It has to be built from the source tree under `rust/`.
+`phonors` is a required runtime dependency of phono3py and is installed
+automatically by `pip install phono3py` and by the
+[conda-forge phono3py package](https://anaconda.org/conda-forge/phono3py).
+Pre-built wheels and conda packages are published for Linux, macOS, and
+Windows on the supported Python versions, so no Rust toolchain is needed
+for typical installations.
 
-### Requirements
+### Building `phonors` from source (optional)
+
+To work against an unreleased `phonors` revision, clone the repository
+alongside phono3py and build the extension in editable mode with
+`maturin develop`:
+
+```bash
+% git clone https://github.com/phonopy/phonors.git
+% cd phonors
+% maturin develop --release
+```
+
+Requirements for a source build:
 
 - A Rust toolchain (stable, edition 2021, `rustc >= 1.75`). The
   easiest way to install it is via [rustup](https://rustup.rs/).
@@ -29,28 +44,6 @@ package. It has to be built from the source tree under `rust/`.
   and conda-forge).
 - Python 3.10 or newer. The extension is built against the stable ABI
   (`abi3-py310`), so one build works for all Python 3.10+ interpreters.
-- A working phono3py source checkout and its usual build/runtime
-  dependencies (see {ref}`install_from_source_code`).
-
-### Build and install
-
-Build the `phono3py_rs` extension in editable mode with `maturin
-develop`:
-
-```bash
-% cd rust
-% maturin develop --release
-```
-
-After a successful build, the module should import from any Python process
-
-```python
-import phono3py_rs
-```
-
-The phono3py Python layer imports `phono3py_rs` lazily and only when
-the Rust backend is selected, so installations without the extension
-continue to work on the C path.
 
 ### Optional: native CPU tuning
 
@@ -66,26 +59,25 @@ instruction set can recover a few percent of wall-clock:
 
 ## Usage
 
-Once `phono3py_rs` is installed, the Rust backend is selected through
-the `--rust` flag on the command line or the `lang` keyword on the
-Python API. The C backend remains the default.
+The Rust backend is the default; no flag or keyword is required. To
+opt back into the legacy C extension, pass `--legacy-backend` on the
+command line or `lang="C"` on the Python API. See
+{ref}`migration_v4` for the full v3 -> v4 migration notes.
 
 ### Command line
 
-Pass `--rust` to the `phono3py` command:
-
 ```bash
-% phono3py --rust ...
+% phono3py --br --mesh 11 11 11                  # default: Rust
+% phono3py --legacy-backend --br --mesh 11 11 11 # opt back into C
 ```
 
-When the flag is set, the *General settings* block of the run log
-prints
+When the Rust backend is active, the run header prints
 
 ```
-Experimental Rust backend enabled (lang=Rust)
+Rust backend (phonors) using rayon (N threads).
 ```
 
-as a reminder.
+where `N` follows rayon's defaults.
 
 ### Python API
 
@@ -95,11 +87,12 @@ a `lang` keyword:
 ```python
 import phono3py
 
-ph3 = phono3py.load("phono3py.yaml", lang="Rust")
+ph3 = phono3py.load("phono3py.yaml")             # default: Rust
+ph3 = phono3py.load("phono3py.yaml", lang="C")   # opt back into C
 ```
 
 The current value is exposed as the read-only `Phono3py.lang`
-property. Valid values are `"C"` (default) and `"Rust"`.
+property. Valid values are `"C"` and `"Rust"` (default `"Rust"`).
 
 `lang` is threaded internally to every lang-aware consumer, including
 `BZGrid` / `GridMatrix`, `Interaction`, the phonon solver
@@ -116,7 +109,7 @@ which uses its own thread pool. The thread count is controlled by
 path):
 
 ```bash
-% RAYON_NUM_THREADS=8 phono3py --rust ...
+% RAYON_NUM_THREADS=8 phono3py ...
 ```
 
 NumPy/SciPy BLAS multithreading used by phonon diagonalization is
@@ -125,11 +118,11 @@ independent and is controlled by the BLAS library's own variables
 
 ### Dispatch tracing
 
-To verify that a given code path is actually running on the Rust
-backend, set `PHONO3PY_TRACE_LANG=1` before launching:
+To verify which backend a given code path is actually running on, set
+`PHONO3PY_TRACE_LANG=1` before launching:
 
 ```bash
-% PHONO3PY_TRACE_LANG=1 phono3py --rust ...
+% PHONO3PY_TRACE_LANG=1 phono3py ...
 ```
 
 Each lang-aware call site emits one line to stderr, for example:
@@ -171,16 +164,48 @@ order:
 Example:
 
 ```bash
-% PHONO3PY_RUST_GP_BATCH_SIZE=8 phono3py --rust ...
+% PHONO3PY_RUST_GP_BATCH_SIZE=8 phono3py ...
 ```
 
 The batched path applies only to the low-memory RTA solver and is
 skipped automatically when `read_gamma` is set.
 
+(rust_backend_no_c_ext)=
+
+## Building phono3py without the C extension
+
+For Rust-only deployments (or to validate that every dispatch site has
+a Rust path), phono3py can be installed with the C extension skipped:
+
+```bash
+% PHONO3PY_NO_C_EXT=1 pip install -e . -vvv
+```
+
+When the env var is set, `CMakeLists.txt` returns early and
+`phono3py._phono3py` / `phono3py._phononcalc` are not built. At runtime,
+`Phono3py()` and `phono3py.load()` detect the missing C extension, emit
+a one-time `[phono3py] C extension ... is not available; falling back
+to lang='Rust' ...` message, and silently flip `lang="C"` requests to
+`lang="Rust"`. Since `phonors` is a required dependency, it is always
+present; an informative `ImportError` is raised only if it has been
+manually uninstalled.
+
+To restore the C extension, simply rebuild without the env var:
+
+```bash
+% pip install -e . -vvv
+```
+
+```{note}
+This option is intended for testing the Rust path and for packagers
+who want a Rust-only wheel. For day-to-day use the regular install
+(with the C extension) remains the recommended path.
+```
+
 ## Scope
 
-Most of the 3-phonon scattering runtime is available on the Rust
-backend:
+Rust kernels are wired through the lang dispatch for the following
+groups:
 
 - Grid construction (`BZGrid`, `GridMatrix`: SNF, grid addresses and
   maps, reciprocal / transform rotations).
@@ -195,7 +220,7 @@ backend:
 ### Known limitations
 
 - **Force constants.** A Rust implementation of the fc3 kernel exists
-  in `phono3py_rs`, but `Phono3py.produce_fc3` still runs on the C /
+  in `phonors`, but `Phono3py.produce_fc3` still runs on the C /
   Python path because it goes through phonopy's `FCSolver`, whose
   signature does not yet accept a `lang` hint. The `lang` parameter
   therefore does not yet reach this step.
@@ -207,6 +232,5 @@ backend:
 If any of these code paths is reached with `lang="Rust"`, phono3py
 transparently uses the C (or Python) implementation for that step.
 
-The Rust backend is exercised by dedicated pull-request CI on Linux,
-macOS, and Windows (see
-`.github/workflows/phono3py-pytest-conda-rust*.yml`).
+The Rust backend is exercised by the regular phono3py CI matrix on
+Linux, macOS, and Windows.

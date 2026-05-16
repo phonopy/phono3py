@@ -56,9 +56,9 @@ from phonopy.file_IO import (
     write_FORCE_SETS,
 )
 from phonopy.harmonic.displacement import DisplacementDataset, Type1DisplacementDataset
+from phonopy.phonon.grid import BZGrid
 from phonopy.structure.atoms import PhonopyAtoms
 
-from phono3py.phonon.grid import BZGrid
 from phono3py.phonon3.displacement_fc3 import (
     Fc3DisplacementDataset,
     Fc3Type1DisplacementDataset,

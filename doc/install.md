@@ -160,7 +160,16 @@ system. If you don't have it and you use Ubuntu linux, it is installed by:
 ```
 
 (install_lapacke)=
-### LAPACKE
+### LAPACKE (deprecated, legacy C-extension backend only)
+
+```{deprecated} v4
+The LAPACKE-linked C build is only useful when running with the legacy
+C-extension backend (`--legacy-backend` / `lang="C"`). The default Rust
+backend uses scipy/numpy for diagonalization and does not call into
+LAPACKE. The LAPACKE-specific `--pinv-solver=1` and `--pinv-solver=2`
+solvers are also deprecated; the default `--pinv-solver=4`
+(`scipy.linalg.lapack.dsyev`) works with both backends.
+```
 
 LAPACK library is used in a few parts of the code to diagonalize matrices.
 LAPACK*E* is the C-wrapper of LAPACK and LAPACK relies on BLAS. Both
@@ -175,7 +184,8 @@ compilation setting. However, it is also possible to compile Phono3py with
 LAPACKE support. When compiled this way, the diagonalization of the dynamical
 matrix is handled by LAPACK routines within the C code of Phono3py.
 Additionally, LAPACK is used for the diagonalization of the collision matrix
-in the direct solution.
+in the direct solution. The LAPACKE-using code paths are only reachable via
+the legacy C-extension backend (`--legacy-backend` / `lang="C"`).
 
 To compile phono3py with linking LAPACKE in C, use the following command:
 

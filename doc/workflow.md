@@ -32,8 +32,56 @@ primitive cell, primitive cell matrix is required to be given. Long-range
 dipole-dipole interaction can be included when parameters for non-analytical
 term correction (NAC) are provided.
 
-```{figure} procedure.png
-:align: center
+```{mermaid}
+flowchart TD
+    UC(["Unit cell"])
+    SM(["Supercell matrix"])
+    PCM(["Primitive cell matrix<br/>(auto)"])
+    NAC(["Non-analytical term<br/>correction parameters<br/>(recommended)"])
+    NACOPT(["Non-analytical term<br/>correction parameters<br/>(optional)"])
+    DD(["Displacement dataset"])
+    SC(["Supercell"])
+    SFS(["Supercell-force sets"])
+    FC(["Force constants<br/>(fc2, fc3)"])
+    LTC(["Lattice thermal<br/>conductivity"])
 
-Work flow of lattice thermal conductivity calculation
+    INIT_FS["phono3py-init<br/>(displacements)"]
+    INIT_FC["phono3py-init<br/>(FORCES_FCx)"]
+    RUN["phono3py<br/>(LTC)"]
+
+    FCALC{{"Force calc."}}
+    FCCALC{{"Force-constants calc."}}
+
+    UC --> INIT_FS
+    SM --> INIT_FS
+    PCM --> INIT_FS
+    NAC --> INIT_FS
+    INIT_FS --> SC
+    INIT_FS --> DD
+
+    SC --> FCALC
+    DD --> FCALC
+    FCALC --> SFS
+
+    DD --> INIT_FC
+    SFS --> INIT_FC
+    INIT_FC --> FCCALC
+    FCCALC --> FC
+
+    UC --> RUN
+    SM --> RUN
+    NACOPT --> RUN
+    FC --> RUN
+    RUN --> LTC
+
+    classDef init fill:#dae8fc,stroke:#6c8ebf,color:#000
+    classDef run fill:#d5e8d4,stroke:#82b366,color:#000
+    classDef ext fill:#ffe6cc,stroke:#d79b00,color:#000
+    class INIT_FS,INIT_FC init
+    class RUN run
+    class FCALC,FCCALC ext
 ```
+
+Blue boxes are `phono3py-init` steps (setup), the green box is the
+`phono3py` lattice-thermal-conductivity step, and orange hexagons are
+external force calculators.

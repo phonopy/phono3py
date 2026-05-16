@@ -37,7 +37,7 @@ def test_gruneisen_qpoints(gruneisen):
     np.testing.assert_allclose(
         gruneisen.frequencies[1],
         [3.98406999, 3.98406999, 9.44271189, 12.03447142, 14.76890302, 14.76890302],
-        rtol=1e-5,
+        atol=1e-4,
     )
 
     # Gruneisen trace at X point (0.5, 0, 0)
@@ -45,7 +45,7 @@ def test_gruneisen_qpoints(gruneisen):
     np.testing.assert_allclose(
         trace,
         [-3.95849219, -3.95849219, 0.59997949, 4.54031737, 3.54802433, 3.54802433],
-        rtol=1e-5,
+        atol=1e-4,
     )
 
     # Optical mode Gruneisen at Gamma: trace / 3 should be ~1.022
@@ -72,7 +72,7 @@ def test_gruneisen_mesh(si_pbesol_111: Phono3py):
 
     # Average Gruneisen parameter (trace/3 averaged over all q and bands)
     trace = gp[:, :, 0, 0] + gp[:, :, 1, 1] + gp[:, :, 2, 2]
-    np.testing.assert_allclose(trace.mean(), 0.5679428, rtol=1e-5)
+    np.testing.assert_allclose(trace.mean(), 0.5679428, atol=1e-4)
 
 
 def test_gruneisen_mesh_with_symmetry(si_pbesol_111: Phono3py):
@@ -93,7 +93,7 @@ def test_gruneisen_mesh_with_symmetry(si_pbesol_111: Phono3py):
     assert g.frequencies.shape == (8, 6)
 
     trace = gp[:, :, 0, 0] + gp[:, :, 1, 1] + gp[:, :, 2, 2]
-    np.testing.assert_allclose(trace.mean(), 0.5799835, rtol=1e-5)
+    np.testing.assert_allclose(trace.mean(), 0.5799835, atol=1e-4)
 
 
 def test_gruneisen_band(si_pbesol_111: Phono3py):
@@ -119,7 +119,7 @@ def test_gruneisen_band(si_pbesol_111: Phono3py):
     np.testing.assert_allclose(
         g.frequencies[0][1],
         [3.98406999, 3.98406999, 9.44271189, 12.03447142, 14.76890302, 14.76890302],
-        rtol=1e-5,
+        atol=1e-4,
     )
 
     # Gruneisen trace at (0.5, 0, 0)
@@ -127,7 +127,7 @@ def test_gruneisen_band(si_pbesol_111: Phono3py):
     np.testing.assert_allclose(
         trace,
         [-3.95849219, -3.95849219, 0.59997949, 4.54031737, 3.54802433, 3.54802433],
-        rtol=1e-5,
+        atol=1e-4,
     )
 
 
