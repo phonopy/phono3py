@@ -386,9 +386,7 @@ class JointDos:
         assert self._temperature is not None
         assert self._frequency_points is not None
         temperature_thz = (
-            self._temperature
-            * get_physical_units().KB
-            / get_physical_units().THzToEv
+            self._temperature * get_physical_units().KB / get_physical_units().THzToEv
         )
         jdos_elem = np.zeros(1, dtype="double")
         if lang == "Rust":
