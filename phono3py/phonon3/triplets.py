@@ -66,7 +66,7 @@ def get_triplets_at_q(
     | None = None,
     is_time_reversal: bool = True,
     swappable: bool = True,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> tuple[NDArray[np.int64], NDArray[np.int64], NDArray[np.int64], NDArray[np.int64]]:
     """Generate q-point triplets.
 
@@ -136,7 +136,7 @@ def get_triplets_at_q(
 
 
 def get_all_triplets(
-    grid_point: int, bz_grid: BZGrid, lang: Literal["C", "Rust"] = "C"
+    grid_point: int, bz_grid: BZGrid, lang: Literal["C", "Rust"] = "Rust"
 ) -> NDArray[np.int64]:
     """Return all triplets of a grid point.
 
@@ -155,7 +155,7 @@ def get_all_triplets(
 
 
 def get_nosym_triplets_at_q(
-    grid_point: int, bz_grid: BZGrid, lang: Literal["C", "Rust"] = "C"
+    grid_point: int, bz_grid: BZGrid, lang: Literal["C", "Rust"] = "Rust"
 ) -> tuple[NDArray[np.int64], NDArray[np.int64], NDArray[np.int64], NDArray[np.int64]]:
     """Return triplets information without imposing mesh symmetry.
 
@@ -177,7 +177,7 @@ def get_triplets_integration_weights(
     sigma: float | None,
     sigma_cutoff: float | None = None,
     is_collision_matrix: bool = False,
-    lang: Literal["C", "Python", "Rust"] = "C",
+    lang: Literal["C", "Python", "Rust"] = "Rust",
 ) -> tuple[NDArray[np.double], NDArray[np.byte] | None]:
     """Calculate triplets integration weights.
 
@@ -279,7 +279,7 @@ def _get_triplets_reciprocal_mesh_at_q(
     rec_rotations: NDArray[np.int64] | Sequence[Sequence[Sequence[int]]],
     is_time_reversal: bool = True,
     swappable: bool = True,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
     """Search symmetry reduced triplets fixing one q-point.
 
@@ -349,7 +349,7 @@ def _get_BZ_triplets_at_q(
     bz_grid_index: int,
     bz_grid: BZGrid,
     map_triplets: NDArray[np.int64],
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
     """Grid point triplets are searched considering BZ surface.
 

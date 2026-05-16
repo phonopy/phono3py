@@ -88,7 +88,7 @@ class Phono3pyJointDos:
         symprec: float = 1e-5,
         output_filename: str | os.PathLike | None = None,
         log_level: int = 0,
-        lang: Literal["C", "Python", "Rust"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "Rust",
     ) -> None:
         """Init method."""
         self._primitive = primitive

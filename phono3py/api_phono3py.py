@@ -201,7 +201,7 @@ class Phono3py:
         symprec: float = 1e-5,
         calculator: str | None = None,
         log_level: int = 0,
-        lang: Literal["C", "Rust"] = "C",
+        lang: Literal["C", "Rust"] = "Rust",
     ):
         """Init method.
 

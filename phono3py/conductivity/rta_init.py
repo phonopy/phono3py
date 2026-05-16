@@ -248,7 +248,7 @@ def get_thermal_conductivity_RTA(
     input_filename: str | None = None,
     output_filename: str | None = None,
     log_level: int = 0,
-    lang: Literal["C", "Python", "Rust"] = "C",
+    lang: Literal["C", "Python", "Rust"] = "Rust",
 ) -> RTACalculator:
     """Run RTA thermal conductivity calculation."""
     _sigmas = [None] if sigmas is None else list(sigmas)

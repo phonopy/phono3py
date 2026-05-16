@@ -745,7 +745,18 @@ def _add_run_options(parser: argparse.ArgumentParser) -> None:
         dest="use_rust",
         action="store_true",
         default=None,
-        help="Use experimental Rust backend instead of the C extension",
+        help=(
+            "Deprecated no-op: the Rust backend (phonors) is the default in "
+            "phono3py v4. Pass --legacy-backend to opt back into the C "
+            "extension."
+        ),
+    )
+    parser.add_argument(
+        "--legacy-backend",
+        dest="use_legacy_backend",
+        action="store_true",
+        default=None,
+        help="Use the legacy C-extension backend instead of the default Rust backend",
     )
     parser.add_argument(
         "--scattering-event-class",
@@ -1130,6 +1141,7 @@ class Phono3pyMockArgs:
     transport_type: str | None = None
     use_pypolymlp: bool | None = None
     use_rust: bool | None = None
+    use_legacy_backend: bool | None = None
     write_gamma: bool | None = None
     write_gamma_detail: bool | None = None
     write_grid_points: bool | None = None

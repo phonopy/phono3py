@@ -65,7 +65,7 @@ from phono3py.phonon.solver import (
 def get_unique_grid_points(
     grid_points: NDArray[np.int64],
     bz_grid: BZGrid,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> NDArray[np.int64]:
     """Collect grid points on tetrahedron vertices around input grid points.
 
@@ -170,7 +170,7 @@ class Isotope:
         symprec: float = 1e-5,
         cutoff_frequency: float | None = None,
         lapack_zheev_uplo: Literal["L", "U"] = "L",
-        lang: Literal["C", "Python", "Rust"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "Rust",
     ):
         """Init method."""
         self._mesh = mesh
@@ -415,14 +415,14 @@ class Isotope:
         self._gamma = gamma / np.prod(self._bz_grid.D_diag)
 
     def _set_integration_weights(
-        self, lang: Literal["C", "Python", "Rust"] = "C"
+        self, lang: Literal["C", "Python", "Rust"] = "Rust"
     ) -> None:
         if lang == "Python":
             self._set_integration_weights_py()
         else:
             self._set_integration_weights_c(lang=lang)
 
-    def _set_integration_weights_c(self, lang: Literal["C", "Rust"] = "C") -> None:
+    def _set_integration_weights_c(self, lang: Literal["C", "Rust"] = "Rust") -> None:
         """Set tetrahedron method integration weights.
 
         self._frequencies are those on all BZ-grid. So all those grid points in

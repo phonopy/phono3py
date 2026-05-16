@@ -31,6 +31,19 @@ Major breaking changes. See {ref}`migration_v4` for the upgrade guide.
   phonopy. The new import paths are `phonopy.phonon.grid.BZGrid`,
   `phonopy.phonon.tetrahedron_method`, and the
   `phonopy.phonon.spectrum` accumulator API.
+- Rust backend (`phonors`) is now the default. `phonors` is a required
+  runtime dependency and is installed automatically with phono3py.
+  `Phono3py(...)`, `phono3py.load(...)`, and the CLI all run on the Rust
+  backend out of the box. The C extension is still built and remains
+  selectable per call via `lang="C"` / `--legacy-backend`.
+- `--rust` is a deprecated no-op (the Rust backend is already active)
+  and emits a `DeprecationWarning`. `--legacy-backend` opts back into
+  the C kernels; the conf-file equivalent is `LEGACY_BACKEND = .true.`.
+- LAPACKE-based pseudo-inversion solvers (`--pinv-solver=1`,
+  `--pinv-solver=2`) are deprecated and remain available only on the
+  legacy C-extension backend (`--legacy-backend` / `lang="C"`). The
+  default `--pinv-solver=4` (`scipy.linalg.lapack.dsyev`) works on both
+  backends.
 
 ## Apr-25-2026: Version 3.31.1
 

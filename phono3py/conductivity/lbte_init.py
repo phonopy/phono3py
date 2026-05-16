@@ -289,7 +289,7 @@ def get_thermal_conductivity_LBTE(
     input_filename: str | os.PathLike | None = None,
     output_filename: str | os.PathLike | None = None,
     log_level: int = 0,
-    lang: Literal["C", "Python", "Rust"] = "C",
+    lang: Literal["C", "Python", "Rust"] = "Rust",
 ) -> LBTECalculator:
     """Calculate lattice thermal conductivity by direct solution."""
     _sigmas = [None] if sigmas is None else list(sigmas)

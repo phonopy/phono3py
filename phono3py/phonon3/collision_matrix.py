@@ -60,7 +60,7 @@ class CollisionMatrix(ImagSelfEnergy):
         rot_grid_points: NDArray[np.int64] | None = None,
         is_kappa_star: bool = True,
         log_level: int = 0,
-        lang: Literal["C", "Python", "Rust"] = "C",
+        lang: Literal["C", "Python", "Rust"] = "Rust",
     ) -> None:
         """Init method.
 

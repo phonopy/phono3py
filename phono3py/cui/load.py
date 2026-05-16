@@ -111,7 +111,7 @@ def load(
     make_r0_average: bool = True,
     symprec: float = 1e-5,
     log_level: int = 0,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> Phono3py:
     """Create Phono3py instance from parameters and/or input files.
 

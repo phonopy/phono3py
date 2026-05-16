@@ -208,7 +208,7 @@ class CalculatorConfig:
     pinv_cutoff: float = 1.0e-8
     pinv_solver: int = 0
     pinv_method: int = 0
-    lang: Literal["C", "Python", "Rust"] = "C"
+    lang: Literal["C", "Python", "Rust"] = "Rust"
     log_level: int = 0
     rust_gp_batch_size: int | None = None
 

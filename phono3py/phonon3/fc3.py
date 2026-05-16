@@ -77,7 +77,7 @@ def get_fc3(
     is_compact_fc: bool = True,
     pinv_solver: str = "numpy",
     verbose: bool = False,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> tuple[NDArray[np.double], NDArray[np.double]]:
     """Calculate fc3.
 
@@ -194,7 +194,7 @@ def distribute_fc3(
     permutations: NDArray[np.int64],
     s2compact: NDArray[np.int64],
     verbose: bool = False,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> None:
     """Distribute fc3 to symmetrically equivalent first-index atoms (in place).
 
@@ -320,7 +320,7 @@ def distribute_fc3(
 def distribute_fc3_by_translations(
     fc3: NDArray[np.double],
     primitive: Primitive,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> None:
     """Distribute compact fc3 data to full fc3 by pure translations.
 
@@ -361,7 +361,7 @@ def compact_fc3_to_full_fc3(
     primitive: Primitive,
     compact_fc3: NDArray[np.double],
     log_level: int = 0,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> NDArray[np.double]:
     """Transform compact fc3 to full fc3.
 
@@ -394,7 +394,7 @@ def full_fc3_to_compact_fc3(
 
 def set_permutation_symmetry_fc3(
     fc3: NDArray[np.double],
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> None:
     """Enforce permutation symmetry to full fc3."""
     lang = resolve_lang(lang)
@@ -423,7 +423,7 @@ def set_permutation_symmetry_fc3(
 def set_permutation_symmetry_compact_fc3(
     fc3: NDArray[np.double],
     primitive: Primitive,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> None:
     """Enforce permulation symmetry to compact fc3."""
     lang = resolve_lang(lang)
@@ -494,7 +494,7 @@ def set_translational_invariance_fc3(fc3: NDArray[np.double]) -> None:
 def set_translational_invariance_compact_fc3(
     fc3: NDArray[np.double],
     primitive: Primitive,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> None:
     """Enforce translational symmetry to compact fc3."""
     lang = resolve_lang(lang)
@@ -570,7 +570,7 @@ def _get_delta_fc2(
     supercell: PhonopyAtoms,
     reduced_site_sym: NDArray[np.int64],
     symprec: float,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> NDArray[np.double]:
     logger.debug("get_delta_fc2")
     disp_fc2 = _get_constrained_fc2(
@@ -592,7 +592,7 @@ def _get_constrained_fc2(
     forces1: NDArray[np.double],
     reduced_site_sym: NDArray[np.int64],
     symprec: float,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> NDArray[np.double]:
     """Return fc2 under reduced (broken) site symmetry by first displacement.
 
@@ -648,7 +648,7 @@ def _solve_fc3(
     symprec: float,
     pinv_solver: str = "numpy",
     verbose: bool = False,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> NDArray[np.double]:
     logger.debug("solve_fc3")
 
@@ -812,7 +812,7 @@ def show_drift_fc3(
 def get_drift_fc3(
     fc3: NDArray[np.double],
     primitive: Primitive | None = None,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> tuple[float, float, float, list[int], list[int], list[int]]:
     """Return max drift of fc3."""
     lang = resolve_lang(lang)
@@ -929,7 +929,7 @@ def _get_fc3_least_atoms(
     is_compact_fc: bool = True,
     pinv_solver: str = "numpy",
     verbose: bool = True,
-    lang: Literal["C", "Rust"] = "C",
+    lang: Literal["C", "Rust"] = "Rust",
 ) -> NDArray[np.double]:
     symprec = symmetry.tolerance
     num_satom = len(supercell)
