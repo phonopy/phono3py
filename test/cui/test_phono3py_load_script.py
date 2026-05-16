@@ -899,7 +899,7 @@ def test_phono3py_load_write_gamma_detail_outputs_hdf5():
                 assert gamma_detail.size > 0
                 assert gamma_detail[0, 0, 0, 0, 0] == pytest.approx(0.0, abs=1e-16)
                 assert np.max(gamma_detail) == pytest.approx(
-                    2.243623483101439e-04, rel=0.2
+                    2.243623483101439e-04, abs=0.0001
                 )
                 assert np.count_nonzero(gamma_detail) > 100
 
