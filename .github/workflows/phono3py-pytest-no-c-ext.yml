@@ -42,7 +42,7 @@ jobs:
       - name: Install symfc develop branch
         run: |
           conda activate test
-          git clone --depth 1 https://github.com/symfc/symfc.git
+          git clone https://github.com/symfc/symfc.git
           cd symfc
           pip install -e . -vvv
       - name: Install phonopy develop branch without C extension
@@ -56,7 +56,7 @@ jobs:
           pip install -e . -vvv
       - name: Clone phonors repository
         run: |
-          git clone --depth 1 https://github.com/phonopy/phonors.git ../phonors
+          git clone https://github.com/phonopy/phonors.git ../phonors
       - name: Build and install phonors
         run: |
           conda activate test
