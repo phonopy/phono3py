@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Command options / Setting tags &#8212; Phono3py v.4.0.0</title>
+    <title>Command options / Setting tags &#8212; Phono3py v.4.0.1</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=a1c85040"></script>
+    <script src="_static/documentation_options.js?v=1a34d25d"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -127,7 +127,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.4.0.0</p>
+    <p class="title logo__title">Phono3py v.4.0.1</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -361,6 +361,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#full-fc-compact-fc-false"><code class="docutils literal notranslate"><span class="pre">--full-fc</span></code> (<code class="docutils literal notranslate"><span class="pre">COMPACT_FC</span> <span class="pre">=</span> <span class="pre">.FALSE.</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cfc-or-compact-fc-compact-fc-true-deprecated"><code class="docutils literal notranslate"><span class="pre">--cfc</span></code> or <code class="docutils literal notranslate"><span class="pre">--compact-fc</span></code> (<code class="docutils literal notranslate"><span class="pre">COMPACT_FC</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>) (deprecated)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fc-symmetry-fc-symmetry-true"><code class="docutils literal notranslate"><span class="pre">--fc-symmetry</span></code> (<code class="docutils literal notranslate"><span class="pre">FC_SYMMETRY</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#symfc-projector-use-symfc-projector-true"><code class="docutils literal notranslate"><span class="pre">--symfc-projector</span></code> (<code class="docutils literal notranslate"><span class="pre">USE_SYMFC_PROJECTOR</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cutoff-fc3-or-cutoff-fc3-distance-cutoff-fc3-distance"><code class="docutils literal notranslate"><span class="pre">--cutoff-fc3</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-fc3-distance</span></code> (<code class="docutils literal notranslate"><span class="pre">CUTOFF_FC3_DISTANCE</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cutoff-pair-or-cutoff-pair-distance-cutoff-pair-distance"><code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-pair-distance</span></code> (<code class="docutils literal notranslate"><span class="pre">CUTOFF_PAIR_DISTANCE</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#alm"><code class="docutils literal notranslate"><span class="pre">--alm</span></code></a></li>
@@ -821,6 +822,16 @@ like ALM.</p>
 <p>The symmetrizations for the second and third orders can be independently applied
 by <code class="docutils literal notranslate"><span class="pre">--sym-fc2</span></code> (<code class="docutils literal notranslate"><span class="pre">SYMMETRIZE_FC2</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>) and <code class="docutils literal notranslate"><span class="pre">--sym-fc3r</span></code>
 (<code class="docutils literal notranslate"><span class="pre">SYMMETRIZE_FC3</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>), , respectively.</p>
+</section>
+<section id="symfc-projector-use-symfc-projector-true">
+<h3><code class="docutils literal notranslate"><span class="pre">--symfc-projector</span></code> (<code class="docutils literal notranslate"><span class="pre">USE_SYMFC_PROJECTOR</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)<a class="headerlink" href="#symfc-projector-use-symfc-projector-true" title="Link to this heading">#</a></h3>
+<p>Symmetrize force constants using the symfc projector instead of the traditional
+approach. This applies both when force constants are computed from displacements
+and when they are read from existing <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code> / <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code> files. In the
+latter case, the symmetrized force constants are written back to those files.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>phono3py.yaml<span class="w"> </span>--symfc-projector
+</pre></div>
+</div>
 </section>
 <section id="cutoff-fc3-or-cutoff-fc3-distance-cutoff-fc3-distance">
 <h3><code class="docutils literal notranslate"><span class="pre">--cutoff-fc3</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-fc3-distance</span></code> (<code class="docutils literal notranslate"><span class="pre">CUTOFF_FC3_DISTANCE</span></code>)<a class="headerlink" href="#cutoff-fc3-or-cutoff-fc3-distance-cutoff-fc3-distance" title="Link to this heading">#</a></h3>
@@ -1612,6 +1623,7 @@ This is equivalent to setting `-i` and `-o` simultaneously. -->
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#full-fc-compact-fc-false"><code class="docutils literal notranslate"><span class="pre">--full-fc</span></code> (<code class="docutils literal notranslate"><span class="pre">COMPACT_FC</span> <span class="pre">=</span> <span class="pre">.FALSE.</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cfc-or-compact-fc-compact-fc-true-deprecated"><code class="docutils literal notranslate"><span class="pre">--cfc</span></code> or <code class="docutils literal notranslate"><span class="pre">--compact-fc</span></code> (<code class="docutils literal notranslate"><span class="pre">COMPACT_FC</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>) (deprecated)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#fc-symmetry-fc-symmetry-true"><code class="docutils literal notranslate"><span class="pre">--fc-symmetry</span></code> (<code class="docutils literal notranslate"><span class="pre">FC_SYMMETRY</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#symfc-projector-use-symfc-projector-true"><code class="docutils literal notranslate"><span class="pre">--symfc-projector</span></code> (<code class="docutils literal notranslate"><span class="pre">USE_SYMFC_PROJECTOR</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cutoff-fc3-or-cutoff-fc3-distance-cutoff-fc3-distance"><code class="docutils literal notranslate"><span class="pre">--cutoff-fc3</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-fc3-distance</span></code> (<code class="docutils literal notranslate"><span class="pre">CUTOFF_FC3_DISTANCE</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#cutoff-pair-or-cutoff-pair-distance-cutoff-pair-distance"><code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-pair-distance</span></code> (<code class="docutils literal notranslate"><span class="pre">CUTOFF_PAIR_DISTANCE</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#alm"><code class="docutils literal notranslate"><span class="pre">--alm</span></code></a></li>

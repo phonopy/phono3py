@@ -2,6 +2,17 @@
 
 # Change Log
 
+## May-18-2026: Version 4.0.1
+
+- Fixed a bug introduced in 4.0.0 where the symfc projector was automatically
+  applied when running `phono3py` with a phono3py yaml file and the traditional
+  FC solver. The default is now traditional symmetrization, consistent with v3
+  behaviour. Use `--symfc-projector` to opt in explicitly.
+- Added `--symfc-projector` option to symmetrize force constants by the symfc
+  projector. This applies when computing FCs from displacements and also when
+  reading existing `fc3.hdf5` / `fc2.hdf5` files, in which case the
+  symmetrized FCs are written back to the hdf5 files.
+
 ## May-16-2026: Version 4.0.0
 
 Major breaking changes. See {ref}`migration_v4` for the upgrade guide.
