@@ -797,6 +797,13 @@ def _add_run_options(parser: argparse.ArgumentParser) -> None:
         help="Show symfc memory usage with respect to cutoff distance",
     )
     parser.add_argument(
+        "--symfc-projector",
+        dest="use_symfc_projector",
+        action="store_true",
+        default=None,
+        help="Symmetrize force constants by symfc projector",
+    )
+    parser.add_argument(
         "--symfc-memsize",
         dest="symfc_memory_size",
         type=float,
@@ -1112,6 +1119,7 @@ class Phono3pyMockArgs:
     fc_calculator: str | None = None
     fc_calculator_options: str | None = None
     fc_symmetry: bool | None = None
+    use_symfc_projector: bool | None = None
     filename: Sequence[str | os.PathLike] | None = None
     force_sets_mode: bool | None = None
     force_sets_to_forces_fc2_mode: bool | None = None

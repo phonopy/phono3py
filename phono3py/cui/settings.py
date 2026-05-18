@@ -105,6 +105,7 @@ class Phono3pySettings(Settings):
         self.sigma_cutoff_width: float | None = None
         self.solve_collective_phonon: bool = False
         self.show_symfc_memory_usage: bool = False
+        self.use_symfc_projector: bool = False
         self.symfc_memory_size: float | None = None
         self.subtract_forces: str | None = None
         self.subtract_forces_fc2: str | None = None
@@ -431,6 +432,12 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
             elif args.show_symfc_memory_usage is False:
                 self._confs["show_symfc_memory_usage"] = ".false."
 
+        if "use_symfc_projector" in arg_list:
+            if args.use_symfc_projector:
+                self._confs["use_symfc_projector"] = ".true."
+            elif args.use_symfc_projector is False:
+                self._confs["use_symfc_projector"] = ".false."
+
         if "subtract_forces" in arg_list:
             if args.subtract_forces:
                 self._confs["subtract_forces"] = args.subtract_forces
@@ -549,6 +556,7 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
                 "spectral_function",
                 "reducible_collision_matrix",
                 "show_symfc_memory_usage",
+                "use_symfc_projector",
                 "symmetrize_fc2",
                 "symmetrize_fc3_q",
                 "symmetrize_fc3_r",
@@ -892,6 +900,10 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
         # Show symfc memory usage
         if "show_symfc_memory_usage" in params:
             settings.show_symfc_memory_usage = params["show_symfc_memory_usage"]
+
+        # Use symfc projector for symmetrization
+        if "use_symfc_projector" in params:
+            settings.use_symfc_projector = params["use_symfc_projector"]
 
         # Cutoff width of smearing function (ratio to sigma value)
         if "sigma_cutoff_width" in params:

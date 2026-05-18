@@ -779,7 +779,7 @@ def _produce_force_constants(
             cutoff_pair_distance=cutoff_pair_distance,
             symmetrize_fc=settings.fc_symmetry,
             is_compact_fc=settings.is_compact_fc,
-            use_symfc_projector=load_phono3py_yaml,
+            use_symfc_projector=settings.use_symfc_projector,
         )
     except ForceCalculatorRequiredError as e:
         if load_phono3py_yaml:
@@ -800,6 +800,12 @@ def _produce_force_constants(
             symmetrize_fc=settings.fc_symmetry,
             is_compact_fc=settings.is_compact_fc,
         )
+
+    if settings.use_symfc_projector:
+        if read_fc3 and ph3py.fc3 is not None:
+            ph3py.symmetrize_fc3(use_symfc_projector=True)
+        if read_fc2 and ph3py.fc2 is not None:
+            ph3py.symmetrize_fc2(use_symfc_projector=True)
 
     if ph3py.fc3 is None and not settings.write_phonon and not settings.read_gamma:
         if log_level:
@@ -825,7 +831,7 @@ def _produce_force_constants(
                 )
             ph3py.cutoff_fc3_by_zero(cutoff_distance)
 
-        if not read_fc3:
+        if not read_fc3 or (read_fc3 and settings.use_symfc_projector):
             write_fc3_to_hdf5(
                 ph3py.fc3,
                 fc3_nonzero_indices=ph3py.fc3_nonzero_indices,
@@ -854,7 +860,7 @@ def _produce_force_constants(
             ph3py.fc2, primitive=ph3py.phonon_primitive, name="fc2"
         )
 
-    if not read_fc2:
+    if not read_fc2 or (read_fc2 and settings.use_symfc_projector):
         write_fc2_to_hdf5(
             ph3py.fc2,
             p2s_map=ph3py.phonon_primitive.p2s_map,
