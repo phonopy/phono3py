@@ -466,6 +466,17 @@ The symmetrizations for the second and third orders can be independently applied
 by `--sym-fc2` (`SYMMETRIZE_FC2 = .TRUE.`) and `--sym-fc3r`
 (`SYMMETRIZE_FC3 = .TRUE.`), , respectively.
 
+### `--symfc-projector` (`USE_SYMFC_PROJECTOR = .TRUE.`)
+
+Symmetrize force constants using the symfc projector instead of the traditional
+approach. This applies both when force constants are computed from displacements
+and when they are read from existing `fc3.hdf5` / `fc2.hdf5` files. In the
+latter case, the symmetrized force constants are written back to those files.
+
+```bash
+% phono3py phono3py.yaml --symfc-projector
+```
+
 ### `--cutoff-fc3` or `--cutoff-fc3-distance` (`CUTOFF_FC3_DISTANCE`)
 
 This option is **not** used to reduce number of supercells with displacements,
