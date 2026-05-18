@@ -2,7 +2,7 @@
 
 # Change Log
 
-## May-18-2026: Version 4.0.1 (dev)
+## May-18-2026: Version 4.0.1
 
 - Fixed a bug introduced in 4.0.0 where the symfc projector was automatically
   applied when running `phono3py` with a phono3py yaml file and the traditional
