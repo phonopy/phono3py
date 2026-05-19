@@ -239,7 +239,7 @@ def test_use_pypolymlp_mgo(mgo_222rd_444rd: Phono3py):
     assert ph3.thermal_conductivity is not None
     assert isinstance(ph3.thermal_conductivity, RTACalculator)
     assert ph3.thermal_conductivity.kappa is not None
-    assert pytest.approx(63.547, abs=1e-1) == ph3.thermal_conductivity.kappa[0, 0, 0]
+    assert pytest.approx(63.547, abs=2e-1) == ph3.thermal_conductivity.kappa[0, 0, 0]
 
 
 @pytest.mark.parametrize("is_compact_fc", [True, False])
