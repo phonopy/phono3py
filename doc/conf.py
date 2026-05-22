@@ -28,11 +28,36 @@
 # extensions = ['sphinx.ext.imgmath']
 extensions = [
     "sphinx.ext.mathjax",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.intersphinx",
     "myst_parser",
     "sphinxcontrib.bibtex",
     "sphinxcontrib.mermaid",
 ]
 myst_enable_extensions = ["linkify", "dollarmath", "amsmath"]
+
+# autodoc / autosummary
+autosummary_generate = True
+autodoc_default_options = {
+    "members": True,
+    "show-inheritance": True,
+}
+autodoc_typehints = "description"
+autodoc_member_order = "bysource"
+
+# napoleon (NumPy-style docstrings)
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
+
+# intersphinx
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "numpy": ("https://numpy.org/doc/stable", None),
+    "phonopy": ("https://phonopy.github.io/phonopy", None),
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

@@ -7,15 +7,16 @@
 :local:
 ```
 
-How to use phono3py API is described below along with snippets that work with
+This page describes how to use the phono3py API, with snippets that work on
+the
 [`AlN-LDA` example](https://github.com/phonopy/phono3py/tree/develop/example/AlN-LDA).
 
 ## Crystal structure
 
-Crystal structures in phono3py are usually `PhonopyAtoms` class instances. When
-we want to obtain the `PhonopyAtoms` class instances from a file written in a
-force-calculator format, the `read_crystal_structure` function in phonopy may be
-used, e.g., in the AlN-LDA example,
+Crystal structures in phono3py are represented as `PhonopyAtoms` instances. To
+create one from a file written in a force-calculator format, use the
+`read_crystal_structure` function provided by phonopy. For example, in the
+AlN-LDA example:
 
 ```python
 In [1]: from phonopy.interface.calculator import read_crystal_structure
@@ -42,79 +43,76 @@ points:
   mass: 14.006700
 ```
 
-Otherwise, it is directly created from
-[`PhonopyAtoms` class](https://phonopy.github.io/phonopy/phonopy-module.html#phonopyatoms-class).
+Otherwise, construct a {class}`~phonopy.structure.atoms.PhonopyAtoms` instance
+directly:
 
 ```python
-In [1]: from phonopy.structure.atoms import PhonopyAtoms
+In [1]: import numpy as np
 
-In [2]: a = 3.11
+In [2]: from phonopy.structure.atoms import PhonopyAtoms
 
 In [3]: a = 3.111
 
 In [4]: c = 4.978
 
-In [5]: lattice = [[a, 0, 0], [-a / 2,  a * np.sqrt(3) / 2, 0], [0, 0, c]]
+In [5]: lattice = [[a, 0, 0], [-a / 2, a * np.sqrt(3) / 2, 0], [0, 0, c]]
 
-In [6]: x = 1. / 3
+In [6]: x = 1.0 / 3
 
-In [7]: points = [[x, 2 * x, 0], [x * 2, x, 0.5], [x, 2 * x, 0.1181], [2 * x, x, 0.6181]]
+In [7]: points = [[x, 2 * x, 0], [2 * x, x, 0.5], [x, 2 * x, 0.1181], [2 * x, x, 0.6181]]
 
-In [8]: symbols = ['Al', 'Al', 'N', 'N']
+In [8]: symbols = ["Al", "Al", "N", "N"]
 
 In [9]: unitcell = PhonopyAtoms(cell=lattice, scaled_positions=points, symbols=symbols)
 ```
 
 ## `Phono3py` class
 
-To operate phono3py from python, there is phono3py API. The main class is
-`Phono3py` that is imported by
+To drive phono3py from Python, use the phono3py API. The main class,
+`Phono3py`, is imported as:
 
 ```python
 from phono3py import Phono3py
 ```
 
-As written in {ref}`workflow`, phono3py workflow is roughly divided into three
-steps. `Phono3py` class is used at each step. The minimum set of inputs to
-instantiate `Phono3py` class are `unitcell` (1st argument), `supercell_matrix`
-(2nd argument), and `primitive_matrix`, which are used as
+As described in {ref}`workflow`, the phono3py workflow is roughly divided into
+three steps, and the `Phono3py` class is used at every step. The minimum set
+of inputs to instantiate it are `unitcell` (1st argument), `supercell_matrix`
+(2nd argument), and `primitive_matrix` (3rd argument):
 
 ```python
-ph3 = Phono3py(unitcell, supercell_matrix=[3, 3, 2], primitive_matrix='auto')
+ph3 = Phono3py(unitcell, supercell_matrix=[3, 3, 2], primitive_matrix="auto")
 ```
 
-The `unitcell` is an instance of the
-[`PhonopyAtoms` class](https://phonopy.github.io/phonopy/phonopy-module.html#phonopyatoms-class).
-`supercell_matrix` and `primitive_matrix` are the transformation matrices to
-generate supercell and primitive cell from `unitcell` (see
-[definitions](https://phonopy.github.io/phonopy/phonopy-module.html#definitions-of-variables)).
-This step is similar to the
-[instantiation of `Phonopy` class](https://phonopy.github.io/phonopy/phonopy-module.html#pre-process).
+`unitcell` is a {class}`~phonopy.structure.atoms.PhonopyAtoms` instance.
+`supercell_matrix` and `primitive_matrix` are the transformation matrices used
+to generate the supercell and primitive cell from `unitcell` (see the
+[definitions in the phonopy docs](https://phonopy.github.io/phonopy/phonopy-module.html#definitions-of-variables)).
+This step is analogous to instantiating the {class}`~phonopy.Phonopy` class
+(see the
+[pre-processing section](https://phonopy.github.io/phonopy/phonopy-module.html#pre-process)
+of the phonopy docs).
 
-There are many parameters that can be given to `Phono3py` class. The details are
-written in the docstring, which is shown by
-
-```python
-help(Phono3py)
-```
+`Phono3py` accepts many other parameters; see {ref}`api_reference` for the
+full list of arguments and attributes (or use `help(Phono3py)` in an
+interactive shell).
 
 ## Displacement dataset generation
 
-The step (1) in {ref}`workflow` generates sets of displacements in supercell.
-Supercells with the displacements are used as input crystal structure models of
-force calculator that is, e.g., first-principles calculation code. Using the
-force calculator, sets of forces of the supercells with the displacements are
-obtained out of phono3py environment, i.e., phono3py only provides crystal
-structures. Here we call the sets of the displacements as
-`displacement dataset`, the sets of the supercell forces as `force sets`, and
-the pair of `displacement dataset` and `force sets` as simply `dataset` for
-computing second and third force constants.
+Step (1) in {ref}`workflow` generates sets of displacements in the supercell.
+The displaced supercells are passed as input crystal-structure models to an
+external force calculator (e.g. a first-principles code). The calculator
+returns sets of forces for the displaced supercells; phono3py itself only
+provides the crystal structures. We refer to the set of displacements as the
+`displacement dataset`, to the set of supercell forces as the `force sets`,
+and to the pair as simply the `dataset` used to compute the second- and
+third-order force constants.
 
 After instantiating `Phono3py` with `unitcell`, displacements are generated as
 follows:
 
 ```python
-In [4]: ph3 = Phono3py(unitcell, supercell_matrix=[3, 3, 2], primitive_matrix='auto')
+In [4]: ph3 = Phono3py(unitcell, supercell_matrix=[3, 3, 2], primitive_matrix="auto")
 
 In [5]: ph3.generate_displacements()
 
@@ -125,12 +123,12 @@ In [7]: type(ph3.supercells_with_displacements[0])
 Out[7]: phonopy.structure.atoms.PhonopyAtoms
 ```
 
-By this, 1254 supercells with displacements were generated.
+In this example, 1254 supercells with displacements were generated.
 
-The generated displacement dataset is used in the force constants calculation.
-Therefore, it is recommended to save it into a file if the python process having
-the `Phono3py` class instance is expected to be terminated. The displacement
-dataset and crystal structure information are saved to a file by
+The displacement dataset is needed later for the force-constants
+calculation, so it is recommended to save it to a file when the Python
+session holding the `Phono3py` instance is going to be terminated. The
+displacement dataset and crystal-structure information are saved via the
 `Phono3py.save()` method:
 
 ```python
@@ -139,17 +137,16 @@ In [8]: ph3.save("phono3py_disp.yaml")
 
 ## Supercell force calculation
 
-Forces of the generated supercells with displacements are calculated by some
-external force calculator such as first-principles calculation code.
+Forces on the displaced supercells are computed by an external force
+calculator such as a first-principles code.
 
-Calculated supercell forces will be stored in a `Phono3py` class instance
-through `Phono3py.forces` attribute by setting an array_like variable with the
-shape of `(num_supercells, num_atoms_in_supercell, 3)`. In the above example,
-the array shape is `(1254, 72, 3)`.
+The computed supercell forces are stored in the `Phono3py` instance through
+the `Phono3py.forces` attribute by assigning an array-like with shape
+`(num_supercells, num_atoms_in_supercell, 3)`. In the example above, the
+shape is `(1254, 72, 3)`.
 
-If the calculated force sets are stored in the
-{ref}`iofile_FORCES_FC3` file, the numpy array of `forces` is
-obtained by
+If the force sets are stored in a {ref}`iofile_FORCES_FC3` file, the numpy
+array of `forces` can be obtained by:
 
 ```python
 forces = np.loadtxt("FORCES_FC3").reshape(-1, num_atoms_in_supercell, 3)
@@ -158,11 +155,11 @@ assert len(forces) == num_supercells
 
 ## Force constants calculation
 
-The pair of the displacement dataset and force sets is required to calculate
-force constants. {ref}`api-phono3py` is the convenient function to load
-these data from files and to set up them in the `Phono3py` class instance.
-However, in the case when only displacement dataset is expected, the low-level
-phono3py-yaml parser in `Phono3pyYaml` is useful.
+Computing the force constants requires both the displacement dataset and the
+force sets. {ref}`api-phono3py` is a convenient function that loads these
+data from files and sets them on the `Phono3py` instance. When only the
+displacement dataset is needed, the low-level phono3py-yaml parser
+`Phono3pyYaml` is useful.
 
 ```python
 In [1]: from phono3py.interface.phono3py_yaml import Phono3pyYaml
@@ -174,10 +171,9 @@ In [3]: ph3yml.read("phono3py_disp.yaml")
 In [4]: disp_dataset = ph3yml.dataset
 ```
 
-With this `ph3yml`, how to compute force constants is explained. In the
-following, it is assumed that we have `FORCES_FC3` in the current directory. The
-displacement dataset and force sets are set to the `Phono3py` class instance as
-follows:
+The steps below show how to compute force constants using `ph3yml`, assuming
+that `FORCES_FC3` is in the current directory. The displacement dataset and
+force sets are assigned to the `Phono3py` instance as follows:
 
 ```python
 In [5]: unitcell = ph3yml.unitcell
@@ -195,16 +191,30 @@ In [10]: ph3.dataset = disp_dataset
 In [11]: ph3.forces = forces
 ```
 
-Now it is ready to compute force constants.
+Now we are ready to compute force constants. With the default
+(`fc_calculator=None`, i.e. the traditional finite-difference solver),
+`produce_fc3` does **not** symmetrize the result; call `symmetrize_fc3` and
+`symmetrize_fc2` explicitly afterwards to enforce translational and
+permutation invariance:
 
 ```python
 In [12]: ph3.produce_fc3()
+
+In [13]: ph3.symmetrize_fc3()
+
+In [14]: ph3.symmetrize_fc2()
 ```
+
+When `phonon_supercell_matrix` is set, fc2 is **not** produced by
+`produce_fc3`; call `ph3.produce_fc2()` (followed by `ph3.symmetrize_fc2()`)
+instead. With `fc_calculator="symfc"` or `"alm"`, the chosen solver already
+returns symmetrized force constants, so the `symmetrize_*` calls are not
+needed. See {ref}`api_reference` for the available calculators and options.
 
 ## Non-analytical term correction parameters
 
-Users collects Born effective charges and dielectric constant tensor from
-experiments or calculations, and they are used as parameters for non-analytical
+Born effective charges and the dielectric constant tensor, obtained from
+experiments or calculations, are passed as parameters for the non-analytical
 term correction (NAC). These parameters are stored as a python dict:
 
 ```
@@ -218,38 +228,38 @@ term correction (NAC). These parameters are stored as a python dict:
     shape=(3, 3), dtype='double', order='C'
 ```
 
-Be careful that, in the case of using phono3py API, Born effective charges of
-all atoms in the primitive cell are necessary, whereas in the
-[`BORN` file](https://phonopy.github.io/phonopy/input-files.html#born-optional),
-only Born effective charges of symmetrically independent atoms are written. Some
-more information about NAC parameters is found
-[here](https://phonopy.github.io/phonopy/phonopy-module.html#getting-parameters-for-non-analytical-term-correction).
+Note that the phono3py API requires Born effective charges for **all** atoms
+in the primitive cell, whereas the
+[`BORN` file](https://phonopy.github.io/phonopy/input-files.html#born-optional)
+only stores those of the symmetrically independent atoms. See
+[the phonopy documentation](https://phonopy.github.io/phonopy/phonopy-module.html#getting-parameters-for-non-analytical-term-correction)
+for more information on NAC parameters.
 
-This NAC parameters are set to the `Phono3py` class instance via the
-`Phono3py.nac_params` attribute. The NAC parameters may be read from `BORN` file
+These NAC parameters are assigned to the `Phono3py` instance via the
+`Phono3py.nac_params` attribute. They can be read from a `BORN` file:
 
 ```python
 In [13]: from phonopy.file_IO import parse_BORN
 
 In [14]: nac_params = parse_BORN(ph3.primitive, filename="BORN")
 
-In [15]: ph3.nac_params = nan_params
+In [15]: ph3.nac_params = nac_params
 ```
 
-where the `parse_BORN` function requires the corresponding primitive cell of the
-`PhonopyAtoms` class.
+where `parse_BORN` requires the corresponding primitive cell as a
+`PhonopyAtoms` instance.
 
 ## Regular grid for **q**-point sampling
 
-Phonons are normally sampled on a $\Gamma$ centre regular grid in reciprocal
-space. There are three ways to specify the regular grid.
+Phonons are normally sampled on a $\Gamma$-centred regular grid in reciprocal
+space. There are three ways to specify the grid:
 
 1. Three integer values
 2. One value
 3. 3x3 integer matrix
 
-One of these is set to `mesh_numbers` attribute of the `Phono3py` class. For
-example,
+One of these is assigned to the `mesh_numbers` attribute of the `Phono3py`
+class. For example:
 
 ```python
 ph3.mesh_numbers = [10, 10, 10]
@@ -259,11 +269,10 @@ ph3.mesh_numbers = [[-10, 10, 10], [10, -10, 10], [10, 10, -10]]
 
 ### Three integer values
 
-Three integer values ($n_1$, $n_2$, $n_3$) are specified.
-
-The conventional regular grid is defined by the three integer values. The
-$\mathbf{q}$-points are given by linear combination of reciprocal basis vectors
-divided by the respective integers, which is given as
+Three integer values ($n_1$, $n_2$, $n_3$) are specified. They define a
+conventional regular grid in which the $\mathbf{q}$-points are given by a
+linear combination of reciprocal basis vectors divided by the respective
+integers:
 
 ```{math}
 :label: three-integer-grid
@@ -276,38 +285,40 @@ where $m_i \in \{ 0, 1, \ldots, n_i - 1 \}$.
 
 ### One value
 
-A distance like value $l$ is specified. Using this value, a regular grid is
-generated. As default, the three integer values of the conventional regular grid
-are defined by the following calculation.
+A length-like value $l$ is specified, from which a regular grid is generated.
+By default, the three integer values of the conventional regular grid are
+computed as:
 
 ```{math}
 :label: one-value-grid
 n_i = \max[1, \mathrm{nint}(l|\mathbf{b}^*_i|)]
 ```
 
-Experimentally, use of a generalized regular grid is supported. By specifying
-`use_grg = True` at the `Phono3py` class instantiation, the generalized regular
-grid is generated using the value $l$. First, the conventional unit cell of the
-primitive cell is searched. Second, Eq. {eq}`one-value-grid` is applied to the
-reciprocal basis vectors of the conventional unit cell. Then,
+As an experimental feature, the generalized regular grid is also supported.
+Pass `use_grg=True` when instantiating `Phono3py` to enable it. The procedure
+is as follows: first, the conventional unit cell corresponding to the
+primitive cell is found; second, Eq. {eq}`one-value-grid` is applied to the
+reciprocal basis vectors of that conventional unit cell; and finally,
 $\mathbf{q}$-points are sampled following Eq. {eq}`three-integer-grid` with
-respect to the reciprocal basis vectors of the conventional unit cell. The
-parallelepiped defined by $\mathbf{b}^*_i$ of the conventinal unit cell can be
-smaller than that of the primitive cell. In this case, the $\mathbf{q}$-points
-are sampled to fill the latter parallelepiped.
+respect to those reciprocal basis vectors. The parallelepiped defined by
+$\mathbf{b}^*_i$ of the conventional unit cell can be smaller than that of
+the primitive cell; in such a case, additional $\mathbf{q}$-points are
+sampled to fill the latter parallelepiped.
 
 ### 3x3 integer matrix (experimental)
 
-This is used to define the generalized regular grid explicitly. The generalized
-regular grid is designed to be automatically generated by one given value
-considering symmetry. However a 3x3 integer matrix (array) is accepted if this
-matrix follows the symmetry properly.
+This form defines the generalized regular grid explicitly. The generalized
+regular grid is designed to be generated automatically from a single
+length-like value while respecting symmetry; however, a 3x3 integer matrix
+(array) is also accepted as long as it is compatible with the crystal
+symmetry.
 
 ## Phonon-phonon interaction calculation
 
-Three phonon interaction strength is calculated after defining the regular grid.
-When we have `phono3py_disp.yaml` and `FORCES_FC3` used above (maybe `BORN`,
-too), it is convenient to get the `Phono3py` class instance with settings.
+The three-phonon interaction strength is computed once the regular grid is
+defined. When `phono3py_disp.yaml` and `FORCES_FC3` (and optionally `BORN`)
+are available, it is convenient to obtain a configured `Phono3py` instance via
+`phono3py.load`:
 
 ```python
 In [1]: import phono3py
@@ -333,7 +344,7 @@ fc2 was symmetrized.
 Max drift of fc2: 0.000000 (yy) 0.000000 (yy)
 ```
 
-Three phonon interaction calculation becomes ready to run by the following
+The three-phonon interaction calculation is ready to run after the following
 lines:
 
 ```python
@@ -342,75 +353,76 @@ In [3]: ph3.mesh_numbers = 30
 In [4]: ph3.init_phph_interaction()
 ```
 
-The three phonon interaction calculation is implemented in
-`phono3py.phonon3.interaction.Interaction` class. By phono3py's design choice,
-$\mathbf{q}_1$ of the three phonons $(\mathbf{q}_1, \mathbf{q}_2, \mathbf{q}_3)$
-in this class is given, and calculation iterates over different $\mathbf{q}_2$.
-$\mathbf{q}_3$ is uniquely determined from $\mathbf{q}_1$ and $\mathbf{q}_2$.
-Symmetry is employed to avoid calculating symmetrically redundant $\mathbf{q}_2$
-at the fixed $\mathbf{q}_1$. One `Interaction` class instance stores the data
-only for one fixed $\mathbf{q}_1$.
+It is implemented in the `phono3py.phonon3.interaction.Interaction` class. By
+design, $\mathbf{q}_1$ of the three phonons
+$(\mathbf{q}_1, \mathbf{q}_2, \mathbf{q}_3)$ is fixed, and the calculation
+iterates over different $\mathbf{q}_2$; $\mathbf{q}_3$ is then uniquely
+determined by $\mathbf{q}_1$ and $\mathbf{q}_2$. Crystal symmetry is used to
+skip symmetrically redundant $\mathbf{q}_2$ at the fixed $\mathbf{q}_1$. A
+single `Interaction` instance stores the data for only one fixed
+$\mathbf{q}_1$.
 
-Three phonon interaction strength requires large memory space. Therefore, in
-lattice thermal conductivity calculation, it is calculated on-demand, and then
-abandoned after use of the data. Three phonon interaction strength calculation
-is the most computationally demanding part for usual applications. Detailed
-techniques are used to avoid elements of the Three phonon interaction strength
-if it is specified to do so.
+The three-phonon interaction strength requires a large amount of memory.
+Therefore, in lattice thermal conductivity calculations it is computed on
+demand and discarded after use. This calculation is typically the most
+computationally demanding step in practical applications, so detailed
+techniques are used (when requested) to skip elements of the interaction
+strength that are not needed.
 
-Three phonon interaction strength calculation is the engine of more practical
-(or closer to macroscopic physical properties) calculation such as lattice
-thermal conductivity calculation. To minimize computational resources required
-by each purpose of use, the outer function that calls this function determines
-proper computational configuration of this function.
+The three-phonon interaction strength calculation is the engine for more
+macroscopic calculations such as lattice thermal conductivity. The outer
+function that drives it sets the computational configuration of this kernel
+so that resources can be tuned to each use case.
 
 ## Lattice thermal conductivity calculation
 
-Once three phonon interaction calculation is prepared by
-`ph3.init_phph_interaction()`, it is ready to run lattice thermal conductivity
-calculation. The many parameters are explained in the docstring, but even with
-the default parameters, the lattice thermal conductivity calculation under the
-mode relaxation time approximation is performed as follows:
+Once the three-phonon interaction has been prepared by
+`ph3.init_phph_interaction()`, the lattice thermal conductivity calculation is
+ready to run. The available parameters are documented in {ref}`api_reference`,
+but even with the defaults, the calculation under the relaxation time
+approximation (RTA) is performed as follows:
 
 ```python
 In [5]: ph3.run_thermal_conductivity()
 ```
 
+Pass `is_LBTE=True` to run the direct solution of the linearized Boltzmann
+equation (and the Wigner transport equation) instead.
+
 ## Use of different supercell dimensions for 2nd and 3rd order FCs
 
-Phono3py supports different supercell dimensions for second and third order
-force constants (fc2 and fc3). The default setting is using the same dimensions.
-Although fc3 requires much more number of supercells than fc2, in our
-experience, fc3 have shorter interaction range in direct space. Therefore we
-tend to expect to use smaller supercell dimension for fc3 than that for fc2. To
-achieve this, `phonon_supercell_matrix` parameter exists to specify fc2
-supercell dimension independently.
+Phono3py supports different supercell dimensions for the second- and third-order
+force constants (fc2 and fc3). By default the same dimension is used for both.
+Although fc3 requires many more supercells than fc2 for the same supercell size,
+fc3 in our experience has a shorter interaction range in direct space.
+Therefore a smaller supercell can usually be used for fc3 than for fc2; the
+`phonon_supercell_matrix` parameter specifies the fc2 supercell dimension
+independently.
 
 Using `POSCAR-unitcell` in the AlN-LDA example,
 
 ```python
 In [1]: from phonopy.interface.calculator import read_crystal_structure
 
-In [2]: unitcell, _ = read_crystal_structure("POSCAR-unitcell", interface_mode='vasp')
+In [2]: unitcell, _ = read_crystal_structure("POSCAR-unitcell", interface_mode="vasp")
 
 In [3]: from phono3py import Phono3py
 
-In [4]: ph3 = Phono3py(unitcell, supercell_matrix=[3, 3, 2], primitive_matrix='auto', phonon_supercell_matrix=[5, 5, 3])
+In [4]: ph3 = Phono3py(unitcell, supercell_matrix=[3, 3, 2], primitive_matrix="auto", phonon_supercell_matrix=[5, 5, 3])
 
-In [5]: ph3.save("phono3py_disp.yaml")
+In [5]: ph3.generate_displacements()
 
-In [6]: ph3.generate_displacements()
+In [6]: ph3.save("phono3py_disp.yaml")
 ```
 
-`Phono3py.generate_fc2_displacements()` is the method to generate displacement
-dataset for fc2. This is normally unnecessary to be called because this is
-called when `Phono3py.generate_displacements()` is called.
-`Phono3py.generate_fc2_displacements()` may be called explicitly if non-default
-control of displacement pattern is expected. See their docstrings for the
-details.
+`Phono3py.generate_fc2_displacements()` generates the fc2 displacement
+dataset. Calling it explicitly is normally unnecessary because
+`Phono3py.generate_displacements()` already calls it. Use it when you need to
+control the displacement pattern with non-default settings; see
+{ref}`api_reference` for the details.
 
-When `phonon_supercell_matrix` is specified, the following attributes are
-usable:
+When `phonon_supercell_matrix` is set, the following attributes are
+available:
 
 ```python
 Phono3py.phonon_supercell_matrix
@@ -419,21 +431,22 @@ Phono3py.phonon_forces
 Phono3py.phonon_supercells_with_displacements
 ```
 
-The meanings of them are found in their docstrings though they may be guessed
-easily.
+Their meanings are documented in {ref}`api_reference`, but should be obvious
+from the names.
 
 (api-phono3py)=
 
 ## `phono3py.load`
 
-The purpose of `phono3py.load` is to create a `Phono3py` class instance with
-basic parameters loaded from the phono3py-yaml-type file and also to try setting
-up force constants and non-analytical term correction automatically from
-phono3py files in the current directory.
+`phono3py.load` creates a `Phono3py` instance with the basic parameters
+loaded from a phono3py-yaml-type file, and additionally tries to set up the
+force constants and non-analytical term correction automatically from
+phono3py files in the current directory. See {ref}`api_reference` for the
+full list of arguments.
 
-In AlN-LDA example, the unit cell structure, supercell matrix, and primitive
-matrix were recorded in the `phono3py_disp_dimfc2.yaml` file. This is easily
-read a helper function of `phono3py.load`. Using ipython (or jupyter-notebook):
+In the AlN-LDA example, the unit cell, supercell matrix, and primitive matrix
+are stored in `phono3py_disp_dimfc2.yaml`. The file is read in ipython (or a
+Jupyter notebook) as follows:
 
 ```python
 In [1]: import phono3py

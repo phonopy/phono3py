@@ -113,173 +113,184 @@ def load(
     log_level: int = 0,
     lang: Literal["C", "Rust"] = "Rust",
 ) -> Phono3py:
-    """Create Phono3py instance from parameters and/or input files.
+    """Create a Phono3py instance from parameters and/or input files.
 
-    "phono3py_yaml"-like file is parsed unless crystal structure information is
-    given by unitcell_filename, supercell_filename, unitcell
-    (PhonopyAtoms-like), or supercell (PhonopyAtoms-like). Even when
-    "phono3py_yaml"-like file is parse, parameters except for crystal structure
-    can be overwritten.
+    A ``"phono3py_yaml"``-like file is parsed unless crystal structure
+    information is given through ``unitcell_filename``,
+    ``supercell_filename``, ``unitcell`` (PhonopyAtoms-like), or
+    ``supercell`` (PhonopyAtoms-like). Even when a ``"phono3py_yaml"``-
+    like file is parsed, parameters other than the crystal structure
+    can be overwritten by keyword arguments.
 
-    'fc3.hdf5' is read if found in current directory. Unless 'fc3.hdf5' is found
-    and if 'FORCES_FC3' and 'phono3py_disp.yaml" are found, these are read and
-    fc3 and fc2 are produced.
+    ``"fc3.hdf5"`` is read if it is found in the current directory.
+    Otherwise, if ``"FORCES_FC3"`` and ``"phono3py_disp.yaml"`` are
+    found, they are read and fc3 (and fc2) are produced. Similarly,
+    ``"fc2.hdf5"`` is read if found; otherwise ``"FORCES_FC2"`` plus
+    ``"phono3py_disp.yaml"`` are used to produce fc2.
 
-    if 'fc2.hdf5' is found, this is read. Unless 'fc2.hdf5' is found and if
-    'FORCES_FC2' and 'phono3py_disp.yaml" are found, these are read and fc2 is
-    produced.
+    When ``forces_fc3_filename`` / ``forces_fc2_filename`` are not
+    given, ``"FORCES_FC3"`` and ``"FORCES_FC2"`` are searched in the
+    current directory. With type-1 ``"FORCES_FC3"`` (or
+    ``"FORCES_FC2"``), ``"phono3py_disp.yaml"`` is also required.
 
-    When force_sets_filename and force_constants_filename are not given,
-    'FORCES_FC3' and 'FORCES_FC2' are looked for in the current directory as the
-    default behavior. When 'FORCES_FC3' ('FORCES_FC2') is given in the type-1
-    format, 'phono3py_disp.yaml' is also necessary and read.
+    **Crystal structure** -- in order of priority::
 
-    Crystal structure
-    -----------------
-    Means to provide crystal structure(s) and their priority:
-        1. unitcell_filename (with supercell_matrix)
+        1. unitcell_filename  (with supercell_matrix)
         2. supercell_filename
-        3. unitcell (with supercell_matrix)
-        4. supercell.
+        3. unitcell           (with supercell_matrix)
+        4. supercell
         5. phono3py_yaml-like
 
-    Force sets or force constants
-    -----------------------------
-    Optional. Means to provide information to generate force constants and their
-    priority:
-        1. fc3_filename (fc2_filename)
-        2. forces_fc3_filename (forces_fc2_filename). Do not forget that for
-           type-1 format, phono3py_disp.yaml has to be given, too.
-        3. 'fc3.hdf5' and 'fc2.hdf5' are searched in current directory.
-        4. 'FORCES_FC3' and 'FORCES_FC2' are searched in current directory.
-           'FORCES_FC2' is optional. For type-1 format, 'phono3py_disp.yaml' is
-           also searched in current directory. When 'FORCES_FC2' is not found,
-           'FORCES_FC3' is used to create fc2.
+    **Force sets or force constants** (optional) -- in order of
+    priority::
 
-    Parameters for non-analytical term correction (NAC)
-    ----------------------------------------------------
-    Optional. Means to provide NAC parameters and their priority:
+        1. fc3_filename       (fc2_filename)
+        2. forces_fc3_filename (forces_fc2_filename); for type-1 format
+           phono3py_disp.yaml must also be supplied.
+        3. fc3.hdf5 and fc2.hdf5 in the current directory.
+        4. FORCES_FC3 and FORCES_FC2 in the current directory.
+           FORCES_FC2 is optional; for type-1 format
+           phono3py_disp.yaml is also searched. When FORCES_FC2 is
+           missing, FORCES_FC3 is used to create fc2.
+
+    **Parameters for non-analytical term correction (NAC)**
+    (optional) -- in order of priority::
+
         1. born_filename
         2. nac_params
-        3. phono3py_yaml_like.nac_params if existed and is_nac=True.
-        4. 'BORN' is searched in current directory when is_nac=True.
+        3. phono3py_yaml_like.nac_params when present and is_nac=True
+        4. BORN in the current directory when is_nac=True
 
     Parameters
     ----------
-    phono3py_yaml : str, optional
-        Filename of "phono3py.yaml"-like file. If this is given, the data in the
-        file are parsed. Default is None.
+    phono3py_yaml : str or os.PathLike, optional
+        Path to a ``"phono3py.yaml"``-like file. When given, the
+        contents are parsed. Default is ``None``.
     supercell_matrix : array_like, optional
-        Supercell matrix multiplied to input cell basis vectors. shape=(3, ) or
-        (3, 3), where the former is considered a diagonal matrix. Default is the
-        unit matrix. dtype=int
-    primitive_matrix : array_like or str, optional
-        Primitive matrix multiplied to input cell basis vectors. Default is
-        'auto', which automatically chooses the centring type ('F', 'I', 'A',
-        'C', 'R', or primitive 'P'). None is treated the same as 'auto'. To
-        use the unit cell as the primitive cell (identity transformation),
-        pass 'P'. When given as array_like, shape=(3, 3), dtype=float. When
-        'F', 'I', 'A', 'C', or 'R' is given instead of a 3x3 matrix, the
-        primitive matrix defined at
-        https://spglib.github.io/spglib/definition.html is used. When a
-        "phono3py.yaml"-like file is loaded and it has a primitive_matrix
-        stored, that value takes priority over the default 'auto'.
+        Transformation matrix to the supercell from the unit cell.
+        ``shape=(3,)`` or ``(3, 3)``, ``dtype=int``. A 1D array is
+        treated as the diagonal of a 3x3 matrix. Default is the
+        identity matrix.
+    primitive_matrix : str or array_like, optional
+        Transformation matrix to the primitive cell from the unit
+        cell. Default is ``"auto"``, which guesses the matrix from
+        crystal symmetry (centring types ``"F"``, ``"I"``, ``"A"``,
+        ``"C"``, ``"R"``, or primitive ``"P"``). To use the unit cell
+        as the primitive cell (identity transformation), pass
+        ``"P"``. ``None`` is treated the same as ``"auto"``. When a
+        centring symbol is given, the primitive matrix defined at
+        https://spglib.github.io/spglib/definition.html is used.
+        When a ``"phono3py.yaml"``-like file is loaded and contains a
+        ``primitive_matrix``, that value takes priority over the
+        default ``"auto"``.
     phonon_supercell_matrix : array_like, optional
-        Supercell matrix used for fc2. In phono3py, supercell matrix for fc3
-        and fc2 can be different to support longer range interaction of fc2 than
-        that of fc3. Unless setting this, supercell_matrix is used. This is only
-        valid when unitcell or unitcell_filename is given. Default is None.
+        Supercell matrix used for fc2 when a different dimension is
+        desired from the one used for fc3. Same format as
+        ``supercell_matrix``. Default is ``None``, which uses
+        ``supercell_matrix`` for fc2. Only valid when ``unitcell`` or
+        ``unitcell_filename`` is given.
     is_nac : bool, optional
-        If True, look for 'BORN' file. If False, NAS is turned off. Default is
-        True.
-    calculator : str, optional.
-        Calculator used for computing forces. This is used to switch the set of
-        physical units when parsing calculator input/output files. Default is
-        None, which is equivalent to "vasp".
+        When True, look for ``"BORN"``. When False, NAC is turned
+        off. Default is True.
+    calculator : str, optional
+        Calculator name (``"vasp"``, ``"qe"``, ...) used to switch
+        the set of physical units when parsing calculator input/output
+        files. Default is ``None``, which is equivalent to ``"vasp"``.
     unitcell : PhonopyAtoms, optional
-        Input unit cell. Default is None.
+        Input unit cell. Default is ``None``.
     supercell : PhonopyAtoms, optional
-        Input supercell. With given, default value of primitive_matrix is set to
-        'auto' (can be overwritten). supercell_matrix is ignored. Default is
-        None.
+        Input supercell. When given, ``primitive_matrix`` defaults to
+        ``"auto"`` (can be overwritten) and ``supercell_matrix`` is
+        ignored. Default is ``None``.
     nac_params : dict, optional
-        Parameters required for non-analytical term correction. Default is None.
-        {'born': Born effective charges
-                 (array_like, shape=(primitive cell atoms, 3, 3), dtype=float),
-         'dielectric': Dielectric constant matrix
-                       (array_like, shape=(3, 3), dtype=float),
-         'factor': unit conversion factor (float)}
-    unitcell_filename : os.PathLike, optional
-        Input unit cell filename. Default is None.
-    supercell_filename : os.PathLike, optional
-        Input supercell filename. When this is specified, supercell_matrix is
-        ignored. Default is None.
-    born_filename : os.PathLike, optional
-        Filename corresponding to 'BORN', a file contains non-analytical term
-        correction parameters.
-    forces_fc3_filename : sequence or os.PathLike, optional
-        A two-elemental sequence of filenames corresponding to ('FORCES_FC3',
-        'phono3py_disp.yaml') in the type-1 format or a filename (os.PathLike)
-        corresponding to 'FORCES_FC3' in the type-2 format. Default is None.
-    forces_fc2_filename : os.PathLike or sequence, optional
-        A two-elemental sequence of filenames corresponding to ('FORCES_FC2',
-        'phono3py_disp.yaml') in the type-1 format or a filename (os.PathLike)
-        corresponding to 'FORCES_FC2' in the type-2 format. Default is None.
-    fc3_filename : os.PathLike, optional
-        Filename of a file corresponding to 'fc3.hdf5', a file contains
-        third-order force constants. Default is None.
-    fc2_filename : os.PathLike, optional
-        Filename of a file corresponding to 'fc2.hdf5', a file contains
-        second-order force constants. Default is None.
+        Parameters for non-analytical term correction::
+
+            'born':       Born effective charges,
+                          shape=(atoms in primitive, 3, 3),
+                          dtype=float.
+            'dielectric': dielectric constant matrix,
+                          shape=(3, 3), dtype=float.
+            'factor':     unit conversion factor (float).
+
+        Default is ``None``.
+    unitcell_filename : str or os.PathLike, optional
+        Path to a unit-cell file. Default is ``None``.
+    supercell_filename : str or os.PathLike, optional
+        Path to a supercell file. When given, ``supercell_matrix`` is
+        ignored. Default is ``None``.
+    born_filename : str or os.PathLike, optional
+        Path to a ``"BORN"`` file containing NAC parameters. Default
+        is ``None``.
+    forces_fc3_filename : str, os.PathLike, or sequence, optional
+        Either a two-element sequence of paths corresponding to
+        ``("FORCES_FC3", "phono3py_disp.yaml")`` for the type-1
+        format, or a single path to ``"FORCES_FC3"`` for the type-2
+        format. Default is ``None``.
+    forces_fc2_filename : str, os.PathLike, or sequence, optional
+        Same as ``forces_fc3_filename`` but for fc2. Default is
+        ``None``.
+    fc3_filename : str or os.PathLike, optional
+        Path to a file storing fc3 (e.g. ``"fc3.hdf5"``). Default is
+        ``None``.
+    fc2_filename : str or os.PathLike, optional
+        Path to a file storing fc2 (e.g. ``"fc2.hdf5"``). Default is
+        ``None``.
     fc_calculator : str, optional
-        Force constants calculator. Currently only 'alm'. Default is None.
+        Force-constants calculator. One of ``None``,
+        ``"traditional"``, ``"symfc"``, or ``"alm"``. Default is
+        ``None`` (equivalent to ``"traditional"``).
     fc_calculator_options : str, optional
-        Optional parameters that are passed to the external fc-calculator. This
-        is given as one text string. How to parse this depends on the
-        fc-calculator. For alm, each parameter is split by comma ',', and
-        each set of key and value pair is written in 'key = value'.
+        Options string forwarded to the chosen calculator. Use
+        ``"<fc2_opts>|<fc3_opts>"`` to set separate options for fc2
+        and fc3. For ``"alm"``, each parameter is split by ``","`` and
+        each key/value pair is written as ``"key = value"``. Default
+        is ``None``.
     factor : float, optional
-        Deprecated.
+        **Deprecated.** Default is ``None``.
     produce_fc : bool, optional
-        Setting False, force constants are not calculated from displacements and
-        forces. Default is True.
+        Compute force constants from displacements and forces. When
+        False, only the dataset is set up. Default is True.
     is_symmetry : bool, optional
-        Setting False, crystal symmetry except for lattice translation is not
-        considered. Default is True.
-    symmetrize_fc : bool, optional
-        Setting False, force constants are not symmetrized when creating force
-        constants from displacements and forces. Default is True.
-    is_mesh_symmetry : bool, optional
-        Setting False, reciprocal mesh symmetry is not considered. Default is
-        True.
-    is_compact_fc : bool, optional
-        fc3 are created in the array whose shape is
-            True: (primitive, supercell, supercell, 3, 3, 3)
-            False: (supercell, supercell, supercell, 3, 3, 3)
-        and for fc2
-            True: (primitive, supercell, 3, 3)
-            False: (supercell, supercell, 3, 3)
-        where 'supercell' and 'primitive' indicate number of atoms in these
-        cells. Default is True.
-    use_pypolymlp : bool, optional
-        Use pypolymlp for generating force constants. Default is False.
-    mlp_params : dict, optional
-        A set of parameters used by machine learning potentials.
-    use_grg : bool, optional
-        Use generalized regular grid when True. Default is False.
-    make_r0_average : bool, optional
-        fc3 transformation from real to reciprocal space is done around three
-        atoms and averaged when True. Default is False, i.e., only around the
-        first atom. Setting False is for rough compatibility with v2.x. Default
+        Use crystal symmetry (beyond lattice translation). Default
         is True.
+    symmetrize_fc : bool, optional
+        Symmetrize the force constants after producing them.
+        Applied per fc order (fc2 / fc3): only effective when the
+        corresponding calculator (after ``"|"`` splitting of
+        ``fc_calculator``) is ``None`` or ``"traditional"``. fc2 or
+        fc3 produced by ``"symfc"`` or ``"alm"`` is already
+        symmetrized by the solver. Default is True.
+    is_mesh_symmetry : bool, optional
+        Use reciprocal-mesh symmetry. Default is True.
+    is_compact_fc : bool, optional
+        Use compact force-constant shape::
+
+            fc3 True:  (primitive, supercell, supercell, 3, 3, 3)
+            fc3 False: (supercell, supercell, supercell, 3, 3, 3)
+            fc2 True:  (primitive, supercell, 3, 3)
+            fc2 False: (supercell, supercell, 3, 3)
+
+        Default is True.
+    use_pypolymlp : bool, optional
+        Use pypolymlp to generate force constants. Default is False.
+    mlp_params : dict, optional
+        Parameters for the machine-learning potential. Default is
+        ``None``.
+    use_grg : bool, optional
+        Use a generalized regular grid (GRG). Default is False.
+    make_r0_average : bool, optional
+        Average the fc3 real-to-reciprocal-space transformation over
+        the three atoms in each triplet when True (default). When
+        False, only the first atom is used. ``False`` is provided for
+        rough backward compatibility with v2.x results.
     symprec : float, optional
-        Tolerance used to find crystal symmetry. Default is 1e-5.
+        Tolerance used to find crystal symmetry. Default is ``1e-5``.
     log_level : int, optional
-        Verbosity control. Default is 0.
+        Verbosity control. Default is ``0``.
     lang : Literal["C", "Rust"], optional
-        Backend implementation for compute-heavy kernels. "C" (default)
-        uses the existing C extension. "Rust" selects the experimental
-        phono3py-rs backend.
+        Backend implementation for compute-heavy kernels. ``"C"``
+        uses the existing C extension; ``"Rust"`` selects the
+        experimental phonors backend. Default is ``"Rust"``.
 
     """
     lang = resolve_lang(lang)
@@ -472,12 +483,21 @@ def compute_force_constants_from_datasets(
     fc2_calc_opts = extract_fc2_fc3_calculators_options(fc_calculator_options, 2)
     if ph3py.fc3 is None and forces_in_dataset(ph3py.dataset):  # type: ignore[arg-type]
         ph3py.produce_fc3(
-            symmetrize_fc3r=symmetrize_fc,
             is_compact_fc=is_compact_fc,
             fc_calculator=fc3_calculator,
             fc_calculator_options=fc3_calc_opts,
-            use_symfc_projector=use_symfc_projector,
         )
+        if symmetrize_fc and fc3_calculator in (None, "traditional"):
+            use_projector_fc3 = use_symfc_projector and fc3_calculator is None
+            ph3py.symmetrize_fc3(
+                use_symfc_projector=use_projector_fc3, options=fc3_calc_opts
+            )
+            # When phonon_supercell_matrix is None, produce_fc3 also
+            # populates fc2; post-symmetrize it with the same scheme.
+            if ph3py.phonon_supercell_matrix is None:
+                ph3py.symmetrize_fc2(
+                    use_symfc_projector=use_projector_fc3, options=fc2_calc_opts
+                )
 
     if ph3py.fc2 is None or fc3_calculator != fc2_calculator:
         if (
@@ -487,12 +507,15 @@ def compute_force_constants_from_datasets(
             and forces_in_dataset(ph3py.phonon_dataset)  # type: ignore[arg-type]
         ):
             ph3py.produce_fc2(
-                symmetrize_fc2=symmetrize_fc,
                 is_compact_fc=is_compact_fc,
                 fc_calculator=fc2_calculator,
                 fc_calculator_options=fc2_calc_opts,
-                use_symfc_projector=use_symfc_projector,
             )
+            if symmetrize_fc and fc2_calculator in (None, "traditional"):
+                use_projector_fc2 = use_symfc_projector and fc2_calculator is None
+                ph3py.symmetrize_fc2(
+                    use_symfc_projector=use_projector_fc2, options=fc2_calc_opts
+                )
 
 
 def _load_fc3(
