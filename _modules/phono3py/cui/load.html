@@ -1,0 +1,1525 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>phono3py.cui.load &#8212; Phono3py v.4.0.1</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../_static/documentation_options.js?v=1a34d25d"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}`;
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        all_mermaids.forEach((el) => {
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+        await mermaid.run();
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+const load = async () => {
+    initStyles();
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...JSON.parse(
+                    `{"startOnLoad": false}`
+                ),
+                ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...JSON.parse(
+        `{"startOnLoad": false}`
+    ),
+    ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/phono3py/cui/load';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="4.0" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Phono3py v.4.0.1</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../rust-backend.html">Rust backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../vasp.html">VASP &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../qe.html">Quantum ESPRESSO (pw) &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../crystal.html">CRYSTAL &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../turbomole.html">TURBOMOLE &amp; phono3py calculation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../command-options.html">Command options / Setting tags</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../input-output-files.html">Input / Output files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../auxiliary-tools.html">Auxiliary tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../direct-solution.html">Direct solution of linearized phonon Boltzmann equation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../wigner-solution.html">Solution of the Wigner transport equation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../workload-distribution.html">Workload distribution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../random-displacements.html">Force constants calculation with random displacements of atoms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pypolymlp.html">Force constants calculation using pypolymlp (machine learning potential)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cutoff-pair.html">Force constants calculation with cutoff pair-distance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../external-tools.html">External tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../phono3py-api.html">Phono3py API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api-reference.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../phono3py.html">phono3py command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../phono3py-init.html">phono3py-init command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../hdf5_howto.html">Using phono3py hdf5 files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../grid.html">Grids in reciprocal space</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../citation.html">How to cite phono3py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../migration-v4.html">Migrating from phono3py v3 to v4</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changelog.html">Change Log</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for phono3py.cui.load</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Phono3py loader.&quot;&quot;&quot;</span>
+
+<span class="c1"># Copyright (C) 2019 Atsushi Togo</span>
+<span class="c1"># All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># This file is part of phono3py.</span>
+<span class="c1">#</span>
+<span class="c1"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c1"># modification, are permitted provided that the following conditions</span>
+<span class="c1"># are met:</span>
+<span class="c1">#</span>
+<span class="c1"># * Redistributions of source code must retain the above copyright</span>
+<span class="c1">#   notice, this list of conditions and the following disclaimer.</span>
+<span class="c1">#</span>
+<span class="c1"># * Redistributions in binary form must reproduce the above copyright</span>
+<span class="c1">#   notice, this list of conditions and the following disclaimer in</span>
+<span class="c1">#   the documentation and/or other materials provided with the</span>
+<span class="c1">#   distribution.</span>
+<span class="c1">#</span>
+<span class="c1"># * Neither the name of the phono3py project nor the names of its</span>
+<span class="c1">#   contributors may be used to endorse or promote products derived</span>
+<span class="c1">#   from this software without specific prior written permission.</span>
+<span class="c1">#</span>
+<span class="c1"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS</span>
+<span class="c1"># &quot;AS IS&quot; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT</span>
+<span class="c1"># LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS</span>
+<span class="c1"># FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE</span>
+<span class="c1"># COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,</span>
+<span class="c1"># INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,</span>
+<span class="c1"># BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;</span>
+<span class="c1"># LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER</span>
+<span class="c1"># CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT</span>
+<span class="c1"># LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN</span>
+<span class="c1"># ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE</span>
+<span class="c1"># POSSIBILITY OF SUCH DAMAGE.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">phonopy.cui.load_helper</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">load_helper</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">phonopy.file_IO</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_supported_file_extensions_for_compression</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">phonopy.harmonic.displacement</span><span class="w"> </span><span class="kn">import</span> <span class="n">DisplacementDataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">phonopy.harmonic.force_constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">show_drift_force_constants</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">phonopy.interface.calculator</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_calculator_physical_units</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">phonopy.structure.atoms</span><span class="w"> </span><span class="kn">import</span> <span class="n">PhonopyAtoms</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">phonopy.structure.cells</span><span class="w"> </span><span class="kn">import</span> <span class="n">determinant</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">phono3py</span><span class="w"> </span><span class="kn">import</span> <span class="n">Phono3py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">phono3py._lang</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_lang</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">phono3py.cui.create_force_constants</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">develop_or_load_pypolymlp</span><span class="p">,</span>
+    <span class="n">parse_forces</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">phono3py.file_IO</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_fc2_from_hdf5</span><span class="p">,</span> <span class="n">read_fc3_from_hdf5</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">phono3py.interface.fc_calculator</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">extract_fc2_fc3_calculators</span><span class="p">,</span>
+    <span class="n">extract_fc2_fc3_calculators_options</span><span class="p">,</span>
+    <span class="n">update_cutoff_fc_calculator_options</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">phono3py.interface.phono3py_yaml</span><span class="w"> </span><span class="kn">import</span> <span class="n">Phono3pyYaml</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">phono3py.phonon3.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">forces_in_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">phono3py.phonon3.displacement_fc3</span><span class="w"> </span><span class="kn">import</span> <span class="n">Fc3DisplacementDataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">phono3py.phonon3.fc3</span><span class="w"> </span><span class="kn">import</span> <span class="n">show_drift_fc3</span>
+
+
+<div class="viewcode-block" id="load">
+<a class="viewcode-back" href="../../../api-reference.html#phono3py.load">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span>
+    <span class="n">phono3py_yaml</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span>
+    <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># phono3py.yaml-like must be the first argument.</span>
+    <span class="n">supercell_matrix</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span>
+    <span class="o">|</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span>
+    <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">primitive_matrix</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;P&quot;</span><span class="p">,</span> <span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="s2">&quot;I&quot;</span><span class="p">,</span> <span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="s2">&quot;R&quot;</span><span class="p">,</span> <span class="s2">&quot;auto&quot;</span><span class="p">]</span>
+    <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span>
+    <span class="o">|</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">double</span><span class="p">]</span>
+    <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">phonon_supercell_matrix</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span>
+    <span class="o">|</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">]</span>
+    <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">is_nac</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">calculator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">unitcell</span><span class="p">:</span> <span class="n">PhonopyAtoms</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">supercell</span><span class="p">:</span> <span class="n">PhonopyAtoms</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">nac_params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">unitcell_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">supercell_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">born_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">forces_fc3_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">forces_fc2_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fc3_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fc2_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fc_calculator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fc_calculator_options</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># deprecated</span>
+    <span class="n">produce_fc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">is_symmetry</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">symmetrize_fc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">is_mesh_symmetry</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">is_compact_fc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">use_pypolymlp</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">mlp_params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">use_grg</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">make_r0_average</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">symprec</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span>
+    <span class="n">log_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">lang</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="s2">&quot;Rust&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Rust&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Phono3py</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a Phono3py instance from parameters and/or input files.</span>
+
+<span class="sd">    A ``&quot;phono3py_yaml&quot;``-like file is parsed unless crystal structure</span>
+<span class="sd">    information is given through ``unitcell_filename``,</span>
+<span class="sd">    ``supercell_filename``, ``unitcell`` (PhonopyAtoms-like), or</span>
+<span class="sd">    ``supercell`` (PhonopyAtoms-like). Even when a ``&quot;phono3py_yaml&quot;``-</span>
+<span class="sd">    like file is parsed, parameters other than the crystal structure</span>
+<span class="sd">    can be overwritten by keyword arguments.</span>
+
+<span class="sd">    ``&quot;fc3.hdf5&quot;`` is read if it is found in the current directory.</span>
+<span class="sd">    Otherwise, if ``&quot;FORCES_FC3&quot;`` and ``&quot;phono3py_disp.yaml&quot;`` are</span>
+<span class="sd">    found, they are read and fc3 (and fc2) are produced. Similarly,</span>
+<span class="sd">    ``&quot;fc2.hdf5&quot;`` is read if found; otherwise ``&quot;FORCES_FC2&quot;`` plus</span>
+<span class="sd">    ``&quot;phono3py_disp.yaml&quot;`` are used to produce fc2.</span>
+
+<span class="sd">    When ``forces_fc3_filename`` / ``forces_fc2_filename`` are not</span>
+<span class="sd">    given, ``&quot;FORCES_FC3&quot;`` and ``&quot;FORCES_FC2&quot;`` are searched in the</span>
+<span class="sd">    current directory. With type-1 ``&quot;FORCES_FC3&quot;`` (or</span>
+<span class="sd">    ``&quot;FORCES_FC2&quot;``), ``&quot;phono3py_disp.yaml&quot;`` is also required.</span>
+
+<span class="sd">    **Crystal structure** -- in order of priority::</span>
+
+<span class="sd">        1. unitcell_filename  (with supercell_matrix)</span>
+<span class="sd">        2. supercell_filename</span>
+<span class="sd">        3. unitcell           (with supercell_matrix)</span>
+<span class="sd">        4. supercell</span>
+<span class="sd">        5. phono3py_yaml-like</span>
+
+<span class="sd">    **Force sets or force constants** (optional) -- in order of</span>
+<span class="sd">    priority::</span>
+
+<span class="sd">        1. fc3_filename       (fc2_filename)</span>
+<span class="sd">        2. forces_fc3_filename (forces_fc2_filename); for type-1 format</span>
+<span class="sd">           phono3py_disp.yaml must also be supplied.</span>
+<span class="sd">        3. fc3.hdf5 and fc2.hdf5 in the current directory.</span>
+<span class="sd">        4. FORCES_FC3 and FORCES_FC2 in the current directory.</span>
+<span class="sd">           FORCES_FC2 is optional; for type-1 format</span>
+<span class="sd">           phono3py_disp.yaml is also searched. When FORCES_FC2 is</span>
+<span class="sd">           missing, FORCES_FC3 is used to create fc2.</span>
+
+<span class="sd">    **Parameters for non-analytical term correction (NAC)**</span>
+<span class="sd">    (optional) -- in order of priority::</span>
+
+<span class="sd">        1. born_filename</span>
+<span class="sd">        2. nac_params</span>
+<span class="sd">        3. phono3py_yaml_like.nac_params when present and is_nac=True</span>
+<span class="sd">        4. BORN in the current directory when is_nac=True</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    phono3py_yaml : str or os.PathLike, optional</span>
+<span class="sd">        Path to a ``&quot;phono3py.yaml&quot;``-like file. When given, the</span>
+<span class="sd">        contents are parsed. Default is ``None``.</span>
+<span class="sd">    supercell_matrix : array_like, optional</span>
+<span class="sd">        Transformation matrix to the supercell from the unit cell.</span>
+<span class="sd">        ``shape=(3,)`` or ``(3, 3)``, ``dtype=int``. A 1D array is</span>
+<span class="sd">        treated as the diagonal of a 3x3 matrix. Default is the</span>
+<span class="sd">        identity matrix.</span>
+<span class="sd">    primitive_matrix : str or array_like, optional</span>
+<span class="sd">        Transformation matrix to the primitive cell from the unit</span>
+<span class="sd">        cell. Default is ``&quot;auto&quot;``, which guesses the matrix from</span>
+<span class="sd">        crystal symmetry (centring types ``&quot;F&quot;``, ``&quot;I&quot;``, ``&quot;A&quot;``,</span>
+<span class="sd">        ``&quot;C&quot;``, ``&quot;R&quot;``, or primitive ``&quot;P&quot;``). To use the unit cell</span>
+<span class="sd">        as the primitive cell (identity transformation), pass</span>
+<span class="sd">        ``&quot;P&quot;``. ``None`` is treated the same as ``&quot;auto&quot;``. When a</span>
+<span class="sd">        centring symbol is given, the primitive matrix defined at</span>
+<span class="sd">        https://spglib.github.io/spglib/definition.html is used.</span>
+<span class="sd">        When a ``&quot;phono3py.yaml&quot;``-like file is loaded and contains a</span>
+<span class="sd">        ``primitive_matrix``, that value takes priority over the</span>
+<span class="sd">        default ``&quot;auto&quot;``.</span>
+<span class="sd">    phonon_supercell_matrix : array_like, optional</span>
+<span class="sd">        Supercell matrix used for fc2 when a different dimension is</span>
+<span class="sd">        desired from the one used for fc3. Same format as</span>
+<span class="sd">        ``supercell_matrix``. Default is ``None``, which uses</span>
+<span class="sd">        ``supercell_matrix`` for fc2. Only valid when ``unitcell`` or</span>
+<span class="sd">        ``unitcell_filename`` is given.</span>
+<span class="sd">    is_nac : bool, optional</span>
+<span class="sd">        When True, look for ``&quot;BORN&quot;``. When False, NAC is turned</span>
+<span class="sd">        off. Default is True.</span>
+<span class="sd">    calculator : str, optional</span>
+<span class="sd">        Calculator name (``&quot;vasp&quot;``, ``&quot;qe&quot;``, ...) used to switch</span>
+<span class="sd">        the set of physical units when parsing calculator input/output</span>
+<span class="sd">        files. Default is ``None``, which is equivalent to ``&quot;vasp&quot;``.</span>
+<span class="sd">    unitcell : PhonopyAtoms, optional</span>
+<span class="sd">        Input unit cell. Default is ``None``.</span>
+<span class="sd">    supercell : PhonopyAtoms, optional</span>
+<span class="sd">        Input supercell. When given, ``primitive_matrix`` defaults to</span>
+<span class="sd">        ``&quot;auto&quot;`` (can be overwritten) and ``supercell_matrix`` is</span>
+<span class="sd">        ignored. Default is ``None``.</span>
+<span class="sd">    nac_params : dict, optional</span>
+<span class="sd">        Parameters for non-analytical term correction::</span>
+
+<span class="sd">            &#39;born&#39;:       Born effective charges,</span>
+<span class="sd">                          shape=(atoms in primitive, 3, 3),</span>
+<span class="sd">                          dtype=float.</span>
+<span class="sd">            &#39;dielectric&#39;: dielectric constant matrix,</span>
+<span class="sd">                          shape=(3, 3), dtype=float.</span>
+<span class="sd">            &#39;factor&#39;:     unit conversion factor (float).</span>
+
+<span class="sd">        Default is ``None``.</span>
+<span class="sd">    unitcell_filename : str or os.PathLike, optional</span>
+<span class="sd">        Path to a unit-cell file. Default is ``None``.</span>
+<span class="sd">    supercell_filename : str or os.PathLike, optional</span>
+<span class="sd">        Path to a supercell file. When given, ``supercell_matrix`` is</span>
+<span class="sd">        ignored. Default is ``None``.</span>
+<span class="sd">    born_filename : str or os.PathLike, optional</span>
+<span class="sd">        Path to a ``&quot;BORN&quot;`` file containing NAC parameters. Default</span>
+<span class="sd">        is ``None``.</span>
+<span class="sd">    forces_fc3_filename : str, os.PathLike, or sequence, optional</span>
+<span class="sd">        Either a two-element sequence of paths corresponding to</span>
+<span class="sd">        ``(&quot;FORCES_FC3&quot;, &quot;phono3py_disp.yaml&quot;)`` for the type-1</span>
+<span class="sd">        format, or a single path to ``&quot;FORCES_FC3&quot;`` for the type-2</span>
+<span class="sd">        format. Default is ``None``.</span>
+<span class="sd">    forces_fc2_filename : str, os.PathLike, or sequence, optional</span>
+<span class="sd">        Same as ``forces_fc3_filename`` but for fc2. Default is</span>
+<span class="sd">        ``None``.</span>
+<span class="sd">    fc3_filename : str or os.PathLike, optional</span>
+<span class="sd">        Path to a file storing fc3 (e.g. ``&quot;fc3.hdf5&quot;``). Default is</span>
+<span class="sd">        ``None``.</span>
+<span class="sd">    fc2_filename : str or os.PathLike, optional</span>
+<span class="sd">        Path to a file storing fc2 (e.g. ``&quot;fc2.hdf5&quot;``). Default is</span>
+<span class="sd">        ``None``.</span>
+<span class="sd">    fc_calculator : str, optional</span>
+<span class="sd">        Force-constants calculator. One of ``None``,</span>
+<span class="sd">        ``&quot;traditional&quot;``, ``&quot;symfc&quot;``, or ``&quot;alm&quot;``. Default is</span>
+<span class="sd">        ``None`` (equivalent to ``&quot;traditional&quot;``).</span>
+<span class="sd">    fc_calculator_options : str, optional</span>
+<span class="sd">        Options string forwarded to the chosen calculator. Use</span>
+<span class="sd">        ``&quot;&lt;fc2_opts&gt;|&lt;fc3_opts&gt;&quot;`` to set separate options for fc2</span>
+<span class="sd">        and fc3. For ``&quot;alm&quot;``, each parameter is split by ``&quot;,&quot;`` and</span>
+<span class="sd">        each key/value pair is written as ``&quot;key = value&quot;``. Default</span>
+<span class="sd">        is ``None``.</span>
+<span class="sd">    factor : float, optional</span>
+<span class="sd">        **Deprecated.** Default is ``None``.</span>
+<span class="sd">    produce_fc : bool, optional</span>
+<span class="sd">        Compute force constants from displacements and forces. When</span>
+<span class="sd">        False, only the dataset is set up. Default is True.</span>
+<span class="sd">    is_symmetry : bool, optional</span>
+<span class="sd">        Use crystal symmetry (beyond lattice translation). Default</span>
+<span class="sd">        is True.</span>
+<span class="sd">    symmetrize_fc : bool, optional</span>
+<span class="sd">        Symmetrize the force constants after producing them.</span>
+<span class="sd">        Applied per fc order (fc2 / fc3): only effective when the</span>
+<span class="sd">        corresponding calculator (after ``&quot;|&quot;`` splitting of</span>
+<span class="sd">        ``fc_calculator``) is ``None`` or ``&quot;traditional&quot;``. fc2 or</span>
+<span class="sd">        fc3 produced by ``&quot;symfc&quot;`` or ``&quot;alm&quot;`` is already</span>
+<span class="sd">        symmetrized by the solver. Default is True.</span>
+<span class="sd">    is_mesh_symmetry : bool, optional</span>
+<span class="sd">        Use reciprocal-mesh symmetry. Default is True.</span>
+<span class="sd">    is_compact_fc : bool, optional</span>
+<span class="sd">        Use compact force-constant shape::</span>
+
+<span class="sd">            fc3 True:  (primitive, supercell, supercell, 3, 3, 3)</span>
+<span class="sd">            fc3 False: (supercell, supercell, supercell, 3, 3, 3)</span>
+<span class="sd">            fc2 True:  (primitive, supercell, 3, 3)</span>
+<span class="sd">            fc2 False: (supercell, supercell, 3, 3)</span>
+
+<span class="sd">        Default is True.</span>
+<span class="sd">    use_pypolymlp : bool, optional</span>
+<span class="sd">        Use pypolymlp to generate force constants. Default is False.</span>
+<span class="sd">    mlp_params : dict, optional</span>
+<span class="sd">        Parameters for the machine-learning potential. Default is</span>
+<span class="sd">        ``None``.</span>
+<span class="sd">    use_grg : bool, optional</span>
+<span class="sd">        Use a generalized regular grid (GRG). Default is False.</span>
+<span class="sd">    make_r0_average : bool, optional</span>
+<span class="sd">        Average the fc3 real-to-reciprocal-space transformation over</span>
+<span class="sd">        the three atoms in each triplet when True (default). When</span>
+<span class="sd">        False, only the first atom is used. ``False`` is provided for</span>
+<span class="sd">        rough backward compatibility with v2.x results.</span>
+<span class="sd">    symprec : float, optional</span>
+<span class="sd">        Tolerance used to find crystal symmetry. Default is ``1e-5``.</span>
+<span class="sd">    log_level : int, optional</span>
+<span class="sd">        Verbosity control. Default is ``0``.</span>
+<span class="sd">    lang : Literal[&quot;C&quot;, &quot;Rust&quot;], optional</span>
+<span class="sd">        Backend implementation for compute-heavy kernels. ``&quot;C&quot;``</span>
+<span class="sd">        uses the existing C extension; ``&quot;Rust&quot;`` selects the</span>
+<span class="sd">        experimental phonors backend. Default is ``&quot;Rust&quot;``.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">lang</span> <span class="o">=</span> <span class="n">resolve_lang</span><span class="p">(</span><span class="n">lang</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">primitive_matrix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">primitive_matrix</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">supercell</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">or</span> <span class="n">supercell_filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">or</span> <span class="n">unitcell</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">or</span> <span class="n">unitcell_filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="n">_calculator</span> <span class="o">=</span> <span class="n">calculator</span>
+        <span class="n">cell</span><span class="p">,</span> <span class="n">smat</span><span class="p">,</span> <span class="n">pmat</span> <span class="o">=</span> <span class="n">load_helper</span><span class="o">.</span><span class="n">get_cell_settings</span><span class="p">(</span>
+            <span class="n">supercell_matrix</span><span class="o">=</span><span class="n">supercell_matrix</span><span class="p">,</span>
+            <span class="n">primitive_matrix</span><span class="o">=</span><span class="n">primitive_matrix</span><span class="p">,</span>
+            <span class="n">unitcell</span><span class="o">=</span><span class="n">unitcell</span><span class="p">,</span>
+            <span class="n">supercell</span><span class="o">=</span><span class="n">supercell</span><span class="p">,</span>
+            <span class="n">unitcell_filename</span><span class="o">=</span><span class="n">unitcell_filename</span><span class="p">,</span>
+            <span class="n">supercell_filename</span><span class="o">=</span><span class="n">supercell_filename</span><span class="p">,</span>
+            <span class="n">calculator</span><span class="o">=</span><span class="n">_calculator</span><span class="p">,</span>
+            <span class="n">symprec</span><span class="o">=</span><span class="n">symprec</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">phonon_supercell_matrix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">unitcell</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">unitcell_filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">&quot;phonon_supercell_matrix can be used only when &quot;</span>
+                    <span class="s2">&quot;unitcell or unitcell_filename is given.&quot;</span>
+                <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="n">ph_smat</span> <span class="o">=</span> <span class="n">phonon_supercell_matrix</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ph_smat</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">_nac_params</span> <span class="o">=</span> <span class="n">nac_params</span>
+        <span class="n">ph3py_yaml</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">elif</span> <span class="n">phono3py_yaml</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ph3py_yaml</span> <span class="o">=</span> <span class="n">Phono3pyYaml</span><span class="p">()</span>
+        <span class="n">ph3py_yaml</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">phono3py_yaml</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">ph3py_yaml</span><span class="o">.</span><span class="n">unitcell</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">cell</span> <span class="o">=</span> <span class="n">ph3py_yaml</span><span class="o">.</span><span class="n">unitcell</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">_calculator</span> <span class="o">=</span> <span class="n">ph3py_yaml</span><span class="o">.</span><span class="n">calculator</span>
+        <span class="n">smat</span> <span class="o">=</span> <span class="n">ph3py_yaml</span><span class="o">.</span><span class="n">supercell_matrix</span>
+        <span class="n">ph_smat</span> <span class="o">=</span> <span class="n">ph3py_yaml</span><span class="o">.</span><span class="n">phonon_supercell_matrix</span>
+        <span class="k">if</span> <span class="n">smat</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">smat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;C&quot;</span><span class="p">)</span>
+        <span class="c1"># When the caller leaves primitive_matrix at the default &quot;auto&quot;,</span>
+        <span class="c1"># a value stored in the yaml takes priority (preserves the cell</span>
+        <span class="c1"># transformation that was used originally).</span>
+        <span class="k">if</span> <span class="n">primitive_matrix</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span> <span class="ow">and</span> <span class="n">ph3py_yaml</span><span class="o">.</span><span class="n">primitive_matrix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pmat</span> <span class="o">=</span> <span class="n">ph3py_yaml</span><span class="o">.</span><span class="n">primitive_matrix</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pmat</span> <span class="o">=</span> <span class="n">primitive_matrix</span>
+
+        <span class="k">if</span> <span class="n">nac_params</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_nac_params</span> <span class="o">=</span> <span class="n">nac_params</span>
+        <span class="k">elif</span> <span class="n">is_nac</span><span class="p">:</span>
+            <span class="n">_nac_params</span> <span class="o">=</span> <span class="n">ph3py_yaml</span><span class="o">.</span><span class="n">nac_params</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_nac_params</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># Convert distance unit of unit cell to Angstrom</span>
+    <span class="n">physical_units</span> <span class="o">=</span> <span class="n">get_calculator_physical_units</span><span class="p">(</span><span class="n">_calculator</span><span class="p">)</span>
+    <span class="n">factor_to_A</span> <span class="o">=</span> <span class="n">physical_units</span><span class="o">.</span><span class="n">distance_to_A</span>
+    <span class="k">assert</span> <span class="n">cell</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="n">cell</span><span class="o">.</span><span class="n">cell</span> <span class="o">=</span> <span class="n">cell</span><span class="o">.</span><span class="n">cell</span> <span class="o">*</span> <span class="n">factor_to_A</span>
+
+    <span class="n">ph3py</span> <span class="o">=</span> <span class="n">Phono3py</span><span class="p">(</span>
+        <span class="n">cell</span><span class="p">,</span>
+        <span class="n">smat</span><span class="p">,</span>
+        <span class="n">primitive_matrix</span><span class="o">=</span><span class="n">pmat</span><span class="p">,</span>
+        <span class="n">phonon_supercell_matrix</span><span class="o">=</span><span class="n">ph_smat</span><span class="p">,</span>
+        <span class="n">symprec</span><span class="o">=</span><span class="n">symprec</span><span class="p">,</span>
+        <span class="n">is_symmetry</span><span class="o">=</span><span class="n">is_symmetry</span><span class="p">,</span>
+        <span class="n">is_mesh_symmetry</span><span class="o">=</span><span class="n">is_mesh_symmetry</span><span class="p">,</span>
+        <span class="n">use_grg</span><span class="o">=</span><span class="n">use_grg</span><span class="p">,</span>
+        <span class="n">make_r0_average</span><span class="o">=</span><span class="n">make_r0_average</span><span class="p">,</span>
+        <span class="n">log_level</span><span class="o">=</span><span class="n">log_level</span><span class="p">,</span>
+        <span class="n">lang</span><span class="o">=</span><span class="n">lang</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">factor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;factor parameter is deprecated.&quot;</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">ph3py</span><span class="o">.</span><span class="n">_frequency_factor_to_THz</span> <span class="o">=</span> <span class="n">factor</span>
+
+    <span class="c1"># NAC params</span>
+    <span class="k">if</span> <span class="n">born_filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">_nac_params</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">is_nac</span><span class="p">:</span>
+        <span class="n">ph3py</span><span class="o">.</span><span class="n">nac_params</span> <span class="o">=</span> <span class="n">load_helper</span><span class="o">.</span><span class="n">get_nac_params</span><span class="p">(</span>
+            <span class="n">ph3py</span><span class="o">.</span><span class="n">primitive</span><span class="p">,</span>
+            <span class="n">_nac_params</span><span class="p">,</span>
+            <span class="n">born_filename</span><span class="p">,</span>
+            <span class="n">is_nac</span><span class="p">,</span>
+            <span class="n">physical_units</span><span class="o">.</span><span class="n">nac_factor</span><span class="p">,</span>
+            <span class="n">log_level</span><span class="o">=</span><span class="n">log_level</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">load_fc2_and_fc3</span><span class="p">(</span>
+        <span class="n">ph3py</span><span class="p">,</span> <span class="n">fc3_filename</span><span class="o">=</span><span class="n">fc3_filename</span><span class="p">,</span> <span class="n">fc2_filename</span><span class="o">=</span><span class="n">fc2_filename</span><span class="p">,</span> <span class="n">log_level</span><span class="o">=</span><span class="n">log_level</span>
+    <span class="p">)</span>
+
+    <span class="n">ph3py</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">select_and_load_dataset</span><span class="p">(</span>  <span class="c1"># type: ignore[assignment]</span>
+        <span class="n">ph3py</span><span class="p">,</span>
+        <span class="n">ph3py_yaml</span><span class="o">=</span><span class="n">ph3py_yaml</span><span class="p">,</span>
+        <span class="n">forces_fc3_filename</span><span class="o">=</span><span class="n">forces_fc3_filename</span><span class="p">,</span>
+        <span class="n">phono3py_yaml_filename</span><span class="o">=</span><span class="n">phono3py_yaml</span><span class="p">,</span>
+        <span class="n">calculator</span><span class="o">=</span><span class="n">_calculator</span><span class="p">,</span>
+        <span class="n">log_level</span><span class="o">=</span><span class="n">log_level</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">ph3py</span><span class="o">.</span><span class="n">phonon_dataset</span> <span class="o">=</span> <span class="n">select_and_load_phonon_dataset</span><span class="p">(</span>  <span class="c1"># type: ignore[assignment]</span>
+        <span class="n">ph3py</span><span class="p">,</span>
+        <span class="n">ph3py_yaml</span><span class="o">=</span><span class="n">ph3py_yaml</span><span class="p">,</span>
+        <span class="n">forces_fc2_filename</span><span class="o">=</span><span class="n">forces_fc2_filename</span><span class="p">,</span>
+        <span class="n">calculator</span><span class="o">=</span><span class="n">_calculator</span><span class="p">,</span>
+        <span class="n">log_level</span><span class="o">=</span><span class="n">log_level</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">use_pypolymlp</span> <span class="ow">and</span> <span class="n">ph3py</span><span class="o">.</span><span class="n">fc3</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">forces_in_dataset</span><span class="p">(</span><span class="n">ph3py</span><span class="o">.</span><span class="n">dataset</span><span class="p">):</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="k">assert</span> <span class="n">ph3py</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">ph3py</span><span class="o">.</span><span class="n">mlp_dataset</span> <span class="o">=</span> <span class="n">ph3py</span><span class="o">.</span><span class="n">dataset</span>  <span class="c1"># type: ignore[assignment]</span>
+        <span class="n">ph3py</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">produce_fc</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">ph3py</span><span class="o">.</span><span class="n">fc3</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">use_pypolymlp</span><span class="p">:</span>
+            <span class="n">develop_or_load_pypolymlp</span><span class="p">(</span><span class="n">ph3py</span><span class="p">,</span> <span class="n">mlp_params</span><span class="o">=</span><span class="n">mlp_params</span><span class="p">,</span> <span class="n">log_level</span><span class="o">=</span><span class="n">log_level</span><span class="p">)</span>
+
+        <span class="n">compute_force_constants_from_datasets</span><span class="p">(</span>
+            <span class="n">ph3py</span><span class="p">,</span>
+            <span class="n">fc_calculator</span><span class="o">=</span><span class="n">fc_calculator</span><span class="p">,</span>
+            <span class="n">fc_calculator_options</span><span class="o">=</span><span class="n">fc_calculator_options</span><span class="p">,</span>
+            <span class="n">symmetrize_fc</span><span class="o">=</span><span class="n">symmetrize_fc</span><span class="p">,</span>
+            <span class="n">is_compact_fc</span><span class="o">=</span><span class="n">is_compact_fc</span><span class="p">,</span>
+            <span class="n">use_symfc_projector</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">log_level</span> <span class="ow">and</span> <span class="n">ph3py</span><span class="o">.</span><span class="n">fc3</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">show_drift_fc3</span><span class="p">(</span><span class="n">ph3py</span><span class="o">.</span><span class="n">fc3</span><span class="p">,</span> <span class="n">primitive</span><span class="o">=</span><span class="n">ph3py</span><span class="o">.</span><span class="n">primitive</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">log_level</span> <span class="ow">and</span> <span class="n">ph3py</span><span class="o">.</span><span class="n">fc2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">show_drift_force_constants</span><span class="p">(</span>
+            <span class="n">ph3py</span><span class="o">.</span><span class="n">fc2</span><span class="p">,</span> <span class="n">primitive</span><span class="o">=</span><span class="n">ph3py</span><span class="o">.</span><span class="n">phonon_primitive</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;fc2&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ph3py</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">load_fc2_and_fc3</span><span class="p">(</span>
+    <span class="n">ph3py</span><span class="p">:</span> <span class="n">Phono3py</span><span class="p">,</span>
+    <span class="n">fc3_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fc2_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">read_fc3</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">read_fc2</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">log_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set force constants.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">read_fc3</span> <span class="ow">and</span> <span class="p">(</span><span class="n">fc3_filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;fc3.hdf5&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()):</span>
+        <span class="n">_load_fc3</span><span class="p">(</span><span class="n">ph3py</span><span class="p">,</span> <span class="n">fc3_filename</span><span class="o">=</span><span class="n">fc3_filename</span><span class="p">,</span> <span class="n">log_level</span><span class="o">=</span><span class="n">log_level</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">read_fc2</span> <span class="ow">and</span> <span class="p">(</span><span class="n">fc2_filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;fc2.hdf5&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()):</span>
+        <span class="n">_load_fc2</span><span class="p">(</span><span class="n">ph3py</span><span class="p">,</span> <span class="n">fc2_filename</span><span class="o">=</span><span class="n">fc2_filename</span><span class="p">,</span> <span class="n">log_level</span><span class="o">=</span><span class="n">log_level</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_force_constants_from_datasets</span><span class="p">(</span>
+    <span class="n">ph3py</span><span class="p">:</span> <span class="n">Phono3py</span><span class="p">,</span>
+    <span class="n">fc_calculator</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;traditional&quot;</span><span class="p">,</span> <span class="s2">&quot;symfc&quot;</span><span class="p">,</span> <span class="s2">&quot;alm&quot;</span><span class="p">]</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fc_calculator_options</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">cutoff_pair_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">symmetrize_fc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">is_compact_fc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">use_symfc_projector</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute force constants from datasets.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    read_fc : dict</span>
+<span class="sd">        This contains flags indicating whether fc2 and fc3 were read from</span>
+<span class="sd">        file(s) or not. This information can be different from ph3py.fc3 is</span>
+<span class="sd">        (not) None and ph3py.fc2 is (not) None. Items are as follows:</span>
+<span class="sd">            fc3 : bool</span>
+<span class="sd">            fc2 : bool</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fc3_calculator</span> <span class="o">=</span> <span class="n">extract_fc2_fc3_calculators</span><span class="p">(</span><span class="n">fc_calculator</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">fc2_calculator</span> <span class="o">=</span> <span class="n">extract_fc2_fc3_calculators</span><span class="p">(</span><span class="n">fc_calculator</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">fc3_calc_opts</span> <span class="o">=</span> <span class="n">extract_fc2_fc3_calculators_options</span><span class="p">(</span><span class="n">fc_calculator_options</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">fc3_calc_opts</span> <span class="o">=</span> <span class="n">update_cutoff_fc_calculator_options</span><span class="p">(</span>
+        <span class="n">fc3_calc_opts</span><span class="p">,</span> <span class="n">cutoff_pair_distance</span>
+    <span class="p">)</span>
+    <span class="n">fc2_calc_opts</span> <span class="o">=</span> <span class="n">extract_fc2_fc3_calculators_options</span><span class="p">(</span><span class="n">fc_calculator_options</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ph3py</span><span class="o">.</span><span class="n">fc3</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">forces_in_dataset</span><span class="p">(</span><span class="n">ph3py</span><span class="o">.</span><span class="n">dataset</span><span class="p">):</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="n">ph3py</span><span class="o">.</span><span class="n">produce_fc3</span><span class="p">(</span>
+            <span class="n">is_compact_fc</span><span class="o">=</span><span class="n">is_compact_fc</span><span class="p">,</span>
+            <span class="n">fc_calculator</span><span class="o">=</span><span class="n">fc3_calculator</span><span class="p">,</span>
+            <span class="n">fc_calculator_options</span><span class="o">=</span><span class="n">fc3_calc_opts</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">symmetrize_fc</span> <span class="ow">and</span> <span class="n">fc3_calculator</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;traditional&quot;</span><span class="p">):</span>
+            <span class="n">use_projector_fc3</span> <span class="o">=</span> <span class="n">use_symfc_projector</span> <span class="ow">and</span> <span class="n">fc3_calculator</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="n">ph3py</span><span class="o">.</span><span class="n">symmetrize_fc3</span><span class="p">(</span>
+                <span class="n">use_symfc_projector</span><span class="o">=</span><span class="n">use_projector_fc3</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">fc3_calc_opts</span>
+            <span class="p">)</span>
+            <span class="c1"># When phonon_supercell_matrix is None, produce_fc3 also</span>
+            <span class="c1"># populates fc2; post-symmetrize it with the same scheme.</span>
+            <span class="k">if</span> <span class="n">ph3py</span><span class="o">.</span><span class="n">phonon_supercell_matrix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">ph3py</span><span class="o">.</span><span class="n">symmetrize_fc2</span><span class="p">(</span>
+                    <span class="n">use_symfc_projector</span><span class="o">=</span><span class="n">use_projector_fc3</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">fc2_calc_opts</span>
+                <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">ph3py</span><span class="o">.</span><span class="n">fc2</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">fc3_calculator</span> <span class="o">!=</span> <span class="n">fc2_calculator</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">ph3py</span><span class="o">.</span><span class="n">phonon_supercell_matrix</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">forces_in_dataset</span><span class="p">(</span><span class="n">ph3py</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="n">ph3py</span><span class="o">.</span><span class="n">phonon_supercell_matrix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">forces_in_dataset</span><span class="p">(</span><span class="n">ph3py</span><span class="o">.</span><span class="n">phonon_dataset</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="p">):</span>
+            <span class="n">ph3py</span><span class="o">.</span><span class="n">produce_fc2</span><span class="p">(</span>
+                <span class="n">is_compact_fc</span><span class="o">=</span><span class="n">is_compact_fc</span><span class="p">,</span>
+                <span class="n">fc_calculator</span><span class="o">=</span><span class="n">fc2_calculator</span><span class="p">,</span>
+                <span class="n">fc_calculator_options</span><span class="o">=</span><span class="n">fc2_calc_opts</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">symmetrize_fc</span> <span class="ow">and</span> <span class="n">fc2_calculator</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;traditional&quot;</span><span class="p">):</span>
+                <span class="n">use_projector_fc2</span> <span class="o">=</span> <span class="n">use_symfc_projector</span> <span class="ow">and</span> <span class="n">fc2_calculator</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="n">ph3py</span><span class="o">.</span><span class="n">symmetrize_fc2</span><span class="p">(</span>
+                    <span class="n">use_symfc_projector</span><span class="o">=</span><span class="n">use_projector_fc2</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">fc2_calc_opts</span>
+                <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_fc3</span><span class="p">(</span>
+    <span class="n">ph3py</span><span class="p">:</span> <span class="n">Phono3py</span><span class="p">,</span>
+    <span class="n">fc3_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">log_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">p2s_map</span> <span class="o">=</span> <span class="n">ph3py</span><span class="o">.</span><span class="n">primitive</span><span class="o">.</span><span class="n">p2s_map</span>
+    <span class="k">if</span> <span class="n">fc3_filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_fc3_filename</span> <span class="o">=</span> <span class="s2">&quot;fc3.hdf5&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_fc3_filename</span> <span class="o">=</span> <span class="n">fc3_filename</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="n">fc3</span> <span class="o">=</span> <span class="n">read_fc3_from_hdf5</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">_fc3_filename</span><span class="p">,</span> <span class="n">p2s_map</span><span class="o">=</span><span class="n">p2s_map</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fc3</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="c1"># fc3 is read from a file with type-1 format.</span>
+        <span class="k">assert</span> <span class="s2">&quot;fc3&quot;</span> <span class="ow">in</span> <span class="n">fc3</span>
+        <span class="n">_check_fc3_shape</span><span class="p">(</span><span class="n">ph3py</span><span class="p">,</span> <span class="n">fc3</span><span class="p">[</span><span class="s2">&quot;fc3&quot;</span><span class="p">],</span> <span class="n">filename</span><span class="o">=</span><span class="n">_fc3_filename</span><span class="p">)</span>
+        <span class="n">ph3py</span><span class="o">.</span><span class="n">fc3</span> <span class="o">=</span> <span class="n">fc3</span><span class="p">[</span><span class="s2">&quot;fc3&quot;</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="s2">&quot;fc3_nonzero_indices&quot;</span> <span class="ow">in</span> <span class="n">fc3</span>
+        <span class="n">ph3py</span><span class="o">.</span><span class="n">fc3_nonzero_indices</span> <span class="o">=</span> <span class="n">fc3</span><span class="p">[</span><span class="s2">&quot;fc3_nonzero_indices&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">log_level</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;fc3 and fc3 nonzero indices were read from &quot;</span><span class="si">{</span><span class="n">_fc3_filename</span><span class="si">}</span><span class="s1">&quot;.&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_check_fc3_shape</span><span class="p">(</span><span class="n">ph3py</span><span class="p">,</span> <span class="n">fc3</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">_fc3_filename</span><span class="p">)</span>
+        <span class="n">ph3py</span><span class="o">.</span><span class="n">fc3</span> <span class="o">=</span> <span class="n">fc3</span>
+        <span class="k">if</span> <span class="n">log_level</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;fc3 was read from &quot;</span><span class="si">{</span><span class="n">_fc3_filename</span><span class="si">}</span><span class="s1">&quot;.&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">select_and_load_dataset</span><span class="p">(</span>
+    <span class="n">ph3py</span><span class="p">:</span> <span class="n">Phono3py</span><span class="p">,</span>
+    <span class="n">ph3py_yaml</span><span class="p">:</span> <span class="n">Phono3pyYaml</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">forces_fc3_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">phono3py_yaml_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">cutoff_pair_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">calculator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">log_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Fc3DisplacementDataset</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Select and load dataset for fc3.&quot;&quot;&quot;</span>
+    <span class="c1"># displacements and forces are in phono3py-yaml-like file</span>
+    <span class="k">if</span> <span class="n">ph3py_yaml</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">forces_in_dataset</span><span class="p">(</span><span class="n">ph3py_yaml</span><span class="o">.</span><span class="n">dataset</span><span class="p">):</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">_get_dataset_for_fc3</span><span class="p">(</span>
+            <span class="n">ph3py</span><span class="p">,</span>
+            <span class="n">ph3py_yaml</span><span class="p">,</span>
+            <span class="kc">None</span><span class="p">,</span>
+            <span class="n">phono3py_yaml_filename</span><span class="p">,</span>
+            <span class="n">cutoff_pair_distance</span><span class="p">,</span>
+            <span class="n">calculator</span><span class="p">,</span>
+            <span class="n">log_level</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">dataset</span>
+
+    <span class="c1"># displacements and forces are in FORCES_FC3-like file</span>
+    <span class="n">force_filename</span> <span class="o">=</span> <span class="n">_get_filename_with_extension</span><span class="p">(</span><span class="s2">&quot;FORCES_FC3&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">forces_fc3_filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">force_filename</span> <span class="o">=</span> <span class="n">forces_fc3_filename</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="k">if</span> <span class="n">force_filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">_get_dataset_for_fc3</span><span class="p">(</span>
+            <span class="n">ph3py</span><span class="p">,</span>
+            <span class="n">ph3py_yaml</span><span class="p">,</span>
+            <span class="n">force_filename</span><span class="p">,</span>
+            <span class="n">phono3py_yaml_filename</span><span class="p">,</span>
+            <span class="n">cutoff_pair_distance</span><span class="p">,</span>
+            <span class="n">calculator</span><span class="p">,</span>
+            <span class="n">log_level</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">dataset</span>
+
+    <span class="c1"># dataset is in phono3py-yaml-like file</span>
+    <span class="k">if</span> <span class="n">ph3py_yaml</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">ph3py_yaml</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># not forces_in_dataset(ph3py_yaml.dataset)</span>
+        <span class="c1"># but want to read displacement dataset.</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">_get_dataset_for_fc3</span><span class="p">(</span>
+            <span class="n">ph3py</span><span class="p">,</span>
+            <span class="n">ph3py_yaml</span><span class="p">,</span>
+            <span class="kc">None</span><span class="p">,</span>
+            <span class="n">phono3py_yaml_filename</span><span class="p">,</span>
+            <span class="n">cutoff_pair_distance</span><span class="p">,</span>
+            <span class="n">calculator</span><span class="p">,</span>
+            <span class="n">log_level</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">dataset</span>
+
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_filename_with_extension</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">get_supported_file_extensions_for_compression</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">filename</span><span class="si">}{</span><span class="n">ext</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">filename</span><span class="si">}{</span><span class="n">ext</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_fc2</span><span class="p">(</span>
+    <span class="n">ph3py</span><span class="p">:</span> <span class="n">Phono3py</span><span class="p">,</span> <span class="n">fc2_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">log_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">phonon_p2s_map</span> <span class="o">=</span> <span class="n">ph3py</span><span class="o">.</span><span class="n">phonon_primitive</span><span class="o">.</span><span class="n">p2s_map</span>
+    <span class="k">if</span> <span class="n">fc2_filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_fc2_filename</span> <span class="o">=</span> <span class="s2">&quot;fc2.hdf5&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_fc2_filename</span> <span class="o">=</span> <span class="n">fc2_filename</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="n">fc2</span> <span class="o">=</span> <span class="n">read_fc2_from_hdf5</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">_fc2_filename</span><span class="p">,</span> <span class="n">p2s_map</span><span class="o">=</span><span class="n">phonon_p2s_map</span><span class="p">)</span>
+    <span class="n">_check_fc2_shape</span><span class="p">(</span><span class="n">ph3py</span><span class="p">,</span> <span class="n">fc2</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">_fc2_filename</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">log_level</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;fc2 was read from &quot;</span><span class="si">{</span><span class="n">_fc2_filename</span><span class="si">}</span><span class="s1">&quot;.&#39;</span><span class="p">)</span>
+    <span class="n">ph3py</span><span class="o">.</span><span class="n">fc2</span> <span class="o">=</span> <span class="n">fc2</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">select_and_load_phonon_dataset</span><span class="p">(</span>
+    <span class="n">ph3py</span><span class="p">:</span> <span class="n">Phono3py</span><span class="p">,</span>
+    <span class="n">ph3py_yaml</span><span class="p">:</span> <span class="n">Phono3pyYaml</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">forces_fc2_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">calculator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">log_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DisplacementDataset</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Select and load phonon dataset for fc2.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">ph3py</span><span class="o">.</span><span class="n">phonon_supercell_matrix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">ph3py_yaml</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">forces_in_dataset</span><span class="p">(</span><span class="n">ph3py_yaml</span><span class="o">.</span><span class="n">phonon_dataset</span><span class="p">):</span>
+        <span class="n">phonon_dataset</span> <span class="o">=</span> <span class="n">_get_dataset_for_fc2</span><span class="p">(</span>
+            <span class="n">ph3py</span><span class="p">,</span>
+            <span class="n">ph3py_yaml</span><span class="p">,</span>
+            <span class="kc">None</span><span class="p">,</span>
+            <span class="n">calculator</span><span class="p">,</span>
+            <span class="n">log_level</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">phonon_dataset</span>
+
+    <span class="n">force_filename</span> <span class="o">=</span> <span class="n">_get_filename_with_extension</span><span class="p">(</span><span class="s2">&quot;FORCES_FC2&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">forces_fc2_filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">force_filename</span> <span class="o">=</span> <span class="n">forces_fc2_filename</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="k">if</span> <span class="n">force_filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">phonon_dataset</span> <span class="o">=</span> <span class="n">_get_dataset_for_fc2</span><span class="p">(</span>
+            <span class="n">ph3py</span><span class="p">,</span>
+            <span class="n">ph3py_yaml</span><span class="p">,</span>
+            <span class="n">force_filename</span><span class="p">,</span>
+            <span class="n">calculator</span><span class="p">,</span>
+            <span class="n">log_level</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">phonon_dataset</span>
+
+    <span class="k">if</span> <span class="n">ph3py_yaml</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">ph3py_yaml</span><span class="o">.</span><span class="n">phonon_dataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># not forces_in_dataset(ph3py_yaml.dataset)</span>
+        <span class="c1"># but want to read displacement dataset.</span>
+        <span class="n">phonon_dataset</span> <span class="o">=</span> <span class="n">_get_dataset_for_fc2</span><span class="p">(</span>
+            <span class="n">ph3py</span><span class="p">,</span>
+            <span class="n">ph3py_yaml</span><span class="p">,</span>
+            <span class="kc">None</span><span class="p">,</span>
+            <span class="n">calculator</span><span class="p">,</span>
+            <span class="n">log_level</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">phonon_dataset</span>
+
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_dataset_for_fc3</span><span class="p">(</span>
+    <span class="n">ph3py</span><span class="p">:</span> <span class="n">Phono3py</span><span class="p">,</span>
+    <span class="n">ph3py_yaml</span><span class="p">:</span> <span class="n">Phono3pyYaml</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">force_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">phono3py_yaml_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">cutoff_pair_distance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">calculator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">log_level</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Fc3DisplacementDataset</span><span class="p">:</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">parse_forces</span><span class="p">(</span>
+        <span class="n">ph3py</span><span class="p">,</span>
+        <span class="n">ph3py_yaml</span><span class="o">=</span><span class="n">ph3py_yaml</span><span class="p">,</span>
+        <span class="n">cutoff_pair_distance</span><span class="o">=</span><span class="n">cutoff_pair_distance</span><span class="p">,</span>
+        <span class="n">force_filename</span><span class="o">=</span><span class="n">force_filename</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="n">phono3py_yaml_filename</span><span class="o">=</span><span class="n">phono3py_yaml_filename</span><span class="p">,</span>
+        <span class="n">fc_type</span><span class="o">=</span><span class="s2">&quot;fc3&quot;</span><span class="p">,</span>
+        <span class="n">calculator</span><span class="o">=</span><span class="n">calculator</span><span class="p">,</span>
+        <span class="n">log_level</span><span class="o">=</span><span class="n">log_level</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Fc3DisplacementDataset</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_dataset_for_fc2</span><span class="p">(</span>
+    <span class="n">ph3py</span><span class="p">:</span> <span class="n">Phono3py</span><span class="p">,</span>
+    <span class="n">ph3py_yaml</span><span class="p">:</span> <span class="n">Phono3pyYaml</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">force_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">calculator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">log_level</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DisplacementDataset</span><span class="p">:</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">parse_forces</span><span class="p">(</span>
+        <span class="n">ph3py</span><span class="p">,</span>
+        <span class="n">ph3py_yaml</span><span class="o">=</span><span class="n">ph3py_yaml</span><span class="p">,</span>
+        <span class="n">force_filename</span><span class="o">=</span><span class="n">force_filename</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="n">fc_type</span><span class="o">=</span><span class="s2">&quot;phonon_fc2&quot;</span><span class="p">,</span>
+        <span class="n">calculator</span><span class="o">=</span><span class="n">calculator</span><span class="p">,</span>
+        <span class="n">log_level</span><span class="o">=</span><span class="n">log_level</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">DisplacementDataset</span><span class="p">,</span> <span class="n">dataset</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_fc2_shape</span><span class="p">(</span>
+    <span class="n">ph3py</span><span class="p">:</span> <span class="n">Phono3py</span><span class="p">,</span>
+    <span class="n">fc2</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">double</span><span class="p">],</span>
+    <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">=</span> <span class="s2">&quot;fc2.hdf5&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">ph3py</span><span class="o">.</span><span class="n">phonon_supercell_matrix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">smat</span> <span class="o">=</span> <span class="n">ph3py</span><span class="o">.</span><span class="n">supercell_matrix</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">smat</span> <span class="o">=</span> <span class="n">ph3py</span><span class="o">.</span><span class="n">phonon_supercell_matrix</span>
+    <span class="n">_check_fc_shape</span><span class="p">(</span><span class="n">ph3py</span><span class="p">,</span> <span class="n">fc2</span><span class="p">,</span> <span class="n">smat</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_fc3_shape</span><span class="p">(</span>
+    <span class="n">ph3py</span><span class="p">:</span> <span class="n">Phono3py</span><span class="p">,</span>
+    <span class="n">fc3</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">double</span><span class="p">],</span>
+    <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">=</span> <span class="s2">&quot;fc3.hdf5&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">smat</span> <span class="o">=</span> <span class="n">ph3py</span><span class="o">.</span><span class="n">supercell_matrix</span>
+    <span class="n">_check_fc_shape</span><span class="p">(</span><span class="n">ph3py</span><span class="p">,</span> <span class="n">fc3</span><span class="p">,</span> <span class="n">smat</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_fc_shape</span><span class="p">(</span>
+    <span class="n">ph3py</span><span class="p">:</span> <span class="n">Phono3py</span><span class="p">,</span>
+    <span class="n">fc</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">double</span><span class="p">],</span>
+    <span class="n">smat</span><span class="p">:</span> <span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">],</span>
+    <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ph3py</span><span class="o">.</span><span class="n">unitcell</span><span class="p">)</span> <span class="o">*</span> <span class="n">determinant</span><span class="p">(</span><span class="n">smat</span><span class="p">)</span> <span class="o">!=</span> <span class="n">fc</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Supercell size mismatch between &quot;</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s1">&quot; and supercell matrix </span><span class="si">{</span><span class="n">smat</span><span class="si">}</span><span class="s1">.&#39;</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Author name not set
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2015, Atsushi Togo.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
