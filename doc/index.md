@@ -56,6 +56,7 @@ pypolymlp
 cutoff-pair
 external-tools
 phono3py-api
+api-reference
 phono3py
 phono3py-init
 hdf5_howto

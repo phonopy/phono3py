@@ -136,43 +136,53 @@ class ImagSelfEnergyValues:
 
 
 class Phono3py:
-    """Phono3py main class.
+    """Phono3py main API.
 
-    Attributes
-    ----------
-    version
-    calculator
-    fc3 : getter and setter
-    fc2 : getter and setter
-    force_constants
-    sigma : getter and setter
-    sigma_cutoff : getter and setter
-    nac_params : getter and setter
-    dynamical_matrix
-    primitive
-    unitcell
-    supercell
-    phonon_supercell
-    phonon_primitive
-    symmetry
-    primitive_symmetry
-    phonon_supercell_symmetry
-    supercell_matrix
-    phonon_supercell_matrix
-    primitive_matrix
-    unit_conversion_factor
-    dataset : getter and setter
-    phonon_dataset : getter and setter
-    band_indices : getter and setter
-    phonon_supercells_with_displacements
-    supercells_with_displacements
-    mesh_numbers : getter and setter
-    thermal_conductivity
-    displacements : getter and setter
-    forces : getter and setter
-    phonon_displacements : getter and setter
-    phonon_forces : getter and setter
-    phph_interaction
+    A ``Phono3py`` instance is created from a unit cell, a supercell
+    matrix, and a primitive matrix. It manages displacement generation
+    for fc3 (and optionally fc2 when a separate
+    ``phonon_supercell_matrix`` is given), construction of second- and
+    third-order force constants from displacement-force datasets,
+    phonon-phonon interaction calculation on a reciprocal-space grid,
+    and derived quantities such as the imaginary and real parts of the
+    phonon self-energy, the spectral function, the joint density of
+    states, and the lattice thermal conductivity (RTA, direct solution
+    of the linearized phonon Boltzmann equation, and the Wigner
+    transport equation).
+
+    Most attributes are exposed as ``@property`` accessors documented
+    individually below. See :ref:`phono3py_api` for a tutorial-style
+    overview of the typical workflow.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from phono3py import Phono3py
+    >>> from phonopy.structure.atoms import PhonopyAtoms
+    >>> a = 3.111
+    >>> c = 4.978
+    >>> x = 1.0 / 3
+    >>> unitcell = PhonopyAtoms(
+    ...     symbols=["Al", "Al", "N", "N"],
+    ...     cell=[[a, 0, 0], [-a / 2, a * np.sqrt(3) / 2, 0], [0, 0, c]],
+    ...     scaled_positions=[
+    ...         [x, 2 * x, 0],
+    ...         [2 * x, x, 0.5],
+    ...         [x, 2 * x, 0.1181],
+    ...         [2 * x, x, 0.6181],
+    ...     ],
+    ... )
+    >>> ph3 = Phono3py(
+    ...     unitcell, supercell_matrix=[3, 3, 2], primitive_matrix="auto"
+    ... )
+    >>> ph3.generate_displacements()
+    >>> # Obtain forces by running an external calculator on
+    >>> # ph3.supercells_with_displacements, then:
+    >>> # ph3.forces = sets_of_forces
+    >>> # ph3.produce_fc3()
+    >>> # ph3.mesh_numbers = 30
+    >>> # ph3.init_phph_interaction()
+    >>> # ph3.run_thermal_conductivity(temperatures=range(0, 1001, 10))
 
     """
 
@@ -207,63 +217,70 @@ class Phono3py:
 
         Parameters
         ----------
-        unitcell : PhonopyAtoms, optional
+        unitcell : PhonopyAtoms
             Input unit cell.
         supercell_matrix : array_like, optional
-            Supercell matrix multiplied to input cell basis vectors. shape=(3, )
-            or (3, 3), where the former is considered a diagonal matrix. The
-            elements have to be given by integers. Although the default is None,
-            which results in identity matrix, it is recommended to give
-            `supercell_matrix` explicitly.
-        primitive_matrix : array_like or str, optional
-            Primitive matrix multiplied to input cell basis vectors. Default is
-            'auto', which automatically chooses the centring type ('F', 'I',
-            'A', 'C', 'R', or primitive 'P') from crystal symmetry. None is
-            treated the same as 'auto'. To use the unit cell as the primitive
-            cell (identity transformation), pass 'P'. When given as array_like,
-            shape=(3, 3), dtype=float. When 'F', 'I', 'A', 'C', or 'R' is
-            given instead of a 3x3 matrix, the primitive matrix defined at
+            Transformation matrix to the supercell from the unit cell.
+            ``shape=(3,)`` or ``(3, 3)``, ``dtype=int``. A 1D array is
+            treated as the diagonal of a 3x3 matrix. Although the
+            default ``None`` yields the identity matrix, it is strongly
+            recommended to give ``supercell_matrix`` explicitly.
+        primitive_matrix : str or array_like, optional
+            Transformation matrix to the primitive cell from the unit
+            cell. ``shape=(3, 3)``, ``dtype=float``. Default is
+            ``"auto"``, which guesses the matrix from crystal symmetry
+            (centring types ``"F"``, ``"I"``, ``"A"``, ``"C"``, ``"R"``,
+            or primitive ``"P"``). To use the unit cell as the primitive
+            cell (identity transformation), pass ``"P"``. ``None`` is
+            treated the same as ``"auto"``. When a centring symbol is
+            given, the primitive matrix defined at
             https://spglib.github.io/spglib/definition.html is used.
         phonon_supercell_matrix : array_like, optional
-            Supercell matrix used for fc2. In phono3py, supercell matrix for fc3
-            and fc2 can be different to support longer range interaction of fc2
-            than that of fc3. Unless setting this, supercell_matrix is used.
-            This is only valid when unitcell or unitcell_filename is given.
-            Default is None.
+            Supercell matrix used for fc2 when a different supercell
+            from the one used for fc3 is desired (typically larger, to
+            capture longer-ranged harmonic interactions). Same format as
+            ``supercell_matrix``. Default is ``None``, which uses
+            ``supercell_matrix`` for fc2.
         cutoff_frequency : float, optional
-            Phonon frequency below this value is ignored when the cutoff is
-            needed for the computation. Default is 1e-4.
+            Phonon frequencies below this value (in THz) are treated as
+            zero in scattering and self-energy calculations. Default is
+            ``1e-4``.
         frequency_factor_to_THz : float, optional
-            Phonon frequency unit conversion factor. Unless specified, default
-            unit conversion factor for each calculator is used.
+            Deprecated. Passing a non-``None`` value emits a
+            ``DeprecationWarning``. By default the conversion factor for
+            the chosen calculator is used.
         is_symmetry : bool, optional
-            Use crystal symmetry in most calculations when True. Default is
-            True.
+            Use crystal symmetry in most calculations when True. Default
+            is True.
         is_mesh_symmetry : bool, optional
-            Use crystal symmetry in reciprocal space grid handling when True.
-            Default is True.
+            Use crystal symmetry in reciprocal-space grid handling when
+            True. Default is True.
         use_grg : bool, optional
-            Use generalized regular grid when True. Default is False.
-        SNF_coordinates : Literal["direct", "reciprocal"], optional
-            `reciprocal` or `direct`. Space of coordinates to generate grid
-            generating matrix either in direct or reciprocal space. The default
-            is `reciprocal`.
+            Use a generalized regular grid (GRG) when True. The grid is
+            generated on the reciprocal basis vectors of the
+            conventional unit cell of the primitive cell, which can
+            reduce the required sampling density for primitive cells
+            with high symmetry. Default is False.
+        SNF_coordinates : Literal["reciprocal", "direct"], optional
+            Space in which the grid-generating matrix is computed via
+            Smith normal form. Default is ``"reciprocal"``.
         make_r0_average : bool, optional
-            fc3 transformation from real to reciprocal space is done
-            around three atoms and averaged when True. Default is False, i.e.,
-            only around the first atom. Setting False is for rough compatibility
-            with v2.x. Default is True.
+            Average the fc3 real-to-reciprocal-space transformation over
+            the three atoms in each triplet when True (default). When
+            False, only the first atom is used. ``False`` is provided
+            for rough backward compatibility with v2.x results.
         symprec : float, optional
-            Tolerance used to find crystal symmetry. Default is 1e-5.
-        calculator : str, optional.
-            Calculator used for computing forces. This is used to switch the set
-            of physical units. Default is None, which is equivalent to "vasp".
+            Tolerance used to find crystal symmetry. Default is ``1e-5``.
+        calculator : str, optional
+            Calculator name (``"vasp"``, ``"qe"``, ...) used to switch
+            the set of physical units. Default is ``None``, which is
+            equivalent to ``"vasp"``.
         log_level : int, optional
-            Verbosity control. Default is 0. This can be 0, 1, or 2.
+            Verbosity control: ``0``, ``1``, or ``2``. Default is ``0``.
         lang : Literal["C", "Rust"], optional
-            Backend implementation for compute-heavy kernels. "C" (default)
-            uses the existing C extension. "Rust" selects the experimental
-            phono3py-rs backend. Default is "C".
+            Backend implementation for compute-heavy kernels. ``"C"``
+            uses the existing C extension; ``"Rust"`` selects the
+            experimental phonors backend. Default is ``"Rust"``.
 
         """
         self._symprec = symprec
@@ -369,44 +386,32 @@ class Phono3py:
 
     @property
     def version(self) -> str:
-        """Return phono3py release version number.
-
-        str
-            Phono3py release version number
-
-        """
+        """Return phono3py release version number."""
         return __version__
 
     @property
     def calculator(self) -> str | None:
-        """Return calculator interface name.
-
-        str
-            Calculator name such as 'vasp', 'qe', etc.
-
-        """
+        """Return calculator name such as ``'vasp'``, ``'qe'``, etc."""
         return self._calculator
 
     @property
     def lang(self) -> Literal["C", "Rust"]:
         """Return the selected backend implementation.
 
-        Literal["C", "Rust"]
-            "C" uses the C extension; "Rust" uses the experimental
-            phono3py-rs backend.
+        ``"C"`` uses the existing C extension; ``"Rust"`` selects the
+        experimental phonors backend.
 
         """
         return self._lang
 
     @property
     def fc3(self) -> NDArray[np.double] | None:
-        """Setter and getter of third order force constants (fc3).
+        """Setter and getter of third-order force constants (fc3).
 
-        ndarray, optional
-            fc3 shape is either (supercell, supercell, supercell, 3, 3, 3) or
-            (primitive, supercell, supercell, 3, 3, 3),
-            where 'supercell' and 'primitive' indicate number of atoms in
-            these cells.
+        ``shape=(s, s, s, 3, 3, 3)`` (full) or
+        ``(p, s, s, 3, 3, 3)`` (compact), where ``s`` and ``p`` are the
+        numbers of atoms in the supercell and the primitive cell.
+        ``dtype='double'``, ``order='C'``.
 
         """
         return self._fc3
@@ -417,10 +422,13 @@ class Phono3py:
 
     @property
     def fc3_nonzero_indices(self) -> NDArray[np.byte] | None:
-        """Setter and getter of non-zero indices of fc3.
+        """Setter and getter of the non-zero element mask of fc3.
 
-        ndarray, optional
-            Non-zero indices of fc3.
+        Boolean mask of atom-triplet indices whose fc3 elements are kept
+        non-zero. This is produced by symfc when a cutoff distance is
+        specified; ``None`` otherwise.
+        ``shape=(s, s, s)`` or ``(p, s, s)`` matching the shape of
+        :attr:`fc3`. ``dtype='byte'``, ``order='C'``.
 
         """
         return self._fc3_nonzero_indices
@@ -431,22 +439,21 @@ class Phono3py:
 
     @property
     def fc3_cutoff(self) -> float | None:
-        """Return cutoff value of fc3.
+        """Return the fc3 cutoff distance in Angstroms.
 
-        Available only when symfc is used.
+        Only available when fc3 was computed with symfc and a cutoff
+        was specified; ``None`` otherwise.
 
         """
         return self._fc3_cutoff
 
     @property
     def fc2(self) -> NDArray[np.double] | None:
-        """Setter and getter of second order force constants (fc2).
+        """Setter and getter of second-order force constants (fc2).
 
-        ndarray
-            fc2 shape is either (supercell, supercell, 3, 3) or
-            (primitive, supercell, 3, 3),
-            where 'supercell' and 'primitive' indicate number of atoms in
-            these cells.
+        ``shape=(s, s, 3, 3)`` (full) or ``(p, s, 3, 3)`` (compact),
+        where ``s`` and ``p`` are the numbers of atoms in the supercell
+        and the primitive cell. ``dtype='double'``, ``order='C'``.
 
         """
         return self._fc2
@@ -457,26 +464,27 @@ class Phono3py:
 
     @property
     def fc2_cutoff(self) -> float | None:
-        """Return cutoff value of fc2.
+        """Return the fc2 cutoff distance in Angstroms.
 
-        Available only when symfc is used.
+        Only available when fc2 was computed with symfc and a cutoff
+        was specified; ``None`` otherwise.
 
         """
         return self._fc2_cutoff
 
     @property
     def force_constants(self) -> NDArray[np.double] | None:
-        """Return fc2. This is same as the getter attribute `fc2`."""
+        """Return fc2. Phonopy-compatible alias for :attr:`fc2`."""
         return self.fc2
 
     @property
     def sigmas(self) -> list[float | None]:
-        """Setter and getter of smearing widths.
+        """Setter and getter of smearing widths used for delta functions.
 
-        list
-            The float values are given as the standard deviations of Gaussian
-            function. If None is given as an element of this list, linear
-            tetrahedron method is used instead of smearing method.
+        Each element is either a Gaussian standard deviation (in the
+        same unit as phonon frequencies, typically THz) or ``None``.
+        A ``None`` entry switches that calculation to the linear
+        tetrahedron method instead of Gaussian smearing.
 
         """
         return self._sigmas
@@ -501,13 +509,11 @@ class Phono3py:
 
     @property
     def sigma_cutoff(self) -> float | None:
-        """Setter and getter of Smearing cutoff width.
+        """Setter and getter of the smearing cutoff width.
 
-        This is given as a multiple of the standard deviation.
-
-        float
-            For example, if this value is 5, the tail of the Gaussian function
-            is cut at 5 sigma.
+        Given as a multiple of the Gaussian standard deviation. For
+        example, ``5`` truncates the tail at 5 sigma. ``None`` disables
+        truncation.
 
         """
         return self._sigma_cutoff
@@ -520,16 +526,19 @@ class Phono3py:
     def nac_params(self) -> dict[str, Any] | None:
         """Setter and getter of parameters for non-analytical term correction.
 
-        dict
-            Parameters used for non-analytical term correction
-            'born': ndarray
-                Born effective charges
-                shape=(primitive cell atoms, 3, 3), dtype='double', order='C'
-            'factor': float
-                Unit conversion factor
-            'dielectric': ndarray
-                Dielectric constant tensor
-                shape=(3, 3), dtype='double', order='C'
+        The dict has the following keys::
+
+            'born':       ndarray, Born effective charges,
+                          shape=(atoms in primitive, 3, 3),
+                          dtype='double', order='C'.
+            'factor':     float, unit conversion factor.
+            'dielectric': ndarray, dielectric constant tensor,
+                          shape=(3, 3), dtype='double', order='C'.
+
+        Unlike the
+        `BORN file <https://phonopy.github.io/phonopy/input-files.html#born-optional>`__,
+        Born effective charges of all atoms in the primitive cell must
+        be supplied (not just the symmetrically independent ones).
 
         """
         return self._nac_params
@@ -542,12 +551,7 @@ class Phono3py:
 
     @property
     def dynamical_matrix(self) -> DynamicalMatrix | None:
-        """Return DynamicalMatrix instance.
-
-        This is not dynamical matrices but the instance of DynamicalMatrix
-        class.
-
-        """
+        """Return the ``DynamicalMatrix`` instance (not the matrix itself)."""
         if self._interaction is None:
             return None
         else:
@@ -555,115 +559,74 @@ class Phono3py:
 
     @property
     def primitive(self) -> Primitive:
-        """Return primitive cell.
-
-        Primitive
-            Primitive cell.
-
-        """
+        """Return primitive cell."""
         return self._primitive
 
     @property
     def unitcell(self) -> PhonopyAtoms:
-        """Return Unit cell.
-
-        PhonopyAtoms
-            Unit cell.
-
-        """
+        """Return input unit cell."""
         return self._unitcell
 
     @property
     def supercell(self) -> Supercell:
-        """Return supercell.
-
-        Supercell
-            Supercell.
-
-        """
+        """Return supercell for fc3."""
         return self._supercell
 
     @property
     def phonon_supercell(self) -> Supercell:
-        """Return supercell for fc2.
-
-        Supercell
-            Supercell for fc2.
-
-        """
+        """Return supercell for fc2."""
         return self._phonon_supercell
 
     @property
     def phonon_primitive(self) -> Primitive:
         """Return primitive cell for fc2.
 
-        Primitive
-            Primitive cell for fc2. This should be the same as the primitive
-            cell for fc3, but this is created from supercell for fc2 and
-            can be not numerically perfectly identical.
+        This represents the same primitive cell as :attr:`primitive`,
+        but is constructed from the fc2 supercell and may therefore not
+        be numerically identical bit-for-bit.
 
         """
         return self._phonon_primitive
 
     @property
     def symmetry(self) -> Symmetry:
-        """Return symmetry of supercell.
-
-        Symmetry
-            Symmetry of supercell
-
-        """
+        """Return symmetry of the supercell."""
         return self._symmetry
 
     @property
     def primitive_symmetry(self) -> Symmetry:
-        """Return symmetry of primitive cell.
-
-        Symmetry
-            Symmetry of primitive cell.
-
-        """
+        """Return symmetry of the primitive cell."""
         return self._primitive_symmetry
 
     @property
     def phonon_supercell_symmetry(self) -> Symmetry:
-        """Return symmetry of supercell for fc2.
-
-        Symmetry
-            Symmetry of supercell for fc2 (phonon_supercell).
-
-        """
+        """Return symmetry of the fc2 supercell (``phonon_supercell``)."""
         return self._phonon_supercell_symmetry
 
     @property
     def supercell_matrix(self) -> NDArray[np.int64]:
-        """Return transformation matrix to supercell cell from unit cell.
+        """Return transformation matrix to the supercell from the unit cell.
 
-        ndarray
-            Supercell matrix with respect to unit cell.
-            shape=(3, 3), dtype='int64', order='C'
+        ``shape=(3, 3)``, ``dtype='int64'``, ``order='C'``.
 
         """
         return self._supercell_matrix
 
     @property
     def phonon_supercell_matrix(self) -> NDArray[np.int64] | None:
-        """Return transformation matrix to phonon supercell from unit cell.
+        """Return transformation matrix to the fc2 supercell from the unit cell.
 
-        ndarray
-            Supercell matrix with respect to unit cell.
-            shape=(3, 3), dtype='int64', order='C'
+        ``shape=(3, 3)``, ``dtype='int64'``, ``order='C'``. ``None`` when
+        the same supercell as fc3 is used.
 
         """
         return self._phonon_supercell_matrix
 
     @property
     def primitive_matrix(self) -> NDArray[np.double] | None:
-        """Return transformation matrix to primitive cell from unit cell.
+        """Return transformation matrix to the primitive cell from the unit cell.
 
-        ndarray or None
-            Primitive matrix with respect to unit cell.
-            shape=(3, 3), dtype='double', order='C'
+        ``shape=(3, 3)``, ``dtype='double'``, ``order='C'``.
 
         """
         return self._primitive_matrix
@@ -672,53 +635,60 @@ class Phono3py:
     def unit_conversion_factor(self) -> float:
         """Return phonon frequency unit conversion factor.
 
-        float
-            Phonon frequency unit conversion factor. This factor
-            converts sqrt(<force>/<distance>/<AMU>)/2pi/1e12 to THz
-            (ordinary frequency).
+        This factor converts
+        ``sqrt(<force> / <distance> / <AMU>) / 2pi / 1e12`` to the
+        chosen phonon frequency unit. The default value converts to THz
+        for displacements in Angstroms and forces in eV/Angstrom (i.e.
+        the VASP default).
 
         """
         return self._frequency_factor_to_THz
 
     @property
     def dataset(self) -> Fc3DisplacementDataset | None:
-        """Setter and getter of displacement-force dataset.
+        """Setter and getter of the fc3 displacement-force dataset.
 
-        dict
-            Displacements in supercells. There are two types of formats.
-            Type 1. Two atomic displacement in each supercell:
-                {'natom': number of atoms in supercell,
-                 'first_atoms': [
-                   {'number': atom index of first displaced atom,
-                    'displacement': displacement in Cartesian coordinates,
-                    'forces': forces on atoms in supercell,
-                    'id': displacement id (1, 2,...,n_first_atoms)
-                    'second_atoms': [
-                      {'number': atom index of second displaced atom,
-                       'displacement': displacement in Cartesian coordinates},
-                       'forces': forces on atoms in supercell,
-                       'supercell_energy': energy of supercell,
-                       'pair_distance': distance between paired atoms,
-                       'included': with cutoff pair distance in displacement
-                                   pair generation, this indicates if this
-                                   pair displacements is included to compute
-                                   fc3 or not,
-                       'id': displacement id. (n_first_atoms + 1, ...)
-                      ... ] }, ... ] }
-            Type 2. All atomic displacements in each supercell:
-                {'displacements': ndarray, dtype='double', order='C',
-                                  shape=(supercells, atoms in supercell, 3),
-                 'forces': ndarray, dtype='double',, order='C',
-                                  shape=(supercells, atoms in supercell, 3),
-                 'supercell_energies': ndarray, dtype='double',
-                                  shape=(supercells,)}
-            In type 2, displacements and forces can be given by numpy array
-            with different shape but that can be reshaped to
-            (supercells, natom, 3).
+        Dataset containing displacements in supercells, and optionally
+        forces and supercell energies. The format is one of two types.
 
-            In addition, 'duplicates' and 'cutoff_distance' can exist in this
-            dataset in displacement pair generation. 'duplicates' gives
-            duplicated supercell ids as pairs.
+        **Type 1. Pairs of atomic displacements per supercell (for fc3)**::
+
+            {'natom': number of atoms in supercell,
+             'first_atoms': [
+               {'number': atom index of first displaced atom,
+                'displacement': displacement in Cartesian coordinates,
+                'forces': forces on atoms in supercell,
+                'id': displacement id (1, 2, ..., n_first_atoms),
+                'second_atoms': [
+                  {'number': atom index of second displaced atom,
+                   'displacement': displacement in Cartesian coordinates,
+                   'forces': forces on atoms in supercell,
+                   'supercell_energy': energy of supercell,
+                   'pair_distance': distance between paired atoms,
+                   'included': bool flag (with cutoff_pair_distance,
+                       whether this pair is used to compute fc3),
+                   'id': displacement id (n_first_atoms + 1, ...)},
+                  ...
+                ]},
+               ...
+             ]}
+
+        **Type 2. All atomic displacements in each supercell**::
+
+            {'displacements':      ndarray, dtype='double', order='C',
+                                   shape=(supercells, atoms in supercell, 3),
+             'forces':             ndarray, dtype='double', order='C',
+                                   shape=(supercells, atoms in supercell, 3),
+             'supercell_energies': ndarray, dtype='double',
+                                   shape=(supercells,)}
+
+        In type 2, ``displacements`` and ``forces`` may be given as any
+        array-like that can be reshaped to
+        ``(supercells, atoms in supercell, 3)``.
+
+        For type 1, ``duplicates`` and ``cutoff_distance`` may also be
+        present when pair displacements are generated; ``duplicates``
+        gives duplicated supercell ids as pairs.
 
         """
         return self._dataset
@@ -744,27 +714,35 @@ class Phono3py:
 
     @property
     def phonon_dataset(self) -> DisplacementDataset | None:
-        """Setter and getter of displacement-force dataset for fc2.
+        """Setter and getter of the fc2 displacement-force dataset.
 
-        dict
-            Displacements in supercells. There are two types of formats.
-            Type 1. Two atomic displacement in each supercell:
-                {'natom': number of atoms in supercell,
-                 'first_atoms': [
-                   {'number': atom index of first displaced atom,
-                    'displacement': displacement in Cartesian coordinates,
-                    'forces': forces on atoms in supercell,
-                    'supercell_energy': energy of supercell}, ... ]}
-            Type 2. All atomic displacements in each supercell:
-                {'displacements': ndarray, dtype='double', order='C',
-                                  shape=(supercells, atoms in supercell, 3),
-                 'forces': ndarray, dtype='double',, order='C',
-                                  shape=(supercells, atoms in supercell, 3),
-                 'supercell_energies': ndarray, dtype='double',
-                                  shape=(supercells,)}
-            In type 2, displacements and forces can be given by numpy array
-            with different shape but that can be reshaped to
-            (supercells, natom, 3).
+        Dataset containing displacements in the fc2 supercells, and
+        optionally forces and supercell energies. The format is one of
+        two types.
+
+        **Type 1. One atomic displacement per supercell**::
+
+            {'natom': number of atoms in supercell,
+             'first_atoms': [
+               {'number': atom index of displaced atom,
+                'displacement': displacement in Cartesian coordinates,
+                'forces': forces on atoms in supercell,
+                'supercell_energy': energy of supercell},
+               ...
+             ]}
+
+        **Type 2. All atomic displacements in each supercell**::
+
+            {'displacements':      ndarray, dtype='double', order='C',
+                                   shape=(supercells, atoms in supercell, 3),
+             'forces':             ndarray, dtype='double', order='C',
+                                   shape=(supercells, atoms in supercell, 3),
+             'supercell_energies': ndarray, dtype='double',
+                                   shape=(supercells,)}
+
+        In type 2, ``displacements`` and ``forces`` may be given as any
+        array-like that can be reshaped to
+        ``(supercells, atoms in supercell, 3)``.
 
         """
         return self._phonon_dataset
@@ -789,11 +767,11 @@ class Phono3py:
 
     @property
     def mlp_dataset(self) -> Type2DisplacementDataset | None:
-        """Return displacement-force dataset.
+        """Setter and getter of the displacement-force dataset used to train an MLP.
 
-        The supercell matrix is equal to that of usual displacement-force
-        dataset. Only type 2 format is supported. "displacements",
-        "forces", and "supercell_energies" should be contained.
+        Uses the same supercell as the fc3 displacement-force dataset.
+        Only the type-2 format is supported; the dict must contain the
+        keys ``"displacements"``, ``"forces"``, and ``"supercell_energies"``.
 
         """
         return self._mlp_dataset
@@ -805,11 +783,11 @@ class Phono3py:
 
     @property
     def phonon_mlp_dataset(self) -> Type2DisplacementDataset | None:
-        """Return phonon displacement-force dataset.
+        """Setter and getter of the phonon MLP displacement-force dataset.
 
-        The phonon supercell matrix is equal to that of usual displacement-force
-        dataset. Only type 2 format is supported. "displacements", "forces", and
-        "supercell_energies" should be contained.
+        Uses the same supercell as the fc2 displacement-force dataset.
+        Only the type-2 format is supported; the dict must contain the
+        keys ``"displacements"``, ``"forces"``, and ``"supercell_energies"``.
 
         """
         return self._phonon_mlp_dataset
@@ -821,7 +799,7 @@ class Phono3py:
 
     @property
     def mlp(self) -> PhonopyMLP | None:
-        """Setter and getter of PhonopyMLP dataclass."""
+        """Setter and getter of the ``PhonopyMLP`` machine-learning potential."""
         return self._mlp
 
     @mlp.setter
@@ -830,16 +808,16 @@ class Phono3py:
 
     @property
     def phonon_mlp(self) -> PhonopyMLP | None:
-        """Return MLP instance for fc2."""
+        """Return the ``PhonopyMLP`` instance used to predict fc2 forces."""
         return self._phonon_mlp
 
     @property
     def band_indices(self) -> Sequence[NDArray[np.int64]]:
         """Setter and getter of band indices.
 
-        list[NDArray[np.int64]]
-            List of band indices specified to select specific bands
-            to computer ph-ph interaction related properties.
+        List of integer-index arrays selecting the bands at which
+        ph-ph-interaction-derived properties are computed. Each entry
+        is an ``NDArray[np.int64]``.
 
         """
         return self._band_indices
@@ -862,7 +840,14 @@ class Phono3py:
 
     @property
     def masses(self) -> NDArray[np.double]:
-        """Setter and getter of atomic masses of primitive cell."""
+        """Setter and getter of atomic masses of the primitive cell.
+
+        ``shape=(atoms in primitive,)``, ``dtype='double'``. Setting
+        propagates the new masses to the unit cell, supercell, phonon
+        primitive cell, and phonon supercell so that the cells stay
+        consistent.
+
+        """
         return self._primitive.masses
 
     @masses.setter
@@ -884,11 +869,11 @@ class Phono3py:
 
     @property
     def supercells_with_displacements(self) -> list[PhonopyAtoms | None]:
-        """Return supercells with displacements.
+        """Return the fc3 supercells with displacements applied.
 
-        list of PhonopyAtoms
-            Supercells with displacements generated by
-            Phono3py.generate_displacements.
+        Built from the displacement dataset generated by
+        :meth:`generate_displacements`. Pair displacements that fall
+        outside the cutoff distance appear as ``None``.
 
         """
         if self._dataset is None:
@@ -900,11 +885,10 @@ class Phono3py:
 
     @property
     def phonon_supercells_with_displacements(self) -> list[PhonopyAtoms]:
-        """Return supercells with displacements for fc2.
+        """Return the fc2 supercells with displacements applied.
 
-        list of PhonopyAtoms
-            Supercells with displacements generated by
-            Phono3py.generate_displacements.
+        Built from the phonon displacement dataset generated by
+        :meth:`generate_displacements` or :meth:`generate_fc2_displacements`.
 
         """
         if self._phonon_supercell_matrix is None:
@@ -923,7 +907,15 @@ class Phono3py:
 
     @property
     def mesh_numbers(self) -> NDArray[np.int64] | None:
-        """Setter and getter of sampling mesh numbers in reciprocal space."""
+        """Setter and getter of the reciprocal-space sampling mesh.
+
+        The getter returns the diagonal of the grid-generating matrix
+        (``BZGrid.D_diag``), ``shape=(3,)``, ``dtype='int64'``, or
+        ``None`` if no grid has been set. The setter accepts a scalar
+        distance-like value, a length-3 sequence of integers, or a
+        ``(3, 3)`` integer matrix; see :ref:`phono3py_api` for details.
+
+        """
         if self._bz_grid is None:
             return None
         else:
@@ -943,30 +935,30 @@ class Phono3py:
     def thermal_conductivity(
         self,
     ) -> RTACalculator | LBTECalculator | None:
-        """Return thermal conductivity class instance."""
+        """Return the thermal-conductivity calculator instance.
+
+        Populated by :meth:`run_thermal_conductivity`. ``RTACalculator``
+        for the relaxation-time approximation (``is_LBTE=False``),
+        ``LBTECalculator`` for the direct solution of the linearized
+        Boltzmann equation or the Wigner transport equation
+        (``is_LBTE=True``), or ``None`` before the calculation has run.
+
+        """
         return self._thermal_conductivity
 
     @property
     def displacements(self) -> NDArray[np.double]:
-        """Setter and getter displacements in supercells.
+        """Setter and getter of displacements in the fc3 supercells.
 
-        There are two types of displacement dataset. See the docstring of
-        dataset about types 1 and 2 for the displacement dataset formats. For
-        type 1 dataset, displacements are extracted and returned in type 2
-        format. Therefore displacements returned are always in the format of
-        type-2 as follows:
+        See the docstring of :attr:`dataset` for the type-1 and type-2
+        formats. The getter always returns a type-2-style ndarray (it
+        synthesizes one when the underlying dataset is type-1) with
+        ``shape=(supercells, atoms in supercell, 3)``,
+        ``dtype='double'``, ``order='C'``.
 
-        Type-2, array_like
-            Displacements of all atoms of all supercells in Cartesian
-            coordinates. shape=(supercells, natom, 3) dtype='double'
-
-
-        For setter, only type-2 dataset format is allowed.
-
-        displacements : array_like
-            Atomic displacements of all atoms of all supercells. Only all
-            displacements in each supercell case (type-2) is supported.
-            shape=(supercells, natom, 3), dtype='double', order='C'
+        The setter accepts an array-like of the same shape and stores
+        it as a type-2 dataset. Setting raises ``RuntimeError`` when
+        the existing dataset is type-1.
 
         """
         dataset = self._dataset
@@ -1018,17 +1010,14 @@ class Phono3py:
 
     @property
     def forces(self) -> NDArray[np.double] | None:
-        """Setter and getter of forces in displacement dataset.
+        """Setter and getter of supercell forces in the fc3 dataset.
 
-        A set of atomic forces in displaced supercells. The order of
-        displaced supercells has to match with that in displacement dataset.
-        shape=(displaced supercells, atoms in supercell, 3)
+        ``shape=(supercells with displacements, atoms in supercell, 3)``,
+        ``dtype='double'``, ``order='C'``.
 
-        getter : ndarray
-
-        setter : array_like
-            The order of supercells used for calculating forces has to
-            be the same order of supercells_with_displacements.
+        The order of supercells must match the order in
+        :attr:`supercells_with_displacements`. The setter accepts any
+        array-like with the same shape.
 
         """
         return self._get_forces_energies(target="forces")
@@ -1044,17 +1033,13 @@ class Phono3py:
 
     @property
     def supercell_energies(self) -> NDArray[np.double] | None:
-        """Setter and getter of supercell energies in displacement dataset.
+        """Setter and getter of supercell energies in the fc3 dataset.
 
-        A set of supercell energies of displaced supercells. The order of
-        displaced supercells has to match with that in displacement dataset.
-        shape=(displaced supercells,)
+        ``shape=(supercells with displacements,)``, ``dtype='double'``.
 
-        getter : ndarray
-
-        setter : array_like
-            The order of supercells used for calculating supercell energies has
-            to be the same order of supercells_with_displacements.
+        The order of supercells must match the order in
+        :attr:`supercells_with_displacements`. The setter accepts any
+        array-like with the same shape.
 
         """
         return self._get_forces_energies(target="supercell_energies")
@@ -1065,32 +1050,19 @@ class Phono3py:
 
     @property
     def phonon_displacements(self) -> NDArray[np.double]:
-        """Setter and getter of displacements in supercells for fc2.
+        """Setter and getter of displacements in the fc2 supercells.
 
-        There are two types of displacement dataset. See the docstring
-        of dataset about types 1 and 2 for the displacement dataset formats.
-        Displacements set returned depends on either type-1 or type-2 as
-        follows:
+        See the docstring of :attr:`phonon_dataset` for the type-1 and
+        type-2 formats. The getter always returns a type-2-style
+        ndarray (it synthesizes one when the underlying dataset is
+        type-1) with
+        ``shape=(supercells, atoms in supercell, 3)``,
+        ``dtype='double'``, ``order='C'``.
 
-        Type-1, List of list
-            The internal list has 4 elements such as [32, 0.01, 0.0, 0.0]].
-            The first element is the supercell atom index starting with 0.
-            The remaining three elements give the displacement in Cartesian
-            coordinates.
-        Type-2, array_like
-            Displacements of all atoms of all supercells in Cartesian
-            coordinates.
-            shape=(supercells, natom, 3)
-            dtype='double'
-
-
-        For setter, only type-2 dataset format is allowed.
-
-        displacements : array_like
-            Atomic displacements of all atoms of all supercells.
-            Only all displacements in each supercell case (type-2) is
-            supported.
-            shape=(supercells, natom, 3), dtype='double', order='C'
+        The setter accepts an array-like of the same shape and stores
+        it as a type-2 dataset. Setting raises ``RuntimeError`` when
+        the existing dataset is type-1 or when
+        :attr:`phonon_supercell_matrix` is not set.
 
         """
         if self._phonon_dataset is None:
@@ -1132,18 +1104,14 @@ class Phono3py:
 
     @property
     def phonon_forces(self) -> NDArray[np.double] | None:
-        """Setter and getter of forces in fc2 displacement dataset.
+        """Setter and getter of supercell forces in the fc2 dataset.
 
-        A set of atomic forces in displaced supercells. The order of
-        displaced supercells has to match with that in phonon displacement
-        dataset.
-        shape=(displaced supercells, atoms in supercell, 3)
+        ``shape=(supercells with displacements, atoms in supercell, 3)``,
+        ``dtype='double'``, ``order='C'``.
 
-        getter : ndarray
-
-        setter : array_like
-            The order of supercells used for calculating forces has to
-            be the same order of phonon_supercells_with_displacements.
+        The order of supercells must match the order in
+        :attr:`phonon_supercells_with_displacements`. The setter accepts
+        any array-like with the same shape.
 
         """
         return self._get_phonon_forces_energies(target="forces")
@@ -1159,15 +1127,13 @@ class Phono3py:
 
     @property
     def phonon_supercell_energies(self) -> NDArray[np.double] | None:
-        """Setter and getter of supercell energies in fc2 displacement dataset.
+        """Setter and getter of supercell energies in the fc2 dataset.
 
-        shape=(displaced supercells,)
+        ``shape=(supercells with displacements,)``, ``dtype='double'``.
 
-        getter : ndarray
-
-        setter : array_like
-            The order of supercells used for calculating supercell energies has
-            to be the same order of phonon_supercells_with_displacements.
+        The order of supercells must match the order in
+        :attr:`phonon_supercells_with_displacements`. The setter accepts
+        any array-like with the same shape.
 
         """
         return self._get_phonon_forces_energies(target="supercell_energies")
@@ -1180,22 +1146,34 @@ class Phono3py:
 
     @property
     def phph_interaction(self) -> Interaction | None:
-        """Return Interaction instance."""
+        """Return the ph-ph ``Interaction`` instance.
+
+        Created by :meth:`init_phph_interaction`. ``None`` before
+        initialization.
+
+        """
         return self._interaction
 
     @property
     def detailed_gammas(self) -> list[NDArray[np.double]] | None:
-        """Return detailed gamma."""
+        """Return scattering-event-resolved imaginary self-energies.
+
+        Populated by
+        :meth:`run_imag_self_energy(..., keep_gamma_detail=True)`.
+        Returns ``None`` when keep_gamma_detail was not requested.
+        Raises ``RuntimeError`` if :meth:`run_imag_self_energy` has not
+        been called.
+
+        """
         if self._ise_params is None:
             raise RuntimeError("Imaginary self energy parameters are not set.")
         return self._ise_params.detailed_gammas
 
     @property
     def grid(self) -> BZGrid | None:
-        """Return Brillouin zone grid information.
+        """Return the Brillouin-zone grid (``BZGrid``) used for the calculation.
 
-        BZGrid
-            An instance of BZGrid used for entire phono3py calculation.
+        ``None`` before :attr:`mesh_numbers` has been set.
 
         """
         return self._bz_grid
@@ -1315,19 +1293,35 @@ class Phono3py:
     def get_phonon_data(
         self,
     ) -> tuple[NDArray[np.double], NDArray[np.cdouble], NDArray[np.int64]]:
-        """Get phonon frequencies and eigenvectors in Interaction instance.
+        """Return phonon frequencies, eigenvectors, and grid addresses.
 
-        Harmonic phonon information is stored in Interaction instance. This
-        information can be obtained. The grid_address returned give the
-        q-points locations with respect to reciprocal basis vectors by
-        integers in the way that
-            q_points = grid_address / np.array(mesh, dtype='double').
+        Grid addresses give the q-point location with respect to the
+        reciprocal basis vectors by integers, with::
+
+            q_points = grid_address / np.array(mesh, dtype='double')
 
         Returns
         -------
-        tuple
-            (frequencies, eigenvectors, grid_address)
-            See more details at the docstring of set_phonon_data.
+        frequencies : ndarray
+            ``shape=(num_grid_points, num_band)``, ``dtype='double'``,
+            ``order='C'``.
+        eigenvectors : ndarray
+            ``shape=(num_grid_points, num_band, num_band)``,
+            ``dtype='cdouble'``, ``order='C'``.
+        grid_address : ndarray
+            Integer grid-point addresses (the first dimension may
+            exceed ``prod(mesh)`` because BZ-boundary points are
+            included).
+            ``shape=(num_grid_points, 3)``, ``dtype=int``.
+
+        Raises
+        ------
+        RuntimeError
+            When :meth:`init_phph_interaction` has not been called.
+
+        See Also
+        --------
+        set_phonon_data
 
         """
         if self._interaction is not None:
@@ -1380,82 +1374,78 @@ class Phono3py:
         max_distance: float | None = None,
         number_estimation_factor: float | None = None,
     ) -> None:
-        """Generate displacement dataset in supercell for fc3.
+        """Generate the fc3 displacement dataset in the supercell.
 
-        Systematic displacements
-        ------------------------
+        Two modes are supported depending on whether
+        ``number_of_snapshots`` is given.
 
-        Unless number_of_snapshots is specified, this method systematically
-        generates single and pair atomic displacements in supercells to
-        calculate fc3 considering crystal symmetry.
+        **Systematic mode** (``number_of_snapshots`` is ``None``):
+        single and pair atomic displacements are generated using crystal
+        symmetry. For fc3 two atoms are displaced per configuration.
+        The first displacement is taken in the perfect supercell along
+        its basis vectors -- this keeps more symmetry intact, which
+        typically reduces the number of second displacements needed.
+        The second displacement is then taken in the once-displaced
+        supercell.
 
-        For fc3, two atoms are displaced for each configuration considering
-        crystal symmetry. The first displacement is chosen in the perfect
-        supercell, and the second displacement in the displaced supercell. The
-        first displacements are taken along the basis vectors of the supercell.
-        This is because the symmetry is expected to be less broken by the
-        introduced first displacement, and as the result, the number of second
-        displacements may become smaller than the case that the first atom is
-        displaced not along the basis vectors.
-
-        Random displacements
-        --------------------
-        Unless number_of_snapshots is specified, displacements are generated
-        randomly. There are several options how the random displacements are
-        generated.
+        **Random mode** (``number_of_snapshots`` is an int or
+        ``"auto"``): the requested number of supercells with random
+        atomic displacements is generated. When ``max_distance`` is
+        given, displacements use random directions and random
+        distances drawn uniformly from ``[distance, max_distance]``;
+        otherwise all atoms are displaced by the same Euclidean
+        distance equal to ``distance``.
 
         Note
         ----
-        When phonon_supercell_matrix is not given, fc2 is also computed from the
-        same set of the displacements for fc3 and respective supercell forces.
-        When phonon_supercell_matrix is set, the displacements in
-        phonon_supercell are generated unless those already exist. If a specific
-        set of displacements for fc2 is expected, generate_fc2_displacements
-        should be called.
+        When ``phonon_supercell_matrix`` is not given, fc2 is computed
+        from the same displacements as fc3. When it is given, fc2
+        displacements in the phonon supercell are generated separately
+        (unless they already exist). To control fc2 displacements
+        independently, call :meth:`generate_fc2_displacements`.
 
         Parameters
         ----------
         distance : float, optional
-            Constant displacement Euclidean distance. Default is None, which
-            gives 0.03. For random direction and random distance displacements
-            generation, this value is also used as `min_distance`, is used to
-            replace generated random distances smaller than this value by this
-            value.
+            Constant displacement Euclidean distance in Angstroms.
+            Default is ``None``, which means ``0.03``. In random-
+            direction-random-distance mode this value also acts as the
+            minimum distance: sampled distances smaller than this are
+            clamped to it.
         cutoff_pair_distance : float, optional
-            This is used as a cutoff Euclidean distance to determine if each
-            pair of displacements is considered to calculate fc3 or not. Default
-            is None, which means cutoff is not used.
-        is_plusminus : True, False, or 'auto', optional
-            With True, atoms are displaced in both positive and negative
-            directions. With False, only one direction. With 'auto', mostly
-            equivalent to is_plusminus=True, but only one direction is chosen
-            when the displacements in both directions are symmetrically
-            equivalent. Default is 'auto'.
-        is_diagonal : Bool, optional
-            With False, the second displacements are made along the basis
-            vectors of the supercell. With True, direction not along the basis
-            vectors can be chosen when the number of the displacements may be
-            reduced.
+            Cutoff Euclidean distance (in Angstroms) used to drop pair
+            displacements that are too far apart from the fc3
+            calculation. Default is ``None`` (no cutoff).
+        is_plusminus : bool or "auto", optional
+            With ``True``, atoms are displaced in both positive and
+            negative directions. With ``False``, only one direction.
+            With ``"auto"`` (default), both directions are used unless
+            they are symmetrically equivalent, in which case only one is
+            kept.
+        is_diagonal : bool, optional
+            With ``True`` (default), second displacements may be chosen
+            off-axis if doing so reduces the displacement count. With
+            ``False``, second displacements are taken strictly along
+            the supercell basis vectors.
         number_of_snapshots : int, "auto", or None, optional
-            Number of snapshots of supercells with random displacements. Random
-            displacements are generated by shifting all atoms in random
-            directions by a fixed distance specified by the `distance`
-            parameter. In other words, all atoms in the supercell are displaced
-            by the same distance in direct space. When “auto”, the minimum
-            required number of snapshots is estimated using symfc and then
-            doubled. The default is None.
+            Number of supercell snapshots with random displacements.
+            With ``"auto"``, the minimum required number is estimated
+            using symfc and then multiplied by
+            ``number_estimation_factor``. Default is ``None``
+            (systematic mode).
         random_seed : int or None, optional
-            Random seed for random displacements generation. Default is None.
+            Random seed for random displacement generation. Default is
+            ``None``.
         max_distance : float or None, optional
-            When specified, displacements are generated with random direction
-            and random distance. This value serves as the maximum distance,
-            while the `distance` parameter sets the minimum distance. The
-            displacement distance is randomly sampled from a uniform
-            distribution between these two bounds.
+            When specified, displacements use random direction and
+            random distance with ``distance`` as the lower bound and
+            ``max_distance`` as the upper bound of a uniform
+            distribution. Default is ``None``.
         number_estimation_factor : float, optional
-            This factor multiplies the number of snapshots estimated by symfc
-            when `number_of_snapshots` is set to "auto". Default is None, which
-            sets this factor to 8 when `max_distance` is specified, otherwise 4.
+            Multiplier applied to the symfc estimate when
+            ``number_of_snapshots="auto"``. Default is ``None``, which
+            uses ``8`` when ``max_distance`` is given and ``4``
+            otherwise.
 
         """
         if distance is None:
@@ -1521,52 +1511,53 @@ class Phono3py:
         random_seed: int | None = None,
         max_distance: float | None = None,
     ) -> None:
-        """Generate displacement dataset in phonon supercell for fc2.
+        """Generate the fc2 displacement dataset in the phonon supercell.
 
-        This systematically generates single atomic displacements in supercells
-        to calculate phonon_fc2 considering crystal symmetry. When this method
-        is called, existing cache of supercells with displacements for fc2 are
-        removed.
+        Two modes are supported. In **systematic mode** (default), single
+        atomic displacements in the phonon supercell are generated using
+        crystal symmetry. In **random mode** (when
+        ``number_of_snapshots`` is given), the requested number of
+        supercells with random displacements is generated. Calling this
+        method clears any cached fc2 supercells with displacements.
 
         Note
         ----
-        is_diagonal=False is chosen as the default setting intentionally to be
-        consistent to the first displacements of the fc3 pair displacements in
-        supercell.
+        ``is_diagonal=False`` is the default so that the fc2
+        first-displacement direction stays consistent with the
+        first-displacement direction used by the fc3 pair generator.
 
         Parameters
         ----------
         distance : float, optional
-            Constant displacement Euclidean distance. Default is None, which
-            gives 0.03. For random direction and random distance displacements
-            generation, this value is also used as `min_distance`, is used to
-            replace generated random distances smaller than this value by this
-            value.
-        is_plusminus : True, False, or 'auto', optional
-            With True, atoms are displaced in both positive and negative
-            directions. With False, only one direction. With 'auto', mostly
-            equivalent to is_plusminus=True, but only one direction is chosen
-            when the displacements in both directions are symmetrically
-            equivalent. Default is 'auto'.
-        is_diagonal : Bool, optional
-            With False, the displacements are made along the basis vectors of
-            the supercell. With True, direction not along the basis vectors can
-            be chosen when the number of the displacements may be reduced.
-            Default is False.
+            Constant displacement Euclidean distance in Angstroms.
+            Default is ``None``, which means ``0.03``. In random-
+            direction-random-distance mode this value also acts as the
+            minimum distance: sampled distances smaller than this are
+            clamped to it.
+        is_plusminus : bool or "auto", optional
+            With ``True``, atoms are displaced in both positive and
+            negative directions. With ``False``, only one direction.
+            With ``"auto"`` (default), both directions are used unless
+            they are symmetrically equivalent, in which case only one
+            is kept.
+        is_diagonal : bool, optional
+            With ``False`` (default), displacements are taken strictly
+            along the supercell basis vectors. With ``True``, off-axis
+            directions may be chosen if doing so reduces the
+            displacement count.
         number_of_snapshots : int, "auto", or None, optional
-            Number of snapshots of supercells with random displacements. Random
-            displacements are generated by shifting all atoms in random
-            directions by a fixed distance specified by the `distance`
-            parameter. In other words, all atoms in the supercell are displaced
-            by the same distance in direct space. When “auto”, the minimum
-            required number of snapshots is estimated using symfc and then
-            doubled. The default is None.
+            Number of supercell snapshots with random displacements.
+            With ``"auto"``, the minimum required number is estimated
+            using symfc and then doubled. Default is ``None``
+            (systematic mode).
         random_seed : int or None, optional
-            Random seed for random displacements generation. Default is None.
+            Random seed for random displacement generation. Default is
+            ``None``.
         max_distance : float or None, optional
-            In random direction and distance displacements generation, this
-            value is specified. In random direction and random distance
-            displacements generation, this value is used as `max_distance`.
+            When specified, displacements use random direction and
+            random distance with ``distance`` as the lower bound and
+            ``max_distance`` as the upper bound of a uniform
+            distribution. Default is ``None``.
 
         """
         if distance is None:
@@ -1608,38 +1599,86 @@ class Phono3py:
 
     def produce_fc3(
         self,
-        symmetrize_fc3r: bool = False,
+        symmetrize_fc3r: bool | None = None,
         is_compact_fc: bool = True,
         fc_calculator: Literal["traditional", "symfc", "alm"] | None = None,
         fc_calculator_options: str | None = None,
-        use_symfc_projector: bool = False,
+        use_symfc_projector: bool | None = None,
     ) -> None:
-        """Calculate fc3 from displacements and forces.
+        """Calculate fc3 (and optionally fc2) from displacements and forces.
+
+        The solver is chosen by ``fc_calculator``:
+
+        - ``None`` (default) or ``"traditional"``: built-in
+          finite-difference solver. The returned fc3 is **not**
+          symmetrized; to enforce translational and permutation
+          invariance, call :meth:`symmetrize_fc3` afterwards (and
+          :meth:`symmetrize_fc2` when applicable).
+        - ``"symfc"``: symfc solver, which returns symmetrized force
+          constants in one shot. When a cutoff distance is configured
+          via ``fc_calculator_options``, it is captured into
+          :attr:`fc3_cutoff` (and :attr:`fc2_cutoff` when fc2 is
+          produced here), and the boolean mask of non-zero atomic
+          triplets is captured into :attr:`fc3_nonzero_indices`.
+        - ``"alm"``: ALM solver, which handles symmetrization
+          internally.
+
+        When ``phonon_supercell_matrix`` is not set, fc2 is produced
+        alongside fc3 and stored in :attr:`fc2`. When
+        ``phonon_supercell_matrix`` is set, :attr:`fc2` is **not**
+        populated here -- call :meth:`produce_fc2` to compute fc2 in
+        the larger phonon supercell.
 
         Parameters
         ----------
         symmetrize_fc3r : bool, optional
-            Only for type 1 displacement_dataset, translational and permutation
-            symmetries are applied after creating fc3. This symmetrization is
-            not very sophisticated and can break space group symmetry, but often
-            useful. If better symmetrization is expected, it is recommended to
-            use external force constants calculator such as ALM. Default is
-            False.
+            **Deprecated.** Passing any value emits a
+            ``DeprecationWarning``. With the traditional solver,
+            call :meth:`symmetrize_fc3` (and :meth:`symmetrize_fc2`
+            when applicable) after :meth:`produce_fc3` instead.
+            Default is ``None``.
         is_compact_fc : bool, optional
-            fc3 shape is
-                True: (primitive, supercell, supercell, 3, 3, 3)
+            fc3 shape::
+
+                True:  (primitive, supercell, supercell, 3, 3, 3)
                 False: (supercell, supercell, supercell, 3, 3, 3)
-            where 'supercell' and 'primitive' indicate number of atoms in these
-            cells. Default is True.
+
+            Default is ``True``.
         fc_calculator : str, optional
-            Force constants calculator given by str.
+            Force-constants calculator. One of ``None``,
+            ``"traditional"``, ``"symfc"``, or ``"alm"``. Default is
+            ``None`` (equivalent to ``"traditional"``).
         fc_calculator_options : str, optional
-            Options for external force constants calculator.
+            Options string forwarded to the chosen calculator. Use
+            ``"<fc2_opts>|<fc3_opts>"`` to set separate options for
+            fc2 and fc3; without ``"|"`` the same options apply to
+            both. For example, ``"cutoff=4|cutoff=3"`` sets cutoff 4
+            for fc2 and 3 for fc3.
         use_symfc_projector : bool, optional
-            If True, the force constants are symmetrized by symfc projector
-            instead of traditional approach.
+            **Deprecated.** Passing any value emits a
+            ``DeprecationWarning``. Call
+            ``symmetrize_fc3(use_symfc_projector=True)`` after
+            :meth:`produce_fc3` instead. Default is ``None``.
 
         """
+        if symmetrize_fc3r is not None:
+            warnings.warn(
+                "The symmetrize_fc3r parameter of Phono3py.produce_fc3 is "
+                "deprecated. Call Phono3py.symmetrize_fc3 (and "
+                "Phono3py.symmetrize_fc2 when applicable) after "
+                "Phono3py.produce_fc3 instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        if use_symfc_projector is not None:
+            warnings.warn(
+                "The use_symfc_projector parameter of Phono3py.produce_fc3 is "
+                "deprecated. Call "
+                "Phono3py.symmetrize_fc3(use_symfc_projector=True) after "
+                "Phono3py.produce_fc3 instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         fc_solver_name = fc_calculator if fc_calculator is not None else "traditional"
         fc_solver = FC3Solver(
             fc_solver_name,
@@ -1706,19 +1745,24 @@ class Phono3py:
         use_symfc_projector: bool = False,
         options: str | None = None,
     ) -> None:
-        """Symmetrize fc3 by symfc projector or traditional approach.
+        """Symmetrize fc3 by symfc projector or the traditional approach.
 
         Parameters
         ----------
         use_symfc_projector : bool, optional
-            If True, the force constants are symmetrized by symfc projector
-            instead of traditional approach.
+            If ``True``, symmetrize force constants with the symfc
+            projector instead of the traditional approach.
         options : str or None, optional
-            For symfc projector:
-                "use_mkl=true" calls sparse_dot_mkl (required to install it).
-            For traditional symmetrization:
-                "level=N" applies translational and permutation symmetries
-                alternately N times in succession. Default is 3.
+            Options string. Accepted values depend on the backend::
+
+                symfc projector:
+                    "use_mkl=true"  call sparse_dot_mkl
+                                    (requires sparse_dot_mkl to be
+                                    installed).
+                traditional:
+                    "level=N"       apply translational and permutation
+                                    symmetries alternately N times.
+                                    Default level is 3.
 
         """
         if self._fc3 is None:
@@ -1768,38 +1812,74 @@ class Phono3py:
 
     def produce_fc2(
         self,
-        symmetrize_fc2: bool = False,
+        symmetrize_fc2: bool | None = None,
         is_compact_fc: bool = True,
         fc_calculator: Literal["traditional", "symfc", "alm"] | None = None,
         fc_calculator_options: str | None = None,
-        use_symfc_projector: bool = False,
+        use_symfc_projector: bool | None = None,
     ) -> None:
         """Calculate fc2 from displacements and forces.
 
+        Uses the phonon supercell (equal to the fc3 supercell when
+        ``phonon_supercell_matrix`` is not set). Forces are taken from
+        :attr:`phonon_dataset` when present, otherwise from
+        :attr:`dataset`. The solver is chosen by ``fc_calculator``:
+
+        - ``None`` (default) or ``"traditional"``: built-in
+          finite-difference solver. The returned fc2 is **not**
+          symmetrized; to enforce translational and permutation
+          invariance, call :meth:`symmetrize_fc2` afterwards.
+        - ``"symfc"``: symfc solver, which returns symmetrized force
+          constants in one shot. When a cutoff distance is configured
+          via ``fc_calculator_options``, it is captured into
+          :attr:`fc2_cutoff`.
+        - ``"alm"``: ALM solver, which handles symmetrization
+          internally.
+
         Parameters
         ----------
-        symmetrize_fc2 : bool
-            Only for type 1 displacement_dataset, translational and
-            permutation symmetries are applied after creating fc3. This
-            symmetrization is not very sophisticated and can break space
-            group symmetry, but often useful. If better symmetrization is
-            expected, it is recommended to use external force constants
-            calculator such as ALM. Default is False.
-        is_compact_fc : bool
-            fc2 shape is
-                True: (primitive, supercell, 3, 3)
+        symmetrize_fc2 : bool, optional
+            **Deprecated.** Passing any value emits a
+            ``DeprecationWarning``. With the traditional solver, call
+            :meth:`symmetrize_fc2` after :meth:`produce_fc2` instead.
+            Default is ``None``.
+        is_compact_fc : bool, optional
+            fc2 shape::
+
+                True:  (primitive, supercell, 3, 3)
                 False: (supercell, supercell, 3, 3)
-            where 'supercell' and 'primitive' indicate number of atoms in these
-            cells. Default is True.
-        fc_calculator : str or None
-            Force constants calculator given by str.
-        fc_calculator_options : str or None
-            Options for external force constants calculator.
+
+            Default is ``True``.
+        fc_calculator : str or None, optional
+            Force-constants calculator. One of ``None``,
+            ``"traditional"``, ``"symfc"``, or ``"alm"``. Default is
+            ``None`` (equivalent to ``"traditional"``).
+        fc_calculator_options : str or None, optional
+            Options string forwarded to the chosen calculator.
         use_symfc_projector : bool, optional
-            If True, the force constants are symmetrized by symfc projector
-            instead of traditional approach.
+            **Deprecated.** Passing any value emits a
+            ``DeprecationWarning``. Call
+            ``symmetrize_fc2(use_symfc_projector=True)`` after
+            :meth:`produce_fc2` instead. Default is ``None``.
 
         """
+        if symmetrize_fc2 is not None:
+            warnings.warn(
+                "The symmetrize_fc2 parameter of Phono3py.produce_fc2 is "
+                "deprecated. Call Phono3py.symmetrize_fc2 after "
+                "Phono3py.produce_fc2 instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        if use_symfc_projector is not None:
+            warnings.warn(
+                "The use_symfc_projector parameter of Phono3py.produce_fc2 is "
+                "deprecated. Call "
+                "Phono3py.symmetrize_fc2(use_symfc_projector=True) after "
+                "Phono3py.produce_fc2 instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         if self._phonon_dataset is None:
             disp_dataset = self._dataset
         else:
@@ -1844,19 +1924,24 @@ class Phono3py:
         use_symfc_projector: bool = False,
         options: str | None = None,
     ) -> None:
-        """Symmetrize fc2 by symfc projector or traditional approach.
+        """Symmetrize fc2 by symfc projector or the traditional approach.
 
         Parameters
         ----------
         use_symfc_projector : bool, optional
-            If True, the force constants are symmetrized by symfc projector
-            instead of traditional approach.
+            If ``True``, symmetrize force constants with the symfc
+            projector instead of the traditional approach.
         options : str or None, optional
-            For symfc projector:
-                "use_mkl=true" calls sparse_dot_mkl (required to install it).
-            For traditional symmetrization:
-                "level=N" applies translational and permutation symmetries
-                alternately N times in succession. Default is 3.
+            Options string. Accepted values depend on the backend::
+
+                symfc projector:
+                    "use_mkl=true"  call sparse_dot_mkl
+                                    (requires sparse_dot_mkl to be
+                                    installed).
+                traditional:
+                    "level=N"       apply translational and permutation
+                                    symmetries alternately N times.
+                                    Default level is 3.
 
         """
         if self._fc2 is None:
@@ -1976,54 +2061,71 @@ class Phono3py:
         keep_gamma_detail: bool = False,
         output_filename: str | None = None,
     ) -> ImagSelfEnergyValues:
-        """Calculate imaginary part of self-energy of bubble diagram (Gamma).
+        """Calculate the imaginary part of the bubble self-energy (Gamma).
 
-        Pi = Delta - i Gamma.
+        The phonon self-energy is decomposed as
+        ``Pi = Delta - i Gamma``. Gamma is computed at the given grid
+        points and temperatures, as a function of frequency. Results
+        are returned as :class:`ImagSelfEnergyValues` and also kept on
+        the instance.
 
         Parameters
         ----------
         grid_points : array_like
-            Grid-point indices where imaginary part of self-energies are
-            caclculated.
-            dtype=int, shape=(grid_points,)
+            Grid-point indices at which Gamma is computed.
+            ``shape=(grid_points,)``, ``dtype=int``.
         temperatures : array_like
-            Temperatures where imaginary part of self-energies are calculated.
-            dtype=float, shape=(temperatures,)
+            Temperatures at which Gamma is computed.
+            ``shape=(temperatures,)``, ``dtype=float``.
         frequency_points : array_like, optional
-            Frequency sampling points. Default is None. With
-            frequency_points_at_bands=False and frequency_points is None,
-            num_frequency_points or frequency_step is used to generate uniform
-            frequency sampling points.
-            dtype=float, shape=(frequency_points,)
+            Frequency sampling points. ``shape=(frequency_points,)``,
+            ``dtype=float``. Default is ``None``; when
+            ``frequency_points_at_bands=False`` and this is ``None``,
+            uniform sampling is generated from
+            ``num_frequency_points`` or ``frequency_step``.
         frequency_step : float, optional
-            Uniform pitch of frequency sampling points. Default is None. This
-            results in using num_frequency_points.
-        num_frequency_points: Int, optional
-            Number of sampling sampling points to be used instead of
-            frequency_step. This number includes end points. Default is None,
-            which gives 201.
-        num_points_in_batch: int, optional
-            Number of sampling points in one batch. This is for the frequency
-            sampling mode and the sampling points are divided into batches.
-            Lager number provides efficient use of multi-cores but more
-            memory demanding. Default is None, which give the number of 10.
+            Uniform pitch of frequency sampling points. Default is
+            ``None``, which falls back to ``num_frequency_points``.
+        num_frequency_points : int, optional
+            Number of sampling points (including end points) used when
+            ``frequency_step`` is not set. Default is ``None``, which
+            gives 201.
+        num_points_in_batch : int, optional
+            Number of sampling points per batch. Larger batches allow
+            more efficient multi-core utilization at the cost of
+            memory. Default is ``None``, which gives 10.
         frequency_points_at_bands : bool, optional
-            Phonon band frequencies are used as frequency points when True.
-            Default is False.
+            When ``True``, use the phonon band frequencies as the
+            frequency points. Default is ``False``.
         scattering_event_class : int, optional
-            Specific choice of scattering event class, 1 or 2 that is specified
-            1 or 2, respectively. The result is stored in gammas. Therefore
-            usual gammas are not stored in the variable. Default is None, which
-            doesn't specify scattering_event_class.
+            Restrict Gamma to a specific scattering event class
+            (``1`` or ``2``). When set, only the chosen class is
+            accumulated into ``gammas`` (the usual full Gamma is not
+            stored). Default is ``None``.
         write_txt : bool, optional
-            Frequency points and imaginary part of self-energies are written
-            into text files.
+            Write frequency points and Gamma to text files. Default
+            is ``False``.
         write_gamma_detail : bool, optional
-            Detailed gammas are written into a file in hdf5. Default is False.
+            Write per-scattering-event Gamma to an HDF5 file. Default
+            is ``False``.
         keep_gamma_detail : bool, optional
-            With True, detailed gammas are stored. Default is False.
-        output_filename : str
-            This string is inserted in the output file names.
+            Keep per-scattering-event Gamma on the instance
+            (accessible via :attr:`detailed_gammas`). Default is
+            ``False``.
+        output_filename : str, optional
+            Inserted into output filenames.
+
+        Returns
+        -------
+        ImagSelfEnergyValues
+            Container with ``frequency_points``, ``gammas``,
+            ``scattering_event_class``, and (when
+            ``keep_gamma_detail=True``) ``detailed_gammas``.
+
+        Raises
+        ------
+        RuntimeError
+            When :meth:`init_phph_interaction` has not been called.
 
         """
         if self._interaction is None:
@@ -2107,47 +2209,67 @@ class Phono3py:
         write_hdf5: bool = False,
         output_filename: str | None = None,
     ) -> tuple[NDArray[np.double] | None, NDArray[np.double]]:
-        """Calculate real-part of self-energy of bubble diagram (Delta).
+        """Calculate the real part of the bubble self-energy (Delta).
 
-        Pi = Delta - i Gamma.
+        The phonon self-energy is decomposed as
+        ``Pi = Delta - i Gamma``. Delta is computed at the given grid
+        points and temperatures, as a function of frequency.
 
         Parameters
         ----------
         grid_points : array_like
-            Grid-point indices where real part of self-energies are
-            caclculated.
-            dtype=int, shape=(grid_points,)
+            Grid-point indices at which Delta is computed.
+            ``shape=(grid_points,)``, ``dtype=int``.
         temperatures : array_like
-            Temperatures where real part of self-energies  are calculated.
-            dtype=float, shape=(temperatures,)
+            Temperatures at which Delta is computed.
+            ``shape=(temperatures,)``, ``dtype=float``.
         frequency_points_at_bands : bool, optional
-            With False, frequency shifts are calculated at frequency sampling
-            points. When True, they are done at the phonon frequencies.
-            Default is False.
+            With ``False`` (default), frequency shifts are calculated
+            at sampling points. With ``True``, they are calculated at
+            the phonon band frequencies.
         frequency_points : array_like, optional
-            Frequency sampling points. Default is None. In this case,
-            num_frequency_points or frequency_step is used to generate uniform
-            frequency sampling points.
-            dtype=float, shape=(frequency_points,)
+            Frequency sampling points. ``shape=(frequency_points,)``,
+            ``dtype=float``. Default is ``None``; when ``None``,
+            uniform sampling is generated from
+            ``num_frequency_points`` or ``frequency_step``.
         frequency_step : float, optional
-            Uniform pitch of frequency sampling points. Default is None. This
-            results in using num_frequency_points.
-        num_frequency_points: Int, optional
-            Number of sampling sampling points to be used instead of
-            frequency_step. This number includes end points. Default is None,
-            which gives 201.
-        epsilons : array_like
-            Smearing widths to computer principal part. When multiple values
-            are given frequency shifts for those values are returned.
-            dtype=float, shape=(epsilons,)
+            Uniform pitch of frequency sampling points. Default is
+            ``None``, which falls back to ``num_frequency_points``.
+        num_frequency_points : int, optional
+            Number of sampling points (including end points) used when
+            ``frequency_step`` is not set. Default is ``None``, which
+            gives 201.
+        epsilons : array_like, optional
+            Smearing widths used to compute the principal part. When
+            multiple values are given, frequency shifts for each are
+            returned. ``shape=(epsilons,)``, ``dtype=float``. Default
+            is ``None`` (use :attr:`sigmas`).
         write_txt : bool, optional
-            Frequency points and real part of self-energies are written
-            into text files.
-        write_hdf5 : bool
-            Results are stored in hdf5 files independently at grid points,
-            epsilons, and temperatures.
-        output_filename : str
-            This string is inserted in the output file names.
+            Write frequency points and Delta to text files. Default
+            is ``False``.
+        write_hdf5 : bool, optional
+            Write results to HDF5 files, one per (grid point, epsilon,
+            temperature). Default is ``False``.
+        output_filename : str, optional
+            Inserted into output filenames.
+
+        Returns
+        -------
+        frequency_points : ndarray or None
+            Frequency sampling points. ``None`` when
+            ``frequency_points_at_bands=True``.
+            ``dtype='double'``.
+        deltas : ndarray
+            Real-part frequency shifts, indexed by
+            ``(epsilon, grid_point, temperature, band)`` with a
+            trailing frequency-points axis (collapsed to the band
+            frequency when ``frequency_points_at_bands=True``).
+            ``dtype='double'``.
+
+        Raises
+        ------
+        RuntimeError
+            When :meth:`init_phph_interaction` has not been called.
 
         """
         if self._interaction is None:
@@ -2207,41 +2329,50 @@ class Phono3py:
         write_hdf5: bool = False,
         output_filename: str | None = None,
     ) -> None:
-        """Frequency shift from lowest order diagram is calculated.
+        """Calculate the phonon spectral function from the bubble self-energy.
+
+        The spectral function
+        ``A(omega) ~ Gamma / ((omega - Omega - Delta)^2 + Gamma^2)``
+        is computed at the given grid points and temperatures, as a
+        function of frequency. The result is stored on the instance.
 
         Parameters
         ----------
         grid_points : array_like
-            Grid-point indices where imag-self-energeis are caclculated.
-            dtype=int, shape=(grid_points,)
+            Grid-point indices at which the spectral function is
+            computed. ``shape=(grid_points,)``, ``dtype=int``.
         temperatures : array_like
-            Temperatures where imag-self-energies are calculated.
-            dtype=float, shape=(temperatures,)
+            Temperatures at which the spectral function is computed.
+            ``shape=(temperatures,)``, ``dtype=float``.
         frequency_points : array_like, optional
-            Frequency sampling points. Default is None. In this case,
-            num_frequency_points or frequency_step is used to generate uniform
-            frequency sampling points.
-            dtype=float, shape=(frequency_points,)
+            Frequency sampling points. ``shape=(frequency_points,)``,
+            ``dtype=float``. Default is ``None``; when ``None``,
+            uniform sampling is generated from
+            ``num_frequency_points`` or ``frequency_step``.
         frequency_step : float, optional
-            Uniform pitch of frequency sampling points. Default is None. This
-            results in using num_frequency_points.
-        num_frequency_points: Int, optional
-            Number of sampling sampling points to be used instead of
-            frequency_step. This number includes end points. Default is None,
-            which gives 201.
-        num_points_in_batch: int, optional
-            Number of sampling points in one batch. This is for the frequency
-            sampling mode and the sampling points are divided into batches.
-            Lager number provides efficient use of multi-cores but more
-            memory demanding. Default is None, which give the number of 10.
+            Uniform pitch of frequency sampling points. Default is
+            ``None``, which falls back to ``num_frequency_points``.
+        num_frequency_points : int, optional
+            Number of sampling points (including end points) used when
+            ``frequency_step`` is not set. Default is ``None``, which
+            gives 201.
+        num_points_in_batch : int, optional
+            Number of sampling points per batch. Larger batches allow
+            more efficient multi-core utilization at the cost of
+            memory. Default is ``None``, which gives 10.
         write_txt : bool, optional
-            Frequency points and spectral functions are written
-            into text files. Default is False.
-        write_hdf5 : bool
-            Results are stored in hdf5 files independently at grid points,
-            epsilons. Default is False.
-        output_filename : str
-            This string is inserted in the output file names.
+            Write frequency points and spectral functions to text
+            files. Default is ``False``.
+        write_hdf5 : bool, optional
+            Write results to HDF5 files, one per grid point. Default
+            is ``False``.
+        output_filename : str, optional
+            Inserted into output filenames.
+
+        Raises
+        ------
+        RuntimeError
+            When :meth:`init_phph_interaction` has not been called.
 
         """
         if self._interaction is None:
@@ -2301,137 +2432,172 @@ class Phono3py:
         output_filename: str | None = None,
         log_level: int | None = None,
     ) -> None:
-        """Run thermal conductivity calculation.
+        """Run a lattice thermal conductivity calculation.
+
+        Result is stored in :attr:`thermal_conductivity` (an
+        ``RTACalculator`` when ``is_LBTE=False``, an ``LBTECalculator``
+        otherwise).
 
         Parameters
         ----------
-        is_LBTE : bool, optional, default is False
-            RTA (False) or direct solution (True).
-        temperatures : array_like, optional, default is None
-            Temperatures at which thermal conductivity is calculated.
-            shape=(temperature_points, ), dtype='double'.
-            With None,
-                `is_LBTE=False` gives temperatures=[0, 10, ..., 1000].
-                `is_LBTE=True` gives temperatures=[300, ].
-        is_isotope : bool, optional, default is False
-            With or without isotope scattering.
-        mass_variances : array_like, optional, default is None
-            Mass variances for isotope scattering calculation. When None,
-            the values stored in phono3py are used with `is_isotope=True`.
-            shape(atoms_in_primitive, ), dtype='double'.
-        grid_points : array_like, optional, default is None
-            List of grid point indices where mode thermal conductivities are
-            calculated. With None, all the grid points that are necessary
-            for thermal conductivity are set internally.
-            shape(num_grid_points, ), dtype='int64'.
-        boundary_mfp : float, optional, default is None
-            Mean free path in micrometer to calculate simple boundary
-            scattering contribution to thermal conductivity.
-            None ignores this contribution.
-        solve_collective_phonon : bool, optional, default is False
-            This is an option for the feature under development.
-        use_ave_pp : bool, optional, default is False
-            RTA only (`is_LBTE=False`). Averaged phonon-phonon interaction
-            strength is used to calculate phonon lifetime. This does not
-            reduce computational demand, but may be used to model thermal
-            conductivity for analyze the calculation results.
-        is_reducible_collision_matrix : bool, optional, default is False
-            Direct solution only (`is_LBTE=True`). This is an experimental
-            option. With True, full collision matrix is created and solved.
-        is_kappa_star : bool, optional, default is True
-            With true, symmetry is considered when sampling grid points
-            at which mode thermal conductivities are calculated.
-        gv_delta_q : float, optional, default is None,  # for group velocity
-            With non-analytical correction, group velocity is calculated
-            by central finite difference method. This value gives the distance
-            in both directions in 1/Angstrom. The default value will be 1e-5.
-        is_full_pp : bool, optional, default is False
-            With True, full elements of phonon-phonon interaction strength
-            are computed. However with tetrahedron method, part of them are
-            known to be zero and unnecessary to calculation. With False,
-            those elements are not calculated, by which considerable
-            improve of efficiency is expected.
-            With smearing method, even if this is set False, full elements
-            are computed unless `sigma_cutoff` is specified.
-        pinv_cutoff : float, optional, default is None (usually 1.0e-8)
-            Direct solution only (`is_LBTE=True`). This is used as a criterion
-            to judge the eigenvalues are considered as zero or not in
-            pseudo-inversion of collision matrix. See also `pinv_method`.
-        pinv_method : int, optional, default is 0.
-            Direct solution only (`is_LBTE=True`).
-                0. abs(eigenvalue) < `pinv_cutoff`
-                1. eigenvalue < `pinv_cutoff`
-        pinv_solver : int, optional, default is 0
-            Direct solution only (`is_LBTE=True`). Choice of solver of
-            pseudo-inversion of collision matrix. 0 means the default choice.
-                1. Lapacke dsyev: Smaller memory consumption than dsyevd, but
-                   slower. This is the default solver when MKL LAPACKE is
-                   integrated or scipy is not installed.
-                2. Lapacke dsyevd: Larger memory consumption than dsyev, but
-                   faster. This is not recommended because sometimes a wrong
-                   result is obtained.
-                3. Numpy's dsyevd (linalg.eigh). This is not recommended
-                   because sometimes a wrong result is obtained.
-                4. Scipy's dsyev: This is the default solver when scipy is
-                   installed and MKL LAPACKE is not integrated.
-                5. Scipy's dsyevd. This is not recommended because sometimes
-                   a wrong result is obtained.
-            The solver choices other than --pinv-solver=1 and
-            --pinv-solver=4 are dangerous and not recommend.
-        write_gamma : bool, optional, default is False
-            RTA only (`is_LBTE=False`). With True, Write mode thermal
-            conductivity properties into files at each grid point. With
-            `band_indices` or multiple `sigmas` is specified, the files
-            are made for each of them, too.
-        read_gamma : bool, optional, default is False
-            RTA only (`is_LBTE=False`). With True, read files created by
-            `write_gamma=True` instead of calculating phonon-phonon
-            interaction strength and imaginary parts of self-energy.
-        is_N_U : bool, optional, default is False
-            RTA only (`is_LBTE=False`). With True, categorization of normal
-            and Umklapp scattering is made and imaginary parts of self energy
-            for them are separated.
+        is_LBTE : bool, optional
+            ``False`` for the relaxation-time approximation (RTA),
+            ``True`` for the direct solution of the linearized Boltzmann
+            equation (LBTE) and the Wigner transport equation. Default
+            is ``False``.
+        temperatures : array_like, optional
+            Temperatures at which thermal conductivity is computed.
+            ``shape=(temperature_points,)``, ``dtype='double'``. With
+            ``None`` (default), the defaults depend on ``is_LBTE``::
+
+                is_LBTE=False:  [0, 10, ..., 1000]
+                is_LBTE=True:   [300]
+
+        is_isotope : bool, optional
+            Include isotope scattering. Default is ``False``.
+        mass_variances : array_like, optional
+            Mass variances for isotope scattering. With ``None``
+            (default) and ``is_isotope=True``, the values stored in the
+            phono3py instance are used.
+            ``shape=(atoms_in_primitive,)``, ``dtype='double'``.
+        grid_points : array_like, optional
+            Grid-point indices at which mode thermal conductivities are
+            computed. With ``None`` (default), all required grid points
+            are chosen internally. ``shape=(num_grid_points,)``,
+            ``dtype='int64'``.
+        boundary_mfp : float, optional
+            Mean free path in micrometers used to model a simple
+            boundary-scattering contribution. ``None`` (default)
+            disables this contribution.
+        solve_collective_phonon : bool, optional
+            Option for an under-development feature. Default is
+            ``False``.
+        use_ave_pp : bool, optional
+            RTA only (``is_LBTE=False``). Use an averaged ph-ph
+            interaction strength to compute phonon lifetimes. This does
+            not reduce computational cost; it is mainly a modelling
+            tool for analyzing the result. Default is ``False``.
+        is_reducible_collision_matrix : bool, optional
+            Direct-solution only (``is_LBTE=True``). Experimental: with
+            ``True``, the full collision matrix is constructed and
+            solved. Default is ``False``.
+        is_kappa_star : bool, optional
+            With ``True`` (default), use crystal symmetry to reduce the
+            grid points at which mode thermal conductivities are
+            sampled.
+        gv_delta_q : float, optional
+            Q-distance (in 1/Angstrom) used by the central
+            finite-difference scheme for group velocity when
+            non-analytical correction is in effect. Default is ``None``
+            (effectively 1e-5).
+        is_full_pp : bool, optional
+            With ``True``, compute all elements of the ph-ph interaction
+            strength. With ``False`` (default) and the tetrahedron
+            method, elements known to be zero are skipped, giving a
+            substantial speed-up. With the smearing method, all
+            elements are computed regardless of this flag unless
+            :attr:`sigma_cutoff` is set.
+        pinv_cutoff : float, optional
+            Direct-solution only (``is_LBTE=True``). Threshold to decide
+            whether an eigenvalue is treated as zero in the
+            pseudo-inverse of the collision matrix. See also
+            ``pinv_method``. Default is ``None`` (typically ``1.0e-8``).
+        pinv_method : int, optional
+            Direct-solution only (``is_LBTE=True``). Pseudo-inverse
+            zero-eigenvalue criterion::
+
+                0:  abs(eigenvalue) < pinv_cutoff
+                1:  eigenvalue       < pinv_cutoff
+
+            Default is ``0``.
+        pinv_solver : int, optional
+            Direct-solution only (``is_LBTE=True``). Choice of solver
+            for the pseudo-inverse of the collision matrix. ``0``
+            selects the default automatically. Choices other than ``1``
+            and ``4`` are dangerous and not recommended::
+
+                0:  default (1 with MKL LAPACKE or scipy unavailable;
+                    4 otherwise).
+                1:  LAPACKE dsyev  -- smaller memory than dsyevd, but
+                    slower. Default when MKL LAPACKE is integrated or
+                    scipy is not installed.
+                2:  LAPACKE dsyevd -- larger memory than dsyev, but
+                    faster. Not recommended (occasional wrong result).
+                3:  numpy dsyevd (linalg.eigh). Not recommended
+                    (occasional wrong result).
+                4:  scipy dsyev. Default when scipy is installed and
+                    MKL LAPACKE is not integrated.
+                5:  scipy dsyevd. Not recommended (occasional wrong
+                    result).
+
+            Default is ``0``.
+        write_gamma : bool, optional
+            RTA only (``is_LBTE=False``). Write mode thermal
+            conductivity properties to files, one per grid point. When
+            :attr:`band_indices` or multiple :attr:`sigmas` are
+            specified, a file is written per band-index group and per
+            sigma. Default is ``False``.
+        read_gamma : bool, optional
+            RTA only (``is_LBTE=False``). Read files written by
+            ``write_gamma=True`` instead of recomputing ph-ph
+            interaction strengths and imaginary self-energies. Default
+            is ``False``.
+        is_N_U : bool, optional
+            RTA only (``is_LBTE=False``). Separate the imaginary
+            self-energy into normal and Umklapp contributions. Default
+            is ``False``.
         transport_type : str, optional
-            "SMM19", "NJC23", or None. Default is None.
-        write_kappa : bool, optional, default is False
-            With True, thermal conductivity and related properties are
-            written into a file. With multiple `sigmas`, respective files
-            are created.
-        write_gamma_detail : bool, optional, default is False
-            RTA only (`is_LBTE=False`). With True, detailed information of
-            imaginary parts of self energy is stored into files such as
-            those made by `write_gamma`.
-        write_collision : bool, optional, default is False
-            Direct solution only (`is_LBTE=True`). With True, collision matrix
-            is written into a file. With multiple `sigmas` specified,
-            respective files are created. Be careful that this file can be
-            huge.
-        read_collision : str | Sequence, optional, default is None.
-            Direct solution only (`is_LBTE=True`). With specified, collision
-            matrix is read from a file.
-        write_pp : bool, optional, default is False
-            With True, phonon-phonon interaction strength is written into
-            files at each grid point. This option assumes single value is in
-            `sigmas`.
-        read_pp : bool, optional, default is False
-            With True, phonon-phonon interaction strength is read from files.
-        read_elph : int, optional, default is None
-            Index to read gammas of electron-phonon from file.
-        write_LBTE_solution : bool, optional, default is False
-            Direct solution only (`is_LBTE=True`). With True, eigenvectors of
-            collision matrix is written in a file as the row vectors except
-            unless `pinv_solver=3` (for this, column vectors). With multiple
-            `sigmas` specified, respective files are created. Be careful that
-            this file can be huge.
-        compression: str, optional, default is "gzip"
-            When writing results into files in hdf5, large data are compressed
-            by this options. See the detail at h5py documentation.
-        input_filename : str, optional, default is None
-            Deprecated. When specified, the string is inserted before filename
-            extension in reading files.
-        output_filename : str, optional, default is None
-            Deprecated. When specified, the string is inserted before filename
-            extension in writing files.
+            ``"SMM19"``, ``"NJC23"``, or ``None``. Default is ``None``.
+        write_kappa : bool, optional
+            Write thermal conductivity and related properties to a
+            file. With multiple :attr:`sigmas`, one file is written per
+            sigma. Default is ``False``.
+        write_gamma_detail : bool, optional
+            RTA only (``is_LBTE=False``). Write detailed imaginary
+            self-energy information alongside the files produced by
+            ``write_gamma``. Default is ``False``.
+        write_collision : bool, optional
+            Direct-solution only (``is_LBTE=True``). Write the
+            collision matrix to a file. With multiple :attr:`sigmas`,
+            one file is written per sigma. The file can be very large.
+            Default is ``False``.
+        read_collision : str or Sequence[int], optional
+            Direct-solution only (``is_LBTE=True``). Read the collision
+            matrix from a file. Default is ``None``.
+        write_pp : bool, optional
+            Write ph-ph interaction strength to files, one per grid
+            point. Assumes a single value in :attr:`sigmas`. Default
+            is ``False``.
+        read_pp : bool, optional
+            Read ph-ph interaction strength from files. Default is
+            ``False``.
+        read_elph : int, optional
+            Index used to read electron-phonon gammas from a file.
+            Default is ``None``.
+        write_LBTE_solution : bool, optional
+            Direct-solution only (``is_LBTE=True``). Write the
+            collision-matrix eigenvectors as row vectors (column
+            vectors when ``pinv_solver=3``). With multiple
+            :attr:`sigmas`, one file is written per sigma. The file
+            can be very large. Default is ``False``.
+        compression : str, optional
+            HDF5 compression for large datasets. See the h5py
+            documentation. Default is ``"gzip"``.
+        input_filename : str, optional
+            **Deprecated.** When set, the string is inserted before
+            the filename extension in read paths. Default is ``None``.
+        output_filename : str, optional
+            **Deprecated.** When set, the string is inserted before
+            the filename extension in write paths. Default is
+            ``None``.
+        log_level : int, optional
+            Override the instance-level :attr:`log_level` for this
+            call. Default is ``None`` (use the instance value).
+
+        Raises
+        ------
+        RuntimeError
+            When :meth:`init_phph_interaction` has not been called.
 
         """
         if input_filename is not None:
@@ -2525,22 +2691,22 @@ class Phono3py:
         filename: str | os.PathLike = "phono3py_params.yaml",
         settings: dict | None = None,
     ) -> None:
-        """Save parameters in Phono3py instants into file.
+        """Save the Phono3py instance state to a YAML file.
 
         Parameters
         ----------
-        filename: str, optional
-            File name. Default is "phono3py_params.yaml"
-        settings: dict, optional
-            It is described which parameters are written out. Only
-            the settings expected to be updated from the following
-            default settings are needed to be set in the dictionary.
-            The possible parameters and their default settings are:
-                {'force_sets': True,
-                 'displacements': True,
-                 'force_constants': False,
+        filename : str or os.PathLike, optional
+            Output file path. Default is ``"phono3py_params.yaml"``.
+        settings : dict, optional
+            Selects which sections to write. Only keys whose values
+            differ from the defaults need to be supplied. The defaults
+            are::
+
+                {'force_sets':            True,
+                 'displacements':         True,
+                 'force_constants':       False,
                  'born_effective_charge': True,
-                 'dielectric_constant': True}
+                 'dielectric_constant':   True}
 
         """
         ph3py_yaml = self.to_phono3py_yaml(settings=settings)
