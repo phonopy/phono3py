@@ -122,7 +122,6 @@ from phono3py.phonon3.real_self_energy import (
     write_real_self_energy,
 )
 from phono3py.phonon3.spectral_function import run_spectral_function
-from phono3py.version import __version__
 
 
 @dataclasses.dataclass
@@ -387,6 +386,8 @@ class Phono3py:
     @property
     def version(self) -> str:
         """Return phono3py release version number."""
+        from phono3py import __version__
+
         return __version__
 
     @property

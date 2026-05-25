@@ -1,3 +1,0 @@
-"""Define phono3py version."""
-
-__version__ = "4.0.1"
