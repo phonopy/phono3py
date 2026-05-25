@@ -78,7 +78,7 @@ from phonopy.structure.atomic_data import get_atomic_data
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import isclose as cells_isclose
 
-from phono3py import Phono3py, Phono3pyIsotope, Phono3pyJointDos
+from phono3py import Phono3py, Phono3pyIsotope, Phono3pyJointDos, __version__
 from phono3py._lang import (
     c_include_lapacke,
     c_omp_max_threads,
@@ -129,7 +129,6 @@ from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.phonon3.dataset import forces_in_dataset
 from phono3py.phonon3.fc3 import show_drift_fc3
 from phono3py.phonon3.gruneisen import run_gruneisen_parameters
-from phono3py.version import __version__
 
 # import logging
 # logging.basicConfig()

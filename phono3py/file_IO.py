@@ -59,11 +59,11 @@ from phonopy.harmonic.displacement import DisplacementDataset, Type1Displacement
 from phonopy.phonon.grid import BZGrid
 from phonopy.structure.atoms import PhonopyAtoms
 
+from phono3py._version import __version__
 from phono3py.phonon3.displacement_fc3 import (
     Fc3DisplacementDataset,
     Fc3Type1DisplacementDataset,
 )
-from phono3py.version import __version__
 
 
 def write_disp_fc3_yaml(
