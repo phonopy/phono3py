@@ -7,7 +7,7 @@ name: Pytest with PHONO3PY_NO_C_EXT (Rust-only backend)
 
 on:
   pull_request:
-    branches: [develop]
+    branches: [main]
 
 jobs:
   build-linux-no-c:
@@ -45,7 +45,7 @@ jobs:
           git clone https://github.com/symfc/symfc.git
           cd symfc
           pip install -e . -vvv
-      - name: Install phonopy develop branch without C extension
+      - name: Install phonopy main branch without C extension
         env:
           PHONOPY_NO_C_EXT: "1"
           CMAKE_GENERATOR: "Unix Makefiles"

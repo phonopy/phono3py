@@ -7,8 +7,8 @@ assignees: ''
 
 ---
 
-**Check the develop branch**
-Report to the combination of the develop branch of phonopy and the develop branch of phono3py.
+**Check the main branch**
+Report to the combination of the main branch of phonopy and the main branch of phono3py.
 
 **Describe the bug**
 A clear and concise description of what the bug is.

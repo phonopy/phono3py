@@ -38,6 +38,11 @@ Nanobind, cmake, and scikit-build-core are used for the building. The receipt is
 written in `CMakeLists.txt` and `pyproject.toml`. The old `setup.py` was
 removed.
 
+The package version is derived from git tags by `setuptools_scm` (written to
+`phono3py/_version.py`). Building from source therefore requires a git checkout
+that includes tags. Building from an archive without git metadata (e.g. a
+downloaded zip) may fail to determine the version.
+
 If phono3py is compiled with a special compiler or special options, manual
 modification of `CMakeLists.txt` may be needed.
 
@@ -57,9 +62,9 @@ This phono3py build can be launched by
 ```
 % pip install -e . -vvv
 ```
-See an example at {ref}`install_an_example`. In the standard output, flags and
-libraries found by cmake are shown. Please carefully check if those
-configurations are expected ones or not.
+In the standard output (shown in verbose mode by `-vvv`), the flags and
+libraries found by cmake are reported. Please carefully check if those
+configurations are the expected ones or not.
 
 ## Installation instruction of latest development version of phono3py
 
@@ -142,7 +147,7 @@ wrong python libraries can be imported.
    % cd phonopy
    % pip install -e . -vvv
    % cd ../phono3py
-   % pip install . -vvv
+   % pip install -e . -vvv
    ```
 
 ## Dependent libraries

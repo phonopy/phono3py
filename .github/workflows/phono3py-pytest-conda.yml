@@ -2,7 +2,7 @@ name: Pytest without using LAPACKE
 
 on:
   pull_request:
-    branches: [develop]
+    branches: [main]
 
 jobs:
   build-linux:
@@ -40,7 +40,7 @@ jobs:
           git clone https://github.com/phonopy/phonors.git
           cd phonors
           maturin develop --release
-      - name: Install phonopy develop branch
+      - name: Install phonopy main branch
         run: |
           conda activate test
           git clone https://github.com/phonopy/phonopy.git
