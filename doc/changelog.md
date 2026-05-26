@@ -2,6 +2,16 @@
 
 # Change Log
 
+## May-26-2026: Version 4.1.0
+
+- Requires phonopy>=4.1.0. Group-velocity calculation with Gonze-Lee
+  non-analytical term correction now uses the analytical derivative of the
+  dynamical matrix by default (provided by phonopy 4.1.0), instead of the
+  former finite-difference scheme with an implicit dq=1e-5. Thermal
+  conductivity results are essentially unchanged. The finite-difference path
+  remains available via ``GV_DELTA_Q`` / ``--gv-delta-q``; set
+  ``--gv-delta-q 1e-5`` to reproduce the previous behavior.
+
 ## May-18-2026: Version 4.0.1
 
 - Fixed a bug introduced in 4.0.0 where the symfc projector was automatically
