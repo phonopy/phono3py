@@ -493,7 +493,11 @@ def _add_run_options(parser: argparse.ArgumentParser) -> None:
         dest="gv_delta_q",
         type=float,
         default=None,
-        help="Delta-q distance used for group velocity calculation",
+        help=(
+            "Delta-q distance for finite-difference group velocity. "
+            "Unset (default) uses the analytical derivative; set 1e-5 to "
+            "reproduce phono3py v4.0.x behavior with NAC"
+        ),
     )
     parser.add_argument(
         "--ion-clamped",
