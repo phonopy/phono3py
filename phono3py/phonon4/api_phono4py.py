@@ -54,6 +54,7 @@ from phono3py.phonon4.file_IO import (
     write_fc4_to_hdf5,
     write_FORCES_FC4,
 )
+from phono3py.phonon4.frequency_shift import FrequencyShift
 from phono3py.phonon4.phono4py_yaml import Phono4pyYaml
 
 if TYPE_CHECKING:
@@ -100,6 +101,7 @@ class Phono4py:
         self._lang: Literal["C", "Rust"] = lang
         self._dataset: Fc4Type1DisplacementDataset | None = None
         self._fc4: NDArray[np.double] | None = None
+        self._frequency_shift: FrequencyShift | None = None
         # Source Phono3py kept for save() (cell/matrices for phono4py_disp.yaml).
         self._phono3py: Phono3py | None = None
 
@@ -288,6 +290,82 @@ class Phono4py:
             verbose=self._log_level > 0,
             lang=self._lang,
         )
+
+    @property
+    def frequency_shift(self) -> FrequencyShift | None:
+        """Return the FrequencyShift instance built by run_frequency_shift.
+
+        Exposes the grid addresses and on-grid frequencies used for the last
+        :meth:`run_frequency_shift` call. ``None`` until that method is run.
+        """
+        return self._frequency_shift
+
+    def run_frequency_shift(
+        self,
+        mesh: NDArray[np.int64] | list[int],
+        fc2: NDArray[np.double],
+        grid_points: NDArray[np.int64] | list[int] | None = None,
+        temperatures: NDArray[np.double] | list[float] | None = None,
+        band_indices: NDArray[np.int64] | list[int] | None = None,
+        cutoff_frequency: float = 1e-4,
+        frequency_factor_to_THz: float | None = None,
+    ) -> NDArray[np.double]:
+        """Compute the fc4 first-order phonon frequency shift (experimental).
+
+        Builds a :class:`phono3py.phonon4.frequency_shift.FrequencyShift` from
+        the computed fc4 (:attr:`fc4`) and the supplied harmonic ``fc2`` and
+        runs it on the requested grid points. The compact/full fc4 layout is
+        detected automatically.
+
+        Parameters
+        ----------
+        mesh : array_like
+            Reciprocal sampling mesh, shape ``(3,)``.
+        fc2 : ndarray
+            Harmonic force constants defined on :attr:`supercell` (the same
+            supercell fc4 is solved in), for the dynamical matrix.
+        grid_points : array_like, optional
+            Grid-point indices into the no-symmetry ``np.ndindex(*mesh)``
+            addresses. Default is ``None`` (all grid points).
+        temperatures : array_like, optional
+            Temperatures in K. Default is ``[0.0]``.
+        band_indices : array_like, optional
+            Band indices to compute. Default is all bands.
+        cutoff_frequency : float, optional
+            Frequencies at or below this (THz) are skipped. Default ``1e-4``.
+        frequency_factor_to_THz : float, optional
+            Frequency unit factor. Default is phonopy's ``DefaultToTHz``.
+
+        Returns
+        -------
+        ndarray
+            Frequency shifts (THz), shape
+            ``(n_grid_points, n_temperatures, n_band_indices)``. The matching
+            grid addresses and frequencies are on :attr:`frequency_shift`.
+
+        """
+        if self._fc4 is None:
+            raise RuntimeError("fc4 is not computed. Run produce_fc4 or load_fc4.")
+        if self._primitive is None:
+            raise RuntimeError("Primitive cell is required for the frequency shift.")
+        mesh = np.array(mesh, dtype="int64")
+        is_compact_fc4 = self._fc4.shape[0] != len(self._supercell)
+        self._frequency_shift = FrequencyShift(
+            self._fc4,
+            fc2,
+            self._supercell,
+            self._primitive,
+            mesh,
+            temperatures=temperatures,
+            band_indices=band_indices,
+            is_compact_fc4=is_compact_fc4,
+            frequency_factor_to_THz=frequency_factor_to_THz,
+            cutoff_frequency=cutoff_frequency,
+            lang=self._lang,
+        )
+        if grid_points is None:
+            grid_points = range(int(np.prod(mesh)))
+        return np.array([self._frequency_shift.run(int(gp)) for gp in grid_points])
 
     def save(
         self,
