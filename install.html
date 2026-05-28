@@ -378,6 +378,10 @@ before running <code class="docutils literal notranslate"><span class="pre">pip<
 Nanobind, cmake, and scikit-build-core are used for the building. The receipt is
 written in <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code> and <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>. The old <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> was
 removed.</p>
+<p>The package version is derived from git tags by <code class="docutils literal notranslate"><span class="pre">setuptools_scm</span></code> (written to
+<code class="docutils literal notranslate"><span class="pre">phono3py/_version.py</span></code>). Building from source therefore requires a git checkout
+that includes tags. Building from an archive without git metadata (e.g. a
+downloaded zip) may fail to determine the version.</p>
 <p>If phono3py is compiled with a special compiler or special options, manual
 modification of <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code> may be needed.</p>
 <ul class="simple">
@@ -395,9 +399,9 @@ This phono3py build can be launched by</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span> <span class="o">-</span><span class="n">vvv</span>
 </pre></div>
 </div>
-<p>See an example at <a class="reference internal" href="#install-an-example"><span class="std std-ref">OpenBLAS provided by conda</span></a>. In the standard output, flags and
-libraries found by cmake are shown. Please carefully check if those
-configurations are expected ones or not.</p>
+<p>In the standard output (shown in verbose mode by <code class="docutils literal notranslate"><span class="pre">-vvv</span></code>), the flags and
+libraries found by cmake are reported. Please carefully check if those
+configurations are the expected ones or not.</p>
 </section>
 </section>
 <section id="installation-instruction-of-latest-development-version-of-phono3py">
@@ -462,7 +466,7 @@ compiled and installed by:</p>
 %<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>phonopy
 %<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="w"> </span>-vvv
 %<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>../phono3py
-%<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.<span class="w"> </span>-vvv
+%<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="w"> </span>-vvv
 </pre></div>
 </div>
 </li>

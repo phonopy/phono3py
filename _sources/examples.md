@@ -7,9 +7,9 @@
 ```
 
 Example files are found at
-https://github.com/phonopy/phono3py/tree/master/example. The same are
+https://github.com/phonopy/phono3py/tree/main/example. The same are
 found in the example directory of the phono3py package downloaded at
-https://github.com/phonopy/phono3py/archive/master.zip.
+https://github.com/phonopy/phono3py/archive/main.zip.
 
 Examples of silicon with VASP and Pwscf as calculators are given in
 the `example` directory. An example using phono3py API is found in

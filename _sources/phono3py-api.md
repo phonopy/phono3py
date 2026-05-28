@@ -9,7 +9,7 @@
 
 This page describes how to use the phono3py API, with snippets that work on
 the
-[`AlN-LDA` example](https://github.com/phonopy/phono3py/tree/develop/example/AlN-LDA).
+[`AlN-LDA` example](https://github.com/phonopy/phono3py/tree/main/example/AlN-LDA).
 
 ## Crystal structure
 
