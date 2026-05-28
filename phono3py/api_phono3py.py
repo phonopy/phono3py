@@ -122,7 +122,6 @@ from phono3py.phonon3.real_self_energy import (
     write_real_self_energy,
 )
 from phono3py.phonon3.spectral_function import run_spectral_function
-from phono3py.version import __version__
 
 
 @dataclasses.dataclass
@@ -387,6 +386,8 @@ class Phono3py:
     @property
     def version(self) -> str:
         """Return phono3py release version number."""
+        from phono3py import __version__
+
         return __version__
 
     @property
@@ -2486,10 +2487,12 @@ class Phono3py:
             grid points at which mode thermal conductivities are
             sampled.
         gv_delta_q : float, optional
-            Q-distance (in 1/Angstrom) used by the central
-            finite-difference scheme for group velocity when
-            non-analytical correction is in effect. Default is ``None``
-            (effectively 1e-5).
+            Q-distance (in 1/Angstrom) for the central finite-difference
+            scheme used to compute group velocity. Default is ``None``,
+            which selects the analytical derivative of the dynamical matrix
+            (including Gonze-Lee NAC, with phonopy>=4.1.0). To reproduce the
+            finite-difference behavior of phono3py v4.0.x and earlier with
+            NAC, set ``1e-5``.
         is_full_pp : bool, optional
             With ``True``, compute all elements of the ph-ph interaction
             strength. With ``False`` (default) and the tetrahedron

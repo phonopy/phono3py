@@ -1,8 +1,8 @@
 [![Version Badge](https://anaconda.org/conda-forge/phono3py/badges/version.svg)](https://anaconda.org/conda-forge/phono3py)
 [![Downloads Badge](https://anaconda.org/conda-forge/phono3py/badges/downloads.svg)](https://anaconda.org/conda-forge/phono3py)
 [![PyPI version](https://badge.fury.io/py/phono3py.svg)](https://badge.fury.io/py/phono3py)
-[![PyPI](https://img.shields.io/pypi/dm/phono3py.svg?maxAge=2592000)](https://pypi.python.org/pypi/phono3py)
-[![codecov](https://codecov.io/gh/phonopy/phono3py/branch/develop/graph/badge.svg)](https://codecov.io/gh/phonopy/phono3py)
+[![PyPI](https://img.shields.io/pypi/dm/phono3py.svg?maxAge=2592000)](https://pypi.org/project/phono3py/)
+[![codecov](https://codecov.io/gh/phonopy/phono3py/branch/main/graph/badge.svg)](https://codecov.io/gh/phonopy/phono3py)
 
 # phono3py
 
@@ -21,11 +21,13 @@ See `pyproject.toml`.
 
 ## Development
 
-The development of phono3py is managed on the `develop` branch of github
+The development of phono3py is managed on the `main` branch of the github
 phono3py repository.
 
-- Github issues is the place to discuss about phono3py issues.
-- Github pull request is the place to request merging source code.
+- GitHub issues are the place to discuss phono3py issues.
+- GitHub pull requests are the place to request merging source code.
+- Releases are published to PyPI by pushing a `v*` tag, which triggers the
+  `release.yml` GitHub Actions workflow (gated by a manual approval).
 - Formatting rules are found in `pyproject.toml`.
 - Not strictly, but VSCode's `settings.json` may be written like below
 
