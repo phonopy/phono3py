@@ -2,14 +2,21 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.phonon.thermal_properties import mode_cv
 from phonopy.physical_units import get_physical_units
 
 from phono3py.conductivity.grid_point_data import HeatCapacityResult
-from phono3py.phonon.heat_capacity_matrix import mode_cv_matrix
+from phono3py.phonon.heat_capacity_matrix import mode_cv_matrix_njc23
 from phono3py.phonon3.interaction import Interaction
+
+# Signature of a mode heat capacity matrix function, e.g.
+# ``mode_cv_matrix_njc23`` or ``mode_cv_matrix_ibdb19``:
+# ``(temps, freqs_ev) -> (num_temp, num_band, num_band)``.
+CvMatrixFunc = Callable[[NDArray[np.double], NDArray[np.double]], NDArray[np.double]]
 
 # ---------------------------------------------------------------------------
 # Bulk computation functions
@@ -66,6 +73,7 @@ def compute_bulk_cv_matrix(
     temperatures: NDArray[np.double],
     band_indices: NDArray[np.int64],
     cutoff_frequency: float,
+    cv_matrix_func: CvMatrixFunc = mode_cv_matrix_njc23,
 ) -> tuple[NDArray[np.double], NDArray[np.double]]:
     """Compute cv and cv_matrix for all grid points.
 
@@ -81,6 +89,11 @@ def compute_bulk_cv_matrix(
         Selected band indices.
     cutoff_frequency : float
         Cutoff frequency in THz.
+    cv_matrix_func : callable, optional
+        Mode heat capacity matrix function, ``(temps, freqs_ev) ->
+        (num_temp, num_band, num_band)``. Selects the inter-band variant
+        (e.g. ``mode_cv_matrix_njc23`` or ``mode_cv_matrix_ibdb19``).
+        Default ``mode_cv_matrix_njc23``.
 
     Returns
     -------
@@ -116,7 +129,7 @@ def compute_bulk_cv_matrix(
             cutoff_frequency,
         )[:, 0, :]  # (num_temp, num_band)
         with np.errstate(divide="ignore", over="ignore", invalid="ignore"):
-            cvm = mode_cv_matrix(
+            cvm = cv_matrix_func(
                 temperatures, freqs_ev
             )  # (num_temp, num_band, num_band)
             cvm = np.where(
@@ -188,8 +201,9 @@ class HeatCapacityMatrixSolver:
 
     This solver implements the ``HeatCapacitySolver`` protocol for the
     Green-Kubo formula.  It computes the off-diagonal heat capacity matrix
-    ``C_{qjj'}`` using ``mode_cv_matrix`` from
-    ``phono3py.phonon.heat_capacity_matrix``.
+    ``C_{qjj'}`` using a mode heat capacity matrix function from
+    ``phono3py.phonon.heat_capacity_matrix`` (e.g. ``mode_cv_matrix_njc23``
+    or ``mode_cv_matrix_ibdb19``).
 
     The returned ``HeatCapacityResult`` contains:
     - ``heat_capacities`` (num_temp, num_gp, num_band0): diagonal (standard)
@@ -202,15 +216,26 @@ class HeatCapacityMatrixSolver:
     pp : Interaction
         Interaction instance.  Phonon solver must have been run before calling
         ``compute``.
+    temperatures : ndarray of double
+        Temperatures in Kelvin.
+    cv_matrix_func : callable, optional
+        Mode heat capacity matrix function selecting the inter-band variant.
+        Default ``mode_cv_matrix_njc23``.
 
     """
 
     produces_heat_capacity_matrix: bool = True
 
-    def __init__(self, pp: Interaction, temperatures: NDArray[np.double]):
+    def __init__(
+        self,
+        pp: Interaction,
+        temperatures: NDArray[np.double],
+        cv_matrix_func: CvMatrixFunc = mode_cv_matrix_njc23,
+    ):
         """Init method."""
         self._pp = pp
         self._temperatures = temperatures
+        self._cv_matrix_func = cv_matrix_func
 
     def compute(
         self,
@@ -238,6 +263,7 @@ class HeatCapacityMatrixSolver:
             self._temperatures,
             self._pp.band_indices,
             self._pp.cutoff_frequency,
+            cv_matrix_func=self._cv_matrix_func,
         )
         return HeatCapacityResult(
             heat_capacities=cv,

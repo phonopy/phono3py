@@ -13,7 +13,7 @@ the supercell approach. For example, the following physical values are obtained:
 
 - {ref}`Lattice thermal conductivity by relaxation time approximation
 and direct-solution of phonon Boltzmann equation, and inter-band
-(coherence) transport <LTC_options>`
+transport <LTC_options>`
 - {ref}`Cumulative lattice thermal conductivity and related properties <auxiliary_tools_kaccum>`
 - {ref}`self_energy_options` (Phonon lifetime/linewidth)
 - {ref}`jdos_option`
