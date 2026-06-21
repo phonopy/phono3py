@@ -9,7 +9,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 import numpy as np
+import phonopy
 import pytest
+from packaging.version import Version
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix
 
 phonors = pytest.importorskip("phonors")
@@ -144,6 +146,10 @@ NACL_Q_POINTS: list[list[float]] = [
 ]
 
 
+@pytest.mark.skipif(
+    Version(phonopy.__version__) < Version("4.2.1.dev0"),
+    reason="requires phonopy >= 4.2.1",
+)
 @pytest.mark.parametrize("q", NACL_Q_POINTS)
 def test_recip_dipole_dipole_matches_phonopy(nacl_dm_gl, q: list[float]) -> None:
     """Rust dd at q equals phonopy's C-side dd to machine precision."""
@@ -165,7 +171,7 @@ def test_recip_dipole_dipole_matches_phonopy(nacl_dm_gl, q: list[float]) -> None
         nacl_dm_gl._Lambda,
         None,
     )
-    ref = nacl_dm_gl._get_c_recip_dipole_dipole(q_cart, None)
+    ref = nacl_dm_gl._get_recip_dipole_dipole(q, None)
     np.testing.assert_allclose(dd, ref, atol=1e-13, rtol=1e-13)
 
 
