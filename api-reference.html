@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>API reference &#8212; Phono3py v.4.0.1</title>
+    <title>API reference &#8212; Phono3py v.4.2.0</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=1a34d25d"></script>
+    <script src="_static/documentation_options.js?v=830d3dd9"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -50,7 +50,7 @@
     <link rel="prev" title="Phono3py API" href="phono3py-api.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="4.0" />
+  <meta name="docsearch:version" content="4.2" />
   </head>
   
   
@@ -125,7 +125,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.4.0.1</p>
+    <p class="title logo__title">Phono3py v.4.2.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -1848,7 +1848,8 @@ is <code class="docutils literal notranslate"><span class="pre">False</span></co
 <li><p><strong>is_N_U</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – RTA only (<code class="docutils literal notranslate"><span class="pre">is_LBTE=False</span></code>). Separate the imaginary
 self-energy into normal and Umklapp contributions. Default
 is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
-<li><p><strong>transport_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – <code class="docutils literal notranslate"><span class="pre">&quot;SMM19&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;NJC23&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>. Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>transport_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – <code class="docutils literal notranslate"><span class="pre">&quot;SMM19&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;NJC23&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;IBDB19&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>. Default
+is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 <li><p><strong>write_kappa</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – Write thermal conductivity and related properties to a
 file. With multiple <a class="reference internal" href="#phono3py.Phono3py.sigmas" title="phono3py.Phono3py.sigmas"><code class="xref py py-attr docutils literal notranslate"><span class="pre">sigmas</span></code></a>, one file is written per
 sigma. Default is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>

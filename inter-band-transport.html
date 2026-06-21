@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Inter-band transport &#8212; Phono3py v.4.0.1</title>
+    <title>Inter-band transport &#8212; Phono3py v.4.2.0</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=1a34d25d"></script>
+    <script src="_static/documentation_options.js?v=830d3dd9"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -52,7 +52,7 @@
     <link rel="prev" title="Direct solution of linearized phonon Boltzmann equation" href="direct-solution.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="4.0" />
+  <meta name="docsearch:version" content="4.2" />
   </head>
   
   
@@ -127,7 +127,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.4.0.1</p>
+    <p class="title logo__title">Phono3py v.4.2.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -320,8 +320,11 @@
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#velocity-matrix">Velocity matrix</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mode-thermal-conductivity">Mode thermal conductivity</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tt-njc23"><code class="docutils literal notranslate"><span class="pre">--tt</span> <span class="pre">njc23</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tt-ibdb19"><code class="docutils literal notranslate"><span class="pre">--tt</span> <span class="pre">ibdb19</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tt-smm19"><code class="docutils literal notranslate"><span class="pre">--tt</span> <span class="pre">smm19</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tt-wte"><code class="docutils literal notranslate"><span class="pre">--tt</span> <span class="pre">wte</span></code></a></li>
 </ul>
             </nav>
@@ -345,18 +348,18 @@ of the heat-flux operator between such distinct bands provide an additional
 contribution to the thermal conductivity.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">--tt</span></code> (<code class="docutils literal notranslate"><span class="pre">--transport-type</span></code>) option selects which transport formulation is
 used to evaluate these contributions:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">phono3py</span> <span class="o">...</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">tt</span> <span class="n">smm19</span>
-<span class="n">phono3py</span> <span class="o">...</span> <span class="o">--</span><span class="n">lbte</span> <span class="o">--</span><span class="n">tt</span> <span class="n">njc23</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">phono3py</span> <span class="o">...</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">tt</span> <span class="n">njc23</span>
+<span class="n">phono3py</span> <span class="o">...</span> <span class="o">--</span><span class="n">lbte</span> <span class="o">--</span><span class="n">tt</span> <span class="n">ibdb19</span>
 </pre></div>
 </div>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">--tt</span></code> is combined with <code class="docutils literal notranslate"><span class="pre">--br</span></code> (RTA) or <code class="docutils literal notranslate"><span class="pre">--lbte</span></code> (direct solution). Without
 <code class="docutils literal notranslate"><span class="pre">--tt</span></code>, the standard particle-like formulation is used.</p></li>
-<li><p>The built-in variants <code class="docutils literal notranslate"><span class="pre">smm19</span></code> and <code class="docutils literal notranslate"><span class="pre">njc23</span></code> are <strong>experimental</strong>; their
-interface and behavior may change without notice.</p></li>
+<li><p>The built-in variants <code class="docutils literal notranslate"><span class="pre">njc23</span></code>, <code class="docutils literal notranslate"><span class="pre">ibdb19</span></code>, and <code class="docutils literal notranslate"><span class="pre">smm19</span></code> are <strong>experimental</strong>.
+Their interface and behavior may change without notice.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">wte</span></code> invokes the external
-<a class="reference external" href="https://github.com/MSimoncelli/phono3py-wte">phono3py-wte</a> plugin (see
-<a class="reference internal" href="wigner-solution.html#wigner-solution"><span class="std std-ref">Solution of the Wigner transport equation</span></a>).</p></li>
+<a class="reference external" href="https://github.com/MSimoncelli/phono3py-wte">phono3py-wte</a> plugin, which must
+be installed separately (see <a class="reference internal" href="wigner-solution.html#wigner-solution"><span class="std std-ref">Solution of the Wigner transport equation</span></a>).</p></li>
 </ul>
 <p>In the following, the phonon frequency, eigenvector, Bose-Einstein
 distribution, and scattering half-linewidth (HWHM) of mode <span class="math notranslate nohighlight">\((\mathbf{q}, j)\)</span> are
@@ -377,28 +380,15 @@ v^{\alpha}_{\mathbf{q}jj'} =
 | e_{\mathbf{q}j'} \rangle .
 \]</div>
 <p>The diagonal element (<span class="math notranslate nohighlight">\(j = j'\)</span>) reduces to the ordinary group velocity
-<span class="math notranslate nohighlight">\(v_{\mathbf{q}j}\)</span>. Degenerate bands are handled by rotating the corresponding
-eigenvectors so that the velocity matrix is well defined. In the conductivity
-formulas below, the outer product
-<span class="math notranslate nohighlight">\(v^{\alpha}_{\mathbf{q}jj'} v^{\beta *}_{\mathbf{q}jj'}\)</span> is averaged over the star
-of <span class="math notranslate nohighlight">\(\mathbf{q}\)</span>; this star average is real (its imaginary part cancels by
-symmetry) and recovers the crystal symmetry of the conductivity tensor.</p>
+<span class="math notranslate nohighlight">\(v_{\mathbf{q}j}\)</span>.</p>
 </section>
-<section id="tt-njc23">
-<h2><code class="docutils literal notranslate"><span class="pre">--tt</span> <span class="pre">njc23</span></code><a class="headerlink" href="#tt-njc23" title="Link to this heading">#</a></h2>
-<p>This variant evaluates the Green-Kubo term. In addition to the velocity matrix
-defined above, it uses the off-diagonal heat capacity matrix, obtained by
-generalizing the scalar mode heat capacity to a band pair,</p>
-<div class="math notranslate nohighlight">
-\[
-C_{\mathbf{q}jj'} =
--\frac{\hbar\,(\omega_{\mathbf{q}j} + \omega_{\mathbf{q}j'})^{2}}
-{4 T (\omega_{\mathbf{q}j} - \omega_{\mathbf{q}j'})}
-(n_{\mathbf{q}j} - n_{\mathbf{q}j'}) ,
-\]</div>
-<p>whose diagonal element (<span class="math notranslate nohighlight">\(j = j'\)</span>) reduces to the ordinary mode heat capacity
-<span class="math notranslate nohighlight">\(C_{\mathbf{q}j}\)</span>. The mode contribution to the thermal conductivity tensor for
-the band pair <span class="math notranslate nohighlight">\((j, j')\)</span> at q-point <span class="math notranslate nohighlight">\(\mathbf{q}\)</span> is</p>
+<section id="mode-thermal-conductivity">
+<span id="mode-conductivity"></span><h2>Mode thermal conductivity<a class="headerlink" href="#mode-thermal-conductivity" title="Link to this heading">#</a></h2>
+<p>All inter-band variants build the thermal conductivity from the velocity matrix
+and a heat capacity matrix <span class="math notranslate nohighlight">\(C_{\mathbf{q}jj'}\)</span>. They differ only in the
+definition of this matrix, given in the sections below. The mode contribution
+to the thermal conductivity tensor for the band pair <span class="math notranslate nohighlight">\((j, j')\)</span> at q-point
+<span class="math notranslate nohighlight">\(\mathbf{q}\)</span> is</p>
 <div class="math notranslate nohighlight">
 \[
 \kappa^{\alpha\beta}_{\mathbf{q}jj'} =
@@ -408,19 +398,64 @@ v^{\alpha}_{\mathbf{q}jj'} v^{\beta *}_{\mathbf{q}jj'}
 {(\omega_{\mathbf{q}j} - \omega_{\mathbf{q}j'})^{2}
 + (\Gamma_{\mathbf{q}j} + \Gamma_{\mathbf{q}j'})^{2}} .
 \]</div>
-<p>The diagonal terms (<span class="math notranslate nohighlight">\(j = j'\)</span>) reproduce the standard particle-like (populations)
-conductivity, while the off-diagonal terms (<span class="math notranslate nohighlight">\(j \ne j'\)</span>) give the additional
-inter-band contribution. The thermal conductivity tensor is obtained by summing
-the mode contributions over the Brillouin zone and all band pairs (with the
-usual normalization by the cell volume and the number of grid points).</p>
-<p>phono3py implements the expression of Ndour, Jund, and Chaput, which can be seen
-as an approximation of the quasi-harmonic Green-Kubo formula derived in the
-appendix of Isaeva, Barbalinardo, Donadio, and Baroni:</p>
+<p>Each heat capacity matrix reduces on the diagonal (<span class="math notranslate nohighlight">\(j = j'\)</span>) to the ordinary
+mode heat capacity <span class="math notranslate nohighlight">\(C_{\mathbf{q}j}\)</span>, so the diagonal terms reproduce the
+standard particle-like (populations) conductivity, while the off-diagonal terms
+(<span class="math notranslate nohighlight">\(j \ne j'\)</span>) give the additional inter-band contribution. The thermal
+conductivity tensor is obtained by summing the mode contributions over the
+Brillouin zone and all band pairs (with the usual normalization by the cell
+volume and the number of grid points).</p>
+<p>Of the built-in variants, <code class="docutils literal notranslate"><span class="pre">njc23</span></code> and <code class="docutils literal notranslate"><span class="pre">ibdb19</span></code> arise from the Green-Kubo
+formulation and <code class="docutils literal notranslate"><span class="pre">smm19</span></code> from the Wigner / unified-theory picture. All reduce to
+the formula above with a variant-specific heat capacity matrix.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">njc23</span></code> and <code class="docutils literal notranslate"><span class="pre">ibdb19</span></code> heat capacity matrices are closely related. <code class="docutils literal notranslate"><span class="pre">ibdb19</span></code>
+evaluates the main-text Eq. (9) of Isaeva, Barbalinardo, Donadio, and Baroni
+(2019), a further approximation of a more detailed formula derived in the
+Supplementary Information of the same paper. The expression of Ndour, Jund, and
+Chaput (<code class="docutils literal notranslate"><span class="pre">njc23</span></code>) was obtained independently and turns out to coincide with the
+first term of Eq. (19) of that Supplementary Information, so <code class="docutils literal notranslate"><span class="pre">njc23</span></code> is the more
+accurate of the two. The sections below are ordered from the more accurate
+(<code class="docutils literal notranslate"><span class="pre">njc23</span></code>) to the more approximate (<code class="docutils literal notranslate"><span class="pre">ibdb19</span></code>), followed by <code class="docutils literal notranslate"><span class="pre">smm19</span></code>.</p>
+</section>
+<section id="tt-njc23">
+<h2><code class="docutils literal notranslate"><span class="pre">--tt</span> <span class="pre">njc23</span></code><a class="headerlink" href="#tt-njc23" title="Link to this heading">#</a></h2>
+<p>This variant evaluates the expression of Ndour, Jund, and Chaput. Its heat
+capacity matrix, generalizing the scalar mode heat capacity to a band pair, is</p>
+<div class="math notranslate nohighlight">
+\[
+C_{\mathbf{q}jj'} =
+-\frac{\hbar\,(\omega_{\mathbf{q}j} + \omega_{\mathbf{q}j'})^{2}}
+{4 T (\omega_{\mathbf{q}j} - \omega_{\mathbf{q}j'})}
+(n_{\mathbf{q}j} - n_{\mathbf{q}j'}) .
+\]</div>
 <ul class="simple">
 <li><p>M. Ndour, P. Jund, and L. Chaput, “Practical approach to thermal conductivity
 calculations of small SiO2 samples”, J. Non-Cryst. Solids <strong>621</strong>, 122618
 (2023). DOI:
 <a class="reference external" href="https://doi.org/10.1016/j.jnoncrysol.2023.122618">10.1016/j.jnoncrysol.2023.122618</a></p></li>
+</ul>
+</section>
+<section id="tt-ibdb19">
+<h2><code class="docutils literal notranslate"><span class="pre">--tt</span> <span class="pre">ibdb19</span></code><a class="headerlink" href="#tt-ibdb19" title="Link to this heading">#</a></h2>
+<p>This variant evaluates the main-text Eq. (9) of Isaeva, Barbalinardo, Donadio,
+and Baroni. Its heat capacity matrix is</p>
+<div class="math notranslate nohighlight">
+\[
+C_{\mathbf{q}jj'} =
+-\frac{\hbar\,\omega_{\mathbf{q}j} \omega_{\mathbf{q}j'}}
+{T (\omega_{\mathbf{q}j} - \omega_{\mathbf{q}j'})}
+(n_{\mathbf{q}j} - n_{\mathbf{q}j'}) .
+\]</div>
+<p>The two heat capacity matrices differ only in the frequency prefactor: <code class="docutils literal notranslate"><span class="pre">njc23</span></code>
+uses the arithmetic-mean-square
+<span class="math notranslate nohighlight">\((\omega_{\mathbf{q}j} + \omega_{\mathbf{q}j'})^{2} / 4\)</span>, while <code class="docutils literal notranslate"><span class="pre">ibdb19</span></code> uses the
+geometric-mean-square <span class="math notranslate nohighlight">\(\omega_{\mathbf{q}j} \omega_{\mathbf{q}j'}\)</span>. Since
+<span class="math notranslate nohighlight">\(\omega_{\mathbf{q}j} \omega_{\mathbf{q}j'} \le (\omega_{\mathbf{q}j} + \omega_{\mathbf{q}j'})^{2} / 4\)</span>
+with equality only at <span class="math notranslate nohighlight">\(\omega_{\mathbf{q}j} = \omega_{\mathbf{q}j'}\)</span>, the two
+coincide on the diagonal (and thus give the same particle-like conductivity),
+while the off-diagonal contribution of <code class="docutils literal notranslate"><span class="pre">ibdb19</span></code> is slightly smaller than that of
+<code class="docutils literal notranslate"><span class="pre">njc23</span></code>.</p>
+<ul class="simple">
 <li><p>L. Isaeva, G. Barbalinardo, D. Donadio, and S. Baroni, “Modeling heat
 transport in crystals and glasses from a unified lattice-dynamical approach”,
 Nat. Commun. <strong>10</strong>, 3853 (2019). DOI:
@@ -429,41 +464,22 @@ Nat. Commun. <strong>10</strong>, 3853 (2019). DOI:
 </section>
 <section id="tt-smm19">
 <h2><code class="docutils literal notranslate"><span class="pre">--tt</span> <span class="pre">smm19</span></code><a class="headerlink" href="#tt-smm19" title="Link to this heading">#</a></h2>
-<p>This variant evaluates a Wigner / unified-theory coherence term in the spirit of
-the formulation by Simoncelli, Marzari, and Mauri. The original formulation and
-its reference implementation are due to those authors and are provided in the
-phono3py-wte plugin, invoked with <code class="docutils literal notranslate"><span class="pre">--tt</span> <span class="pre">wte</span></code> (see <a class="reference internal" href="wigner-solution.html#wigner-solution"><span class="std std-ref">Solution of the Wigner transport equation</span></a>); that
+<p>This variant evaluates a Wigner / unified-theory term in the spirit of the
+formulation by Simoncelli, Marzari, and Mauri. The original formulation and its
+reference implementation are due to those authors and are provided in the
+phono3py-wte plugin, invoked with <code class="docutils literal notranslate"><span class="pre">--tt</span> <span class="pre">wte</span></code> (see <a class="reference internal" href="wigner-solution.html#wigner-solution"><span class="std std-ref">Solution of the Wigner transport equation</span></a>). That
 plugin should be used for results consistent with the published Wigner
 formulation. The built-in <code class="docutils literal notranslate"><span class="pre">smm19</span></code> here is an experimental, simplified in-tree
-variant that adopts the velocity matrix defined in the <a class="reference internal" href="#velocity-matrix"><span class="std std-ref">Velocity matrix</span></a> section above (the same definition as <code class="docutils literal notranslate"><span class="pre">njc23</span></code>) instead of the
-original velocity-operator definition. Its off-diagonal results are therefore not
-identical to those of the original Wigner formulation.</p>
+variant that adopts the velocity matrix defined in the <a class="reference internal" href="#velocity-matrix"><span class="std std-ref">Velocity matrix</span></a> section above (the same definition as the other variants)
+instead of the original velocity-operator definition. Its off-diagonal results
+are therefore not identical to those of the original Wigner formulation.</p>
 <p>This in-tree <code class="docutils literal notranslate"><span class="pre">smm19</span></code> shares the same velocity matrix and Lorentzian linewidth
-factor as <code class="docutils literal notranslate"><span class="pre">njc23</span></code>; the difference is the heat-capacity prefactor, which is built
-from the scalar mode heat capacities <span class="math notranslate nohighlight">\(C_{\mathbf{q}j}\)</span> in a symmetrized form. The
-mode contribution to the thermal conductivity tensor for the band pair <span class="math notranslate nohighlight">\((j, j')\)</span>
-at q-point <span class="math notranslate nohighlight">\(\mathbf{q}\)</span> is</p>
+factor as the other variants. The difference is its heat capacity matrix, an
+effective matrix built from the scalar mode heat capacities <span class="math notranslate nohighlight">\(C_{\mathbf{q}j}\)</span> in
+a symmetrized form,</p>
 <div class="math notranslate nohighlight">
 \[
-\kappa^{\alpha\beta}_{\mathbf{q}jj'} =
-\frac{1}{4}
-(\omega_{\mathbf{q}j} + \omega_{\mathbf{q}j'})
-\left(
-\frac{C_{\mathbf{q}j}}{\omega_{\mathbf{q}j}}
-+ \frac{C_{\mathbf{q}j'}}{\omega_{\mathbf{q}j'}}
-\right)
-v^{\alpha}_{\mathbf{q}jj'} v^{\beta *}_{\mathbf{q}jj'}
-\frac{\Gamma_{\mathbf{q}j} + \Gamma_{\mathbf{q}j'}}
-{(\omega_{\mathbf{q}j} - \omega_{\mathbf{q}j'})^{2}
-+ (\Gamma_{\mathbf{q}j} + \Gamma_{\mathbf{q}j'})^{2}} .
-\]</div>
-<p>As in <code class="docutils literal notranslate"><span class="pre">njc23</span></code>, the diagonal terms (<span class="math notranslate nohighlight">\(j = j'\)</span>) reproduce the standard
-particle-like (populations) conductivity, while the off-diagonal terms
-(<span class="math notranslate nohighlight">\(j \ne j'\)</span>) give the coherence contribution.</p>
-<p>If the symmetrized prefactor is regarded as an effective heat capacity matrix,</p>
-<div class="math notranslate nohighlight">
-\[
-C^{\mathrm{SMM}}_{\mathbf{q}jj'} =
+C_{\mathbf{q}jj'} =
 \frac{1}{4}
 (\omega_{\mathbf{q}j} + \omega_{\mathbf{q}j'})
 \left(
@@ -471,16 +487,37 @@ C^{\mathrm{SMM}}_{\mathbf{q}jj'} =
 + \frac{C_{\mathbf{q}j'}}{\omega_{\mathbf{q}j'}}
 \right) ,
 \]</div>
-<p>the formula takes the same form as <code class="docutils literal notranslate"><span class="pre">njc23</span></code>, with <span class="math notranslate nohighlight">\(C^{\mathrm{SMM}}_{\mathbf{q}jj'}\)</span>
-in place of <span class="math notranslate nohighlight">\(C_{\mathbf{q}jj'}\)</span> and the same velocity matrix. In this sense the
-two variants differ only in the definition of the heat capacity matrix.</p>
-<p>For the formulation and background, see
-<a class="reference internal" href="citation.html#citation-unified-theory"><span class="std std-ref">Simoncelli, Marzari, and Mauri (2019)</span></a>.</p>
+<p>which reduces on the diagonal (<span class="math notranslate nohighlight">\(j = j'\)</span>) to the ordinary mode heat capacity
+<span class="math notranslate nohighlight">\(C_{\mathbf{q}j}\)</span>.</p>
+<ul class="simple">
+<li><p>M. Simoncelli, N. Marzari, and F. Mauri, “Unified theory of thermal transport
+in crystals and glasses”, Nat. Phys. <strong>15</strong>, 809 (2019). DOI:
+<a class="reference external" href="https://doi.org/10.1038/s41567-019-0520-x">10.1038/s41567-019-0520-x</a></p></li>
+</ul>
+</section>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading">#</a></h2>
+<p>The lattice thermal conductivity is reported split into the intra-band part
+<code class="docutils literal notranslate"><span class="pre">K_intra</span></code>, the inter-band part <code class="docutils literal notranslate"><span class="pre">K_inter</span></code>, and their sum <code class="docutils literal notranslate"><span class="pre">K_TOT</span></code>. As an example,
+NaMgF3 (an orthorhombic perovskite with 20 atoms per unit cell, mp-2955 in the
+<a class="reference external" href="https://github.com/atztogo/phonondb/blob/main/mdr/phonondb_LTC/README.md">phonondb LTC list</a>)
+at 300 K in the RTA with <code class="docutils literal notranslate"><span class="pre">--tt</span> <span class="pre">njc23</span> <span class="pre">--mesh</span> <span class="pre">50</span></code> gives roughly</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#          T(K)        xx         yy         zz         yz         xz         xy</span>
+<span class="n">K_intra</span>   <span class="mf">300.0</span>       <span class="mf">3.022</span>      <span class="mf">3.230</span>      <span class="mf">3.234</span>      <span class="mf">0.000</span>      <span class="mf">0.000</span>      <span class="mf">0.000</span>
+
+<span class="n">K_inter</span>   <span class="mf">300.0</span>       <span class="mf">0.702</span>      <span class="mf">0.746</span>      <span class="mf">0.740</span>      <span class="mf">0.000</span>      <span class="mf">0.000</span>      <span class="mf">0.000</span>
+
+<span class="n">K_TOT</span>     <span class="mf">300.0</span>       <span class="mf">3.724</span>      <span class="mf">3.976</span>      <span class="mf">3.975</span>      <span class="mf">0.000</span>      <span class="mf">0.000</span>      <span class="mf">0.000</span>
+</pre></div>
+</div>
+<p>For this system the three built-in variants <code class="docutils literal notranslate"><span class="pre">njc23</span></code>, <code class="docutils literal notranslate"><span class="pre">ibdb19</span></code>, and <code class="docutils literal notranslate"><span class="pre">smm19</span></code> give
+<code class="docutils literal notranslate"><span class="pre">K_inter</span></code> values that agree to within about 1%.</p>
 </section>
 <section id="tt-wte">
 <h2><code class="docutils literal notranslate"><span class="pre">--tt</span> <span class="pre">wte</span></code><a class="headerlink" href="#tt-wte" title="Link to this heading">#</a></h2>
 <p>The solution of the Wigner transport equation is provided as a separate plugin,
-phono3py-wte, and is invoked with <code class="docutils literal notranslate"><span class="pre">--tt</span> <span class="pre">wte</span></code>. See <a class="reference internal" href="wigner-solution.html#wigner-solution"><span class="std std-ref">Solution of the Wigner transport equation</span></a> for
+phono3py-wte, and is invoked with <code class="docutils literal notranslate"><span class="pre">--tt</span> <span class="pre">wte</span></code>. The plugin must be installed
+separately (it is not bundled with phono3py). See <a class="reference internal" href="wigner-solution.html#wigner-solution"><span class="std std-ref">Solution of the Wigner transport equation</span></a> for
 installation and usage.</p>
 <div class="toctree-wrapper compound">
 </div>
@@ -535,8 +572,11 @@ installation and usage.</p>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#velocity-matrix">Velocity matrix</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mode-thermal-conductivity">Mode thermal conductivity</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tt-njc23"><code class="docutils literal notranslate"><span class="pre">--tt</span> <span class="pre">njc23</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tt-ibdb19"><code class="docutils literal notranslate"><span class="pre">--tt</span> <span class="pre">ibdb19</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tt-smm19"><code class="docutils literal notranslate"><span class="pre">--tt</span> <span class="pre">smm19</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tt-wte"><code class="docutils literal notranslate"><span class="pre">--tt</span> <span class="pre">wte</span></code></a></li>
 </ul>
   </nav></div>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Command options / Setting tags &#8212; Phono3py v.4.0.1</title>
+    <title>Command options / Setting tags &#8212; Phono3py v.4.2.0</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=1a34d25d"></script>
+    <script src="_static/documentation_options.js?v=830d3dd9"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -52,7 +52,7 @@
     <link rel="prev" title="TURBOMOLE &amp; phono3py calculation" href="turbomole.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="4.0" />
+  <meta name="docsearch:version" content="4.2" />
   </head>
   
   
@@ -127,7 +127,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.4.0.1</p>
+    <p class="title logo__title">Phono3py v.4.2.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -1023,10 +1023,11 @@ equivalent to that of <code class="docutils literal notranslate"><span class="pr
 </section>
 <section id="tt-transport-type-transport-type">
 <h3><code class="docutils literal notranslate"><span class="pre">--tt</span></code>, <code class="docutils literal notranslate"><span class="pre">--transport-type</span></code> (<code class="docutils literal notranslate"><span class="pre">TRANSPORT_TYPE</span></code>)<a class="headerlink" href="#tt-transport-type-transport-type" title="Link to this heading">#</a></h3>
-<p>Select the transport formulation used to evaluate the inter-band (coherence)
+<p>Select the transport formulation used to evaluate the inter-band
 contributions to the thermal conductivity. This option is combined with <code class="docutils literal notranslate"><span class="pre">--br</span></code>
 (RTA) or <code class="docutils literal notranslate"><span class="pre">--lbte</span></code> (direct solution). Without <code class="docutils literal notranslate"><span class="pre">--tt</span></code>, the standard particle-like
-formulation is used. The built-in variants <code class="docutils literal notranslate"><span class="pre">smm19</span></code> and <code class="docutils literal notranslate"><span class="pre">njc23</span></code> are experimental.
+formulation is used. The built-in variants <code class="docutils literal notranslate"><span class="pre">njc23</span></code>, <code class="docutils literal notranslate"><span class="pre">ibdb19</span></code>, and <code class="docutils literal notranslate"><span class="pre">smm19</span></code> are
+experimental.
 <code class="docutils literal notranslate"><span class="pre">wte</span></code> invokes the external phono3py-wte plugin. More detail is documented at
 <a class="reference internal" href="inter-band-transport.html#inter-band-transport"><span class="std std-ref">Inter-band transport</span></a>.</p>
 </section>
