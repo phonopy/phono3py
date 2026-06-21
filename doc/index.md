@@ -49,7 +49,7 @@ command-options
 input-output-files
 auxiliary-tools
 direct-solution
-wigner-solution
+inter-band-transport
 workload-distribution
 random-displacements
 pypolymlp
