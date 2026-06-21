@@ -155,7 +155,6 @@
 <li class="toctree-l1"><a class="reference internal" href="input-output-files.html">Input / Output files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="direct-solution.html">Direct solution of linearized phonon Boltzmann equation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="wigner-solution.html">Solution of the Wigner transport equation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a></li>
 <li class="toctree-l1"><a class="reference internal" href="random-displacements.html">Force constants calculation with random displacements of atoms</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pypolymlp.html">Force constants calculation using pypolymlp (machine learning potential)</a></li>
@@ -399,7 +398,7 @@ AlN-LDA example:</p>
   <span class="n">mass</span><span class="p">:</span> <span class="mf">14.006700</span>
 </pre></div>
 </div>
-<p>Otherwise, construct a <a class="reference external" href="https://phonopy.github.io/phonopy/api-reference.html#phonopy.structure.atoms.PhonopyAtoms" title="(in phonopy v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">PhonopyAtoms</span></code></a> instance
+<p>Otherwise, construct a <a class="reference external" href="https://phonopy.github.io/phonopy/api-reference.html#phonopy.structure.atoms.PhonopyAtoms" title="(in phonopy v4.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">PhonopyAtoms</span></code></a> instance
 directly:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
@@ -435,11 +434,11 @@ of inputs to instantiate it are <code class="docutils literal notranslate"><span
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ph3</span> <span class="o">=</span> <span class="n">Phono3py</span><span class="p">(</span><span class="n">unitcell</span><span class="p">,</span> <span class="n">supercell_matrix</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">primitive_matrix</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">unitcell</span></code> is a <a class="reference external" href="https://phonopy.github.io/phonopy/api-reference.html#phonopy.structure.atoms.PhonopyAtoms" title="(in phonopy v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">PhonopyAtoms</span></code></a> instance.
+<p><code class="docutils literal notranslate"><span class="pre">unitcell</span></code> is a <a class="reference external" href="https://phonopy.github.io/phonopy/api-reference.html#phonopy.structure.atoms.PhonopyAtoms" title="(in phonopy v4.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">PhonopyAtoms</span></code></a> instance.
 <code class="docutils literal notranslate"><span class="pre">supercell_matrix</span></code> and <code class="docutils literal notranslate"><span class="pre">primitive_matrix</span></code> are the transformation matrices used
 to generate the supercell and primitive cell from <code class="docutils literal notranslate"><span class="pre">unitcell</span></code> (see the
 <a class="reference external" href="https://phonopy.github.io/phonopy/phonopy-module.html#definitions-of-variables">definitions in the phonopy docs</a>).
-This step is analogous to instantiating the <a class="reference external" href="https://phonopy.github.io/phonopy/api-reference.html#phonopy.Phonopy" title="(in phonopy v4.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Phonopy</span></code></a> class
+This step is analogous to instantiating the <a class="reference external" href="https://phonopy.github.io/phonopy/api-reference.html#phonopy.Phonopy" title="(in phonopy v4.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Phonopy</span></code></a> class
 (see the
 <a class="reference external" href="https://phonopy.github.io/phonopy/phonopy-module.html#pre-process">pre-processing section</a>
 of the phonopy docs).</p>
