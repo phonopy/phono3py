@@ -14,8 +14,8 @@ The `--tt` (`--transport-type`) option selects which transport formulation is
 used to evaluate these contributions:
 
 ```
-phono3py ... --br --tt smm19
-phono3py ... --lbte --tt njc23
+phono3py ... --br --tt njc23
+phono3py ... --lbte --tt ibdb19
 ```
 
 - `--tt` is combined with `--br` (RTA) or `--lbte` (direct solution). Without
@@ -49,12 +49,7 @@ v^{\alpha}_{\mathbf{q}jj'} =
 $$
 
 The diagonal element ($j = j'$) reduces to the ordinary group velocity
-$v_{\mathbf{q}j}$. Degenerate bands are handled by rotating the corresponding
-eigenvectors so that the velocity matrix is well defined. In the conductivity
-formulas below, the outer product
-$v^{\alpha}_{\mathbf{q}jj'} v^{\beta *}_{\mathbf{q}jj'}$ is averaged over the star
-of $\mathbf{q}$. This star average is real (its imaginary part cancels by
-symmetry) and recovers the crystal symmetry of the conductivity tensor.
+$v_{\mathbf{q}j}$.
 
 (mode_conductivity)=
 

@@ -2,6 +2,14 @@
 
 # Change Log
 
+## Jun-21-2026: Version 4.2.0
+
+- Requires phonopy>=4.2.0.
+- Added the experimental inter-band transport variant `ibdb19`
+  (`--tt ibdb19`), which evaluates the main-text Eq. (9) of Isaeva et al.
+  (2019). A new documentation page describes the built-in inter-band transport
+  options (`--tt njc23` / `ibdb19` / `smm19`). See {ref}`inter_band_transport`.
+
 ## May-26-2026: Version 4.1.0
 
 - Requires phonopy>=4.1.0. Group-velocity calculation with Gonze-Lee
