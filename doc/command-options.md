@@ -693,6 +693,15 @@ linearized phonon Boltzmann equation. The basis usage of this option is
 equivalent to that of `--br`. More detail is documented at
 {ref}`direct_solution`.
 
+### `--tt`, `--transport-type` (`TRANSPORT_TYPE`)
+
+Select the transport formulation used to evaluate the inter-band (coherence)
+contributions to the thermal conductivity. This option is combined with `--br`
+(RTA) or `--lbte` (direct solution). Without `--tt`, the standard particle-like
+formulation is used. The built-in variants `smm19` and `njc23` are experimental.
+`wte` invokes the external phono3py-wte plugin. More detail is documented at
+{ref}`inter_band_transport`.
+
 ## Scattering
 
 ### `--isotope` (`ISOTOPE =.TRUE.`)
