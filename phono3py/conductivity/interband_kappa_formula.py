@@ -1,4 +1,15 @@
-"""Kappa solvers for the NJC23 (Green-Kubo) method."""
+"""Generic inter-band mode-kappa formula shared by NJC23, IBDB19, etc.
+
+All inter-band (coherence) variants share the same mode-kappa expression
+
+    kappa_mat[s, s'] = C[s, s'] * V[s, s'] V*[s, s'] * g / (dw^2 + g^2)
+
+where C is the variant-specific heat capacity matrix, V is the velocity
+matrix, g = gamma_s + gamma_s' is the sum of half-linewidths, and
+dw = w_s - w_s'. The variants differ only in the heat capacity matrix C,
+so they all use this kernel and supply their own C via the aggregates.
+
+"""
 
 from __future__ import annotations
 
@@ -8,16 +19,16 @@ from numpy.typing import NDArray
 from phono3py.conductivity.grid_point_data import GridPointAggregates
 
 
-def _compute_njc23_mode_kappa_matrix(
+def _compute_interband_mode_kappa_matrix(
     frequencies: NDArray[np.double],
     gamma: NDArray[np.double],
     heat_capacity_matrix: NDArray[np.double],
     vm_by_vm: NDArray[np.cdouble],
     conversion_factor: float,
 ) -> NDArray[np.double]:
-    """Compute NJC23 mode-kappa matrix for one grid point.
+    """Compute inter-band mode-kappa matrix for one grid point.
 
-    The Green-Kubo formula for each band pair (s, s'):
+    The mode-kappa for each band pair (s, s'):
 
         kappa_mat[s, s'] = C[s,s'] * V[s,s']*V*[s,s'] * g / (dw^2 + g^2)
 
@@ -60,7 +71,7 @@ def _compute_njc23_mode_kappa_matrix(
     return mode_kappa_mat
 
 
-def compute_njc23_mode_kappa(
+def compute_interband_mode_kappa(
     frequencies: NDArray[np.double],
     gamma: NDArray[np.double],
     aggregates: GridPointAggregates,
@@ -70,7 +81,7 @@ def compute_njc23_mode_kappa(
     """Adapter for InterBandRTA/LBTEKappaSolver."""
     assert aggregates.vm_by_vm is not None
     assert aggregates.heat_capacity_matrix is not None
-    return _compute_njc23_mode_kappa_matrix(
+    return _compute_interband_mode_kappa_matrix(
         frequencies=frequencies,
         gamma=gamma,
         heat_capacity_matrix=aggregates.heat_capacity_matrix[:, i_gp, :, :],

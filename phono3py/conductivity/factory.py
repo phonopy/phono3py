@@ -14,6 +14,11 @@ Built-in methods
     Green-Kubo formula in RTA.
 "NJC23-lbte"
     Green-Kubo formula via direct solution.
+"IBDB19-rta"
+    Quasi-harmonic Green-Kubo formula (Eq. (9) of Isaeva et al.) in RTA.
+"IBDB19-lbte"
+    Quasi-harmonic Green-Kubo formula (Eq. (9) of Isaeva et al.) via
+    direct solution.
 
 External plugins
 ----------------
@@ -321,7 +326,8 @@ def conductivity_calculator(
         Smearing widths.  A None entry selects the tetrahedron method.
     method : str, optional
         Calculation method.  Built-in: "std-rta", "std-lbte", "SMM19-rta",
-        "SMM19-lbte", "NJC23-rta", "NJC23-lbte".  Default "std-rta".
+        "SMM19-lbte", "NJC23-rta", "NJC23-lbte", "IBDB19-rta",
+        "IBDB19-lbte".  Default "std-rta".
     grid_points : array-like or None, optional
         BZ grid point indices.  None uses irreducible grid points.  Default None.
     sigma_cutoff : float or None, optional
@@ -461,6 +467,11 @@ register_variant(
 
 try:
     import phono3py.conductivity.njc23  # noqa: F401, E402
+except ImportError:
+    pass
+
+try:
+    import phono3py.conductivity.ibdb19  # noqa: F401, E402
 except ImportError:
     pass
 

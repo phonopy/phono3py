@@ -7,57 +7,7 @@ methods with the conductivity factory so that
 
 """
 
-from phono3py.conductivity.build_components import VariantContext
-from phono3py.conductivity.factory import register_variant
-from phono3py.conductivity.heat_capacity_solvers import (
-    HeatCapacityMatrixSolver,
-)
-from phono3py.conductivity.interband_kappa_solvers import (
-    InterBandLBTEKappaSolver,
-    InterBandRTAKappaSolver,
-)
-from phono3py.conductivity.njc23.kappa_solvers import compute_njc23_mode_kappa
-from phono3py.conductivity.velocity_solvers import VelocityMatrixSolver
+from phono3py.conductivity.interband_variant import register_interband_variant
+from phono3py.phonon.heat_capacity_matrix import mode_cv_matrix_njc23
 
-
-def _make_velocity_solver(ctx: VariantContext) -> VelocityMatrixSolver:
-    return VelocityMatrixSolver(
-        ctx.interaction,
-        is_kappa_star=ctx.kappa_settings.is_kappa_star,
-        gv_delta_q=ctx.kappa_settings.gv_delta_q,
-        log_level=ctx.log_level,
-    )
-
-
-def _make_cv_solver(ctx: VariantContext) -> HeatCapacityMatrixSolver:
-    return HeatCapacityMatrixSolver(ctx.interaction, ctx.kappa_settings.temperatures)
-
-
-def _make_rta_kappa_solver(ctx: VariantContext) -> InterBandRTAKappaSolver:
-    frequencies, _, _ = ctx.interaction.get_phonons()
-    return InterBandRTAKappaSolver(
-        kappa_settings=ctx.kappa_settings,
-        frequencies=frequencies,
-        compute_mode_kappa=compute_njc23_mode_kappa,
-        log_level=ctx.log_level,
-    )
-
-
-def _make_lbte_kappa_solver(ctx: VariantContext) -> InterBandLBTEKappaSolver:
-    frequencies, _, _ = ctx.interaction.get_phonons()
-    return InterBandLBTEKappaSolver(
-        solver=ctx.collision_matrix_kernel,
-        kappa_settings=ctx.kappa_settings,
-        frequencies=frequencies,
-        compute_mode_kappa=compute_njc23_mode_kappa,
-        log_level=ctx.log_level,
-    )
-
-
-register_variant(
-    "NJC23",
-    make_velocity_solver=_make_velocity_solver,
-    make_cv_solver=_make_cv_solver,
-    make_rta_kappa_solver=_make_rta_kappa_solver,
-    make_lbte_kappa_solver=_make_lbte_kappa_solver,
-)
+register_interband_variant("NJC23", mode_cv_matrix_njc23)
