@@ -5,57 +5,15 @@ methods with the conductivity factory so that
 ``conductivity_calculator("SMM19-rta", ...)`` and
 ``conductivity_calculator("SMM19-lbte", ...)`` work out of the box.
 
+This variant implements the Wigner / unified-theory coherence term of
+G. Simoncelli, N. Marzari, and F. Mauri, Nat. Phys. 15, 809 (2019). It
+shares the inter-band mode-kappa kernel and velocity matrix with NJC23 and
+differs only in the heat capacity matrix (the effective
+``mode_cv_matrix_smm19`` built from scalar mode heat capacities).
+
 """
 
-from phono3py.conductivity.build_components import VariantContext
-from phono3py.conductivity.factory import register_variant
-from phono3py.conductivity.heat_capacity_solvers import ModeHeatCapacitySolver
-from phono3py.conductivity.interband_kappa_solvers import (
-    InterBandLBTEKappaSolver,
-    InterBandRTAKappaSolver,
-)
-from phono3py.conductivity.smm19.kappa_solvers import compute_smm19_mode_kappa
-from phono3py.conductivity.velocity_solvers import VelocityMatrixSolver
+from phono3py.conductivity.interband_variant import register_interband_variant
+from phono3py.phonon.heat_capacity_matrix import mode_cv_matrix_smm19
 
-
-def _make_velocity_solver(ctx: VariantContext) -> VelocityMatrixSolver:
-    return VelocityMatrixSolver(
-        ctx.interaction,
-        is_kappa_star=ctx.kappa_settings.is_kappa_star,
-        gv_delta_q=ctx.kappa_settings.gv_delta_q,
-        log_level=ctx.log_level,
-    )
-
-
-def _make_cv_solver(ctx: VariantContext) -> ModeHeatCapacitySolver:
-    return ModeHeatCapacitySolver(ctx.interaction, ctx.kappa_settings.temperatures)
-
-
-def _make_rta_kappa_solver(ctx: VariantContext) -> InterBandRTAKappaSolver:
-    frequencies, _, _ = ctx.interaction.get_phonons()
-    return InterBandRTAKappaSolver(
-        kappa_settings=ctx.kappa_settings,
-        frequencies=frequencies,
-        compute_mode_kappa=compute_smm19_mode_kappa,
-        log_level=ctx.log_level,
-    )
-
-
-def _make_lbte_kappa_solver(ctx: VariantContext) -> InterBandLBTEKappaSolver:
-    frequencies, _, _ = ctx.interaction.get_phonons()
-    return InterBandLBTEKappaSolver(
-        solver=ctx.collision_matrix_kernel,
-        kappa_settings=ctx.kappa_settings,
-        frequencies=frequencies,
-        compute_mode_kappa=compute_smm19_mode_kappa,
-        log_level=ctx.log_level,
-    )
-
-
-register_variant(
-    "SMM19",
-    make_velocity_solver=_make_velocity_solver,
-    make_cv_solver=_make_cv_solver,
-    make_rta_kappa_solver=_make_rta_kappa_solver,
-    make_lbte_kappa_solver=_make_lbte_kappa_solver,
-)
+register_interband_variant("SMM19", mode_cv_matrix_smm19)

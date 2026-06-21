@@ -51,5 +51,5 @@ repos:
         stages: [pre-commit, commit-msg]
         args:
           - --ignore-words-list
-          - "te,groth,skelton,inout,mater"
+          - "te,groth,skelton,inout,mater,commun"
           - --check-filenames
