@@ -175,6 +175,26 @@ $C_{\mathbf{q}j}$.
   in crystals and glasses", Nat. Phys. **15**, 809 (2019). DOI:
   [10.1038/s41567-019-0520-x](https://doi.org/10.1038/s41567-019-0520-x)
 
+## Example
+
+The lattice thermal conductivity is reported split into the intra-band part
+`K_intra`, the inter-band part `K_inter`, and their sum `K_TOT`. As an example,
+NaMgF3 (an orthorhombic perovskite with 20 atoms per unit cell, mp-2955 in the
+[phonondb LTC list](https://github.com/atztogo/phonondb/blob/main/mdr/phonondb_LTC/README.md))
+at 300 K in the RTA with `--tt njc23 --mesh 50` gives roughly
+
+```
+#          T(K)        xx         yy         zz         yz         xz         xy
+K_intra   300.0       3.022      3.230      3.234      0.000      0.000      0.000
+
+K_inter   300.0       0.702      0.746      0.740      0.000      0.000      0.000
+
+K_TOT     300.0       3.724      3.976      3.975      0.000      0.000      0.000
+```
+
+For this system the three built-in variants `njc23`, `ibdb19`, and `smm19` give
+`K_inter` values that agree to within about 1%.
+
 ## `--tt wte`
 
 The solution of the Wigner transport equation is provided as a separate plugin,
