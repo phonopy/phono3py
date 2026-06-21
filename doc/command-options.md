@@ -670,7 +670,7 @@ see {ref}`--ave-pp <ave_pp_option>`) is also given and stored.
 
 (LTC_options)=
 
-## Methods to solve phonon Boltzmann equation and Wigner formulation
+## Methods to solve phonon Boltzmann equation and inter-band transport
 
 ### `--br` (`BTERTA = .TRUE.`)
 
