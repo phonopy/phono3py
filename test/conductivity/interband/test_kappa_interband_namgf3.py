@@ -93,7 +93,9 @@ def test_namgf3_kappa_intra(namgf3_kappa, transport_type: str):
 def test_namgf3_kappa_inter(namgf3_kappa, transport_type: str):
     """Off-diagonal (inter-band) kappa matches the reference values."""
     kappa_inter = namgf3_kappa[transport_type][1]
-    np.testing.assert_allclose(ref_inter[transport_type], kappa_inter[:3], atol=TOLERANCE)
+    np.testing.assert_allclose(
+        ref_inter[transport_type], kappa_inter[:3], atol=TOLERANCE
+    )
     np.testing.assert_allclose([0, 0, 0], kappa_inter[3:], atol=TOLERANCE)
 
 
