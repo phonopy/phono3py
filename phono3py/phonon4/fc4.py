@@ -640,7 +640,13 @@ def _get_constrained_fc3(
     rotations = np.array(reduced_site_sym, dtype="int64", order="C")
     translations = np.zeros((len(reduced_site_sym), 3), dtype="double", order="C")
     permutations = compute_all_sg_permutations(
-        positions_shifted, rotations, translations, lattice, symprec, lang=lang
+        positions_shifted,
+        rotations,
+        translations,
+        lattice,
+        symprec,
+        supercell.permutation_types,
+        lang=lang,
     )
     target_atoms = [i for i in range(num_atom) if i not in atom_list]
     distribute_fc3(
@@ -682,7 +688,12 @@ def _solve_fc4(
     positions = supercell.scaled_positions
     positions = positions - positions[first_atom_num]
     rot_map_syms = get_positions_sent_by_rot_inv(
-        lattice, positions, site_symmetry, symprec, lang=lang
+        lattice,
+        positions,
+        site_symmetry,
+        symprec,
+        supercell.permutation_types,
+        lang=lang,
     )
     rot_map_syms = np.array(rot_map_syms, dtype="int64", order="C")
     rot_disps = get_rotated_displacement(displacements_first, site_sym_cart)  # type: ignore[arg-type]
