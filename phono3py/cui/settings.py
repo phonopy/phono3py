@@ -83,7 +83,7 @@ class Phono3pySettings(Settings):
         self.is_symmetrize_fc3_q: bool = False
         self.is_symmetrize_fc3_r: bool = False
         self.is_tetrahedron_method: bool = False
-        self.lapack_zheev_uplo: Literal["L", "U"] = "L"
+        self.lapack_zheev_uplo: Literal["L", "U"] | None = None
         self.mass_variances: list[float] | None = None
         self.max_freepath: float | None = None
         self.num_points_in_batch: int | None = None

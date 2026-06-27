@@ -65,7 +65,7 @@ class Phono3pyIsotope:
         use_grg: bool = False,
         symprec: float = 1e-5,
         cutoff_frequency: float | None = None,
-        lapack_zheev_uplo: Literal["L", "U"] = "L",
+        lapack_zheev_uplo: Literal["L", "U"] | None = None,
         lang: Literal["C", "Python", "Rust"] = "Rust",
     ) -> None:
         """Init method."""
@@ -85,6 +85,16 @@ class Phono3pyIsotope:
             )
             _frequency_factor_to_THz = frequency_factor_to_THz
 
+        if lapack_zheev_uplo is None:
+            _lapack_zheev_uplo: Literal["L", "U"] = "L"
+        else:
+            warnings.warn(
+                "lapack_zheev_uplo parameter is deprecated.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            _lapack_zheev_uplo = lapack_zheev_uplo
+
         self._iso = Isotope(
             mesh,
             primitive,
@@ -94,7 +104,7 @@ class Phono3pyIsotope:
             use_grg=use_grg,
             symprec=symprec,
             cutoff_frequency=cutoff_frequency,
-            lapack_zheev_uplo=lapack_zheev_uplo,
+            lapack_zheev_uplo=_lapack_zheev_uplo,
             lang=lang,
         )
 
