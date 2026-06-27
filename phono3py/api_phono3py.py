@@ -1185,7 +1185,7 @@ class Phono3py:
         constant_averaged_interaction: float | None = None,
         frequency_scale_factor: float | None = None,
         symmetrize_fc3q: bool = False,
-        lapack_zheev_uplo: Literal["L", "U"] = "L",
+        lapack_zheev_uplo: Literal["L", "U"] | None = None,
         openmp_per_triplets: bool | None = None,
     ) -> None:
         """Initialize ph-ph interaction calculation.
@@ -1220,8 +1220,11 @@ class Phono3py:
             fc3 in phonon space is symmetrized by permutation symmetry.
             Default is False.
         lapack_zheev_uplo : str, optional
-            'L' or 'U'. Default is 'L'. This is passed to LAPACK zheev
-            used for phonon solver.
+            Deprecated. 'L' or 'U' that was passed to the LAPACK zheev phonon
+            solver. This option will be removed together with the C
+            implementation of the phonon solver. Default is None, which means
+            'L' is used. Supplying this parameter raises a
+            ``DeprecationWarning``.
         openmp_per_triplets : bool or None, optional, default is None
             Normally this parameter should not be touched.
             When `True`, ph-ph interaction strength calculation runs with
@@ -1237,6 +1240,16 @@ class Phono3py:
             msg = "Phono3py.fc2 of instance is not found."
             raise RuntimeError(msg)
 
+        if lapack_zheev_uplo is None:
+            _lapack_zheev_uplo: Literal["L", "U"] = "L"
+        else:
+            warnings.warn(
+                "lapack_zheev_uplo parameter is deprecated.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            _lapack_zheev_uplo = lapack_zheev_uplo
+
         self._interaction = Interaction(
             self._primitive,
             self._bz_grid,
@@ -1251,7 +1264,7 @@ class Phono3py:
             is_mesh_symmetry=self._is_mesh_symmetry,
             symmetrize_fc3q=symmetrize_fc3q,
             make_r0_average=self._make_r0_average,
-            lapack_zheev_uplo=lapack_zheev_uplo,
+            lapack_zheev_uplo=_lapack_zheev_uplo,
             openmp_per_triplets=openmp_per_triplets,
             lang=self._lang,
         )
