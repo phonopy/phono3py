@@ -11,6 +11,7 @@ from phonopy.harmonic.dynamical_matrix import (
     DynamicalMatrix,
     DynamicalMatrixGL,
     DynamicalMatrixNAC,
+    diagonalize_dynamical_matrices,
 )
 from phonopy.physical_units import get_physical_units
 
@@ -180,8 +181,13 @@ def run_phonon_solver_rust(
 
     Dynamical matrices are constructed in Rust via
     ``phonors.dynamical_matrices_at_gridpoints`` (and its Gonze NAC
-    variant).  Eigen-decomposition is performed in python with
-    ``numpy.linalg.eigh`` since LAPACK is not linked in Rust.
+    variant).  Eigen-decomposition is then performed for the whole batch of
+    grid points at once through
+    ``phonopy.harmonic.dynamical_matrix.diagonalize_dynamical_matrices``,
+    which dispatches to the phonors batched Hermitian eigensolver when
+    available and falls back to ``numpy.linalg.eigh`` otherwise.  The batched
+    path requires the lower triangle (UPLO='L'); UPLO='U' keeps the per-q
+    ``numpy.linalg.eigh`` loop.
 
     See ``run_phonon_solver_c`` for parameter documentation.
 
@@ -293,12 +299,31 @@ def run_phonon_solver_rust(
             float(nac_factor),
         )
 
-    for gp in undone:
-        eigvals, vecs = np.linalg.eigh(eigenvectors[gp], UPLO=lapack_zheev_uplo)
-        frequencies[gp] = (
+    if lapack_zheev_uplo == "L":
+        # faer (used by phonors) reads the lower triangle only, matching
+        # UPLO='L'. Gather a contiguous batch of dynamical matrices,
+        # diagonalize them at once, and scatter the results back. The grid
+        # phonons always need eigenvectors for the ph-ph interaction, so the
+        # values+vectors kernel is used. eigenvectors[undone] fancy-indexing
+        # returns a copy, so the helper's non-destructive (separate
+        # input/output buffers) contract is satisfied. The helper falls back to
+        # numpy when phonors is not importable.
+        dms = np.ascontiguousarray(eigenvectors[undone])
+        eigvals, vecs = diagonalize_dynamical_matrices(dms, with_eigenvectors=True)
+        assert vecs is not None
+        frequencies[undone] = (
             np.sign(eigvals) * np.sqrt(np.abs(eigvals)) * _frequency_conversion_factor
         )
-        eigenvectors[gp] = vecs
+        eigenvectors[undone] = vecs
+    else:  # faer reads the lower triangle only; keep numpy for UPLO='U'.
+        for gp in undone:
+            eigvals, vecs = np.linalg.eigh(eigenvectors[gp], UPLO=lapack_zheev_uplo)
+            frequencies[gp] = (
+                np.sign(eigvals)
+                * np.sqrt(np.abs(eigvals))
+                * _frequency_conversion_factor
+            )
+            eigenvectors[gp] = vecs
     phonon_done[undone] = 1
 
 

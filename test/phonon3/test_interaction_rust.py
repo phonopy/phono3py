@@ -133,6 +133,22 @@ def test_phonon_solver_rust_vs_c(si_pbesol: Phono3py):
     freq_c, _, _ = itr_c.get_phonons()
     freq_rust, _, _ = itr_rust.get_phonons()
     assert freq_c is not None and freq_rust is not None
+
     # Eigenvectors are not compared because degenerate eigenspaces can mix
     # individual eigenvectors even when the subspaces agree.
-    np.testing.assert_allclose(freq_rust, freq_c, rtol=1e-10, atol=1e-12)
+    #
+    # Compare the signed eigenvalues (freq * |freq|) rather than the raw
+    # frequencies.  The Rust path diagonalizes with faer while the C path uses
+    # LAPACK; their eigenvalues agree to ~1e-12--1e-14, but the
+    # sign(e) * sqrt(|e|) frequency map amplifies that tiny difference at the
+    # near-zero acoustic modes at Gamma (sqrt(1e-13) ~ 3e-7).  Squaring back to
+    # the eigenvalue scale removes this artifact and keeps the tolerance tight.
+    def _signed_eigenvalue(freq: np.ndarray) -> np.ndarray:
+        return freq * np.abs(freq)
+
+    np.testing.assert_allclose(
+        _signed_eigenvalue(freq_rust),
+        _signed_eigenvalue(freq_c),
+        rtol=1e-10,
+        atol=1e-12,
+    )
