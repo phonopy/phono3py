@@ -13,9 +13,9 @@ import os
 import h5py  # type: ignore[import-untyped]
 import numpy as np
 from numpy.typing import NDArray
-from phono3py._version import __version__
 from phonopy.file_IO import check_force_constants_indices, get_io_module_to_decompress
 
+from phono3py._version import __version__
 from phono3py.phonon4.dataset import (
     count_supercells_fc4,
     get_displacements_and_forces_fc4,
