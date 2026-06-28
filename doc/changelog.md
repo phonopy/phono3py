@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Jun-28-2026: Version 4.3.1
+
+- Release to create conda-forge package.
+
 ## Jun-28-2026: Version 4.3.0
 
 - The Rust phonon solver now uses phonors batched diagonalization.
