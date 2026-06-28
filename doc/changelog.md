@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Jun-28-2026: Version 4.3.0
+
+- The Rust phonon solver now uses phonors batched diagonalization.
+
 ## Jun-21-2026: Version 4.2.0
 
 - Requires phonopy>=4.2.0.
