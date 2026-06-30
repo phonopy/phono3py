@@ -51,6 +51,7 @@ from phonopy.cui.phonopy_script import file_exists, files_exist, print_error
 from phonopy.file_IO import is_file_phonopy_yaml, parse_FORCE_SETS, write_FORCE_SETS
 from phonopy.harmonic.displacement import DisplacementDataset
 from phonopy.interface.calculator import get_calc_dataset
+from phonopy.interface.lammps import rotate_lammps_forces
 from phonopy.structure.atoms import PhonopyAtoms
 
 from phono3py.cui.settings import Phono3pySettings
@@ -320,6 +321,8 @@ def _get_force_sets_fc2(
         verbose=(log_level > 0),
     )
     force_sets = calc_dataset["forces"]
+    if interface_mode == "lammps":
+        rotate_lammps_forces(force_sets, supercell.cell, verbose=(log_level > 0))
     if "points" in calc_dataset:
         if filename := check_agreements_of_displacements(  # type: ignore[assignment]
             supercell,
@@ -342,6 +345,10 @@ def _get_force_sets_fc2(
             ],
             verbose=(log_level > 0),
         )
+        if interface_mode == "lammps":
+            rotate_lammps_forces(
+                calc_dataset_zero["forces"], supercell.cell, verbose=False
+            )
         if "points" in calc_dataset_zero:
             if check_agreement_of_supercell_positions(
                 supercell, calc_dataset_zero["points"][0]
@@ -450,6 +457,8 @@ def _get_force_sets_fc3(
                 verbose=(log_level > 0),
             )
         force_sets = calc_dataset["forces"]
+        if interface_mode == "lammps":
+            rotate_lammps_forces(force_sets, supercell.cell, verbose=(log_level > 0))
         displacements, _ = get_displacements_and_forces_fc3(disp_dataset)
         if "points" in calc_dataset:
             if filename := check_agreements_of_displacements(
@@ -473,6 +482,10 @@ def _get_force_sets_fc3(
             ],
             verbose=(log_level > 0),
         )
+        if interface_mode == "lammps":
+            rotate_lammps_forces(
+                calc_dataset_zero["forces"], supercell.cell, verbose=False
+            )
         force_set_zero = calc_dataset_zero["forces"][0]
         if "points" in calc_dataset_zero:
             if check_agreement_of_supercell_positions(

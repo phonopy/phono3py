@@ -52,6 +52,7 @@ calculator_info: dict[str, dict[str, dict[str, str]]] = {
     #                      'help': "Invoke dftb+ mode"}},
     # 'elk': {'option': {'name': "--elk",
     #                    'help': "Invoke elk mode"}},
+    "lammps": {"option": {"name": "--lammps", "help": "Invoke Lammps mode"}},
     "qe": {"option": {"name": "--qe", "help": "Invoke Quantum espresso (QE) mode"}},
     # 'siesta': {'option': {'name': "--siesta",
     #                       'help': "Invoke Siesta mode"}},
@@ -76,7 +77,14 @@ def get_additional_info_to_write_supercells(
     interface_mode: str | None,
     supercell_matrix: NDArray[np.int64],
 ) -> dict[str, Any]:
-    """Return additional information to write supercells for calculators."""
+    """Return additional information to write fc3-supercells for calculators.
+
+    The fc3 supercell filename is left to each calculator default (as phonopy
+    does), so "pre_filename" is not set here. Only crystal needs extra template
+    information. See get_additional_info_to_write_fc2_supercells for why the fc2
+    supercells override the filename instead.
+
+    """
     additional_info: dict[str, Any] = {}
     if interface_mode == "crystal":
         additional_info["template_file"] = "TEMPLATE3"
@@ -89,18 +97,20 @@ def get_additional_info_to_write_fc2_supercells(
     phonon_supercell_matrix: NDArray[np.int64],
     suffix: str = "fc2",
 ) -> dict[str, Any]:
-    """Return additional information to write fc2-supercells for calculators."""
+    """Return additional information to write fc2-supercells for calculators.
+
+    The fc2 supercells share the directory with the fc3 supercells, so
+    "pre_filename" is overwritten here with a suffix to avoid filename
+    collisions. The base name follows the calculator default convention:
+    "POSCAR" for VASP and "supercell" for the others.
+
+    """
     additional_info: dict[str, Any] = {}
-    if interface_mode == "qe":
-        additional_info["pre_filename"] = "supercell_%s" % suffix
-    elif interface_mode == "crystal":
-        additional_info["template_file"] = "TEMPLATE"
-        additional_info["pre_filename"] = "supercell_%s" % suffix
-        additional_info["supercell_matrix"] = phonon_supercell_matrix
-    elif interface_mode == "abinit":
-        additional_info["pre_filename"] = "supercell_%s" % suffix
-    elif interface_mode == "turbomole":
-        additional_info["pre_filename"] = "supercell_%s" % suffix
-    else:
+    if interface_mode is None or interface_mode == "vasp":
         additional_info["pre_filename"] = "POSCAR_%s" % suffix.upper()
+    else:
+        additional_info["pre_filename"] = "supercell_%s" % suffix
+    if interface_mode == "crystal":
+        additional_info["template_file"] = "TEMPLATE"
+        additional_info["supercell_matrix"] = phonon_supercell_matrix
     return additional_info

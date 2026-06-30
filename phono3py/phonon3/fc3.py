@@ -631,7 +631,13 @@ def _get_constrained_fc2(
     rotations = np.array(reduced_site_sym, dtype="int64", order="C")
     translations = np.zeros((len(reduced_site_sym), 3), dtype="double", order="C")
     permutations = compute_all_sg_permutations(
-        positions, rotations, translations, lattice, symprec, lang=lang
+        positions,
+        rotations,
+        translations,
+        lattice,
+        symprec,
+        supercell.permutation_types,
+        lang=lang,
     )
     distribute_force_constants(
         fc2, atom_list, lattice, rotations, permutations, lang=lang
@@ -694,7 +700,12 @@ def _solve_fc3(
     logger.debug("get_positions_sent_by_rot_inv")
 
     rot_map_syms = get_positions_sent_by_rot_inv(
-        lattice, positions, site_symmetry, symprec, lang=lang
+        lattice,
+        positions,
+        site_symmetry,
+        symprec,
+        supercell.permutation_types,
+        lang=lang,
     )
     rot_map_syms = np.array(rot_map_syms, dtype="int64", order="C")
     rot_disps = get_rotated_displacement(displacements_first, site_sym_cart)  # type: ignore[arg-type]

@@ -44,6 +44,33 @@ from collections.abc import Sequence
 
 from phonopy.cui.phonopy_argparse import fix_deprecated_option_names
 
+from phono3py.interface.calculator import calculator_info
+
+_CALCULATOR_DESTS = frozenset(f"{name}_mode" for name in calculator_info)
+
+
+class _SortedHelpFormatter(argparse.HelpFormatter):
+    """Help formatter that orders options independently of definition order.
+
+    The options are split across shared / init helper functions, so their
+    definition order does not give a tidy ``--help`` listing. This formatter
+    sorts the display instead: ``-h`` first, then the calculator interface
+    flags (alphabetically), then the remaining options alphabetically.
+
+    """
+
+    def add_arguments(self, actions):
+        """Sort actions before the base formatter lays them out."""
+
+        def sort_key(action):
+            is_help = action.dest == "help"
+            is_calculator = action.dest in _CALCULATOR_DESTS
+            opt = (action.option_strings or [""])[0].lstrip("-").lower()
+            # (help first, calculators next, then the rest), each then by name.
+            return (not is_help, not is_calculator, opt)
+
+        super().add_arguments(sorted(actions, key=sort_key))
+
 
 def _add_shared_options(parser: argparse.ArgumentParser) -> None:
     """Add options accepted by both phono3py-init and phono3py."""
@@ -1066,7 +1093,8 @@ def get_init_parser() -> tuple[argparse.ArgumentParser, list[str]]:
         description=(
             "phono3py-init: set up supercells, displacements, and "
             "FORCES_FC3 / FORCES_FC2 / FORCE_SETS files."
-        )
+        ),
+        formatter_class=_SortedHelpFormatter,
     )
     _add_shared_options(parser)
     _add_init_options(parser)

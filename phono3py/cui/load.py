@@ -366,6 +366,7 @@ def load(
         is_mesh_symmetry=is_mesh_symmetry,
         use_grg=use_grg,
         make_r0_average=make_r0_average,
+        calculator=_calculator,
         log_level=log_level,
         lang=lang,
     )

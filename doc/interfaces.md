@@ -2,10 +2,10 @@
 # Interfaces to calculators
 
 Currently the built-in interfaces for VASP, QUANTUM ESPRESSO (QE),
-CRYSTAL, Abinit, and TURBOMOLE are prepared. VASP is the default interface and no
-special option is necessary to invoke it, but for the other
+CRYSTAL, Abinit, TURBOMOLE, and LAMMPS are prepared. VASP is the default
+interface and no special option is necessary to invoke it, but for the other
 interfaces, each special option has to be specified, e.g. `--qe`,
-`--crystal`, `--abinit`, or `--turbomole`
+`--crystal`, `--abinit`, `--turbomole`, or `--lammps`
 
 ```{toctree}
 :maxdepth: 1
@@ -13,14 +13,15 @@ vasp
 qe
 crystal
 turbomole
+lammps
 ```
 
 ## Calculator specific behaviors
 
 ### Physical unit
 
-The interfaces for VASP, QE (pw), CRYSTAL, Abinit, and TURBOMOLE are
-built in to the phono3py command.
+The interfaces for VASP, QE (pw), CRYSTAL, Abinit, TURBOMOLE, and LAMMPS
+are built in to the phono3py command.
 
 For each calculator, each physical unit system is used. The physical
 unit systems used for the calculators are summarized below.
@@ -33,6 +34,7 @@ unit systems used for the calculators are summarized below.
 | CRYSTAL    | Angstrom  | eV/Angstrom | Angstrom           |
 | Abinit     | au (bohr) | eV/Angstrom | au                 |
 | TURBOMOLE  | au (bohr) | hartree/au  | au                 |
+| LAMMPS     | Angstrom  | eV/Angstrom | Angstrom           |
 ```
 
 `FORCES_FC3`, `FORCES_FC2`, and `phono3py_disp.yaml` have the same physical units.
@@ -55,6 +57,7 @@ Default unit cell file names are also changed according to the calculators::
 | CRYSTAL   | crystal.o   |
 | Abinit    | unitcell.in |
 | TURBOMOLE | control     |
+| LAMMPS    | unitcell    |
 ```
 
 (default_displacement_distance_for_calculator)=
@@ -71,4 +74,5 @@ Default displacement distances created by `-d` option without
 | CRYSTAL    | 0.03 Angstrom  |
 | Abinit     | 0.06 au (bohr) |
 | TURBOMOLE  | 0.06 au (bohr) |
+| LAMMPS     | 0.03 Angstrom  |
 ```
