@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Interfaces to calculators &#8212; Phono3py v.4.2.0</title>
+    <title>Interfaces to calculators &#8212; Phono3py v.4.3.1</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=830d3dd9"></script>
+    <script src="_static/documentation_options.js?v=c42b8a28"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -52,7 +52,7 @@
     <link rel="prev" title="Examples" href="examples.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="4.2" />
+  <meta name="docsearch:version" content="4.3" />
   </head>
   
   
@@ -127,7 +127,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.4.2.0</p>
+    <p class="title logo__title">Phono3py v.4.3.1</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -144,7 +144,7 @@
 <li class="toctree-l1"><a class="reference internal" href="rust-backend.html">Rust backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
-<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 current active has-children"><a class="current reference internal" href="#">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE, LAMMPS)</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="qe.html">Quantum ESPRESSO (pw) &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="crystal.html">CRYSTAL &amp; phono3py calculation</a></li>
@@ -339,10 +339,10 @@
   <section class="tex2jax_ignore mathjax_ignore" id="interfaces-to-calculators">
 <span id="calculator-interfaces"></span><h1>Interfaces to calculators<a class="headerlink" href="#interfaces-to-calculators" title="Link to this heading">#</a></h1>
 <p>Currently the built-in interfaces for VASP, QUANTUM ESPRESSO (QE),
-CRYSTAL, Abinit, and TURBOMOLE are prepared. VASP is the default interface and no
-special option is necessary to invoke it, but for the other
+CRYSTAL, Abinit, TURBOMOLE, and LAMMPS are prepared. VASP is the default
+interface and no special option is necessary to invoke it, but for the other
 interfaces, each special option has to be specified, e.g. <code class="docutils literal notranslate"><span class="pre">--qe</span></code>,
-<code class="docutils literal notranslate"><span class="pre">--crystal</span></code>, <code class="docutils literal notranslate"><span class="pre">--abinit</span></code>, or <code class="docutils literal notranslate"><span class="pre">--turbomole</span></code></p>
+<code class="docutils literal notranslate"><span class="pre">--crystal</span></code>, <code class="docutils literal notranslate"><span class="pre">--abinit</span></code>, <code class="docutils literal notranslate"><span class="pre">--turbomole</span></code>, or <code class="docutils literal notranslate"><span class="pre">--lammps</span></code></p>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
@@ -355,8 +355,8 @@ interfaces, each special option has to be specified, e.g. <code class="docutils 
 <h2>Calculator specific behaviors<a class="headerlink" href="#calculator-specific-behaviors" title="Link to this heading">#</a></h2>
 <section id="physical-unit">
 <h3>Physical unit<a class="headerlink" href="#physical-unit" title="Link to this heading">#</a></h3>
-<p>The interfaces for VASP, QE (pw), CRYSTAL, Abinit, and TURBOMOLE are
-built in to the phono3py command.</p>
+<p>The interfaces for VASP, QE (pw), CRYSTAL, Abinit, TURBOMOLE, and LAMMPS
+are built in to the phono3py command.</p>
 <p>For each calculator, each physical unit system is used. The physical
 unit systems used for the calculators are summarized below.</p>
 <div class="pst-scrollable-table-container"><table class="table">
@@ -393,6 +393,11 @@ unit systems used for the calculators are summarized below.</p>
 <td><p>hartree/au</p></td>
 <td><p>au</p></td>
 </tr>
+<tr class="row-odd"><td><p>LAMMPS</p></td>
+<td><p>Angstrom</p></td>
+<td><p>eV/Angstrom</p></td>
+<td><p>Angstrom</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -427,6 +432,9 @@ unit systems used for the calculators are summarized below.</p>
 <tr class="row-even"><td><p>TURBOMOLE</p></td>
 <td><p>control</p></td>
 </tr>
+<tr class="row-odd"><td><p>LAMMPS</p></td>
+<td><p>unitcell</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -456,6 +464,9 @@ unit systems used for the calculators are summarized below.</p>
 </tr>
 <tr class="row-even"><td><p>TURBOMOLE</p></td>
 <td><p>0.06 au (bohr)</p></td>
+</tr>
+<tr class="row-odd"><td><p>LAMMPS</p></td>
+<td><p>0.03 Angstrom</p></td>
 </tr>
 </tbody>
 </table>

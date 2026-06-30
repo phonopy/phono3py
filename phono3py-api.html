@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Phono3py API &#8212; Phono3py v.4.2.0</title>
+    <title>Phono3py API &#8212; Phono3py v.4.3.1</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
 
-    <script src="_static/documentation_options.js?v=830d3dd9"></script>
+    <script src="_static/documentation_options.js?v=c42b8a28"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -52,7 +52,7 @@
     <link rel="prev" title="External tools" href="external-tools.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="4.2" />
+  <meta name="docsearch:version" content="4.3" />
   </head>
   
   
@@ -127,7 +127,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.4.2.0</p>
+    <p class="title logo__title">Phono3py v.4.3.1</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -144,7 +144,7 @@
 <li class="toctree-l1"><a class="reference internal" href="rust-backend.html">Rust backend</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE, LAMMPS)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="qe.html">Quantum ESPRESSO (pw) &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="crystal.html">CRYSTAL &amp; phono3py calculation</a></li>
@@ -402,7 +402,7 @@ AlN-LDA example:</p>
   <span class="n">mass</span><span class="p">:</span> <span class="mf">14.006700</span>
 </pre></div>
 </div>
-<p>Otherwise, construct a <a class="reference external" href="https://phonopy.github.io/phonopy/api-reference.html#phonopy.structure.atoms.PhonopyAtoms" title="(in phonopy v4.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">PhonopyAtoms</span></code></a> instance
+<p>Otherwise, construct a <a class="reference external" href="https://phonopy.github.io/phonopy/api-reference.html#phonopy.structure.atoms.PhonopyAtoms" title="(in phonopy v4.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">PhonopyAtoms</span></code></a> instance
 directly:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
@@ -438,11 +438,11 @@ of inputs to instantiate it are <code class="docutils literal notranslate"><span
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ph3</span> <span class="o">=</span> <span class="n">Phono3py</span><span class="p">(</span><span class="n">unitcell</span><span class="p">,</span> <span class="n">supercell_matrix</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">primitive_matrix</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">unitcell</span></code> is a <a class="reference external" href="https://phonopy.github.io/phonopy/api-reference.html#phonopy.structure.atoms.PhonopyAtoms" title="(in phonopy v4.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">PhonopyAtoms</span></code></a> instance.
+<p><code class="docutils literal notranslate"><span class="pre">unitcell</span></code> is a <a class="reference external" href="https://phonopy.github.io/phonopy/api-reference.html#phonopy.structure.atoms.PhonopyAtoms" title="(in phonopy v4.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">PhonopyAtoms</span></code></a> instance.
 <code class="docutils literal notranslate"><span class="pre">supercell_matrix</span></code> and <code class="docutils literal notranslate"><span class="pre">primitive_matrix</span></code> are the transformation matrices used
 to generate the supercell and primitive cell from <code class="docutils literal notranslate"><span class="pre">unitcell</span></code> (see the
 <a class="reference external" href="https://phonopy.github.io/phonopy/phonopy-module.html#definitions-of-variables">definitions in the phonopy docs</a>).
-This step is analogous to instantiating the <a class="reference external" href="https://phonopy.github.io/phonopy/api-reference.html#phonopy.Phonopy" title="(in phonopy v4.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Phonopy</span></code></a> class
+This step is analogous to instantiating the <a class="reference external" href="https://phonopy.github.io/phonopy/api-reference.html#phonopy.Phonopy" title="(in phonopy v4.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Phonopy</span></code></a> class
 (see the
 <a class="reference external" href="https://phonopy.github.io/phonopy/phonopy-module.html#pre-process">pre-processing section</a>
 of the phonopy docs).</p>
