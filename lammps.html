@@ -1,0 +1,686 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>LAMMPS &amp; phono3py calculation &#8212; Phono3py v.4.3.1</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=c42b8a28"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'lammps';</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Command options / Setting tags" href="command-options.html" />
+    <link rel="prev" title="TURBOMOLE &amp; phono3py calculation" href="turbomole.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="4.3" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">Phono3py v.4.3.1</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rust-backend.html">Rust backend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE, LAMMPS)</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qe.html">Quantum ESPRESSO (pw) &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="crystal.html">CRYSTAL &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbomole.html">TURBOMOLE &amp; phono3py calculation</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">LAMMPS &amp; phono3py calculation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options / Setting tags</a></li>
+<li class="toctree-l1"><a class="reference internal" href="input-output-files.html">Input / Output files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="direct-solution.html">Direct solution of linearized phonon Boltzmann equation</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="inter-band-transport.html">Inter-band transport</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="wigner-solution.html">Solution of the Wigner transport equation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="random-displacements.html">Force constants calculation with random displacements of atoms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pypolymlp.html">Force constants calculation using pypolymlp (machine learning potential)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Force constants calculation with cutoff pair-distance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-api.html">Phono3py API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-reference.html">API reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py.html">phono3py command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-init.html">phono3py-init command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">Using phono3py hdf5 files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="grid.html">Grids in reciprocal space</a></li>
+<li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration-v4.html">Migrating from phono3py v3 to v4</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/lammps.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>LAMMPS & phono3py calculation</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">Workflow</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lammps-structure-format">LAMMPS structure format</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#generating-supercells-with-displacements">Generating supercells with displacements</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#route-a-from-a-lammps-structure-file">Route (a): from a LAMMPS structure file</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#route-b-from-a-unit-cell-defined-in-yaml">Route (b): from a unit cell defined in yaml</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#force-calculation-and-forces-fc3">Force calculation and FORCES_FC3</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-the-thermal-conductivity-calculation">Running the thermal conductivity calculation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#examples">Examples</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#si-lammps-ace-ace">Si-lammps-ace (ACE)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#appendix-structure-optimization-using-lammps">Appendix: structure optimization using LAMMPS</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="lammps-phono3py-calculation">
+<span id="lammps-interface"></span><h1>LAMMPS &amp; phono3py calculation<a class="headerlink" href="#lammps-phono3py-calculation" title="Link to this heading">#</a></h1>
+<p>Phono3py drives a LAMMPS force calculation in the same way as an ab-initio
+calculator: it builds fc3 (and optionally fc2) supercells with atomic
+displacements, LAMMPS evaluates the forces on every atom, and phono3py collects
+them into <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> (and <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code>). This is convenient in combination
+with machine-learning potentials (for example the ACE <code class="docutils literal notranslate"><span class="pre">pace</span></code> or the polynomial
+<code class="docutils literal notranslate"><span class="pre">polymlp</span></code> <code class="docutils literal notranslate"><span class="pre">pair_style</span></code>).</p>
+<section id="workflow">
+<h2>Workflow<a class="headerlink" href="#workflow" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>(Optional) Relax the unit cell with the potential
+(<a class="reference internal" href="#lammps-p3-structure-optimization"><span class="std std-ref">Appendix: structure optimization using LAMMPS</span></a>).</p></li>
+<li><p>Generate supercells with displacements
+(<a class="reference internal" href="#lammps-p3-supercell-generation"><span class="std std-ref">Generating supercells with displacements</span></a>).</p></li>
+<li><p>Compute forces with LAMMPS for every supercell
+(<a class="reference internal" href="#lammps-p3-force-calculation"><span class="std std-ref">Force calculation and FORCES_FC3</span></a>).</p></li>
+<li><p>Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> (and <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code>) with <code class="docutils literal notranslate"><span class="pre">phono3py-init</span> <span class="pre">--cf3</span></code>
+(<a class="reference internal" href="#lammps-p3-force-calculation"><span class="std std-ref">Force calculation and FORCES_FC3</span></a>).</p></li>
+<li><p>Calculate the lattice thermal conductivity with <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code>
+(<a class="reference internal" href="#lammps-p3-conductivity"><span class="std std-ref">Running the thermal conductivity calculation</span></a>).</p></li>
+</ol>
+<p>Assumptions:</p>
+<ul class="simple">
+<li><p>The LAMMPS calculation uses <code class="docutils literal notranslate"><span class="pre">units</span> <span class="pre">metal</span></code> and <code class="docutils literal notranslate"><span class="pre">atom_style</span> <span class="pre">atomic</span></code>.</p></li>
+<li><p>LAMMPS version 15Sep2022 or later is assumed.</p></li>
+<li><p>Forces are read from a LAMMPS dump written in a specific format
+(<a class="reference internal" href="#lammps-p3-force-calculation"><span class="std std-ref">Force calculation and FORCES_FC3</span></a>).</p></li>
+</ul>
+<p>A worked example is in the <a class="reference external" href="https://github.com/phonopy/phono3py/tree/master/example">example
+directory</a>:
+<code class="docutils literal notranslate"><span class="pre">Si-lammps-ace</span></code> (ACE <code class="docutils literal notranslate"><span class="pre">pace</span></code> potential).</p>
+</section>
+<section id="lammps-structure-format">
+<span id="lammps-p3-structure-format"></span><h2>LAMMPS structure format<a class="headerlink" href="#lammps-structure-format" title="Link to this heading">#</a></h2>
+<p>Phono3py reads and writes crystal structures in the LAMMPS
+<a class="reference external" href="https://docs.lammps.org/read_data.html">read_data</a> format, identically to
+phonopy. The supported keywords, the rotation to the LAMMPS triclinic box
+convention, and the handling of <code class="docutils literal notranslate"><span class="pre">Atom</span> <span class="pre">Type</span> <span class="pre">Labels</span></code> and <code class="docutils literal notranslate"><span class="pre">Masses</span></code> are documented
+in the <a class="reference external" href="https://phonopy.github.io/phonopy/lammps.html#lammps-structure-input-format">phonopy LAMMPS
+documentation</a>.</p>
+<p>Two points are worth repeating here:</p>
+<ul class="simple">
+<li><p>A structure written for LAMMPS is a rotated copy of the phono3py cell. The
+forces from LAMMPS are rotated back automatically when <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> is created.</p></li>
+<li><p>Phono3py writes a <code class="docutils literal notranslate"><span class="pre">Masses</span></code> section into every supercell it generates, so the
+LAMMPS input script for the force calculation needs no <code class="docutils literal notranslate"><span class="pre">mass</span></code> command. <code class="docutils literal notranslate"><span class="pre">Masses</span></code>
+may be omitted from the input unit cell file, since the masses are taken from
+the element labels.</p></li>
+</ul>
+</section>
+<section id="generating-supercells-with-displacements">
+<span id="lammps-p3-supercell-generation"></span><h2>Generating supercells with displacements<a class="headerlink" href="#generating-supercells-with-displacements" title="Link to this heading">#</a></h2>
+<p>There are two routes, depending on how the unit cell is provided. After either
+route, <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> and the supercell files (<code class="docutils literal notranslate"><span class="pre">supercell</span></code>,
+<code class="docutils literal notranslate"><span class="pre">supercell-00001</span></code>, <code class="docutils literal notranslate"><span class="pre">supercell-00002</span></code>, …) are created. Many fc3 supercells are
+generated because fc3 needs displacement pairs; the file index uses five digits.</p>
+<section id="route-a-from-a-lammps-structure-file">
+<h3>Route (a): from a LAMMPS structure file<a class="headerlink" href="#route-a-from-a-lammps-structure-file" title="Link to this heading">#</a></h3>
+<p>When the unit cell is already in the LAMMPS format (e.g. <code class="docutils literal notranslate"><span class="pre">lammps_structure_Si</span></code>),
+generate the supercells directly:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span><span class="o">-</span><span class="n">init</span> <span class="o">--</span><span class="n">lammps</span> <span class="o">-</span><span class="n">c</span> <span class="n">lammps_structure_Si</span> <span class="o">-</span><span class="n">d</span> <span class="o">--</span><span class="n">dim</span> <span class="mi">2</span> <span class="mi">2</span> <span class="mi">2</span>
+</pre></div>
+</div>
+<p>A larger supercell for fc2 than for fc3 can be requested with <code class="docutils literal notranslate"><span class="pre">--dim-fc2</span></code>, which
+adds <code class="docutils literal notranslate"><span class="pre">supercell_fc2-xxxxx</span></code> files:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span><span class="o">-</span><span class="n">init</span> <span class="o">--</span><span class="n">lammps</span> <span class="o">-</span><span class="n">c</span> <span class="n">lammps_structure_Si</span> <span class="o">-</span><span class="n">d</span> <span class="o">--</span><span class="n">dim</span> <span class="mi">2</span> <span class="mi">2</span> <span class="mi">2</span> <span class="o">--</span><span class="n">dim</span><span class="o">-</span><span class="n">fc2</span> <span class="mi">4</span> <span class="mi">4</span> <span class="mi">4</span>
+</pre></div>
+</div>
+</section>
+<section id="route-b-from-a-unit-cell-defined-in-yaml">
+<h3>Route (b): from a unit cell defined in yaml<a class="headerlink" href="#route-b-from-a-unit-cell-defined-in-yaml" title="Link to this heading">#</a></h3>
+<p>A LAMMPS structure file is expressed in the rotated triclinic convention. To keep
+the cell in its original (for example, the symmetric, unrotated) orientation,
+define it in yaml and generate the supercells with a short script. A silicon
+conventional cell saved as <code class="docutils literal notranslate"><span class="pre">phono3py_unitcell.yaml</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">unit_cell</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">lattice</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">5.431000000000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.000000000000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.000000000000000</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># a</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.000000000000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">5.431000000000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.000000000000000</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># b</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.000000000000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.000000000000000</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">5.431000000000000</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># c</span>
+<span class="w">  </span><span class="nt">points</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">symbol</span><span class="p">:</span><span class="w"> </span><span class="nv">Si</span><span class="p p-Indicator">,</span><span class="nt"> coordinates</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.00</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.00</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.00</span><span class="p p-Indicator">]}</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">symbol</span><span class="p">:</span><span class="w"> </span><span class="nv">Si</span><span class="p p-Indicator">,</span><span class="nt"> coordinates</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.00</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.50</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.50</span><span class="p p-Indicator">]}</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">symbol</span><span class="p">:</span><span class="w"> </span><span class="nv">Si</span><span class="p p-Indicator">,</span><span class="nt"> coordinates</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.50</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.00</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.50</span><span class="p p-Indicator">]}</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">symbol</span><span class="p">:</span><span class="w"> </span><span class="nv">Si</span><span class="p p-Indicator">,</span><span class="nt"> coordinates</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.50</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.50</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.00</span><span class="p p-Indicator">]}</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">symbol</span><span class="p">:</span><span class="w"> </span><span class="nv">Si</span><span class="p p-Indicator">,</span><span class="nt"> coordinates</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.25</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.25</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.25</span><span class="p p-Indicator">]}</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">symbol</span><span class="p">:</span><span class="w"> </span><span class="nv">Si</span><span class="p p-Indicator">,</span><span class="nt"> coordinates</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.25</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">]}</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">symbol</span><span class="p">:</span><span class="w"> </span><span class="nv">Si</span><span class="p p-Indicator">,</span><span class="nt"> coordinates</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.25</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">]}</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">symbol</span><span class="p">:</span><span class="w"> </span><span class="nv">Si</span><span class="p p-Indicator">,</span><span class="nt"> coordinates</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.75</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.25</span><span class="p p-Indicator">]}</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">phono3py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">phonopy.interface.calculator</span><span class="w"> </span><span class="kn">import</span> <span class="n">write_supercells_with_displacements</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">phonopy.interface.phonopy_yaml</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_cell_yaml</span>
+
+<span class="n">cell</span> <span class="o">=</span> <span class="n">read_cell_yaml</span><span class="p">(</span><span class="s2">&quot;phono3py_unitcell.yaml&quot;</span><span class="p">)</span>
+<span class="n">ph3</span> <span class="o">=</span> <span class="n">phono3py</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+    <span class="n">unitcell</span><span class="o">=</span><span class="n">cell</span><span class="p">,</span> <span class="n">supercell_matrix</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">calculator</span><span class="o">=</span><span class="s2">&quot;lammps&quot;</span><span class="p">,</span> <span class="n">produce_fc</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">)</span>
+<span class="n">ph3</span><span class="o">.</span><span class="n">generate_displacements</span><span class="p">()</span>
+<span class="n">ph3</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;phono3py_disp.yaml&quot;</span><span class="p">)</span>
+
+<span class="n">write_supercells_with_displacements</span><span class="p">(</span>
+    <span class="s2">&quot;lammps&quot;</span><span class="p">,</span> <span class="n">ph3</span><span class="o">.</span><span class="n">supercell</span><span class="p">,</span> <span class="n">ph3</span><span class="o">.</span><span class="n">supercells_with_displacements</span><span class="p">,</span> <span class="n">zfill_width</span><span class="o">=</span><span class="mi">5</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">primitive_matrix</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>, so it is not passed. With route (b),
+<code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> stores the cell in the original (unrotated) orientation,
+whereas route (a) stores the rotated triclinic cell. In both cases the supercells
+follow the LAMMPS structure file format.</p>
+</section>
+</section>
+<section id="force-calculation-and-forces-fc3">
+<span id="lammps-p3-force-calculation"></span><h2>Force calculation and FORCES_FC3<a class="headerlink" href="#force-calculation-and-forces-fc3" title="Link to this heading">#</a></h2>
+<p>Phono3py reads forces from a LAMMPS dump written in a fixed text format. For each
+<code class="docutils literal notranslate"><span class="pre">supercell-xxxxx</span></code>, evaluate the forces once with <code class="docutils literal notranslate"><span class="pre">run</span> <span class="pre">0</span></code> (no time integration):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">units</span> <span class="n">metal</span>
+
+<span class="n">read_data</span> <span class="n">supercell</span><span class="o">-</span><span class="mi">00001</span>
+
+<span class="n">pair_style</span>  <span class="o">&lt;</span><span class="n">potential</span><span class="o">&gt;</span>
+<span class="n">pair_coeff</span>  <span class="o">&lt;...&gt;</span>
+
+<span class="n">dump</span> <span class="n">phonopy</span> <span class="nb">all</span> <span class="n">custom</span> <span class="mi">1</span> <span class="n">force</span><span class="o">.*</span> <span class="nb">id</span> <span class="nb">type</span> <span class="n">x</span> <span class="n">y</span> <span class="n">z</span> <span class="n">fx</span> <span class="n">fy</span> <span class="n">fz</span>
+<span class="n">dump_modify</span> <span class="n">phonopy</span> <span class="nb">format</span> <span class="n">line</span> <span class="s2">&quot;</span><span class="si">%d</span><span class="s2"> </span><span class="si">%d</span><span class="s2"> </span><span class="si">%15.8f</span><span class="s2"> </span><span class="si">%15.8f</span><span class="s2"> </span><span class="si">%15.8f</span><span class="s2"> </span><span class="si">%15.8f</span><span class="s2"> </span><span class="si">%15.8f</span><span class="s2"> </span><span class="si">%15.8f</span><span class="s2">&quot;</span>
+<span class="n">run</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<p>Only the <code class="docutils literal notranslate"><span class="pre">pair_style</span></code>/<code class="docutils literal notranslate"><span class="pre">pair_coeff</span></code> lines change between potentials. Keep the
+<code class="docutils literal notranslate"><span class="pre">dump</span></code> and <code class="docutils literal notranslate"><span class="pre">dump_modify</span></code> lines verbatim so that phono3py can parse the output;
+<code class="docutils literal notranslate"><span class="pre">force.*</span></code> expands to <code class="docutils literal notranslate"><span class="pre">force.0</span></code> for <code class="docutils literal notranslate"><span class="pre">run</span> <span class="pre">0</span></code>. Loop over all supercells, e.g.:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="k">for</span><span class="w"> </span>f<span class="w"> </span><span class="k">in</span><span class="w"> </span>supercell-*<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">    </span><span class="nv">num</span><span class="o">=</span><span class="si">${</span><span class="nv">f</span><span class="p">#supercell-</span><span class="si">}</span>
+<span class="w">    </span>sed<span class="w"> </span><span class="s2">&quot;s/supercell-00001/</span><span class="nv">$f</span><span class="s2">/&quot;</span><span class="w"> </span><span class="k">in</span>.force<span class="w"> </span>&gt;<span class="w"> </span><span class="k">in</span>.tmp
+<span class="w">    </span>lmp<span class="w"> </span>-in<span class="w"> </span><span class="k">in</span>.tmp
+<span class="w">    </span>mv<span class="w"> </span>force.0<span class="w"> </span>force.<span class="nv">$num</span>
+<span class="k">done</span>
+</pre></div>
+</div>
+<p>Collect the forces into <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> (and <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> with <code class="docutils literal notranslate"><span class="pre">--cf2</span></code> if a separate
+fc2 supercell was used):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span><span class="o">-</span><span class="n">init</span> <span class="o">--</span><span class="n">cf3</span> <span class="n">force</span><span class="o">.</span><span class="p">{</span><span class="mf">00001..00111</span><span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> is required. Phono3py subtracts the drift force (the net
+force on each supercell) and rotates the forces back from the LAMMPS frame to the
+phono3py cell, printing the rotation matrix <code class="docutils literal notranslate"><span class="pre">R</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Forces</span> <span class="n">parsed</span> <span class="kn">from</span><span class="w"> </span><span class="nn">LAMMPS</span> <span class="n">output</span> <span class="n">were</span> <span class="n">rotated</span> <span class="n">by</span> <span class="n">F</span><span class="o">=</span><span class="n">R</span><span class="o">.</span><span class="n">F</span><span class="p">(</span><span class="n">lammps</span><span class="p">)</span> <span class="k">with</span> <span class="n">R</span><span class="p">:</span>
+  <span class="mf">1.00000</span> <span class="mf">0.00000</span> <span class="mf">0.00000</span>
+  <span class="mf">0.00000</span> <span class="mf">1.00000</span> <span class="mf">0.00000</span>
+  <span class="mf">0.00000</span> <span class="mf">0.00000</span> <span class="mf">1.00000</span>
+</pre></div>
+</div>
+</section>
+<section id="running-the-thermal-conductivity-calculation">
+<span id="lammps-p3-conductivity"></span><h2>Running the thermal conductivity calculation<a class="headerlink" href="#running-the-thermal-conductivity-calculation" title="Link to this heading">#</a></h2>
+<p>Once <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> exists, run <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code>, which reads <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code>
+and <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> automatically. The first run also creates <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code> and
+<code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code>. For example, the BTE-RTA lattice thermal conductivity at 300 K with
+an 11x11x11 sampling mesh:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span><span class="o">-</span><span class="n">load</span> <span class="o">--</span><span class="n">mesh</span> <span class="mi">11</span> <span class="mi">11</span> <span class="mi">11</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">ts</span> <span class="mi">300</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">kappa-m111111.hdf5</span></code> is written with the result.</p>
+</section>
+<section id="examples">
+<span id="lammps-p3-examples"></span><h2>Examples<a class="headerlink" href="#examples" title="Link to this heading">#</a></h2>
+<section id="si-lammps-ace-ace">
+<h3>Si-lammps-ace (ACE)<a class="headerlink" href="#si-lammps-ace-ace" title="Link to this heading">#</a></h3>
+<p>This uses the LAMMPS <code class="docutils literal notranslate"><span class="pre">pair_style</span> <span class="pre">pace</span></code> (atomic cluster expansion). Any LAMMPS
+build with the <code class="docutils literal notranslate"><span class="pre">ML-PACE</span></code> package can run it, including the conda-forge <code class="docutils literal notranslate"><span class="pre">lammps</span></code>
+package:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pair_style</span> <span class="n">pace</span>
+<span class="n">pair_coeff</span> <span class="o">*</span> <span class="o">*</span> <span class="n">Si_npj_CompMat2021</span><span class="o">.</span><span class="n">ace</span> <span class="n">Si</span>
+</pre></div>
+</div>
+<p>The potential file <code class="docutils literal notranslate"><span class="pre">Si_npj_CompMat2021.ace</span></code> is from the dataset accompanying Y.
+Lysogorskiy <em>et al.</em>, “Performant implementation of the atomic cluster expansion
+(PACE) and application to copper and silicon”, npj Comput. Mater. <strong>7</strong>, 97
+(2021), distributed on Zenodo (<a class="reference external" href="https://doi.org/10.5281/zenodo.4734036">https://doi.org/10.5281/zenodo.4734036</a>) under
+the <strong>CC-BY-4.0</strong> license. Download it into the working directory; it is not
+redistributed with phono3py.</p>
+<p>The example uses the 8-atom conventional cell and a 2x2x2 supercell, the same as
+the VASP <code class="docutils literal notranslate"><span class="pre">Si-PBEsol</span></code> example, so the lattice thermal conductivities can be
+compared directly. At 300 K the ACE result is 118.9 W/m-K (11x11x11 mesh) and
+132.7 W/m-K (19x19x19 mesh), somewhat higher than the PBEsol values of 109.1 and
+124.4 W/m-K.</p>
+<p>The unit cell uses the experimental room-temperature lattice constant of
+silicon, a = 5.431 A. Because the ACE equilibrium constant differs slightly, a
+small residual stress may appear as near-zero or slightly imaginary acoustic
+frequencies around Gamma; relax the cell with the potential to remove it (see the
+appendix below).</p>
+</section>
+</section>
+<section id="appendix-structure-optimization-using-lammps">
+<span id="lammps-p3-structure-optimization"></span><h2>Appendix: structure optimization using LAMMPS<a class="headerlink" href="#appendix-structure-optimization-using-lammps" title="Link to this heading">#</a></h2>
+<p>Relax the crystal structure with the potential before the phonon calculation so
+that the residual forces, and the residual stress on the lattice, vanish. The
+following relaxes both the cell and the internal coordinates:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>units metal
+
+read_data unitcell
+
+pair_style  pace
+pair_coeff * * Si_npj_CompMat2021.ace Si
+
+variable etol equal 0.0
+variable ftol equal 1e-8
+variable maxiter equal 1000
+variable maxeval equal 100000
+
+fix relax all box/relax iso 0.0 vmax 0.001
+minimize ${etol} ${ftol} ${maxiter} ${maxeval}
+
+write_data dump.unitcell
+</pre></div>
+</div>
+<p>Drop the <code class="docutils literal notranslate"><span class="pre">fix</span> <span class="pre">box/relax</span></code> line to relax only the internal coordinates. More
+instruction is found at
+<a class="reference external" href="https://gist.github.com/lan496/e9dff8449cd7489f6722b276282e66a0">https://gist.github.com/lan496/e9dff8449cd7489f6722b276282e66a0</a>.</p>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="turbomole.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">TURBOMOLE &amp; phono3py calculation</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="command-options.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Command options / Setting tags</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#workflow">Workflow</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lammps-structure-format">LAMMPS structure format</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#generating-supercells-with-displacements">Generating supercells with displacements</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#route-a-from-a-lammps-structure-file">Route (a): from a LAMMPS structure file</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#route-b-from-a-unit-cell-defined-in-yaml">Route (b): from a unit cell defined in yaml</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#force-calculation-and-forces-fc3">Force calculation and FORCES_FC3</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-the-thermal-conductivity-calculation">Running the thermal conductivity calculation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#examples">Examples</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#si-lammps-ace-ace">Si-lammps-ace (ACE)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#appendix-structure-optimization-using-lammps">Appendix: structure optimization using LAMMPS</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Author name not set
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2015, Atsushi Togo.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
