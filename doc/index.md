@@ -20,8 +20,8 @@ transport <LTC_options>`
 - {ref}`spectral_function_option`
 - Built-in interfaces for {ref}`VASP <vasp_interface>`,
   {ref}`QE (pw) <qe_interface>`, {ref}`CRYSTAL <crystal_interface>`,
-  {ref}`TURBOMOLE <turbomole_interface>`, and Abinit (see
-  {ref}`calculator_interfaces`).
+  {ref}`TURBOMOLE <turbomole_interface>`, {ref}`LAMMPS <lammps_interface>`,
+  and Abinit (see {ref}`calculator_interfaces`).
 - API is prepared to operate phono3py from Python
   ([example](https://github.com/phonopy/phono3py/blob/master/example/Si-PBEsol/Si.py)).
 
@@ -44,7 +44,7 @@ install
 rust-backend
 workflow
 examples
-Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE) <interfaces>
+Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE, LAMMPS) <interfaces>
 command-options
 input-output-files
 auxiliary-tools
