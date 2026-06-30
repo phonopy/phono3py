@@ -117,7 +117,14 @@ def parse_forces(
                 dataset = type2_dataset
                 dataset_filename_read_from = force_filename
 
-        assert dataset is not None
+        if dataset is None:
+            raise RuntimeError(
+                f'Forces were found in "{force_filename}", but no displacement '
+                "dataset is available to interpret them. A displacement dataset "
+                '(e.g. "phono3py_disp.yaml") is required to read forces from '
+                f'"{force_filename}". Remove or move the force file if you only '
+                "intend to generate displacements."
+            )
 
         # Try reading forces with type1 dataset.
         if not forces_in_dataset(dataset):
