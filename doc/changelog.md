@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Jul-03-2026: Version 4.3.3
+
+- Release to create conda-forge package.
+
 ## Jul-02-2026: Version 4.3.2
 
 - Added LAMMPS calculator interface with the Si-lammps-ace example and
