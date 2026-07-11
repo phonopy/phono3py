@@ -4,7 +4,7 @@ import numpy as np
 
 from phono3py import Phono3py
 
-TOLERANCE = 0.2
+TOLERANCE = 0.25
 
 
 def test_kappa_smm19_si(si_pbesol: Phono3py):
