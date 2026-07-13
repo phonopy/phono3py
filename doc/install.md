@@ -18,8 +18,7 @@ please use the latest release of phonopy when installing phono3py.
 ## Installation using conda
 
 Using conda is the easiest way for installation of phono3py for linux and macOS.
-These packages are made and maintained by Jan Janssen. The installation is
-simply done by:
+These packages are made by Jan Janssen. The installation is simply done by:
 
 ```bash
 % conda install -c conda-forge phono3py
@@ -30,41 +29,18 @@ All dependent packages should be installed.
 (install_from_source_code)=
 ## Installation from source code
 
-When installing phono3py from the source code, a few libraries are required
-before running `pip install`.
-
-Note that at version 3.3.0, the build system of phono3py was modernized.
-Nanobind, cmake, and scikit-build-core are used for the building. The receipt is
-written in `CMakeLists.txt` and `pyproject.toml`. The old `setup.py` was
-removed.
+When installing phono3py from the source code, cmake is required before running
+`pip install`. A C/C++ compiler is required only when the legacy C extension is
+also built (i.e. without `PHONO3PY_NO_C_EXT=1`).
 
 The package version is derived from git tags by `setuptools_scm` (written to
 `phono3py/_version.py`). Building from source therefore requires a git checkout
 that includes tags. Building from an archive without git metadata (e.g. a
 downloaded zip) may fail to determine the version.
 
-If phono3py is compiled with a special compiler or special options, manual
-modification of `CMakeLists.txt` may be needed.
-
-- {ref}`Linear algebra library <install_lapacke>`: BLAS, LAPACK, and LAPACKE
-  (optional, see {ref}`install_with_lapacke`)
-
-These packages may be installed by the package manager of OS (e.g. `apt`) or
-conda environment. Automatic search of required libraries and flags that are
-already on the system is performed by cmake.
-
-(install_with_cmake)=
-### Building with automatic search of library configurations by cmake
-
-With installed cmake and required libraries on the system, cmake tries to find
-libraries to be linked and the compiler flags that are required during the build.
-This phono3py build can be launched by
-```
-% pip install -e . -vvv
-```
-In the standard output (shown in verbose mode by `-vvv`), the flags and
-libraries found by cmake are reported. Please carefully check if those
-configurations are the expected ones or not.
+These may be installed by the package manager of OS (e.g. `apt`) or conda
+environment. Automatic search of required libraries and flags that are already
+on the system is performed by cmake.
 
 ## Installation instruction of latest development version of phono3py
 
@@ -103,37 +79,21 @@ wrong python libraries can be imported.
 
 3. Install necessary conda packages for phono3py
 
-   For x86-64 system:
-
    ```bash
-   % conda install numpy scipy h5py pyyaml matplotlib-base c-compiler cxx-compiler cmake spglib
+   % conda install numpy scipy h5py pyyaml matplotlib-base cmake spglib phonors
    ```
 
-   Unless {ref}`install_with_lapacke`, the following packages will be
-   necessary to compile phono3py:
+   Here `phonors` is the Rust backend, installed as a pre-built binary from
+   conda; usually this is all that is needed. Only when a development version of
+   `phonors` is required is it necessary to build `phonors` from source; see
+   {ref}`rust_backend`.
+
+   The above packages are enough for the default build below, which skips the C
+   extension. To also build the legacy C extension, additionally install C/C++
+   compilers:
 
    ```bash
-   % conda install "libblas=*=*mkl" mkl-include
-   ```
-
-   A libblas library can be chosen among `[openblas, mkl, blis, netlib]`. If
-   specific one is expected, it is installed by (e.g. openblas)
-
-   ```bash
-   % conda install "libblas=*=*openblas"
-   ```
-
-   For macOS ARM64 system:
-
-   ```bash
-   % conda install numpy scipy h5py pyyaml matplotlib-base c-compiler cxx-compiler spglib cmake
-   ```
-
-   Unless {ref}`install_with_lapacke`, the following package will be
-   necessary to compile phono3py:
-
-   ```bash
-   % conda install openblas
+   % conda install c-compiler cxx-compiler
    ```
 
    The latest phonopy and phono3py are obtained from github, and they are
@@ -145,24 +105,22 @@ wrong python libraries can be imported.
    % git clone https://github.com/phonopy/phonopy.git
    % git clone https://github.com/phonopy/phono3py.git
    % cd phonopy
-   % pip install -e . -vvv
+   % PHONOPY_NO_C_EXT=1 pip install -e . -vvv
    % cd ../phono3py
-   % pip install -e . -vvv
+   % PHONO3PY_NO_C_EXT=1 pip install -e . -vvv
    ```
 
+   Both phonopy and phono3py default to the Rust backend provided by
+   `phonors`, which is installed automatically as a runtime dependency, so the
+   C extension is not required. Setting `PHONOPY_NO_C_EXT=1` /
+   `PHONO3PY_NO_C_EXT=1` makes each `CMakeLists.txt` return early and skips
+   building the C extensions (`phonopy._phonopy` / `phonopy._recgrid` and
+   `phono3py._phono3py` / `phono3py._phononcalc`); no C/C++ compiler is needed
+   in this case. To also build the legacy C extensions, run `pip install -e .
+   -vvv` without these env vars. See {ref}`rust_backend_no_c_ext` for more
+   details.
+
 ## Dependent libraries
-
-### OpenMP
-
-#### GCC on Ubuntu
-
-With system provided gcc, `libgomp1` may be necessary to enable OpenMP
-multithreading support. This library is probably installed already in your
-system. If you don't have it and you use Ubuntu linux, it is installed by:
-
-```bash
-% sudo apt-get install libgomp1
-```
 
 (install_lapacke)=
 ### LAPACKE (deprecated, legacy C-extension backend only)
