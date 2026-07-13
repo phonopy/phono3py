@@ -319,16 +319,9 @@
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-using-conda">Installation using conda</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-from-source-code">Installation from source code</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#building-with-automatic-search-of-library-configurations-by-cmake">Building with automatic search of library configurations by cmake</a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-from-source-code">Installation from source code</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-instruction-of-latest-development-version-of-phono3py">Installation instruction of latest development version of phono3py</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dependent-libraries">Dependent libraries</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#openmp">OpenMP</a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gcc-on-ubuntu">GCC on Ubuntu</a></li>
-</ul>
-</li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lapacke-deprecated-legacy-c-extension-backend-only">LAPACKE (deprecated, legacy C-extension backend only)</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#building-with-linking-lapacke">Building with linking LAPACKE</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-provided-by-conda">OpenBLAS provided by conda</a></li>
@@ -367,8 +360,7 @@ please use the latest release of phonopy when installing phono3py.</p>
 <section id="installation-using-conda">
 <h2>Installation using conda<a class="headerlink" href="#installation-using-conda" title="Link to this heading">#</a></h2>
 <p>Using conda is the easiest way for installation of phono3py for linux and macOS.
-These packages are made and maintained by Jan Janssen. The installation is
-simply done by:</p>
+These packages are made by Jan Janssen. The installation is simply done by:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>phono3py
 </pre></div>
 </div>
@@ -376,37 +368,16 @@ simply done by:</p>
 </section>
 <section id="installation-from-source-code">
 <span id="install-from-source-code"></span><h2>Installation from source code<a class="headerlink" href="#installation-from-source-code" title="Link to this heading">#</a></h2>
-<p>When installing phono3py from the source code, a few libraries are required
-before running <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span></code>.</p>
-<p>Note that at version 3.3.0, the build system of phono3py was modernized.
-Nanobind, cmake, and scikit-build-core are used for the building. The receipt is
-written in <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code> and <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>. The old <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> was
-removed.</p>
+<p>When installing phono3py from the source code, cmake is required before running
+<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span></code>. A C/C++ compiler is required only when the legacy C extension is
+also built (i.e. without <code class="docutils literal notranslate"><span class="pre">PHONO3PY_NO_C_EXT=1</span></code>).</p>
 <p>The package version is derived from git tags by <code class="docutils literal notranslate"><span class="pre">setuptools_scm</span></code> (written to
 <code class="docutils literal notranslate"><span class="pre">phono3py/_version.py</span></code>). Building from source therefore requires a git checkout
 that includes tags. Building from an archive without git metadata (e.g. a
 downloaded zip) may fail to determine the version.</p>
-<p>If phono3py is compiled with a special compiler or special options, manual
-modification of <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code> may be needed.</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="#install-lapacke"><span class="std std-ref">Linear algebra library</span></a>: BLAS, LAPACK, and LAPACKE
-(optional, see <a class="reference internal" href="#install-with-lapacke"><span class="std std-ref">Building with linking LAPACKE</span></a>)</p></li>
-</ul>
-<p>These packages may be installed by the package manager of OS (e.g. <code class="docutils literal notranslate"><span class="pre">apt</span></code>) or
-conda environment. Automatic search of required libraries and flags that are
-already on the system is performed by cmake.</p>
-<section id="building-with-automatic-search-of-library-configurations-by-cmake">
-<span id="install-with-cmake"></span><h3>Building with automatic search of library configurations by cmake<a class="headerlink" href="#building-with-automatic-search-of-library-configurations-by-cmake" title="Link to this heading">#</a></h3>
-<p>With installed cmake and required libraries on the system, cmake tries to find
-libraries to be linked and the compiler flags that are required during the build.
-This phono3py build can be launched by</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span> <span class="o">-</span><span class="n">vvv</span>
-</pre></div>
-</div>
-<p>In the standard output (shown in verbose mode by <code class="docutils literal notranslate"><span class="pre">-vvv</span></code>), the flags and
-libraries found by cmake are reported. Please carefully check if those
-configurations are the expected ones or not.</p>
-</section>
+<p>These may be installed by the package manager of OS (e.g. <code class="docutils literal notranslate"><span class="pre">apt</span></code>) or conda
+environment. Automatic search of required libraries and flags that are already
+on the system is performed by cmake.</p>
 </section>
 <section id="installation-instruction-of-latest-development-version-of-phono3py">
 <h2>Installation instruction of latest development version of phono3py<a class="headerlink" href="#installation-instruction-of-latest-development-version-of-phono3py" title="Link to this heading">#</a></h2>
@@ -438,27 +409,17 @@ virtual environment.</p>
 </div>
 </li>
 <li><p>Install necessary conda packages for phono3py</p>
-<p>For x86-64 system:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>numpy<span class="w"> </span>scipy<span class="w"> </span>h5py<span class="w"> </span>pyyaml<span class="w"> </span>matplotlib-base<span class="w"> </span>c-compiler<span class="w"> </span>cxx-compiler<span class="w"> </span>cmake<span class="w"> </span>spglib
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>numpy<span class="w"> </span>scipy<span class="w"> </span>h5py<span class="w"> </span>pyyaml<span class="w"> </span>matplotlib-base<span class="w"> </span>cmake<span class="w"> </span>spglib<span class="w"> </span>phonors
 </pre></div>
 </div>
-<p>Unless <a class="reference internal" href="#install-with-lapacke"><span class="std std-ref">Building with linking LAPACKE</span></a>, the following packages will be
-necessary to compile phono3py:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;libblas=*=*mkl&quot;</span><span class="w"> </span>mkl-include
-</pre></div>
-</div>
-<p>A libblas library can be chosen among <code class="docutils literal notranslate"><span class="pre">[openblas,</span> <span class="pre">mkl,</span> <span class="pre">blis,</span> <span class="pre">netlib]</span></code>. If
-specific one is expected, it is installed by (e.g. openblas)</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;libblas=*=*openblas&quot;</span>
-</pre></div>
-</div>
-<p>For macOS ARM64 system:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>numpy<span class="w"> </span>scipy<span class="w"> </span>h5py<span class="w"> </span>pyyaml<span class="w"> </span>matplotlib-base<span class="w"> </span>c-compiler<span class="w"> </span>cxx-compiler<span class="w"> </span>spglib<span class="w"> </span>cmake
-</pre></div>
-</div>
-<p>Unless <a class="reference internal" href="#install-with-lapacke"><span class="std std-ref">Building with linking LAPACKE</span></a>, the following package will be
-necessary to compile phono3py:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>openblas
+<p>Here <code class="docutils literal notranslate"><span class="pre">phonors</span></code> is the Rust backend, installed as a pre-built binary from
+conda; usually this is all that is needed. Only when a development version of
+<code class="docutils literal notranslate"><span class="pre">phonors</span></code> is required is it necessary to build <code class="docutils literal notranslate"><span class="pre">phonors</span></code> from source; see
+<a class="reference internal" href="rust-backend.html#rust-backend"><span class="std std-ref">Rust backend</span></a>.</p>
+<p>The above packages are enough for the default build below, which skips the C
+extension. To also build the legacy C extension, additionally install C/C++
+compilers:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>conda<span class="w"> </span>install<span class="w"> </span>c-compiler<span class="w"> </span>cxx-compiler
 </pre></div>
 </div>
 <p>The latest phonopy and phono3py are obtained from github, and they are
@@ -468,28 +429,24 @@ compiled and installed by:</p>
 %<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/phonopy/phonopy.git
 %<span class="w"> </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/phonopy/phono3py.git
 %<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>phonopy
-%<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="w"> </span>-vvv
+%<span class="w"> </span><span class="nv">PHONOPY_NO_C_EXT</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="w"> </span>-vvv
 %<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>../phono3py
-%<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="w"> </span>-vvv
+%<span class="w"> </span><span class="nv">PHONO3PY_NO_C_EXT</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="w"> </span>-vvv
 </pre></div>
 </div>
+<p>Both phonopy and phono3py default to the Rust backend provided by
+<code class="docutils literal notranslate"><span class="pre">phonors</span></code>, which is installed automatically as a runtime dependency, so the
+C extension is not required. Setting <code class="docutils literal notranslate"><span class="pre">PHONOPY_NO_C_EXT=1</span></code> /
+<code class="docutils literal notranslate"><span class="pre">PHONO3PY_NO_C_EXT=1</span></code> makes each <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code> return early and skips
+building the C extensions (<code class="docutils literal notranslate"><span class="pre">phonopy._phonopy</span></code> / <code class="docutils literal notranslate"><span class="pre">phonopy._recgrid</span></code> and
+<code class="docutils literal notranslate"><span class="pre">phono3py._phono3py</span></code> / <code class="docutils literal notranslate"><span class="pre">phono3py._phononcalc</span></code>); no C/C++ compiler is needed
+in this case. To also build the legacy C extensions, run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">.</span> <span class="pre">-vvv</span></code> without these env vars. See <a class="reference internal" href="rust-backend.html#rust-backend-no-c-ext"><span class="std std-ref">Building phono3py without the C extension</span></a> for more
+details.</p>
 </li>
 </ol>
 </section>
 <section id="dependent-libraries">
 <h2>Dependent libraries<a class="headerlink" href="#dependent-libraries" title="Link to this heading">#</a></h2>
-<section id="openmp">
-<h3>OpenMP<a class="headerlink" href="#openmp" title="Link to this heading">#</a></h3>
-<section id="gcc-on-ubuntu">
-<h4>GCC on Ubuntu<a class="headerlink" href="#gcc-on-ubuntu" title="Link to this heading">#</a></h4>
-<p>With system provided gcc, <code class="docutils literal notranslate"><span class="pre">libgomp1</span></code> may be necessary to enable OpenMP
-multithreading support. This library is probably installed already in your
-system. If you don’t have it and you use Ubuntu linux, it is installed by:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>libgomp1
-</pre></div>
-</div>
-</section>
-</section>
 <section id="lapacke-deprecated-legacy-c-extension-backend-only">
 <span id="install-lapacke"></span><h3>LAPACKE (deprecated, legacy C-extension backend only)<a class="headerlink" href="#lapacke-deprecated-legacy-c-extension-backend-only" title="Link to this heading">#</a></h3>
 <div class="deprecated">
@@ -621,16 +578,9 @@ multithreadings are unnecessary to be deactivated. -->
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-using-conda">Installation using conda</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-from-source-code">Installation from source code</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#building-with-automatic-search-of-library-configurations-by-cmake">Building with automatic search of library configurations by cmake</a></li>
-</ul>
-</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-from-source-code">Installation from source code</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation-instruction-of-latest-development-version-of-phono3py">Installation instruction of latest development version of phono3py</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dependent-libraries">Dependent libraries</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#openmp">OpenMP</a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#gcc-on-ubuntu">GCC on Ubuntu</a></li>
-</ul>
-</li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lapacke-deprecated-legacy-c-extension-backend-only">LAPACKE (deprecated, legacy C-extension backend only)</a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#building-with-linking-lapacke">Building with linking LAPACKE</a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-provided-by-conda">OpenBLAS provided by conda</a></li>
