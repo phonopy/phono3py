@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Jul-18-2026: Version 4.4.0
+
+- Maintenance release.
+
 ## Jul-03-2026: Version 4.3.3
 
 - Release to create conda-forge package.
