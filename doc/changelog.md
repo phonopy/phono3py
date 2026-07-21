@@ -2,6 +2,13 @@
 
 # Change Log
 
+## Unreleased (v4.5.0)
+
+- Supercell file names keep a uniform number of digits when the number of
+  displacements exceeds five digits, e.g. `POSCAR-000001`, ...,
+  `POSCAR-100000`. This requires phonopy with the same change. Names are
+  unchanged for up to 99999 displacements.
+
 ## Jul-18-2026: Version 4.4.0
 
 - Maintenance release.
