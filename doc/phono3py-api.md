@@ -434,6 +434,71 @@ Phono3py.phonon_supercells_with_displacements
 Their meanings are documented in {ref}`api_reference`, but should be obvious
 from the names.
 
+### Harmonic calculations from a phono3py-yaml file
+
+`phonopy.load` does not read a phono3py-yaml file as a phonopy calculation.
+It returns a `Phonopy` instance built on `supercell_matrix`, which is the fc3
+supercell, and it does not pick up `phonon_supercell_matrix` or
+`phonon_dataset`. This is intended: phonopy is kept independent of the
+phono3py file format.
+
+The resulting instance therefore has no displacement dataset and no force
+constants, and the first calculation attempted with it fails with a message
+that does not indicate the cause:
+
+```python
+In [1]: import phonopy
+
+In [2]: ph = phonopy.load("phono3py_disp_dimfc2.yaml")
+
+In [3]: ph.produce_force_constants()
+---------------------------------------------------------------------------
+RuntimeError: Displacement dataset is not set.
+```
+
+or, if force constants are never produced,
+
+```python
+RuntimeError: Dynamical matrix has not yet built.
+```
+
+To run harmonic calculations from a phono3py-yaml file, load it with
+`phono3py.load` and construct the `Phonopy` instance from the phonon
+supercell and phonon dataset:
+
+```python
+In [1]: import phono3py
+
+In [2]: from phonopy import Phonopy
+
+In [3]: ph3 = phono3py.load("phono3py_disp_dimfc2.yaml", produce_fc=False, log_level=2)
+
+In [4]: ph = Phonopy(ph3.unitcell,
+   ...:              supercell_matrix=ph3.phonon_supercell_matrix,
+   ...:              primitive_matrix=ph3.primitive_matrix,
+   ...:              log_level=2)
+
+In [5]: ph.dataset = ph3.phonon_dataset
+
+In [6]: ph.nac_params = ph3.nac_params
+
+In [7]: ph.produce_force_constants()
+
+In [8]: ph.symmetrize_force_constants(use_symfc_projector=True)
+
+In [9]: ph.auto_band_structure(plot=True).show()
+```
+
+`ph3.phonon_supercell_matrix` is used rather than `ph3.supercell_matrix`, so
+the harmonic force constants come from the fc2 supercell. When
+`phonon_supercell_matrix` is not set, use `ph3.supercell_matrix` and
+`ph3.dataset` instead.
+
+`use_symfc_projector=True` applies the symfc projector when symmetrizing, which
+enforces the translational invariance more accurately than the default. This
+matters when a small residual would otherwise leave the acoustic modes at
+{math}`\Gamma` slightly negative and be mistaken for a dynamical instability.
+
 (api-phono3py)=
 
 ## `phono3py.load`
