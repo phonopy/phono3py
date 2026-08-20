@@ -41,17 +41,40 @@ from numpy.typing import NDArray
 from phonopy.phonon.thermal_properties import mode_cv
 from phonopy.physical_units import get_physical_units
 
+# Threshold on x = E / (kB T) below which two modes are treated as
+# degenerate and (n_j - n_j') / (x_j - x_j') is replaced by its analytic
+# limit instead of the quotient.
+_DEGENERACY_TOLERANCE = 1e-6
 
-def _bose_einstein(
-    freqs: NDArray[np.double], temps: NDArray[np.double]
+
+def _bose_einstein_difference_ratio(
+    x: NDArray[np.double], n: NDArray[np.double]
 ) -> NDArray[np.double]:
-    """Bose-Einstein distribution.
+    r"""Return (n_j - n_j') / (x_j - x_j') with x = E / (k_B T).
 
-    Re-implemented here because of different physical units.
+    Evaluated as a quotient, this is 0/0 for degenerate modes and loses all
+    significant digits when two frequencies differ only by round-off, which
+    happens at every q-point where bands are degenerate. The exact identity
+
+    n_{\mathbf{q}j} - n_{\mathbf{q}j'} =
+    -n_{\mathbf{q}j} (n_{\mathbf{q}j'} + 1)
+    \left( e^{x_{\mathbf{q}j} - x_{\mathbf{q}j'}} - 1 \right)
+
+    removes the cancellation and gives the finite limit
+    -n_{\mathbf{q}j} (n_{\mathbf{q}j} + 1) at x_{\mathbf{q}j} = x_{\mathbf{q}j'}.
+    It is used for the nearly degenerate pairs, for which the exponential is
+    safely expanded to first order.
 
     """
-    x = np.divide.outer(freqs, get_physical_units().KB * temps).T
-    return 1.0 / (np.exp(x) - 1)
+    d = x[:, :, None] - x[:, None, :]
+    n_j = n[:, :, None]
+    n_jp = n[:, None, :]
+    is_deg = np.abs(d) < _DEGENERACY_TOLERANCE
+    return np.where(
+        is_deg,
+        -n_j * (n_jp + 1) * (1 + d / 2),
+        (n_j - n_jp) / np.where(is_deg, 1, d),
+    )
 
 
 def _mode_cv_matrix(
@@ -85,10 +108,11 @@ def _mode_cv_matrix(
         shape=(num_temps, num_band, num_band), dtype='double', order='C'.
 
     """
-    n = _bose_einstein(freqs, temps)
-    f_sub = np.subtract.outer(freqs, freqs)
-    n_sub = n[:, :, None] - n[:, None, :]
-    cvm = -prefactor[None, :, :] / temps[:, None, None] * n_sub / f_sub[None, :, :]
+    kb_temps = get_physical_units().KB * temps
+    x = np.divide.outer(freqs, kb_temps).T
+    n = 1.0 / np.expm1(x)
+    ratio = _bose_einstein_difference_ratio(x, n)
+    cvm = -prefactor[None, :, :] * ratio / (temps * kb_temps)[:, None, None]
     return np.ascontiguousarray(cvm)
 
 
