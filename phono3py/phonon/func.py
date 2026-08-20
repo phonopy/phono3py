@@ -65,8 +65,8 @@ def bose_einstein(x: NDArray[np.double], T: float) -> NDArray[np.double]:
         Temperature in K
 
     """
-    return 1.0 / (
-        np.exp(get_physical_units().THzToEv * x / (get_physical_units().KB * T)) - 1
+    return 1.0 / np.expm1(
+        get_physical_units().THzToEv * x / (get_physical_units().KB * T)
     )
 
 
