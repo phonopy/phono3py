@@ -22,28 +22,16 @@ from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
-from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
+from phonopy.harmonic.dynamical_matrix import NacParams, get_dynamical_matrix
+from phonopy.phonon.grid import BZGrid, get_qpoints_from_bz_grid_points
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive
 
 from phono3py._lang import resolve_lang
+from phono3py.phonon.func import bose_einstein
+from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_rust
 from phono3py.phonon4.real_to_reciprocal import RealToReciprocalFc4
-
-
-def _bose_einstein(frequencies: NDArray[np.double], t: float) -> NDArray[np.double]:
-    """Return Bose-Einstein occupations for frequencies (THz) at temperature t (K).
-
-    Frequencies at or below zero get zero occupation.
-    """
-    units = get_physical_units()
-    occ = np.zeros_like(frequencies)
-    if t <= 0:
-        return occ
-    mask = frequencies > 0
-    x = units.THzToEv * frequencies[mask] / (units.KB * t)
-    occ[mask] = 1.0 / (np.exp(x) - 1.0)
-    return occ
 
 
 class ReciprocalToNormalFc4:
@@ -141,6 +129,7 @@ class FrequencyShift:
         mesh: NDArray[np.int64],
         temperatures: NDArray[np.double] | None = None,
         band_indices: NDArray[np.int64] | None = None,
+        nac_params: NacParams | None = None,
         is_compact_fc4: bool = False,
         frequency_factor_to_THz: float | None = None,
         cutoff_frequency: float = 1e-4,
@@ -162,6 +151,10 @@ class FrequencyShift:
             Temperatures in K. Default is ``[0.0]``.
         band_indices : array_like, optional
             Band indices to compute. Default is all bands.
+        nac_params : NacParams, optional
+            Non-analytical term correction parameters. Default is None, i.e.
+            no correction. The correction is dropped at Gamma, where it is
+            direction dependent and the grid gives no direction to take.
         is_compact_fc4 : bool, optional
             Whether ``fc4`` is compact. Default is False.
         frequency_factor_to_THz : float, optional
@@ -188,13 +181,13 @@ class FrequencyShift:
         self._cutoff_frequency = cutoff_frequency
         self._lang = resolve_lang(lang)
 
-        self._dm = get_dynamical_matrix(fc2, supercell, primitive)
-        self._r2r = RealToReciprocalFc4(
-            fc4, primitive, self._mesh, is_compact_fc4, lang=self._lang
+        self._dm = get_dynamical_matrix(
+            fc2, supercell, primitive, nac_params=nac_params
         )
+        self._r2r = RealToReciprocalFc4(fc4, primitive, is_compact_fc4, lang=self._lang)
 
-        self._grid_address = np.array(
-            list(np.ndindex(*self._mesh.tolist())), dtype="int64"
+        self._bz_grid = BZGrid(
+            self._mesh, lattice=primitive.cell, store_dense_gp_map=True
         )
         self._frequencies, self._eigenvectors = self._solve_phonons()
         self._r2n = ReciprocalToNormalFc4(
@@ -215,57 +208,85 @@ class FrequencyShift:
             * units.EV
             / (2 * np.pi * units.THz)
             / 8
-            / np.prod(self._mesh)
+            / np.prod(self._bz_grid.D_diag)
         )
 
     def _solve_phonons(self) -> tuple[NDArray[np.double], NDArray[np.complex128]]:
-        num_grid = len(self._grid_address)
+        num_bzgp = len(self._bz_grid.addresses)
         num_band = len(self._primitive) * 3
-        frequencies = np.zeros((num_grid, num_band), dtype="double")
-        eigenvectors = np.zeros((num_grid, num_band, num_band), dtype="complex128")
-        for gi, address in enumerate(self._grid_address):
-            q = address / self._mesh
-            self._dm.run(q)
-            eigvals, eigenvectors[gi] = np.linalg.eigh(self._dm.dynamical_matrix)
-            frequencies[gi] = np.sqrt(np.abs(eigvals)) * np.sign(eigvals) * self._factor
+        frequencies = np.zeros((num_bzgp, num_band), dtype="double")
+        eigenvectors = np.zeros((num_bzgp, num_band, num_band), dtype="complex128")
+        solver = run_phonon_solver_rust if self._lang == "Rust" else run_phonon_solver_c
+        solver(
+            self._dm,
+            frequencies,
+            eigenvectors,
+            np.zeros(num_bzgp, dtype="byte"),  # phonon_done
+            np.arange(num_bzgp, dtype="int64"),
+            self._bz_grid.addresses,
+            self._bz_grid.QDinv,
+            self._factor,
+            None,  # No q-direction, so the NAC is dropped at Gamma.
+            "L",
+        )
         return frequencies, eigenvectors
 
     @property
+    def bz_grid(self) -> BZGrid:
+        """Return the BZ-grid the phonons and the mesh sum are defined on."""
+        return self._bz_grid
+
+    @property
     def grid_address(self) -> NDArray[np.int64]:
-        """Return the (no-symmetry) grid addresses."""
-        return self._grid_address
+        """Return the BZ-grid addresses."""
+        return self._bz_grid.addresses
+
+    @property
+    def mesh_grid_points(self) -> NDArray[np.int64]:
+        """Return one BZ-grid point per mesh point.
+
+        The BZ-grid holds every translationally equivalent address on the BZ
+        surface, so it has more points than the mesh. These are the unique
+        representatives the weight-one mesh sum runs over.
+
+        """
+        return self._bz_grid.grg2bzg
 
     @property
     def frequencies(self) -> NDArray[np.double]:
-        """Return phonon frequencies on the grid (THz)."""
+        """Return phonon frequencies on the BZ-grid (THz)."""
         return self._frequencies
 
     def run(self, grid_point: int) -> NDArray[np.double]:
-        """Return frequency shifts at a grid point, shape (n_temperatures, n_bands)."""
-        address0 = self._grid_address[grid_point]
-        num_grid = len(self._grid_address)
+        """Return frequency shifts at a BZ-grid point.
+
+        Returns shape (n_temperatures, n_bands).
+        """
+        q0 = get_qpoints_from_bz_grid_points(grid_point, self._bz_grid)
+        gps1 = self.mesh_grid_points
+        qpoints1 = get_qpoints_from_bz_grid_points(gps1, self._bz_grid)
         num_band = len(self._primitive) * 3
 
         # fc4_normal[gp1, band_j, band'] for the requested bands.
         fc4_normal = np.zeros(
-            (num_grid, len(self._band_indices), num_band), dtype="complex128"
+            (len(gps1), len(self._band_indices), num_band), dtype="complex128"
         )
-        for gi, address1 in enumerate(self._grid_address):
-            quartet = np.array([-address0, address0, address1, -address1])
-            fc4_reciprocal = self._r2r.run(quartet)
+        for i, (gp1, q1) in enumerate(zip(gps1, qpoints1, strict=True)):
+            fc4_reciprocal = self._r2r.run(np.array([-q0, q0, q1, -q1]))
             for j, band_index in enumerate(self._band_indices):
-                fc4_normal[gi, j] = self._r2n.run(
-                    fc4_reciprocal, grid_point, int(band_index), gi
+                fc4_normal[i, j] = self._r2n.run(
+                    fc4_reciprocal, grid_point, int(band_index), int(gp1)
                 )
 
+        freqs1 = self._frequencies[gps1]
         shifts = np.zeros((len(self._temperatures), len(self._band_indices)))
         for i_t, temperature in enumerate(self._temperatures):
-            for j in range(len(self._band_indices)):
-                total = 0.0 + 0.0j
-                for gi in range(num_grid):
-                    occ = _bose_einstein(self._frequencies[gi], temperature)
-                    total += (
-                        fc4_normal[gi, j] * self._unit_conversion * (2 * occ + 1)
-                    ).sum()
-                shifts[i_t, j] = total.real
+            occs = np.zeros_like(freqs1)
+            if temperature > 0:
+                mask = freqs1 > 0
+                occs[mask] = bose_einstein(freqs1[mask], temperature)
+            shifts[i_t] = (
+                self._unit_conversion
+                * np.einsum("gjb,gb->j", fc4_normal, 2 * occs + 1).real
+            )
         return shifts

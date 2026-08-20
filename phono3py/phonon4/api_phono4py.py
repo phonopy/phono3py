@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING, Literal
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.api_phonopy import set_data_to_phonopy_yaml
+from phonopy.harmonic.dynamical_matrix import NacParams
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive
 from phonopy.structure.symmetry import Symmetry
@@ -307,6 +308,7 @@ class Phono4py:
         grid_points: NDArray[np.int64] | list[int] | None = None,
         temperatures: NDArray[np.double] | list[float] | None = None,
         band_indices: NDArray[np.int64] | list[int] | None = None,
+        nac_params: NacParams | None = None,
         cutoff_frequency: float = 1e-4,
         frequency_factor_to_THz: float | None = None,
     ) -> NDArray[np.double]:
@@ -325,12 +327,18 @@ class Phono4py:
             Harmonic force constants defined on :attr:`supercell` (the same
             supercell fc4 is solved in), for the dynamical matrix.
         grid_points : array_like, optional
-            Grid-point indices into the no-symmetry ``np.ndindex(*mesh)``
-            addresses. Default is ``None`` (all grid points).
+            BZ-grid point indices, i.e. indices into
+            :attr:`FrequencyShift.grid_address`. Default is ``None``, which
+            uses :attr:`FrequencyShift.mesh_grid_points`, one point per mesh
+            point.
         temperatures : array_like, optional
             Temperatures in K. Default is ``[0.0]``.
         band_indices : array_like, optional
             Band indices to compute. Default is all bands.
+        nac_params : NacParams, optional
+            Non-analytical term correction parameters. Default is None, i.e.
+            no correction. The correction is dropped at Gamma, where it is
+            direction dependent and the grid gives no direction to take.
         cutoff_frequency : float, optional
             Frequencies at or below this (THz) are skipped. Default ``1e-4``.
         frequency_factor_to_THz : float, optional
@@ -358,13 +366,14 @@ class Phono4py:
             mesh,
             temperatures=temperatures,
             band_indices=band_indices,
+            nac_params=nac_params,
             is_compact_fc4=is_compact_fc4,
             frequency_factor_to_THz=frequency_factor_to_THz,
             cutoff_frequency=cutoff_frequency,
             lang=self._lang,
         )
         if grid_points is None:
-            grid_points = range(int(np.prod(mesh)))
+            grid_points = self._frequency_shift.mesh_grid_points
         return np.array([self._frequency_shift.run(int(gp)) for gp in grid_points])
 
     def save(

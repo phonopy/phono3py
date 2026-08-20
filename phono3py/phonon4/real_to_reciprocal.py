@@ -29,7 +29,6 @@ class RealToReciprocalFc4:
         self,
         fc4: NDArray[np.double],
         primitive: Primitive,
-        mesh: NDArray[np.int64],
         is_compact_fc: bool = False,
         lang: Literal["C", "Rust"] = "Rust",
     ) -> None:
@@ -42,8 +41,6 @@ class RealToReciprocalFc4:
             ``(n_patom, N, N, N, 3, 3, 3, 3)`` layout.
         primitive : Primitive
             Primitive cell (provides p2s/s2p maps and smallest vectors).
-        mesh : array_like
-            Reciprocal sampling mesh, shape ``(3,)``.
         is_compact_fc : bool, optional
             Whether ``fc4`` is in the compact layout. Default is False.
         lang : {"C", "Rust"}, optional
@@ -53,7 +50,6 @@ class RealToReciprocalFc4:
         """
         self._fc4 = np.array(fc4, dtype="double", order="C")
         self._primitive = primitive
-        self._mesh = np.array(mesh, dtype="int64")
         self._is_compact_fc = is_compact_fc
         self._lang = resolve_lang(lang)
         self._p2s_map = np.array(primitive.p2s_map, dtype="int64")
@@ -64,16 +60,15 @@ class RealToReciprocalFc4:
         self._num_satom = len(self._s2p_map)
         self._num_patom = len(self._p2s_map)
 
-    def run(self, quartet: NDArray[np.int64]) -> NDArray[np.complex128]:
+    def run(self, q_points: NDArray[np.double]) -> NDArray[np.complex128]:
         """Return fc4 in reciprocal space at the given q-point quartet.
 
         Parameters
         ----------
-        quartet : ndarray
-            Four grid addresses (integers), shape ``(4, 3)``. The fractional
-            q-points are ``quartet / mesh``; the first q-point is the reference
-            (only the last three enter the phase factors), mirroring the 2015
-            convention.
+        q_points : ndarray
+            Four q-points in fractional coordinates without 2pi, shape
+            ``(4, 3)``. The first q-point is the reference (only the last three
+            enter the phase factors), mirroring the 2015 convention.
 
         Returns
         -------
@@ -83,7 +78,7 @@ class RealToReciprocalFc4:
             dtype=complex128.
 
         """
-        q = np.array(quartet, dtype="double", order="C") / self._mesh
+        q = np.array(q_points, dtype="double", order="C")
         n_patom = self._num_patom
         fc4_reciprocal = np.zeros((n_patom,) * 4 + (3,) * 4, dtype="complex128")
         if self._lang == "Rust":
