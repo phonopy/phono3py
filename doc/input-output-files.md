@@ -272,7 +272,7 @@ irreducible q-points divided by number of grid points gives
 $\kappa$ ({ref}`iofile_kappa_hdf5_kappa`), e.g.,:
 
 ```python
-kappa_xx_at_index_30 = mode_kappa[30, :, :, 0].sum()/ weight.sum()
+kappa_xx_at_index_30 = mode_kappa[30, :, :, 0].sum() / weight.sum()
 ```
 
 Be careful that until version 1.12.7, mode-kappa values were divided
@@ -467,10 +467,10 @@ import h5py
 import numpy as np
 
 gd = h5py.File("gamma_detail-mxxx-gx.hdf5")
-temp_index = 30 # index of temperature
-temperature = gd['temperature'][temp_index]
-gamma_tp = gd['gamma_detail'][:].sum(axis=-1).sum(axis=-1)
-weight = gd['weight'][:]
+temp_index = 30  # index of temperature
+temperature = gd["temperature"][temp_index]
+gamma_tp = gd["gamma_detail"][:].sum(axis=-1).sum(axis=-1)
+weight = gd["weight"][:]
 gamma = np.dot(weight, gamma_tp[temp_index])
 ```
 
@@ -489,19 +489,25 @@ example, phonon triplets of three phonon scatterings are obtained by
 import h5py
 import numpy as np
 
-gd = h5py.File("gamma_detail-mxxx-gx.hdf5", 'r')
-ph = h5py.File("phonon-mxxx.hdf5", 'r')
-gp1 = gd['grid_point'][()]
-triplets = gd['triplet'][:] # Sets of (gp1, gp2, gp3) where gp1 is fixed
-mesh = gd['mesh'][:]
-grid_address = ph['grid_address'][:]
-q_triplets = grid_address[triplets] / mesh.astype('double') # For conventional regular grid
+gd = h5py.File("gamma_detail-mxxx-gx.hdf5", "r")
+ph = h5py.File("phonon-mxxx.hdf5", "r")
+gp1 = gd["grid_point"][()]
+triplets = gd["triplet"][:]  # Sets of (gp1, gp2, gp3) where gp1 is fixed
+mesh = gd["mesh"][:]
+grid_address = ph["grid_address"][:]
+q_triplets = grid_address[triplets] / mesh.astype(
+    "double"
+)  # For conventional regular grid
 # Phonons of triplets[2]
-phonon_tp = [(ph['frequency'][i], ph['eigenvector'][i]) for i in triplets[2]]
+phonon_tp = [(ph["frequency"][i], ph["eigenvector"][i]) for i in triplets[2]]
 # Fractions of contributions of triplets at this grid point and temperature index 30
-gamma_sum_over_bands = np.dot(weight, gd['gamma_detail'][30].sum(axis=-1).sum(axis=-1).sum(axis=-1))
-contrib_tp = [gd['gamma_detail'][30, i].sum() / gamma_sum_over_bands for i in range(len(weight))]
-np.dot(weight, contrib_tp) # is one
+gamma_sum_over_bands = np.dot(
+    weight, gd["gamma_detail"][30].sum(axis=-1).sum(axis=-1).sum(axis=-1)
+)
+contrib_tp = [
+    gd["gamma_detail"][30, i].sum() / gamma_sum_over_bands for i in range(len(weight))
+]
+np.dot(weight, contrib_tp)  # is one
 ```
 
 (iofile_phonon_hdf5)=

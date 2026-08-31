@@ -84,7 +84,7 @@ else:
 
 with open("ir_grid_points.yaml") as f:
     data = yaml.load(f, Loader=Loader)
-    gps = [gp['grid_point'] for gp in data['ir_grid_points']]
+    gps = [gp["grid_point"] for gp in data["ir_grid_points"]]
     gp_lists = [[] for i in range(num)]
     for i, gp in enumerate(gps):
         gp_lists[i % num].append(gp)

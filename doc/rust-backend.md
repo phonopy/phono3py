@@ -87,8 +87,8 @@ a `lang` keyword:
 ```python
 import phono3py
 
-ph3 = phono3py.load("phono3py.yaml")             # default: Rust
-ph3 = phono3py.load("phono3py.yaml", lang="C")   # opt back into C
+ph3 = phono3py.load("phono3py.yaml")  # default: Rust
+ph3 = phono3py.load("phono3py.yaml", lang="C")  # opt back into C
 ```
 
 The current value is exposed as the read-only `Phono3py.lang`

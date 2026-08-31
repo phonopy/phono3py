@@ -112,14 +112,14 @@ After instantiating `Phono3py` with `unitcell`, displacements are generated as
 follows:
 
 ```python
-In [4]: ph3 = Phono3py(unitcell, supercell_matrix=[3, 3, 2], primitive_matrix="auto")
+In[4]: ph3 = Phono3py(unitcell, supercell_matrix=[3, 3, 2], primitive_matrix="auto")
 
-In [5]: ph3.generate_displacements()
+In[5]: ph3.generate_displacements()
 
-In [6]: len(ph3.supercells_with_displacements)
+In[6]: len(ph3.supercells_with_displacements)
 Out[6]: 1254
 
-In [7]: type(ph3.supercells_with_displacements[0])
+In[7]: type(ph3.supercells_with_displacements[0])
 Out[7]: phonopy.structure.atoms.PhonopyAtoms
 ```
 
@@ -132,7 +132,7 @@ displacement dataset and crystal-structure information are saved via the
 `Phono3py.save()` method:
 
 ```python
-In [8]: ph3.save("phono3py_disp.yaml")
+In[8]: ph3.save("phono3py_disp.yaml")
 ```
 
 ## Supercell force calculation
@@ -198,11 +198,11 @@ Now we are ready to compute force constants. With the default
 permutation invariance:
 
 ```python
-In [12]: ph3.produce_fc3()
+In[12]: ph3.produce_fc3()
 
-In [13]: ph3.symmetrize_fc3()
+In[13]: ph3.symmetrize_fc3()
 
-In [14]: ph3.symmetrize_fc2()
+In[14]: ph3.symmetrize_fc2()
 ```
 
 When `phonon_supercell_matrix` is set, fc2 is **not** produced by
@@ -348,9 +348,9 @@ The three-phonon interaction calculation is ready to run after the following
 lines:
 
 ```python
-In [3]: ph3.mesh_numbers = 30
+In[3]: ph3.mesh_numbers = 30
 
-In [4]: ph3.init_phph_interaction()
+In[4]: ph3.init_phph_interaction()
 ```
 
 It is implemented in the `phono3py.phonon3.interaction.Interaction` class. By
@@ -383,7 +383,7 @@ but even with the defaults, the calculation under the relaxation time
 approximation (RTA) is performed as follows:
 
 ```python
-In [5]: ph3.run_thermal_conductivity()
+In[5]: ph3.run_thermal_conductivity()
 ```
 
 Pass `is_LBTE=True` to run the direct solution of the linearized Boltzmann

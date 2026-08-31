@@ -32,7 +32,7 @@ Out[4]: <phono3py.phonon.grid.BZGrid at 0x1070f3b60>
 It is recommended to read docstring in `BZGrid` by
 
 ```python
-In [5]: help(ph3.grid)
+In[5]: help(ph3.grid)
 ```
 
 Some attributes of this class are presented below.
@@ -102,11 +102,11 @@ To get the number corresponding to the phono3py version 1.x,
 `store_dense_gp_map=False` should be specified in `phono3py.load`,
 
 ```python
-In [5]: ph3 = phono3py.load("phono3py_disp.yaml", store_dense_gp_map=False)
+In[5]: ph3 = phono3py.load("phono3py_disp.yaml", store_dense_gp_map=False)
 
-In [6]: ph3.mesh_numbers = [20, 20, 20]
+In[6]: ph3.mesh_numbers = [20, 20, 20]
 
-In [7]: ph3.grid.get_indices_from_addresses([0, 10, 10])
+In[7]: ph3.grid.get_indices_from_addresses([0, 10, 10])
 Out[7]: 4200
 ```
 
