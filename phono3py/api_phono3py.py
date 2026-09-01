@@ -2759,14 +2759,12 @@ class Phono3py:
             test_size=test_size,
         )
 
-    def save_mlp(
-        self, filename: str | os.PathLike | None = None, optimal: bool = True
-    ) -> None:
+    def save_mlp(self, filename: str | os.PathLike | None = None) -> None:
         """Save machine learning potential."""
         if self._mlp is None:
             raise RuntimeError("MLP is not developed yet.")
 
-        self._mlp.save(filename=filename, optimal=optimal)
+        self._mlp.save(filename=filename)
 
     def load_mlp(self, filename: str | os.PathLike | None = None) -> None:
         """Load machine learning potential."""
