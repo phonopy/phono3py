@@ -266,8 +266,8 @@ def test_real_to_reciprocal_gamma(ph3: Phono3py) -> None:
     n_satom = len(ph3.supercell)
     rng = np.random.default_rng(0)
     fc4 = rng.standard_normal((n_satom, n_satom, n_satom, n_satom, 3, 3, 3, 3))
-    r2r = RealToReciprocalFc4(fc4, ph3.primitive, np.array([2, 2, 2]))
-    rec = r2r.run(np.zeros((4, 3), dtype=int))
+    r2r = RealToReciprocalFc4(fc4, ph3.primitive)
+    rec = r2r.run(np.zeros((4, 3), dtype="double"))
 
     n_patom = len(ph3.primitive)
     assert rec.shape == (n_patom, n_patom, n_patom, n_patom, 3, 3, 3, 3)

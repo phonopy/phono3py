@@ -10,7 +10,7 @@ description = "This is the phono3py module."
 authors = [{ name = "Atsushi Togo", email = "atztogo@gmail.com" }]
 requires-python = ">=3.10"
 dependencies = [
-    "phonopy>=4.3.0,<4.4.0",
+    "phonopy>=4.4.0,<4.5.0",
 ]
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
