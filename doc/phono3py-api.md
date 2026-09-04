@@ -78,20 +78,20 @@ from phono3py import Phono3py
 As described in {ref}`workflow`, the phono3py workflow is roughly divided into
 three steps, and the `Phono3py` class is used at every step. The minimum set
 of inputs to instantiate it are `unitcell` (1st argument), `supercell_matrix`
-(2nd argument), and `primitive_matrix` (3rd argument):
+(2nd argument):
 
 ```python
-ph3 = Phono3py(unitcell, supercell_matrix=[3, 3, 2], primitive_matrix="auto")
+ph3 = Phono3py(unitcell, supercell_matrix=[3, 3, 2])
 ```
 
 `unitcell` is a {class}`~phonopy.structure.atoms.PhonopyAtoms` instance.
-`supercell_matrix` and `primitive_matrix` are the transformation matrices used
-to generate the supercell and primitive cell from `unitcell` (see the
-[definitions in the phonopy docs](https://phonopy.github.io/phonopy/phonopy-module.html#definitions-of-variables)).
-This step is analogous to instantiating the {class}`~phonopy.Phonopy` class
-(see the
-[pre-processing section](https://phonopy.github.io/phonopy/phonopy-module.html#pre-process)
-of the phonopy docs).
+`supercell_matrix` is the transformation matrix used to generate the supercell
+from `unitcell` (see the [definitions in the phonopy
+docs](https://phonopy.github.io/phonopy/phonopy-module.html#definitions-of-variables)).
+This step is analogous to instantiating the {class}`~phonopy.Phonopy` class (see
+the [pre-processing
+section](https://phonopy.github.io/phonopy/phonopy-module.html#pre-process) of
+the phonopy docs).
 
 `Phono3py` accepts many other parameters; see {ref}`api_reference` for the
 full list of arguments and attributes (or use `help(Phono3py)` in an
@@ -112,14 +112,14 @@ After instantiating `Phono3py` with `unitcell`, displacements are generated as
 follows:
 
 ```python
-In [4]: ph3 = Phono3py(unitcell, supercell_matrix=[3, 3, 2], primitive_matrix="auto")
+In[4]: ph3 = Phono3py(unitcell, supercell_matrix=[3, 3, 2])
 
-In [5]: ph3.generate_displacements()
+In[5]: ph3.generate_displacements()
 
-In [6]: len(ph3.supercells_with_displacements)
+In[6]: len(ph3.supercells_with_displacements)
 Out[6]: 1254
 
-In [7]: type(ph3.supercells_with_displacements[0])
+In[7]: type(ph3.supercells_with_displacements[0])
 Out[7]: phonopy.structure.atoms.PhonopyAtoms
 ```
 
@@ -132,8 +132,101 @@ displacement dataset and crystal-structure information are saved via the
 `Phono3py.save()` method:
 
 ```python
-In [8]: ph3.save("phono3py_disp.yaml")
+In[8]: ph3.save("phono3py_disp.yaml")
 ```
+
+(api_dataset)=
+
+## Type-I and type-II datasets
+
+The dataset is stored in the `Phono3py.dataset` attribute (and in
+`Phono3py.phonon_dataset` for fc2 when `phonon_supercell_matrix` is set) as a
+python dict. Two formats are supported, which are called type-I and type-II.
+Which of them `Phono3py.generate_displacements()` creates is chosen by the
+`number_of_snapshots` parameter:
+
+```python
+ph3.generate_displacements()  # type-I (systematic displacements)
+ph3.generate_displacements(number_of_snapshots=100)  # type-II (random displacements)
+```
+
+The two formats are not interchangeable. A type-I dataset can be given to any
+force constants calculator, but a type-II dataset can be given only to a
+calculator that accepts arbitrary displacements, i.e., symfc
+(`fc_calculator="symfc"`) or ALM (`fc_calculator="alm"`). The finite difference
+method, which is used by default (`fc_calculator=None`), requires a type-I
+dataset because it relies on the specific set of symmetry-adapted
+displacements.
+
+symfc requires a large amount of memory and computation. Therefore, for fc3
+computed from small displacements by the finite difference method, systematic
+displacements are worth using. Their drawback is that the number of the
+supercells grows rapidly with the supercell size and with lower crystal
+symmetry. When it becomes too large to compute the forces by a first-principles
+calculator, {ref}`pypolymlp <pypolymlp-interface>` is worth considering
+(`use_pypolymlp=True` in `phono3py.load`). A machine learning potential is
+trained on a small number of supercells with random displacements, and the
+forces of the systematic displacements are then evaluated by the potential.
+
+### Type-I (systematic displacements)
+
+In the systematic scheme, one atom (for fc2) or a pair of atoms (for fc3) is
+displaced in each supercell along symmetry-adapted directions. The type-I
+format keeps this structure explicitly:
+
+```
+{'natom': number of atoms in supercell,
+ 'first_atoms': [
+   {'number': atom index of the first displaced atom,
+    'displacement': displacement in Cartesian coordinates,
+    'forces': forces on atoms in the supercell,
+    'second_atoms': [
+      {'number': atom index of the second displaced atom,
+       'displacement': displacement in Cartesian coordinates,
+       'forces': forces on atoms in the supercell},
+      ...
+    ]},
+   ...
+ ]}
+```
+
+Since `forces` of each supercell is stored next to the displacement that
+generated it, the displacements and the force sets are paired inside the dict.
+The number of supercells is the number of the single-atom displacements plus
+that of the pair displacements,
+
+```python
+n_supercells = len(dataset["first_atoms"])
+for d1 in dataset["first_atoms"]:
+    n_supercells += len(d1["second_atoms"])
+```
+
+and the supercells are ordered so that all the single-atom-displaced supercells
+come first, followed by all the pair-displaced supercells. This is the order of
+`Phono3py.supercells_with_displacements`.
+
+### Type-II (general displacements)
+
+The type-II format stores the displacements of all atoms in each supercell as
+plain arrays, without assuming any relation between the supercells:
+
+```
+{'displacements':      ndarray, dtype='double', order='C',
+                       shape=(supercells, atoms in supercell, 3),
+ 'forces':             ndarray, dtype='double', order='C',
+                       shape=(supercells, atoms in supercell, 3),
+ 'supercell_energies': ndarray, dtype='double',
+                       shape=(supercells,)}
+```
+
+`supercell_energies` is optional and is used to train a machine learning
+potential. The number of supercells is simply `len(dataset["displacements"])`.
+
+`Phono3py.displacements` and `Phono3py.forces` always return arrays in this
+type-II style. For a type-I dataset, `Phono3py.displacements` synthesizes the
+array on the fly (each supercell has one or two non-zero rows and the rest are
+zero), but assigning to `Phono3py.displacements` raises `RuntimeError` because
+a type-I dataset cannot be overwritten by a type-II one.
 
 ## Supercell force calculation
 
@@ -145,6 +238,22 @@ the `Phono3py.forces` attribute by assigning an array-like with shape
 `(num_supercells, num_atoms_in_supercell, 3)`. In the example above, the
 shape is `(1254, 72, 3)`.
 
+**The number of the force sets must agree with the number of the displacements
+in the dataset, and they must be given in the same order as
+`Phono3py.supercells_with_displacements`.** How the number of supercells is
+counted for each format is described in {ref}`api_dataset`. A convenient check is
+
+```python
+assert len(forces) == len(ph3.supercells_with_displacements)
+ph3.forces = forces
+```
+
+which works for both dataset types. For a type-I dataset, a shorter array
+raises `IndexError` and a longer array is silently truncated; for a type-II
+dataset, the arrays are stored as they are and the mismatch is only detected
+later by the force constants calculator. So this check is worth doing before
+assigning.
+
 If the force sets are stored in a {ref}`iofile_FORCES_FC3` file, the numpy
 array of `forces` can be obtained by:
 
@@ -153,63 +262,78 @@ forces = np.loadtxt("FORCES_FC3").reshape(-1, num_atoms_in_supercell, 3)
 assert len(forces) == num_supercells
 ```
 
+The type-I and type-II formats of `FORCES_FC3` correspond to those of the
+dataset, and both are read into the same `(num_supercells,
+num_atoms_in_supercell, 3)` array by the line above.
+
 ## Force constants calculation
 
-Computing the force constants requires both the displacement dataset and the
-force sets. {ref}`api-phono3py` is a convenient function that loads these
-data from files and sets them on the `Phono3py` instance. When only the
-displacement dataset is needed, the low-level phono3py-yaml parser
-`Phono3pyYaml` is useful.
+Computing force constants requires both the displacement dataset and the force
+sets. The {ref}`phono3py.load <api-phono3py>` function conveniently loads these
+data from files and sets them on the `Phono3py` instance.
 
 ```python
-In [1]: from phono3py.interface.phono3py_yaml import Phono3pyYaml
+In [1]: import phono3py
 
-In [2]: ph3yml = Phono3pyYaml()
-
-In [3]: ph3yml.read("phono3py_disp.yaml")
-
-In [4]: disp_dataset = ph3yml.dataset
+In [2]: ph3 = phono3py.load("phono3py_disp.yaml", log_level=1)
 ```
 
-The steps below show how to compute force constants using `ph3yml`, assuming
-that `FORCES_FC3` is in the current directory. The displacement dataset and
-force sets are assigned to the `Phono3py` instance as follows:
+Force constants are calculated automatically when the input file `FORCES_FC3`
+(and optionally `FORCES_FC2`) is found. Forces may also be stored in the
+phono3py-yaml file itself, in which case they are read from there. To load the
+data without computing force constants, specify `produce_fc=False`.
+
+By default (`fc_calculator=None`), a {ref}`type-I <api_dataset>` dataset is
+treated by the finite difference method followed by the symmetry projector of
+symfc. With `fc_calculator="traditional"`, the force constants are computed by
+the same finite difference method, but they are symmetrized by the traditional
+approach without invoking the symfc projector. For a {ref}`type-II
+<api_dataset>` dataset, `fc_calculator="symfc"` has to be specified explicitly;
+unlike the `phono3py` command, `phono3py.load` does not switch to symfc by
+itself:
 
 ```python
-In [5]: unitcell = ph3yml.unitcell
-
-In [6]: from phono3py import Phono3py
-
-In [7]: ph3 = Phono3py(unitcell, supercell_matrix=ph3yml.supercell_matrix, primitive_matrix=ph3yml.primitive_matrix)
-
-In [8]: import numpy as np
-
-In [9]: forces = np.loadtxt("FORCES_FC3").reshape(-1, len(ph3.supercell), 3)
-
-In [10]: ph3.dataset = disp_dataset
-
-In [11]: ph3.forces = forces
+In [3]: ph3 = phono3py.load("phono3py_params.yaml", fc_calculator="symfc", log_level=1)
 ```
 
-Now we are ready to compute force constants. With the default
-(`fc_calculator=None`, i.e. the traditional finite-difference solver),
-`produce_fc3` does **not** symmetrize the result; call `symmetrize_fc3` and
-`symmetrize_fc2` explicitly afterwards to enforce translational and
-permutation invariance:
+When the displacement-force dataset is set after loading, e.g.,
 
 ```python
-In [12]: ph3.produce_fc3()
-
-In [13]: ph3.symmetrize_fc3()
-
-In [14]: ph3.symmetrize_fc2()
+ph3.dataset = my_dataset
 ```
 
-When `phonon_supercell_matrix` is set, fc2 is **not** produced by
-`produce_fc3`; call `ph3.produce_fc2()` (followed by `ph3.symmetrize_fc2()`)
-instead. With `fc_calculator="symfc"` or `"alm"`, the chosen solver already
-returns symmetrized force constants, so the `symmetrize_*` calls are not
-needed. See {ref}`api_reference` for the available calculators and options.
+or
+
+```python
+ph3.displacements = my_displacements
+ph3.forces = my_forces
+```
+
+force constants are not produced automatically, and the methods have to be
+called explicitly:
+
+```python
+ph3.produce_fc3()
+ph3.symmetrize_fc3(use_symfc_projector=True)
+ph3.symmetrize_fc2(use_symfc_projector=True)
+```
+
+`produce_fc3` produces fc2 as well, but it does not symmetrize the force
+constants, so `symmetrize_fc3` and `symmetrize_fc2` are called after it.
+`use_symfc_projector=True` chooses the symfc projector; without it, the
+traditional symmetrization is applied. These two calls are unnecessary with
+`fc_calculator="symfc"` or `"alm"`, whose force constants are already
+symmetrized by the calculators themselves.
+
+When `phonon_supercell_matrix` is set, fc2 is not produced by `produce_fc3`.
+It is produced from `Phono3py.phonon_dataset` by
+
+```python
+ph3.produce_fc2()
+ph3.symmetrize_fc2(use_symfc_projector=True)
+```
+
+See {ref}`api_reference` for the available calculators and their options.
 
 ## Non-analytical term correction parameters
 
@@ -348,9 +472,9 @@ The three-phonon interaction calculation is ready to run after the following
 lines:
 
 ```python
-In [3]: ph3.mesh_numbers = 30
+In[3]: ph3.mesh_numbers = 30
 
-In [4]: ph3.init_phph_interaction()
+In[4]: ph3.init_phph_interaction()
 ```
 
 It is implemented in the `phono3py.phonon3.interaction.Interaction` class. By
@@ -383,7 +507,7 @@ but even with the defaults, the calculation under the relaxation time
 approximation (RTA) is performed as follows:
 
 ```python
-In [5]: ph3.run_thermal_conductivity()
+In[5]: ph3.run_thermal_conductivity()
 ```
 
 Pass `is_LBTE=True` to run the direct solution of the linearized Boltzmann
@@ -408,7 +532,7 @@ In [2]: unitcell, _ = read_crystal_structure("POSCAR-unitcell", interface_mode="
 
 In [3]: from phono3py import Phono3py
 
-In [4]: ph3 = Phono3py(unitcell, supercell_matrix=[3, 3, 2], primitive_matrix="auto", phonon_supercell_matrix=[5, 5, 3])
+In [4]: ph3 = Phono3py(unitcell, supercell_matrix=[3, 3, 2], phonon_supercell_matrix=[5, 5, 3])
 
 In [5]: ph3.generate_displacements()
 
@@ -433,6 +557,40 @@ Phono3py.phonon_supercells_with_displacements
 
 Their meanings are documented in {ref}`api_reference`, but should be obvious
 from the names.
+
+## Using the fc2 dataset with phonopy
+
+The fc2 dataset in a `Phono3py` instance can be handed to a
+{class}`~phonopy.Phonopy` instance, e.g., to draw a phonon band structure by
+phonopy. In the AlN-LDA example,
+
+```python
+import phono3py
+from phonopy import Phonopy
+
+ph3 = phono3py.load("phono3py_disp_dimfc2.yaml", produce_fc=False, log_level=2)
+ph = Phonopy(
+    ph3.unitcell,
+    supercell_matrix=ph3.phonon_supercell_matrix,
+    primitive_matrix=ph3.primitive_matrix,
+    log_level=2,
+)
+ph.dataset = ph3.phonon_dataset
+ph.nac_params = ph3.nac_params
+ph.produce_force_constants()
+ph.symmetrize_force_constants(use_symfc_projector=True)
+ph.auto_band_structure(plot=True).show()
+```
+
+`produce_fc=False` is specified because the force constants are computed by
+phonopy here. The forces are read from `FORCES_FC2` (or from the phono3py-yaml
+file) even with `produce_fc=False`, so `ph3.phonon_dataset` already contains
+them.
+
+When `phonon_supercell_matrix` is not set, `Phono3py.phonon_supercell_matrix`
+and `Phono3py.phonon_dataset` are `None` because fc2 is computed from the same
+supercell and dataset as fc3. In this case, `Phono3py.supercell_matrix` and
+`Phono3py.dataset` are passed to `Phonopy` instead.
 
 (api-phono3py)=
 
