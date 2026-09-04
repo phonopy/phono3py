@@ -75,6 +75,15 @@ The type-II format is the same as
 [phonopy's type-II format](https://phonopy.github.io/phonopy/input-files.html#type-2)
 of `FORCE_SETS`.
 
+The number of the force sets in this file has to be equal to the number of the
+displacements in the displacement dataset stored in `phono3py_disp.yaml`, and
+they have to be written in the same order as the supercells with displacements.
+With {ref}`--cutoff-pair <cutoff_pair_option>`, the supercells of the pair
+displacements that are excluded are not skipped in this file; their forces are
+written as zeros so that the numbers of the displacements and the force sets
+agree. See {ref}`api_dataset` for how the number of the displacements is
+counted in the type-I and type-II datasets.
+
 ## `FORCES_FC2`
 
 This is created with {ref}`--cf2 <dim_fc2_option>` option. The file formats

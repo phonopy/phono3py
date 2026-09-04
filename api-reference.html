@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>API reference &#8212; Phono3py v.4.3.3</title>
+    <title>API reference &#8212; Phono3py v.4.4.0</title>
   
   
   
@@ -27,44 +27,51 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=4418a689" />
   
   <!-- So that users can add custom icons -->
-  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="_static/documentation_options.js?v=68a38853"></script>
+    <script src="_static/documentation_options.js?v=e4428b72"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'api-reference';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="phono3py command" href="phono3py.html" />
     <link rel="prev" title="Phono3py API" href="phono3py-api.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="4.3" />
+  <meta name="docsearch:version" content="4.4" />
+  
+    
+    <script src="_static/searchtools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -90,7 +97,51 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
     </header>
   
 
@@ -125,7 +176,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.4.3.3</p>
+    <p class="title logo__title">Phono3py v.4.4.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -285,11 +336,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -317,7 +375,7 @@
                 <h2> Contents </h2>
             </div>
             <nav aria-label="Page">
-                <ul class="visible nav section-nav flex-column">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#top-level-functions">Top-level functions</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phono3py.load"><code class="docutils literal notranslate"><span class="pre">load()</span></code></a></li>
 </ul>
@@ -508,12 +566,12 @@ files. Default is <code class="docutils literal notranslate"><span class="pre">N
 <code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code> (can be overwritten) and <code class="docutils literal notranslate"><span class="pre">supercell_matrix</span></code> is
 ignored. Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
 <li><p><strong>nac_params</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>, </em><em>optional</em>) – <p>Parameters for non-analytical term correction:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;born&#39;</span><span class="p">:</span>       <span class="n">Born</span> <span class="n">effective</span> <span class="n">charges</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s1">'born'</span><span class="p">:</span>       <span class="n">Born</span> <span class="n">effective</span> <span class="n">charges</span><span class="p">,</span>
               <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">atoms</span> <span class="ow">in</span> <span class="n">primitive</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
               <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="o">.</span>
-<span class="s1">&#39;dielectric&#39;</span><span class="p">:</span> <span class="n">dielectric</span> <span class="n">constant</span> <span class="n">matrix</span><span class="p">,</span>
+<span class="s1">'dielectric'</span><span class="p">:</span> <span class="n">dielectric</span> <span class="n">constant</span> <span class="n">matrix</span><span class="p">,</span>
               <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="o">.</span>
-<span class="s1">&#39;factor&#39;</span><span class="p">:</span>     <span class="n">unit</span> <span class="n">conversion</span> <span class="n">factor</span> <span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span>
+<span class="s1">'factor'</span><span class="p">:</span>     <span class="n">unit</span> <span class="n">conversion</span> <span class="n">factor</span> <span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span>
 </pre></div>
 </div>
 <p>Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
@@ -613,7 +671,7 @@ overview of the typical workflow.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">c</span> <span class="o">=</span> <span class="mf">4.978</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="mi">3</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">unitcell</span> <span class="o">=</span> <span class="n">PhonopyAtoms</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">symbols</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Al&quot;</span><span class="p">,</span> <span class="s2">&quot;Al&quot;</span><span class="p">,</span> <span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="s2">&quot;N&quot;</span><span class="p">],</span>
+<span class="gp">... </span>    <span class="n">symbols</span><span class="o">=</span><span class="p">[</span><span class="s2">"Al"</span><span class="p">,</span> <span class="s2">"Al"</span><span class="p">,</span> <span class="s2">"N"</span><span class="p">,</span> <span class="s2">"N"</span><span class="p">],</span>
 <span class="gp">... </span>    <span class="n">cell</span><span class="o">=</span><span class="p">[[</span><span class="n">a</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="n">a</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">a</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">c</span><span class="p">]],</span>
 <span class="gp">... </span>    <span class="n">scaled_positions</span><span class="o">=</span><span class="p">[</span>
 <span class="gp">... </span>        <span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
@@ -623,7 +681,7 @@ overview of the typical workflow.</p>
 <span class="gp">... </span>    <span class="p">],</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ph3</span> <span class="o">=</span> <span class="n">Phono3py</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">unitcell</span><span class="p">,</span> <span class="n">supercell_matrix</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">primitive_matrix</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span>
+<span class="gp">... </span>    <span class="n">unitcell</span><span class="p">,</span> <span class="n">supercell_matrix</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">primitive_matrix</span><span class="o">=</span><span class="s2">"auto"</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ph3</span><span class="o">.</span><span class="n">generate_displacements</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># Obtain forces by running an external calculator on</span>
@@ -752,12 +810,12 @@ truncation.</p>
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">nac_params</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="headerlink" href="#phono3py.Phono3py.nac_params" title="Link to this definition">#</a></dt>
 <dd><p>Setter and getter of parameters for non-analytical term correction.</p>
 <p>The dict has the following keys:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;born&#39;</span><span class="p">:</span>       <span class="n">ndarray</span><span class="p">,</span> <span class="n">Born</span> <span class="n">effective</span> <span class="n">charges</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s1">'born'</span><span class="p">:</span>       <span class="n">ndarray</span><span class="p">,</span> <span class="n">Born</span> <span class="n">effective</span> <span class="n">charges</span><span class="p">,</span>
               <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">atoms</span> <span class="ow">in</span> <span class="n">primitive</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
-              <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;double&#39;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="o">.</span>
-<span class="s1">&#39;factor&#39;</span><span class="p">:</span>     <span class="nb">float</span><span class="p">,</span> <span class="n">unit</span> <span class="n">conversion</span> <span class="n">factor</span><span class="o">.</span>
-<span class="s1">&#39;dielectric&#39;</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">dielectric</span> <span class="n">constant</span> <span class="n">tensor</span><span class="p">,</span>
-              <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;double&#39;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="o">.</span>
+              <span class="n">dtype</span><span class="o">=</span><span class="s1">'double'</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">'C'</span><span class="o">.</span>
+<span class="s1">'factor'</span><span class="p">:</span>     <span class="nb">float</span><span class="p">,</span> <span class="n">unit</span> <span class="n">conversion</span> <span class="n">factor</span><span class="o">.</span>
+<span class="s1">'dielectric'</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">dielectric</span> <span class="n">constant</span> <span class="n">tensor</span><span class="p">,</span>
+              <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">'double'</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">'C'</span><span class="o">.</span>
 </pre></div>
 </div>
 <p>Unlike the
@@ -780,7 +838,7 @@ be supplied (not just the symmetrically independent ones).</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="phono3py.Phono3py.unitcell">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">unitcell</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://phonopy.github.io/phonopy/api-reference.html#phonopy.structure.atoms.PhonopyAtoms" title="(in phonopy v4.3)"><span class="pre">PhonopyAtoms</span></a></span><a class="headerlink" href="#phono3py.Phono3py.unitcell" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">unitcell</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://phonopy.github.io/phonopy/api-reference.html#phonopy.structure.atoms.PhonopyAtoms" title="(in phonopy v4.4)"><span class="pre">PhonopyAtoms</span></a></span><a class="headerlink" href="#phono3py.Phono3py.unitcell" title="Link to this definition">#</a></dt>
 <dd><p>Return input unit cell.</p>
 </dd></dl>
 
@@ -863,21 +921,21 @@ the VASP default).</p>
 <p>Dataset containing displacements in supercells, and optionally
 forces and supercell energies. The format is one of two types.</p>
 <p><strong>Type 1. Pairs of atomic displacements per supercell (for fc3)</strong>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;natom&#39;</span><span class="p">:</span> <span class="n">number</span> <span class="n">of</span> <span class="n">atoms</span> <span class="ow">in</span> <span class="n">supercell</span><span class="p">,</span>
- <span class="s1">&#39;first_atoms&#39;</span><span class="p">:</span> <span class="p">[</span>
-   <span class="p">{</span><span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="n">atom</span> <span class="n">index</span> <span class="n">of</span> <span class="n">first</span> <span class="n">displaced</span> <span class="n">atom</span><span class="p">,</span>
-    <span class="s1">&#39;displacement&#39;</span><span class="p">:</span> <span class="n">displacement</span> <span class="ow">in</span> <span class="n">Cartesian</span> <span class="n">coordinates</span><span class="p">,</span>
-    <span class="s1">&#39;forces&#39;</span><span class="p">:</span> <span class="n">forces</span> <span class="n">on</span> <span class="n">atoms</span> <span class="ow">in</span> <span class="n">supercell</span><span class="p">,</span>
-    <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">displacement</span> <span class="nb">id</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">n_first_atoms</span><span class="p">),</span>
-    <span class="s1">&#39;second_atoms&#39;</span><span class="p">:</span> <span class="p">[</span>
-      <span class="p">{</span><span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="n">atom</span> <span class="n">index</span> <span class="n">of</span> <span class="n">second</span> <span class="n">displaced</span> <span class="n">atom</span><span class="p">,</span>
-       <span class="s1">&#39;displacement&#39;</span><span class="p">:</span> <span class="n">displacement</span> <span class="ow">in</span> <span class="n">Cartesian</span> <span class="n">coordinates</span><span class="p">,</span>
-       <span class="s1">&#39;forces&#39;</span><span class="p">:</span> <span class="n">forces</span> <span class="n">on</span> <span class="n">atoms</span> <span class="ow">in</span> <span class="n">supercell</span><span class="p">,</span>
-       <span class="s1">&#39;supercell_energy&#39;</span><span class="p">:</span> <span class="n">energy</span> <span class="n">of</span> <span class="n">supercell</span><span class="p">,</span>
-       <span class="s1">&#39;pair_distance&#39;</span><span class="p">:</span> <span class="n">distance</span> <span class="n">between</span> <span class="n">paired</span> <span class="n">atoms</span><span class="p">,</span>
-       <span class="s1">&#39;included&#39;</span><span class="p">:</span> <span class="nb">bool</span> <span class="n">flag</span> <span class="p">(</span><span class="k">with</span> <span class="n">cutoff_pair_distance</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">'natom'</span><span class="p">:</span> <span class="n">number</span> <span class="n">of</span> <span class="n">atoms</span> <span class="ow">in</span> <span class="n">supercell</span><span class="p">,</span>
+ <span class="s1">'first_atoms'</span><span class="p">:</span> <span class="p">[</span>
+   <span class="p">{</span><span class="s1">'number'</span><span class="p">:</span> <span class="n">atom</span> <span class="n">index</span> <span class="n">of</span> <span class="n">first</span> <span class="n">displaced</span> <span class="n">atom</span><span class="p">,</span>
+    <span class="s1">'displacement'</span><span class="p">:</span> <span class="n">displacement</span> <span class="ow">in</span> <span class="n">Cartesian</span> <span class="n">coordinates</span><span class="p">,</span>
+    <span class="s1">'forces'</span><span class="p">:</span> <span class="n">forces</span> <span class="n">on</span> <span class="n">atoms</span> <span class="ow">in</span> <span class="n">supercell</span><span class="p">,</span>
+    <span class="s1">'id'</span><span class="p">:</span> <span class="n">displacement</span> <span class="nb">id</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">n_first_atoms</span><span class="p">),</span>
+    <span class="s1">'second_atoms'</span><span class="p">:</span> <span class="p">[</span>
+      <span class="p">{</span><span class="s1">'number'</span><span class="p">:</span> <span class="n">atom</span> <span class="n">index</span> <span class="n">of</span> <span class="n">second</span> <span class="n">displaced</span> <span class="n">atom</span><span class="p">,</span>
+       <span class="s1">'displacement'</span><span class="p">:</span> <span class="n">displacement</span> <span class="ow">in</span> <span class="n">Cartesian</span> <span class="n">coordinates</span><span class="p">,</span>
+       <span class="s1">'forces'</span><span class="p">:</span> <span class="n">forces</span> <span class="n">on</span> <span class="n">atoms</span> <span class="ow">in</span> <span class="n">supercell</span><span class="p">,</span>
+       <span class="s1">'supercell_energy'</span><span class="p">:</span> <span class="n">energy</span> <span class="n">of</span> <span class="n">supercell</span><span class="p">,</span>
+       <span class="s1">'pair_distance'</span><span class="p">:</span> <span class="n">distance</span> <span class="n">between</span> <span class="n">paired</span> <span class="n">atoms</span><span class="p">,</span>
+       <span class="s1">'included'</span><span class="p">:</span> <span class="nb">bool</span> <span class="n">flag</span> <span class="p">(</span><span class="k">with</span> <span class="n">cutoff_pair_distance</span><span class="p">,</span>
            <span class="n">whether</span> <span class="n">this</span> <span class="n">pair</span> <span class="ow">is</span> <span class="n">used</span> <span class="n">to</span> <span class="n">compute</span> <span class="n">fc3</span><span class="p">),</span>
-       <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">displacement</span> <span class="nb">id</span> <span class="p">(</span><span class="n">n_first_atoms</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="o">...</span><span class="p">)},</span>
+       <span class="s1">'id'</span><span class="p">:</span> <span class="n">displacement</span> <span class="nb">id</span> <span class="p">(</span><span class="n">n_first_atoms</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="o">...</span><span class="p">)},</span>
       <span class="o">...</span>
     <span class="p">]},</span>
    <span class="o">...</span>
@@ -885,11 +943,11 @@ forces and supercell energies. The format is one of two types.</p>
 </pre></div>
 </div>
 <p><strong>Type 2. All atomic displacements in each supercell</strong>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;displacements&#39;</span><span class="p">:</span>      <span class="n">ndarray</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;double&#39;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">'displacements'</span><span class="p">:</span>      <span class="n">ndarray</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">'double'</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">'C'</span><span class="p">,</span>
                        <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">supercells</span><span class="p">,</span> <span class="n">atoms</span> <span class="ow">in</span> <span class="n">supercell</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
- <span class="s1">&#39;forces&#39;</span><span class="p">:</span>             <span class="n">ndarray</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;double&#39;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">,</span>
+ <span class="s1">'forces'</span><span class="p">:</span>             <span class="n">ndarray</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">'double'</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">'C'</span><span class="p">,</span>
                        <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">supercells</span><span class="p">,</span> <span class="n">atoms</span> <span class="ow">in</span> <span class="n">supercell</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
- <span class="s1">&#39;supercell_energies&#39;</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;double&#39;</span><span class="p">,</span>
+ <span class="s1">'supercell_energies'</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">'double'</span><span class="p">,</span>
                        <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">supercells</span><span class="p">,)}</span>
 </pre></div>
 </div>
@@ -909,22 +967,22 @@ gives duplicated supercell ids as pairs.</p>
 optionally forces and supercell energies. The format is one of
 two types.</p>
 <p><strong>Type 1. One atomic displacement per supercell</strong>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;natom&#39;</span><span class="p">:</span> <span class="n">number</span> <span class="n">of</span> <span class="n">atoms</span> <span class="ow">in</span> <span class="n">supercell</span><span class="p">,</span>
- <span class="s1">&#39;first_atoms&#39;</span><span class="p">:</span> <span class="p">[</span>
-   <span class="p">{</span><span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="n">atom</span> <span class="n">index</span> <span class="n">of</span> <span class="n">displaced</span> <span class="n">atom</span><span class="p">,</span>
-    <span class="s1">&#39;displacement&#39;</span><span class="p">:</span> <span class="n">displacement</span> <span class="ow">in</span> <span class="n">Cartesian</span> <span class="n">coordinates</span><span class="p">,</span>
-    <span class="s1">&#39;forces&#39;</span><span class="p">:</span> <span class="n">forces</span> <span class="n">on</span> <span class="n">atoms</span> <span class="ow">in</span> <span class="n">supercell</span><span class="p">,</span>
-    <span class="s1">&#39;supercell_energy&#39;</span><span class="p">:</span> <span class="n">energy</span> <span class="n">of</span> <span class="n">supercell</span><span class="p">},</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">'natom'</span><span class="p">:</span> <span class="n">number</span> <span class="n">of</span> <span class="n">atoms</span> <span class="ow">in</span> <span class="n">supercell</span><span class="p">,</span>
+ <span class="s1">'first_atoms'</span><span class="p">:</span> <span class="p">[</span>
+   <span class="p">{</span><span class="s1">'number'</span><span class="p">:</span> <span class="n">atom</span> <span class="n">index</span> <span class="n">of</span> <span class="n">displaced</span> <span class="n">atom</span><span class="p">,</span>
+    <span class="s1">'displacement'</span><span class="p">:</span> <span class="n">displacement</span> <span class="ow">in</span> <span class="n">Cartesian</span> <span class="n">coordinates</span><span class="p">,</span>
+    <span class="s1">'forces'</span><span class="p">:</span> <span class="n">forces</span> <span class="n">on</span> <span class="n">atoms</span> <span class="ow">in</span> <span class="n">supercell</span><span class="p">,</span>
+    <span class="s1">'supercell_energy'</span><span class="p">:</span> <span class="n">energy</span> <span class="n">of</span> <span class="n">supercell</span><span class="p">},</span>
    <span class="o">...</span>
  <span class="p">]}</span>
 </pre></div>
 </div>
 <p><strong>Type 2. All atomic displacements in each supercell</strong>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;displacements&#39;</span><span class="p">:</span>      <span class="n">ndarray</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;double&#39;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">'displacements'</span><span class="p">:</span>      <span class="n">ndarray</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">'double'</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">'C'</span><span class="p">,</span>
                        <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">supercells</span><span class="p">,</span> <span class="n">atoms</span> <span class="ow">in</span> <span class="n">supercell</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
- <span class="s1">&#39;forces&#39;</span><span class="p">:</span>             <span class="n">ndarray</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;double&#39;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">,</span>
+ <span class="s1">'forces'</span><span class="p">:</span>             <span class="n">ndarray</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">'double'</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">'C'</span><span class="p">,</span>
                        <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">supercells</span><span class="p">,</span> <span class="n">atoms</span> <span class="ow">in</span> <span class="n">supercell</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
- <span class="s1">&#39;supercell_energies&#39;</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;double&#39;</span><span class="p">,</span>
+ <span class="s1">'supercell_energies'</span><span class="p">:</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">'double'</span><span class="p">,</span>
                        <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">supercells</span><span class="p">,)}</span>
 </pre></div>
 </div>
@@ -984,7 +1042,7 @@ consistent.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="phono3py.Phono3py.supercells_with_displacements">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">supercells_with_displacements</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://phonopy.github.io/phonopy/api-reference.html#phonopy.structure.atoms.PhonopyAtoms" title="(in phonopy v4.3)"><span class="pre">PhonopyAtoms</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#phono3py.Phono3py.supercells_with_displacements" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">supercells_with_displacements</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://phonopy.github.io/phonopy/api-reference.html#phonopy.structure.atoms.PhonopyAtoms" title="(in phonopy v4.4)"><span class="pre">PhonopyAtoms</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#phono3py.Phono3py.supercells_with_displacements" title="Link to this definition">#</a></dt>
 <dd><p>Return the fc3 supercells with displacements applied.</p>
 <p>Built from the displacement dataset generated by
 <a class="reference internal" href="#phono3py.Phono3py.generate_displacements" title="phono3py.Phono3py.generate_displacements"><code class="xref py py-meth docutils literal notranslate"><span class="pre">generate_displacements()</span></code></a>. Pair displacements that fall
@@ -993,7 +1051,7 @@ outside the cutoff distance appear as <code class="docutils literal notranslate"
 
 <dl class="py property">
 <dt class="sig sig-object py" id="phono3py.Phono3py.phonon_supercells_with_displacements">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">phonon_supercells_with_displacements</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://phonopy.github.io/phonopy/api-reference.html#phonopy.structure.atoms.PhonopyAtoms" title="(in phonopy v4.3)"><span class="pre">PhonopyAtoms</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#phono3py.Phono3py.phonon_supercells_with_displacements" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">phonon_supercells_with_displacements</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://phonopy.github.io/phonopy/api-reference.html#phonopy.structure.atoms.PhonopyAtoms" title="(in phonopy v4.4)"><span class="pre">PhonopyAtoms</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#phono3py.Phono3py.phonon_supercells_with_displacements" title="Link to this definition">#</a></dt>
 <dd><p>Return the fc2 supercells with displacements applied.</p>
 <p>Built from the phonon displacement dataset generated by
 <a class="reference internal" href="#phono3py.Phono3py.generate_displacements" title="phono3py.Phono3py.generate_displacements"><code class="xref py py-meth docutils literal notranslate"><span class="pre">generate_displacements()</span></code></a> or <a class="reference internal" href="#phono3py.Phono3py.generate_fc2_displacements" title="phono3py.Phono3py.generate_fc2_displacements"><code class="xref py py-meth docutils literal notranslate"><span class="pre">generate_fc2_displacements()</span></code></a>.</p>
@@ -1200,7 +1258,7 @@ shape=(num_grid_points, 3), dtype=int</p></li>
 <dd><p>Return phonon frequencies, eigenvectors, and grid addresses.</p>
 <p>Grid addresses give the q-point location with respect to the
 reciprocal basis vectors by integers, with:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">q_points</span> <span class="o">=</span> <span class="n">grid_address</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;double&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">q_points</span> <span class="o">=</span> <span class="n">grid_address</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">'double'</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
@@ -1445,11 +1503,11 @@ for fc2 and 3 for fc3.</p></li>
 projector instead of the traditional approach.</p></li>
 <li><p><strong>options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> or </em><em>None</em><em>, </em><em>optional</em>) – <p>Options string. Accepted values depend on the backend:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">symfc</span> <span class="n">projector</span><span class="p">:</span>
-    <span class="s2">&quot;use_mkl=true&quot;</span>  <span class="n">call</span> <span class="n">sparse_dot_mkl</span>
+    <span class="s2">"use_mkl=true"</span>  <span class="n">call</span> <span class="n">sparse_dot_mkl</span>
                     <span class="p">(</span><span class="n">requires</span> <span class="n">sparse_dot_mkl</span> <span class="n">to</span> <span class="n">be</span>
                     <span class="n">installed</span><span class="p">)</span><span class="o">.</span>
 <span class="n">traditional</span><span class="p">:</span>
-    <span class="s2">&quot;level=N&quot;</span>       <span class="n">apply</span> <span class="n">translational</span> <span class="ow">and</span> <span class="n">permutation</span>
+    <span class="s2">"level=N"</span>       <span class="n">apply</span> <span class="n">translational</span> <span class="ow">and</span> <span class="n">permutation</span>
                     <span class="n">symmetries</span> <span class="n">alternately</span> <span class="n">N</span> <span class="n">times</span><span class="o">.</span>
                     <span class="n">Default</span> <span class="n">level</span> <span class="ow">is</span> <span class="mf">3.</span>
 </pre></div>
@@ -1524,11 +1582,11 @@ Default is <code class="docutils literal notranslate"><span class="pre">None</sp
 projector instead of the traditional approach.</p></li>
 <li><p><strong>options</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> or </em><em>None</em><em>, </em><em>optional</em>) – <p>Options string. Accepted values depend on the backend:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">symfc</span> <span class="n">projector</span><span class="p">:</span>
-    <span class="s2">&quot;use_mkl=true&quot;</span>  <span class="n">call</span> <span class="n">sparse_dot_mkl</span>
+    <span class="s2">"use_mkl=true"</span>  <span class="n">call</span> <span class="n">sparse_dot_mkl</span>
                     <span class="p">(</span><span class="n">requires</span> <span class="n">sparse_dot_mkl</span> <span class="n">to</span> <span class="n">be</span>
                     <span class="n">installed</span><span class="p">)</span><span class="o">.</span>
 <span class="n">traditional</span><span class="p">:</span>
-    <span class="s2">&quot;level=N&quot;</span>       <span class="n">apply</span> <span class="n">translational</span> <span class="ow">and</span> <span class="n">permutation</span>
+    <span class="s2">"level=N"</span>       <span class="n">apply</span> <span class="n">translational</span> <span class="ow">and</span> <span class="n">permutation</span>
                     <span class="n">symmetries</span> <span class="n">alternately</span> <span class="n">N</span> <span class="n">times</span><span class="o">.</span>
                     <span class="n">Default</span> <span class="n">level</span> <span class="ow">is</span> <span class="mf">3.</span>
 </pre></div>
@@ -1909,11 +1967,11 @@ call. Default is <code class="docutils literal notranslate"><span class="pre">No
 <li><p><strong>settings</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>, </em><em>optional</em>) – <p>Selects which sections to write. Only keys whose values
 differ from the defaults need to be supplied. The defaults
 are:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;force_sets&#39;</span><span class="p">:</span>            <span class="kc">True</span><span class="p">,</span>
- <span class="s1">&#39;displacements&#39;</span><span class="p">:</span>         <span class="kc">True</span><span class="p">,</span>
- <span class="s1">&#39;force_constants&#39;</span><span class="p">:</span>       <span class="kc">False</span><span class="p">,</span>
- <span class="s1">&#39;born_effective_charge&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
- <span class="s1">&#39;dielectric_constant&#39;</span><span class="p">:</span>   <span class="kc">True</span><span class="p">}</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">'force_sets'</span><span class="p">:</span>            <span class="kc">True</span><span class="p">,</span>
+ <span class="s1">'displacements'</span><span class="p">:</span>         <span class="kc">True</span><span class="p">,</span>
+ <span class="s1">'force_constants'</span><span class="p">:</span>       <span class="kc">False</span><span class="p">,</span>
+ <span class="s1">'born_effective_charge'</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+ <span class="s1">'dielectric_constant'</span><span class="p">:</span>   <span class="kc">True</span><span class="p">}</span>
 </pre></div>
 </div>
 </p></li>
@@ -1947,11 +2005,14 @@ is used for test. Default is 0.1.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="phono3py.Phono3py.save_mlp">
-<span class="sig-name descname"><span class="pre">save_mlp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/phono3py/api_phono3py.html#Phono3py.save_mlp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#phono3py.Phono3py.save_mlp" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">save_mlp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/phono3py/api_phono3py.html#Phono3py.save_mlp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#phono3py.Phono3py.save_mlp" title="Link to this definition">#</a></dt>
 <dd><p>Save machine learning potential.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/os.html#os.PathLike" title="(in Python v3.14)"><em>PathLike</em></a><em> | </em><em>None</em>)</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/os.html#os.PathLike" title="(in Python v3.14)"><em>PathLike</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>optimal</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+</ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
@@ -2125,7 +2186,7 @@ constants.</p>
     <i class="fa-solid fa-list"></i> Contents
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="visible nav section-nav flex-column">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#top-level-functions">Top-level functions</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#phono3py.load"><code class="docutils literal notranslate"><span class="pre">load()</span></code></a></li>
 </ul>
@@ -2257,8 +2318,8 @@ By Author name not set
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>

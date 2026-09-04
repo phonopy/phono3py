@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Workload distribution &#8212; Phono3py v.4.3.3</title>
+    <title>Workload distribution &#8212; Phono3py v.4.4.0</title>
   
   
   
@@ -27,44 +27,51 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/sphinx-book-theme.css?v=4418a689" />
   
   <!-- So that users can add custom icons -->
-  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="_static/documentation_options.js?v=68a38853"></script>
+    <script src="_static/documentation_options.js?v=e4428b72"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'workload-distribution';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Force constants calculation with random displacements of atoms" href="random-displacements.html" />
     <link rel="prev" title="Solution of the Wigner transport equation" href="wigner-solution.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="4.3" />
+  <meta name="docsearch:version" content="4.4" />
+  
+    
+    <script src="_static/searchtools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="searchindex.js"></script>
+  
   </head>
-  
-  
-  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
-
+  <body data-default-mode="">
   
   
   <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
   
   <div id="pst-scroll-pixel-helper"></div>
   
   <button type="button" class="btn rounded-pill" id="pst-back-to-top">
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
-
+  
+  
+  
   
   <dialog id="pst-search-dialog">
     
@@ -90,7 +97,51 @@
 </div>
 
   
-    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
     </header>
   
 
@@ -125,7 +176,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.4.3.3</p>
+    <p class="title logo__title">Phono3py v.4.4.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -285,11 +336,18 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div>
 
 
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
@@ -317,7 +375,7 @@
                 <h2> Contents </h2>
             </div>
             <nav aria-label="Page">
-                <ul class="visible nav section-nav flex-column">
+                <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-do-it">How to do it</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#a-convenient-script">A convenient script</a></li>
 </ul>
@@ -365,7 +423,7 @@ created on a single node:</p>
 </pre></div>
 </div>
 <p>and they are stored in <code class="docutils literal notranslate"><span class="pre">ir_grid_points.yaml</span></code>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>egrep<span class="w"> </span><span class="s1">&#39;^- grid_point:&#39;</span><span class="w"> </span>ir_grid_points.yaml<span class="p">|</span>awk<span class="w"> </span><span class="s1">&#39;{printf(&quot;%d,&quot;,$3)}&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>egrep<span class="w"> </span><span class="s1">'^- grid_point:'</span><span class="w"> </span>ir_grid_points.yaml<span class="p">|</span>awk<span class="w"> </span><span class="s1">'{printf("%d,",$3)}'</span>
 <span class="m">0</span>,1,2,3,4,5,6,7,8,9,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,60,61,62,63,64,65,66,67,68,69,70,71,72,73,80,81,82,83,84,85,86,87,88,89,90,91,100,101,102,103,104,105,106,107,108,109,120,121,122,123,124,125,126,127,140,141,142,143,144,145,160,161,162,163,180,181,402,403,404,405,406,407,408,409,422,423,424,425,426,427,428,429,430,431,432,433,434,435,442,443,444,445,446,447,448,449,450,451,452,453,462,463,464,465,466,467,468,469,470,471,482,483,484,485,486,487,488,489,502,503,504,505,506,507,522,523,524,525,542,543,804,805,806,807,808,809,824,825,826,827,828,829,830,831,832,833,844,845,846,847,848,849,850,851,864,865,866,867,868,869,884,885,886,887,904,905,1206,1207,1208,1209,1226,1227,1228,1229,1230,1231,1246,1247,1248,1249,1266,1267,1608,1609,1628,1629,
 </pre></div>
 </div>
@@ -373,7 +431,7 @@ created on a single node:</p>
 necessary to obtain lattice thermal conductivity. To distribute
 computational demands into computer nodes, a set of the grid-point
 indices are chosen and executed as follows:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--br<span class="w"> </span>--gp<span class="w"> </span><span class="s2">&quot;0,1,2,3,4,5,6,7,8,9,20,21,22,23,24,25&quot;</span><span class="w"> </span>--write-gamma
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--br<span class="w"> </span>--gp<span class="w"> </span><span class="s2">"0,1,2,3,4,5,6,7,8,9,20,21,22,23,24,25"</span><span class="w"> </span>--write-gamma
 </pre></div>
 </div>
 <p>Then many <code class="docutils literal notranslate"><span class="pre">kappa-m191919-gx.hdf5</span></code> files are generated. These file names should
@@ -401,14 +459,14 @@ indices for workload distribution.</p>
 <span class="k">else</span><span class="p">:</span>
     <span class="n">num</span> <span class="o">=</span> <span class="mi">1</span>
 
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;ir_grid_points.yaml&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">"ir_grid_points.yaml"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Loader</span><span class="o">=</span><span class="n">Loader</span><span class="p">)</span>
-    <span class="n">gps</span> <span class="o">=</span> <span class="p">[</span><span class="n">gp</span><span class="p">[</span><span class="s1">&#39;grid_point&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">gp</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;ir_grid_points&#39;</span><span class="p">]]</span>
+    <span class="n">gps</span> <span class="o">=</span> <span class="p">[</span><span class="n">gp</span><span class="p">[</span><span class="s1">'grid_point'</span><span class="p">]</span> <span class="k">for</span> <span class="n">gp</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s1">'ir_grid_points'</span><span class="p">]]</span>
     <span class="n">gp_lists</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num</span><span class="p">)]</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">gp</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">gps</span><span class="p">):</span>
         <span class="n">gp_lists</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="n">num</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gp</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">gp_set</span> <span class="ow">in</span> <span class="n">gp_lists</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">gp</span> <span class="k">for</span> <span class="n">gp</span> <span class="ow">in</span> <span class="n">gp_set</span><span class="p">]))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">"</span><span class="si">%d</span><span class="s2">"</span> <span class="o">%</span> <span class="n">gp</span> <span class="k">for</span> <span class="n">gp</span> <span class="ow">in</span> <span class="n">gp_set</span><span class="p">]))</span>
 </pre></div>
 </div>
 <p>Supposed that this script is saved as <code class="docutils literal notranslate"><span class="pre">divide_gps.py</span></code>,</p>
@@ -450,7 +508,7 @@ system,</p>
 <span class="c1">#$ -e err-phono3py-num.log</span>
 <span class="c1">#$ -o std-phono3py-num.log</span>
 
-phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--br<span class="w"> </span>--gp<span class="w"> </span><span class="s2">&quot;gps&quot;</span><span class="w"> </span>--write-gamma
+phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--br<span class="w"> </span>--gp<span class="w"> </span><span class="s2">"gps"</span><span class="w"> </span>--write-gamma
 </pre></div>
 </div>
 </section>
@@ -502,7 +560,7 @@ phono3py<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19
     <i class="fa-solid fa-list"></i> Contents
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="visible nav section-nav flex-column">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-do-it">How to do it</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#a-convenient-script">A convenient script</a></li>
 </ul>
@@ -553,8 +611,8 @@ By Author name not set
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script defer src="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
 
   <footer class="bd-footer">
   </footer>
