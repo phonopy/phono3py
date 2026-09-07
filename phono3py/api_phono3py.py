@@ -41,7 +41,6 @@ import os
 import warnings
 from collections.abc import Sequence
 from typing import (  # List and Optional are for < python3.10
-    Any,
     List,
     Literal,
     Optional,
@@ -59,7 +58,7 @@ from phonopy.harmonic.displacement import (
     get_least_displacements,
     get_random_displacements_dataset,
 )
-from phonopy.harmonic.dynamical_matrix import DynamicalMatrix
+from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, NacParams
 from phonopy.harmonic.force_constants import (
     set_permutation_symmetry,
     set_translational_invariance,
@@ -315,7 +314,7 @@ class Phono3py:
         warn_if_primitive_matrix_auto_changed_cell(
             primitive_matrix, self._primitive_matrix
         )
-        self._nac_params: dict | None = None
+        self._nac_params: NacParams | None = None
         if phonon_supercell_matrix is not None:
             self._phonon_supercell_matrix = np.array(
                 shape_supercell_matrix(phonon_supercell_matrix),
@@ -524,7 +523,7 @@ class Phono3py:
         self._sigma_cutoff = sigma_cutoff
 
     @property
-    def nac_params(self) -> dict[str, Any] | None:
+    def nac_params(self) -> NacParams | None:
         """Setter and getter of parameters for non-analytical term correction.
 
         The dict has the following keys::
@@ -545,7 +544,7 @@ class Phono3py:
         return self._nac_params
 
     @nac_params.setter
-    def nac_params(self, nac_params: dict[str, Any] | None) -> None:
+    def nac_params(self, nac_params: NacParams | None) -> None:
         self._nac_params = nac_params
         if self._interaction is not None:
             self._init_dynamical_matrix()

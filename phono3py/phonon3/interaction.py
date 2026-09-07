@@ -7,7 +7,11 @@ from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
-from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
+from phonopy.harmonic.dynamical_matrix import (
+    DynamicalMatrix,
+    NacParams,
+    get_dynamical_matrix,
+)
 from phonopy.phonon.grid import (
     BZGrid,
     get_grid_points_by_rotations,
@@ -217,7 +221,7 @@ class Interaction:
         self._frequencies_at_gamma: NDArray[np.double] | None = None
         self._eigenvectors_at_gamma: NDArray[np.cdouble] | None = None
         self._dm: DynamicalMatrix | None = None
-        self._nac_params: dict | None = None
+        self._nac_params: NacParams | None = None
         self._nac_q_direction: NDArray[np.double] | None = None
 
         self._band_index_count = 0
@@ -377,7 +381,7 @@ class Interaction:
         return self._band_indices
 
     @property
-    def nac_params(self) -> dict | None:
+    def nac_params(self) -> NacParams | None:
         """Return NAC params."""
         return self._nac_params
 
@@ -624,7 +628,7 @@ class Interaction:
         fc2: NDArray[np.double],
         supercell: Supercell,
         primitive: Primitive,
-        nac_params: dict | None = None,
+        nac_params: NacParams | None = None,
         decimals: int | None = None,
     ) -> None:
         """Prepare for phonon calculation on grid.
