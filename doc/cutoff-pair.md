@@ -160,12 +160,12 @@ p3yaml.read("phono3py_disp.yaml")
 dds = p3yaml.dataset
 file_name_tmpl = "disp-%05d/vasprun.xml"
 count = 1
-for d1 in dds['first_atoms']:
+for d1 in dds["first_atoms"]:
     print(file_name_tmpl % count)
     count += 1
-for d1 in dds['first_atoms']:
-    for d2 in d1['second_atoms']:
-        if d2['included']:
+for d1 in dds["first_atoms"]:
+    for d2 in d1["second_atoms"]:
+        if d2["included"]:
             print(file_name_tmpl % count)
         count += 1
 ```
@@ -245,13 +245,13 @@ p3yaml.read("phono3py_disp.yaml")
 data = p3yaml.dataset
 
 disp_ids = []
-for data1 in data['first_atoms']:
-    disp_ids.append(data1['id'])
+for data1 in data["first_atoms"]:
+    disp_ids.append(data1["id"])
 
-for data1 in data['first_atoms']:
-    for data2 in data1['second_atoms']:
-        if data2['included']:
-            disp_ids.append(data2['id'])
+for data1 in data["first_atoms"]:
+    for data2 in data1["second_atoms"]:
+        if data2["included"]:
+            disp_ids.append(data2["id"])
 
 # To remove duplicates
 # duplicates = dict(data['duplicates'])
