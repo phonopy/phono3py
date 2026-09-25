@@ -79,9 +79,18 @@ class JointDos:
         filename: str | os.PathLike | None = None,
         log_level: int = 0,
         lapack_zheev_uplo: Literal["L", "U"] = "L",
+        symmetrize_tetrahedra: bool = False,
         lang: Literal["C", "Python", "Rust"] = "Rust",
     ) -> None:
-        """Init method."""
+        """Init method.
+
+        ``symmetrize_tetrahedra``: when True, the integration weights of the
+        tetrahedron method are averaged over the 24 tetrahedra rotated by all the
+        point-group operations. The 24 tetrahedra are cut along one main diagonal,
+        so the weights can differ between symmetrically equivalent q-points.
+        Averaging removes the difference.
+
+        """
         self._grid_point: int | None = None
         self._primitive = primitive
         self._supercell = supercell
@@ -107,6 +116,7 @@ class JointDos:
         self._filename = filename
         self._log_level = log_level
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
+        self._symmetrize_tetrahedra = symmetrize_tetrahedra
         if lang in ("C", "Rust"):
             lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
@@ -207,6 +217,11 @@ class JointDos:
     def bz_grid(self) -> BZGrid:
         """Setter and getter of BZGrid."""
         return self._bz_grid
+
+    @property
+    def symmetrize_tetrahedra(self) -> bool:
+        """Return whether tetrahedron weights are averaged over the point group."""
+        return self._symmetrize_tetrahedra
 
     @property
     def temperature(self) -> float | None:

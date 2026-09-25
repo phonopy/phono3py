@@ -15,7 +15,10 @@ from phono3py.conductivity.grid_point_data import ScatteringResult
 from phono3py.other.isotope import Isotope
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy, average_by_degeneracy
 from phono3py.phonon3.interaction import Interaction
-from phono3py.phonon3.triplets import get_triplets_at_q
+from phono3py.phonon3.triplets import (
+    get_triplets_at_q,
+    get_triplets_relative_grid_address,
+)
 
 
 def run_pp_collision_rust(
@@ -609,14 +612,10 @@ class RTAScatteringSolver:
             dtype="double",
         )
 
-        tetrahedra: NDArray[np.int64] | None = None
+        relative_grid_address: NDArray[np.int64] | None = None
         if None in self._sigmas:
-            from phonopy.phonon.tetrahedron_method import (
-                get_tetrahedra_relative_grid_address,
-            )
-
-            tetrahedra = get_tetrahedra_relative_grid_address(
-                self._pp.bz_grid.microzone_lattice
+            relative_grid_address = get_triplets_relative_grid_address(
+                self._pp.bz_grid, self._pp.symmetrize_tetrahedra
             )
 
         if self._pp.openmp_per_triplets is None:
@@ -630,7 +629,7 @@ class RTAScatteringSolver:
             collisions = self._dispatch_lowmem_collision(
                 sigma,
                 temperatures_THz,
-                tetrahedra,
+                relative_grid_address,
                 openmp_per_triplets,
             )
             self._store_lowmem_results(j, grid_point, gamma, collisions)
@@ -639,7 +638,7 @@ class RTAScatteringSolver:
         self,
         sigma: float | None,
         temperatures_THz: NDArray[np.double],
-        tetrahedra: NDArray[np.int64] | None,
+        relative_grid_address: NDArray[np.int64] | None,
         openmp_per_triplets: bool,
     ) -> NDArray[np.double]:
         """Call C-extension for low-memory collision at one sigma."""
@@ -672,12 +671,7 @@ class RTAScatteringSolver:
         self._collision.set_sigma(sigma)
 
         if sigma is None:
-            assert tetrahedra is not None
-            relative_grid_address = np.array(
-                np.dot(tetrahedra, self._pp.bz_grid.P.T),
-                dtype="int64",
-                order="C",
-            )
+            assert relative_grid_address is not None
             if self._lang == "Rust":
                 run_pp_collision_rust(
                     collisions,
@@ -709,6 +703,10 @@ class RTAScatteringSolver:
             else:
                 import phono3py._phono3py as phono3c
 
+                if self._pp.symmetrize_tetrahedra:
+                    raise RuntimeError(
+                        "symmetrize_tetrahedra is not supported with lang='C'."
+                    )
                 phono3c.pp_collision(
                     collisions,
                     relative_grid_address,
@@ -1053,9 +1051,6 @@ class RTAScatteringSolver:
             return self._rust_cache
 
         from phonopy.phonon.grid import get_reduced_bases_and_tmat_inv
-        from phonopy.phonon.tetrahedron_method import (
-            get_tetrahedra_relative_grid_address,
-        )
 
         pp = self._pp
         svecs, multi = pp.primitive.get_smallest_vectors()
@@ -1063,9 +1058,8 @@ class RTAScatteringSolver:
         assert frequencies is not None
         assert eigenvectors is not None
 
-        tetrahedra = get_tetrahedra_relative_grid_address(pp.bz_grid.microzone_lattice)
-        relative_grid_address = np.array(
-            np.dot(tetrahedra, pp.bz_grid.P.T), dtype="int64", order="C"
+        relative_grid_address = get_triplets_relative_grid_address(
+            pp.bz_grid, pp.symmetrize_tetrahedra
         )
 
         reduced_basis, tmat_inv_int = get_reduced_bases_and_tmat_inv(

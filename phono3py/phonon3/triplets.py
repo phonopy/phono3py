@@ -47,6 +47,7 @@ from phonopy.phonon.grid import (
 )
 from phonopy.phonon.tetrahedron_method import (
     TetrahedronMethod,
+    get_symmetrized_tetrahedra_relative_grid_address,
     get_tetrahedra_relative_grid_address,
 )
 
@@ -169,6 +170,29 @@ def get_nosym_triplets_at_q(
     )
 
     return triplets_at_q, weights, map_triplets, map_q
+
+
+def get_triplets_relative_grid_address(
+    bz_grid: BZGrid, symmetrize_tetrahedra: bool = False
+) -> NDArray[np.int64]:
+    """Return the tetrahedra around a grid point for the tetrahedron method.
+
+    With ``symmetrize_tetrahedra``, the 24 tetrahedra rotated by all the
+    point-group operations are concatenated, and the integration weights become
+    their average.
+
+    Returns
+    -------
+    relative_grid_address : ndarray
+        Relative grid addresses in GR-grid coordinates, the central vertex first
+        in each tetrahedron.
+        shape=(24 * n, 4, 3), dtype='int64', order='C'
+
+    """
+    if symmetrize_tetrahedra:
+        return get_symmetrized_tetrahedra_relative_grid_address(bz_grid)
+    tetrahedra = get_tetrahedra_relative_grid_address(bz_grid.microzone_lattice)
+    return np.array(tetrahedra @ bz_grid.P.T, dtype="int64", order="C")
 
 
 def get_triplets_integration_weights(
@@ -438,14 +462,15 @@ def _set_triplets_integration_weights_c(
 ) -> None:
     import phono3py._phono3py as phono3c
 
-    tetrahedra = get_tetrahedra_relative_grid_address(pp.bz_grid.microzone_lattice)
+    if pp.symmetrize_tetrahedra:
+        raise RuntimeError("symmetrize_tetrahedra is not supported with lang='C'.")
     triplets_at_q = pp.get_triplets_at_q()[0]
     frequencies = pp.get_phonons()[0]
     phono3c.triplets_integration_weights(
         g,
         g_zero,
         frequency_points,  # f0
-        np.array(np.dot(tetrahedra, pp.bz_grid.P.T), dtype="int64", order="C"),
+        get_triplets_relative_grid_address(pp.bz_grid),
         pp.bz_grid.D_diag,
         triplets_at_q,
         frequencies,  # f1
@@ -465,14 +490,13 @@ def _set_triplets_integration_weights_rust(
 ) -> None:
     import phonors
 
-    tetrahedra = get_tetrahedra_relative_grid_address(pp.bz_grid.microzone_lattice)
     triplets_at_q = pp.get_triplets_at_q()[0]
     frequencies = pp.get_phonons()[0]
     phonors.triplets_integration_weights(
         g,
         g_zero,
         frequency_points,  # f0
-        np.array(np.dot(tetrahedra, pp.bz_grid.P.T), dtype="int64", order="C"),
+        get_triplets_relative_grid_address(pp.bz_grid, pp.symmetrize_tetrahedra),
         pp.bz_grid.D_diag,
         triplets_at_q,
         frequencies,  # f1
@@ -491,16 +515,17 @@ def _set_triplets_integration_weights_py(
 ) -> None:
     """Python version of _set_triplets_integration_weights_c.
 
-    Tetrahedron method engine is that implemented in phonopy written mainly in C.
+    The tetrahedron method is phonopy's pure-Python TetrahedronMethod.
 
     """
-    thm = TetrahedronMethod(pp.bz_grid.microzone_lattice)
+    relative_grid_address = get_triplets_relative_grid_address(
+        pp.bz_grid, pp.symmetrize_tetrahedra
+    )
+    thm = TetrahedronMethod(None, relative_grid_address=relative_grid_address)
     triplets_at_q = pp.get_triplets_at_q()[0]
     assert triplets_at_q is not None
     tetrahedra_vertices = _get_tetrahedra_vertices(
-        np.array(np.dot(thm.tetrahedra, pp.bz_grid.P.T), dtype="int64", order="C"),
-        triplets_at_q,
-        pp.bz_grid,
+        relative_grid_address, triplets_at_q, pp.bz_grid
     )
     pp.run_phonon_solver()
     frequencies = pp.get_phonons()[0]
@@ -540,7 +565,7 @@ def _get_tetrahedra_vertices(
 
     """
     num_triplets = len(triplets_at_q)
-    vertices = np.zeros((num_triplets, 2, 24, 4), dtype="int64")
+    vertices = np.zeros((num_triplets, 2, len(relative_address), 4), dtype="int64")
     for i, tp in enumerate(triplets_at_q):
         for j, adrs_shift in enumerate((relative_address, -relative_address)):
             adrs = bz_grid.addresses[tp[j + 1]] + adrs_shift

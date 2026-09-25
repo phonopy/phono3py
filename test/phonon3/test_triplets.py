@@ -1973,10 +1973,76 @@ def test_get_triplets_integration_weights_tetrahedron_c_equals_python(
     np.testing.assert_allclose(g_c, g_py, rtol=1e-4, atol=1e-10)
 
 
+@pytest.mark.parametrize("symmetrize_tetrahedra", [False, True])
+def test_get_triplets_integration_weights_little_group(
+    aln_lda: Phono3py, symmetrize_tetrahedra: bool
+):
+    """Test that g(q0; S q1) = g(q0; q1) for S in the little group of q0.
+
+    Without symmetrization the fixed main diagonal breaks this on AlN.
+
+    """
+    aln_lda.mesh_numbers = [6, 6, 4]
+    assert aln_lda.grid is not None
+    grid_point = int(
+        aln_lda.grid.grg2bzg[get_grid_point_from_address([1, 0, 0], [6, 6, 4])]
+    )
+    itr = _setup_interaction(
+        aln_lda,
+        [6, 6, 4],
+        grid_point,
+        is_mesh_symmetry=False,
+        symmetrize_tetrahedra=symmetrize_tetrahedra,
+    )
+    bz_grid = itr.bz_grid
+    frequencies = itr.get_phonons()[0]
+    assert frequencies is not None
+    g, _ = get_triplets_integration_weights(itr, frequencies[grid_point], sigma=None)
+
+    triplets = itr.get_triplets_at_q()[0]
+    assert triplets is not None
+    index = {int(gp): i for i, gp in enumerate(bz_grid.bzg2grg[triplets[:, 1]])}
+    q0 = bz_grid.addresses[grid_point]
+    diff = 0.0
+    for r in bz_grid.rotations:
+        if ((r @ q0 - q0) % bz_grid.D_diag).any():
+            continue
+        for i, tp in enumerate(triplets):
+            gp = get_grid_point_from_address(r @ bz_grid.addresses[tp[1]], [6, 6, 4])
+            diff = max(diff, abs(g[:, i] - g[:, index[int(gp)]]).max())
+    if symmetrize_tetrahedra:
+        assert diff < 1e-10
+    else:
+        assert diff > 1
+
+
+def test_get_triplets_integration_weights_symmetrize_fcc(si_pbesol: Phono3py):
+    """Test that symmetrization leaves the weights of an fcc lattice unchanged.
+
+    The 24 tetrahedra of an fcc lattice are already invariant under the point
+    group.
+
+    """
+    frequency_points = np.linspace(0, 20, 11)
+    g = [
+        get_triplets_integration_weights(
+            _setup_interaction(
+                si_pbesol, [4, 4, 4], 1, symmetrize_tetrahedra=symmetrize_tetrahedra
+            ),
+            frequency_points,
+            sigma=None,
+        )[0]
+        for symmetrize_tetrahedra in (False, True)
+    ]
+    np.testing.assert_array_equal(g[0], g[1])
+
+
 def _setup_interaction(
     ph3: Phono3py,
     mesh: list,
     grid_point: int,
+    is_mesh_symmetry: bool = True,
+    symmetrize_tetrahedra: bool = False,
 ) -> Interaction:
     """Set up Interaction with phonons solved at a given grid point."""
     ph3.mesh_numbers = mesh
@@ -1987,6 +2053,8 @@ def _setup_interaction(
         ph3.primitive_symmetry,
         fc3=ph3.fc3,
         cutoff_frequency=1e-4,
+        is_mesh_symmetry=is_mesh_symmetry,
+        symmetrize_tetrahedra=symmetrize_tetrahedra,
     )
     itr.init_dynamical_matrix(
         ph3.fc2,
