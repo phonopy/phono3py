@@ -145,6 +145,7 @@ class Interaction:
         cutoff_frequency: float | None = None,
         lapack_zheev_uplo: Literal["L", "U"] = "L",
         openmp_per_triplets: bool | None = None,
+        symmetrize_tetrahedra: bool = False,
         lang: Literal["C", "Python", "Rust"] = "Rust",
     ):
         """Init method.
@@ -154,6 +155,12 @@ class Interaction:
         per-call basis through the ``lang`` argument of ``run``.  ``"Python"``
         falls back to the C phonon solver since there is no pure-Python
         grid-wide phonon solver implementation.
+
+        ``symmetrize_tetrahedra``: when True, the integration weights of the
+        tetrahedron method are averaged over the 24 tetrahedra rotated by all the
+        point-group operations. The 24 tetrahedra are cut along one main diagonal,
+        so the weights can differ between symmetrically equivalent q-points.
+        Averaging removes the difference.
 
         """
         self._primitive = primitive
@@ -199,6 +206,7 @@ class Interaction:
         self._make_r0_average = make_r0_average
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
         self._openmp_per_triplets = openmp_per_triplets
+        self._symmetrize_tetrahedra = symmetrize_tetrahedra
         if lang in ("C", "Rust"):
             lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
@@ -468,6 +476,11 @@ class Interaction:
     def symmetrize_fc3q(self) -> bool:
         """Return boolean of symmetrize_fc3q."""
         return self._symmetrize_fc3q
+
+    @property
+    def symmetrize_tetrahedra(self) -> bool:
+        """Return whether tetrahedron weights are averaged over the point group."""
+        return self._symmetrize_tetrahedra
 
     @property
     def make_r0_average(self) -> bool:
