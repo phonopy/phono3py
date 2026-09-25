@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from phono3py import Phono3pyIsotope
-from phono3py.other.isotope import get_mass_variances
+from phono3py.other.isotope import Isotope, get_mass_variances
 
 si_pbesol_iso = [
     [
@@ -84,12 +84,11 @@ def test_get_mass_variances_no_args_raises():
         get_mass_variances()
 
 
-@pytest.mark.parametrize("lang", ["C", "Python"])
+@pytest.mark.parametrize("lang", ["C", "Rust"])
 def test_Phono3pyIsotope(si_pbesol, lang):
     """Phono3pyIsotope with tetrahedron method."""
-    # Tetrahedron isotope kernel is C-only (Python path uses the C
-    # scalar ``get_tetrahedra_integration_weight`` helper).
-    pytest.importorskip("phonopy._phonopy")
+    if lang == "C":
+        pytest.importorskip("phonopy._phonopy")
     si_pbesol.mesh_numbers = [21, 21, 21]
     iso = Phono3pyIsotope(
         si_pbesol.mesh_numbers,
@@ -108,7 +107,7 @@ def test_Phono3pyIsotope(si_pbesol, lang):
     np.testing.assert_allclose(si_pbesol_iso, iso.gamma[0], atol=3e-4)
 
 
-@pytest.mark.parametrize("lang", ["C", "Python"])
+@pytest.mark.parametrize("lang", ["C", "Python", "Rust"])
 def test_Phono3pyIsotope_with_sigma(si_pbesol, lang):
     """Phono3pyIsotope with smearing method."""
     si_pbesol.mesh_numbers = [21, 21, 21]
@@ -132,10 +131,11 @@ def test_Phono3pyIsotope_with_sigma(si_pbesol, lang):
     np.testing.assert_allclose(si_pbesol_iso_sigma, iso.gamma[0], atol=3e-4)
 
 
-@pytest.mark.parametrize("lang", ["C", "Python"])
+@pytest.mark.parametrize("lang", ["C", "Rust"])
 def test_Phono3pyIsotope_grg(si_pbesol_grg, lang):
     """Phono3pyIsotope with tetrahedron method and GR-grid."""
-    pytest.importorskip("phonopy._phonopy")
+    if lang == "C":
+        pytest.importorskip("phonopy._phonopy")
     ph3 = si_pbesol_grg
     iso = Phono3pyIsotope(
         80,
@@ -157,7 +157,7 @@ def test_Phono3pyIsotope_grg(si_pbesol_grg, lang):
     np.testing.assert_allclose(si_pbesol_grg_iso, iso.gamma[0], atol=3e-3)
 
 
-@pytest.mark.parametrize("lang", ["C", "Python"])
+@pytest.mark.parametrize("lang", ["C", "Python", "Rust"])
 def test_Phono3pyIsotope_grg_with_sigma(si_pbesol_grg, lang):
     """Phono3pyIsotope with smearing method and GR-grid."""
     ph3 = si_pbesol_grg
@@ -182,3 +182,49 @@ def test_Phono3pyIsotope_grg_with_sigma(si_pbesol_grg, lang):
         iso.grid.grid_matrix, [[-15, 15, 15], [15, -15, 15], [15, 15, -15]]
     )
     np.testing.assert_allclose(si_pbesol_grg_iso_sigma, iso.gamma[0], atol=3e-4)
+
+
+@pytest.mark.parametrize(
+    "ph3_name,mesh,use_grg",
+    [("si_pbesol", [7, 7, 7], False), ("si_pbesol_grg", 20, True)],
+)
+def test_Isotope_python_matches_rust(request, ph3_name, mesh, use_grg):
+    """The pure-Python tetrahedron path gives the gamma of the Rust path.
+
+    The Python path is the prototype of the Rust one, and it is slow, so it is
+    checked against Rust on a small mesh rather than against the references.
+
+    Both paths get the same phonons. The frequency points are the frequencies
+    at the grid point itself, which vertices of symmetrically equivalent points
+    share, so phonons solved separately, apart by 1e-7, move the weights.
+
+    """
+    ph3 = request.getfixturevalue(ph3_name)
+    isotopes = {}
+    for lang in ("Rust", "Python"):
+        iso = Isotope(
+            mesh,
+            ph3.phonon_primitive,
+            symprec=ph3.symmetry.tolerance,
+            use_grg=use_grg,
+            lang=lang,
+        )
+        iso.init_dynamical_matrix(
+            ph3.fc2,
+            ph3.phonon_supercell,
+            ph3.phonon_primitive,
+            nac_params=ph3.nac_params,
+        )
+        isotopes[lang] = iso
+    for grid_point in (1, 10):
+        isotopes["Rust"].set_grid_point(grid_point)
+        isotopes["Rust"].run()
+        frequencies, eigenvectors, phonon_done = isotopes["Rust"].get_phonons()
+        isotopes["Python"].set_phonons(
+            frequencies.copy(), eigenvectors.copy(), phonon_done.copy()
+        )
+        isotopes["Python"].set_grid_point(grid_point)
+        isotopes["Python"].run()
+        np.testing.assert_allclose(
+            isotopes["Python"].gamma, isotopes["Rust"].gamma, rtol=1e-10, atol=1e-16
+        )
