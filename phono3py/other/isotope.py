@@ -43,10 +43,10 @@ import numpy as np
 from numpy.typing import NDArray
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
 from phonopy.phonon.grid import BZGrid
-from phonopy.phonon.tetrahedron_mesh import get_tetrahedra_frequencies
 from phonopy.phonon.tetrahedron_method import (
     TetrahedronMethod,
     get_integration_weights,
+    get_tetrahedra_frequencies,
 )
 from phonopy.structure.atomic_data import get_atomic_data
 from phonopy.structure.atoms import PhonopyAtoms
@@ -469,22 +469,10 @@ class Isotope:
 
         for i, gp in enumerate(self._grid_points):
             tfreqs = get_tetrahedra_frequencies(
-                gp,  # In BZ-grid used only to access self._bz_grid.addresses.
-                self._bz_grid.D_diag,
-                self._bz_grid.addresses,
-                np.array(
-                    np.dot(thm.tetrahedra, self._bz_grid.P.T),
-                    dtype="int64",
-                    order="C",
-                ),
-                self._bz_grid.grg2bzg,
+                gp,
+                self._bz_grid,
+                np.array(np.dot(thm.tetrahedra, self._bz_grid.P.T), dtype="int64"),
                 self._frequencies,
-                grid_order=[
-                    1,
-                    self._bz_grid.D_diag[0],
-                    self._bz_grid.D_diag[0] * self._bz_grid.D_diag[1],
-                ],
-                lang="Python",
             )
 
             for bi, frequencies in enumerate(tfreqs):
