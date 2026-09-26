@@ -248,6 +248,35 @@ def test_jdso_si_nomeshsym(si_pbesol: Phono3py):
     )
 
 
+@pytest.mark.parametrize("symmetrize_tetrahedra", [False, True])
+def test_jdos_aln_symmetrize_tetrahedra(aln_lda: Phono3py, symmetrize_tetrahedra: bool):
+    """Test that the JDOS summed over irreducible triplets equals the full sum.
+
+    The two sums agree only when the tetrahedron weights are invariant under
+    the little group of q0, which symmetrize_tetrahedra makes them in AlN.
+
+    """
+    joint_dos = {}
+    for is_mesh_symmetry in (True, False):
+        jdos = Phono3pyJointDos(
+            aln_lda.phonon_supercell,
+            aln_lda.phonon_primitive,
+            aln_lda.fc2,
+            mesh=[6, 6, 4],
+            nac_params=aln_lda.nac_params,
+            num_frequency_points=10,
+            is_mesh_symmetry=is_mesh_symmetry,
+            symmetrize_tetrahedra=symmetrize_tetrahedra,
+        )
+        jdos.run([1])
+        joint_dos[is_mesh_symmetry] = jdos.joint_dos
+    diff = abs(joint_dos[True] - joint_dos[False]).max()
+    if symmetrize_tetrahedra:
+        assert diff < 1e-5
+    else:
+        assert diff > 0.1
+
+
 def test_jdos_nacl(nacl_pbe: Phono3py):
     """Test joint-DOS by NaCl."""
     nacl_pbe.mesh_numbers = [9, 9, 9]

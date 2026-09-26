@@ -619,6 +619,36 @@ This is the default option. Therefore it is not necessary to specify this unless
 both results by tetrahedron method and smearing method in one time execution are
 expected.
 
+(symmetrize_tetrahedra_option)=
+
+### `--symmetrize-tetrahedra` (`SYMMETRIZE_TETRAHEDRA = .TRUE.`)
+
+The tetrahedron method divides the space around each grid point into 24
+tetrahedra. The tetrahedra are cut along one of the four main diagonals of the
+grid, and the same diagonal is used at every grid point.
+
+Take a grid point $\mathbf{q}$ and a point-group operation $R$, which maps
+$\mathbf{q}$ to the symmetrically equivalent grid point $R\mathbf{q}$. Rotating
+the 24 tetrahedra around $\mathbf{q}$ by $R$ gives 24 tetrahedra around
+$R\mathbf{q}$, and they are cut along the rotated diagonal. The 24 tetrahedra
+used around $R\mathbf{q}$ in the calculation are cut along the fixed diagonal,
+which is in general a different one. The two sets of tetrahedra around
+$R\mathbf{q}$ are therefore different, and the integration weights at
+$\mathbf{q}$ and $R\mathbf{q}$ can differ.
+
+With this option, the 24 tetrahedra around each grid point are rotated by each
+point-group operation. The integration weights are calculated with each of the
+rotated sets of 24 tetrahedra, and their average is used. The averaged
+integration weights at $\mathbf{q}$ and $R\mathbf{q}$ are equal. The number of
+tetrahedra in the integration is multiplied by the number of different sets of
+24 tetrahedra.
+
+The average is used for the imaginary part of the self energy, the thermal
+conductivity, the joint density of states and the isotope scattering. The
+option is off by default, and `--no-symmetrize-tetrahedra` turns it off
+explicitly. The option cannot be combined with `--legacy-backend`, which
+selects the C implementation.
+
 (sigma_option)=
 
 ### `--sigma` (`SIGMA`)

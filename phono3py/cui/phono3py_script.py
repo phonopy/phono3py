@@ -955,6 +955,7 @@ def _run_jdos_then_exit(
         is_mesh_symmetry=settings.is_mesh_symmetry,
         symprec=phono3py.symmetry.tolerance,
         log_level=log_level,
+        symmetrize_tetrahedra=settings.symmetrize_tetrahedra,
         lang=phono3py.lang,
     )
 
@@ -997,6 +998,7 @@ def _run_isotope_then_exit(
         symprec=phono3py.symmetry.tolerance,
         cutoff_frequency=settings.cutoff_frequency,
         lapack_zheev_uplo=settings.lapack_zheev_uplo,
+        symmetrize_tetrahedra=settings.symmetrize_tetrahedra,
         lang=phono3py.lang,
     )
     assert phono3py.fc2 is not None
@@ -1046,6 +1048,8 @@ def _init_phph_interaction(
 
         if settings.is_symmetrize_fc3_q:
             print("Permutation symmetry of ph-ph interaction strengths: True")
+        if settings.symmetrize_tetrahedra:
+            print("Tetrahedron weights averaged over point group: True")
         if settings.is_fc3_r0_average:
             print("fc3-r2q-transformation over three atoms: True")
         else:
@@ -1065,6 +1069,7 @@ def _init_phph_interaction(
         frequency_scale_factor=updated_settings["frequency_scale_factor"],
         symmetrize_fc3q=settings.is_symmetrize_fc3_q,
         lapack_zheev_uplo=settings.lapack_zheev_uplo,
+        symmetrize_tetrahedra=settings.symmetrize_tetrahedra,
     )
 
     if log_level:

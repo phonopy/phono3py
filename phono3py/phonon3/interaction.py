@@ -150,17 +150,69 @@ class Interaction:
     ):
         """Init method.
 
-        ``lang`` selects the backend used by ``run``, ``run_phonon_solver``,
-        and ``run_phonon_solver_at_gamma``.  It can be overridden on a
-        per-call basis through the ``lang`` argument of ``run``.  ``"Python"``
-        falls back to the C phonon solver since there is no pure-Python
-        grid-wide phonon solver implementation.
-
-        ``symmetrize_tetrahedra``: when True, the integration weights of the
-        tetrahedron method are averaged over the 24 tetrahedra rotated by all the
-        point-group operations. The 24 tetrahedra are cut along one main diagonal,
-        so the weights can differ between symmetrically equivalent q-points.
-        Averaging removes the difference.
+        Parameters
+        ----------
+        primitive : Primitive
+            Primitive cell.
+        bz_grid : BZGrid
+            Grid in reciprocal space.
+        primitive_symmetry : Symmetry
+            Symmetry of the primitive cell. Its tolerance is also used to
+            compare distances of atoms.
+        fc3 : ndarray, optional
+            Third-order force constants. Without them, only
+            ``constant_averaged_interaction`` gives the interaction strength.
+            shape=(atoms in supercell, atoms in supercell, atoms in supercell,
+            3, 3, 3) or (atoms in primitive, atoms in supercell, atoms in
+            supercell, 3, 3, 3), dtype='double'
+        fc3_nonzero_indices : ndarray, optional
+            1 for the atom triplets of fc3 to be used, 0 for those to be
+            skipped. If None, all are used.
+            shape=fc3.shape[:3], dtype='byte'
+        band_indices : array_like, optional
+            Bands at the grid point for which the interaction is calculated.
+            If None, all bands. shape=(bands,), dtype='int64'
+        constant_averaged_interaction : float, optional
+            If given, the interaction strength is not calculated but set to
+            this value divided by the number of grid points.
+        frequency_factor_to_THz : float, optional
+            Factor that converts the phonon frequencies to THz. If None,
+            ``get_physical_units().DefaultToTHz``.
+        frequency_scale_factor : float, optional
+            Factor multiplied to all phonon frequencies; fc3 is multiplied by
+            its square. If None, not scaled.
+        unit_conversion : float, optional
+            Factor multiplied to the interaction strength. If None, the one
+            that gives it in eV^2 per grid point.
+        is_mesh_symmetry : bool, optional, default=True
+            Use the triplets irreducible by the symmetry of the grid point
+            instead of all triplets.
+        symmetrize_fc3q : bool, optional, default=False
+            Symmetrize fc3 in phonon space by index permutation.
+        make_r0_average : bool, optional, default=False
+            Average the transformation of fc3 to reciprocal space over the
+            three atoms of each triplet instead of taking it at the first.
+        cutoff_frequency : float, optional
+            Phonon modes with frequency below this value in THz are left out.
+            If None, 0.
+        lapack_zheev_uplo : str, optional, default='L'
+            'L' or 'U' passed to the LAPACK zheev phonon solver.
+        openmp_per_triplets : bool, optional
+            Distribute the OpenMP work over triplets when True and over bands
+            when False. If None, chosen automatically.
+        symmetrize_tetrahedra : bool, optional, default=False
+            When True, the integration weights of the tetrahedron method are
+            averaged over the 24 tetrahedra rotated by all the point-group
+            operations. The 24 tetrahedra are cut along one main diagonal, so
+            the weights can differ between symmetrically equivalent q-points.
+            Averaging removes the difference. Not available with
+            ``lang='C'``.
+        lang : str, optional, default='Rust'
+            Backend, 'C', 'Python' or 'Rust', used by ``run``,
+            ``run_phonon_solver`` and ``run_phonon_solver_at_gamma``. It can
+            be overridden per call through the ``lang`` argument of ``run``.
+            'Python' falls back to the C phonon solver, since there is no
+            pure-Python phonon solver over the grid.
 
         """
         self._primitive = primitive

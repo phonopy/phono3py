@@ -82,6 +82,7 @@ class Phono3pySettings(Settings):
         self.is_symmetrize_fc2: bool = False
         self.is_symmetrize_fc3_q: bool = False
         self.is_symmetrize_fc3_r: bool = False
+        self.symmetrize_tetrahedra: bool = False
         self.is_tetrahedron_method: bool = False
         self.lapack_zheev_uplo: Literal["L", "U"] | None = None
         self.mass_variances: list[float] | None = None
@@ -318,6 +319,12 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
                 self._confs["symmetrize_fc3_r"] = ".true."
             elif args.is_symmetrize_fc3_r is False:
                 self._confs["symmetrize_fc3_r"] = ".false."
+
+        if "symmetrize_tetrahedra" in arg_list:
+            if args.symmetrize_tetrahedra:
+                self._confs["symmetrize_tetrahedra"] = ".true."
+            elif args.symmetrize_tetrahedra is False:
+                self._confs["symmetrize_tetrahedra"] = ".false."
 
         if "is_tetrahedron_method" in arg_list:
             if args.is_tetrahedron_method:
@@ -560,6 +567,7 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
                 "symmetrize_fc2",
                 "symmetrize_fc3_q",
                 "symmetrize_fc3_r",
+                "symmetrize_tetrahedra",
                 "kappa_star",
             ):
                 if confs[conf_key].lower() == ".true.":
@@ -828,6 +836,10 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
         # Symmetrize fc3 by index exchange
         if "symmetrize_fc3_r" in params:
             settings.is_symmetrize_fc3_r = params["symmetrize_fc3_r"]
+
+        # Average tetrahedron weights over the point group
+        if "symmetrize_tetrahedra" in params:
+            settings.symmetrize_tetrahedra = params["symmetrize_tetrahedra"]
 
         # Mass variance parameters
         if "mass_variances" in params:

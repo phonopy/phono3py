@@ -1186,6 +1186,7 @@ class Phono3py:
         symmetrize_fc3q: bool = False,
         lapack_zheev_uplo: Literal["L", "U"] | None = None,
         openmp_per_triplets: bool | None = None,
+        symmetrize_tetrahedra: bool = False,
     ) -> None:
         """Initialize ph-ph interaction calculation.
 
@@ -1229,6 +1230,13 @@ class Phono3py:
             When `True`, ph-ph interaction strength calculation runs with
             OpenMP distribution over triplets, and over bands when `False`.
             `None` will choose one of them automatically.
+        symmetrize_tetrahedra : bool, optional
+            When True, the integration weights of the tetrahedron method are
+            averaged over the 24 tetrahedra rotated by all the point-group
+            operations. The 24 tetrahedra are cut along one main diagonal, so
+            the weights can differ between symmetrically equivalent q-points.
+            Averaging removes the difference. Isotope scattering in the
+            thermal conductivity follows this choice. Default is False.
 
         """
         if self._bz_grid is None:
@@ -1265,6 +1273,7 @@ class Phono3py:
             make_r0_average=self._make_r0_average,
             lapack_zheev_uplo=_lapack_zheev_uplo,
             openmp_per_triplets=openmp_per_triplets,
+            symmetrize_tetrahedra=symmetrize_tetrahedra,
             lang=self._lang,
         )
         self._interaction.nac_q_direction = nac_q_direction

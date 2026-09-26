@@ -9,11 +9,13 @@
   mainly changes isotope scattering, whose frequency points are the
   frequencies of the grid point itself. For Si with isotope scattering, the
   thermal conductivity is 0.3-0.7% lower in the tests. The fix is in phonors.
-- `Interaction`, `JointDos` and `Isotope` accept `symmetrize_tetrahedra`.
-  When it is True, the integration weights of the tetrahedron method are
-  averaged over the 24 tetrahedra rotated by all the point-group operations,
-  so that symmetrically equivalent q-points get equal weights. The default is
-  False.
+- New option {ref}`--symmetrize-tetrahedra <symmetrize_tetrahedra_option>`
+  (`SYMMETRIZE_TETRAHEDRA`). With it, the integration weights of the
+  tetrahedron method are averaged over the 24 tetrahedra rotated by all the
+  point-group operations, so that symmetrically equivalent q-points get equal
+  weights. In the API, it is the `symmetrize_tetrahedra` parameter of
+  `Phono3py.init_phph_interaction`, `Phono3pyJointDos` and `Phono3pyIsotope`.
+  The default is off.
 
 ## Sep-10-2026: Version 4.5.0
 

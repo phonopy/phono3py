@@ -866,6 +866,16 @@ def _add_run_options(parser: argparse.ArgumentParser) -> None:
         help="Symmetrize fc3 in reciprocal space by index exchange",
     )
     parser.add_argument(
+        "--symmetrize-tetrahedra",
+        dest="symmetrize_tetrahedra",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help=(
+            "Average the tetrahedron weights over the point group, so that "
+            "symmetrically equivalent q-points get equal weights (default: off)"
+        ),
+    )
+    parser.add_argument(
         "--thm",
         "--tetrahedron-method",
         dest="is_tetrahedron_method",
@@ -1177,6 +1187,7 @@ class Phono3pyMockArgs:
     save_params: bool | None = None
     show_num_triplets: bool | None = None
     supercell_dimension: Sequence[str] | None = None
+    symmetrize_tetrahedra: bool | None = None
     temperatures: Sequence[str] | None = None
     transport_type: str | None = None
     use_pypolymlp: bool | None = None

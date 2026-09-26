@@ -184,6 +184,27 @@ def test_Phono3pyIsotope_grg_with_sigma(si_pbesol_grg, lang):
     np.testing.assert_allclose(si_pbesol_grg_iso_sigma, iso.gamma[0], atol=3e-4)
 
 
+def test_Phono3pyIsotope_symmetrize_tetrahedra(aln_lda):
+    """Phono3pyIsotope passes symmetrize_tetrahedra to Isotope."""
+    gammas = []
+    for symmetrize_tetrahedra in (False, True):
+        iso = Phono3pyIsotope(
+            [6, 6, 4],
+            aln_lda.phonon_primitive,
+            symprec=aln_lda.symmetry.tolerance,
+            symmetrize_tetrahedra=symmetrize_tetrahedra,
+        )
+        iso.init_dynamical_matrix(
+            aln_lda.fc2,
+            aln_lda.phonon_supercell,
+            aln_lda.phonon_primitive,
+            nac_params=aln_lda.nac_params,
+        )
+        iso.run([1])
+        gammas.append(iso.gamma[0])
+    assert abs(gammas[0] - gammas[1]).max() > 1e-6
+
+
 @pytest.mark.parametrize(
     "ph3_name,mesh,use_grg,symmetrize_tetrahedra",
     [
