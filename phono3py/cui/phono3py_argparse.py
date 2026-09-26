@@ -1130,7 +1130,8 @@ def get_run_parser() -> tuple[argparse.ArgumentParser, list[str]]:
         description=(
             "phono3py: phonon and thermal-conductivity calculation from a "
             "phono3py.yaml-like file."
-        )
+        ),
+        formatter_class=_SortedHelpFormatter,
     )
     _add_shared_options(parser)
     _add_run_options(parser)
