@@ -8,6 +8,7 @@ from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
+from phonopy.phonon.tetrahedron_method import get_tetrahedra_relative_gr_grid_address
 from phonopy.physical_units import get_physical_units
 
 from phono3py._lang import resolve_lang
@@ -15,10 +16,7 @@ from phono3py.conductivity.grid_point_data import ScatteringResult
 from phono3py.other.isotope import Isotope
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy, average_by_degeneracy
 from phono3py.phonon3.interaction import Interaction
-from phono3py.phonon3.triplets import (
-    get_triplets_at_q,
-    get_triplets_relative_grid_address,
-)
+from phono3py.phonon3.triplets import get_triplets_at_q
 
 
 def run_pp_collision_rust(
@@ -614,7 +612,7 @@ class RTAScatteringSolver:
 
         relative_grid_address: NDArray[np.int64] | None = None
         if None in self._sigmas:
-            relative_grid_address = get_triplets_relative_grid_address(
+            relative_grid_address = get_tetrahedra_relative_gr_grid_address(
                 self._pp.bz_grid, self._pp.symmetrize_tetrahedra
             )
 
@@ -1058,7 +1056,7 @@ class RTAScatteringSolver:
         assert frequencies is not None
         assert eigenvectors is not None
 
-        relative_grid_address = get_triplets_relative_grid_address(
+        relative_grid_address = get_tetrahedra_relative_gr_grid_address(
             pp.bz_grid, pp.symmetrize_tetrahedra
         )
 
