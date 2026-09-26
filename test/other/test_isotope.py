@@ -8,20 +8,20 @@ from phono3py.other.isotope import Isotope, get_mass_variances
 
 si_pbesol_iso = [
     [
-        8.32325038e-07,
-        9.45389739e-07,
-        1.57942189e-05,
-        1.28121297e-03,
-        1.13842605e-03,
-        3.84915211e-04,
+        9.29165496e-07,
+        8.91095194e-07,
+        1.59076880e-05,
+        1.37564273e-03,
+        1.22769818e-03,
+        6.78849406e-04,
     ],
     [
-        2.89457649e-05,
-        1.57841863e-04,
-        3.97462227e-04,
-        1.03489892e-02,
-        4.45981554e-03,
-        2.67184355e-03,
+        3.02404246e-05,
+        1.58721060e-04,
+        3.99215630e-04,
+        1.03909232e-02,
+        4.58409106e-03,
+        2.89547273e-03,
     ],
 ]
 si_pbesol_iso_sigma = [
@@ -43,8 +43,8 @@ si_pbesol_iso_sigma = [
     ],
 ]
 si_pbesol_grg_iso = [
-    [0.000141, 0.000161, 0.000599, 0.001332, 0.017676, 0.012157],
-    [0.000227, 0.00039, 0.000187, 0.001136, 0.01043, 0.01381],
+    [0.000140, 0.000162, 0.000524, 0.001383, 0.017868, 0.015051],
+    [0.000228, 0.000379, 0.000203, 0.001178, 0.010589, 0.013985],
 ]
 si_pbesol_grg_iso_sigma = [
     [0.000129, 0.000154, 0.000677, 0.001306, 0.011859, 0.010465],
@@ -204,10 +204,6 @@ def test_Isotope_python_matches_rust(
     at the grid point itself, which vertices of symmetrically equivalent points
     share, so phonons solved separately, apart by 1e-7, move the weights.
 
-    NAC is left out. With NAC, the phonons at the images q and q + G of a grid
-    point on the BZ surface differ, and the two paths do not pick the same
-    image.
-
     """
     ph3 = request.getfixturevalue(ph3_name)
     isotopes = {}
@@ -220,7 +216,12 @@ def test_Isotope_python_matches_rust(
             symmetrize_tetrahedra=symmetrize_tetrahedra,
             lang=lang,
         )
-        iso.init_dynamical_matrix(ph3.fc2, ph3.phonon_supercell, ph3.phonon_primitive)
+        iso.init_dynamical_matrix(
+            ph3.fc2,
+            ph3.phonon_supercell,
+            ph3.phonon_primitive,
+            nac_params=ph3.nac_params,
+        )
         isotopes[lang] = iso
     for grid_point in (1, 10):
         isotopes["Rust"].set_grid_point(grid_point)

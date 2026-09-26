@@ -2,6 +2,19 @@
 
 # Change Log
 
+## Unreleased
+
+- The tetrahedron-method integration weight at a frequency point exactly equal
+  to the frequency at a vertex was zero. It is now the limit from above. This
+  mainly changes isotope scattering, whose frequency points are the
+  frequencies of the grid point itself. For Si with isotope scattering, the
+  thermal conductivity is 0.3-0.7% lower in the tests. The fix is in phonors.
+- `Interaction`, `JointDos` and `Isotope` accept `symmetrize_tetrahedra`.
+  When it is True, the integration weights of the tetrahedron method are
+  averaged over the 24 tetrahedra rotated by all the point-group operations,
+  so that symmetrically equivalent q-points get equal weights. The default is
+  False.
+
 ## Sep-10-2026: Version 4.5.0
 
 - Supercell file names keep a uniform number of digits when the number of

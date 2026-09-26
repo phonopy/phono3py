@@ -128,7 +128,7 @@ def test_kappa_RTA_si_grg(si_pbesol_grg: Phono3py):
 
 def test_kappa_RTA_si_grg_iso(si_pbesol_grg: Phono3py):
     """Test RTA with isotope scattering by Si with GR-grid.."""
-    ref_kappa_RTA_grg_iso = [104.290, 104.290, 104.290, 0, 0, 0]
+    ref_kappa_RTA_grg_iso = [103.609, 103.609, 103.609, 0, 0, 0]
     mesh = 30
     ph3 = si_pbesol_grg
     ph3.mesh_numbers = mesh
