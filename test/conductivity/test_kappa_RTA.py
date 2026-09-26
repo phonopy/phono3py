@@ -248,6 +248,42 @@ def test_kappa_RTA_aln(aln_lda: Phono3py):
     np.testing.assert_allclose(ref_kappa_RTA, kappa, atol=0.5)
 
 
+def test_kappa_RTA_aln_symmetrize_tetrahedra(
+    aln_lda: Phono3py, monkeypatch: pytest.MonkeyPatch
+):
+    """Test RTA with symmetrized tetrahedra by AlN.
+
+    The low-memory and the full-pp paths build the tetrahedra separately and
+    give the same kappa, which differs from that without symmetrization.
+    Isotope scattering follows the choice made for Interaction.
+
+    """
+    import phono3py.conductivity.calculators as calculators
+
+    flags = []
+    isotope_class = calculators.Isotope
+
+    def _isotope(*args, **kwargs):
+        flags.append(kwargs["symmetrize_tetrahedra"])
+        return isotope_class(*args, **kwargs)
+
+    monkeypatch.setattr(calculators, "Isotope", _isotope)
+    kappa = {
+        (symmetrize, is_full_pp): _get_kappa(
+            aln_lda,
+            [4, 4, 3],
+            is_isotope=True,
+            is_full_pp=is_full_pp,
+            symmetrize_tetrahedra=symmetrize,
+        ).ravel()
+        for symmetrize in (False, True)
+        for is_full_pp in (False, True)
+    }
+    assert flags == [False, False, True, True]
+    np.testing.assert_allclose(kappa[True, False], kappa[True, True], rtol=1e-8)
+    assert abs(kappa[True, False] - kappa[False, False]).max() > 0.5
+
+
 def test_kappa_RTA_aln_with_sigma(aln_lda: Phono3py):
     """Test RTA with smearing method by AlN."""
     ref_kappa_RTA_with_sigmas = [217.598, 217.598, 230.099, 0, 0, 0]
@@ -289,9 +325,13 @@ def _get_kappa(
     is_full_pp=False,
     openmp_per_triplets=None,
     transport_type=None,
+    symmetrize_tetrahedra=False,
 ):
     ph3.mesh_numbers = mesh
-    ph3.init_phph_interaction(openmp_per_triplets=openmp_per_triplets)
+    ph3.init_phph_interaction(
+        openmp_per_triplets=openmp_per_triplets,
+        symmetrize_tetrahedra=symmetrize_tetrahedra,
+    )
     ph3.run_thermal_conductivity(
         temperatures=[
             300,

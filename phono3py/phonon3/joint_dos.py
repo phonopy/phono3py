@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import sys
 
 # Copyright (C) 2020 Atsushi Togo
@@ -75,8 +74,6 @@ class JointDos:
         frequency_factor_to_THz: float | None = None,
         frequency_scale_factor: float | None = None,
         is_mesh_symmetry: bool = True,
-        symprec: float = 1e-5,
-        filename: str | os.PathLike | None = None,
         log_level: int = 0,
         lapack_zheev_uplo: Literal["L", "U"] = "L",
         symmetrize_tetrahedra: bool = False,
@@ -84,11 +81,52 @@ class JointDos:
     ) -> None:
         """Init method.
 
-        ``symmetrize_tetrahedra``: when True, the integration weights of the
-        tetrahedron method are averaged over the 24 tetrahedra rotated by all the
-        point-group operations. The 24 tetrahedra are cut along one main diagonal,
-        so the weights can differ between symmetrically equivalent q-points.
-        Averaging removes the difference.
+        Parameters
+        ----------
+        primitive : Primitive
+            Primitive cell.
+        supercell : Supercell
+            Supercell of fc2.
+        bz_grid : BZGrid
+            Grid in reciprocal space.
+        fc2 : ndarray
+            Second-order force constants.
+            shape=(atoms in supercell, atoms in supercell, 3, 3) or
+            (atoms in primitive, atoms in supercell, 3, 3), dtype='double'
+        nac_params : dict, optional
+            Parameters of the non-analytical term correction.
+        nac_q_direction : array_like, optional
+            Direction of q from Gamma in fractional coordinates, used for the
+            non-analytical term correction at the Gamma point. shape=(3,)
+        sigma : float, optional
+            Width of the Gaussian smearing in THz. If None, the tetrahedron
+            method is used.
+        sigma_cutoff : float, optional
+            The Gaussian is cut off at this many sigmas. If None, not cut off.
+        cutoff_frequency : float, optional
+            Phonon modes with frequency below this value in THz are left out.
+            If None, 0.
+        frequency_factor_to_THz : float, optional
+            Factor that converts the phonon frequencies to THz. If None,
+            ``get_physical_units().DefaultToTHz``.
+        frequency_scale_factor : float, optional
+            Factor multiplied to all phonon frequencies. If None, not scaled.
+        is_mesh_symmetry : bool, optional, default=True
+            Sum over the triplets irreducible by the symmetry of the grid
+            point, weighted by their multiplicities, instead of all triplets.
+        log_level : int, optional, default=0
+            Verbosity of the standard output.
+        lapack_zheev_uplo : str, optional, default='L'
+            'L' or 'U' passed to the LAPACK zheev phonon solver.
+        symmetrize_tetrahedra : bool, optional, default=False
+            When True, the integration weights of the tetrahedron method are
+            averaged over the 24 tetrahedra rotated by all the point-group
+            operations. The 24 tetrahedra are cut along one main diagonal, so
+            the weights can differ between symmetrically equivalent q-points.
+            Averaging removes the difference. Not available with
+            ``lang='C'``.
+        lang : str, optional, default='Rust'
+            Backend, 'C', 'Python' or 'Rust'.
 
         """
         self._grid_point: int | None = None
@@ -112,8 +150,6 @@ class JointDos:
             self._frequency_factor_to_THz = frequency_factor_to_THz
         self._frequency_scale_factor = frequency_scale_factor
         self._is_mesh_symmetry = is_mesh_symmetry
-        self._symprec = symprec
-        self._filename = filename
         self._log_level = log_level
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
         self._symmetrize_tetrahedra = symmetrize_tetrahedra

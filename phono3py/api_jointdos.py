@@ -88,9 +88,83 @@ class Phono3pyJointDos:
         symprec: float = 1e-5,
         output_filename: str | os.PathLike | None = None,
         log_level: int = 0,
+        symmetrize_tetrahedra: bool = False,
         lang: Literal["C", "Python", "Rust"] = "Rust",
     ) -> None:
-        """Init method."""
+        """Init method.
+
+        Parameters
+        ----------
+        supercell : Supercell
+            Supercell of fc2.
+        primitive : Primitive
+            Primitive cell.
+        fc2 : ndarray
+            Second-order force constants.
+            shape=(atoms in supercell, atoms in supercell, 3, 3) or
+            (atoms in primitive, atoms in supercell, 3, 3), dtype='double'
+        mesh : float or array_like, optional
+            Sampling mesh, given as a length, three mesh numbers, or a grid
+            matrix. shape=(3,) or (3, 3). If None, ``initialize`` has to be
+            called with it before ``run``.
+        nac_params : dict, optional
+            Parameters of the non-analytical term correction.
+        nac_q_direction : array_like, optional
+            Direction of q from Gamma in fractional coordinates, used for the
+            non-analytical term correction at the Gamma point. shape=(3,)
+        sigmas : list of float or None, optional
+            Widths of the Gaussian smearing in THz, one calculation for each.
+            None in the list means the tetrahedron method. If None, [None].
+        cutoff_frequency : float, optional, default=1e-4
+            Phonon modes with frequency below this value in THz are left out.
+        frequency_step : float, optional
+            Spacing of the frequency points in THz. Used when
+            ``num_frequency_points`` is None.
+        num_frequency_points : int, optional
+            Number of frequency points. The frequency points run from 0 to
+            twice the maximum phonon frequency, plus four times the largest
+            sigma. If neither this nor ``frequency_step`` is given, 201.
+        num_points_in_batch : int, optional
+            Number of frequency points computed at once. A larger value gives
+            better concurrency but uses more memory.
+        temperatures : list of float or None, optional
+            Temperatures in K. For None in the list, the JDOS is computed
+            without phonon occupations; otherwise it is weighted by them. If
+            None, [None].
+        frequency_factor_to_THz : float, optional
+            Deprecated. Passing a non-None value emits a
+            ``DeprecationWarning``. If None,
+            ``get_physical_units().DefaultToTHz``.
+        frequency_scale_factor : float, optional
+            Factor multiplied to all phonon frequencies. If None, not scaled.
+        use_grg : bool, optional, default=False
+            Use a generalized regular grid.
+        SNF_coordinates : str, optional, default='reciprocal'
+            'reciprocal' or 'direct', the space in which the grid matrix is
+            brought to the Smith normal form.
+        is_mesh_symmetry : bool, optional, default=True
+            Sum over the triplets irreducible by the symmetry of the grid
+            point, weighted by their multiplicities, instead of all triplets.
+        is_symmetry : bool, optional, default=True
+            Use the crystal symmetry and time reversal for the grid.
+        symprec : float, optional, default=1e-5
+            Tolerance of the symmetry search.
+        output_filename : str or os.PathLike, optional
+            Inserted into the names of the files written by ``run`` with
+            ``write_jdos=True``.
+        log_level : int, optional, default=0
+            Verbosity of the standard output.
+        symmetrize_tetrahedra : bool, optional, default=False
+            When True, the integration weights of the tetrahedron method are
+            averaged over the 24 tetrahedra rotated by all the point-group
+            operations. The 24 tetrahedra are cut along one main diagonal, so
+            the weights can differ between symmetrically equivalent q-points.
+            Averaging removes the difference. Not available with
+            ``lang='C'``.
+        lang : str, optional, default='Rust'
+            Backend, 'C', 'Python' or 'Rust'.
+
+        """
         self._primitive = primitive
         self._supercell = supercell
         self._fc2 = fc2
@@ -123,6 +197,7 @@ class Phono3pyJointDos:
         self._symprec = symprec
         self._filename = output_filename
         self._log_level = log_level
+        self._symmetrize_tetrahedra = symmetrize_tetrahedra
         if lang in ("C", "Rust"):
             lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
@@ -211,9 +286,8 @@ class Phono3pyJointDos:
             frequency_factor_to_THz=self._frequency_factor_to_THz,
             frequency_scale_factor=self._frequency_scale_factor,
             is_mesh_symmetry=self._is_mesh_symmetry,
-            symprec=self._symprec,
-            filename=self._filename,
             log_level=self._log_level,
+            symmetrize_tetrahedra=self._symmetrize_tetrahedra,
             lang=self._lang,
         )
         if self._log_level:
