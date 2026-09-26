@@ -116,6 +116,56 @@ def test_phono3py_load_with_isotope():
             os.chdir(original_cwd)
 
 
+@pytest.mark.parametrize(
+    "symmetrize_tetrahedra,kappa_xx", [(None, 120.84), (True, 119.88)]
+)
+def test_phono3py_load_symmetrize_tetrahedra(
+    symmetrize_tetrahedra: bool | None, kappa_xx: float
+):
+    """Test phono3py-load script with --symmetrize-tetrahedra by AlN.
+
+    The two values differ by about 1 W/m-K, so the option reaches the
+    calculation of the ph-ph and isotope scattering.
+
+    """
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_cwd = pathlib.Path.cwd()
+        os.chdir(temp_dir)
+
+        try:
+            argparse_control = _get_phono3py_load_args(
+                cwd / ".." / "phono3py_params_AlN332.yaml.xz",
+                is_bterta=True,
+                is_isotope=True,
+                temperatures=[
+                    "300",
+                ],
+                mesh_numbers=["4", "4", "3"],
+                symmetrize_tetrahedra=symmetrize_tetrahedra,
+            )
+            with pytest.raises(SystemExit) as excinfo:
+                main(**argparse_control)
+            assert excinfo.value.code == 0
+
+            with h5py.File("kappa-m443.hdf5", "r") as f:
+                assert f["kappa"][0, 0] == pytest.approx(kappa_xx, abs=0.3)  # type: ignore
+
+            for created_filename in (
+                "phono3py.yaml",
+                "fc2.hdf5",
+                "fc3.hdf5",
+                "kappa-m443.hdf5",
+            ):
+                file_path = pathlib.Path(created_filename)
+                assert file_path.exists()
+                file_path.unlink()
+
+            _check_no_files()
+
+        finally:
+            os.chdir(original_cwd)
+
+
 def test_phono3py_load_generates_kappa_hdf5_contents():
     """Run phono3py-load and validate generated kappa hdf5 content."""
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -1488,6 +1538,7 @@ def _get_phono3py_load_args(
     read_gamma: bool | None = None,
     save_params: bool | None = None,
     supercell_dimension: Sequence | None = None,
+    symmetrize_tetrahedra: bool | None = None,
     temperatures: Sequence | None = None,
     use_pypolymlp: bool | None = None,
     write_gamma: bool | None = None,
@@ -1524,6 +1575,7 @@ def _get_phono3py_load_args(
             rd_number_estimation_factor=rd_number_estimation_factor,
             save_params=save_params,
             supercell_dimension=supercell_dimension,
+            symmetrize_tetrahedra=symmetrize_tetrahedra,
             temperatures=temperatures,
             use_pypolymlp=use_pypolymlp,
             write_gamma=write_gamma,
@@ -1555,6 +1607,7 @@ def _get_phono3py_load_args(
             read_gamma=read_gamma,
             save_params=save_params,
             supercell_dimension=supercell_dimension,
+            symmetrize_tetrahedra=symmetrize_tetrahedra,
             temperatures=temperatures,
             use_pypolymlp=use_pypolymlp,
             write_gamma=write_gamma,
