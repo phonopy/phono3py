@@ -2037,12 +2037,33 @@ def test_get_triplets_integration_weights_symmetrize_fcc(si_pbesol: Phono3py):
     np.testing.assert_array_equal(g[0], g[1])
 
 
+def test_get_triplets_integration_weights_tetrahedron_python_matches_rust(
+    aln_lda: Phono3py,
+):
+    """The pure-Python tetrahedron path gives the weights of the Rust path.
+
+    Grid point 10 of the 4x4x2 mesh is on the BZ surface, where the vertices
+    of the tetrahedra have to be the same BZ-grid images in both paths.
+
+    """
+    itr = _setup_interaction(aln_lda, [4, 4, 2], 10, nac_params=aln_lda.nac_params)
+    frequency_points = np.linspace(0, 25, 6)
+    g_rust, _ = get_triplets_integration_weights(
+        itr, frequency_points, sigma=None, lang="Rust"
+    )
+    g_py, _ = get_triplets_integration_weights(
+        itr, frequency_points, sigma=None, lang="Python"
+    )
+    np.testing.assert_allclose(g_py, g_rust, rtol=0, atol=1e-12)
+
+
 def _setup_interaction(
     ph3: Phono3py,
     mesh: list,
     grid_point: int,
     is_mesh_symmetry: bool = True,
     symmetrize_tetrahedra: bool = False,
+    nac_params: dict | None = None,
 ) -> Interaction:
     """Set up Interaction with phonons solved at a given grid point."""
     ph3.mesh_numbers = mesh
@@ -2060,6 +2081,7 @@ def _setup_interaction(
         ph3.fc2,
         ph3.phonon_supercell,
         ph3.phonon_primitive,
+        nac_params=nac_params,
     )
     itr.set_grid_point(grid_point)
     itr.run_phonon_solver()
