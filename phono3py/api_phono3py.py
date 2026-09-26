@@ -1187,6 +1187,7 @@ class Phono3py:
         lapack_zheev_uplo: Literal["L", "U"] | None = None,
         openmp_per_triplets: bool | None = None,
         symmetrize_tetrahedra: bool = False,
+        exclude_gamma_acoustic: bool = False,
     ) -> None:
         """Initialize ph-ph interaction calculation.
 
@@ -1237,6 +1238,13 @@ class Phono3py:
             the weights can differ between symmetrically equivalent q-points.
             Averaging removes the difference. Isotope scattering in the
             thermal conductivity follows this choice. Default is False.
+        exclude_gamma_acoustic : bool, optional
+            When True, the frequencies of the three modes at Gamma with the
+            smallest absolute values are set to zero after the phonons are
+            solved. The acoustic modes at Gamma are then zero on every
+            platform, instead of small nonzero values from rounding.
+            Isotope scattering in the thermal conductivity follows this
+            choice. Default is False.
 
         """
         if self._bz_grid is None:
@@ -1274,6 +1282,7 @@ class Phono3py:
             lapack_zheev_uplo=_lapack_zheev_uplo,
             openmp_per_triplets=openmp_per_triplets,
             symmetrize_tetrahedra=symmetrize_tetrahedra,
+            exclude_gamma_acoustic=exclude_gamma_acoustic,
             lang=self._lang,
         )
         self._interaction.nac_q_direction = nac_q_direction

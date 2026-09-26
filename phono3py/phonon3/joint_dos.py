@@ -77,6 +77,7 @@ class JointDos:
         log_level: int = 0,
         lapack_zheev_uplo: Literal["L", "U"] = "L",
         symmetrize_tetrahedra: bool = False,
+        exclude_gamma_acoustic: bool = False,
         lang: Literal["C", "Python", "Rust"] = "Rust",
     ) -> None:
         """Init method.
@@ -125,6 +126,11 @@ class JointDos:
             the weights can differ between symmetrically equivalent q-points.
             Averaging removes the difference. Not available with
             ``lang='C'``.
+        exclude_gamma_acoustic : bool, optional, default=False
+            When True, the frequencies of the three modes at Gamma with the
+            smallest absolute values are set to zero after the phonons are
+            solved. The acoustic modes at Gamma are then zero on every
+            platform, instead of small nonzero values from rounding.
         lang : str, optional, default='Rust'
             Backend, 'C', 'Python' or 'Rust'.
 
@@ -153,6 +159,7 @@ class JointDos:
         self._log_level = log_level
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
         self._symmetrize_tetrahedra = symmetrize_tetrahedra
+        self._exclude_gamma_acoustic = exclude_gamma_acoustic
         if lang in ("C", "Rust"):
             lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
@@ -260,6 +267,11 @@ class JointDos:
         return self._symmetrize_tetrahedra
 
     @property
+    def exclude_gamma_acoustic(self) -> bool:
+        """Return whether the acoustic frequencies at Gamma are set to zero."""
+        return self._exclude_gamma_acoustic
+
+    @property
     def temperature(self) -> float | None:
         """Setter and getter of temperature."""
         return self._temperature
@@ -332,6 +344,7 @@ class JointDos:
             self._frequency_factor_to_THz,
             self._nac_q_direction,
             self._lapack_zheev_uplo,
+            exclude_gamma_acoustic=self._exclude_gamma_acoustic,
         )
 
     def run_phonon_solver_at_gamma(self, is_nac: bool = False) -> None:

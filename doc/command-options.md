@@ -649,6 +649,19 @@ option is off by default, and `--no-symmetrize-tetrahedra` turns it off
 explicitly. The option cannot be combined with `--legacy-backend`, which
 selects the C implementation.
 
+(exclude_gamma_acoustic_option)=
+
+### `--exclude-gamma-acoustic` (`EXCLUDE_GAMMA_ACOUSTIC = .TRUE.`)
+
+The frequencies of the three acoustic modes at the Gamma point are zero in
+theory. In a calculation, they have small nonzero values from rounding, and
+these values depend on the linear algebra library. With this option, the three
+frequencies at the Gamma point with the smallest absolute values are set to
+zero after the phonons are solved.
+
+The option is off by default, and `--no-exclude-gamma-acoustic` turns it off
+explicitly.
+
 (sigma_option)=
 
 ### `--sigma` (`SIGMA`)

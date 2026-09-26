@@ -248,6 +248,36 @@ def test_kappa_RTA_aln(aln_lda: Phono3py):
     np.testing.assert_allclose(ref_kappa_RTA, kappa, atol=0.5)
 
 
+def test_kappa_RTA_si_exclude_gamma_acoustic(
+    si_pbesol: Phono3py, monkeypatch: pytest.MonkeyPatch
+):
+    """Test RTA with the acoustic frequencies at Gamma set to zero by Si.
+
+    The acoustic modes at Gamma are below the cutoff frequency either way, so
+    kappa is unchanged. Isotope scattering follows the choice made for
+    Interaction.
+
+    """
+    import phono3py.conductivity.calculators as calculators
+
+    flags = []
+    isotope_class = calculators.Isotope
+
+    def _isotope(*args, **kwargs):
+        flags.append(kwargs["exclude_gamma_acoustic"])
+        return isotope_class(*args, **kwargs)
+
+    monkeypatch.setattr(calculators, "Isotope", _isotope)
+    kappa = _get_kappa(si_pbesol, [9, 9, 9], is_isotope=True).ravel()
+    kappa_exclude = _get_kappa(
+        si_pbesol, [9, 9, 9], is_isotope=True, exclude_gamma_acoustic=True
+    ).ravel()
+    assert flags == [False, True]
+    frequencies = si_pbesol.thermal_conductivity.frequencies
+    np.testing.assert_array_equal(frequencies[0, :3], 0)
+    np.testing.assert_allclose(kappa_exclude, kappa, atol=1e-6)
+
+
 def test_kappa_RTA_aln_symmetrize_tetrahedra(
     aln_lda: Phono3py, monkeypatch: pytest.MonkeyPatch
 ):
@@ -326,11 +356,13 @@ def _get_kappa(
     openmp_per_triplets=None,
     transport_type=None,
     symmetrize_tetrahedra=False,
+    exclude_gamma_acoustic=False,
 ):
     ph3.mesh_numbers = mesh
     ph3.init_phph_interaction(
         openmp_per_triplets=openmp_per_triplets,
         symmetrize_tetrahedra=symmetrize_tetrahedra,
+        exclude_gamma_acoustic=exclude_gamma_acoustic,
     )
     ph3.run_thermal_conductivity(
         temperatures=[

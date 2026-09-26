@@ -866,6 +866,16 @@ def _add_run_options(parser: argparse.ArgumentParser) -> None:
         help="Symmetrize fc3 in reciprocal space by index exchange",
     )
     parser.add_argument(
+        "--exclude-gamma-acoustic",
+        dest="exclude_gamma_acoustic",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help=(
+            "Set the frequencies of the three acoustic modes at Gamma to zero "
+            "(default: off)"
+        ),
+    )
+    parser.add_argument(
         "--symmetrize-tetrahedra",
         dest="symmetrize_tetrahedra",
         action=argparse.BooleanOptionalAction,
@@ -1158,6 +1168,7 @@ class Phono3pyMockArgs:
     create_forces_fc2: Sequence[str | os.PathLike] | None = None
     create_forces_fc3: Sequence[str | os.PathLike] | None = None
     create_forces_fc3_file: str | os.PathLike | None = None
+    exclude_gamma_acoustic: bool | None = None
     fc_calculator: str | None = None
     fc_calculator_options: str | None = None
     fc_symmetry: bool | None = None

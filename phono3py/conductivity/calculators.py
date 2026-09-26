@@ -70,6 +70,7 @@ def _build_isotope_solver(
         cutoff_frequency=kappa_settings.cutoff_frequency,
         lapack_zheev_uplo=pp.lapack_zheev_uplo,
         symmetrize_tetrahedra=pp.symmetrize_tetrahedra,
+        exclude_gamma_acoustic=pp.exclude_gamma_acoustic,
         lang=lang,
     )
     return IsotopeScatteringSolver(isotope, kappa_settings.sigmas, log_level=log_level)

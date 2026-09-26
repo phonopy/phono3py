@@ -16,6 +16,11 @@
   weights. In the API, it is the `symmetrize_tetrahedra` parameter of
   `Phono3py.init_phph_interaction`, `Phono3pyJointDos` and `Phono3pyIsotope`.
   The default is off.
+- New option {ref}`--exclude-gamma-acoustic <exclude_gamma_acoustic_option>`
+  (`EXCLUDE_GAMMA_ACOUSTIC`), which sets the frequencies of the three acoustic
+  modes at the Gamma point to zero. In the API, it is the
+  `exclude_gamma_acoustic` parameter of `Phono3py.init_phph_interaction`,
+  `Phono3pyJointDos` and `Phono3pyIsotope`. The default is off.
 
 ## Sep-10-2026: Version 4.5.0
 

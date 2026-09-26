@@ -29,6 +29,7 @@ def run_phonon_solver_c(
     | NDArray[np.double]
     | None = None,  # in reduced coordinates
     lapack_zheev_uplo: Literal["L", "U"] = "L",
+    exclude_gamma_acoustic: bool = False,
 ) -> None:
     """Build and solve dynamical matrices on grid in C-API.
 
@@ -162,6 +163,9 @@ def run_phonon_solver_c(
             * _frequency_conversion_factor
         )
 
+    if exclude_gamma_acoustic:
+        _zero_gamma_acoustic_at(frequencies, phonon_done, grid_points, grid_address)
+
 
 def run_phonon_solver_rust(
     dm: DynamicalMatrix,
@@ -176,6 +180,7 @@ def run_phonon_solver_rust(
     | NDArray[np.double]
     | None = None,  # in reduced coordinates
     lapack_zheev_uplo: Literal["L", "U"] = "L",
+    exclude_gamma_acoustic: bool = False,
 ) -> None:
     """Build and solve dynamical matrices on grid in Rust + python.
 
@@ -326,6 +331,9 @@ def run_phonon_solver_rust(
             eigenvectors[gp] = vecs
     phonon_done[undone] = 1
 
+    if exclude_gamma_acoustic:
+        _zero_gamma_acoustic_at(frequencies, phonon_done, undone, grid_address)
+
 
 def run_phonon_solver_py(
     grid_point: int,
@@ -337,6 +345,7 @@ def run_phonon_solver_py(
     dynamical_matrix: DynamicalMatrix,
     frequency_conversion_factor: float | None = None,
     lapack_zheev_uplo: Literal["L", "U"] = "L",
+    exclude_gamma_acoustic: bool = False,
 ) -> None:
     """Build and solve dynamical matrices on grid in python."""
     if frequency_conversion_factor is None:
@@ -357,6 +366,61 @@ def run_phonon_solver_py(
             np.sqrt(np.abs(eigvals)) * np.sign(eigvals) * _frequency_conversion_factor
         )
         eigenvectors[gp] = eigvecs
+        if exclude_gamma_acoustic:
+            _zero_gamma_acoustic_at(frequencies, phonon_done, [gp], grid_address)
+
+
+def zero_gamma_acoustic_frequencies(
+    frequencies: NDArray[np.double],
+    phonon_done: NDArray[np.byte],
+    gp_Gamma: int | None,
+) -> None:
+    """Set the frequencies of the acoustic modes at Gamma to zero in place.
+
+    The acoustic modes are the three modes at Gamma with the smallest absolute
+    frequencies, as in phonopy's ``gamma_acoustic_bands``. Nothing is done
+    when the grid does not contain Gamma or its phonons are not solved.
+
+    Parameters
+    ----------
+    frequencies : ndarray
+        Phonon frequencies on BZ-grid points.
+        shape=(bz_grid_points, num_band), dtype='double'
+    phonon_done : ndarray
+        1 for the BZ-grid points whose phonons are solved.
+        shape=(bz_grid_points,), dtype='byte'
+    gp_Gamma : int or None
+        BZ-grid point of Gamma, None when the grid does not contain Gamma.
+
+    """
+    if gp_Gamma is not None and phonon_done[gp_Gamma]:
+        acoustic_bands = np.argsort(np.abs(frequencies[gp_Gamma]))[:3]
+        frequencies[gp_Gamma, acoustic_bands] = 0
+
+
+def _zero_gamma_acoustic_at(
+    frequencies: NDArray[np.double],
+    phonon_done: NDArray[np.byte],
+    grid_points: Sequence[int] | NDArray[np.int64],
+    grid_address: NDArray[np.int64],
+) -> None:
+    """Apply zero_gamma_acoustic_frequencies to Gamma among grid_points.
+
+    Parameters
+    ----------
+    frequencies : ndarray
+        shape=(bz_grid_points, num_band), dtype='double'
+    phonon_done : ndarray
+        shape=(bz_grid_points,), dtype='byte'
+    grid_points : array_like
+        BZ-grid points just solved. shape=(grid_points,), dtype='int64'
+    grid_address : ndarray
+        BZ-grid addresses. shape=(bz_grid_points, 3), dtype='int64'
+
+    """
+    for gp in grid_points:
+        if (grid_address[gp] == 0).all():
+            zero_gamma_acoustic_frequencies(frequencies, phonon_done, int(gp))
 
 
 def _extract_params(

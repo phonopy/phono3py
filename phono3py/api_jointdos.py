@@ -89,6 +89,7 @@ class Phono3pyJointDos:
         output_filename: str | os.PathLike | None = None,
         log_level: int = 0,
         symmetrize_tetrahedra: bool = False,
+        exclude_gamma_acoustic: bool = False,
         lang: Literal["C", "Python", "Rust"] = "Rust",
     ) -> None:
         """Init method.
@@ -161,6 +162,11 @@ class Phono3pyJointDos:
             the weights can differ between symmetrically equivalent q-points.
             Averaging removes the difference. Not available with
             ``lang='C'``.
+        exclude_gamma_acoustic : bool, optional, default=False
+            When True, the frequencies of the three modes at Gamma with the
+            smallest absolute values are set to zero after the phonons are
+            solved. The acoustic modes at Gamma are then zero on every
+            platform, instead of small nonzero values from rounding.
         lang : str, optional, default='Rust'
             Backend, 'C', 'Python' or 'Rust'.
 
@@ -198,6 +204,7 @@ class Phono3pyJointDos:
         self._filename = output_filename
         self._log_level = log_level
         self._symmetrize_tetrahedra = symmetrize_tetrahedra
+        self._exclude_gamma_acoustic = exclude_gamma_acoustic
         if lang in ("C", "Rust"):
             lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
@@ -288,6 +295,7 @@ class Phono3pyJointDos:
             is_mesh_symmetry=self._is_mesh_symmetry,
             log_level=self._log_level,
             symmetrize_tetrahedra=self._symmetrize_tetrahedra,
+            exclude_gamma_acoustic=self._exclude_gamma_acoustic,
             lang=self._lang,
         )
         if self._log_level:
