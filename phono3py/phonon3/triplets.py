@@ -42,7 +42,7 @@ import numpy as np
 from numpy.typing import NDArray
 from phonopy.phonon.grid import (
     BZGrid,
-    get_grid_point_from_address,
+    get_neighboring_grid_points,
     get_reduced_bases_and_tmat_inv,
 )
 from phonopy.phonon.tetrahedron_method import (
@@ -509,8 +509,8 @@ def _set_triplets_integration_weights_py(
     num_band = frequencies.shape[1]
     for i, vertices in enumerate(tetrahedra_vertices):
         for j, k in list(np.ndindex((num_band, num_band))):
-            f1_v = frequencies[vertices[0], j]
-            f2_v = frequencies[vertices[1], k]
+            f1_v = np.maximum(frequencies[vertices[0], j], 0)
+            f2_v = np.maximum(frequencies[vertices[1], k], 0)
             thm.set_tetrahedra_omegas(f1_v + f2_v)
             thm.run(frequency_points)
             g0 = thm.get_integration_weight()
@@ -544,7 +544,7 @@ def _get_tetrahedra_vertices(
     vertices = np.zeros((num_triplets, 2, len(relative_address), 4), dtype="int64")
     for i, tp in enumerate(triplets_at_q):
         for j, adrs_shift in enumerate((relative_address, -relative_address)):
-            adrs = bz_grid.addresses[tp[j + 1]] + adrs_shift
-            gps = get_grid_point_from_address(adrs, bz_grid.D_diag, lang="Python")
-            vertices[i, j] = bz_grid.grg2bzg[gps]
+            vertices[i, j] = get_neighboring_grid_points(
+                tp[j + 1], adrs_shift, bz_grid, lang="Python"
+            )
     return vertices
