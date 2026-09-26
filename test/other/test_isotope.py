@@ -204,10 +204,6 @@ def test_Isotope_python_matches_rust(
     at the grid point itself, which vertices of symmetrically equivalent points
     share, so phonons solved separately, apart by 1e-7, move the weights.
 
-    NAC is left out. With NAC, the phonons at the images q and q + G of a grid
-    point on the BZ surface differ, and the two paths do not pick the same
-    image.
-
     """
     ph3 = request.getfixturevalue(ph3_name)
     isotopes = {}
@@ -220,7 +216,12 @@ def test_Isotope_python_matches_rust(
             symmetrize_tetrahedra=symmetrize_tetrahedra,
             lang=lang,
         )
-        iso.init_dynamical_matrix(ph3.fc2, ph3.phonon_supercell, ph3.phonon_primitive)
+        iso.init_dynamical_matrix(
+            ph3.fc2,
+            ph3.phonon_supercell,
+            ph3.phonon_primitive,
+            nac_params=ph3.nac_params,
+        )
         isotopes[lang] = iso
     for grid_point in (1, 10):
         isotopes["Rust"].set_grid_point(grid_point)
