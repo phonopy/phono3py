@@ -509,8 +509,8 @@ def _set_triplets_integration_weights_py(
     num_band = frequencies.shape[1]
     for i, vertices in enumerate(tetrahedra_vertices):
         for j, k in list(np.ndindex((num_band, num_band))):
-            f1_v = frequencies[vertices[0], j]
-            f2_v = frequencies[vertices[1], k]
+            f1_v = np.maximum(frequencies[vertices[0], j], 0)
+            f2_v = np.maximum(frequencies[vertices[1], k], 0)
             thm.set_tetrahedra_omegas(f1_v + f2_v)
             thm.run(frequency_points)
             g0 = thm.get_integration_weight()
