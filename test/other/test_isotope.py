@@ -185,10 +185,16 @@ def test_Phono3pyIsotope_grg_with_sigma(si_pbesol_grg, lang):
 
 
 @pytest.mark.parametrize(
-    "ph3_name,mesh,use_grg",
-    [("si_pbesol", [7, 7, 7], False), ("si_pbesol_grg", 20, True)],
+    "ph3_name,mesh,use_grg,symmetrize_tetrahedra",
+    [
+        ("si_pbesol", [7, 7, 7], False, False),
+        ("si_pbesol_grg", 20, True, False),
+        ("aln_lda", [4, 4, 2], False, True),
+    ],
 )
-def test_Isotope_python_matches_rust(request, ph3_name, mesh, use_grg):
+def test_Isotope_python_matches_rust(
+    request, ph3_name, mesh, use_grg, symmetrize_tetrahedra
+):
     """The pure-Python tetrahedron path gives the gamma of the Rust path.
 
     The Python path is the prototype of the Rust one, and it is slow, so it is
@@ -197,6 +203,10 @@ def test_Isotope_python_matches_rust(request, ph3_name, mesh, use_grg):
     Both paths get the same phonons. The frequency points are the frequencies
     at the grid point itself, which vertices of symmetrically equivalent points
     share, so phonons solved separately, apart by 1e-7, move the weights.
+
+    NAC is left out. With NAC, the phonons at the images q and q + G of a grid
+    point on the BZ surface differ, and the two paths do not pick the same
+    image.
 
     """
     ph3 = request.getfixturevalue(ph3_name)
@@ -207,14 +217,10 @@ def test_Isotope_python_matches_rust(request, ph3_name, mesh, use_grg):
             ph3.phonon_primitive,
             symprec=ph3.symmetry.tolerance,
             use_grg=use_grg,
+            symmetrize_tetrahedra=symmetrize_tetrahedra,
             lang=lang,
         )
-        iso.init_dynamical_matrix(
-            ph3.fc2,
-            ph3.phonon_supercell,
-            ph3.phonon_primitive,
-            nac_params=ph3.nac_params,
-        )
+        iso.init_dynamical_matrix(ph3.fc2, ph3.phonon_supercell, ph3.phonon_primitive)
         isotopes[lang] = iso
     for grid_point in (1, 10):
         isotopes["Rust"].set_grid_point(grid_point)

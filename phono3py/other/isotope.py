@@ -47,6 +47,7 @@ from phonopy.phonon.tetrahedron_method import (
     TetrahedronMethod,
     get_integration_weights,
     get_tetrahedra_frequencies,
+    get_tetrahedra_relative_gr_grid_address,
 )
 from phonopy.structure.atomic_data import get_atomic_data
 from phonopy.structure.atoms import PhonopyAtoms
@@ -65,6 +66,7 @@ from phono3py.phonon.solver import (
 def get_unique_grid_points(
     grid_points: NDArray[np.int64],
     bz_grid: BZGrid,
+    symmetrize_tetrahedra: bool = False,
     lang: Literal["C", "Rust"] = "Rust",
 ) -> NDArray[np.int64]:
     """Collect grid points on tetrahedron vertices around input grid points.
@@ -78,6 +80,9 @@ def get_unique_grid_points(
         Grid point indices.
     bz_grid : BZGrid
         Grid information in reciprocal space.
+    symmetrize_tetrahedra : bool, optional, default=False
+        Use the vertices of the 24 tetrahedra rotated by all the point-group
+        operations.
 
     Returns
     -------
@@ -88,9 +93,11 @@ def get_unique_grid_points(
     """
     lang = resolve_lang(lang)
     _grid_points = np.ascontiguousarray(grid_points, dtype="int64")
-    thm = TetrahedronMethod(bz_grid.microzone_lattice)
+    relative_grid_address = get_tetrahedra_relative_gr_grid_address(
+        bz_grid, symmetrize_tetrahedra=symmetrize_tetrahedra
+    )
     unique_vertices = np.array(
-        np.dot(thm.get_unique_tetrahedra_vertices(), bz_grid.P.T),
+        np.unique(relative_grid_address.reshape(-1, 3), axis=0),
         dtype="int64",
         order="C",
     )
@@ -170,9 +177,61 @@ class Isotope:
         symprec: float = 1e-5,
         cutoff_frequency: float | None = None,
         lapack_zheev_uplo: Literal["L", "U"] = "L",
+        symmetrize_tetrahedra: bool = False,
         lang: Literal["C", "Python", "Rust"] = "Rust",
     ):
-        """Init method."""
+        """Init method.
+
+        Parameters
+        ----------
+        mesh : float or array_like
+            Sampling mesh, given as a length, three mesh numbers, or a grid
+            matrix. shape=(3,) or (3, 3). It is used only when ``bz_grid`` is
+            None.
+        primitive : Primitive
+            Primitive cell.
+        mass_variances : array_like, optional
+            Mass variance of each atom in the primitive cell,
+            sum_i f_i (1 - m_i / m_ave)^2 over the isotopes i with fraction f_i
+            and mass m_i. If None, computed by ``get_mass_variances`` from
+            ``isotope_data``. shape=(atoms,), dtype='double'
+        isotope_data : dict, optional
+            Isotopes of each element, overriding phonopy's data, e.g.,
+            ``{"Si": [(28, 27.977, 0.922), (29, 28.976, 0.047),
+            (30, 29.974, 0.031)]}`` with (mass number, mass, fraction). Used
+            only when ``mass_variances`` is None.
+        band_indices : array_like, optional
+            Bands at which the scattering rate is calculated. If None, all
+            bands. shape=(bands,), dtype='int64'
+        sigma : float, optional
+            Width of the Gaussian smearing in THz. If None, the tetrahedron
+            method is used.
+        bz_grid : BZGrid, optional
+            Grid in reciprocal space. If None, built from ``mesh`` and the
+            symmetry of ``primitive``.
+        frequency_factor_to_THz : float, optional
+            Factor that converts the phonon frequencies to THz. If None,
+            ``get_physical_units().DefaultToTHz``.
+        use_grg : bool, optional, default=False
+            Use a generalized regular grid when ``bz_grid`` is built here.
+        symprec : float, optional, default=1e-5
+            Tolerance of the symmetry search when ``bz_grid`` is built here.
+        cutoff_frequency : float, optional
+            Phonon modes with frequency below this value in THz are left out.
+            If None, 0.
+        lapack_zheev_uplo : str, optional, default='L'
+            'L' or 'U' passed to the LAPACK zheev phonon solver.
+        symmetrize_tetrahedra : bool, optional, default=False
+            When True, the integration weights of the tetrahedron method are
+            averaged over the 24 tetrahedra rotated by all the point-group
+            operations. The 24 tetrahedra are cut along one main diagonal, so
+            the weights can differ between symmetrically equivalent q-points.
+            Averaging removes the difference. Not available with
+            ``lang='C'``.
+        lang : str, optional, default='Rust'
+            Backend, 'C', 'Python' or 'Rust'.
+
+        """
         self._mesh = mesh
         if mass_variances is None:
             self._mass_variances = get_mass_variances(
@@ -189,6 +248,7 @@ class Isotope:
             self._cutoff_frequency = cutoff_frequency
         self._frequency_factor_to_THz = frequency_factor_to_THz
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
+        self._symmetrize_tetrahedra = symmetrize_tetrahedra
         if lang in ("C", "Rust"):
             lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
@@ -274,6 +334,11 @@ class Isotope:
     def bz_grid(self) -> BZGrid:
         """Return BZgrid class instance."""
         return self._bz_grid
+
+    @property
+    def symmetrize_tetrahedra(self) -> bool:
+        """Return whether tetrahedron weights are averaged over the point group."""
+        return self._symmetrize_tetrahedra
 
     @property
     def mass_variances(self) -> NDArray[np.double]:
@@ -420,9 +485,11 @@ class Isotope:
         if lang == "Python":
             self._set_integration_weights_py()
         else:
-            self._set_integration_weights_c(lang=lang)
+            self._set_integration_weights_native(lang=lang)
 
-    def _set_integration_weights_c(self, lang: Literal["C", "Rust"] = "Rust") -> None:
+    def _set_integration_weights_native(
+        self, lang: Literal["C", "Rust"] = "Rust"
+    ) -> None:
         """Set tetrahedron method integration weights.
 
         self._frequencies are those on all BZ-grid. So all those grid points in
@@ -433,7 +500,10 @@ class Isotope:
         assert self._grid_points is not None
 
         unique_grid_points = get_unique_grid_points(
-            self._grid_points, self._bz_grid, lang=lang
+            self._grid_points,
+            self._bz_grid,
+            symmetrize_tetrahedra=self._symmetrize_tetrahedra,
+            lang=lang,
         )
         self._run_phonon_solver_c(unique_grid_points)
         freq_points = np.array(
@@ -447,19 +517,22 @@ class Isotope:
             self._bz_grid,
             grid_points=self._grid_points,
             lang=lang,
+            symmetrize_tetrahedra=self._symmetrize_tetrahedra,
         )
 
     def _set_integration_weights_py(self) -> None:
         """Set tetrahedron method integration weights.
 
-        Python implementation corresponding to _set_integration_weights_c.
+        Python implementation corresponding to _set_integration_weights_native.
 
         """
         assert self._grid_points is not None
         assert self._frequencies is not None
 
-        thm = TetrahedronMethod(self._bz_grid.microzone_lattice)
-        assert thm.tetrahedra is not None
+        relative_grid_address = get_tetrahedra_relative_gr_grid_address(
+            self._bz_grid, symmetrize_tetrahedra=self._symmetrize_tetrahedra
+        )
+        thm = TetrahedronMethod(None, relative_grid_address=relative_grid_address)
 
         num_grid_points = len(self._grid_points)
         num_band = len(self._primitive) * 3
@@ -469,10 +542,7 @@ class Isotope:
 
         for i, gp in enumerate(self._grid_points):
             tfreqs = get_tetrahedra_frequencies(
-                gp,
-                self._bz_grid,
-                np.array(np.dot(thm.tetrahedra, self._bz_grid.P.T), dtype="int64"),
-                self._frequencies,
+                gp, self._bz_grid, relative_grid_address, self._frequencies
             )
 
             for bi, frequencies in enumerate(tfreqs):

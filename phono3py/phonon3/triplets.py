@@ -47,8 +47,7 @@ from phonopy.phonon.grid import (
 )
 from phonopy.phonon.tetrahedron_method import (
     TetrahedronMethod,
-    get_symmetrized_tetrahedra_relative_grid_address,
-    get_tetrahedra_relative_grid_address,
+    get_tetrahedra_relative_gr_grid_address,
 )
 
 from phono3py._lang import resolve_lang
@@ -170,29 +169,6 @@ def get_nosym_triplets_at_q(
     )
 
     return triplets_at_q, weights, map_triplets, map_q
-
-
-def get_triplets_relative_grid_address(
-    bz_grid: BZGrid, symmetrize_tetrahedra: bool = False
-) -> NDArray[np.int64]:
-    """Return the tetrahedra around a grid point for the tetrahedron method.
-
-    With ``symmetrize_tetrahedra``, the 24 tetrahedra rotated by all the
-    point-group operations are concatenated, and the integration weights become
-    their average.
-
-    Returns
-    -------
-    relative_grid_address : ndarray
-        Relative grid addresses in GR-grid coordinates, the central vertex first
-        in each tetrahedron.
-        shape=(24 * n, 4, 3), dtype='int64', order='C'
-
-    """
-    if symmetrize_tetrahedra:
-        return get_symmetrized_tetrahedra_relative_grid_address(bz_grid)
-    tetrahedra = get_tetrahedra_relative_grid_address(bz_grid.microzone_lattice)
-    return np.array(tetrahedra @ bz_grid.P.T, dtype="int64", order="C")
 
 
 def get_triplets_integration_weights(
@@ -470,7 +446,7 @@ def _set_triplets_integration_weights_c(
         g,
         g_zero,
         frequency_points,  # f0
-        get_triplets_relative_grid_address(pp.bz_grid),
+        get_tetrahedra_relative_gr_grid_address(pp.bz_grid),
         pp.bz_grid.D_diag,
         triplets_at_q,
         frequencies,  # f1
@@ -496,7 +472,7 @@ def _set_triplets_integration_weights_rust(
         g,
         g_zero,
         frequency_points,  # f0
-        get_triplets_relative_grid_address(pp.bz_grid, pp.symmetrize_tetrahedra),
+        get_tetrahedra_relative_gr_grid_address(pp.bz_grid, pp.symmetrize_tetrahedra),
         pp.bz_grid.D_diag,
         triplets_at_q,
         frequencies,  # f1
@@ -518,7 +494,7 @@ def _set_triplets_integration_weights_py(
     The tetrahedron method is phonopy's pure-Python TetrahedronMethod.
 
     """
-    relative_grid_address = get_triplets_relative_grid_address(
+    relative_grid_address = get_tetrahedra_relative_gr_grid_address(
         pp.bz_grid, pp.symmetrize_tetrahedra
     )
     thm = TetrahedronMethod(None, relative_grid_address=relative_grid_address)
