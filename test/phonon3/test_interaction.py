@@ -10,6 +10,7 @@ import pytest
 from phonopy.structure.cells import get_smallest_vectors
 
 from phono3py import Phono3py
+from phono3py.phonon.solver import zero_gamma_acoustic_frequencies
 from phono3py.phonon3.interaction import Interaction
 
 
@@ -201,6 +202,39 @@ def test_interaction_run_phonon_solver_at_gamma_NaCl(nacl_pbe: Phono3py):
     )
 
 
+def test_zero_gamma_acoustic_frequencies():
+    """The three smallest |nu| at Gamma are set to zero, not the most negative."""
+    frequencies = np.array([[2e-7, -3.0, -1e-7, 3e-7, 5.0], [1e-7, 1.0, 2.0, 3.0, 4.0]])
+    phonon_done = np.array([1, 1], dtype="byte")
+    zero_gamma_acoustic_frequencies(frequencies, phonon_done, 0)
+    np.testing.assert_array_equal(
+        frequencies, [[0, -3.0, 0, 0, 5.0], [1e-7, 1.0, 2.0, 3.0, 4.0]]
+    )
+
+
+def test_interaction_exclude_gamma_acoustic_NaCl(nacl_pbe: Phono3py):
+    """Test that the acoustic frequencies at Gamma are exactly zero.
+
+    Phonons at Gamma are solved at init_dynamical_matrix(), again with NAC at
+    set_grid_point(0), and restored by run_phonon_solver_at_gamma(). The
+    acoustic frequencies are zero after each of them.
+
+    """
+    itr = _get_irt(
+        nacl_pbe, [7, 7, 7], nac_params=nacl_pbe.nac_params, exclude_gamma_acoustic=True
+    )
+    itr.nac_q_direction = [1, 0, 0]
+    frequencies, _, _ = itr.get_phonons()
+    np.testing.assert_array_equal(frequencies[0, :3], 0)
+    itr.set_grid_point(0)
+    np.testing.assert_array_equal(frequencies[0, :3], 0)
+    np.testing.assert_allclose(
+        frequencies[0, 3:], [4.59488262, 4.59488262, 7.41183870], rtol=0, atol=1e-6
+    )
+    itr.run_phonon_solver_at_gamma()
+    np.testing.assert_array_equal(frequencies[0, :3], 0)
+
+
 def test_phonon_solver_expand_RTA_si(si_pbesol: Phono3py):
     """Test phonon solver with eigenvector rotation of Si.
 
@@ -259,6 +293,7 @@ def _get_irt(
     solve_dynamical_matrices: bool = True,
     make_r0_average: bool = False,
     lang: Literal["C", "Python", "Rust"] = "C",
+    exclude_gamma_acoustic: bool = False,
 ):
     ph3.mesh_numbers = mesh
     assert ph3.grid is not None
@@ -269,6 +304,7 @@ def _get_irt(
         fc3=ph3.fc3,
         make_r0_average=make_r0_average,
         cutoff_frequency=1e-4,
+        exclude_gamma_acoustic=exclude_gamma_acoustic,
         lang=lang,
     )
     if nac_params is None:

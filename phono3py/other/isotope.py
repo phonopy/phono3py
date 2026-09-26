@@ -60,6 +60,7 @@ from phono3py.phonon.solver import (
     run_phonon_solver_c,
     run_phonon_solver_py,
     run_phonon_solver_rust,
+    zero_gamma_acoustic_frequencies,
 )
 
 
@@ -178,6 +179,7 @@ class Isotope:
         cutoff_frequency: float | None = None,
         lapack_zheev_uplo: Literal["L", "U"] = "L",
         symmetrize_tetrahedra: bool = False,
+        exclude_gamma_acoustic: bool = False,
         lang: Literal["C", "Python", "Rust"] = "Rust",
     ):
         """Init method.
@@ -228,6 +230,11 @@ class Isotope:
             the weights can differ between symmetrically equivalent q-points.
             Averaging removes the difference. Not available with
             ``lang='C'``.
+        exclude_gamma_acoustic : bool, optional, default=False
+            When True, the frequencies of the three modes at Gamma with the
+            smallest absolute values are set to zero after the phonons are
+            solved or set. The acoustic modes at Gamma are then zero on every
+            platform, instead of small nonzero values from rounding.
         lang : str, optional, default='Rust'
             Backend, 'C', 'Python' or 'Rust'.
 
@@ -249,6 +256,7 @@ class Isotope:
         self._frequency_factor_to_THz = frequency_factor_to_THz
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
         self._symmetrize_tetrahedra = symmetrize_tetrahedra
+        self._exclude_gamma_acoustic = exclude_gamma_acoustic
         if lang in ("C", "Rust"):
             lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
@@ -341,6 +349,11 @@ class Isotope:
         return self._symmetrize_tetrahedra
 
     @property
+    def exclude_gamma_acoustic(self) -> bool:
+        """Return whether the acoustic frequencies at Gamma are set to zero."""
+        return self._exclude_gamma_acoustic
+
+    @property
     def mass_variances(self) -> NDArray[np.double]:
         """Return mass variances."""
         return self._mass_variances
@@ -366,6 +379,10 @@ class Isotope:
         self._phonon_done = phonon_done  # type: ignore[assignment]
         if dm is not None:
             self._dm = dm
+        if self._exclude_gamma_acoustic:
+            zero_gamma_acoustic_frequencies(
+                self._frequencies, self._phonon_done, self._bz_grid.gp_Gamma
+            )
 
     def init_dynamical_matrix(
         self,
@@ -603,6 +620,7 @@ class Isotope:
             self._frequency_factor_to_THz,
             self._nac_q_direction,
             self._lapack_zheev_uplo,
+            exclude_gamma_acoustic=self._exclude_gamma_acoustic,
         )
 
     def _run_phonon_solver_py(self, grid_point: int) -> None:
@@ -620,6 +638,7 @@ class Isotope:
             self._dm,
             self._frequency_factor_to_THz,
             self._lapack_zheev_uplo,
+            exclude_gamma_acoustic=self._exclude_gamma_acoustic,
         )
 
     def _allocate_phonon(self) -> None:

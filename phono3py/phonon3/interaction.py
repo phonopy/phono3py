@@ -26,6 +26,7 @@ from phono3py.phonon.solver import (
     run_phonon_solver_c,
     run_phonon_solver_py,
     run_phonon_solver_rust,
+    zero_gamma_acoustic_frequencies,
 )
 from phono3py.phonon3.real_to_reciprocal import RealToReciprocal
 from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
@@ -146,6 +147,7 @@ class Interaction:
         lapack_zheev_uplo: Literal["L", "U"] = "L",
         openmp_per_triplets: bool | None = None,
         symmetrize_tetrahedra: bool = False,
+        exclude_gamma_acoustic: bool = False,
         lang: Literal["C", "Python", "Rust"] = "Rust",
     ):
         """Init method.
@@ -207,6 +209,11 @@ class Interaction:
             the weights can differ between symmetrically equivalent q-points.
             Averaging removes the difference. Not available with
             ``lang='C'``.
+        exclude_gamma_acoustic : bool, optional, default=False
+            When True, the frequencies of the three modes at Gamma with the
+            smallest absolute values are set to zero after the phonons are
+            solved. The acoustic modes at Gamma are then zero on every
+            platform, instead of small nonzero values from rounding.
         lang : str, optional, default='Rust'
             Backend, 'C', 'Python' or 'Rust', used by ``run``,
             ``run_phonon_solver`` and ``run_phonon_solver_at_gamma``. It can
@@ -259,6 +266,7 @@ class Interaction:
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
         self._openmp_per_triplets = openmp_per_triplets
         self._symmetrize_tetrahedra = symmetrize_tetrahedra
+        self._exclude_gamma_acoustic = exclude_gamma_acoustic
         if lang in ("C", "Rust"):
             lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
@@ -535,6 +543,11 @@ class Interaction:
         return self._symmetrize_tetrahedra
 
     @property
+    def exclude_gamma_acoustic(self) -> bool:
+        """Return whether the acoustic frequencies at Gamma are set to zero."""
+        return self._exclude_gamma_acoustic
+
+    @property
     def make_r0_average(self) -> bool:
         """Return boolean of make_r0_average.
 
@@ -744,6 +757,10 @@ class Interaction:
             self._frequencies[:] = frequencies
             self._eigenvectors[:] = eigenvectors
             gp_Gamma = self._bz_grid.gp_Gamma
+            if self._exclude_gamma_acoustic:
+                zero_gamma_acoustic_frequencies(
+                    self._frequencies, self._phonon_done, gp_Gamma
+                )
             self._frequencies_at_gamma = self._frequencies[gp_Gamma].copy()
             self._eigenvectors_at_gamma = self._eigenvectors[gp_Gamma].copy()
 
@@ -1122,6 +1139,7 @@ class Interaction:
             frequency_conversion_factor=self._frequency_factor_to_THz,
             nac_q_direction=self._nac_q_direction,
             lapack_zheev_uplo=self._lapack_zheev_uplo,
+            exclude_gamma_acoustic=self._exclude_gamma_acoustic,
         )
 
     def _run_py(self):
@@ -1175,6 +1193,7 @@ class Interaction:
             self._dm,
             self._frequency_factor_to_THz,
             self._lapack_zheev_uplo,
+            exclude_gamma_acoustic=self._exclude_gamma_acoustic,
         )
 
     def _allocate_phonon(self) -> None:

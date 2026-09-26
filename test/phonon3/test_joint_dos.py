@@ -277,6 +277,44 @@ def test_jdos_aln_symmetrize_tetrahedra(aln_lda: Phono3py, symmetrize_tetrahedra
         assert diff > 0.1
 
 
+def test_jdos_exclude_gamma_acoustic(
+    nacl_pbe: Phono3py, monkeypatch: pytest.MonkeyPatch
+):
+    """Test that JointDos sets the acoustic frequencies at Gamma to zero.
+
+    Phono3pyJointDos passes exclude_gamma_acoustic to JointDos.
+
+    """
+    jdos = _get_jdos(
+        nacl_pbe, [7, 7, 7], nac_params=nacl_pbe.nac_params, exclude_gamma_acoustic=True
+    )
+    jdos.run_phonon_solver()
+    frequencies = jdos.get_phonons()[0]
+    assert frequencies is not None
+    gp_Gamma = jdos.bz_grid.gp_Gamma
+    np.testing.assert_array_equal(frequencies[gp_Gamma, :3], 0)
+    assert (frequencies[gp_Gamma, 3:] > 1).all()
+
+    import phono3py.api_jointdos as api_jointdos
+
+    flags = []
+    joint_dos_class = api_jointdos.JointDos
+
+    def _joint_dos(*args, **kwargs):
+        flags.append(kwargs["exclude_gamma_acoustic"])
+        return joint_dos_class(*args, **kwargs)
+
+    monkeypatch.setattr(api_jointdos, "JointDos", _joint_dos)
+    Phono3pyJointDos(
+        nacl_pbe.phonon_supercell,
+        nacl_pbe.phonon_primitive,
+        nacl_pbe.fc2,
+        mesh=[7, 7, 7],
+        exclude_gamma_acoustic=True,
+    )
+    assert flags == [True]
+
+
 def test_jdos_nacl(nacl_pbe: Phono3py):
     """Test joint-DOS by NaCl."""
     nacl_pbe.mesh_numbers = [9, 9, 9]
@@ -506,7 +544,7 @@ def test_jdos_nac_NaCl_300K_PyPy(nacl_pbe: Phono3py):
     )
 
 
-def _get_jdos(ph3: Phono3py, mesh, nac_params=None):
+def _get_jdos(ph3: Phono3py, mesh, nac_params=None, exclude_gamma_acoustic=False):
     bz_grid = BZGrid(
         mesh,
         lattice=ph3.primitive.cell,
@@ -520,5 +558,6 @@ def _get_jdos(ph3: Phono3py, mesh, nac_params=None):
         ph3.fc2,
         nac_params=nac_params,
         cutoff_frequency=1e-4,
+        exclude_gamma_acoustic=exclude_gamma_acoustic,
     )
     return jdos

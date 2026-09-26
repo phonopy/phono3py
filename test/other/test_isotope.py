@@ -184,6 +184,25 @@ def test_Phono3pyIsotope_grg_with_sigma(si_pbesol_grg, lang):
     np.testing.assert_allclose(si_pbesol_grg_iso_sigma, iso.gamma[0], atol=3e-4)
 
 
+def test_Phono3pyIsotope_exclude_gamma_acoustic(nacl_pbe):
+    """Phono3pyIsotope sets the acoustic frequencies at Gamma to zero."""
+    iso = Phono3pyIsotope(
+        [7, 7, 7],
+        nacl_pbe.phonon_primitive,
+        symprec=nacl_pbe.symmetry.tolerance,
+        exclude_gamma_acoustic=True,
+    )
+    iso.init_dynamical_matrix(
+        nacl_pbe.fc2,
+        nacl_pbe.phonon_supercell,
+        nacl_pbe.phonon_primitive,
+        nac_params=nacl_pbe.nac_params,
+    )
+    iso.run([iso.grid.gp_Gamma, 1])
+    np.testing.assert_array_equal(iso.frequencies[0, :3], 0)
+    assert (iso.frequencies[0, 3:] > 1).all()
+
+
 def test_Phono3pyIsotope_symmetrize_tetrahedra(aln_lda):
     """Phono3pyIsotope passes symmetrize_tetrahedra to Isotope."""
     gammas = []

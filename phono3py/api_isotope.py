@@ -67,6 +67,7 @@ class Phono3pyIsotope:
         cutoff_frequency: float | None = None,
         lapack_zheev_uplo: Literal["L", "U"] | None = None,
         symmetrize_tetrahedra: bool = False,
+        exclude_gamma_acoustic: bool = False,
         lang: Literal["C", "Python", "Rust"] = "Rust",
     ) -> None:
         """Init method.
@@ -110,6 +111,11 @@ class Phono3pyIsotope:
             the weights can differ between symmetrically equivalent q-points.
             Averaging removes the difference. Not available with
             ``lang='C'``.
+        exclude_gamma_acoustic : bool, optional, default=False
+            When True, the frequencies of the three modes at Gamma with the
+            smallest absolute values are set to zero after the phonons are
+            solved. The acoustic modes at Gamma are then zero on every
+            platform, instead of small nonzero values from rounding.
         lang : str, optional, default='Rust'
             Backend, 'C', 'Python' or 'Rust'.
 
@@ -151,6 +157,7 @@ class Phono3pyIsotope:
             cutoff_frequency=cutoff_frequency,
             lapack_zheev_uplo=_lapack_zheev_uplo,
             symmetrize_tetrahedra=symmetrize_tetrahedra,
+            exclude_gamma_acoustic=exclude_gamma_acoustic,
             lang=lang,
         )
 

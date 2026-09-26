@@ -956,6 +956,7 @@ def _run_jdos_then_exit(
         symprec=phono3py.symmetry.tolerance,
         log_level=log_level,
         symmetrize_tetrahedra=settings.symmetrize_tetrahedra,
+        exclude_gamma_acoustic=settings.exclude_gamma_acoustic,
         lang=phono3py.lang,
     )
 
@@ -999,6 +1000,7 @@ def _run_isotope_then_exit(
         cutoff_frequency=settings.cutoff_frequency,
         lapack_zheev_uplo=settings.lapack_zheev_uplo,
         symmetrize_tetrahedra=settings.symmetrize_tetrahedra,
+        exclude_gamma_acoustic=settings.exclude_gamma_acoustic,
         lang=phono3py.lang,
     )
     assert phono3py.fc2 is not None
@@ -1050,6 +1052,8 @@ def _init_phph_interaction(
             print("Permutation symmetry of ph-ph interaction strengths: True")
         if settings.symmetrize_tetrahedra:
             print("Tetrahedron weights averaged over point group: True")
+        if settings.exclude_gamma_acoustic:
+            print("Acoustic frequencies at Gamma set to zero: True")
         if settings.is_fc3_r0_average:
             print("fc3-r2q-transformation over three atoms: True")
         else:
@@ -1070,6 +1074,7 @@ def _init_phph_interaction(
         symmetrize_fc3q=settings.is_symmetrize_fc3_q,
         lapack_zheev_uplo=settings.lapack_zheev_uplo,
         symmetrize_tetrahedra=settings.symmetrize_tetrahedra,
+        exclude_gamma_acoustic=settings.exclude_gamma_acoustic,
     )
 
     if log_level:
