@@ -2,13 +2,17 @@
 
 # Change Log
 
-## Unreleased
+## Sep-27-2026: Version 4.7.0
 
-- The tetrahedron-method integration weight at a frequency point exactly equal
-  to the frequency at a vertex was zero. It is now the limit from above. This
-  mainly changes isotope scattering, whose frequency points are the
-  frequencies of the grid point itself. For Si with isotope scattering, the
-  thermal conductivity is 0.3-0.7% lower in the tests. The fix is in phonors.
+- Version 4.6 is skipped so that the minor version matches that of phonopy.
+  Phono3py requires phonopy 4.7.0 or later.
+- In the tetrahedron method, when a sampling frequency was exactly equal to the
+  frequency at a vertex of a tetrahedron, the tetrahedron gave zero weight. It
+  now gives the weight that the frequencies close to the vertex frequency give.
+  This mainly changes isotope scattering, whose sampling frequencies are the
+  phonon frequencies at the grid point itself. For the usual sampling mesh
+  densities, the thermal conductivity changes only slightly. The fix is in
+  phonors.
 - New option {ref}`--symmetrize-tetrahedra <symmetrize_tetrahedra_option>`
   (`SYMMETRIZE_TETRAHEDRA`). With it, the integration weights of the
   tetrahedron method are averaged over the 24 tetrahedra rotated by all the
