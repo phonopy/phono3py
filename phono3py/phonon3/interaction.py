@@ -12,6 +12,7 @@ from phonopy.harmonic.dynamical_matrix import (
     NacParams,
     get_dynamical_matrix,
 )
+from phonopy.phonon.degeneracy import get_degenerate_ids
 from phonopy.phonon.grid import (
     BZGrid,
     get_grid_points_by_rotations,
@@ -148,6 +149,7 @@ class Interaction:
         openmp_per_triplets: bool | None = None,
         symmetrize_tetrahedra: bool = False,
         exclude_gamma_acoustic: bool = False,
+        average_degenerate_weights: bool = False,
         lang: Literal["C", "Python", "Rust"] = "Rust",
     ):
         """Init method.
@@ -214,6 +216,12 @@ class Interaction:
             smallest absolute values are set to zero after the phonons are
             solved. The acoustic modes at Gamma are then zero on every
             platform, instead of small nonzero values from rounding.
+        average_degenerate_weights : bool, optional, default=False
+            When True, the integration weights of the tetrahedron method are
+            averaged over the degenerate bands at q' and at q'' of each
+            triplet. Without the average, the imaginary part of the
+            self-energy depends on the choice of eigenvectors in the
+            degenerate subspaces. See get_triplets_integration_weights.
         lang : str, optional, default='Rust'
             Backend, 'C', 'Python' or 'Rust', used by ``run``,
             ``run_phonon_solver`` and ``run_phonon_solver_at_gamma``. It can
@@ -267,6 +275,7 @@ class Interaction:
         self._openmp_per_triplets = openmp_per_triplets
         self._symmetrize_tetrahedra = symmetrize_tetrahedra
         self._exclude_gamma_acoustic = exclude_gamma_acoustic
+        self._average_degenerate_weights = average_degenerate_weights
         if lang in ("C", "Rust"):
             lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
@@ -286,6 +295,7 @@ class Interaction:
         self._done_nac_at_gamma: bool = False  # Phonon at Gamma is calculated with NAC.
         self._frequencies: NDArray[np.double] | None = None
         self._eigenvectors: NDArray[np.cdouble] | None = None
+        self._degenerate_ids: NDArray[np.int64] | None = None
         self._frequencies_at_gamma: NDArray[np.double] | None = None
         self._eigenvectors_at_gamma: NDArray[np.cdouble] | None = None
         self._dm: DynamicalMatrix | None = None
@@ -513,6 +523,19 @@ class Interaction:
         return self._frequencies, self._eigenvectors, self._phonon_done
 
     @property
+    def degenerate_ids(self) -> NDArray[np.int64] | None:
+        """Return degenerate sets of bands on grid.
+
+        Each element is the smallest band index in the degenerate set of that
+        band. Bands i and j at a grid point are degenerate when their elements
+        are equal. The sets are updated whenever the frequencies are.
+
+        shape=(num_bz_grid, num_band), dtype='int64'
+
+        """
+        return self._degenerate_ids
+
+    @property
     def frequency_factor_to_THz(self) -> float:
         """Return phonon frequency conversion factor to THz."""
         return self._frequency_factor_to_THz
@@ -546,6 +569,11 @@ class Interaction:
     def exclude_gamma_acoustic(self) -> bool:
         """Return whether the acoustic frequencies at Gamma are set to zero."""
         return self._exclude_gamma_acoustic
+
+    @property
+    def average_degenerate_weights(self) -> bool:
+        """Return whether tetrahedron weights are averaged over degenerate bands."""
+        return self._average_degenerate_weights
 
     @property
     def make_r0_average(self) -> bool:
@@ -763,6 +791,7 @@ class Interaction:
                 )
             self._frequencies_at_gamma = self._frequencies[gp_Gamma].copy()
             self._eigenvectors_at_gamma = self._eigenvectors[gp_Gamma].copy()
+            self._update_degenerate_ids()
 
     def run_phonon_solver(
         self,
@@ -808,6 +837,7 @@ class Interaction:
             gp_Gamma = self._bz_grid.gp_Gamma
             self._frequencies[gp_Gamma] = self._frequencies_at_gamma
             self._eigenvectors[gp_Gamma] = self._eigenvectors_at_gamma
+            self._update_degenerate_ids(None if gp_Gamma is None else [gp_Gamma])
             return
 
         self._phonon_done[self._bz_grid.gp_Gamma] = 0
@@ -878,6 +908,7 @@ class Interaction:
                 self._rotate_eigvecs(irgp, bzgp, r_cart, perms[d_i], d_i)
 
         bz_grid_points_solved = self._get_phonons_at_minus_q()
+        self._update_degenerate_ids()
         if bz_grid_points_solved:
             print("DEBUG: BZ-grid points additionally solved than ir-grid-points.")
             qpoints = np.dot(
@@ -1140,6 +1171,7 @@ class Interaction:
             nac_q_direction=self._nac_q_direction,
             lapack_zheev_uplo=self._lapack_zheev_uplo,
             exclude_gamma_acoustic=self._exclude_gamma_acoustic,
+            degenerate_ids=self._degenerate_ids,
         )
 
     def _run_py(self):
@@ -1194,7 +1226,24 @@ class Interaction:
             self._frequency_factor_to_THz,
             self._lapack_zheev_uplo,
             exclude_gamma_acoustic=self._exclude_gamma_acoustic,
+            degenerate_ids=self._degenerate_ids,
         )
+
+    def _update_degenerate_ids(
+        self, grid_points: Sequence[int] | NDArray[np.int64] | None = None
+    ) -> None:
+        """Update degenerate sets from the frequencies at grid points.
+
+        All grid points are updated when grid_points is None.
+
+        """
+        assert self._frequencies is not None
+        assert self._degenerate_ids is not None
+        if grid_points is None:
+            self._degenerate_ids[:] = get_degenerate_ids(self._frequencies)
+        else:
+            gps = np.asarray(grid_points, dtype="int64")
+            self._degenerate_ids[gps] = get_degenerate_ids(self._frequencies[gps])
 
     def _allocate_phonon(self) -> None:
         """Allocate phonon arrays.
@@ -1212,6 +1261,7 @@ class Interaction:
         self._eigenvectors = np.zeros(
             (num_grid, num_band, num_band), dtype=complex_dtype, order="C"
         )
+        self._degenerate_ids = np.zeros((num_grid, num_band), dtype="int64")
         gp_Gamma = self._bz_grid.gp_Gamma
         self.run_phonon_solver_at_gamma()
         self._frequencies_at_gamma = self._frequencies[gp_Gamma].copy()

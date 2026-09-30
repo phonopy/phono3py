@@ -886,6 +886,17 @@ def _add_run_options(parser: argparse.ArgumentParser) -> None:
         ),
     )
     parser.add_argument(
+        "--average-degenerate-weights",
+        dest="average_degenerate_weights",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help=(
+            "Average the tetrahedron weights over degenerate bands, so that "
+            "the results do not depend on the choice of degenerate "
+            "eigenvectors (default: off)"
+        ),
+    )
+    parser.add_argument(
         "--thm",
         "--tetrahedron-method",
         dest="is_tetrahedron_method",
@@ -1164,6 +1175,7 @@ class Phono3pyMockArgs:
 
     """
 
+    average_degenerate_weights: bool | None = None
     cell_filename: str | os.PathLike | None = None
     conf_filename: str | os.PathLike | None = None
     create_forces_fc2: Sequence[str | os.PathLike] | None = None

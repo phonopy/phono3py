@@ -7,6 +7,7 @@ from typing import Literal, Optional, Union
 
 import numpy as np
 import pytest
+from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.structure.cells import get_smallest_vectors
 
 from phono3py import Phono3py
@@ -248,6 +249,27 @@ def test_phonon_solver_expand_RTA_si(si_pbesol: Phono3py):
     itr.run_phonon_solver_with_eigvec_rotation()
     freqs_expanded, _, _ = itr.get_phonons()
     np.testing.assert_allclose(freqs, freqs_expanded, rtol=0, atol=1e-6)
+
+
+def test_degenerate_ids_si(si_pbesol: Phono3py):
+    """Test that degenerate_ids gives the sets of phonopy's degenerate_sets.
+
+    The sets are checked at every BZ-grid point after the phonons are solved
+    over the grid, and again after they are solved with eigenvector rotation.
+
+    """
+    for solve_by_rotation in (False, True):
+        itr = _get_irt(si_pbesol, [6, 6, 6], solve_dynamical_matrices=False)
+        itr.run_phonon_solver(solve_by_rotation=solve_by_rotation)
+        freqs, _, _ = itr.get_phonons()
+        assert freqs is not None
+        assert itr.degenerate_ids is not None
+        num_degenerate = 0
+        for f, ids in zip(freqs, itr.degenerate_ids, strict=True):
+            sets = [np.flatnonzero(ids == i).tolist() for i in np.unique(ids)]
+            assert sets == degenerate_sets(f)
+            num_degenerate += len(sets) < len(f)
+        assert num_degenerate > 0
 
 
 def test_get_all_shortest(aln_lda: Phono3py):
