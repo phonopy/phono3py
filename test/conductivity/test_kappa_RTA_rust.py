@@ -26,7 +26,11 @@ pytest.importorskip("phonors")
 
 
 def _build_interaction(
-    ph3: Phono3py, mesh: Sequence[int], *, lang: str = "C"
+    ph3: Phono3py,
+    mesh: Sequence[int],
+    *,
+    lang: str = "C",
+    average_degenerate_weights: bool = False,
 ) -> Interaction:
     """Build an Interaction with the given phonon-solver lang (default C)."""
     ph3.mesh_numbers = mesh
@@ -37,6 +41,7 @@ def _build_interaction(
         ph3.primitive_symmetry,
         fc3=ph3.fc3,
         cutoff_frequency=1e-4,
+        average_degenerate_weights=average_degenerate_weights,
         lang=lang,
     )
     itr.init_dynamical_matrix(ph3.fc2, ph3.phonon_supercell, ph3.phonon_primitive)
@@ -56,9 +61,15 @@ def _run_rta(
     is_N_U: bool = False,
     is_gamma_detail: bool = False,
     rust_gp_batch_size: int | None = None,
+    average_degenerate_weights: bool = False,
 ) -> np.ndarray:
     """Run one RTA solve and return a copy of the kappa tensor."""
-    itr = _build_interaction(ph3, mesh, lang=interaction_lang)
+    itr = _build_interaction(
+        ph3,
+        mesh,
+        lang=interaction_lang,
+        average_degenerate_weights=average_degenerate_weights,
+    )
     rta = conductivity_calculator(
         itr,
         temperatures=np.array([300.0], dtype="double"),
@@ -131,6 +142,28 @@ def test_kappa_RTA_rust_vs_c_nosym(si_pbesol: Phono3py, si_pbesol_nosym: Phono3p
     kappa_c = _run_rta(si_pbesol_nosym, [4, 4, 4], lang="C")
     kappa_rust = _run_rta(si_pbesol_nosym, [4, 4, 4], lang="Rust")
     np.testing.assert_allclose(kappa_rust, kappa_c, rtol=1e-10, atol=1e-10)
+
+
+@pytest.mark.parametrize("rust_gp_batch_size", [0, 4])
+def test_kappa_RTA_rust_average_degenerate_weights(
+    si_pbesol: Phono3py, rust_gp_batch_size: int
+):
+    """Averaged weights in the fused Rust path match the full-gamma path.
+
+    The full-gamma path averages the weights in Python. Without the average
+    kappa differs, so the comparison shows that the average is applied.
+
+    """
+    kwargs = {"lang": "Rust", "average_degenerate_weights": True}
+    kappa_full_pp = _run_rta(si_pbesol, [5, 5, 5], is_full_pp=True, **kwargs)
+    kappa = _run_rta(
+        si_pbesol, [5, 5, 5], rust_gp_batch_size=rust_gp_batch_size, **kwargs
+    )
+    np.testing.assert_allclose(kappa, kappa_full_pp, rtol=1e-10, atol=1e-10)
+    kappa_off = _run_rta(
+        si_pbesol, [5, 5, 5], lang="Rust", rust_gp_batch_size=rust_gp_batch_size
+    )
+    assert abs(kappa - kappa_off).max() > 1e-6 * abs(kappa).max()
 
 
 @pytest.mark.parametrize("batch_size", [1, 3, 16])

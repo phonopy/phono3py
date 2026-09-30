@@ -177,17 +177,67 @@ def get_triplets_integration_weights(
     sigma: float | None,
     sigma_cutoff: float | None = None,
     is_collision_matrix: bool = False,
+    average_degenerate_weights: bool = False,
     lang: Literal["C", "Python", "Rust"] = "Rust",
 ) -> tuple[NDArray[np.double], NDArray[np.byte] | None]:
     """Calculate triplets integration weights.
+
+    A triplet is a set of three q-points (q, q', q''). For band j at q' and
+    band k at q'', the weights are the following delta functions evaluated
+    at each frequency point omega:
+
+        g[0] = delta(omega - omega'_j - omega''_k)
+        g[1] = delta(omega + omega'_j - omega''_k)
+               - delta(omega - omega'_j + omega''_k)
+        g[2] = delta(omega - omega'_j - omega''_k)
+               + delta(omega + omega'_j - omega''_k)
+               + delta(omega - omega'_j + omega''_k)
+
+    g[2] is computed only for the collision matrix. With sigma=None the delta
+    functions are integrated by the linear tetrahedron method. With a value
+    of sigma the delta functions are replaced by Gaussians of that width.
+
+    Parameters
+    ----------
+    interaction : Interaction or JointDos
+        The triplets are taken from interaction.get_triplets_at_q(). The
+        phonon frequencies are taken from interaction.get_phonons(). The
+        phonons at the grid points of the triplets have to be solved before
+        this function is called.
+    frequency_points : ndarray
+        The frequencies omega at which the weights are computed.
+        shape=(freq_points,), dtype='double'
+    sigma : float or None
+        The width of the Gaussian. None selects the tetrahedron method.
+    sigma_cutoff : float or None, optional, default=None
+        This parameter is used only with sigma. An element is marked in
+        g_zero when all the arguments of its delta functions are farther from
+        zero than sigma_cutoff * sigma. The weights of a marked element are
+        set to zero. With None no element is marked.
+    is_collision_matrix : bool, optional, default=False
+        When True, g[2] is computed in addition to g[0] and g[1].
+    average_degenerate_weights : bool, optional, default=False
+        This parameter is used only with the tetrahedron method. When True,
+        the weights of each triplet are averaged over each set of degenerate
+        bands at q' and over each set of degenerate bands at q''. The
+        tetrahedron weights of a band are computed from the frequencies of
+        that band at the neighbouring grid points, where the degeneracy is
+        lifted. The weights are therefore different among degenerate bands.
+        Without the average, the imaginary part of the self-energy depends on
+        the choice of eigenvectors in the degenerate subspaces at q' and q''.
+    lang : {"C", "Python", "Rust"}, optional, default="Rust"
+        The implementation used to compute the weights. When "C" is given and
+        the C extension is not installed, "Rust" is used.
 
     Returns
     -------
     g : ndarray
         Triplets integration weights.
         shape=(2 or 3, triplets, freq_points, bands, bands), dtype='double'.
-    g_zero : ndarray
-        Location of strictly zero elements.
+    g_zero : ndarray or None
+        An element is 1 when all the weights of that element are zero, and 0
+        otherwise. The interaction strengths of the elements with 1 are not
+        computed. With lang="Python" None is returned.
         shape=(triplets, freq_points, bands, bands), dtype='byte'
 
     """
@@ -269,8 +319,61 @@ def get_triplets_integration_weights(
                 )
         else:
             _set_triplets_integration_weights_py(g, interaction, frequency_points)
+        if average_degenerate_weights:
+            degenerate_ids = getattr(interaction, "degenerate_ids", None)
+            if degenerate_ids is None:
+                raise RuntimeError(
+                    "average_degenerate_weights needs degenerate_ids of Interaction."
+                )
+            _average_weights_over_degenerate_sets(g, g_zero, triplets, degenerate_ids)
 
     return g, g_zero
+
+
+def _average_weights_over_degenerate_sets(
+    g: NDArray[np.double],
+    g_zero: NDArray[np.byte] | None,
+    triplets: NDArray[np.int64],
+    degenerate_ids: NDArray[np.int64],
+) -> None:
+    """Average integration weights over degenerate bands at q' and q'' in place.
+
+    An element with zero weights can be in the same degenerate block as an
+    element with nonzero weights. After the average, both elements have the
+    nonzero mean. The mark of such an element in g_zero is removed, so that
+    its interaction strength is computed. The comparison is g != 0, not
+    g > 0, because g[1] can be negative. Marks are only removed and never
+    added.
+
+    Parameters
+    ----------
+    g : ndarray
+        Triplets integration weights.
+        shape=(2 or 3, triplets, freq_points, bands, bands), dtype='double'.
+    g_zero : ndarray or None
+        Location of strictly zero elements.
+        shape=(triplets, freq_points, bands, bands), dtype='byte'
+    triplets : ndarray
+        Grid points of triplets. shape=(triplets, 3), dtype='int64'
+    degenerate_ids : ndarray
+        Smallest band index in the degenerate set of each band, see
+        Interaction.degenerate_ids. shape=(grid_points, bands), dtype='int64'
+
+    """
+    bands = np.arange(g.shape[-1])
+    for i, (_, gp1, gp2) in enumerate(triplets):
+        g_i = g[:, i]
+        for axis, gp in ((2, gp1), (3, gp2)):
+            starts = np.flatnonzero(degenerate_ids[gp] == bands)
+            if len(starts) == len(bands):
+                continue
+            counts = np.diff(starts, append=len(bands))
+            shape = [1, 1, 1, 1]
+            shape[axis] = len(counts)
+            means = np.add.reduceat(g_i, starts, axis=axis) / counts.reshape(shape)
+            g_i[:] = np.repeat(means, counts, axis=axis)
+    if g_zero is not None:
+        g_zero[(g != 0).any(axis=0)] = 0
 
 
 def _get_triplets_reciprocal_mesh_at_q(

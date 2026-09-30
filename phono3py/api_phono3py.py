@@ -1188,6 +1188,7 @@ class Phono3py:
         openmp_per_triplets: bool | None = None,
         symmetrize_tetrahedra: bool = False,
         exclude_gamma_acoustic: bool = False,
+        average_degenerate_weights: bool = False,
     ) -> None:
         """Initialize ph-ph interaction calculation.
 
@@ -1245,6 +1246,12 @@ class Phono3py:
             platform, instead of small nonzero values from rounding.
             Isotope scattering in the thermal conductivity follows this
             choice. Default is False.
+        average_degenerate_weights : bool, optional
+            When True, the integration weights of the tetrahedron method are
+            averaged over the degenerate bands at q' and at q'' of each
+            triplet. Without the average, the imaginary part of the
+            self-energy and the collision matrix depend on the choice of
+            eigenvectors in the degenerate subspaces. Default is False.
 
         """
         if self._bz_grid is None:
@@ -1283,6 +1290,7 @@ class Phono3py:
             openmp_per_triplets=openmp_per_triplets,
             symmetrize_tetrahedra=symmetrize_tetrahedra,
             exclude_gamma_acoustic=exclude_gamma_acoustic,
+            average_degenerate_weights=average_degenerate_weights,
             lang=self._lang,
         )
         self._interaction.nac_q_direction = nac_q_direction

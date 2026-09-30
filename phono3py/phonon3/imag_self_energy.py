@@ -264,6 +264,7 @@ class ImagSelfEnergy:
             self._sigma,
             self._sigma_cutoff,
             is_collision_matrix=isinstance(self, CollisionMatrix),
+            average_degenerate_weights=self._pp.average_degenerate_weights,
         )
 
         if scattering_event_class == 1 or scattering_event_class == 2:

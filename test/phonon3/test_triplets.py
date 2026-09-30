@@ -5,6 +5,7 @@ from typing import Literal
 import numpy as np
 import pytest
 from phonopy import Phonopy
+from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.phonon.grid import BZGrid, get_grid_point_from_address
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.symmetry import Symmetry
@@ -2055,6 +2056,43 @@ def test_get_triplets_integration_weights_tetrahedron_python_matches_rust(
         itr, frequency_points, sigma=None, lang="Python"
     )
     np.testing.assert_allclose(g_py, g_rust, rtol=0, atol=1e-12)
+
+
+def test_get_triplets_integration_weights_average_degenerate(si_pbesol: Phono3py):
+    """Averaged weights are equal inside degenerate blocks and keep block sums.
+
+    g_zero is only unset, and only where the averaged weights are nonzero.
+
+    """
+    itr = _setup_interaction(si_pbesol, [4, 4, 4], 1)
+    frequencies = itr.get_phonons()[0]
+    triplets = itr.get_triplets_at_q()[0]
+    assert frequencies is not None
+    assert triplets is not None
+    frequency_points = frequencies[1]
+    g, g_zero = get_triplets_integration_weights(itr, frequency_points, sigma=None)
+    g_avg, g_zero_avg = get_triplets_integration_weights(
+        itr, frequency_points, sigma=None, average_degenerate_weights=True
+    )
+    assert g_zero is not None
+    assert g_zero_avg is not None
+
+    spread = 0.0
+    for i, (_, gp1, gp2) in enumerate(triplets):
+        for s1 in degenerate_sets(frequencies[gp1]):
+            for s2 in degenerate_sets(frequencies[gp2]):
+                b = g[:, i][:, :, s1][:, :, :, s2]
+                b_avg = g_avg[:, i][:, :, s1][:, :, :, s2]
+                np.testing.assert_allclose(
+                    b_avg.sum(axis=(2, 3)), b.sum(axis=(2, 3)), atol=1e-12
+                )
+                np.testing.assert_allclose(
+                    b_avg, np.broadcast_to(b_avg[:, :, :1, :1], b_avg.shape), atol=1e-12
+                )
+                spread = max(spread, np.ptp(b, axis=(2, 3)).max())
+    assert spread > 1e-8
+    assert not (g_zero_avg.astype(bool) & ~g_zero.astype(bool)).any()
+    assert not (g_zero_avg.astype(bool) & (g_avg != 0).any(axis=0)).any()
 
 
 def _setup_interaction(

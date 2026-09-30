@@ -45,12 +45,15 @@ def run_pp_collision_rust(
     make_r0_average: bool,
     all_shortest: NDArray[np.byte],
     cutoff_frequency: float,
+    degenerate_ids: NDArray[np.int64] | None = None,
 ) -> None:
     """Compute low-memory collision with the tetrahedron method (Rust).
 
     Drop-in replacement for ``phono3c.pp_collision``.  Writes into
     ``collisions`` in place; the shape is ``(num_temps, num_band0)`` or
-    ``(2, num_temps, num_band0)`` when ``is_N_U`` is True.
+    ``(2, num_temps, num_band0)`` when ``is_N_U`` is True.  When
+    ``degenerate_ids`` (see ``Interaction.degenerate_ids``) is given, the
+    integration weights are averaged over degenerate bands.
 
     """
     import phonors
@@ -84,6 +87,7 @@ def run_pp_collision_rust(
         np.ascontiguousarray(all_shortest, dtype="byte"),
         float(cutoff_frequency),
         is_compact_fc3,
+        **_degenerate_ids_kwargs(degenerate_ids),
     )
 
 
@@ -187,6 +191,7 @@ def run_collision_at_grid_points_batched_rust(
     make_r0_average: bool,
     all_shortest: NDArray[np.byte],
     cutoff_frequency: float,
+    degenerate_ids: NDArray[np.int64] | None = None,
 ) -> None:
     """Compute gamma for a batch of grid points in one Rust call.
 
@@ -244,6 +249,7 @@ def run_collision_at_grid_points_batched_rust(
         np.ascontiguousarray(all_shortest, dtype="byte"),
         float(cutoff_frequency),
         is_compact_fc3,
+        **_degenerate_ids_kwargs(degenerate_ids),
     )
 
 
@@ -281,6 +287,7 @@ def run_collision_at_grid_point_rust(
     make_r0_average: bool,
     all_shortest: NDArray[np.byte],
     cutoff_frequency: float,
+    degenerate_ids: NDArray[np.int64] | None = None,
 ) -> None:
     """Compute gamma for one grid point with multiple sigmas (Rust).
 
@@ -334,7 +341,22 @@ def run_collision_at_grid_point_rust(
         np.ascontiguousarray(all_shortest, dtype="byte"),
         float(cutoff_frequency),
         is_compact_fc3,
+        **_degenerate_ids_kwargs(degenerate_ids),
     )
+
+
+def _degenerate_ids_kwargs(
+    degenerate_ids: NDArray[np.int64] | None,
+) -> dict[str, NDArray[np.int64]]:
+    """Return degenerate_ids as a keyword argument to phonors when given.
+
+    Nothing is passed when degenerate_ids is None, so that a phonors without
+    this argument works as before.
+
+    """
+    if degenerate_ids is None:
+        return {}
+    return {"degenerate_ids": np.ascontiguousarray(degenerate_ids, dtype="int64")}
 
 
 class RTAScatteringSolver:
@@ -697,6 +719,11 @@ class RTAScatteringSolver:
                     self._pp.make_r0_average,
                     self._pp.all_shortest,
                     self._pp.cutoff_frequency,
+                    degenerate_ids=(
+                        self._pp.degenerate_ids
+                        if self._pp.average_degenerate_weights
+                        else None
+                    ),
                 )
             else:
                 import phono3py._phono3py as phono3c
@@ -704,6 +731,10 @@ class RTAScatteringSolver:
                 if self._pp.symmetrize_tetrahedra:
                     raise RuntimeError(
                         "symmetrize_tetrahedra is not supported with lang='C'."
+                    )
+                if self._pp.average_degenerate_weights:
+                    raise RuntimeError(
+                        "average_degenerate_weights is not supported with lang='C'."
                     )
                 phono3c.pp_collision(
                     collisions,
@@ -907,6 +938,7 @@ class RTAScatteringSolver:
             cache["make_r0_average"],
             cache["all_shortest"],
             cache["cutoff_frequency"],
+            degenerate_ids=cache["degenerate_ids"],
         )
 
         for j in range(num_sigma):
@@ -1015,6 +1047,7 @@ class RTAScatteringSolver:
             cache["make_r0_average"],
             cache["all_shortest"],
             cache["cutoff_frequency"],
+            degenerate_ids=cache["degenerate_ids"],
         )
 
         out: list[dict] = []
@@ -1118,6 +1151,9 @@ class RTAScatteringSolver:
             "make_r0_average": bool(pp.make_r0_average),
             "all_shortest": np.ascontiguousarray(pp.all_shortest, dtype="byte"),
             "cutoff_frequency": float(pp.cutoff_frequency),
+            "degenerate_ids": (
+                pp.degenerate_ids if pp.average_degenerate_weights else None
+            ),
         }
         return self._rust_cache
 
