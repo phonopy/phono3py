@@ -662,6 +662,40 @@ zero after the phonons are solved.
 The option is off by default, and `--no-exclude-gamma-acoustic` turns it off
 explicitly.
 
+(average_degenerate_weights_option)=
+
+### `--average-degenerate-weights` (`AVERAGE_DEGENERATE_WEIGHTS = .TRUE.`)
+
+At some q-points, two or three phonon modes have the same frequency. These
+modes are degenerate. Any orthonormal combination of their eigenvectors is also
+a set of eigenvectors, and the combination returned by the eigenvalue solver
+depends on the linear algebra library.
+
+The imaginary part of the self energy of a phonon mode is a sum over pairs of
+modes at $\mathbf{q}'$ and $\mathbf{q}''$. Each pair contributes its ph-ph
+interaction strength multiplied by an integration weight. When the degenerate
+modes at $\mathbf{q}'$ have the same integration weight, their summed
+contribution does not depend on the choice of eigenvectors.
+
+The tetrahedron method computes the integration weight of a mode from the
+frequencies of the same band index at the neighbouring grid points. At the
+neighbouring grid points the modes are in general not degenerate, so the
+degenerate modes at $\mathbf{q}'$ get different integration weights. The
+imaginary part of the self energy then depends on the choice of eigenvectors at
+$\mathbf{q}'$ and $\mathbf{q}''$, and so on the linear algebra library.
+
+With this option, the integration weights are averaged over each set of
+degenerate modes at $\mathbf{q}'$ and over each set at $\mathbf{q}''$. The
+imaginary part of the self energy then does not depend on the choice of
+eigenvectors at $\mathbf{q}'$ and $\mathbf{q}''$.
+
+The averaged weights are used for the imaginary part of the self energy and
+the thermal conductivity. The joint density of states and the isotope
+scattering do not use this option. With `--sigma`, the option has no effect,
+because the Gaussian function gives degenerate modes the same weight. The
+option is off by default, and `--no-average-degenerate-weights` turns it off
+explicitly.
+
 (sigma_option)=
 
 ### `--sigma` (`SIGMA`)
