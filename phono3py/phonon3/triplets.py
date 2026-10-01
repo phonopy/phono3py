@@ -336,14 +336,19 @@ def _average_weights_over_degenerate_sets(
     triplets: NDArray[np.int64],
     degenerate_ids: NDArray[np.int64],
 ) -> None:
-    """Average integration weights over degenerate bands at q' and q'' in place.
+    """Average integration weights over the degenerate blocks in place.
+
+    A degenerate block is a degenerate set of bands at q' times a degenerate
+    set at q'', one of them possibly a single band. All weights of a block
+    are replaced by their mean.
 
     An element with zero weights can be in the same degenerate block as an
     element with nonzero weights. After the average, both elements have the
-    nonzero mean. The mark of such an element in g_zero is removed, so that
-    its interaction strength is computed. The comparison is g != 0, not
-    g > 0, because g[1] can be negative. Marks are only removed and never
-    added.
+    nonzero mean. g_zero is therefore reduced over each block by AND: an
+    element stays marked only when every element of its block was marked,
+    that is, when the whole block has zero weights. The interaction
+    strengths of the other elements are computed. Marks are only removed
+    and never added.
 
     Parameters
     ----------
@@ -360,20 +365,30 @@ def _average_weights_over_degenerate_sets(
         Interaction.degenerate_ids. shape=(grid_points, bands), dtype='int64'
 
     """
-    bands = np.arange(g.shape[-1])
+    num_band = g.shape[-1]
+    bands = np.arange(num_band)
     for i, (_, gp1, gp2) in enumerate(triplets):
+        starts1 = np.flatnonzero(degenerate_ids[gp1] == bands)
+        starts2 = np.flatnonzero(degenerate_ids[gp2] == bands)
+        if len(starts1) == num_band and len(starts2) == num_band:
+            continue
+        counts1 = np.diff(starts1, append=num_band)
+        counts2 = np.diff(starts2, append=num_band)
+
+        # Sums over the blocks: shape=(2 or 3, freq_points, sets1, sets2).
         g_i = g[:, i]
-        for axis, gp in ((2, gp1), (3, gp2)):
-            starts = np.flatnonzero(degenerate_ids[gp] == bands)
-            if len(starts) == len(bands):
-                continue
-            counts = np.diff(starts, append=len(bands))
-            shape = [1, 1, 1, 1]
-            shape[axis] = len(counts)
-            means = np.add.reduceat(g_i, starts, axis=axis) / counts.reshape(shape)
-            g_i[:] = np.repeat(means, counts, axis=axis)
-    if g_zero is not None:
-        g_zero[(g != 0).any(axis=0)] = 0
+        sums = np.add.reduceat(np.add.reduceat(g_i, starts1, axis=2), starts2, axis=3)
+        means = sums / np.outer(counts1, counts2)
+        g_i[:] = np.repeat(np.repeat(means, counts1, axis=2), counts2, axis=3)
+
+        if g_zero is not None:
+            # Minimum of 0 and 1 is AND.
+            all_marked = np.minimum.reduceat(
+                np.minimum.reduceat(g_zero[i], starts1, axis=1), starts2, axis=2
+            )
+            g_zero[i] = np.repeat(
+                np.repeat(all_marked, counts1, axis=1), counts2, axis=2
+            )
 
 
 def _get_triplets_reciprocal_mesh_at_q(
