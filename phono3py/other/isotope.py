@@ -36,6 +36,7 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Sequence
 from typing import Literal
 
@@ -391,21 +392,77 @@ class Isotope:
         """
         return self._phonons
 
+    def get_phonons(
+        self,
+    ) -> tuple[
+        NDArray[np.double] | None, NDArray[np.cdouble] | None, NDArray[np.byte] | None
+    ]:
+        """Return frequencies, eigenvectors and phonon_done on grid.
+
+        This method is deprecated and will be removed in v5.0. Use the
+        ``phonons`` property.
+
+        """
+        warnings.warn(
+            "get_phonons() is deprecated and will be removed in v5.0. "
+            "Use the phonons property.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if self._phonons is None:
+            return None, None, None
+        return (
+            self._phonons.frequencies,
+            self._phonons.eigenvectors,
+            self._phonons.phonon_done,
+        )
+
     def set_phonons(
-        self, phonons: PhononData, dm: DynamicalMatrix | None = None
+        self,
+        phonons: PhononData | NDArray[np.double],
+        eigenvectors: NDArray[np.cdouble] | None = None,
+        phonon_done: NDArray[np.byte] | None = None,
+        dm: DynamicalMatrix | None = None,
     ) -> None:
         """Set phonons on grid.
 
         The arrays in ``phonons`` are used as they are, not copied.
 
+        Passing frequencies, eigenvectors and phonon_done as separate arrays
+        is deprecated and will be removed in v5.0. Pass a PhononData instance.
+
         Parameters
         ----------
         phonons : PhononData
-            Phonons on the BZ grid of this instance.
+            Phonons on the BZ grid of this instance. Frequencies when the
+            deprecated form is used.
+        eigenvectors : ndarray, optional
+            Deprecated. Eigenvectors on the BZ grid.
+        phonon_done : ndarray, optional
+            Deprecated. 1 where phonons are calculated, otherwise 0.
         dm : DynamicalMatrix, optional
-            Dynamical matrix used when phonons are solved later.
+            Dynamical matrix used when phonons are solved later. Pass it by
+            keyword.
 
         """
+        if not isinstance(phonons, PhononData):
+            if eigenvectors is None or phonon_done is None:
+                raise TypeError(
+                    "set_phonons() takes a PhononData instance, or frequencies, "
+                    "eigenvectors and phonon_done."
+                )
+            warnings.warn(
+                "set_phonons(frequencies, eigenvectors, phonon_done) is deprecated "
+                "and will be removed in v5.0. Pass a PhononData instance.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            phonons = PhononData(
+                frequencies=phonons,
+                eigenvectors=eigenvectors,
+                phonon_done=phonon_done,
+                degenerate_ids=get_degenerate_ids(phonons),
+            )
         self._phonons = phonons
         if dm is not None:
             self._dm = dm

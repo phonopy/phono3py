@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import warnings
 
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
@@ -206,6 +207,31 @@ class JointDos:
     @frequency_points.setter
     def frequency_points(self, frequency_points: NDArray[np.double]) -> None:
         self._frequency_points = np.array(frequency_points, dtype="double")
+
+    def get_phonons(
+        self,
+    ) -> tuple[
+        NDArray[np.double] | None, NDArray[np.cdouble] | None, NDArray[np.byte] | None
+    ]:
+        """Return frequencies, eigenvectors and phonon_done on grid.
+
+        This method is deprecated and will be removed in v5.0. Use the
+        ``phonons`` property.
+
+        """
+        warnings.warn(
+            "get_phonons() is deprecated and will be removed in v5.0. "
+            "Use the phonons property.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if self._phonons is None:
+            return None, None, None
+        return (
+            self._phonons.frequencies,
+            self._phonons.eigenvectors,
+            self._phonons.phonon_done,
+        )
 
     @property
     def phonons(self) -> PhononData | None:

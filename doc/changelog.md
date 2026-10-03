@@ -2,21 +2,21 @@
 
 # Change Log
 
-## Unreleased
+## Oct-3-2026: Version 4.8.0
 
-- Phono3py requires phonopy 4.8.0 or later, which provides
-  `get_degenerate_ids`.
-- {ref}`--average-degenerate-weights <average_degenerate_weights_option>` now
-  also applies to the isotope scattering with the tetrahedron method. The
-  weights are averaged over the degenerate modes at $\mathbf{q}'$ and at the
-  phonon mode of interest, and the scattering rates are averaged over the
-  degenerate modes of the latter. In the API, it is the
-  `average_degenerate_weights` parameter of `Phono3pyIsotope`.
-- `get_phonons()` of `Interaction`, `JointDos` and `Isotope` and
-  `Interaction.degenerate_ids` are removed. The `phonons` property of these
-  classes returns a `PhononData` instance with `frequencies`, `eigenvectors`,
-  `phonon_done` and `degenerate_ids`. `Isotope.set_phonons` takes a
-  `PhononData` instance. See {ref}`migration_v5`.
+- Phono3py requires phonopy 4.8.0 or later.
+- New option {ref}`--average-degenerate-weights
+  <average_degenerate_weights_option>` (`AVERAGE_DEGENERATE_WEIGHTS`). With it,
+  the integration weights of the tetrahedron method are averaged over the
+  degenerate modes at $\mathbf{q}'$ and at $\mathbf{q}''$, so that the results
+  do not depend on the choice of the eigenvectors in the degenerate subspaces.
+  It also applies to the isotope scattering, where the weights are averaged
+  over the degenerate modes at $\mathbf{q}'$ and at the phonon mode of
+  interest, and the scattering rates are averaged over the degenerate modes of
+  the latter. In the API, it is the `average_degenerate_weights` parameter of
+  `Phono3py.init_phph_interaction` and `Phono3pyIsotope`. The default is off,
+  but the option is recommended for new calculations. It will be on by default
+  in v5.0, see {ref}`migration_v5`.
 
 ## Sep-27-2026: Version 4.7.0
 
