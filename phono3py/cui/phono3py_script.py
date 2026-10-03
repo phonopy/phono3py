@@ -1000,6 +1000,7 @@ def _run_isotope_then_exit(
         cutoff_frequency=settings.cutoff_frequency,
         lapack_zheev_uplo=settings.lapack_zheev_uplo,
         symmetrize_tetrahedra=settings.symmetrize_tetrahedra,
+        average_degenerate_weights=settings.average_degenerate_weights,
         exclude_gamma_acoustic=settings.exclude_gamma_acoustic,
         lang=phono3py.lang,
     )

@@ -51,6 +51,10 @@ from phonopy.phonon.tetrahedron_method import (
 )
 
 from phono3py._lang import resolve_lang
+from phono3py.phonon.degeneracy import (
+    average_over_degenerate_sets,
+    minimum_over_degenerate_sets,
+)
 from phono3py.phonon.func import gaussian
 
 if TYPE_CHECKING:
@@ -201,7 +205,7 @@ def get_triplets_integration_weights(
     ----------
     interaction : Interaction or JointDos
         The triplets are taken from interaction.get_triplets_at_q(). The
-        phonon frequencies are taken from interaction.get_phonons(). The
+        phonon frequencies are taken from interaction.phonons. The
         phonons at the grid points of the triplets have to be solved before
         this function is called.
     frequency_points : ndarray
@@ -246,7 +250,8 @@ def get_triplets_integration_weights(
 
     triplets = interaction.get_triplets_at_q()[0]
     assert triplets is not None
-    frequencies = interaction.get_phonons()[0]
+    assert interaction.phonons is not None
+    frequencies = interaction.phonons.frequencies
     assert frequencies is not None
     num_band = frequencies.shape[1]
     g_zero = None
@@ -320,12 +325,14 @@ def get_triplets_integration_weights(
         else:
             _set_triplets_integration_weights_py(g, interaction, frequency_points)
         if average_degenerate_weights:
-            degenerate_ids = getattr(interaction, "degenerate_ids", None)
-            if degenerate_ids is None:
+            phonons = interaction.phonons
+            if phonons is None:
                 raise RuntimeError(
-                    "average_degenerate_weights needs degenerate_ids of Interaction."
+                    "average_degenerate_weights needs phonons of Interaction."
                 )
-            _average_weights_over_degenerate_sets(g, g_zero, triplets, degenerate_ids)
+            _average_weights_over_degenerate_sets(
+                g, g_zero, triplets, phonons.degenerate_ids
+            )
 
     return g, g_zero
 
@@ -362,32 +369,19 @@ def _average_weights_over_degenerate_sets(
         Grid points of triplets. shape=(triplets, 3), dtype='int64'
     degenerate_ids : ndarray
         Smallest band index in the degenerate set of each band, see
-        Interaction.degenerate_ids. shape=(grid_points, bands), dtype='int64'
+        PhononData.degenerate_ids. shape=(grid_points, bands), dtype='int64'
 
     """
-    num_band = g.shape[-1]
-    bands = np.arange(num_band)
     for i, (_, gp1, gp2) in enumerate(triplets):
-        starts1 = np.flatnonzero(degenerate_ids[gp1] == bands)
-        starts2 = np.flatnonzero(degenerate_ids[gp2] == bands)
-        if len(starts1) == num_band and len(starts2) == num_band:
-            continue
-        counts1 = np.diff(starts1, append=num_band)
-        counts2 = np.diff(starts2, append=num_band)
-
-        # Sums over the blocks: shape=(2 or 3, freq_points, sets1, sets2).
-        g_i = g[:, i]
-        sums = np.add.reduceat(np.add.reduceat(g_i, starts1, axis=2), starts2, axis=3)
-        means = sums / np.outer(counts1, counts2)
-        g_i[:] = np.repeat(np.repeat(means, counts1, axis=2), counts2, axis=3)
-
+        ids1 = degenerate_ids[gp1]
+        ids2 = degenerate_ids[gp2]
+        # Shape of g[:, i]: (2 or 3, freq_points, bands, bands).
+        g[:, i] = average_over_degenerate_sets(
+            average_over_degenerate_sets(g[:, i], ids1, 2), ids2, 3
+        )
         if g_zero is not None:
-            # Minimum of 0 and 1 is AND.
-            all_marked = np.minimum.reduceat(
-                np.minimum.reduceat(g_zero[i], starts1, axis=1), starts2, axis=2
-            )
-            g_zero[i] = np.repeat(
-                np.repeat(all_marked, counts1, axis=1), counts2, axis=2
+            g_zero[i] = minimum_over_degenerate_sets(
+                minimum_over_degenerate_sets(g_zero[i], ids1, 1), ids2, 2
             )
 
 
@@ -559,7 +553,8 @@ def _set_triplets_integration_weights_c(
     if pp.symmetrize_tetrahedra:
         raise RuntimeError("symmetrize_tetrahedra is not supported with lang='C'.")
     triplets_at_q = pp.get_triplets_at_q()[0]
-    frequencies = pp.get_phonons()[0]
+    assert pp.phonons is not None
+    frequencies = pp.phonons.frequencies
     phono3c.triplets_integration_weights(
         g,
         g_zero,
@@ -585,7 +580,8 @@ def _set_triplets_integration_weights_rust(
     import phonors
 
     triplets_at_q = pp.get_triplets_at_q()[0]
-    frequencies = pp.get_phonons()[0]
+    assert pp.phonons is not None
+    frequencies = pp.phonons.frequencies
     phonors.triplets_integration_weights(
         g,
         g_zero,
@@ -622,7 +618,8 @@ def _set_triplets_integration_weights_py(
         relative_grid_address, triplets_at_q, pp.bz_grid
     )
     pp.run_phonon_solver()
-    frequencies = pp.get_phonons()[0]
+    assert pp.phonons is not None
+    frequencies = pp.phonons.frequencies
     assert frequencies is not None
     num_band = frequencies.shape[1]
     for i, vertices in enumerate(tetrahedra_vertices):

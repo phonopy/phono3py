@@ -142,7 +142,9 @@ class CollisionMatrix(ImagSelfEnergy):
                 self._ir_map_at_q,
             ) = self._pp.get_triplets_at_q()
             self._grid_point = grid_point
-            self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
+            assert self._pp.phonons is not None
+            self._frequencies = self._pp.phonons.frequencies
+            self._eigenvectors = self._pp.phonons.eigenvectors
 
     def _run_collision_matrix(self) -> None:
         assert self._temperature is not None

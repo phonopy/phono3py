@@ -149,7 +149,8 @@ def _build_lbte_calculator(
     """Build an LBTECalculator from variant component factories."""
     _run_phonon_solver(interaction)
     kappa_settings = build_lbte_kappa_settings(interaction, config)
-    frequencies, _, _ = interaction.get_phonons()
+    assert interaction.phonons is not None
+    frequencies = interaction.phonons.frequencies
     rot_grid_points = build_rot_grid_points(kappa_settings)
     collision = CollisionMatrix(
         interaction,
@@ -442,7 +443,8 @@ def _std_make_velocity_solver(ctx: VariantContext) -> GroupVelocitySolver:
 
 
 def _std_make_rta_kappa_solver(ctx: VariantContext) -> RTAKappaSolver:
-    frequencies, _, _ = ctx.interaction.get_phonons()
+    assert ctx.interaction.phonons is not None
+    frequencies = ctx.interaction.phonons.frequencies
     return RTAKappaSolver(
         kappa_settings=ctx.kappa_settings,
         frequencies=frequencies,

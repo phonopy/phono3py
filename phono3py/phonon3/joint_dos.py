@@ -49,7 +49,11 @@ from phonopy.structure.cells import Primitive, Supercell
 
 from phono3py._lang import log_dispatch, resolve_lang
 from phono3py.phonon.func import bose_einstein
-from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_rust
+from phono3py.phonon.solver import (
+    PhononData,
+    run_phonon_solver_c,
+    run_phonon_solver_rust,
+)
 from phono3py.phonon3.triplets import (
     get_nosym_triplets_at_q,
     get_triplets_at_q,
@@ -169,10 +173,8 @@ class JointDos:
         self._reciprocal_lattice = np.linalg.inv(self._primitive.cell)
 
         self._tetrahedron_method = None
-        self._phonon_done: NDArray[np.byte] | None = None
+        self._phonons: PhononData | None = None
         self._done_nac_at_gamma = False  # Phonon at Gamma is calculated with NAC.
-        self._frequencies: NDArray[np.double] | None = None
-        self._eigenvectors: NDArray[np.cdouble] | None = None
 
         self._joint_dos: NDArray[np.double] | None = None
         self._frequency_points: NDArray[np.double] | None = None
@@ -205,15 +207,15 @@ class JointDos:
     def frequency_points(self, frequency_points: NDArray[np.double]) -> None:
         self._frequency_points = np.array(frequency_points, dtype="double")
 
-    def get_phonons(
-        self,
-    ) -> tuple[
-        NDArray[np.double] | None,
-        NDArray[np.cdouble] | None,
-        NDArray[np.byte] | None,
-    ]:
-        """Return phonon calculation results."""
-        return self._frequencies, self._eigenvectors, self._phonon_done
+    @property
+    def phonons(self) -> PhononData | None:
+        """Return phonons on grid.
+
+        None before the phonons are allocated. The arrays in the returned
+        PhononData are those used in this instance, not copies.
+
+        """
+        return self._phonons
 
     @property
     def primitive(self) -> Primitive:
@@ -295,16 +297,16 @@ class JointDos:
         self._set_triplets()
         self._joint_dos = None
 
-        assert self._phonon_done is not None
+        assert self._phonons is not None
         gamma_gp = get_grid_point_from_address([0, 0, 0], self._bz_grid.D_diag)
         if (self._bz_grid.addresses[grid_point] == 0).all():
             if self._nac_q_direction is not None:
                 self._done_nac_at_gamma = True
-                self._phonon_done[gamma_gp] = 0
+                self._phonons.phonon_done[gamma_gp] = 0
         elif self._done_nac_at_gamma:
             if self._nac_q_direction is None:
                 self._done_nac_at_gamma = False
-                self._phonon_done[gamma_gp] = 0
+                self._phonons.phonon_done[gamma_gp] = 0
             else:
                 msg = (
                     "Phonons at Gamma has been calculated with NAC, "
@@ -324,9 +326,7 @@ class JointDos:
         method name. So this name is not allowed to change.
 
         """
-        assert self._frequencies is not None
-        assert self._eigenvectors is not None
-        assert self._phonon_done is not None
+        assert self._phonons is not None
         if grid_points is None:
             _grid_points = np.arange(len(self._bz_grid.addresses), dtype="int64")
         else:
@@ -335,9 +335,9 @@ class JointDos:
         solver = run_phonon_solver_rust if self._lang == "Rust" else run_phonon_solver_c
         solver(
             self._dm,
-            self._frequencies,
-            self._eigenvectors,
-            self._phonon_done,
+            self._phonons.frequencies,
+            self._phonons.eigenvectors,
+            self._phonons.phonon_done,
             _grid_points,
             self._bz_grid.addresses,
             self._bz_grid.QDinv,
@@ -345,6 +345,7 @@ class JointDos:
             self._nac_q_direction,
             self._lapack_zheev_uplo,
             exclude_gamma_acoustic=self._exclude_gamma_acoustic,
+            degenerate_ids=self._phonons.degenerate_ids,
         )
 
     def run_phonon_solver_at_gamma(self, is_nac: bool = False) -> None:
@@ -361,8 +362,8 @@ class JointDos:
             otherwise without NAC. Default is False.
 
         """
-        assert self._phonon_done is not None
-        self._phonon_done[self._bz_grid.gp_Gamma] = 0
+        assert self._phonons is not None
+        self._phonons.phonon_done[self._bz_grid.gp_Gamma] = 0
         if is_nac:
             self.run_phonon_solver(np.array([self._bz_grid.gp_Gamma], dtype="int64"))
         else:
@@ -452,6 +453,7 @@ class JointDos:
         temperature_thz = (
             self._temperature * get_physical_units().KB / get_physical_units().THzToEv
         )
+        assert self._phonons is not None
         jdos_elem = np.zeros(1, dtype="double")
         if lang == "Rust":
             from phono3py.phonon3.imag_self_energy import (
@@ -464,7 +466,7 @@ class JointDos:
                     self._ones_pp_strength,
                     self._triplets_at_q,
                     self._weights_at_q,
-                    self._frequencies,
+                    self._phonons.frequencies,
                     temperature_thz,
                     g,
                     self._g_zero,
@@ -481,7 +483,7 @@ class JointDos:
                     self._ones_pp_strength,
                     self._triplets_at_q,
                     self._weights_at_q,
-                    self._frequencies,
+                    self._phonons.frequencies,
                     temperature_thz,
                     g,
                     self._g_zero,
@@ -492,10 +494,10 @@ class JointDos:
 
     def _run_occupation(self) -> None:
         assert self._temperature is not None
-        assert self._frequencies is not None
+        assert self._phonons is not None
         assert self._triplets_at_q is not None
         t = self._temperature
-        freqs = self._frequencies[self._triplets_at_q[:, 1:]]
+        freqs = self._phonons.frequencies[self._triplets_at_q[:, 1:]]
         self._occupations = np.where(
             freqs > self._cutoff_frequency, bose_einstein(freqs, t), -1
         )
@@ -544,13 +546,6 @@ class JointDos:
             )
 
     def _allocate_phonons(self) -> None:
-        num_grid = len(self._bz_grid.addresses)
-        num_band = self._num_band
-        self._phonon_done = np.zeros(num_grid, dtype="byte")  # type: ignore[call-overload]
-        self._frequencies = np.zeros(  # type: ignore[call-overload]
-            (num_grid, num_band), dtype="double", order="C"
-        )
-        complex_dtype = "c%d" % (np.dtype("double").itemsize * 2)
-        self._eigenvectors = np.zeros(  # type: ignore[call-overload]
-            (num_grid, num_band, num_band), dtype=complex_dtype, order="C"
+        self._phonons = PhononData.allocate(
+            len(self._bz_grid.addresses), self._num_band
         )

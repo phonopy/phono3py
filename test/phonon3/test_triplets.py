@@ -1886,7 +1886,7 @@ def test_get_triplets_integration_weights_sigma(
 ):
     """Test get_triplets_integration_weights with Gaussian smearing."""
     itr = _setup_interaction(si_pbesol, [4, 4, 4], grid_point=1)
-    frequencies = itr.get_phonons()[0]
+    frequencies = itr.phonons.frequencies
     assert frequencies is not None
     num_band = frequencies.shape[1]
     triplets = itr.get_triplets_at_q()[0]
@@ -1933,7 +1933,7 @@ def test_get_triplets_integration_weights_tetrahedron(
     if lang == "C":
         pytest.importorskip("phonopy._phonopy")
     itr = _setup_interaction(si_pbesol, [4, 4, 4], grid_point=1)
-    frequencies = itr.get_phonons()[0]
+    frequencies = itr.phonons.frequencies
     assert frequencies is not None
     num_band = frequencies.shape[1]
     triplets = itr.get_triplets_at_q()[0]
@@ -1996,7 +1996,7 @@ def test_get_triplets_integration_weights_little_group(
         symmetrize_tetrahedra=symmetrize_tetrahedra,
     )
     bz_grid = itr.bz_grid
-    frequencies = itr.get_phonons()[0]
+    frequencies = itr.phonons.frequencies
     assert frequencies is not None
     g, _ = get_triplets_integration_weights(itr, frequencies[grid_point], sigma=None)
 
@@ -2065,7 +2065,7 @@ def test_get_triplets_integration_weights_average_degenerate(si_pbesol: Phono3py
 
     """
     itr = _setup_interaction(si_pbesol, [4, 4, 4], 1)
-    frequencies = itr.get_phonons()[0]
+    frequencies = itr.phonons.frequencies
     triplets = itr.get_triplets_at_q()[0]
     assert frequencies is not None
     assert triplets is not None

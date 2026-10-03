@@ -70,6 +70,7 @@ def _build_isotope_solver(
         cutoff_frequency=kappa_settings.cutoff_frequency,
         lapack_zheev_uplo=pp.lapack_zheev_uplo,
         symmetrize_tetrahedra=pp.symmetrize_tetrahedra,
+        average_degenerate_weights=pp.average_degenerate_weights,
         exclude_gamma_acoustic=pp.exclude_gamma_acoustic,
         lang=lang,
     )
@@ -83,13 +84,8 @@ def _prepare_isotope_phonons(
     """Set phonon data on the isotope solver's Isotope instance."""
     if isotope_solver is None:
         return
-    frequencies, eigenvectors, phonon_done = pp.get_phonons()
-    isotope_solver.isotope.set_phonons(
-        frequencies,
-        eigenvectors,
-        phonon_done,
-        dm=pp.dynamical_matrix,
-    )
+    assert pp.phonons is not None
+    isotope_solver.isotope.set_phonons(pp.phonons, dm=pp.dynamical_matrix)
 
 
 def _show_log_header(
@@ -183,7 +179,8 @@ class ConductivityCalculatorBase(abc.ABC):
         self._velocity_solver = velocity_solver
         self._cv_solver = cv_solver
         self._kappa_settings = kappa_settings
-        self._frequencies: NDArray[np.double] = pp.get_phonons()[0]
+        assert pp.phonons is not None
+        self._frequencies: NDArray[np.double] = pp.phonons.frequencies
         self._sigma_cutoff_width = sigma_cutoff_width
         self._log_level = log_level
         self._grid_point_count = 0
