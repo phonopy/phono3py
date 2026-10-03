@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- Phono3py requires phonopy 4.8.0 or later, which provides
+  `get_degenerate_ids`.
 - {ref}`--average-degenerate-weights <average_degenerate_weights_option>` now
   also applies to the isotope scattering with the tetrahedron method. The
   weights are averaged over the degenerate modes at $\mathbf{q}'$ and at the
