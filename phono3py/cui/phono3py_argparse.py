@@ -866,6 +866,37 @@ def _add_run_options(parser: argparse.ArgumentParser) -> None:
         help="Symmetrize fc3 in reciprocal space by index exchange",
     )
     parser.add_argument(
+        "--exclude-gamma-acoustic",
+        dest="exclude_gamma_acoustic",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help=(
+            "Set the frequencies of the three acoustic modes at Gamma to zero "
+            "(default: off)"
+        ),
+    )
+    parser.add_argument(
+        "--symmetrize-tetrahedra",
+        dest="symmetrize_tetrahedra",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help=(
+            "Average the tetrahedron weights over the point group, so that "
+            "symmetrically equivalent q-points get equal weights (default: off)"
+        ),
+    )
+    parser.add_argument(
+        "--average-degenerate-weights",
+        dest="average_degenerate_weights",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help=(
+            "Average the tetrahedron weights over degenerate bands, so that "
+            "the results do not depend on the choice of degenerate "
+            "eigenvectors (default: off)"
+        ),
+    )
+    parser.add_argument(
         "--thm",
         "--tetrahedron-method",
         dest="is_tetrahedron_method",
@@ -1110,7 +1141,8 @@ def get_run_parser() -> tuple[argparse.ArgumentParser, list[str]]:
         description=(
             "phono3py: phonon and thermal-conductivity calculation from a "
             "phono3py.yaml-like file."
-        )
+        ),
+        formatter_class=_SortedHelpFormatter,
     )
     _add_shared_options(parser)
     _add_run_options(parser)
@@ -1143,11 +1175,13 @@ class Phono3pyMockArgs:
 
     """
 
+    average_degenerate_weights: bool | None = None
     cell_filename: str | os.PathLike | None = None
     conf_filename: str | os.PathLike | None = None
     create_forces_fc2: Sequence[str | os.PathLike] | None = None
     create_forces_fc3: Sequence[str | os.PathLike] | None = None
     create_forces_fc3_file: str | os.PathLike | None = None
+    exclude_gamma_acoustic: bool | None = None
     fc_calculator: str | None = None
     fc_calculator_options: str | None = None
     fc_symmetry: bool | None = None
@@ -1177,6 +1211,7 @@ class Phono3pyMockArgs:
     save_params: bool | None = None
     show_num_triplets: bool | None = None
     supercell_dimension: Sequence[str] | None = None
+    symmetrize_tetrahedra: bool | None = None
     temperatures: Sequence[str] | None = None
     transport_type: str | None = None
     use_pypolymlp: bool | None = None

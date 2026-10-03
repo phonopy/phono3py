@@ -124,7 +124,7 @@ def test_write_gamma_passes_extra_grid_point_output(monkeypatch):
 
     interaction = SimpleNamespace(
         primitive=SimpleNamespace(volume=1.0),
-        get_phonons=lambda: (np.ones((20, 3), dtype="double"), None, None),
+        phonons=SimpleNamespace(frequencies=np.ones((20, 3), dtype="double")),
     )
     monkeypatch.setattr("phono3py.conductivity.output.all_bands_exist", lambda _: True)
 
@@ -171,7 +171,7 @@ def test_write_gamma_no_extra_grid_point_output(monkeypatch):
 
     interaction = SimpleNamespace(
         primitive=SimpleNamespace(volume=1.0),
-        get_phonons=lambda: (np.ones((20, 3), dtype="double"), None, None),
+        phonons=SimpleNamespace(frequencies=np.ones((20, 3), dtype="double")),
     )
 
     br = SimpleNamespace(
@@ -219,7 +219,7 @@ def test_write_gamma_band_resolved_slices_extra_data(monkeypatch):
 
     interaction = SimpleNamespace(
         primitive=SimpleNamespace(volume=1.0),
-        get_phonons=lambda: (np.ones((20, 6), dtype="double"), None, None),
+        phonons=SimpleNamespace(frequencies=np.ones((20, 6), dtype="double")),
         band_indices=np.array([1, 3], dtype="int64"),
     )
 

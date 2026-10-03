@@ -2,12 +2,52 @@
 
 # Change Log
 
-## Unreleased (v4.5.0)
+## Oct-3-2026: Version 4.8.0
+
+- Phono3py requires phonopy 4.8.0 or later.
+- New option {ref}`--average-degenerate-weights
+  <average_degenerate_weights_option>` (`AVERAGE_DEGENERATE_WEIGHTS`). With it,
+  the integration weights of the tetrahedron method are averaged over the
+  degenerate modes at $\mathbf{q}'$ and at $\mathbf{q}''$, so that the results
+  do not depend on the choice of the eigenvectors in the degenerate subspaces.
+  It also applies to the isotope scattering, where the weights are averaged
+  over the degenerate modes at $\mathbf{q}'$ and at the phonon mode of
+  interest, and the scattering rates are averaged over the degenerate modes of
+  the latter. In the API, it is the `average_degenerate_weights` parameter of
+  `Phono3py.init_phph_interaction` and `Phono3pyIsotope`. The default is off,
+  but the option is recommended for new calculations. It will be on by default
+  in v5.0, see {ref}`migration_v5`.
+
+## Sep-27-2026: Version 4.7.0
+
+- Version 4.6 is skipped so that the minor version matches that of phonopy.
+  Phono3py requires phonopy 4.7.0 or later.
+- In the tetrahedron method, when a sampling frequency was exactly equal to the
+  frequency at a vertex of a tetrahedron, the tetrahedron gave zero weight. It
+  now gives the weight that the frequencies close to the vertex frequency give.
+  This mainly changes isotope scattering, whose sampling frequencies are the
+  phonon frequencies at the grid point itself. For the usual sampling mesh
+  densities, the thermal conductivity changes only slightly. The fix is in
+  phonors.
+- New option {ref}`--symmetrize-tetrahedra <symmetrize_tetrahedra_option>`
+  (`SYMMETRIZE_TETRAHEDRA`). With it, the integration weights of the
+  tetrahedron method are averaged over the 24 tetrahedra rotated by all the
+  point-group operations, so that symmetrically equivalent q-points get equal
+  weights. In the API, it is the `symmetrize_tetrahedra` parameter of
+  `Phono3py.init_phph_interaction`, `Phono3pyJointDos` and `Phono3pyIsotope`.
+  The default is off.
+- New option {ref}`--exclude-gamma-acoustic <exclude_gamma_acoustic_option>`
+  (`EXCLUDE_GAMMA_ACOUSTIC`), which sets the frequencies of the three acoustic
+  modes at the Gamma point to zero. In the API, it is the
+  `exclude_gamma_acoustic` parameter of `Phono3py.init_phph_interaction`,
+  `Phono3pyJointDos` and `Phono3pyIsotope`. The default is off.
+
+## Sep-10-2026: Version 4.5.0
 
 - Supercell file names keep a uniform number of digits when the number of
-  displacements exceeds five digits, e.g. `POSCAR-000001`, ...,
-  `POSCAR-100000`. This requires phonopy with the same change. Names are
-  unchanged for up to 99999 displacements.
+  displacements exceeds five digits, e.g. `POSCAR-000001`, ..., `POSCAR-100000`.
+  Names are unchanged for up to 99999 displacements.
+- `phono3py.load` accepts a file-pointer-like object as `phono3py_yaml`.
 
 ## Jul-18-2026: Version 4.4.0
 

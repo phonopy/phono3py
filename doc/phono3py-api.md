@@ -293,7 +293,7 @@ unlike the `phono3py` command, `phono3py.load` does not switch to symfc by
 itself:
 
 ```python
-In [3]: ph3 = phono3py.load("phono3py_params.yaml", fc_calculator="symfc", log_level=1)
+In[3]: ph3 = phono3py.load("phono3py_params.yaml", fc_calculator="symfc", log_level=1)
 ```
 
 When the displacement-force dataset is set after loading, e.g.,

@@ -7,9 +7,11 @@ from typing import Literal, Optional, Union
 
 import numpy as np
 import pytest
+from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.structure.cells import get_smallest_vectors
 
 from phono3py import Phono3py
+from phono3py.phonon.solver import zero_gamma_acoustic_frequencies
 from phono3py.phonon3.interaction import Interaction
 
 
@@ -121,12 +123,24 @@ def test_interaction_RTA_AlN(aln_lda: Phono3py):
     )
 
 
+def test_interaction_get_phonons_deprecated(si_pbesol: Phono3py):
+    """Test that get_phonons is deprecated and returns the phonons property."""
+    itr = _get_irt(si_pbesol, [7, 7, 7])
+    itr.set_grid_point(1)
+    with pytest.warns(DeprecationWarning, match="get_phonons"):
+        frequencies, eigenvectors, phonon_done = itr.get_phonons()
+    assert itr.phonons is not None
+    assert frequencies is itr.phonons.frequencies
+    assert eigenvectors is itr.phonons.eigenvectors
+    assert phonon_done is itr.phonons.phonon_done
+
+
 def test_interaction_nac_direction_phonon_NaCl(nacl_pbe: Phono3py):
     """Test interaction_strength of NaCl with nac_q_direction."""
     itr = _get_irt(nacl_pbe, [7, 7, 7], nac_params=nacl_pbe.nac_params)
     itr.nac_q_direction = [1, 0, 0]
     itr.set_grid_point(0)
-    frequencies, _, _ = itr.get_phonons()
+    frequencies = itr.phonons.frequencies
     np.testing.assert_allclose(
         frequencies[0], [0, 0, 0, 4.59488262, 4.59488262, 7.41183870], rtol=0, atol=1e-6
     )
@@ -158,7 +172,7 @@ def test_interaction_nac_direction_phonon_NaCl_second_no_error(nacl_pbe: Phono3p
     itr.set_grid_point(0)
     itr.nac_q_direction = None
     itr.set_grid_point(1)
-    frequencies, _, _ = itr.get_phonons()
+    frequencies = itr.phonons.frequencies
     np.testing.assert_allclose(
         frequencies[0], [0, 0, 0, 4.59488262, 4.59488262, 4.59488262], rtol=0, atol=1e-6
     )
@@ -182,12 +196,12 @@ def test_interaction_run_phonon_solver_at_gamma_NaCl(nacl_pbe: Phono3py):
     """
     itr = _get_irt(nacl_pbe, [7, 7, 7], nac_params=nacl_pbe.nac_params)
     itr.nac_q_direction = [1, 0, 0]
-    frequencies, _, _ = itr.get_phonons()
+    frequencies = itr.phonons.frequencies
     np.testing.assert_allclose(
         frequencies[0], [0, 0, 0, 4.59488262, 4.59488262, 4.59488262], rtol=0, atol=1e-6
     )
     itr.set_grid_point(0)
-    frequencies, _, _ = itr.get_phonons()
+    frequencies = itr.phonons.frequencies
     np.testing.assert_allclose(
         frequencies[0], [0, 0, 0, 4.59488262, 4.59488262, 7.41183870], rtol=0, atol=1e-6
     )
@@ -201,6 +215,39 @@ def test_interaction_run_phonon_solver_at_gamma_NaCl(nacl_pbe: Phono3py):
     )
 
 
+def test_zero_gamma_acoustic_frequencies():
+    """The three smallest |nu| at Gamma are set to zero, not the most negative."""
+    frequencies = np.array([[2e-7, -3.0, -1e-7, 3e-7, 5.0], [1e-7, 1.0, 2.0, 3.0, 4.0]])
+    phonon_done = np.array([1, 1], dtype="byte")
+    zero_gamma_acoustic_frequencies(frequencies, phonon_done, 0)
+    np.testing.assert_array_equal(
+        frequencies, [[0, -3.0, 0, 0, 5.0], [1e-7, 1.0, 2.0, 3.0, 4.0]]
+    )
+
+
+def test_interaction_exclude_gamma_acoustic_NaCl(nacl_pbe: Phono3py):
+    """Test that the acoustic frequencies at Gamma are exactly zero.
+
+    Phonons at Gamma are solved at init_dynamical_matrix(), again with NAC at
+    set_grid_point(0), and restored by run_phonon_solver_at_gamma(). The
+    acoustic frequencies are zero after each of them.
+
+    """
+    itr = _get_irt(
+        nacl_pbe, [7, 7, 7], nac_params=nacl_pbe.nac_params, exclude_gamma_acoustic=True
+    )
+    itr.nac_q_direction = [1, 0, 0]
+    frequencies = itr.phonons.frequencies
+    np.testing.assert_array_equal(frequencies[0, :3], 0)
+    itr.set_grid_point(0)
+    np.testing.assert_array_equal(frequencies[0, :3], 0)
+    np.testing.assert_allclose(
+        frequencies[0, 3:], [4.59488262, 4.59488262, 7.41183870], rtol=0, atol=1e-6
+    )
+    itr.run_phonon_solver_at_gamma()
+    np.testing.assert_array_equal(frequencies[0, :3], 0)
+
+
 def test_phonon_solver_expand_RTA_si(si_pbesol: Phono3py):
     """Test phonon solver with eigenvector rotation of Si.
 
@@ -208,12 +255,34 @@ def test_phonon_solver_expand_RTA_si(si_pbesol: Phono3py):
 
     """
     itr = _get_irt(si_pbesol, [4, 4, 4])
-    freqs, _, phonon_done = itr.get_phonons()
+    freqs = itr.phonons.frequencies
+    phonon_done = itr.phonons.phonon_done
     assert (phonon_done == 1).all()
     itr = _get_irt(si_pbesol, [4, 4, 4], solve_dynamical_matrices=False)
     itr.run_phonon_solver_with_eigvec_rotation()
-    freqs_expanded, _, _ = itr.get_phonons()
+    freqs_expanded = itr.phonons.frequencies
     np.testing.assert_allclose(freqs, freqs_expanded, rtol=0, atol=1e-6)
+
+
+def test_degenerate_ids_si(si_pbesol: Phono3py):
+    """Test that degenerate_ids gives the sets of phonopy's degenerate_sets.
+
+    The sets are checked at every BZ-grid point after the phonons are solved
+    over the grid, and again after they are solved with eigenvector rotation.
+
+    """
+    for solve_by_rotation in (False, True):
+        itr = _get_irt(si_pbesol, [6, 6, 6], solve_dynamical_matrices=False)
+        itr.run_phonon_solver(solve_by_rotation=solve_by_rotation)
+        freqs = itr.phonons.frequencies
+        assert freqs is not None
+        assert itr.phonons.degenerate_ids is not None
+        num_degenerate = 0
+        for f, ids in zip(freqs, itr.phonons.degenerate_ids, strict=True):
+            sets = [np.flatnonzero(ids == i).tolist() for i in np.unique(ids)]
+            assert sets == degenerate_sets(f)
+            num_degenerate += len(sets) < len(f)
+        assert num_degenerate > 0
 
 
 def test_get_all_shortest(aln_lda: Phono3py):
@@ -259,6 +328,7 @@ def _get_irt(
     solve_dynamical_matrices: bool = True,
     make_r0_average: bool = False,
     lang: Literal["C", "Python", "Rust"] = "C",
+    exclude_gamma_acoustic: bool = False,
 ):
     ph3.mesh_numbers = mesh
     assert ph3.grid is not None
@@ -269,6 +339,7 @@ def _get_irt(
         fc3=ph3.fc3,
         make_r0_average=make_r0_average,
         cutoff_frequency=1e-4,
+        exclude_gamma_acoustic=exclude_gamma_acoustic,
         lang=lang,
     )
     if nac_params is None:

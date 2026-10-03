@@ -60,7 +60,8 @@ def _run_rust(itr: Interaction) -> np.ndarray:
         order="C",
     )
     g_zero = np.zeros(out.shape, dtype="byte", order="C")
-    frequencies, eigenvectors, _ = itr.get_phonons()
+    frequencies = itr.phonons.frequencies
+    eigenvectors = itr.phonons.eigenvectors
     assert frequencies is not None and eigenvectors is not None
     svecs, multi = itr.primitive.get_smallest_vectors()
     run_interaction_rust(
@@ -130,8 +131,8 @@ def test_phonon_solver_rust_vs_c(si_pbesol: Phono3py):
 
     itr_c = _build("C")
     itr_rust = _build("Rust")
-    freq_c, _, _ = itr_c.get_phonons()
-    freq_rust, _, _ = itr_rust.get_phonons()
+    freq_c = itr_c.phonons.frequencies
+    freq_rust = itr_rust.phonons.frequencies
     assert freq_c is not None and freq_rust is not None
 
     # Eigenvectors are not compared because degenerate eigenspaces can mix

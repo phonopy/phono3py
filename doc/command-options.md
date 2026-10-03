@@ -619,6 +619,98 @@ This is the default option. Therefore it is not necessary to specify this unless
 both results by tetrahedron method and smearing method in one time execution are
 expected.
 
+(symmetrize_tetrahedra_option)=
+
+### `--symmetrize-tetrahedra` (`SYMMETRIZE_TETRAHEDRA = .TRUE.`)
+
+The tetrahedron method divides the space around each grid point into 24
+tetrahedra. The tetrahedra are cut along one of the four main diagonals of the
+grid, and the same diagonal is used at every grid point.
+
+Take a grid point $\mathbf{q}$ and a point-group operation $R$, which maps
+$\mathbf{q}$ to the symmetrically equivalent grid point $R\mathbf{q}$. Rotating
+the 24 tetrahedra around $\mathbf{q}$ by $R$ gives 24 tetrahedra around
+$R\mathbf{q}$, and they are cut along the rotated diagonal. The 24 tetrahedra
+used around $R\mathbf{q}$ in the calculation are cut along the fixed diagonal,
+which is in general a different one. The two sets of tetrahedra around
+$R\mathbf{q}$ are therefore different, and the integration weights at
+$\mathbf{q}$ and $R\mathbf{q}$ can differ.
+
+With this option, the 24 tetrahedra around each grid point are rotated by each
+point-group operation. The integration weights are calculated with each of the
+rotated sets of 24 tetrahedra, and their average is used. The averaged
+integration weights at $\mathbf{q}$ and $R\mathbf{q}$ are equal. The number of
+tetrahedra in the integration is multiplied by the number of different sets of
+24 tetrahedra.
+
+The average is used for the imaginary part of the self energy, the thermal
+conductivity, the joint density of states and the isotope scattering. The
+option is off by default, and `--no-symmetrize-tetrahedra` turns it off
+explicitly. The option cannot be combined with `--legacy-backend`, which
+selects the C implementation.
+
+(exclude_gamma_acoustic_option)=
+
+### `--exclude-gamma-acoustic` (`EXCLUDE_GAMMA_ACOUSTIC = .TRUE.`)
+
+The frequencies of the three acoustic modes at the Gamma point are zero in
+theory. In a calculation, they have small nonzero values from rounding, and
+these values depend on the linear algebra library. With this option, the three
+frequencies at the Gamma point with the smallest absolute values are set to
+zero after the phonons are solved.
+
+The option is off by default, and `--no-exclude-gamma-acoustic` turns it off
+explicitly.
+
+(average_degenerate_weights_option)=
+
+### `--average-degenerate-weights` (`AVERAGE_DEGENERATE_WEIGHTS = .TRUE.`)
+
+At some q-points, two or three phonon modes have the same frequency. These
+modes are degenerate. Any orthonormal combination of their eigenvectors is also
+a set of eigenvectors, and the combination returned by the eigenvalue solver
+depends on the linear algebra library.
+
+The imaginary part of the self energy of a phonon mode is a sum over pairs of
+modes at $\mathbf{q}'$ and $\mathbf{q}''$. Each pair contributes its ph-ph
+interaction strength multiplied by an integration weight. When the degenerate
+modes at $\mathbf{q}'$ have the same integration weight, their summed
+contribution does not depend on the choice of eigenvectors.
+
+The tetrahedron method computes the integration weight of a mode from the
+frequencies of the same band index at the neighbouring grid points. At the
+neighbouring grid points the modes are in general not degenerate, so the
+degenerate modes at $\mathbf{q}'$ get different integration weights. The
+imaginary part of the self energy then depends on the choice of eigenvectors at
+$\mathbf{q}'$ and $\mathbf{q}''$, and so on the linear algebra library.
+
+With this option, the integration weights are averaged over each set of
+degenerate modes at $\mathbf{q}'$ and over each set at $\mathbf{q}''$. The
+imaginary part of the self energy then does not depend on the choice of
+eigenvectors at $\mathbf{q}'$ and $\mathbf{q}''$.
+
+The isotope scattering rate is a sum over the modes at $\mathbf{q}'$ of the
+overlap of the eigenvectors multiplied by an integration weight, and has the
+same dependence. With this option, the integration weights are averaged over
+each set of degenerate modes at $\mathbf{q}'$ and over each set of degenerate
+modes at the phonon mode of interest. The isotope scattering rates of the
+degenerate modes at the latter are averaged as well.
+
+The averaged weights are used for the imaginary part of the self energy, the
+isotope scattering and the thermal conductivity. The joint density of states
+does not use this option. With `--sigma`, the option has no effect,
+because the Gaussian function gives degenerate modes the same weight.
+
+For the isotope scattering, use this option together with
+{ref}`--exclude-gamma-acoustic <exclude_gamma_acoustic_option>`. Without it,
+the three acoustic modes at the Gamma point have small nonzero frequencies, and
+the modes with frequencies below the cutoff frequency are left out. Which modes
+are left out depends on the eigenvectors.
+
+The option is recommended for new calculations. It is off by default, and
+`--no-average-degenerate-weights` turns it off explicitly. It will be on by
+default in v5.0, see {ref}`migration_v5`.
+
 (sigma_option)=
 
 ### `--sigma` (`SIGMA`)

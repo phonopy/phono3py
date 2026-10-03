@@ -42,15 +42,19 @@ import numpy as np
 from numpy.typing import NDArray
 from phonopy.phonon.grid import (
     BZGrid,
-    get_grid_point_from_address_py,
+    get_neighboring_grid_points,
     get_reduced_bases_and_tmat_inv,
 )
 from phonopy.phonon.tetrahedron_method import (
     TetrahedronMethod,
-    get_tetrahedra_relative_grid_address,
+    get_tetrahedra_relative_gr_grid_address,
 )
 
 from phono3py._lang import resolve_lang
+from phono3py.phonon.degeneracy import (
+    average_over_degenerate_sets,
+    minimum_over_degenerate_sets,
+)
 from phono3py.phonon.func import gaussian
 
 if TYPE_CHECKING:
@@ -177,17 +181,67 @@ def get_triplets_integration_weights(
     sigma: float | None,
     sigma_cutoff: float | None = None,
     is_collision_matrix: bool = False,
+    average_degenerate_weights: bool = False,
     lang: Literal["C", "Python", "Rust"] = "Rust",
 ) -> tuple[NDArray[np.double], NDArray[np.byte] | None]:
     """Calculate triplets integration weights.
+
+    A triplet is a set of three q-points (q, q', q''). For band j at q' and
+    band k at q'', the weights are the following delta functions evaluated
+    at each frequency point omega:
+
+        g[0] = delta(omega - omega'_j - omega''_k)
+        g[1] = delta(omega + omega'_j - omega''_k)
+               - delta(omega - omega'_j + omega''_k)
+        g[2] = delta(omega - omega'_j - omega''_k)
+               + delta(omega + omega'_j - omega''_k)
+               + delta(omega - omega'_j + omega''_k)
+
+    g[2] is computed only for the collision matrix. With sigma=None the delta
+    functions are integrated by the linear tetrahedron method. With a value
+    of sigma the delta functions are replaced by Gaussians of that width.
+
+    Parameters
+    ----------
+    interaction : Interaction or JointDos
+        The triplets are taken from interaction.get_triplets_at_q(). The
+        phonon frequencies are taken from interaction.phonons. The
+        phonons at the grid points of the triplets have to be solved before
+        this function is called.
+    frequency_points : ndarray
+        The frequencies omega at which the weights are computed.
+        shape=(freq_points,), dtype='double'
+    sigma : float or None
+        The width of the Gaussian. None selects the tetrahedron method.
+    sigma_cutoff : float or None, optional, default=None
+        This parameter is used only with sigma. An element is marked in
+        g_zero when all the arguments of its delta functions are farther from
+        zero than sigma_cutoff * sigma. The weights of a marked element are
+        set to zero. With None no element is marked.
+    is_collision_matrix : bool, optional, default=False
+        When True, g[2] is computed in addition to g[0] and g[1].
+    average_degenerate_weights : bool, optional, default=False
+        This parameter is used only with the tetrahedron method. When True,
+        the weights of each triplet are averaged over each set of degenerate
+        bands at q' and over each set of degenerate bands at q''. The
+        tetrahedron weights of a band are computed from the frequencies of
+        that band at the neighbouring grid points, where the degeneracy is
+        lifted. The weights are therefore different among degenerate bands.
+        Without the average, the imaginary part of the self-energy depends on
+        the choice of eigenvectors in the degenerate subspaces at q' and q''.
+    lang : {"C", "Python", "Rust"}, optional, default="Rust"
+        The implementation used to compute the weights. When "C" is given and
+        the C extension is not installed, "Rust" is used.
 
     Returns
     -------
     g : ndarray
         Triplets integration weights.
         shape=(2 or 3, triplets, freq_points, bands, bands), dtype='double'.
-    g_zero : ndarray
-        Location of strictly zero elements.
+    g_zero : ndarray or None
+        An element is 1 when all the weights of that element are zero, and 0
+        otherwise. The interaction strengths of the elements with 1 are not
+        computed. With lang="Python" None is returned.
         shape=(triplets, freq_points, bands, bands), dtype='byte'
 
     """
@@ -196,7 +250,8 @@ def get_triplets_integration_weights(
 
     triplets = interaction.get_triplets_at_q()[0]
     assert triplets is not None
-    frequencies = interaction.get_phonons()[0]
+    assert interaction.phonons is not None
+    frequencies = interaction.phonons.frequencies
     assert frequencies is not None
     num_band = frequencies.shape[1]
     g_zero = None
@@ -269,8 +324,65 @@ def get_triplets_integration_weights(
                 )
         else:
             _set_triplets_integration_weights_py(g, interaction, frequency_points)
+        if average_degenerate_weights:
+            phonons = interaction.phonons
+            if phonons is None:
+                raise RuntimeError(
+                    "average_degenerate_weights needs phonons of Interaction."
+                )
+            _average_weights_over_degenerate_sets(
+                g, g_zero, triplets, phonons.degenerate_ids
+            )
 
     return g, g_zero
+
+
+def _average_weights_over_degenerate_sets(
+    g: NDArray[np.double],
+    g_zero: NDArray[np.byte] | None,
+    triplets: NDArray[np.int64],
+    degenerate_ids: NDArray[np.int64],
+) -> None:
+    """Average integration weights over the degenerate blocks in place.
+
+    A degenerate block is a degenerate set of bands at q' times a degenerate
+    set at q'', one of them possibly a single band. All weights of a block
+    are replaced by their mean.
+
+    An element with zero weights can be in the same degenerate block as an
+    element with nonzero weights. After the average, both elements have the
+    nonzero mean. g_zero is therefore reduced over each block by AND: an
+    element stays marked only when every element of its block was marked,
+    that is, when the whole block has zero weights. The interaction
+    strengths of the other elements are computed. Marks are only removed
+    and never added.
+
+    Parameters
+    ----------
+    g : ndarray
+        Triplets integration weights.
+        shape=(2 or 3, triplets, freq_points, bands, bands), dtype='double'.
+    g_zero : ndarray or None
+        Location of strictly zero elements.
+        shape=(triplets, freq_points, bands, bands), dtype='byte'
+    triplets : ndarray
+        Grid points of triplets. shape=(triplets, 3), dtype='int64'
+    degenerate_ids : ndarray
+        Smallest band index in the degenerate set of each band, see
+        PhononData.degenerate_ids. shape=(grid_points, bands), dtype='int64'
+
+    """
+    for i, (_, gp1, gp2) in enumerate(triplets):
+        ids1 = degenerate_ids[gp1]
+        ids2 = degenerate_ids[gp2]
+        # Shape of g[:, i]: (2 or 3, freq_points, bands, bands).
+        g[:, i] = average_over_degenerate_sets(
+            average_over_degenerate_sets(g[:, i], ids1, 2), ids2, 3
+        )
+        if g_zero is not None:
+            g_zero[i] = minimum_over_degenerate_sets(
+                minimum_over_degenerate_sets(g_zero[i], ids1, 1), ids2, 2
+            )
 
 
 def _get_triplets_reciprocal_mesh_at_q(
@@ -438,14 +550,16 @@ def _set_triplets_integration_weights_c(
 ) -> None:
     import phono3py._phono3py as phono3c
 
-    tetrahedra = get_tetrahedra_relative_grid_address(pp.bz_grid.microzone_lattice)
+    if pp.symmetrize_tetrahedra:
+        raise RuntimeError("symmetrize_tetrahedra is not supported with lang='C'.")
     triplets_at_q = pp.get_triplets_at_q()[0]
-    frequencies = pp.get_phonons()[0]
+    assert pp.phonons is not None
+    frequencies = pp.phonons.frequencies
     phono3c.triplets_integration_weights(
         g,
         g_zero,
         frequency_points,  # f0
-        np.array(np.dot(tetrahedra, pp.bz_grid.P.T), dtype="int64", order="C"),
+        get_tetrahedra_relative_gr_grid_address(pp.bz_grid),
         pp.bz_grid.D_diag,
         triplets_at_q,
         frequencies,  # f1
@@ -465,14 +579,14 @@ def _set_triplets_integration_weights_rust(
 ) -> None:
     import phonors
 
-    tetrahedra = get_tetrahedra_relative_grid_address(pp.bz_grid.microzone_lattice)
     triplets_at_q = pp.get_triplets_at_q()[0]
-    frequencies = pp.get_phonons()[0]
+    assert pp.phonons is not None
+    frequencies = pp.phonons.frequencies
     phonors.triplets_integration_weights(
         g,
         g_zero,
         frequency_points,  # f0
-        np.array(np.dot(tetrahedra, pp.bz_grid.P.T), dtype="int64", order="C"),
+        get_tetrahedra_relative_gr_grid_address(pp.bz_grid, pp.symmetrize_tetrahedra),
         pp.bz_grid.D_diag,
         triplets_at_q,
         frequencies,  # f1
@@ -491,25 +605,27 @@ def _set_triplets_integration_weights_py(
 ) -> None:
     """Python version of _set_triplets_integration_weights_c.
 
-    Tetrahedron method engine is that implemented in phonopy written mainly in C.
+    The tetrahedron method is phonopy's pure-Python TetrahedronMethod.
 
     """
-    thm = TetrahedronMethod(pp.bz_grid.microzone_lattice)
+    relative_grid_address = get_tetrahedra_relative_gr_grid_address(
+        pp.bz_grid, pp.symmetrize_tetrahedra
+    )
+    thm = TetrahedronMethod(None, relative_grid_address=relative_grid_address)
     triplets_at_q = pp.get_triplets_at_q()[0]
     assert triplets_at_q is not None
     tetrahedra_vertices = _get_tetrahedra_vertices(
-        np.array(np.dot(thm.tetrahedra, pp.bz_grid.P.T), dtype="int64", order="C"),
-        triplets_at_q,
-        pp.bz_grid,
+        relative_grid_address, triplets_at_q, pp.bz_grid
     )
     pp.run_phonon_solver()
-    frequencies = pp.get_phonons()[0]
+    assert pp.phonons is not None
+    frequencies = pp.phonons.frequencies
     assert frequencies is not None
     num_band = frequencies.shape[1]
     for i, vertices in enumerate(tetrahedra_vertices):
         for j, k in list(np.ndindex((num_band, num_band))):
-            f1_v = frequencies[vertices[0], j]
-            f2_v = frequencies[vertices[1], k]
+            f1_v = np.maximum(frequencies[vertices[0], j], 0)
+            f2_v = np.maximum(frequencies[vertices[1], k], 0)
             thm.set_tetrahedra_omegas(f1_v + f2_v)
             thm.run(frequency_points)
             g0 = thm.get_integration_weight()
@@ -540,10 +656,10 @@ def _get_tetrahedra_vertices(
 
     """
     num_triplets = len(triplets_at_q)
-    vertices = np.zeros((num_triplets, 2, 24, 4), dtype="int64")
+    vertices = np.zeros((num_triplets, 2, len(relative_address), 4), dtype="int64")
     for i, tp in enumerate(triplets_at_q):
         for j, adrs_shift in enumerate((relative_address, -relative_address)):
-            adrs = bz_grid.addresses[tp[j + 1]] + adrs_shift
-            gps = get_grid_point_from_address_py(adrs, bz_grid.D_diag)
-            vertices[i, j] = bz_grid.grg2bzg[gps]
+            vertices[i, j] = get_neighboring_grid_points(
+                tp[j + 1], adrs_shift, bz_grid, lang="Python"
+            )
     return vertices

@@ -2,26 +2,27 @@
 
 import numpy as np
 import pytest
+from phonopy.phonon.degeneracy import get_degenerate_ids
 
 from phono3py import Phono3pyIsotope
-from phono3py.other.isotope import get_mass_variances
+from phono3py.other.isotope import Isotope, get_mass_variances
 
 si_pbesol_iso = [
     [
-        8.32325038e-07,
-        9.45389739e-07,
-        1.57942189e-05,
-        1.28121297e-03,
-        1.13842605e-03,
-        3.84915211e-04,
+        9.29165496e-07,
+        8.91095194e-07,
+        1.59076880e-05,
+        1.37564273e-03,
+        1.22769818e-03,
+        6.78849406e-04,
     ],
     [
-        2.89457649e-05,
-        1.57841863e-04,
-        3.97462227e-04,
-        1.03489892e-02,
-        4.45981554e-03,
-        2.67184355e-03,
+        3.02404246e-05,
+        1.58721060e-04,
+        3.99215630e-04,
+        1.03909232e-02,
+        4.58409106e-03,
+        2.89547273e-03,
     ],
 ]
 si_pbesol_iso_sigma = [
@@ -43,8 +44,8 @@ si_pbesol_iso_sigma = [
     ],
 ]
 si_pbesol_grg_iso = [
-    [0.000141, 0.000161, 0.000599, 0.001332, 0.017676, 0.012157],
-    [0.000227, 0.00039, 0.000187, 0.001136, 0.01043, 0.01381],
+    [0.000140, 0.000162, 0.000524, 0.001383, 0.017868, 0.015051],
+    [0.000228, 0.000379, 0.000203, 0.001178, 0.010589, 0.013985],
 ]
 si_pbesol_grg_iso_sigma = [
     [0.000129, 0.000154, 0.000677, 0.001306, 0.011859, 0.010465],
@@ -84,12 +85,11 @@ def test_get_mass_variances_no_args_raises():
         get_mass_variances()
 
 
-@pytest.mark.parametrize("lang", ["C", "Python"])
+@pytest.mark.parametrize("lang", ["C", "Rust"])
 def test_Phono3pyIsotope(si_pbesol, lang):
     """Phono3pyIsotope with tetrahedron method."""
-    # Tetrahedron isotope kernel is C-only (Python path uses the C
-    # scalar ``get_tetrahedra_integration_weight`` helper).
-    pytest.importorskip("phonopy._phonopy")
+    if lang == "C":
+        pytest.importorskip("phonopy._phonopy")
     si_pbesol.mesh_numbers = [21, 21, 21]
     iso = Phono3pyIsotope(
         si_pbesol.mesh_numbers,
@@ -108,7 +108,7 @@ def test_Phono3pyIsotope(si_pbesol, lang):
     np.testing.assert_allclose(si_pbesol_iso, iso.gamma[0], atol=3e-4)
 
 
-@pytest.mark.parametrize("lang", ["C", "Python"])
+@pytest.mark.parametrize("lang", ["C", "Python", "Rust"])
 def test_Phono3pyIsotope_with_sigma(si_pbesol, lang):
     """Phono3pyIsotope with smearing method."""
     si_pbesol.mesh_numbers = [21, 21, 21]
@@ -132,10 +132,11 @@ def test_Phono3pyIsotope_with_sigma(si_pbesol, lang):
     np.testing.assert_allclose(si_pbesol_iso_sigma, iso.gamma[0], atol=3e-4)
 
 
-@pytest.mark.parametrize("lang", ["C", "Python"])
+@pytest.mark.parametrize("lang", ["C", "Rust"])
 def test_Phono3pyIsotope_grg(si_pbesol_grg, lang):
     """Phono3pyIsotope with tetrahedron method and GR-grid."""
-    pytest.importorskip("phonopy._phonopy")
+    if lang == "C":
+        pytest.importorskip("phonopy._phonopy")
     ph3 = si_pbesol_grg
     iso = Phono3pyIsotope(
         80,
@@ -157,7 +158,7 @@ def test_Phono3pyIsotope_grg(si_pbesol_grg, lang):
     np.testing.assert_allclose(si_pbesol_grg_iso, iso.gamma[0], atol=3e-3)
 
 
-@pytest.mark.parametrize("lang", ["C", "Python"])
+@pytest.mark.parametrize("lang", ["C", "Python", "Rust"])
 def test_Phono3pyIsotope_grg_with_sigma(si_pbesol_grg, lang):
     """Phono3pyIsotope with smearing method and GR-grid."""
     ph3 = si_pbesol_grg
@@ -182,3 +183,212 @@ def test_Phono3pyIsotope_grg_with_sigma(si_pbesol_grg, lang):
         iso.grid.grid_matrix, [[-15, 15, 15], [15, -15, 15], [15, 15, -15]]
     )
     np.testing.assert_allclose(si_pbesol_grg_iso_sigma, iso.gamma[0], atol=3e-4)
+
+
+def test_Phono3pyIsotope_exclude_gamma_acoustic(nacl_pbe):
+    """Phono3pyIsotope sets the acoustic frequencies at Gamma to zero."""
+    iso = Phono3pyIsotope(
+        [7, 7, 7],
+        nacl_pbe.phonon_primitive,
+        symprec=nacl_pbe.symmetry.tolerance,
+        exclude_gamma_acoustic=True,
+    )
+    iso.init_dynamical_matrix(
+        nacl_pbe.fc2,
+        nacl_pbe.phonon_supercell,
+        nacl_pbe.phonon_primitive,
+        nac_params=nacl_pbe.nac_params,
+    )
+    iso.run([iso.grid.gp_Gamma, 1])
+    np.testing.assert_array_equal(iso.frequencies[0, :3], 0)
+    assert (iso.frequencies[0, 3:] > 1).all()
+
+
+def test_Phono3pyIsotope_symmetrize_tetrahedra(aln_lda):
+    """Phono3pyIsotope passes symmetrize_tetrahedra to Isotope."""
+    gammas = []
+    for symmetrize_tetrahedra in (False, True):
+        iso = Phono3pyIsotope(
+            [6, 6, 4],
+            aln_lda.phonon_primitive,
+            symprec=aln_lda.symmetry.tolerance,
+            symmetrize_tetrahedra=symmetrize_tetrahedra,
+        )
+        iso.init_dynamical_matrix(
+            aln_lda.fc2,
+            aln_lda.phonon_supercell,
+            aln_lda.phonon_primitive,
+            nac_params=aln_lda.nac_params,
+        )
+        iso.run([1])
+        gammas.append(iso.gamma[0])
+    assert abs(gammas[0] - gammas[1]).max() > 1e-6
+
+
+@pytest.mark.parametrize(
+    "ph3_name,mesh,use_grg,symmetrize_tetrahedra",
+    [
+        ("si_pbesol", [7, 7, 7], False, False),
+        ("si_pbesol_grg", 20, True, False),
+        ("aln_lda", [4, 4, 2], False, True),
+    ],
+)
+def test_Isotope_python_matches_rust(
+    request, ph3_name, mesh, use_grg, symmetrize_tetrahedra
+):
+    """The pure-Python tetrahedron path gives the gamma of the Rust path.
+
+    The Python path is the prototype of the Rust one, and it is slow, so it is
+    checked against Rust on a small mesh rather than against the references.
+
+    Both paths get the same phonons. The frequency points are the frequencies
+    at the grid point itself, which vertices of symmetrically equivalent points
+    share, so phonons solved separately, apart by 1e-7, move the weights.
+
+    """
+    ph3 = request.getfixturevalue(ph3_name)
+    isotopes = {}
+    for lang in ("Rust", "Python"):
+        iso = Isotope(
+            mesh,
+            ph3.phonon_primitive,
+            symprec=ph3.symmetry.tolerance,
+            use_grg=use_grg,
+            symmetrize_tetrahedra=symmetrize_tetrahedra,
+            lang=lang,
+        )
+        iso.init_dynamical_matrix(
+            ph3.fc2,
+            ph3.phonon_supercell,
+            ph3.phonon_primitive,
+            nac_params=ph3.nac_params,
+        )
+        isotopes[lang] = iso
+    for grid_point in (1, 10):
+        isotopes["Rust"].set_grid_point(grid_point)
+        isotopes["Rust"].run()
+        isotopes["Python"].set_phonons(isotopes["Rust"].phonons.copy())
+        isotopes["Python"].set_grid_point(grid_point)
+        isotopes["Python"].run()
+        np.testing.assert_allclose(
+            isotopes["Python"].gamma, isotopes["Rust"].gamma, rtol=1e-10, atol=1e-16
+        )
+
+
+def test_Isotope_get_phonons_and_set_phonons_deprecated(si_pbesol):
+    """get_phonons and set_phonons of arrays are deprecated but still work."""
+    iso = _run_isotope(si_pbesol, "Rust", False, 10)
+    with pytest.warns(DeprecationWarning, match="get_phonons"):
+        frequencies, eigenvectors, phonon_done = iso.get_phonons()
+    assert frequencies is iso.phonons.frequencies
+
+    iso_old = Isotope(
+        [6, 6, 6],
+        si_pbesol.phonon_primitive,
+        symprec=si_pbesol.symmetry.tolerance,
+        exclude_gamma_acoustic=True,
+    )
+    iso_old.init_dynamical_matrix(
+        si_pbesol.fc2,
+        si_pbesol.phonon_supercell,
+        si_pbesol.phonon_primitive,
+        nac_params=si_pbesol.nac_params,
+    )
+    with pytest.warns(DeprecationWarning, match="set_phonons"):
+        iso_old.set_phonons(frequencies.copy(), eigenvectors.copy(), phonon_done.copy())
+    iso_old.set_grid_point(10)
+    iso_old.run()
+    np.testing.assert_allclose(iso_old.gamma, iso.gamma, rtol=1e-10, atol=1e-16)
+    with pytest.raises(TypeError):
+        iso_old.set_phonons(frequencies)
+
+
+def _rotate_degenerate_eigenvectors(frequencies, eigenvectors, seed=0):
+    """Mix eigenvectors randomly within each degenerate set of bands."""
+    rng = np.random.default_rng(seed)
+    rotated = eigenvectors.copy()
+    for gp, freqs in enumerate(frequencies):
+        ids = get_degenerate_ids(freqs[None, :])[0]
+        for start in np.unique(ids):
+            bands = np.flatnonzero(ids == start)
+            n = len(bands)
+            if n == 1:
+                continue
+            q, _ = np.linalg.qr(rng.normal(size=(n, n)) + 1j * rng.normal(size=(n, n)))
+            rotated[gp][:, bands] = eigenvectors[gp][:, bands] @ q
+    return rotated
+
+
+def _run_isotope(ph3, lang, average_degenerate_weights, grid_point, phonons=None):
+    iso = Isotope(
+        [6, 6, 6],
+        ph3.phonon_primitive,
+        symprec=ph3.symmetry.tolerance,
+        average_degenerate_weights=average_degenerate_weights,
+        exclude_gamma_acoustic=True,
+        lang=lang,
+    )
+    iso.init_dynamical_matrix(
+        ph3.fc2,
+        ph3.phonon_supercell,
+        ph3.phonon_primitive,
+        nac_params=ph3.nac_params,
+    )
+    if phonons is not None:
+        iso.set_phonons(phonons.copy())
+    iso.set_grid_point(grid_point)
+    iso.run()
+    return iso
+
+
+@pytest.mark.parametrize("lang", ["Rust", "Python"])
+def test_Isotope_average_degenerate_weights(si_pbesol, lang):
+    """Averaged isotope gamma does not depend on degenerate eigenvectors."""
+    for grid_point in (1, 10, 0):
+        iso = _run_isotope(si_pbesol, "Rust", True, grid_point)
+        phonons = iso.phonons
+        assert phonons.phonon_done.all()
+        rotated = phonons.copy()
+        rotated.eigenvectors = _rotate_degenerate_eigenvectors(
+            phonons.frequencies, phonons.eigenvectors
+        )
+        iso_ave = _run_isotope(si_pbesol, lang, True, grid_point, rotated)
+        np.testing.assert_allclose(iso_ave.gamma, iso.gamma, rtol=1e-8, atol=1e-14)
+
+
+@pytest.mark.parametrize("grid_point", [0, 1, 10])
+@pytest.mark.parametrize("band_indices", [[1, 4], [3], [0, 1, 2]])
+def test_Isotope_average_degenerate_weights_band_indices(
+    si_pbesol, grid_point, band_indices
+):
+    """Band indices select the averaged gamma of all bands.
+
+    Depending on the grid point, band_indices include degenerate bands or not.
+
+    """
+    gammas = []
+    for bi in (None, band_indices):
+        iso = Isotope(
+            [6, 6, 6],
+            si_pbesol.phonon_primitive,
+            symprec=si_pbesol.symmetry.tolerance,
+            band_indices=bi,
+            average_degenerate_weights=True,
+            exclude_gamma_acoustic=True,
+        )
+        iso.init_dynamical_matrix(
+            si_pbesol.fc2,
+            si_pbesol.phonon_supercell,
+            si_pbesol.phonon_primitive,
+            nac_params=si_pbesol.nac_params,
+        )
+        iso.set_grid_point(grid_point)
+        iso.run()
+        gammas.append(iso.gamma)
+    np.testing.assert_allclose(gammas[1], gammas[0][band_indices], rtol=1e-10)
+
+
+def test_Isotope_average_degenerate_weights_changes_gamma(si_pbesol):
+    """Averaging changes gamma where degenerate bands have different weights."""
+    gamma = [_run_isotope(si_pbesol, "Rust", ave, 10).gamma for ave in (False, True)]
+    assert abs(gamma[0] - gamma[1]).max() > 1e-8

@@ -264,6 +264,7 @@ class ImagSelfEnergy:
             self._sigma,
             self._sigma_cutoff,
             is_collision_matrix=isinstance(self, CollisionMatrix),
+            average_degenerate_weights=self._pp.average_degenerate_weights,
         )
 
         if scattering_event_class == 1 or scattering_event_class == 2:
@@ -357,7 +358,9 @@ class ImagSelfEnergy:
             self._pp_strength = None
             self._triplets_at_q, self._weights_at_q = self._pp.get_triplets_at_q()[:2]
             self._grid_point = grid_point
-            self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
+            assert self._pp.phonons is not None
+            self._frequencies = self._pp.phonons.frequencies
+            self._eigenvectors = self._pp.phonons.eigenvectors
 
     def set_sigma(self, sigma: float | None, sigma_cutoff: float | None = None) -> None:
         """Set sigma value. None means tetrahedron method."""
@@ -979,7 +982,8 @@ def get_imag_self_energy(
 
     # Set phonon at Gamma without NAC for finding max_phonon_freq.
     interaction.run_phonon_solver_at_gamma()
-    max_phonon_freq = float(np.amax(interaction.get_phonons()[0]))  # type: ignore[arg-type]
+    assert interaction.phonons is not None
+    max_phonon_freq = float(np.amax(interaction.phonons.frequencies))  # type: ignore[arg-type]
     interaction.run_phonon_solver_at_gamma(is_nac=True)
 
     num_band0 = len(interaction.band_indices)
@@ -1041,7 +1045,7 @@ def get_imag_self_energy(
             print("Number of ir-triplets: %d / %d" % (len(weights), weights.sum()))
 
         ise.run_interaction()
-        frequencies = interaction.get_phonons()[0][gp]  # type: ignore[index]
+        frequencies = interaction.phonons.frequencies[gp]  # type: ignore[index]
 
         if log_level:
             qpoint = np.dot(bz_grid.QDinv, bz_grid.addresses[gp])
@@ -1091,7 +1095,8 @@ def _get_imag_self_energy_at_gp(
     log_level: int,
 ) -> None:
     num_band0 = len(interaction.band_indices)
-    frequencies = interaction.get_phonons()[0]
+    assert interaction.phonons is not None
+    frequencies = interaction.phonons.frequencies
     assert frequencies is not None
     mesh = interaction.mesh_numbers
     bz_grid = interaction.bz_grid

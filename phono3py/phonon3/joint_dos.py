@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import os
 import sys
+import warnings
 
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
@@ -50,7 +50,11 @@ from phonopy.structure.cells import Primitive, Supercell
 
 from phono3py._lang import log_dispatch, resolve_lang
 from phono3py.phonon.func import bose_einstein
-from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_rust
+from phono3py.phonon.solver import (
+    PhononData,
+    run_phonon_solver_c,
+    run_phonon_solver_rust,
+)
 from phono3py.phonon3.triplets import (
     get_nosym_triplets_at_q,
     get_triplets_at_q,
@@ -75,13 +79,67 @@ class JointDos:
         frequency_factor_to_THz: float | None = None,
         frequency_scale_factor: float | None = None,
         is_mesh_symmetry: bool = True,
-        symprec: float = 1e-5,
-        filename: str | os.PathLike | None = None,
         log_level: int = 0,
         lapack_zheev_uplo: Literal["L", "U"] = "L",
+        symmetrize_tetrahedra: bool = False,
+        exclude_gamma_acoustic: bool = False,
         lang: Literal["C", "Python", "Rust"] = "Rust",
     ) -> None:
-        """Init method."""
+        """Init method.
+
+        Parameters
+        ----------
+        primitive : Primitive
+            Primitive cell.
+        supercell : Supercell
+            Supercell of fc2.
+        bz_grid : BZGrid
+            Grid in reciprocal space.
+        fc2 : ndarray
+            Second-order force constants.
+            shape=(atoms in supercell, atoms in supercell, 3, 3) or
+            (atoms in primitive, atoms in supercell, 3, 3), dtype='double'
+        nac_params : dict, optional
+            Parameters of the non-analytical term correction.
+        nac_q_direction : array_like, optional
+            Direction of q from Gamma in fractional coordinates, used for the
+            non-analytical term correction at the Gamma point. shape=(3,)
+        sigma : float, optional
+            Width of the Gaussian smearing in THz. If None, the tetrahedron
+            method is used.
+        sigma_cutoff : float, optional
+            The Gaussian is cut off at this many sigmas. If None, not cut off.
+        cutoff_frequency : float, optional
+            Phonon modes with frequency below this value in THz are left out.
+            If None, 0.
+        frequency_factor_to_THz : float, optional
+            Factor that converts the phonon frequencies to THz. If None,
+            ``get_physical_units().DefaultToTHz``.
+        frequency_scale_factor : float, optional
+            Factor multiplied to all phonon frequencies. If None, not scaled.
+        is_mesh_symmetry : bool, optional, default=True
+            Sum over the triplets irreducible by the symmetry of the grid
+            point, weighted by their multiplicities, instead of all triplets.
+        log_level : int, optional, default=0
+            Verbosity of the standard output.
+        lapack_zheev_uplo : str, optional, default='L'
+            'L' or 'U' passed to the LAPACK zheev phonon solver.
+        symmetrize_tetrahedra : bool, optional, default=False
+            When True, the integration weights of the tetrahedron method are
+            averaged over the 24 tetrahedra rotated by all the point-group
+            operations. The 24 tetrahedra are cut along one main diagonal, so
+            the weights can differ between symmetrically equivalent q-points.
+            Averaging removes the difference. Not available with
+            ``lang='C'``.
+        exclude_gamma_acoustic : bool, optional, default=False
+            When True, the frequencies of the three modes at Gamma with the
+            smallest absolute values are set to zero after the phonons are
+            solved. The acoustic modes at Gamma are then zero on every
+            platform, instead of small nonzero values from rounding.
+        lang : str, optional, default='Rust'
+            Backend, 'C', 'Python' or 'Rust'.
+
+        """
         self._grid_point: int | None = None
         self._primitive = primitive
         self._supercell = supercell
@@ -103,10 +161,10 @@ class JointDos:
             self._frequency_factor_to_THz = frequency_factor_to_THz
         self._frequency_scale_factor = frequency_scale_factor
         self._is_mesh_symmetry = is_mesh_symmetry
-        self._symprec = symprec
-        self._filename = filename
         self._log_level = log_level
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
+        self._symmetrize_tetrahedra = symmetrize_tetrahedra
+        self._exclude_gamma_acoustic = exclude_gamma_acoustic
         if lang in ("C", "Rust"):
             lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
@@ -116,10 +174,8 @@ class JointDos:
         self._reciprocal_lattice = np.linalg.inv(self._primitive.cell)
 
         self._tetrahedron_method = None
-        self._phonon_done: NDArray[np.byte] | None = None
+        self._phonons: PhononData | None = None
         self._done_nac_at_gamma = False  # Phonon at Gamma is calculated with NAC.
-        self._frequencies: NDArray[np.double] | None = None
-        self._eigenvectors: NDArray[np.cdouble] | None = None
 
         self._joint_dos: NDArray[np.double] | None = None
         self._frequency_points: NDArray[np.double] | None = None
@@ -155,12 +211,37 @@ class JointDos:
     def get_phonons(
         self,
     ) -> tuple[
-        NDArray[np.double] | None,
-        NDArray[np.cdouble] | None,
-        NDArray[np.byte] | None,
+        NDArray[np.double] | None, NDArray[np.cdouble] | None, NDArray[np.byte] | None
     ]:
-        """Return phonon calculation results."""
-        return self._frequencies, self._eigenvectors, self._phonon_done
+        """Return frequencies, eigenvectors and phonon_done on grid.
+
+        This method is deprecated and will be removed in v5.0. Use the
+        ``phonons`` property.
+
+        """
+        warnings.warn(
+            "get_phonons() is deprecated and will be removed in v5.0. "
+            "Use the phonons property.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if self._phonons is None:
+            return None, None, None
+        return (
+            self._phonons.frequencies,
+            self._phonons.eigenvectors,
+            self._phonons.phonon_done,
+        )
+
+    @property
+    def phonons(self) -> PhononData | None:
+        """Return phonons on grid.
+
+        None before the phonons are allocated. The arrays in the returned
+        PhononData are those used in this instance, not copies.
+
+        """
+        return self._phonons
 
     @property
     def primitive(self) -> Primitive:
@@ -209,6 +290,16 @@ class JointDos:
         return self._bz_grid
 
     @property
+    def symmetrize_tetrahedra(self) -> bool:
+        """Return whether tetrahedron weights are averaged over the point group."""
+        return self._symmetrize_tetrahedra
+
+    @property
+    def exclude_gamma_acoustic(self) -> bool:
+        """Return whether the acoustic frequencies at Gamma are set to zero."""
+        return self._exclude_gamma_acoustic
+
+    @property
     def temperature(self) -> float | None:
         """Setter and getter of temperature."""
         return self._temperature
@@ -232,16 +323,16 @@ class JointDos:
         self._set_triplets()
         self._joint_dos = None
 
-        assert self._phonon_done is not None
+        assert self._phonons is not None
         gamma_gp = get_grid_point_from_address([0, 0, 0], self._bz_grid.D_diag)
         if (self._bz_grid.addresses[grid_point] == 0).all():
             if self._nac_q_direction is not None:
                 self._done_nac_at_gamma = True
-                self._phonon_done[gamma_gp] = 0
+                self._phonons.phonon_done[gamma_gp] = 0
         elif self._done_nac_at_gamma:
             if self._nac_q_direction is None:
                 self._done_nac_at_gamma = False
-                self._phonon_done[gamma_gp] = 0
+                self._phonons.phonon_done[gamma_gp] = 0
             else:
                 msg = (
                     "Phonons at Gamma has been calculated with NAC, "
@@ -261,9 +352,7 @@ class JointDos:
         method name. So this name is not allowed to change.
 
         """
-        assert self._frequencies is not None
-        assert self._eigenvectors is not None
-        assert self._phonon_done is not None
+        assert self._phonons is not None
         if grid_points is None:
             _grid_points = np.arange(len(self._bz_grid.addresses), dtype="int64")
         else:
@@ -272,15 +361,17 @@ class JointDos:
         solver = run_phonon_solver_rust if self._lang == "Rust" else run_phonon_solver_c
         solver(
             self._dm,
-            self._frequencies,
-            self._eigenvectors,
-            self._phonon_done,
+            self._phonons.frequencies,
+            self._phonons.eigenvectors,
+            self._phonons.phonon_done,
             _grid_points,
             self._bz_grid.addresses,
             self._bz_grid.QDinv,
             self._frequency_factor_to_THz,
             self._nac_q_direction,
             self._lapack_zheev_uplo,
+            exclude_gamma_acoustic=self._exclude_gamma_acoustic,
+            degenerate_ids=self._phonons.degenerate_ids,
         )
 
     def run_phonon_solver_at_gamma(self, is_nac: bool = False) -> None:
@@ -297,8 +388,8 @@ class JointDos:
             otherwise without NAC. Default is False.
 
         """
-        assert self._phonon_done is not None
-        self._phonon_done[self._bz_grid.gp_Gamma] = 0
+        assert self._phonons is not None
+        self._phonons.phonon_done[self._bz_grid.gp_Gamma] = 0
         if is_nac:
             self.run_phonon_solver(np.array([self._bz_grid.gp_Gamma], dtype="int64"))
         else:
@@ -388,6 +479,7 @@ class JointDos:
         temperature_thz = (
             self._temperature * get_physical_units().KB / get_physical_units().THzToEv
         )
+        assert self._phonons is not None
         jdos_elem = np.zeros(1, dtype="double")
         if lang == "Rust":
             from phono3py.phonon3.imag_self_energy import (
@@ -400,7 +492,7 @@ class JointDos:
                     self._ones_pp_strength,
                     self._triplets_at_q,
                     self._weights_at_q,
-                    self._frequencies,
+                    self._phonons.frequencies,
                     temperature_thz,
                     g,
                     self._g_zero,
@@ -417,7 +509,7 @@ class JointDos:
                     self._ones_pp_strength,
                     self._triplets_at_q,
                     self._weights_at_q,
-                    self._frequencies,
+                    self._phonons.frequencies,
                     temperature_thz,
                     g,
                     self._g_zero,
@@ -428,10 +520,10 @@ class JointDos:
 
     def _run_occupation(self) -> None:
         assert self._temperature is not None
-        assert self._frequencies is not None
+        assert self._phonons is not None
         assert self._triplets_at_q is not None
         t = self._temperature
-        freqs = self._frequencies[self._triplets_at_q[:, 1:]]
+        freqs = self._phonons.frequencies[self._triplets_at_q[:, 1:]]
         self._occupations = np.where(
             freqs > self._cutoff_frequency, bose_einstein(freqs, t), -1
         )
@@ -480,13 +572,6 @@ class JointDos:
             )
 
     def _allocate_phonons(self) -> None:
-        num_grid = len(self._bz_grid.addresses)
-        num_band = self._num_band
-        self._phonon_done = np.zeros(num_grid, dtype="byte")  # type: ignore[call-overload]
-        self._frequencies = np.zeros(  # type: ignore[call-overload]
-            (num_grid, num_band), dtype="double", order="C"
-        )
-        complex_dtype = "c%d" % (np.dtype("double").itemsize * 2)
-        self._eigenvectors = np.zeros(  # type: ignore[call-overload]
-            (num_grid, num_band, num_band), dtype=complex_dtype, order="C"
+        self._phonons = PhononData.allocate(
+            len(self._bz_grid.addresses), self._num_band
         )

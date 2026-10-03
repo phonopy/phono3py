@@ -248,6 +248,73 @@ def test_jdso_si_nomeshsym(si_pbesol: Phono3py):
     )
 
 
+@pytest.mark.parametrize("symmetrize_tetrahedra", [False, True])
+def test_jdos_aln_symmetrize_tetrahedra(aln_lda: Phono3py, symmetrize_tetrahedra: bool):
+    """Test that the JDOS summed over irreducible triplets equals the full sum.
+
+    The two sums agree only when the tetrahedron weights are invariant under
+    the little group of q0, which symmetrize_tetrahedra makes them in AlN.
+
+    """
+    joint_dos = {}
+    for is_mesh_symmetry in (True, False):
+        jdos = Phono3pyJointDos(
+            aln_lda.phonon_supercell,
+            aln_lda.phonon_primitive,
+            aln_lda.fc2,
+            mesh=[6, 6, 4],
+            nac_params=aln_lda.nac_params,
+            num_frequency_points=10,
+            is_mesh_symmetry=is_mesh_symmetry,
+            symmetrize_tetrahedra=symmetrize_tetrahedra,
+        )
+        jdos.run([1])
+        joint_dos[is_mesh_symmetry] = jdos.joint_dos
+    diff = abs(joint_dos[True] - joint_dos[False]).max()
+    if symmetrize_tetrahedra:
+        assert diff < 1e-5
+    else:
+        assert diff > 0.1
+
+
+def test_jdos_exclude_gamma_acoustic(
+    nacl_pbe: Phono3py, monkeypatch: pytest.MonkeyPatch
+):
+    """Test that JointDos sets the acoustic frequencies at Gamma to zero.
+
+    Phono3pyJointDos passes exclude_gamma_acoustic to JointDos.
+
+    """
+    jdos = _get_jdos(
+        nacl_pbe, [7, 7, 7], nac_params=nacl_pbe.nac_params, exclude_gamma_acoustic=True
+    )
+    jdos.run_phonon_solver()
+    frequencies = jdos.phonons.frequencies
+    assert frequencies is not None
+    gp_Gamma = jdos.bz_grid.gp_Gamma
+    np.testing.assert_array_equal(frequencies[gp_Gamma, :3], 0)
+    assert (frequencies[gp_Gamma, 3:] > 1).all()
+
+    import phono3py.api_jointdos as api_jointdos
+
+    flags = []
+    joint_dos_class = api_jointdos.JointDos
+
+    def _joint_dos(*args, **kwargs):
+        flags.append(kwargs["exclude_gamma_acoustic"])
+        return joint_dos_class(*args, **kwargs)
+
+    monkeypatch.setattr(api_jointdos, "JointDos", _joint_dos)
+    Phono3pyJointDos(
+        nacl_pbe.phonon_supercell,
+        nacl_pbe.phonon_primitive,
+        nacl_pbe.fc2,
+        mesh=[7, 7, 7],
+        exclude_gamma_acoustic=True,
+    )
+    assert flags == [True]
+
+
 def test_jdos_nacl(nacl_pbe: Phono3py):
     """Test joint-DOS by NaCl."""
     nacl_pbe.mesh_numbers = [9, 9, 9]
@@ -349,6 +416,18 @@ def test_jdos_nacl_nac_gamma_at_300K_npoints(nacl_pbe: Phono3py):
     )
 
 
+def test_jdos_get_phonons_deprecated(si_pbesol: Phono3py):
+    """Test that get_phonons is deprecated and returns the phonons property."""
+    jdos = _get_jdos(si_pbesol, [7, 7, 7])
+    jdos.set_grid_point(1)
+    with pytest.warns(DeprecationWarning, match="get_phonons"):
+        frequencies, eigenvectors, phonon_done = jdos.get_phonons()
+    assert jdos.phonons is not None
+    assert frequencies is jdos.phonons.frequencies
+    assert eigenvectors is jdos.phonons.eigenvectors
+    assert phonon_done is jdos.phonons.phonon_done
+
+
 def test_jdos_nac_direction_phonon_NaCl(nacl_pbe: Phono3py):
     """Test JDOS of NaCl with nac_q_direction."""
     jdos = _get_jdos(
@@ -358,7 +437,7 @@ def test_jdos_nac_direction_phonon_NaCl(nacl_pbe: Phono3py):
     )
     jdos.nac_q_direction = [1, 0, 0]
     jdos.set_grid_point(0)
-    frequencies, _, _ = jdos.get_phonons()
+    frequencies = jdos.phonons.frequencies
     np.testing.assert_allclose(
         frequencies[0], [0, 0, 0, 4.59488262, 4.59488262, 7.41183870], rtol=0, atol=1e-6
     )
@@ -398,7 +477,7 @@ def test_jdos_nac_direction_phonon_NaCl_second_no_error(nacl_pbe: Phono3py):
     jdos.set_grid_point(0)
     jdos.nac_q_direction = None
     jdos.set_grid_point(1)
-    frequencies, _, _ = jdos.get_phonons()
+    frequencies = jdos.phonons.frequencies
     np.testing.assert_allclose(
         frequencies[0], [0, 0, 0, 4.59488262, 4.59488262, 4.59488262], rtol=0, atol=1e-6
     )
@@ -461,9 +540,6 @@ def test_jdos_nac_NaCl_300K_Py(nacl_pbe: Phono3py):
 
 def test_jdos_nac_NaCl_300K_PyPy(nacl_pbe: Phono3py):
     """Test running JDOS of NaCl in Py (JDOS) and Py (tetrahedron) mode."""
-    # Python integration_weights uses the C scalar
-    # ``get_tetrahedra_integration_weight`` helper.
-    pytest.importorskip("phonopy._phonopy")
     jdos = _get_jdos(
         nacl_pbe,
         [9, 9, 9],
@@ -480,7 +556,7 @@ def test_jdos_nac_NaCl_300K_PyPy(nacl_pbe: Phono3py):
     )
 
 
-def _get_jdos(ph3: Phono3py, mesh, nac_params=None):
+def _get_jdos(ph3: Phono3py, mesh, nac_params=None, exclude_gamma_acoustic=False):
     bz_grid = BZGrid(
         mesh,
         lattice=ph3.primitive.cell,
@@ -494,5 +570,6 @@ def _get_jdos(ph3: Phono3py, mesh, nac_params=None):
         ph3.fc2,
         nac_params=nac_params,
         cutoff_frequency=1e-4,
+        exclude_gamma_acoustic=exclude_gamma_acoustic,
     )
     return jdos

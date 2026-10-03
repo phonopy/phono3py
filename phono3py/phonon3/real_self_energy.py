@@ -160,7 +160,9 @@ class RealSelfEnergy:
         """Calculate ph-ph interaction strength."""
         self._pp.run()
         self._pp_strength = self._pp.interaction_strength
-        self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
+        assert self._pp.phonons is not None
+        self._frequencies = self._pp.phonons.frequencies
+        self._eigenvectors = self._pp.phonons.eigenvectors
         self._triplets_at_q, self._weights_at_q, _, _ = self._pp.get_triplets_at_q()
         self._band_indices = self._pp.band_indices
 
@@ -691,7 +693,7 @@ def get_real_self_energy(
 
     _temperatures = np.asarray(temperatures, dtype="double")
 
-    if (interaction.get_phonons()[2] == 0).any():  # type: ignore[union-attr]
+    if (interaction.phonons.phonon_done == 0).any():  # type: ignore[union-attr]
         if log_level:
             print("Running harmonic phonon calculations...")
         interaction.run_phonon_solver()
@@ -702,7 +704,8 @@ def get_real_self_energy(
 
     # Set phonon at Gamma without NAC for finding max_phonon_freq.
     interaction.run_phonon_solver_at_gamma()
-    max_phonon_freq = np.amax(interaction.get_phonons()[0])  # type: ignore[arg-type]
+    assert interaction.phonons is not None
+    max_phonon_freq = np.amax(interaction.phonons.frequencies)  # type: ignore[arg-type]
     interaction.run_phonon_solver_at_gamma(is_nac=True)
 
     band_indices = interaction.band_indices
@@ -755,7 +758,7 @@ def get_real_self_energy(
             print("Number of ir-triplets: %d / %d" % (len(weights), weights.sum()))
 
         fst.run_interaction()
-        frequencies = interaction.get_phonons()[0][gp]  # type: ignore[index]
+        frequencies = interaction.phonons.frequencies[gp]  # type: ignore[index]
 
         if log_level:
             bz_grid = interaction.bz_grid

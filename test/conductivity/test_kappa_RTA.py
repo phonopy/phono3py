@@ -128,7 +128,7 @@ def test_kappa_RTA_si_grg(si_pbesol_grg: Phono3py):
 
 def test_kappa_RTA_si_grg_iso(si_pbesol_grg: Phono3py):
     """Test RTA with isotope scattering by Si with GR-grid.."""
-    ref_kappa_RTA_grg_iso = [104.290, 104.290, 104.290, 0, 0, 0]
+    ref_kappa_RTA_grg_iso = [103.609, 103.609, 103.609, 0, 0, 0]
     mesh = 30
     ph3 = si_pbesol_grg
     ph3.mesh_numbers = mesh
@@ -248,6 +248,123 @@ def test_kappa_RTA_aln(aln_lda: Phono3py):
     np.testing.assert_allclose(ref_kappa_RTA, kappa, atol=0.5)
 
 
+def test_kappa_RTA_si_exclude_gamma_acoustic(
+    si_pbesol: Phono3py, monkeypatch: pytest.MonkeyPatch
+):
+    """Test RTA with the acoustic frequencies at Gamma set to zero by Si.
+
+    The acoustic modes at Gamma are below the cutoff frequency either way, so
+    kappa is unchanged. Isotope scattering follows the choice made for
+    Interaction.
+
+    """
+    import phono3py.conductivity.calculators as calculators
+
+    flags = []
+    isotope_class = calculators.Isotope
+
+    def _isotope(*args, **kwargs):
+        flags.append(kwargs["exclude_gamma_acoustic"])
+        return isotope_class(*args, **kwargs)
+
+    monkeypatch.setattr(calculators, "Isotope", _isotope)
+    kappa = _get_kappa(si_pbesol, [9, 9, 9], is_isotope=True).ravel()
+    kappa_exclude = _get_kappa(
+        si_pbesol, [9, 9, 9], is_isotope=True, exclude_gamma_acoustic=True
+    ).ravel()
+    assert flags == [False, True]
+    frequencies = si_pbesol.thermal_conductivity.frequencies
+    np.testing.assert_array_equal(frequencies[0, :3], 0)
+    np.testing.assert_allclose(kappa_exclude, kappa, atol=1e-6)
+
+
+def test_kappa_RTA_si_iso_average_degenerate_weights(
+    si_pbesol: Phono3py, monkeypatch: pytest.MonkeyPatch
+):
+    """Test RTA with tetrahedron weights averaged over degenerate bands by Si.
+
+    The helper _get_kappa passes average_degenerate_weights explicitly, so the
+    other tests keep checking the choice without averaging. Isotope scattering
+    follows the choice made for Interaction. The averaged kappa does not depend
+    on the eigenvectors in the degenerate subspaces, so its tolerance is tighter
+    than the others.
+
+    """
+    import phono3py.conductivity.calculators as calculators
+
+    flags = []
+    isotope_class = calculators.Isotope
+
+    def _isotope(*args, **kwargs):
+        flags.append(kwargs["average_degenerate_weights"])
+        return isotope_class(*args, **kwargs)
+
+    monkeypatch.setattr(calculators, "Isotope", _isotope)
+    ref_kappa_RTA_iso = [97.296, 97.296, 97.296, 0, 0, 0]
+    kappa = _get_kappa(si_pbesol, [9, 9, 9], is_isotope=True).ravel()
+    np.testing.assert_allclose(ref_kappa_RTA_iso, kappa, atol=0.5)
+    ref_kappa_RTA_iso_average = [96.895, 96.895, 96.895, 0, 0, 0]
+    kappa_average = _get_kappa(
+        si_pbesol, [9, 9, 9], is_isotope=True, average_degenerate_weights=True
+    ).ravel()
+    assert flags == [False, True]
+    np.testing.assert_allclose(ref_kappa_RTA_iso_average, kappa_average, atol=0.1)
+
+
+def test_kappa_RTA_aln_iso_average_degenerate_weights(aln_lda: Phono3py):
+    """Test RTA with tetrahedron weights averaged over degenerate bands by AlN.
+
+    The averaging raises kappa by about 0.1 in AlN. The kappa without averaging
+    depends on the eigenvectors in the degenerate subspaces, so only the
+    averaged kappa is compared with a tighter tolerance.
+
+    """
+    ref_kappa_RTA_iso = [206.019, 206.019, 219.522, 0, 0, 0]
+    ref_kappa_RTA_iso_average = [206.122, 206.122, 219.594, 0, 0, 0]
+    kappa = _get_kappa(aln_lda, [7, 7, 5], is_isotope=True).ravel()
+    np.testing.assert_allclose(ref_kappa_RTA_iso, kappa, atol=0.5)
+    kappa_average = _get_kappa(
+        aln_lda, [7, 7, 5], is_isotope=True, average_degenerate_weights=True
+    ).ravel()
+    np.testing.assert_allclose(ref_kappa_RTA_iso_average, kappa_average, atol=0.1)
+
+
+def test_kappa_RTA_aln_symmetrize_tetrahedra(
+    aln_lda: Phono3py, monkeypatch: pytest.MonkeyPatch
+):
+    """Test RTA with symmetrized tetrahedra by AlN.
+
+    The low-memory and the full-pp paths build the tetrahedra separately and
+    give the same kappa, which differs from that without symmetrization.
+    Isotope scattering follows the choice made for Interaction.
+
+    """
+    import phono3py.conductivity.calculators as calculators
+
+    flags = []
+    isotope_class = calculators.Isotope
+
+    def _isotope(*args, **kwargs):
+        flags.append(kwargs["symmetrize_tetrahedra"])
+        return isotope_class(*args, **kwargs)
+
+    monkeypatch.setattr(calculators, "Isotope", _isotope)
+    kappa = {
+        (symmetrize, is_full_pp): _get_kappa(
+            aln_lda,
+            [4, 4, 3],
+            is_isotope=True,
+            is_full_pp=is_full_pp,
+            symmetrize_tetrahedra=symmetrize,
+        ).ravel()
+        for symmetrize in (False, True)
+        for is_full_pp in (False, True)
+    }
+    assert flags == [False, False, True, True]
+    np.testing.assert_allclose(kappa[True, False], kappa[True, True], rtol=1e-8)
+    assert abs(kappa[True, False] - kappa[False, False]).max() > 0.5
+
+
 def test_kappa_RTA_aln_with_sigma(aln_lda: Phono3py):
     """Test RTA with smearing method by AlN."""
     ref_kappa_RTA_with_sigmas = [217.598, 217.598, 230.099, 0, 0, 0]
@@ -289,9 +406,17 @@ def _get_kappa(
     is_full_pp=False,
     openmp_per_triplets=None,
     transport_type=None,
+    symmetrize_tetrahedra=False,
+    exclude_gamma_acoustic=False,
+    average_degenerate_weights=False,
 ):
     ph3.mesh_numbers = mesh
-    ph3.init_phph_interaction(openmp_per_triplets=openmp_per_triplets)
+    ph3.init_phph_interaction(
+        openmp_per_triplets=openmp_per_triplets,
+        symmetrize_tetrahedra=symmetrize_tetrahedra,
+        exclude_gamma_acoustic=exclude_gamma_acoustic,
+        average_degenerate_weights=average_degenerate_weights,
+    )
     ph3.run_thermal_conductivity(
         temperatures=[
             300,

@@ -38,7 +38,9 @@ def _run_r2n(
     triplets_at_q, *_ = itr.get_triplets_at_q()
     assert triplets_at_q is not None
 
-    frequencies, eigenvectors, _ = itr.get_phonons()
+    frequencies = itr.phonons.frequencies
+
+    eigenvectors = itr.phonons.eigenvectors
     assert frequencies is not None
     assert eigenvectors is not None
 
@@ -119,7 +121,7 @@ def test_reciprocal_to_normal_cutoff(si_pbesol: Phono3py):
     itr = _get_interaction(si_pbesol, [4, 4, 4])
     itr.set_grid_point(1)
 
-    frequencies, _, _ = itr.get_phonons()
+    frequencies = itr.phonons.frequencies
     assert frequencies is not None
     max_freq = float(np.max(frequencies)) + 1.0
 
@@ -145,7 +147,9 @@ def test_reciprocal_to_normal_rust_vs_python(si_pbesol: Phono3py):
     # returns directly.
     ref_squared = np.abs(fc3_normal) ** 2
 
-    frequencies, eigenvectors, _ = itr.get_phonons()
+    frequencies = itr.phonons.frequencies
+
+    eigenvectors = itr.phonons.eigenvectors
     assert frequencies is not None and eigenvectors is not None
 
     r2r = RealToReciprocal(si_pbesol.fc3, si_pbesol.primitive, itr.mesh_numbers)

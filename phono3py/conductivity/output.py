@@ -81,8 +81,9 @@ class ConductivityRTAWriter:
         gamma_N, gamma_U = br.get_gamma_N_U()
 
         gp = grid_points[i]
+        assert interaction.phonons is not None
         phonons = _require_ndarray_not_none(
-            interaction.get_phonons()[0], "interaction phonons"
+            interaction.phonons.frequencies, "interaction phonons"
         )
         if all_bands_exist(interaction):
             ave_pp_i = ave_pp[i] if ave_pp is not None else None

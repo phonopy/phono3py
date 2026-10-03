@@ -5,6 +5,7 @@ from typing import Literal
 import numpy as np
 import pytest
 from phonopy import Phonopy
+from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.phonon.grid import BZGrid, get_grid_point_from_address
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.symmetry import Symmetry
@@ -1885,7 +1886,7 @@ def test_get_triplets_integration_weights_sigma(
 ):
     """Test get_triplets_integration_weights with Gaussian smearing."""
     itr = _setup_interaction(si_pbesol, [4, 4, 4], grid_point=1)
-    frequencies = itr.get_phonons()[0]
+    frequencies = itr.phonons.frequencies
     assert frequencies is not None
     num_band = frequencies.shape[1]
     triplets = itr.get_triplets_at_q()[0]
@@ -1929,12 +1930,10 @@ def test_get_triplets_integration_weights_tetrahedron(
     si_pbesol: Phono3py, lang: Literal["C", "Python"]
 ):
     """Test get_triplets_integration_weights with tetrahedron method (no sigma)."""
-    # The Python path internally uses the C scalar
-    # ``get_tetrahedra_integration_weight`` helper, so it also needs the C
-    # extension.
-    pytest.importorskip("phonopy._phonopy")
+    if lang == "C":
+        pytest.importorskip("phonopy._phonopy")
     itr = _setup_interaction(si_pbesol, [4, 4, 4], grid_point=1)
-    frequencies = itr.get_phonons()[0]
+    frequencies = itr.phonons.frequencies
     assert frequencies is not None
     num_band = frequencies.shape[1]
     triplets = itr.get_triplets_at_q()[0]
@@ -1975,10 +1974,134 @@ def test_get_triplets_integration_weights_tetrahedron_c_equals_python(
     np.testing.assert_allclose(g_c, g_py, rtol=1e-4, atol=1e-10)
 
 
+@pytest.mark.parametrize("symmetrize_tetrahedra", [False, True])
+def test_get_triplets_integration_weights_little_group(
+    aln_lda: Phono3py, symmetrize_tetrahedra: bool
+):
+    """Test that g(q0; S q1) = g(q0; q1) for S in the little group of q0.
+
+    Without symmetrization the fixed main diagonal breaks this on AlN.
+
+    """
+    aln_lda.mesh_numbers = [6, 6, 4]
+    assert aln_lda.grid is not None
+    grid_point = int(
+        aln_lda.grid.grg2bzg[get_grid_point_from_address([1, 0, 0], [6, 6, 4])]
+    )
+    itr = _setup_interaction(
+        aln_lda,
+        [6, 6, 4],
+        grid_point,
+        is_mesh_symmetry=False,
+        symmetrize_tetrahedra=symmetrize_tetrahedra,
+    )
+    bz_grid = itr.bz_grid
+    frequencies = itr.phonons.frequencies
+    assert frequencies is not None
+    g, _ = get_triplets_integration_weights(itr, frequencies[grid_point], sigma=None)
+
+    triplets = itr.get_triplets_at_q()[0]
+    assert triplets is not None
+    index = {int(gp): i for i, gp in enumerate(bz_grid.bzg2grg[triplets[:, 1]])}
+    q0 = bz_grid.addresses[grid_point]
+    diff = 0.0
+    for r in bz_grid.rotations:
+        if ((r @ q0 - q0) % bz_grid.D_diag).any():
+            continue
+        for i, tp in enumerate(triplets):
+            gp = get_grid_point_from_address(r @ bz_grid.addresses[tp[1]], [6, 6, 4])
+            diff = max(diff, abs(g[:, i] - g[:, index[int(gp)]]).max())
+    if symmetrize_tetrahedra:
+        assert diff < 1e-10
+    else:
+        assert diff > 1
+
+
+def test_get_triplets_integration_weights_symmetrize_fcc(si_pbesol: Phono3py):
+    """Test that symmetrization leaves the weights of an fcc lattice unchanged.
+
+    The 24 tetrahedra of an fcc lattice are already invariant under the point
+    group.
+
+    """
+    frequency_points = np.linspace(0, 20, 11)
+    g = [
+        get_triplets_integration_weights(
+            _setup_interaction(
+                si_pbesol, [4, 4, 4], 1, symmetrize_tetrahedra=symmetrize_tetrahedra
+            ),
+            frequency_points,
+            sigma=None,
+        )[0]
+        for symmetrize_tetrahedra in (False, True)
+    ]
+    np.testing.assert_array_equal(g[0], g[1])
+
+
+def test_get_triplets_integration_weights_tetrahedron_python_matches_rust(
+    aln_lda: Phono3py,
+):
+    """The pure-Python tetrahedron path gives the weights of the Rust path.
+
+    Grid point 10 of the 4x4x2 mesh is on the BZ surface, where the vertices
+    of the tetrahedra have to be the same BZ-grid images in both paths.
+
+    """
+    itr = _setup_interaction(aln_lda, [4, 4, 2], 10, nac_params=aln_lda.nac_params)
+    frequency_points = np.linspace(0, 25, 6)
+    g_rust, _ = get_triplets_integration_weights(
+        itr, frequency_points, sigma=None, lang="Rust"
+    )
+    g_py, _ = get_triplets_integration_weights(
+        itr, frequency_points, sigma=None, lang="Python"
+    )
+    np.testing.assert_allclose(g_py, g_rust, rtol=0, atol=1e-12)
+
+
+def test_get_triplets_integration_weights_average_degenerate(si_pbesol: Phono3py):
+    """Averaged weights are equal inside degenerate blocks and keep block sums.
+
+    g_zero is only unset, and only where the averaged weights are nonzero.
+
+    """
+    itr = _setup_interaction(si_pbesol, [4, 4, 4], 1)
+    frequencies = itr.phonons.frequencies
+    triplets = itr.get_triplets_at_q()[0]
+    assert frequencies is not None
+    assert triplets is not None
+    frequency_points = frequencies[1]
+    g, g_zero = get_triplets_integration_weights(itr, frequency_points, sigma=None)
+    g_avg, g_zero_avg = get_triplets_integration_weights(
+        itr, frequency_points, sigma=None, average_degenerate_weights=True
+    )
+    assert g_zero is not None
+    assert g_zero_avg is not None
+
+    spread = 0.0
+    for i, (_, gp1, gp2) in enumerate(triplets):
+        for s1 in degenerate_sets(frequencies[gp1]):
+            for s2 in degenerate_sets(frequencies[gp2]):
+                b = g[:, i][:, :, s1][:, :, :, s2]
+                b_avg = g_avg[:, i][:, :, s1][:, :, :, s2]
+                np.testing.assert_allclose(
+                    b_avg.sum(axis=(2, 3)), b.sum(axis=(2, 3)), atol=1e-12
+                )
+                np.testing.assert_allclose(
+                    b_avg, np.broadcast_to(b_avg[:, :, :1, :1], b_avg.shape), atol=1e-12
+                )
+                spread = max(spread, np.ptp(b, axis=(2, 3)).max())
+    assert spread > 1e-8
+    assert not (g_zero_avg.astype(bool) & ~g_zero.astype(bool)).any()
+    assert not (g_zero_avg.astype(bool) & (g_avg != 0).any(axis=0)).any()
+
+
 def _setup_interaction(
     ph3: Phono3py,
     mesh: list,
     grid_point: int,
+    is_mesh_symmetry: bool = True,
+    symmetrize_tetrahedra: bool = False,
+    nac_params: dict | None = None,
 ) -> Interaction:
     """Set up Interaction with phonons solved at a given grid point."""
     ph3.mesh_numbers = mesh
@@ -1989,11 +2112,14 @@ def _setup_interaction(
         ph3.primitive_symmetry,
         fc3=ph3.fc3,
         cutoff_frequency=1e-4,
+        is_mesh_symmetry=is_mesh_symmetry,
+        symmetrize_tetrahedra=symmetrize_tetrahedra,
     )
     itr.init_dynamical_matrix(
         ph3.fc2,
         ph3.phonon_supercell,
         ph3.phonon_primitive,
+        nac_params=nac_params,
     )
     itr.set_grid_point(grid_point)
     itr.run_phonon_solver()

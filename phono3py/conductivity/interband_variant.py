@@ -63,7 +63,8 @@ def register_interband_variant(name: str, cv_matrix_func: CvMatrixFunc) -> None:
         )
 
     def _make_rta_kappa_solver(ctx: VariantContext) -> InterBandRTAKappaSolver:
-        frequencies: NDArray[np.double] = ctx.interaction.get_phonons()[0]
+        assert ctx.interaction.phonons is not None
+        frequencies: NDArray[np.double] = ctx.interaction.phonons.frequencies
         return InterBandRTAKappaSolver(
             kappa_settings=ctx.kappa_settings,
             frequencies=frequencies,
@@ -72,7 +73,8 @@ def register_interband_variant(name: str, cv_matrix_func: CvMatrixFunc) -> None:
         )
 
     def _make_lbte_kappa_solver(ctx: VariantContext) -> InterBandLBTEKappaSolver:
-        frequencies: NDArray[np.double] = ctx.interaction.get_phonons()[0]
+        assert ctx.interaction.phonons is not None
+        frequencies: NDArray[np.double] = ctx.interaction.phonons.frequencies
         return InterBandLBTEKappaSolver(
             solver=ctx.collision_matrix_kernel,
             kappa_settings=ctx.kappa_settings,

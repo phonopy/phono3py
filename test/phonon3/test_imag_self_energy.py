@@ -2,8 +2,10 @@
 
 import numpy as np
 import pytest
+from phonopy.phonon.degeneracy import degenerate_sets
 
 from phono3py import Phono3py
+from phono3py.phonon3.imag_self_energy import ImagSelfEnergy
 
 
 def test_imag_self_energy_at_bands(si_pbesol: Phono3py):
@@ -1160,3 +1162,63 @@ def test_imag_self_energy_nacl_nac_npoints(nacl_pbe: Phono3py):
     np.testing.assert_allclose(
         ref_gammas_nacl_nac, ise_params.gammas.ravel(), rtol=0, atol=2e-2
     )
+
+
+@pytest.mark.parametrize("average_degenerate_weights", [False, True])
+def test_imag_self_energy_average_degenerate_weights(
+    si_pbesol: Phono3py, average_degenerate_weights: bool
+):
+    """Gamma with the tetrahedron method under a change of eigenvector basis.
+
+    The eigenvectors at all grid points except grid point 1 are rotated by
+    random unitary matrices inside the degenerate subspaces. With the
+    averaged weights Gamma at grid point 1 is unchanged. Without the average
+    it changes by several percent on this coarse mesh.
+
+    """
+    si_pbesol.mesh_numbers = [4, 4, 4]
+    si_pbesol.init_phph_interaction(
+        average_degenerate_weights=average_degenerate_weights
+    )
+    itr = si_pbesol.phph_interaction
+    assert itr is not None
+    assert si_pbesol.grid is not None
+    itr.run_phonon_solver()
+    frequencies = itr.phonons.frequencies
+    eigenvectors = itr.phonons.eigenvectors
+    assert frequencies is not None
+    assert eigenvectors is not None
+    grid_point = int(si_pbesol.grid.grg2bzg[1])
+
+    def run_gammas() -> np.ndarray:
+        ise = ImagSelfEnergy(itr)
+        ise.set_grid_point(grid_point)
+        ise.set_sigma(None)
+        ise.temperature = 300.0
+        ise.run_integration_weights()
+        ise.run_interaction(is_full_pp=False)
+        ise.run()
+        assert ise.imag_self_energy is not None
+        return ise.imag_self_energy.copy()
+
+    eigenvectors_orig = eigenvectors.copy()
+    gammas = run_gammas()
+    rng = np.random.default_rng(0)
+    for gp, freqs in enumerate(frequencies):
+        if gp == grid_point:
+            continue
+        for deg_set in degenerate_sets(freqs):
+            n = len(deg_set)
+            if n > 1:
+                a = rng.normal(size=(n, n)) + 1j * rng.normal(size=(n, n))
+                eigenvectors[gp][:, deg_set] = (
+                    eigenvectors[gp][:, deg_set] @ np.linalg.qr(a)[0]
+                )
+    gammas_rotated = run_gammas()
+    eigenvectors[:] = eigenvectors_orig
+
+    diff = abs(gammas_rotated - gammas).max() / abs(gammas).max()
+    if average_degenerate_weights:
+        assert diff < 1e-12
+    else:
+        assert diff > 1e-2

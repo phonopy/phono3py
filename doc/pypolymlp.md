@@ -582,8 +582,13 @@ follows:
 ```python
 import phono3py
 import phonopy
+
 ph3 = phono3py.load("phono3py.yaml")
-ph = phonopy.Phonopy(unitcell=ph3.unitcell, supercell_matrix=ph3.supercell_matrix, primitive_matrix=ph3.primitive_matrix)
+ph = phonopy.Phonopy(
+    unitcell=ph3.unitcell,
+    supercell_matrix=ph3.supercell_matrix,
+    primitive_matrix=ph3.primitive_matrix,
+)
 ph.nac_params = ph3.nac_params
 ph.save("phonopy_params.yaml")
 ```
@@ -614,6 +619,7 @@ You can then perform supercell force calculations for the structures from
 
 ```python
 import phono3py
+
 ph3_orig = phono3py.load("phono3py_disp_orig.yaml")
 ph3 = phono3py.load("phono3py_disp_200.yaml")
 displacements = ph3.displacements

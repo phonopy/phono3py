@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Sequence
 from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
-from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
+from phonopy.harmonic.dynamical_matrix import (
+    DynamicalMatrix,
+    NacParams,
+    get_dynamical_matrix,
+)
+from phonopy.phonon.degeneracy import get_degenerate_ids
 from phonopy.phonon.grid import (
     BZGrid,
     get_grid_points_by_rotations,
@@ -19,9 +25,11 @@ from phonopy.structure.symmetry import Symmetry
 
 from phono3py._lang import log_dispatch, resolve_lang
 from phono3py.phonon.solver import (
+    PhononData,
     run_phonon_solver_c,
     run_phonon_solver_py,
     run_phonon_solver_rust,
+    zero_gamma_acoustic_frequencies,
 )
 from phono3py.phonon3.real_to_reciprocal import RealToReciprocal
 from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
@@ -141,15 +149,87 @@ class Interaction:
         cutoff_frequency: float | None = None,
         lapack_zheev_uplo: Literal["L", "U"] = "L",
         openmp_per_triplets: bool | None = None,
+        symmetrize_tetrahedra: bool = False,
+        exclude_gamma_acoustic: bool = False,
+        average_degenerate_weights: bool = False,
         lang: Literal["C", "Python", "Rust"] = "Rust",
     ):
         """Init method.
 
-        ``lang`` selects the backend used by ``run``, ``run_phonon_solver``,
-        and ``run_phonon_solver_at_gamma``.  It can be overridden on a
-        per-call basis through the ``lang`` argument of ``run``.  ``"Python"``
-        falls back to the C phonon solver since there is no pure-Python
-        grid-wide phonon solver implementation.
+        Parameters
+        ----------
+        primitive : Primitive
+            Primitive cell.
+        bz_grid : BZGrid
+            Grid in reciprocal space.
+        primitive_symmetry : Symmetry
+            Symmetry of the primitive cell. Its tolerance is also used to
+            compare distances of atoms.
+        fc3 : ndarray, optional
+            Third-order force constants. Without them, only
+            ``constant_averaged_interaction`` gives the interaction strength.
+            shape=(atoms in supercell, atoms in supercell, atoms in supercell,
+            3, 3, 3) or (atoms in primitive, atoms in supercell, atoms in
+            supercell, 3, 3, 3), dtype='double'
+        fc3_nonzero_indices : ndarray, optional
+            1 for the atom triplets of fc3 to be used, 0 for those to be
+            skipped. If None, all are used.
+            shape=fc3.shape[:3], dtype='byte'
+        band_indices : array_like, optional
+            Bands at the grid point for which the interaction is calculated.
+            If None, all bands. shape=(bands,), dtype='int64'
+        constant_averaged_interaction : float, optional
+            If given, the interaction strength is not calculated but set to
+            this value divided by the number of grid points.
+        frequency_factor_to_THz : float, optional
+            Factor that converts the phonon frequencies to THz. If None,
+            ``get_physical_units().DefaultToTHz``.
+        frequency_scale_factor : float, optional
+            Factor multiplied to all phonon frequencies; fc3 is multiplied by
+            its square. If None, not scaled.
+        unit_conversion : float, optional
+            Factor multiplied to the interaction strength. If None, the one
+            that gives it in eV^2 per grid point.
+        is_mesh_symmetry : bool, optional, default=True
+            Use the triplets irreducible by the symmetry of the grid point
+            instead of all triplets.
+        symmetrize_fc3q : bool, optional, default=False
+            Symmetrize fc3 in phonon space by index permutation.
+        make_r0_average : bool, optional, default=False
+            Average the transformation of fc3 to reciprocal space over the
+            three atoms of each triplet instead of taking it at the first.
+        cutoff_frequency : float, optional
+            Phonon modes with frequency below this value in THz are left out.
+            If None, 0.
+        lapack_zheev_uplo : str, optional, default='L'
+            'L' or 'U' passed to the LAPACK zheev phonon solver.
+        openmp_per_triplets : bool, optional
+            Distribute the OpenMP work over triplets when True and over bands
+            when False. If None, chosen automatically.
+        symmetrize_tetrahedra : bool, optional, default=False
+            When True, the integration weights of the tetrahedron method are
+            averaged over the 24 tetrahedra rotated by all the point-group
+            operations. The 24 tetrahedra are cut along one main diagonal, so
+            the weights can differ between symmetrically equivalent q-points.
+            Averaging removes the difference. Not available with
+            ``lang='C'``.
+        exclude_gamma_acoustic : bool, optional, default=False
+            When True, the frequencies of the three modes at Gamma with the
+            smallest absolute values are set to zero after the phonons are
+            solved. The acoustic modes at Gamma are then zero on every
+            platform, instead of small nonzero values from rounding.
+        average_degenerate_weights : bool, optional, default=False
+            When True, the integration weights of the tetrahedron method are
+            averaged over the degenerate bands at q' and at q'' of each
+            triplet. Without the average, the imaginary part of the
+            self-energy depends on the choice of eigenvectors in the
+            degenerate subspaces. See get_triplets_integration_weights.
+        lang : str, optional, default='Rust'
+            Backend, 'C', 'Python' or 'Rust', used by ``run``,
+            ``run_phonon_solver`` and ``run_phonon_solver_at_gamma``. It can
+            be overridden per call through the ``lang`` argument of ``run``.
+            'Python' falls back to the C phonon solver, since there is no
+            pure-Python phonon solver over the grid.
 
         """
         self._primitive = primitive
@@ -195,6 +275,9 @@ class Interaction:
         self._make_r0_average = make_r0_average
         self._lapack_zheev_uplo: Literal["L", "U"] = lapack_zheev_uplo
         self._openmp_per_triplets = openmp_per_triplets
+        self._symmetrize_tetrahedra = symmetrize_tetrahedra
+        self._exclude_gamma_acoustic = exclude_gamma_acoustic
+        self._average_degenerate_weights = average_degenerate_weights
         if lang in ("C", "Rust"):
             lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
@@ -209,15 +292,13 @@ class Interaction:
         self._interaction_strength: NDArray[np.double] | None = None
         self._g_zero: NDArray[np.byte] | None = None
 
-        self._phonon_done: NDArray[np.byte] | None = None
+        self._phonons: PhononData | None = None
         self._phonon_all_done: bool = False
         self._done_nac_at_gamma: bool = False  # Phonon at Gamma is calculated with NAC.
-        self._frequencies: NDArray[np.double] | None = None
-        self._eigenvectors: NDArray[np.cdouble] | None = None
         self._frequencies_at_gamma: NDArray[np.double] | None = None
         self._eigenvectors_at_gamma: NDArray[np.cdouble] | None = None
         self._dm: DynamicalMatrix | None = None
-        self._nac_params: dict | None = None
+        self._nac_params: NacParams | None = None
         self._nac_q_direction: NDArray[np.double] | None = None
 
         self._band_index_count = 0
@@ -331,7 +412,7 @@ class Interaction:
         True value is set in run_phonon_solver(). Even when False, it is
         possible that all phonons are already calculated, but it is safer to
         think some of phonons are not calculated yet. To be sure, check
-        (self._phonon_done == 0).any().
+        (self.phonons.phonon_done == 0).any().
 
         """
         return self._phonon_all_done
@@ -377,7 +458,7 @@ class Interaction:
         return self._band_indices
 
     @property
-    def nac_params(self) -> dict | None:
+    def nac_params(self) -> NacParams | None:
         """Return NAC params."""
         return self._nac_params
 
@@ -421,24 +502,35 @@ class Interaction:
     ) -> tuple[
         NDArray[np.double] | None, NDArray[np.cdouble] | None, NDArray[np.byte] | None
     ]:
-        """Return phonons on grid.
+        """Return frequencies, eigenvectors and phonon_done on grid.
 
-        Returns
-        -------
-        tuple
-            frequencies : ndarray
-                Phonon frequencies on grid.
-                shape=(num_bz_grid, num_band), dtype='double', order='C'
-            eigenvectors : ndarray
-                Phonon eigenvectors on grid.
-                shape=(num_bz_grid, num_band, num_band),
-                dtype="cdouble", order='C'
-            phonon_done : ndarray
-                1 if phonon at a grid point is calculated, otherwise 0.
-                shape=(num_bz_grid, ), dtype='byte'
+        This method is deprecated and will be removed in v5.0. Use the
+        ``phonons`` property.
 
         """
-        return self._frequencies, self._eigenvectors, self._phonon_done
+        warnings.warn(
+            "get_phonons() is deprecated and will be removed in v5.0. "
+            "Use the phonons property.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if self._phonons is None:
+            return None, None, None
+        return (
+            self._phonons.frequencies,
+            self._phonons.eigenvectors,
+            self._phonons.phonon_done,
+        )
+
+    @property
+    def phonons(self) -> PhononData | None:
+        """Return phonons on grid.
+
+        None before init_dynamical_matrix() is called. The arrays in the
+        returned PhononData are those used in this instance, not copies.
+
+        """
+        return self._phonons
 
     @property
     def frequency_factor_to_THz(self) -> float:
@@ -464,6 +556,21 @@ class Interaction:
     def symmetrize_fc3q(self) -> bool:
         """Return boolean of symmetrize_fc3q."""
         return self._symmetrize_fc3q
+
+    @property
+    def symmetrize_tetrahedra(self) -> bool:
+        """Return whether tetrahedron weights are averaged over the point group."""
+        return self._symmetrize_tetrahedra
+
+    @property
+    def exclude_gamma_acoustic(self) -> bool:
+        """Return whether the acoustic frequencies at Gamma are set to zero."""
+        return self._exclude_gamma_acoustic
+
+    @property
+    def average_degenerate_weights(self) -> bool:
+        """Return whether tetrahedron weights are averaged over degenerate bands."""
+        return self._average_degenerate_weights
 
     @property
     def make_r0_average(self) -> bool:
@@ -624,7 +731,7 @@ class Interaction:
         fc2: NDArray[np.double],
         supercell: Supercell,
         primitive: Primitive,
-        nac_params: dict | None = None,
+        nac_params: NacParams | None = None,
         decimals: int | None = None,
     ) -> None:
         """Prepare for phonon calculation on grid.
@@ -663,20 +770,21 @@ class Interaction:
                 "Input grid addresses are inconsistent. Setting phonons failed."
             )
         else:
-            if (
-                self._phonon_done is None
-                or self._frequencies is None
-                or self._eigenvectors is None
-            ):
+            if self._phonons is None:
                 raise RuntimeError(
                     "Phonons are not initialized. Call init_dynamical_matrix() first."
                 )
-            self._phonon_done[:] = 1
-            self._frequencies[:] = frequencies
-            self._eigenvectors[:] = eigenvectors
+            self._phonons.phonon_done[:] = 1
+            self._phonons.frequencies[:] = frequencies
+            self._phonons.eigenvectors[:] = eigenvectors
             gp_Gamma = self._bz_grid.gp_Gamma
-            self._frequencies_at_gamma = self._frequencies[gp_Gamma].copy()
-            self._eigenvectors_at_gamma = self._eigenvectors[gp_Gamma].copy()
+            if self._exclude_gamma_acoustic:
+                zero_gamma_acoustic_frequencies(
+                    self._phonons.frequencies, self._phonons.phonon_done, gp_Gamma
+                )
+            self._frequencies_at_gamma = self._phonons.frequencies[gp_Gamma].copy()
+            self._eigenvectors_at_gamma = self._phonons.eigenvectors[gp_Gamma].copy()
+            self._update_degenerate_ids()
 
     def run_phonon_solver(
         self,
@@ -709,22 +817,19 @@ class Interaction:
             otherwise without NAC. Default is False.
 
         """
-        if (
-            self._phonon_done is None
-            or self._frequencies is None
-            or self._eigenvectors is None
-        ):
+        if self._phonons is None:
             raise RuntimeError(
                 "Phonons are not initialized. Call init_dynamical_matrix() first."
             )
 
         if not is_nac and self._frequencies_at_gamma is not None:
             gp_Gamma = self._bz_grid.gp_Gamma
-            self._frequencies[gp_Gamma] = self._frequencies_at_gamma
-            self._eigenvectors[gp_Gamma] = self._eigenvectors_at_gamma
+            self._phonons.frequencies[gp_Gamma] = self._frequencies_at_gamma
+            self._phonons.eigenvectors[gp_Gamma] = self._eigenvectors_at_gamma
+            self._update_degenerate_ids(None if gp_Gamma is None else [gp_Gamma])
             return
 
-        self._phonon_done[self._bz_grid.gp_Gamma] = 0
+        self._phonons.phonon_done[self._bz_grid.gp_Gamma] = 0
         if is_nac:
             self._done_nac_at_gamma = True
             self.run_phonon_solver([self._bz_grid.gp_Gamma])
@@ -741,25 +846,25 @@ class Interaction:
         Some phonons that are not covered by rotations are solved.
 
         The following data are updated.
-            self._frequencies
-            self._eigenvectors
-            self._phonon_done
+            self._phonons.frequencies
+            self._phonons.eigenvectors
+            self._phonons.phonon_done
+            self._phonons.degenerate_ids
 
         """
-        if self._phonon_done is None:
+        if self._phonons is None:
             raise RuntimeError(
                 "Phonons are not initialized. Call init_dynamical_matrix() first."
             )
 
-        self._phonon_done[:] = 0
+        self._phonons.phonon_done[:] = 0
         ir_grid_points, _, _ = get_ir_grid_points(self._bz_grid)
         ir_bz_grid_points = self._bz_grid.grg2bzg[ir_grid_points]
         self.run_phonon_solver(grid_points=ir_bz_grid_points)
 
         # --- Replace eigenvectors by projected ones to lift degeneracy. ---
         # assert self._dm is not None
-        # assert self._eigenvectors is not None
-        # assert self._frequencies is not None
+        # assert self._phonons is not None
         # direction = np.array([1, 2, 3], dtype="double")
         # dq_cart = direction / np.linalg.norm(direction) * 1e-5
         # dq = self._primitive.cell @ dq_cart
@@ -769,8 +874,8 @@ class Interaction:
         #     strict=True,
         # ):
         #     dD = delta_dynamical_matrix(q, dq, self._dm)
-        #     self._eigenvectors[gp] = lift_degeneracy(
-        #         self._frequencies[gp], self._eigenvectors[gp], dD
+        #     self._phonons.eigenvectors[gp] = lift_degeneracy(
+        #         self._phonons.frequencies[gp], self._phonons.eigenvectors[gp], dD
         #     )[1]
 
         d2r_map = self._get_reciprocal_rotations_in_space_group_operations()
@@ -786,12 +891,13 @@ class Interaction:
                     reciprocal_rotations=rot.reshape(1, 3, 3),
                     with_surface=True,
                 )[0]
-                if self._phonon_done[bzgp]:
+                if self._phonons.phonon_done[bzgp]:
                     continue
 
                 self._rotate_eigvecs(irgp, bzgp, r_cart, perms[d_i], d_i)
 
         bz_grid_points_solved = self._get_phonons_at_minus_q()
+        self._update_degenerate_ids()
         if bz_grid_points_solved:
             print("DEBUG: BZ-grid points additionally solved than ir-grid-points.")
             qpoints = np.dot(
@@ -840,20 +946,18 @@ class Interaction:
         e_j'(Rq) = R e_j(q) exp(-iRq.\tau)
 
         """
-        assert self._phonon_done is not None
-        assert self._frequencies is not None
-        assert self._eigenvectors is not None
+        assert self._phonons is not None
 
         Rq = np.dot(self._bz_grid.QDinv, self._bz_grid.addresses[bzgp])
         tau = self._bz_grid.grid_symmetry_dataset.translations[t_i]  # type: ignore
         phase_factor = np.exp(-2j * np.pi * np.dot(Rq, tau))
-        self._phonon_done[bzgp] = 1
-        self._frequencies[bzgp, :] = self._frequencies[orig_gp, :]
-        eigvecs = self._eigenvectors[orig_gp, :, :] * phase_factor
+        self._phonons.phonon_done[bzgp] = 1
+        self._phonons.frequencies[bzgp, :] = self._phonons.frequencies[orig_gp, :]
+        eigvecs = self._phonons.eigenvectors[orig_gp, :, :] * phase_factor
         for i, vec in enumerate(eigvecs.T):
             vec_perm = vec.reshape(-1, 3)[perm, :].T
             vec_rot = np.dot(r_cart, vec_perm).T.ravel()
-            self._eigenvectors[bzgp, :, i] = vec_rot
+            self._phonons.eigenvectors[bzgp, :, i] = vec_rot
 
     def _get_phonons_at_minus_q(self) -> list[int]:
         """Phonons at -q are given by phonons at q.
@@ -867,13 +971,11 @@ class Interaction:
             in this method.
 
         """
-        assert self._phonon_done is not None
-        assert self._frequencies is not None
-        assert self._eigenvectors is not None
+        assert self._phonons is not None
 
         r_inv = -np.eye(3, dtype="int64")
         bz_grid_points_solved = []
-        for bzgp, done in enumerate(self._phonon_done):
+        for bzgp, done in enumerate(self._phonons.phonon_done):
             if done:
                 continue
 
@@ -885,7 +987,7 @@ class Interaction:
                 with_surface=True,
             )[0]
 
-            if self._phonon_done[bzgp_mq] == 0:
+            if self._phonons.phonon_done[bzgp_mq] == 0:
                 self.run_phonon_solver(
                     grid_points=np.array(
                         [
@@ -896,11 +998,13 @@ class Interaction:
                 )
                 bz_grid_points_solved.append(bzgp_mq)
 
-            self._phonon_done[bzgp] = 1
-            self._frequencies[bzgp, :] = self._frequencies[bzgp_mq, :]
-            self._eigenvectors[bzgp, :, :] = np.conj(self._eigenvectors[bzgp_mq, :, :])
+            self._phonons.phonon_done[bzgp] = 1
+            self._phonons.frequencies[bzgp, :] = self._phonons.frequencies[bzgp_mq, :]
+            self._phonons.eigenvectors[bzgp, :, :] = np.conj(
+                self._phonons.eigenvectors[bzgp_mq, :, :]
+            )
 
-        assert (self._phonon_done == 1).all()
+        assert (self._phonons.phonon_done == 1).all()
 
         return bz_grid_points_solved
 
@@ -970,11 +1074,12 @@ class Interaction:
         else:
             openmp_per_triplets = self._openmp_per_triplets
 
+        assert self._phonons is not None
         phono3c.interaction(
             self._interaction_strength,
             _g_zero,
-            self._frequencies,
-            self._eigenvectors,
+            self._phonons.frequencies,
+            self._phonons.eigenvectors,
             self._triplets_at_q,
             self._bz_grid.addresses,
             self._bz_grid.D_diag,
@@ -1009,11 +1114,12 @@ class Interaction:
         else:
             _g_zero = g_zero
 
+        assert self._phonons is not None
         run_interaction_rust(
             self._interaction_strength,
             _g_zero,
-            self._frequencies,
-            self._eigenvectors,
+            self._phonons.frequencies,
+            self._phonons.eigenvectors,
             self._triplets_at_q,
             self._bz_grid.addresses,
             self._bz_grid.D_diag,
@@ -1036,30 +1142,29 @@ class Interaction:
 
     def _run_phonon_solver_c(self, grid_points: NDArray[np.int64]) -> None:
         assert self._dm is not None
-        assert self._frequencies is not None
-        assert self._eigenvectors is not None
-        assert self._phonon_done is not None
+        assert self._phonons is not None
         # "Python" falls back to the C phonon solver; there is no pure-Python
         # grid-wide phonon solver implementation.
         solver = run_phonon_solver_rust if self._lang == "Rust" else run_phonon_solver_c
         solver(
             self._dm,
-            self._frequencies,
-            self._eigenvectors,
-            self._phonon_done,
+            self._phonons.frequencies,
+            self._phonons.eigenvectors,
+            self._phonons.phonon_done,
             grid_points,
             self._bz_grid.addresses,
             self._bz_grid.QDinv,
             frequency_conversion_factor=self._frequency_factor_to_THz,
             nac_q_direction=self._nac_q_direction,
             lapack_zheev_uplo=self._lapack_zheev_uplo,
+            exclude_gamma_acoustic=self._exclude_gamma_acoustic,
+            degenerate_ids=self._phonons.degenerate_ids,
         )
 
     def _run_py(self):
         assert self._interaction_strength is not None
         assert self._triplets_at_q is not None
-        assert self._frequencies is not None
-        assert self._eigenvectors is not None
+        assert self._phonons is not None
 
         r2r = RealToReciprocal(
             self._fc3,
@@ -1071,8 +1176,8 @@ class Interaction:
         )
         r2n = ReciprocalToNormal(
             self._primitive,
-            self._frequencies,
-            self._eigenvectors,
+            self._phonons.frequencies,
+            self._phonons.eigenvectors,
             self._band_indices,
             cutoff_frequency=self._cutoff_frequency,
         )
@@ -1092,21 +1197,40 @@ class Interaction:
             )
 
     def _run_phonon_solver_py(self, grid_point: int) -> None:
-        assert self._phonon_done is not None
-        assert self._frequencies is not None
-        assert self._eigenvectors is not None
+        assert self._phonons is not None
         assert self._dm is not None
         run_phonon_solver_py(
             grid_point,
-            self._phonon_done,
-            self._frequencies,
-            self._eigenvectors,
+            self._phonons.phonon_done,
+            self._phonons.frequencies,
+            self._phonons.eigenvectors,
             self._bz_grid.addresses,
             self._bz_grid.QDinv,
             self._dm,
             self._frequency_factor_to_THz,
             self._lapack_zheev_uplo,
+            exclude_gamma_acoustic=self._exclude_gamma_acoustic,
+            degenerate_ids=self._phonons.degenerate_ids,
         )
+
+    def _update_degenerate_ids(
+        self, grid_points: Sequence[int] | NDArray[np.int64] | None = None
+    ) -> None:
+        """Update degenerate sets from the frequencies at grid points.
+
+        All grid points are updated when grid_points is None.
+
+        """
+        assert self._phonons is not None
+        if grid_points is None:
+            self._phonons.degenerate_ids[:] = get_degenerate_ids(
+                self._phonons.frequencies
+            )
+        else:
+            gps = np.asarray(grid_points, dtype="int64")
+            self._phonons.degenerate_ids[gps] = get_degenerate_ids(
+                self._phonons.frequencies[gps]
+            )
 
     def _allocate_phonon(self) -> None:
         """Allocate phonon arrays.
@@ -1117,18 +1241,13 @@ class Interaction:
         """
         num_band = len(self._primitive) * 3
         num_grid = len(self._bz_grid.addresses)
-        self._phonon_done = np.zeros(num_grid, dtype="byte")
+        self._phonons = PhononData.allocate(num_grid, num_band)
         self._phonon_all_done = False
-        self._frequencies = np.zeros((num_grid, num_band), dtype="double", order="C")
-        complex_dtype = "c%d" % (np.dtype("double").itemsize * 2)
-        self._eigenvectors = np.zeros(
-            (num_grid, num_band, num_band), dtype=complex_dtype, order="C"
-        )
         gp_Gamma = self._bz_grid.gp_Gamma
         self.run_phonon_solver_at_gamma()
-        self._frequencies_at_gamma = self._frequencies[gp_Gamma].copy()
-        self._eigenvectors_at_gamma = self._eigenvectors[gp_Gamma].copy()
-        self._phonon_done[gp_Gamma] = 0
+        self._frequencies_at_gamma = self._phonons.frequencies[gp_Gamma].copy()
+        self._eigenvectors_at_gamma = self._phonons.eigenvectors[gp_Gamma].copy()
+        self._phonons.phonon_done[gp_Gamma] = 0
 
     def _get_all_shortest(self) -> None:
         """Return array indicating distances among three atoms are all shortest.

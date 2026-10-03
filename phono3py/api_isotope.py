@@ -66,9 +66,65 @@ class Phono3pyIsotope:
         symprec: float = 1e-5,
         cutoff_frequency: float | None = None,
         lapack_zheev_uplo: Literal["L", "U"] | None = None,
+        symmetrize_tetrahedra: bool = False,
+        average_degenerate_weights: bool = False,
+        exclude_gamma_acoustic: bool = False,
         lang: Literal["C", "Python", "Rust"] = "Rust",
     ) -> None:
-        """Init method."""
+        """Init method.
+
+        Parameters
+        ----------
+        mesh : float or array_like
+            Sampling mesh, given as a length, three mesh numbers, or a grid
+            matrix. shape=(3,) or (3, 3).
+        primitive : Primitive
+            Primitive cell.
+        mass_variances : array_like, optional
+            Mass variance of each atom in the primitive cell,
+            sum_i f_i (1 - m_i / m_ave)^2 over the isotopes i with fraction f_i
+            and mass m_i. If None, computed from phonopy's isotope data.
+            shape=(atoms,), dtype='double'
+        band_indices : array_like, optional
+            Bands at which the scattering rate is calculated. If None, all
+            bands. shape=(bands,), dtype='int64'
+        sigmas : list of float or None, optional
+            Widths of the Gaussian smearing in THz, one calculation for each.
+            None in the list means the tetrahedron method. If None, [None].
+        frequency_factor_to_THz : float, optional
+            Deprecated. Passing a non-None value emits a
+            ``DeprecationWarning``. If None,
+            ``get_physical_units().DefaultToTHz``.
+        use_grg : bool, optional, default=False
+            Use a generalized regular grid.
+        symprec : float, optional, default=1e-5
+            Tolerance of the symmetry search.
+        cutoff_frequency : float, optional
+            Phonon modes with frequency below this value in THz are left out.
+            If None, 0.
+        lapack_zheev_uplo : str, optional
+            Deprecated. 'L' or 'U' passed to the LAPACK zheev phonon solver.
+            Passing it emits a ``DeprecationWarning``. If None, 'L'.
+        symmetrize_tetrahedra : bool, optional, default=False
+            When True, the integration weights of the tetrahedron method are
+            averaged over the 24 tetrahedra rotated by all the point-group
+            operations. The 24 tetrahedra are cut along one main diagonal, so
+            the weights can differ between symmetrically equivalent q-points.
+            Averaging removes the difference. Not available with
+            ``lang='C'``.
+        average_degenerate_weights : bool, optional, default=False
+            When True, the integration weights of the tetrahedron method are
+            averaged over each set of degenerate bands, see ``Isotope``. Used
+            only with the tetrahedron method (``sigma=None``).
+        exclude_gamma_acoustic : bool, optional, default=False
+            When True, the frequencies of the three modes at Gamma with the
+            smallest absolute values are set to zero after the phonons are
+            solved. The acoustic modes at Gamma are then zero on every
+            platform, instead of small nonzero values from rounding.
+        lang : str, optional, default='Rust'
+            Backend, 'C', 'Python' or 'Rust'.
+
+        """
         self._sigmas: Sequence[float | None]
         if sigmas is None:
             self._sigmas = [None]
@@ -105,6 +161,9 @@ class Phono3pyIsotope:
             symprec=symprec,
             cutoff_frequency=cutoff_frequency,
             lapack_zheev_uplo=_lapack_zheev_uplo,
+            symmetrize_tetrahedra=symmetrize_tetrahedra,
+            average_degenerate_weights=average_degenerate_weights,
+            exclude_gamma_acoustic=exclude_gamma_acoustic,
             lang=lang,
         )
 
@@ -126,7 +185,8 @@ class Phono3pyIsotope:
     @property
     def frequencies(self) -> NDArray[np.double]:
         """Return phonon frequencies at grid points."""
-        return self._iso.get_phonons()[0][self._grid_points]  # type: ignore[index]
+        assert self._iso.phonons is not None
+        return self._iso.phonons.frequencies[self._grid_points]  # type: ignore[index]
 
     @property
     def grid_points(self) -> NDArray[np.int64]:
@@ -168,7 +228,8 @@ class Phono3pyIsotope:
                     self._iso.sigma = sigma
                     self._iso.run()
                     gamma[i, j] = self._iso.gamma
-                    frequencies = self._iso.get_phonons()[0]
+                    assert self._iso.phonons is not None
+                    frequencies = self._iso.phonons.frequencies
                     print("")
                     print("Phonon-isotope scattering rate in THz (1/4pi-tau)")
                     print(" Frequency     Rate")

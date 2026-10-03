@@ -41,7 +41,6 @@ import os
 import warnings
 from collections.abc import Sequence
 from typing import (  # List and Optional are for < python3.10
-    Any,
     List,
     Literal,
     Optional,
@@ -59,7 +58,7 @@ from phonopy.harmonic.displacement import (
     get_least_displacements,
     get_random_displacements_dataset,
 )
-from phonopy.harmonic.dynamical_matrix import DynamicalMatrix
+from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, NacParams
 from phonopy.harmonic.force_constants import (
     set_permutation_symmetry,
     set_translational_invariance,
@@ -315,7 +314,7 @@ class Phono3py:
         warn_if_primitive_matrix_auto_changed_cell(
             primitive_matrix, self._primitive_matrix
         )
-        self._nac_params: dict | None = None
+        self._nac_params: NacParams | None = None
         if phonon_supercell_matrix is not None:
             self._phonon_supercell_matrix = np.array(
                 shape_supercell_matrix(phonon_supercell_matrix),
@@ -524,7 +523,7 @@ class Phono3py:
         self._sigma_cutoff = sigma_cutoff
 
     @property
-    def nac_params(self) -> dict[str, Any] | None:
+    def nac_params(self) -> NacParams | None:
         """Setter and getter of parameters for non-analytical term correction.
 
         The dict has the following keys::
@@ -545,7 +544,7 @@ class Phono3py:
         return self._nac_params
 
     @nac_params.setter
-    def nac_params(self, nac_params: dict[str, Any] | None) -> None:
+    def nac_params(self, nac_params: NacParams | None) -> None:
         self._nac_params = nac_params
         if self._interaction is not None:
             self._init_dynamical_matrix()
@@ -1187,6 +1186,9 @@ class Phono3py:
         symmetrize_fc3q: bool = False,
         lapack_zheev_uplo: Literal["L", "U"] | None = None,
         openmp_per_triplets: bool | None = None,
+        symmetrize_tetrahedra: bool = False,
+        exclude_gamma_acoustic: bool = False,
+        average_degenerate_weights: bool = False,
     ) -> None:
         """Initialize ph-ph interaction calculation.
 
@@ -1230,6 +1232,26 @@ class Phono3py:
             When `True`, ph-ph interaction strength calculation runs with
             OpenMP distribution over triplets, and over bands when `False`.
             `None` will choose one of them automatically.
+        symmetrize_tetrahedra : bool, optional
+            When True, the integration weights of the tetrahedron method are
+            averaged over the 24 tetrahedra rotated by all the point-group
+            operations. The 24 tetrahedra are cut along one main diagonal, so
+            the weights can differ between symmetrically equivalent q-points.
+            Averaging removes the difference. Isotope scattering in the
+            thermal conductivity follows this choice. Default is False.
+        exclude_gamma_acoustic : bool, optional
+            When True, the frequencies of the three modes at Gamma with the
+            smallest absolute values are set to zero after the phonons are
+            solved. The acoustic modes at Gamma are then zero on every
+            platform, instead of small nonzero values from rounding.
+            Isotope scattering in the thermal conductivity follows this
+            choice. Default is False.
+        average_degenerate_weights : bool, optional
+            When True, the integration weights of the tetrahedron method are
+            averaged over the degenerate bands at q' and at q'' of each
+            triplet. Without the average, the imaginary part of the
+            self-energy and the collision matrix depend on the choice of
+            eigenvectors in the degenerate subspaces. Default is False.
 
         """
         if self._bz_grid is None:
@@ -1266,6 +1288,9 @@ class Phono3py:
             make_r0_average=self._make_r0_average,
             lapack_zheev_uplo=_lapack_zheev_uplo,
             openmp_per_triplets=openmp_per_triplets,
+            symmetrize_tetrahedra=symmetrize_tetrahedra,
+            exclude_gamma_acoustic=exclude_gamma_acoustic,
+            average_degenerate_weights=average_degenerate_weights,
             lang=self._lang,
         )
         self._interaction.nac_q_direction = nac_q_direction
@@ -1339,7 +1364,9 @@ class Phono3py:
 
         """
         if self._interaction is not None:
-            freqs, eigvecs, _ = self._interaction.get_phonons()
+            assert self._interaction.phonons is not None
+            freqs = self._interaction.phonons.frequencies
+            eigvecs = self._interaction.phonons.eigenvectors
             # In Phono3py, if self._interaction is not None, phonon data should be set.
             assert freqs is not None and eigvecs is not None
             return freqs, eigvecs, self._interaction.bz_grid.addresses

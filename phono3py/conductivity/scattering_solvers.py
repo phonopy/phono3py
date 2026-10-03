@@ -8,6 +8,7 @@ from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
+from phonopy.phonon.tetrahedron_method import get_tetrahedra_relative_gr_grid_address
 from phonopy.physical_units import get_physical_units
 
 from phono3py._lang import resolve_lang
@@ -44,12 +45,15 @@ def run_pp_collision_rust(
     make_r0_average: bool,
     all_shortest: NDArray[np.byte],
     cutoff_frequency: float,
+    degenerate_ids: NDArray[np.int64] | None = None,
 ) -> None:
     """Compute low-memory collision with the tetrahedron method (Rust).
 
     Drop-in replacement for ``phono3c.pp_collision``.  Writes into
     ``collisions`` in place; the shape is ``(num_temps, num_band0)`` or
-    ``(2, num_temps, num_band0)`` when ``is_N_U`` is True.
+    ``(2, num_temps, num_band0)`` when ``is_N_U`` is True.  When
+    ``degenerate_ids`` (see ``PhononData.degenerate_ids``) is given, the
+    integration weights are averaged over degenerate bands.
 
     """
     import phonors
@@ -83,6 +87,7 @@ def run_pp_collision_rust(
         np.ascontiguousarray(all_shortest, dtype="byte"),
         float(cutoff_frequency),
         is_compact_fc3,
+        **_degenerate_ids_kwargs(degenerate_ids),
     )
 
 
@@ -186,6 +191,7 @@ def run_collision_at_grid_points_batched_rust(
     make_r0_average: bool,
     all_shortest: NDArray[np.byte],
     cutoff_frequency: float,
+    degenerate_ids: NDArray[np.int64] | None = None,
 ) -> None:
     """Compute gamma for a batch of grid points in one Rust call.
 
@@ -243,6 +249,7 @@ def run_collision_at_grid_points_batched_rust(
         np.ascontiguousarray(all_shortest, dtype="byte"),
         float(cutoff_frequency),
         is_compact_fc3,
+        **_degenerate_ids_kwargs(degenerate_ids),
     )
 
 
@@ -280,6 +287,7 @@ def run_collision_at_grid_point_rust(
     make_r0_average: bool,
     all_shortest: NDArray[np.byte],
     cutoff_frequency: float,
+    degenerate_ids: NDArray[np.int64] | None = None,
 ) -> None:
     """Compute gamma for one grid point with multiple sigmas (Rust).
 
@@ -333,7 +341,22 @@ def run_collision_at_grid_point_rust(
         np.ascontiguousarray(all_shortest, dtype="byte"),
         float(cutoff_frequency),
         is_compact_fc3,
+        **_degenerate_ids_kwargs(degenerate_ids),
     )
+
+
+def _degenerate_ids_kwargs(
+    degenerate_ids: NDArray[np.int64] | None,
+) -> dict[str, NDArray[np.int64]]:
+    """Return degenerate_ids as a keyword argument to phonors when given.
+
+    Nothing is passed when degenerate_ids is None, so that a phonors without
+    this argument works as before.
+
+    """
+    if degenerate_ids is None:
+        return {}
+    return {"degenerate_ids": np.ascontiguousarray(degenerate_ids, dtype="int64")}
 
 
 class RTAScatteringSolver:
@@ -609,14 +632,10 @@ class RTAScatteringSolver:
             dtype="double",
         )
 
-        tetrahedra: NDArray[np.int64] | None = None
+        relative_grid_address: NDArray[np.int64] | None = None
         if None in self._sigmas:
-            from phonopy.phonon.tetrahedron_method import (
-                get_tetrahedra_relative_grid_address,
-            )
-
-            tetrahedra = get_tetrahedra_relative_grid_address(
-                self._pp.bz_grid.microzone_lattice
+            relative_grid_address = get_tetrahedra_relative_gr_grid_address(
+                self._pp.bz_grid, self._pp.symmetrize_tetrahedra
             )
 
         if self._pp.openmp_per_triplets is None:
@@ -630,7 +649,7 @@ class RTAScatteringSolver:
             collisions = self._dispatch_lowmem_collision(
                 sigma,
                 temperatures_THz,
-                tetrahedra,
+                relative_grid_address,
                 openmp_per_triplets,
             )
             self._store_lowmem_results(j, grid_point, gamma, collisions)
@@ -639,7 +658,7 @@ class RTAScatteringSolver:
         self,
         sigma: float | None,
         temperatures_THz: NDArray[np.double],
-        tetrahedra: NDArray[np.int64] | None,
+        relative_grid_address: NDArray[np.int64] | None,
         openmp_per_triplets: bool,
     ) -> NDArray[np.double]:
         """Call C-extension for low-memory collision at one sigma."""
@@ -652,7 +671,10 @@ class RTAScatteringSolver:
         assert triplets_at_q is not None
         assert weights_at_q is not None
 
-        frequencies, eigenvectors, _ = self._pp.get_phonons()
+        assert self._pp.phonons is not None
+        frequencies = self._pp.phonons.frequencies
+
+        eigenvectors = self._pp.phonons.eigenvectors
         assert frequencies is not None
         assert eigenvectors is not None
 
@@ -672,12 +694,7 @@ class RTAScatteringSolver:
         self._collision.set_sigma(sigma)
 
         if sigma is None:
-            assert tetrahedra is not None
-            relative_grid_address = np.array(
-                np.dot(tetrahedra, self._pp.bz_grid.P.T),
-                dtype="int64",
-                order="C",
-            )
+            assert relative_grid_address is not None
             if self._lang == "Rust":
                 run_pp_collision_rust(
                     collisions,
@@ -705,10 +722,23 @@ class RTAScatteringSolver:
                     self._pp.make_r0_average,
                     self._pp.all_shortest,
                     self._pp.cutoff_frequency,
+                    degenerate_ids=(
+                        self._pp.phonons.degenerate_ids
+                        if self._pp.average_degenerate_weights
+                        else None
+                    ),
                 )
             else:
                 import phono3py._phono3py as phono3c
 
+                if self._pp.symmetrize_tetrahedra:
+                    raise RuntimeError(
+                        "symmetrize_tetrahedra is not supported with lang='C'."
+                    )
+                if self._pp.average_degenerate_weights:
+                    raise RuntimeError(
+                        "average_degenerate_weights is not supported with lang='C'."
+                    )
                 phono3c.pp_collision(
                     collisions,
                     relative_grid_address,
@@ -810,7 +840,8 @@ class RTAScatteringSolver:
         col_unit_conv = self._collision.unit_conversion_factor
         pp_unit_conv = self._pp.unit_conversion_factor
         band_indices = self._pp.band_indices
-        frequencies, _, _ = self._pp.get_phonons()
+        assert self._pp.phonons is not None
+        frequencies = self._pp.phonons.frequencies
         freq_at_gp = frequencies[grid_point]
 
         if self._is_N_U:
@@ -911,6 +942,7 @@ class RTAScatteringSolver:
             cache["make_r0_average"],
             cache["all_shortest"],
             cache["cutoff_frequency"],
+            degenerate_ids=cache["degenerate_ids"],
         )
 
         for j in range(num_sigma):
@@ -1019,6 +1051,7 @@ class RTAScatteringSolver:
             cache["make_r0_average"],
             cache["all_shortest"],
             cache["cutoff_frequency"],
+            degenerate_ids=cache["degenerate_ids"],
         )
 
         out: list[dict] = []
@@ -1053,19 +1086,17 @@ class RTAScatteringSolver:
             return self._rust_cache
 
         from phonopy.phonon.grid import get_reduced_bases_and_tmat_inv
-        from phonopy.phonon.tetrahedron_method import (
-            get_tetrahedra_relative_grid_address,
-        )
 
         pp = self._pp
         svecs, multi = pp.primitive.get_smallest_vectors()
-        frequencies, eigenvectors, _ = pp.get_phonons()
+        assert pp.phonons is not None
+        frequencies = pp.phonons.frequencies
+        eigenvectors = pp.phonons.eigenvectors
         assert frequencies is not None
         assert eigenvectors is not None
 
-        tetrahedra = get_tetrahedra_relative_grid_address(pp.bz_grid.microzone_lattice)
-        relative_grid_address = np.array(
-            np.dot(tetrahedra, pp.bz_grid.P.T), dtype="int64", order="C"
+        relative_grid_address = get_tetrahedra_relative_gr_grid_address(
+            pp.bz_grid, pp.symmetrize_tetrahedra
         )
 
         reduced_basis, tmat_inv_int = get_reduced_bases_and_tmat_inv(
@@ -1126,6 +1157,9 @@ class RTAScatteringSolver:
             "make_r0_average": bool(pp.make_r0_average),
             "all_shortest": np.ascontiguousarray(pp.all_shortest, dtype="byte"),
             "cutoff_frequency": float(pp.cutoff_frequency),
+            "degenerate_ids": (
+                pp.phonons.degenerate_ids if pp.average_degenerate_weights else None
+            ),
         }
         return self._rust_cache
 

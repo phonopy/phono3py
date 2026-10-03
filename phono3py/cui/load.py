@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import os
 import pathlib
+import typing
 import warnings
 from collections.abc import Sequence
 from typing import Literal, cast
@@ -46,6 +47,7 @@ import phonopy.cui.load_helper as load_helper
 from numpy.typing import NDArray
 from phonopy.file_IO import get_supported_file_extensions_for_compression
 from phonopy.harmonic.displacement import DisplacementDataset
+from phonopy.harmonic.dynamical_matrix import NacParams
 from phonopy.harmonic.force_constants import show_drift_force_constants
 from phonopy.interface.calculator import get_calculator_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
@@ -72,6 +74,7 @@ from phono3py.phonon3.fc3 import show_drift_fc3
 def load(
     phono3py_yaml: str
     | os.PathLike
+    | typing.IO
     | None = None,  # phono3py.yaml-like must be the first argument.
     supercell_matrix: Sequence[int]
     | Sequence[Sequence[int]]
@@ -89,7 +92,7 @@ def load(
     calculator: str | None = None,
     unitcell: PhonopyAtoms | None = None,
     supercell: PhonopyAtoms | None = None,
-    nac_params: dict | None = None,
+    nac_params: NacParams | None = None,
     unitcell_filename: str | os.PathLike | None = None,
     supercell_filename: str | os.PathLike | None = None,
     born_filename: str | os.PathLike | None = None,
@@ -163,9 +166,9 @@ def load(
 
     Parameters
     ----------
-    phono3py_yaml : str or os.PathLike, optional
-        Path to a ``"phono3py.yaml"``-like file. When given, the
-        contents are parsed. Default is ``None``.
+    phono3py_yaml : str, os.PathLike, typing.IO, optional
+        Path to a ``"phono3py.yaml"``-like file, or a file-pointer-like
+        object. When given, the contents are parsed. Default is ``None``.
     supercell_matrix : array_like, optional
         Transformation matrix to the supercell from the unit cell.
         ``shape=(3,)`` or ``(3, 3)``, ``dtype=int``. A 1D array is
@@ -202,7 +205,7 @@ def load(
         Input supercell. When given, ``primitive_matrix`` defaults to
         ``"auto"`` (can be overwritten) and ``supercell_matrix`` is
         ignored. Default is ``None``.
-    nac_params : dict, optional
+    nac_params : NacParams, optional
         Parameters for non-analytical term correction::
 
             'born':       Born effective charges,
@@ -294,6 +297,10 @@ def load(
 
     """
     lang = resolve_lang(lang)
+    # A file-pointer-like phono3py_yaml has no name to report in a log.
+    _yaml_filename = (
+        phono3py_yaml if isinstance(phono3py_yaml, (str, os.PathLike)) else None
+    )
     if primitive_matrix is None:
         primitive_matrix = "auto"
     if (
@@ -324,6 +331,7 @@ def load(
         else:
             ph_smat = None
         _nac_params = nac_params
+        _nac_params_source = None
         ph3py_yaml = None
     elif phono3py_yaml is not None:
         ph3py_yaml = Phono3pyYaml()
@@ -343,10 +351,13 @@ def load(
         else:
             pmat = primitive_matrix
 
+        _nac_params_source = None
         if nac_params is not None:
             _nac_params = nac_params
         elif is_nac:
             _nac_params = ph3py_yaml.nac_params
+            if _nac_params is not None and _yaml_filename is not None:
+                _nac_params_source = str(_yaml_filename)
         else:
             _nac_params = None
 
@@ -381,11 +392,12 @@ def load(
     # NAC params
     if born_filename is not None or _nac_params is not None or is_nac:
         ph3py.nac_params = load_helper.get_nac_params(
-            ph3py.primitive,
-            _nac_params,
-            born_filename,
-            is_nac,
-            physical_units.nac_factor,
+            primitive=ph3py.primitive,
+            nac_params=_nac_params,
+            nac_params_source=_nac_params_source,
+            born_filename=born_filename,
+            is_nac=is_nac,
+            nac_factor=physical_units.nac_factor,
             log_level=log_level,
         )
 
@@ -397,7 +409,7 @@ def load(
         ph3py,
         ph3py_yaml=ph3py_yaml,
         forces_fc3_filename=forces_fc3_filename,
-        phono3py_yaml_filename=phono3py_yaml,
+        phono3py_yaml_filename=_yaml_filename,
         calculator=_calculator,
         log_level=log_level,
     )
