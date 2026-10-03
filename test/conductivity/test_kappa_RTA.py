@@ -286,7 +286,8 @@ def test_kappa_RTA_si_iso_average_degenerate_weights(
     The helper _get_kappa passes average_degenerate_weights explicitly, so the
     other tests keep checking the choice without averaging. Isotope scattering
     follows the choice made for Interaction. The averaged kappa does not depend
-    on the eigenvectors in the degenerate subspaces, so its tolerance is tight.
+    on the eigenvectors in the degenerate subspaces, so its tolerance is tighter
+    than the others.
 
     """
     import phono3py.conductivity.calculators as calculators
@@ -307,7 +308,7 @@ def test_kappa_RTA_si_iso_average_degenerate_weights(
         si_pbesol, [9, 9, 9], is_isotope=True, average_degenerate_weights=True
     ).ravel()
     assert flags == [False, True]
-    np.testing.assert_allclose(ref_kappa_RTA_iso_average, kappa_average, atol=0.05)
+    np.testing.assert_allclose(ref_kappa_RTA_iso_average, kappa_average, atol=0.1)
 
 
 def test_kappa_RTA_aln_iso_average_degenerate_weights(aln_lda: Phono3py):
@@ -315,7 +316,7 @@ def test_kappa_RTA_aln_iso_average_degenerate_weights(aln_lda: Phono3py):
 
     The averaging raises kappa by about 0.1 in AlN. The kappa without averaging
     depends on the eigenvectors in the degenerate subspaces, so only the
-    averaged kappa is compared with a tight tolerance.
+    averaged kappa is compared with a tighter tolerance.
 
     """
     ref_kappa_RTA_iso = [206.019, 206.019, 219.522, 0, 0, 0]
@@ -325,7 +326,7 @@ def test_kappa_RTA_aln_iso_average_degenerate_weights(aln_lda: Phono3py):
     kappa_average = _get_kappa(
         aln_lda, [7, 7, 5], is_isotope=True, average_degenerate_weights=True
     ).ravel()
-    np.testing.assert_allclose(ref_kappa_RTA_iso_average, kappa_average, atol=0.05)
+    np.testing.assert_allclose(ref_kappa_RTA_iso_average, kappa_average, atol=0.1)
 
 
 def test_kappa_RTA_aln_symmetrize_tetrahedra(

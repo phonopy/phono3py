@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Sequence
 from typing import Literal
 
@@ -495,6 +496,31 @@ class Interaction:
 
         """
         return self._g_zero
+
+    def get_phonons(
+        self,
+    ) -> tuple[
+        NDArray[np.double] | None, NDArray[np.cdouble] | None, NDArray[np.byte] | None
+    ]:
+        """Return frequencies, eigenvectors and phonon_done on grid.
+
+        This method is deprecated and will be removed in v5.0. Use the
+        ``phonons`` property.
+
+        """
+        warnings.warn(
+            "get_phonons() is deprecated and will be removed in v5.0. "
+            "Use the phonons property.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if self._phonons is None:
+            return None, None, None
+        return (
+            self._phonons.frequencies,
+            self._phonons.eigenvectors,
+            self._phonons.phonon_done,
+        )
 
     @property
     def phonons(self) -> PhononData | None:

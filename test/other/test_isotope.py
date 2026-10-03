@@ -275,6 +275,34 @@ def test_Isotope_python_matches_rust(
         )
 
 
+def test_Isotope_get_phonons_and_set_phonons_deprecated(si_pbesol):
+    """get_phonons and set_phonons of arrays are deprecated but still work."""
+    iso = _run_isotope(si_pbesol, "Rust", False, 10)
+    with pytest.warns(DeprecationWarning, match="get_phonons"):
+        frequencies, eigenvectors, phonon_done = iso.get_phonons()
+    assert frequencies is iso.phonons.frequencies
+
+    iso_old = Isotope(
+        [6, 6, 6],
+        si_pbesol.phonon_primitive,
+        symprec=si_pbesol.symmetry.tolerance,
+        exclude_gamma_acoustic=True,
+    )
+    iso_old.init_dynamical_matrix(
+        si_pbesol.fc2,
+        si_pbesol.phonon_supercell,
+        si_pbesol.phonon_primitive,
+        nac_params=si_pbesol.nac_params,
+    )
+    with pytest.warns(DeprecationWarning, match="set_phonons"):
+        iso_old.set_phonons(frequencies.copy(), eigenvectors.copy(), phonon_done.copy())
+    iso_old.set_grid_point(10)
+    iso_old.run()
+    np.testing.assert_allclose(iso_old.gamma, iso.gamma, rtol=1e-10, atol=1e-16)
+    with pytest.raises(TypeError):
+        iso_old.set_phonons(frequencies)
+
+
 def _rotate_degenerate_eigenvectors(frequencies, eigenvectors, seed=0):
     """Mix eigenvectors randomly within each degenerate set of bands."""
     rng = np.random.default_rng(seed)

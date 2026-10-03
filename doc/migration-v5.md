@@ -77,16 +77,15 @@ From Python, pass `average_degenerate_weights=True` to
 `--no-average-degenerate-weights`, `AVERAGE_DEGENERATE_WEIGHTS = .FALSE.` or
 `average_degenerate_weights=False`.
 
-## Removed API: `get_phonons` and the old `set_phonons`
+## Deprecated API: `get_phonons` and the old `set_phonons`
 
 `Interaction.get_phonons()`, `JointDos.get_phonons()` and `Isotope.get_phonons()`
-returned the tuple of frequencies, eigenvectors and `phonon_done`. They are
-removed in v5.0. Instead, the `phonons` property of `Interaction`, `JointDos` and
-`Isotope` returns a `phono3py.phonon.solver.PhononData` instance whose
-attributes are `frequencies`, `eigenvectors`, `phonon_done` and
-`degenerate_ids`. The arrays are those used in the instance, not copies.
-`Interaction.degenerate_ids` is removed as well and is now
-`Interaction.phonons.degenerate_ids`.
+return the tuple of frequencies, eigenvectors and `phonon_done`. They emit a
+`DeprecationWarning` and will be removed in v5.0. Instead, the `phonons`
+property of `Interaction`, `JointDos` and `Isotope` returns a
+`phono3py.phonon.solver.PhononData` instance whose attributes are
+`frequencies`, `eigenvectors`, `phonon_done` and `degenerate_ids`. The arrays
+are those used in the instance, not copies.
 
 ```python
 # v4.x
@@ -99,9 +98,10 @@ eigenvectors = phonons.eigenvectors
 phonon_done = phonons.phonon_done
 ```
 
+Passing frequencies, eigenvectors and `phonon_done` to
 `Isotope.set_phonons(frequencies, eigenvectors, phonon_done, dm=None)` is
-replaced by `Isotope.set_phonons(phonons, dm=None)`, which takes a `PhononData`
-instance.
+deprecated in the same way. Pass a `PhononData` instance,
+`Isotope.set_phonons(phonons, dm=None)`. Pass `dm` by keyword.
 
 ## Getting all the v5.0 defaults now
 

@@ -416,6 +416,18 @@ def test_jdos_nacl_nac_gamma_at_300K_npoints(nacl_pbe: Phono3py):
     )
 
 
+def test_jdos_get_phonons_deprecated(si_pbesol: Phono3py):
+    """Test that get_phonons is deprecated and returns the phonons property."""
+    jdos = _get_jdos(si_pbesol, [7, 7, 7])
+    jdos.set_grid_point(1)
+    with pytest.warns(DeprecationWarning, match="get_phonons"):
+        frequencies, eigenvectors, phonon_done = jdos.get_phonons()
+    assert jdos.phonons is not None
+    assert frequencies is jdos.phonons.frequencies
+    assert eigenvectors is jdos.phonons.eigenvectors
+    assert phonon_done is jdos.phonons.phonon_done
+
+
 def test_jdos_nac_direction_phonon_NaCl(nacl_pbe: Phono3py):
     """Test JDOS of NaCl with nac_q_direction."""
     jdos = _get_jdos(

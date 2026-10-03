@@ -699,9 +699,17 @@ degenerate modes at the latter are averaged as well.
 The averaged weights are used for the imaginary part of the self energy, the
 isotope scattering and the thermal conductivity. The joint density of states
 does not use this option. With `--sigma`, the option has no effect,
-because the Gaussian function gives degenerate modes the same weight. The
-option is off by default, and `--no-average-degenerate-weights` turns it off
-explicitly.
+because the Gaussian function gives degenerate modes the same weight.
+
+For the isotope scattering, use this option together with
+{ref}`--exclude-gamma-acoustic <exclude_gamma_acoustic_option>`. Without it,
+the three acoustic modes at the Gamma point have small nonzero frequencies, and
+the modes with frequencies below the cutoff frequency are left out. Which modes
+are left out depends on the eigenvectors.
+
+The option is recommended for new calculations. It is off by default, and
+`--no-average-degenerate-weights` turns it off explicitly. It will be on by
+default in v5.0, see {ref}`migration_v5`.
 
 (sigma_option)=
 

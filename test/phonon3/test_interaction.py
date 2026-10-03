@@ -123,6 +123,18 @@ def test_interaction_RTA_AlN(aln_lda: Phono3py):
     )
 
 
+def test_interaction_get_phonons_deprecated(si_pbesol: Phono3py):
+    """Test that get_phonons is deprecated and returns the phonons property."""
+    itr = _get_irt(si_pbesol, [7, 7, 7])
+    itr.set_grid_point(1)
+    with pytest.warns(DeprecationWarning, match="get_phonons"):
+        frequencies, eigenvectors, phonon_done = itr.get_phonons()
+    assert itr.phonons is not None
+    assert frequencies is itr.phonons.frequencies
+    assert eigenvectors is itr.phonons.eigenvectors
+    assert phonon_done is itr.phonons.phonon_done
+
+
 def test_interaction_nac_direction_phonon_NaCl(nacl_pbe: Phono3py):
     """Test interaction_strength of NaCl with nac_q_direction."""
     itr = _get_irt(nacl_pbe, [7, 7, 7], nac_params=nacl_pbe.nac_params)
