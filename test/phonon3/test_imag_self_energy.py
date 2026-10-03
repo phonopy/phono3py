@@ -1184,7 +1184,8 @@ def test_imag_self_energy_average_degenerate_weights(
     assert itr is not None
     assert si_pbesol.grid is not None
     itr.run_phonon_solver()
-    frequencies, eigenvectors, _ = itr.get_phonons()
+    frequencies = itr.phonons.frequencies
+    eigenvectors = itr.phonons.eigenvectors
     assert frequencies is not None
     assert eigenvectors is not None
     grid_point = int(si_pbesol.grid.grg2bzg[1])

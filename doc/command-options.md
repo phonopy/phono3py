@@ -689,9 +689,16 @@ degenerate modes at $\mathbf{q}'$ and over each set at $\mathbf{q}''$. The
 imaginary part of the self energy then does not depend on the choice of
 eigenvectors at $\mathbf{q}'$ and $\mathbf{q}''$.
 
-The averaged weights are used for the imaginary part of the self energy and
-the thermal conductivity. The joint density of states and the isotope
-scattering do not use this option. With `--sigma`, the option has no effect,
+The isotope scattering rate is a sum over the modes at $\mathbf{q}'$ of the
+overlap of the eigenvectors multiplied by an integration weight, and has the
+same dependence. With this option, the integration weights are averaged over
+each set of degenerate modes at $\mathbf{q}'$ and over each set of degenerate
+modes at the phonon mode of interest. The isotope scattering rates of the
+degenerate modes at the latter are averaged as well.
+
+The averaged weights are used for the imaginary part of the self energy, the
+isotope scattering and the thermal conductivity. The joint density of states
+does not use this option. With `--sigma`, the option has no effect,
 because the Gaussian function gives degenerate modes the same weight. The
 option is off by default, and `--no-average-degenerate-weights` turns it off
 explicitly.

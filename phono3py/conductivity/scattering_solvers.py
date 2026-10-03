@@ -52,7 +52,7 @@ def run_pp_collision_rust(
     Drop-in replacement for ``phono3c.pp_collision``.  Writes into
     ``collisions`` in place; the shape is ``(num_temps, num_band0)`` or
     ``(2, num_temps, num_band0)`` when ``is_N_U`` is True.  When
-    ``degenerate_ids`` (see ``Interaction.degenerate_ids``) is given, the
+    ``degenerate_ids`` (see ``PhononData.degenerate_ids``) is given, the
     integration weights are averaged over degenerate bands.
 
     """
@@ -671,7 +671,10 @@ class RTAScatteringSolver:
         assert triplets_at_q is not None
         assert weights_at_q is not None
 
-        frequencies, eigenvectors, _ = self._pp.get_phonons()
+        assert self._pp.phonons is not None
+        frequencies = self._pp.phonons.frequencies
+
+        eigenvectors = self._pp.phonons.eigenvectors
         assert frequencies is not None
         assert eigenvectors is not None
 
@@ -720,7 +723,7 @@ class RTAScatteringSolver:
                     self._pp.all_shortest,
                     self._pp.cutoff_frequency,
                     degenerate_ids=(
-                        self._pp.degenerate_ids
+                        self._pp.phonons.degenerate_ids
                         if self._pp.average_degenerate_weights
                         else None
                     ),
@@ -837,7 +840,8 @@ class RTAScatteringSolver:
         col_unit_conv = self._collision.unit_conversion_factor
         pp_unit_conv = self._pp.unit_conversion_factor
         band_indices = self._pp.band_indices
-        frequencies, _, _ = self._pp.get_phonons()
+        assert self._pp.phonons is not None
+        frequencies = self._pp.phonons.frequencies
         freq_at_gp = frequencies[grid_point]
 
         if self._is_N_U:
@@ -1085,7 +1089,9 @@ class RTAScatteringSolver:
 
         pp = self._pp
         svecs, multi = pp.primitive.get_smallest_vectors()
-        frequencies, eigenvectors, _ = pp.get_phonons()
+        assert pp.phonons is not None
+        frequencies = pp.phonons.frequencies
+        eigenvectors = pp.phonons.eigenvectors
         assert frequencies is not None
         assert eigenvectors is not None
 
@@ -1152,7 +1158,7 @@ class RTAScatteringSolver:
             "all_shortest": np.ascontiguousarray(pp.all_shortest, dtype="byte"),
             "cutoff_frequency": float(pp.cutoff_frequency),
             "degenerate_ids": (
-                pp.degenerate_ids if pp.average_degenerate_weights else None
+                pp.phonons.degenerate_ids if pp.average_degenerate_weights else None
             ),
         }
         return self._rust_cache

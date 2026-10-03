@@ -333,7 +333,8 @@ class Phono3pyJointDos:
             print("Running harmonic phonon calculations...", flush=True)
 
         self._jdos.run_phonon_solver()
-        frequencies, _, _ = self._jdos.get_phonons()
+        assert self._jdos.phonons is not None
+        frequencies = self._jdos.phonons.frequencies
         assert frequencies is not None
         self._jdos.run_phonon_solver_at_gamma()
         max_phonon_freq = np.max(frequencies)
@@ -380,7 +381,7 @@ class Phono3pyJointDos:
                 assert weights is not None
                 print("Number of triplets: %d" % len(weights))
                 print("Frequency")
-                _freqs = self._jdos.get_phonons()[0]
+                _freqs = self._jdos.phonons.frequencies
                 assert _freqs is not None
                 for f in _freqs[gp]:
                     print("%8.3f" % f)

@@ -135,7 +135,8 @@ def run_spectral_function(
     assert temperatures is not None
     assert band_indices is not None
     for i, gp in enumerate(spf):
-        frequencies = interaction.get_phonons()[0]
+        assert interaction.phonons is not None
+        frequencies = interaction.phonons.frequencies
         assert frequencies is not None
         assert spf.spectral_functions is not None
         for sigma_i, sigma in enumerate(spf.sigmas):
@@ -391,7 +392,8 @@ class SpectralFunction:
         assert self._gammas is not None
         assert self._deltas is not None
         assert self._spectral_functions is not None
-        frequencies = self._pp.get_phonons()[0]
+        assert self._pp.phonons is not None
+        frequencies = self._pp.phonons.frequencies
         assert frequencies is not None
         for j, _ in enumerate(self._temperatures):
             for k, bi in enumerate(self._pp.band_indices):
@@ -417,7 +419,8 @@ class SpectralFunction:
         return vals
 
     def _set_frequency_points(self) -> None:
-        phonon_done = self._pp.get_phonons()[2]
+        assert self._pp.phonons is not None
+        phonon_done = self._pp.phonons.phonon_done
         assert phonon_done is not None
         if (phonon_done == 0).any():
             if self._log_level:
@@ -426,7 +429,7 @@ class SpectralFunction:
 
         # Set phonon at Gamma without NAC for finding max_phonon_freq.
         self._pp.run_phonon_solver_at_gamma()
-        phonons = self._pp.get_phonons()[0]
+        phonons = self._pp.phonons.frequencies
         assert phonons is not None
         max_phonon_freq = np.amax(phonons)
         self._pp.run_phonon_solver_at_gamma(is_nac=True)

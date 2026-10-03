@@ -278,6 +278,56 @@ def test_kappa_RTA_si_exclude_gamma_acoustic(
     np.testing.assert_allclose(kappa_exclude, kappa, atol=1e-6)
 
 
+def test_kappa_RTA_si_iso_average_degenerate_weights(
+    si_pbesol: Phono3py, monkeypatch: pytest.MonkeyPatch
+):
+    """Test RTA with tetrahedron weights averaged over degenerate bands by Si.
+
+    The helper _get_kappa passes average_degenerate_weights explicitly, so the
+    other tests keep checking the choice without averaging. Isotope scattering
+    follows the choice made for Interaction. The averaged kappa does not depend
+    on the eigenvectors in the degenerate subspaces, so its tolerance is tight.
+
+    """
+    import phono3py.conductivity.calculators as calculators
+
+    flags = []
+    isotope_class = calculators.Isotope
+
+    def _isotope(*args, **kwargs):
+        flags.append(kwargs["average_degenerate_weights"])
+        return isotope_class(*args, **kwargs)
+
+    monkeypatch.setattr(calculators, "Isotope", _isotope)
+    ref_kappa_RTA_iso = [97.296, 97.296, 97.296, 0, 0, 0]
+    kappa = _get_kappa(si_pbesol, [9, 9, 9], is_isotope=True).ravel()
+    np.testing.assert_allclose(ref_kappa_RTA_iso, kappa, atol=0.5)
+    ref_kappa_RTA_iso_average = [96.895, 96.895, 96.895, 0, 0, 0]
+    kappa_average = _get_kappa(
+        si_pbesol, [9, 9, 9], is_isotope=True, average_degenerate_weights=True
+    ).ravel()
+    assert flags == [False, True]
+    np.testing.assert_allclose(ref_kappa_RTA_iso_average, kappa_average, atol=0.05)
+
+
+def test_kappa_RTA_aln_iso_average_degenerate_weights(aln_lda: Phono3py):
+    """Test RTA with tetrahedron weights averaged over degenerate bands by AlN.
+
+    The averaging raises kappa by about 0.1 in AlN. The kappa without averaging
+    depends on the eigenvectors in the degenerate subspaces, so only the
+    averaged kappa is compared with a tight tolerance.
+
+    """
+    ref_kappa_RTA_iso = [206.019, 206.019, 219.522, 0, 0, 0]
+    ref_kappa_RTA_iso_average = [206.122, 206.122, 219.594, 0, 0, 0]
+    kappa = _get_kappa(aln_lda, [7, 7, 5], is_isotope=True).ravel()
+    np.testing.assert_allclose(ref_kappa_RTA_iso, kappa, atol=0.5)
+    kappa_average = _get_kappa(
+        aln_lda, [7, 7, 5], is_isotope=True, average_degenerate_weights=True
+    ).ravel()
+    np.testing.assert_allclose(ref_kappa_RTA_iso_average, kappa_average, atol=0.05)
+
+
 def test_kappa_RTA_aln_symmetrize_tetrahedra(
     aln_lda: Phono3py, monkeypatch: pytest.MonkeyPatch
 ):
@@ -357,12 +407,14 @@ def _get_kappa(
     transport_type=None,
     symmetrize_tetrahedra=False,
     exclude_gamma_acoustic=False,
+    average_degenerate_weights=False,
 ):
     ph3.mesh_numbers = mesh
     ph3.init_phph_interaction(
         openmp_per_triplets=openmp_per_triplets,
         symmetrize_tetrahedra=symmetrize_tetrahedra,
         exclude_gamma_acoustic=exclude_gamma_acoustic,
+        average_degenerate_weights=average_degenerate_weights,
     )
     ph3.run_thermal_conductivity(
         temperatures=[

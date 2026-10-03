@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 from collections.abc import Sequence
 from typing import Literal
 
@@ -15,6 +16,59 @@ from phonopy.harmonic.dynamical_matrix import (
 )
 from phonopy.phonon.degeneracy import get_degenerate_ids
 from phonopy.physical_units import get_physical_units
+
+
+@dataclasses.dataclass
+class PhononData:
+    """Phonons on the BZ grid.
+
+    The arrays are shared by reference when a PhononData instance is passed
+    between objects, e.g., from Interaction to Isotope.
+
+    Attributes
+    ----------
+    frequencies : ndarray
+        Phonon frequencies in THz (or the unit given by the frequency
+        conversion factor). shape=(bz_grid_points, num_band), dtype='double'
+    eigenvectors : ndarray
+        Phonon eigenvectors. The columns are the eigenvectors.
+        shape=(bz_grid_points, num_band, num_band), dtype='cdouble'
+    phonon_done : ndarray
+        1 at the grid points where the phonons have been calculated, otherwise
+        0. shape=(bz_grid_points,), dtype='byte'
+    degenerate_ids : ndarray
+        Smallest band index in the degenerate set of each band, see phonopy's
+        get_degenerate_ids. Bands i and j at a grid point are degenerate when
+        their elements are equal. It is updated by the phonon solvers at the
+        solved grid points. shape=(bz_grid_points, num_band), dtype='int64'
+
+    """
+
+    frequencies: NDArray[np.double]
+    eigenvectors: NDArray[np.cdouble]
+    phonon_done: NDArray[np.byte]
+    degenerate_ids: NDArray[np.int64]
+
+    def copy(self) -> PhononData:
+        """Return PhononData with copies of the arrays."""
+        return PhononData(
+            frequencies=self.frequencies.copy(),
+            eigenvectors=self.eigenvectors.copy(),
+            phonon_done=self.phonon_done.copy(),
+            degenerate_ids=self.degenerate_ids.copy(),
+        )
+
+    @classmethod
+    def allocate(cls, num_grid: int, num_band: int) -> PhononData:
+        """Return PhononData with zero-filled arrays."""
+        return cls(
+            frequencies=np.zeros((num_grid, num_band), dtype="double", order="C"),
+            eigenvectors=np.zeros(
+                (num_grid, num_band, num_band), dtype="cdouble", order="C"
+            ),
+            phonon_done=np.zeros(num_grid, dtype="byte"),
+            degenerate_ids=np.zeros((num_grid, num_band), dtype="int64"),
+        )
 
 
 def run_phonon_solver_c(
@@ -46,7 +100,7 @@ def run_phonon_solver_c(
     dm : DynamicalMatrix
         DynamicalMatrix instance.
     frequencies, eigenvectors, phonon_done :
-        See Interaction.get_phonons().
+        See PhononData.
     grid_points : ndarray
         Grid point indices.
         shape=(grid_points, ), dtype='int64'

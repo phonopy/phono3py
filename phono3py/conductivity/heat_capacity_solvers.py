@@ -185,7 +185,8 @@ class ModeHeatCapacitySolver:
             ``heat_capacities`` (num_temp, num_gp, num_band0) is set.
 
         """
-        frequencies = self._pp.get_phonons()[0]
+        assert self._pp.phonons is not None
+        frequencies = self._pp.phonons.frequencies
         cv = compute_bulk_mode_cv(
             frequencies,
             grid_points,
@@ -256,7 +257,8 @@ class HeatCapacityMatrixSolver:
             are set.
 
         """
-        frequencies = self._pp.get_phonons()[0]
+        assert self._pp.phonons is not None
+        frequencies = self._pp.phonons.frequencies
         cv, cv_mat = compute_bulk_cv_matrix(
             frequencies,
             grid_points,

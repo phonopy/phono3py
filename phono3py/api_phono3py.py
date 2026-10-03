@@ -1364,7 +1364,9 @@ class Phono3py:
 
         """
         if self._interaction is not None:
-            freqs, eigvecs, _ = self._interaction.get_phonons()
+            assert self._interaction.phonons is not None
+            freqs = self._interaction.phonons.frequencies
+            eigvecs = self._interaction.phonons.eigenvectors
             # In Phono3py, if self._interaction is not None, phonon data should be set.
             assert freqs is not None and eigvecs is not None
             return freqs, eigvecs, self._interaction.bz_grid.addresses

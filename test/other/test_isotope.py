@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+from phonopy.phonon.degeneracy import get_degenerate_ids
 
 from phono3py import Phono3pyIsotope
 from phono3py.other.isotope import Isotope, get_mass_variances
@@ -266,12 +267,100 @@ def test_Isotope_python_matches_rust(
     for grid_point in (1, 10):
         isotopes["Rust"].set_grid_point(grid_point)
         isotopes["Rust"].run()
-        frequencies, eigenvectors, phonon_done = isotopes["Rust"].get_phonons()
-        isotopes["Python"].set_phonons(
-            frequencies.copy(), eigenvectors.copy(), phonon_done.copy()
-        )
+        isotopes["Python"].set_phonons(isotopes["Rust"].phonons.copy())
         isotopes["Python"].set_grid_point(grid_point)
         isotopes["Python"].run()
         np.testing.assert_allclose(
             isotopes["Python"].gamma, isotopes["Rust"].gamma, rtol=1e-10, atol=1e-16
         )
+
+
+def _rotate_degenerate_eigenvectors(frequencies, eigenvectors, seed=0):
+    """Mix eigenvectors randomly within each degenerate set of bands."""
+    rng = np.random.default_rng(seed)
+    rotated = eigenvectors.copy()
+    for gp, freqs in enumerate(frequencies):
+        ids = get_degenerate_ids(freqs[None, :])[0]
+        for start in np.unique(ids):
+            bands = np.flatnonzero(ids == start)
+            n = len(bands)
+            if n == 1:
+                continue
+            q, _ = np.linalg.qr(rng.normal(size=(n, n)) + 1j * rng.normal(size=(n, n)))
+            rotated[gp][:, bands] = eigenvectors[gp][:, bands] @ q
+    return rotated
+
+
+def _run_isotope(ph3, lang, average_degenerate_weights, grid_point, phonons=None):
+    iso = Isotope(
+        [6, 6, 6],
+        ph3.phonon_primitive,
+        symprec=ph3.symmetry.tolerance,
+        average_degenerate_weights=average_degenerate_weights,
+        exclude_gamma_acoustic=True,
+        lang=lang,
+    )
+    iso.init_dynamical_matrix(
+        ph3.fc2,
+        ph3.phonon_supercell,
+        ph3.phonon_primitive,
+        nac_params=ph3.nac_params,
+    )
+    if phonons is not None:
+        iso.set_phonons(phonons.copy())
+    iso.set_grid_point(grid_point)
+    iso.run()
+    return iso
+
+
+@pytest.mark.parametrize("lang", ["Rust", "Python"])
+def test_Isotope_average_degenerate_weights(si_pbesol, lang):
+    """Averaged isotope gamma does not depend on degenerate eigenvectors."""
+    for grid_point in (1, 10, 0):
+        iso = _run_isotope(si_pbesol, "Rust", True, grid_point)
+        phonons = iso.phonons
+        assert phonons.phonon_done.all()
+        rotated = phonons.copy()
+        rotated.eigenvectors = _rotate_degenerate_eigenvectors(
+            phonons.frequencies, phonons.eigenvectors
+        )
+        iso_ave = _run_isotope(si_pbesol, lang, True, grid_point, rotated)
+        np.testing.assert_allclose(iso_ave.gamma, iso.gamma, rtol=1e-8, atol=1e-14)
+
+
+@pytest.mark.parametrize("grid_point", [0, 1, 10])
+@pytest.mark.parametrize("band_indices", [[1, 4], [3], [0, 1, 2]])
+def test_Isotope_average_degenerate_weights_band_indices(
+    si_pbesol, grid_point, band_indices
+):
+    """Band indices select the averaged gamma of all bands.
+
+    Depending on the grid point, band_indices include degenerate bands or not.
+
+    """
+    gammas = []
+    for bi in (None, band_indices):
+        iso = Isotope(
+            [6, 6, 6],
+            si_pbesol.phonon_primitive,
+            symprec=si_pbesol.symmetry.tolerance,
+            band_indices=bi,
+            average_degenerate_weights=True,
+            exclude_gamma_acoustic=True,
+        )
+        iso.init_dynamical_matrix(
+            si_pbesol.fc2,
+            si_pbesol.phonon_supercell,
+            si_pbesol.phonon_primitive,
+            nac_params=si_pbesol.nac_params,
+        )
+        iso.set_grid_point(grid_point)
+        iso.run()
+        gammas.append(iso.gamma)
+    np.testing.assert_allclose(gammas[1], gammas[0][band_indices], rtol=1e-10)
+
+
+def test_Isotope_average_degenerate_weights_changes_gamma(si_pbesol):
+    """Averaging changes gamma where degenerate bands have different weights."""
+    gamma = [_run_isotope(si_pbesol, "Rust", ave, 10).gamma for ave in (False, True)]
+    assert abs(gamma[0] - gamma[1]).max() > 1e-8
