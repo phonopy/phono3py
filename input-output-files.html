@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Input / Output files &#8212; Phono3py v.4.4.0</title>
+    <title>Input / Output files &#8212; Phono3py v.4.7.0</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="_static/documentation_options.js?v=e4428b72"></script>
+    <script src="_static/documentation_options.js?v=3a5dd307"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -53,7 +53,7 @@
     <link rel="prev" title="Command options / Setting tags" href="command-options.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="4.4" />
+  <meta name="docsearch:version" content="4.7" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -178,7 +178,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.4.4.0</p>
+    <p class="title logo__title">Phono3py v.4.7.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -225,6 +225,7 @@
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="migration-v4.html">Migrating from phono3py v3 to v4</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration-v5.html">Migrating toward phono3py v5</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
 </ul>
 
@@ -662,7 +663,7 @@ T)}{[\exp(\hbar\omega_\lambda/k_\mathrm{B} T)-1]^2}.
 <p>The sum of this over <span class="math notranslate nohighlight">\({}^*\mathbf{k}\)</span> corresponding to
 irreducible q-points divided by number of grid points gives
 <span class="math notranslate nohighlight">\(\kappa\)</span> (<a class="reference internal" href="#iofile-kappa-hdf5-kappa"><span class="std std-ref">kappa</span></a>), e.g.,:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">kappa_xx_at_index_30</span> <span class="o">=</span> <span class="n">mode_kappa</span><span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">/</span> <span class="n">weight</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">kappa_xx_at_index_30</span> <span class="o">=</span> <span class="n">mode_kappa</span><span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="n">weight</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>Be careful that until version 1.12.7, mode-kappa values were divided
@@ -861,10 +862,10 @@ script:</p>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 <span class="n">gd</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">"gamma_detail-mxxx-gx.hdf5"</span><span class="p">)</span>
-<span class="n">temp_index</span> <span class="o">=</span> <span class="mi">30</span> <span class="c1"># index of temperature</span>
-<span class="n">temperature</span> <span class="o">=</span> <span class="n">gd</span><span class="p">[</span><span class="s1">'temperature'</span><span class="p">][</span><span class="n">temp_index</span><span class="p">]</span>
-<span class="n">gamma_tp</span> <span class="o">=</span> <span class="n">gd</span><span class="p">[</span><span class="s1">'gamma_detail'</span><span class="p">][:]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">weight</span> <span class="o">=</span> <span class="n">gd</span><span class="p">[</span><span class="s1">'weight'</span><span class="p">][:]</span>
+<span class="n">temp_index</span> <span class="o">=</span> <span class="mi">30</span>  <span class="c1"># index of temperature</span>
+<span class="n">temperature</span> <span class="o">=</span> <span class="n">gd</span><span class="p">[</span><span class="s2">"temperature"</span><span class="p">][</span><span class="n">temp_index</span><span class="p">]</span>
+<span class="n">gamma_tp</span> <span class="o">=</span> <span class="n">gd</span><span class="p">[</span><span class="s2">"gamma_detail"</span><span class="p">][:]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">weight</span> <span class="o">=</span> <span class="n">gd</span><span class="p">[</span><span class="s2">"weight"</span><span class="p">][:]</span>
 <span class="n">gamma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="n">gamma_tp</span><span class="p">[</span><span class="n">temp_index</span><span class="p">])</span>
 </pre></div>
 </div>
@@ -880,19 +881,25 @@ example, phonon triplets of three phonon scatterings are obtained by</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">h5py</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
-<span class="n">gd</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">"gamma_detail-mxxx-gx.hdf5"</span><span class="p">,</span> <span class="s1">'r'</span><span class="p">)</span>
-<span class="n">ph</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">"phonon-mxxx.hdf5"</span><span class="p">,</span> <span class="s1">'r'</span><span class="p">)</span>
-<span class="n">gp1</span> <span class="o">=</span> <span class="n">gd</span><span class="p">[</span><span class="s1">'grid_point'</span><span class="p">][()]</span>
-<span class="n">triplets</span> <span class="o">=</span> <span class="n">gd</span><span class="p">[</span><span class="s1">'triplet'</span><span class="p">][:]</span> <span class="c1"># Sets of (gp1, gp2, gp3) where gp1 is fixed</span>
-<span class="n">mesh</span> <span class="o">=</span> <span class="n">gd</span><span class="p">[</span><span class="s1">'mesh'</span><span class="p">][:]</span>
-<span class="n">grid_address</span> <span class="o">=</span> <span class="n">ph</span><span class="p">[</span><span class="s1">'grid_address'</span><span class="p">][:]</span>
-<span class="n">q_triplets</span> <span class="o">=</span> <span class="n">grid_address</span><span class="p">[</span><span class="n">triplets</span><span class="p">]</span> <span class="o">/</span> <span class="n">mesh</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'double'</span><span class="p">)</span> <span class="c1"># For conventional regular grid</span>
+<span class="n">gd</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">"gamma_detail-mxxx-gx.hdf5"</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span>
+<span class="n">ph</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">"phonon-mxxx.hdf5"</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span>
+<span class="n">gp1</span> <span class="o">=</span> <span class="n">gd</span><span class="p">[</span><span class="s2">"grid_point"</span><span class="p">][()]</span>
+<span class="n">triplets</span> <span class="o">=</span> <span class="n">gd</span><span class="p">[</span><span class="s2">"triplet"</span><span class="p">][:]</span>  <span class="c1"># Sets of (gp1, gp2, gp3) where gp1 is fixed</span>
+<span class="n">mesh</span> <span class="o">=</span> <span class="n">gd</span><span class="p">[</span><span class="s2">"mesh"</span><span class="p">][:]</span>
+<span class="n">grid_address</span> <span class="o">=</span> <span class="n">ph</span><span class="p">[</span><span class="s2">"grid_address"</span><span class="p">][:]</span>
+<span class="n">q_triplets</span> <span class="o">=</span> <span class="n">grid_address</span><span class="p">[</span><span class="n">triplets</span><span class="p">]</span> <span class="o">/</span> <span class="n">mesh</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span>
+    <span class="s2">"double"</span>
+<span class="p">)</span>  <span class="c1"># For conventional regular grid</span>
 <span class="c1"># Phonons of triplets[2]</span>
-<span class="n">phonon_tp</span> <span class="o">=</span> <span class="p">[(</span><span class="n">ph</span><span class="p">[</span><span class="s1">'frequency'</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> <span class="n">ph</span><span class="p">[</span><span class="s1">'eigenvector'</span><span class="p">][</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">triplets</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
+<span class="n">phonon_tp</span> <span class="o">=</span> <span class="p">[(</span><span class="n">ph</span><span class="p">[</span><span class="s2">"frequency"</span><span class="p">][</span><span class="n">i</span><span class="p">],</span> <span class="n">ph</span><span class="p">[</span><span class="s2">"eigenvector"</span><span class="p">][</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">triplets</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
 <span class="c1"># Fractions of contributions of triplets at this grid point and temperature index 30</span>
-<span class="n">gamma_sum_over_bands</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="n">gd</span><span class="p">[</span><span class="s1">'gamma_detail'</span><span class="p">][</span><span class="mi">30</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
-<span class="n">contrib_tp</span> <span class="o">=</span> <span class="p">[</span><span class="n">gd</span><span class="p">[</span><span class="s1">'gamma_detail'</span><span class="p">][</span><span class="mi">30</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="n">gamma_sum_over_bands</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">weight</span><span class="p">))]</span>
-<span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="n">contrib_tp</span><span class="p">)</span> <span class="c1"># is one</span>
+<span class="n">gamma_sum_over_bands</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span>
+    <span class="n">weight</span><span class="p">,</span> <span class="n">gd</span><span class="p">[</span><span class="s2">"gamma_detail"</span><span class="p">][</span><span class="mi">30</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">contrib_tp</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">gd</span><span class="p">[</span><span class="s2">"gamma_detail"</span><span class="p">][</span><span class="mi">30</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="n">gamma_sum_over_bands</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">weight</span><span class="p">))</span>
+<span class="p">]</span>
+<span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="n">contrib_tp</span><span class="p">)</span>  <span class="c1"># is one</span>
 </pre></div>
 </div>
 </section>

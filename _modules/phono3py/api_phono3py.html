@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>phono3py.api_phono3py &#8212; Phono3py v.4.4.0</title>
+    <title>phono3py.api_phono3py &#8212; Phono3py v.4.7.0</title>
   
   
   
@@ -38,7 +38,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../../_static/documentation_options.js?v=e4428b72"></script>
+    <script src="../../_static/documentation_options.js?v=3a5dd307"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -406,7 +406,7 @@ window.runMermaid = runMermaid;</script>
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="4.4" />
+  <meta name="docsearch:version" content="4.7" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -529,7 +529,7 @@ window.runMermaid = runMermaid;</script>
   
   
   
-    <p class="title logo__title">Phono3py v.4.4.0</p>
+    <p class="title logo__title">Phono3py v.4.7.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -576,6 +576,7 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1"><a class="reference internal" href="../../citation.html">How to cite phono3py</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../reference.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../migration-v4.html">Migrating from phono3py v3 to v4</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../migration-v5.html">Migrating toward phono3py v5</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Change Log</a></li>
 </ul>
 
@@ -727,7 +728,6 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># List and Optional are for &lt; python3.10</span>
-    <span class="n">Any</span><span class="p">,</span>
     <span class="n">List</span><span class="p">,</span>
     <span class="n">Literal</span><span class="p">,</span>
     <span class="n">Optional</span><span class="p">,</span>
@@ -745,7 +745,7 @@ window.runMermaid = runMermaid;</script>
     <span class="n">get_least_displacements</span><span class="p">,</span>
     <span class="n">get_random_displacements_dataset</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">phonopy.harmonic.dynamical_matrix</span><span class="w"> </span><span class="kn">import</span> <span class="n">DynamicalMatrix</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">phonopy.harmonic.dynamical_matrix</span><span class="w"> </span><span class="kn">import</span> <span class="n">DynamicalMatrix</span><span class="p">,</span> <span class="n">NacParams</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">phonopy.harmonic.force_constants</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">set_permutation_symmetry</span><span class="p">,</span>
     <span class="n">set_translational_invariance</span><span class="p">,</span>
@@ -1003,7 +1003,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">warn_if_primitive_matrix_auto_changed_cell</span><span class="p">(</span>
             <span class="n">primitive_matrix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_primitive_matrix</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_nac_params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nac_params</span><span class="p">:</span> <span class="n">NacParams</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">phonon_supercell_matrix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_phonon_supercell_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
                 <span class="n">shape_supercell_matrix</span><span class="p">(</span><span class="n">phonon_supercell_matrix</span><span class="p">),</span>
@@ -1212,7 +1212,7 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sigma_cutoff</span> <span class="o">=</span> <span class="n">sigma_cutoff</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">nac_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nac_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NacParams</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Setter and getter of parameters for non-analytical term correction.</span>
 
 <span class="sd">        The dict has the following keys::</span>
@@ -1233,7 +1233,7 @@ window.runMermaid = runMermaid;</script>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nac_params</span>
 
     <span class="nd">@nac_params</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">nac_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nac_params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nac_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nac_params</span><span class="p">:</span> <span class="n">NacParams</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_nac_params</span> <span class="o">=</span> <span class="n">nac_params</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interaction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_init_dynamical_matrix</span><span class="p">()</span>
@@ -1877,6 +1877,9 @@ window.runMermaid = runMermaid;</script>
         <span class="n">symmetrize_fc3q</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">lapack_zheev_uplo</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"L"</span><span class="p">,</span> <span class="s2">"U"</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">openmp_per_triplets</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">symmetrize_tetrahedra</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">exclude_gamma_acoustic</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">average_degenerate_weights</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Initialize ph-ph interaction calculation.</span>
 
@@ -1920,6 +1923,26 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">            When `True`, ph-ph interaction strength calculation runs with</span>
 <span class="sd">            OpenMP distribution over triplets, and over bands when `False`.</span>
 <span class="sd">            `None` will choose one of them automatically.</span>
+<span class="sd">        symmetrize_tetrahedra : bool, optional</span>
+<span class="sd">            When True, the integration weights of the tetrahedron method are</span>
+<span class="sd">            averaged over the 24 tetrahedra rotated by all the point-group</span>
+<span class="sd">            operations. The 24 tetrahedra are cut along one main diagonal, so</span>
+<span class="sd">            the weights can differ between symmetrically equivalent q-points.</span>
+<span class="sd">            Averaging removes the difference. Isotope scattering in the</span>
+<span class="sd">            thermal conductivity follows this choice. Default is False.</span>
+<span class="sd">        exclude_gamma_acoustic : bool, optional</span>
+<span class="sd">            When True, the frequencies of the three modes at Gamma with the</span>
+<span class="sd">            smallest absolute values are set to zero after the phonons are</span>
+<span class="sd">            solved. The acoustic modes at Gamma are then zero on every</span>
+<span class="sd">            platform, instead of small nonzero values from rounding.</span>
+<span class="sd">            Isotope scattering in the thermal conductivity follows this</span>
+<span class="sd">            choice. Default is False.</span>
+<span class="sd">        average_degenerate_weights : bool, optional</span>
+<span class="sd">            When True, the integration weights of the tetrahedron method are</span>
+<span class="sd">            averaged over the degenerate bands at q' and at q'' of each</span>
+<span class="sd">            triplet. Without the average, the imaginary part of the</span>
+<span class="sd">            self-energy and the collision matrix depend on the choice of</span>
+<span class="sd">            eigenvectors in the degenerate subspaces. Default is False.</span>
 
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bz_grid</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1956,6 +1979,9 @@ window.runMermaid = runMermaid;</script>
             <span class="n">make_r0_average</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_make_r0_average</span><span class="p">,</span>
             <span class="n">lapack_zheev_uplo</span><span class="o">=</span><span class="n">_lapack_zheev_uplo</span><span class="p">,</span>
             <span class="n">openmp_per_triplets</span><span class="o">=</span><span class="n">openmp_per_triplets</span><span class="p">,</span>
+            <span class="n">symmetrize_tetrahedra</span><span class="o">=</span><span class="n">symmetrize_tetrahedra</span><span class="p">,</span>
+            <span class="n">exclude_gamma_acoustic</span><span class="o">=</span><span class="n">exclude_gamma_acoustic</span><span class="p">,</span>
+            <span class="n">average_degenerate_weights</span><span class="o">=</span><span class="n">average_degenerate_weights</span><span class="p">,</span>
             <span class="n">lang</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_lang</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_interaction</span><span class="o">.</span><span class="n">nac_q_direction</span> <span class="o">=</span> <span class="n">nac_q_direction</span>
@@ -2035,7 +2061,9 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interaction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">freqs</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interaction</span><span class="o">.</span><span class="n">get_phonons</span><span class="p">()</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interaction</span><span class="o">.</span><span class="n">phonons</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="n">freqs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interaction</span><span class="o">.</span><span class="n">phonons</span><span class="o">.</span><span class="n">frequencies</span>
+            <span class="n">eigvecs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interaction</span><span class="o">.</span><span class="n">phonons</span><span class="o">.</span><span class="n">eigenvectors</span>
             <span class="c1"># In Phono3py, if self._interaction is not None, phonon data should be set.</span>
             <span class="k">assert</span> <span class="n">freqs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">eigvecs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="k">return</span> <span class="n">freqs</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interaction</span><span class="o">.</span><span class="n">bz_grid</span><span class="o">.</span><span class="n">addresses</span>

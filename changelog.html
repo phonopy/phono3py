@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Change Log &#8212; Phono3py v.4.4.0</title>
+    <title>Change Log &#8212; Phono3py v.4.7.0</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="_static/documentation_options.js?v=e4428b72"></script>
+    <script src="_static/documentation_options.js?v=3a5dd307"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -49,10 +49,10 @@
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Migrating from phono3py v3 to v4" href="migration-v4.html" />
+    <link rel="prev" title="Migrating toward phono3py v5" href="migration-v5.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="4.4" />
+  <meta name="docsearch:version" content="4.7" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -177,7 +177,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.4.4.0</p>
+    <p class="title logo__title">Phono3py v.4.7.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -224,6 +224,7 @@
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="migration-v4.html">Migrating from phono3py v3 to v4</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration-v5.html">Migrating toward phono3py v5</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Change Log</a></li>
 </ul>
 
@@ -377,7 +378,9 @@
             </div>
             <nav aria-label="Page">
                 <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#unreleased-v4-5-0">Unreleased (v4.5.0)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#oct-3-2026-version-4-8-0">Oct-3-2026: Version 4.8.0</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sep-27-2026-version-4-7-0">Sep-27-2026: Version 4.7.0</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sep-10-2026-version-4-5-0">Sep-10-2026: Version 4.5.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jul-18-2026-version-4-4-0">Jul-18-2026: Version 4.4.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jul-03-2026-version-4-3-3">Jul-03-2026: Version 4.3.3</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jul-02-2026-version-4-3-2">Jul-02-2026: Version 4.3.2</a></li>
@@ -521,13 +524,56 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="change-log">
 <span id="changelog"></span><h1>Change Log<a class="headerlink" href="#change-log" title="Link to this heading">#</a></h1>
-<section id="unreleased-v4-5-0">
-<h2>Unreleased (v4.5.0)<a class="headerlink" href="#unreleased-v4-5-0" title="Link to this heading">#</a></h2>
+<section id="oct-3-2026-version-4-8-0">
+<h2>Oct-3-2026: Version 4.8.0<a class="headerlink" href="#oct-3-2026-version-4-8-0" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Phono3py requires phonopy 4.8.0 or later.</p></li>
+<li><p>New option <a class="reference internal" href="command-options.html#average-degenerate-weights-option"><span class="std std-ref">–average-degenerate-weights</span></a> (<code class="docutils literal notranslate"><span class="pre">AVERAGE_DEGENERATE_WEIGHTS</span></code>). With it,
+the integration weights of the tetrahedron method are averaged over the
+degenerate modes at <span class="math notranslate nohighlight">\(\mathbf{q}'\)</span> and at <span class="math notranslate nohighlight">\(\mathbf{q}''\)</span>, so that the results
+do not depend on the choice of the eigenvectors in the degenerate subspaces.
+It also applies to the isotope scattering, where the weights are averaged
+over the degenerate modes at <span class="math notranslate nohighlight">\(\mathbf{q}'\)</span> and at the phonon mode of
+interest, and the scattering rates are averaged over the degenerate modes of
+the latter. In the API, it is the <code class="docutils literal notranslate"><span class="pre">average_degenerate_weights</span></code> parameter of
+<code class="docutils literal notranslate"><span class="pre">Phono3py.init_phph_interaction</span></code> and <code class="docutils literal notranslate"><span class="pre">Phono3pyIsotope</span></code>. The default is off,
+but the option is recommended for new calculations. It will be on by default
+in v5.0, see <a class="reference internal" href="migration-v5.html#migration-v5"><span class="std std-ref">Migrating toward phono3py v5</span></a>.</p></li>
+</ul>
+</section>
+<section id="sep-27-2026-version-4-7-0">
+<h2>Sep-27-2026: Version 4.7.0<a class="headerlink" href="#sep-27-2026-version-4-7-0" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Version 4.6 is skipped so that the minor version matches that of phonopy.
+Phono3py requires phonopy 4.7.0 or later.</p></li>
+<li><p>In the tetrahedron method, when a sampling frequency was exactly equal to the
+frequency at a vertex of a tetrahedron, the tetrahedron gave zero weight. It
+now gives the weight that the frequencies close to the vertex frequency give.
+This mainly changes isotope scattering, whose sampling frequencies are the
+phonon frequencies at the grid point itself. For the usual sampling mesh
+densities, the thermal conductivity changes only slightly. The fix is in
+phonors.</p></li>
+<li><p>New option <a class="reference internal" href="command-options.html#symmetrize-tetrahedra-option"><span class="std std-ref">–symmetrize-tetrahedra</span></a>
+(<code class="docutils literal notranslate"><span class="pre">SYMMETRIZE_TETRAHEDRA</span></code>). With it, the integration weights of the
+tetrahedron method are averaged over the 24 tetrahedra rotated by all the
+point-group operations, so that symmetrically equivalent q-points get equal
+weights. In the API, it is the <code class="docutils literal notranslate"><span class="pre">symmetrize_tetrahedra</span></code> parameter of
+<code class="docutils literal notranslate"><span class="pre">Phono3py.init_phph_interaction</span></code>, <code class="docutils literal notranslate"><span class="pre">Phono3pyJointDos</span></code> and <code class="docutils literal notranslate"><span class="pre">Phono3pyIsotope</span></code>.
+The default is off.</p></li>
+<li><p>New option <a class="reference internal" href="command-options.html#exclude-gamma-acoustic-option"><span class="std std-ref">–exclude-gamma-acoustic</span></a>
+(<code class="docutils literal notranslate"><span class="pre">EXCLUDE_GAMMA_ACOUSTIC</span></code>), which sets the frequencies of the three acoustic
+modes at the Gamma point to zero. In the API, it is the
+<code class="docutils literal notranslate"><span class="pre">exclude_gamma_acoustic</span></code> parameter of <code class="docutils literal notranslate"><span class="pre">Phono3py.init_phph_interaction</span></code>,
+<code class="docutils literal notranslate"><span class="pre">Phono3pyJointDos</span></code> and <code class="docutils literal notranslate"><span class="pre">Phono3pyIsotope</span></code>. The default is off.</p></li>
+</ul>
+</section>
+<section id="sep-10-2026-version-4-5-0">
+<h2>Sep-10-2026: Version 4.5.0<a class="headerlink" href="#sep-10-2026-version-4-5-0" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p>Supercell file names keep a uniform number of digits when the number of
-displacements exceeds five digits, e.g. <code class="docutils literal notranslate"><span class="pre">POSCAR-000001</span></code>, …,
-<code class="docutils literal notranslate"><span class="pre">POSCAR-100000</span></code>. This requires phonopy with the same change. Names are
-unchanged for up to 99999 displacements.</p></li>
+displacements exceeds five digits, e.g. <code class="docutils literal notranslate"><span class="pre">POSCAR-000001</span></code>, …, <code class="docutils literal notranslate"><span class="pre">POSCAR-100000</span></code>.
+Names are unchanged for up to 99999 displacements.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code> accepts a file-pointer-like object as <code class="docutils literal notranslate"><span class="pre">phono3py_yaml</span></code>.</p></li>
 </ul>
 </section>
 <section id="jul-18-2026-version-4-4-0">
@@ -1651,12 +1697,12 @@ a mesh number is an even number, it is more carefully treated.</p></li>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="migration-v4.html"
+       href="migration-v5.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Migrating from phono3py v3 to v4</p>
+        <p class="prev-next-title">Migrating toward phono3py v5</p>
       </div>
     </a>
 </div>
@@ -1677,7 +1723,9 @@ a mesh number is an even number, it is more carefully treated.</p></li>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#unreleased-v4-5-0">Unreleased (v4.5.0)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#oct-3-2026-version-4-8-0">Oct-3-2026: Version 4.8.0</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sep-27-2026-version-4-7-0">Sep-27-2026: Version 4.7.0</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sep-10-2026-version-4-5-0">Sep-10-2026: Version 4.5.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jul-18-2026-version-4-4-0">Jul-18-2026: Version 4.4.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jul-03-2026-version-4-3-3">Jul-03-2026: Version 4.3.3</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jul-02-2026-version-4-3-2">Jul-02-2026: Version 4.3.2</a></li>

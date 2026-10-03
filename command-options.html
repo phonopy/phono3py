@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Command options / Setting tags &#8212; Phono3py v.4.4.0</title>
+    <title>Command options / Setting tags &#8212; Phono3py v.4.7.0</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="_static/documentation_options.js?v=e4428b72"></script>
+    <script src="_static/documentation_options.js?v=3a5dd307"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -53,7 +53,7 @@
     <link rel="prev" title="LAMMPS &amp; phono3py calculation" href="lammps.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="4.4" />
+  <meta name="docsearch:version" content="4.7" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -178,7 +178,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.4.4.0</p>
+    <p class="title logo__title">Phono3py v.4.7.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -225,6 +225,7 @@
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">References</a></li>
 <li class="toctree-l1"><a class="reference internal" href="migration-v4.html">Migrating from phono3py v3 to v4</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration-v5.html">Migrating toward phono3py v5</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
 </ul>
 
@@ -441,6 +442,9 @@
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brillouin-zone-integration">Brillouin zone integration</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#thm-tetrahedron-true"><code class="docutils literal notranslate"><span class="pre">--thm</span></code> (<code class="docutils literal notranslate"><span class="pre">TETRAHEDRON</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#symmetrize-tetrahedra-symmetrize-tetrahedra-true"><code class="docutils literal notranslate"><span class="pre">--symmetrize-tetrahedra</span></code> (<code class="docutils literal notranslate"><span class="pre">SYMMETRIZE_TETRAHEDRA</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exclude-gamma-acoustic-exclude-gamma-acoustic-true"><code class="docutils literal notranslate"><span class="pre">--exclude-gamma-acoustic</span></code> (<code class="docutils literal notranslate"><span class="pre">EXCLUDE_GAMMA_ACOUSTIC</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#average-degenerate-weights-average-degenerate-weights-true"><code class="docutils literal notranslate"><span class="pre">--average-degenerate-weights</span></code> (<code class="docutils literal notranslate"><span class="pre">AVERAGE_DEGENERATE_WEIGHTS</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sigma-sigma"><code class="docutils literal notranslate"><span class="pre">--sigma</span></code> (<code class="docutils literal notranslate"><span class="pre">SIGMA</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sigma-cutoff-sigma-cutoff-width"><code class="docutils literal notranslate"><span class="pre">--sigma-cutoff</span></code> (<code class="docutils literal notranslate"><span class="pre">SIGMA_CUTOFF_WIDTH</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#full-pp-full-pp-true"><code class="docutils literal notranslate"><span class="pre">--full-pp</span></code> (<code class="docutils literal notranslate"><span class="pre">FULL_PP</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
@@ -1015,6 +1019,81 @@ with <code class="docutils literal notranslate"><span class="pre">--gp</span></c
 This is the default option. Therefore it is not necessary to specify this unless
 both results by tetrahedron method and smearing method in one time execution are
 expected.</p>
+</section>
+<section id="symmetrize-tetrahedra-symmetrize-tetrahedra-true">
+<span id="symmetrize-tetrahedra-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--symmetrize-tetrahedra</span></code> (<code class="docutils literal notranslate"><span class="pre">SYMMETRIZE_TETRAHEDRA</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)<a class="headerlink" href="#symmetrize-tetrahedra-symmetrize-tetrahedra-true" title="Link to this heading">#</a></h3>
+<p>The tetrahedron method divides the space around each grid point into 24
+tetrahedra. The tetrahedra are cut along one of the four main diagonals of the
+grid, and the same diagonal is used at every grid point.</p>
+<p>Take a grid point <span class="math notranslate nohighlight">\(\mathbf{q}\)</span> and a point-group operation <span class="math notranslate nohighlight">\(R\)</span>, which maps
+<span class="math notranslate nohighlight">\(\mathbf{q}\)</span> to the symmetrically equivalent grid point <span class="math notranslate nohighlight">\(R\mathbf{q}\)</span>. Rotating
+the 24 tetrahedra around <span class="math notranslate nohighlight">\(\mathbf{q}\)</span> by <span class="math notranslate nohighlight">\(R\)</span> gives 24 tetrahedra around
+<span class="math notranslate nohighlight">\(R\mathbf{q}\)</span>, and they are cut along the rotated diagonal. The 24 tetrahedra
+used around <span class="math notranslate nohighlight">\(R\mathbf{q}\)</span> in the calculation are cut along the fixed diagonal,
+which is in general a different one. The two sets of tetrahedra around
+<span class="math notranslate nohighlight">\(R\mathbf{q}\)</span> are therefore different, and the integration weights at
+<span class="math notranslate nohighlight">\(\mathbf{q}\)</span> and <span class="math notranslate nohighlight">\(R\mathbf{q}\)</span> can differ.</p>
+<p>With this option, the 24 tetrahedra around each grid point are rotated by each
+point-group operation. The integration weights are calculated with each of the
+rotated sets of 24 tetrahedra, and their average is used. The averaged
+integration weights at <span class="math notranslate nohighlight">\(\mathbf{q}\)</span> and <span class="math notranslate nohighlight">\(R\mathbf{q}\)</span> are equal. The number of
+tetrahedra in the integration is multiplied by the number of different sets of
+24 tetrahedra.</p>
+<p>The average is used for the imaginary part of the self energy, the thermal
+conductivity, the joint density of states and the isotope scattering. The
+option is off by default, and <code class="docutils literal notranslate"><span class="pre">--no-symmetrize-tetrahedra</span></code> turns it off
+explicitly. The option cannot be combined with <code class="docutils literal notranslate"><span class="pre">--legacy-backend</span></code>, which
+selects the C implementation.</p>
+</section>
+<section id="exclude-gamma-acoustic-exclude-gamma-acoustic-true">
+<span id="exclude-gamma-acoustic-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--exclude-gamma-acoustic</span></code> (<code class="docutils literal notranslate"><span class="pre">EXCLUDE_GAMMA_ACOUSTIC</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)<a class="headerlink" href="#exclude-gamma-acoustic-exclude-gamma-acoustic-true" title="Link to this heading">#</a></h3>
+<p>The frequencies of the three acoustic modes at the Gamma point are zero in
+theory. In a calculation, they have small nonzero values from rounding, and
+these values depend on the linear algebra library. With this option, the three
+frequencies at the Gamma point with the smallest absolute values are set to
+zero after the phonons are solved.</p>
+<p>The option is off by default, and <code class="docutils literal notranslate"><span class="pre">--no-exclude-gamma-acoustic</span></code> turns it off
+explicitly.</p>
+</section>
+<section id="average-degenerate-weights-average-degenerate-weights-true">
+<span id="average-degenerate-weights-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--average-degenerate-weights</span></code> (<code class="docutils literal notranslate"><span class="pre">AVERAGE_DEGENERATE_WEIGHTS</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)<a class="headerlink" href="#average-degenerate-weights-average-degenerate-weights-true" title="Link to this heading">#</a></h3>
+<p>At some q-points, two or three phonon modes have the same frequency. These
+modes are degenerate. Any orthonormal combination of their eigenvectors is also
+a set of eigenvectors, and the combination returned by the eigenvalue solver
+depends on the linear algebra library.</p>
+<p>The imaginary part of the self energy of a phonon mode is a sum over pairs of
+modes at <span class="math notranslate nohighlight">\(\mathbf{q}'\)</span> and <span class="math notranslate nohighlight">\(\mathbf{q}''\)</span>. Each pair contributes its ph-ph
+interaction strength multiplied by an integration weight. When the degenerate
+modes at <span class="math notranslate nohighlight">\(\mathbf{q}'\)</span> have the same integration weight, their summed
+contribution does not depend on the choice of eigenvectors.</p>
+<p>The tetrahedron method computes the integration weight of a mode from the
+frequencies of the same band index at the neighbouring grid points. At the
+neighbouring grid points the modes are in general not degenerate, so the
+degenerate modes at <span class="math notranslate nohighlight">\(\mathbf{q}'\)</span> get different integration weights. The
+imaginary part of the self energy then depends on the choice of eigenvectors at
+<span class="math notranslate nohighlight">\(\mathbf{q}'\)</span> and <span class="math notranslate nohighlight">\(\mathbf{q}''\)</span>, and so on the linear algebra library.</p>
+<p>With this option, the integration weights are averaged over each set of
+degenerate modes at <span class="math notranslate nohighlight">\(\mathbf{q}'\)</span> and over each set at <span class="math notranslate nohighlight">\(\mathbf{q}''\)</span>. The
+imaginary part of the self energy then does not depend on the choice of
+eigenvectors at <span class="math notranslate nohighlight">\(\mathbf{q}'\)</span> and <span class="math notranslate nohighlight">\(\mathbf{q}''\)</span>.</p>
+<p>The isotope scattering rate is a sum over the modes at <span class="math notranslate nohighlight">\(\mathbf{q}'\)</span> of the
+overlap of the eigenvectors multiplied by an integration weight, and has the
+same dependence. With this option, the integration weights are averaged over
+each set of degenerate modes at <span class="math notranslate nohighlight">\(\mathbf{q}'\)</span> and over each set of degenerate
+modes at the phonon mode of interest. The isotope scattering rates of the
+degenerate modes at the latter are averaged as well.</p>
+<p>The averaged weights are used for the imaginary part of the self energy, the
+isotope scattering and the thermal conductivity. The joint density of states
+does not use this option. With <code class="docutils literal notranslate"><span class="pre">--sigma</span></code>, the option has no effect,
+because the Gaussian function gives degenerate modes the same weight.</p>
+<p>For the isotope scattering, use this option together with
+<a class="reference internal" href="#exclude-gamma-acoustic-option"><span class="std std-ref">–exclude-gamma-acoustic</span></a>. Without it,
+the three acoustic modes at the Gamma point have small nonzero frequencies, and
+the modes with frequencies below the cutoff frequency are left out. Which modes
+are left out depends on the eigenvectors.</p>
+<p>The option is recommended for new calculations. It is off by default, and
+<code class="docutils literal notranslate"><span class="pre">--no-average-degenerate-weights</span></code> turns it off explicitly. It will be on by
+default in v5.0, see <a class="reference internal" href="migration-v5.html#migration-v5"><span class="std std-ref">Migrating toward phono3py v5</span></a>.</p>
 </section>
 <section id="sigma-sigma">
 <span id="sigma-option"></span><h3><code class="docutils literal notranslate"><span class="pre">--sigma</span></code> (<code class="docutils literal notranslate"><span class="pre">SIGMA</span></code>)<a class="headerlink" href="#sigma-sigma" title="Link to this heading">#</a></h3>
@@ -1714,6 +1793,9 @@ This is equivalent to setting `-i` and `-o` simultaneously. -->
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#brillouin-zone-integration">Brillouin zone integration</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#thm-tetrahedron-true"><code class="docutils literal notranslate"><span class="pre">--thm</span></code> (<code class="docutils literal notranslate"><span class="pre">TETRAHEDRON</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#symmetrize-tetrahedra-symmetrize-tetrahedra-true"><code class="docutils literal notranslate"><span class="pre">--symmetrize-tetrahedra</span></code> (<code class="docutils literal notranslate"><span class="pre">SYMMETRIZE_TETRAHEDRA</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#exclude-gamma-acoustic-exclude-gamma-acoustic-true"><code class="docutils literal notranslate"><span class="pre">--exclude-gamma-acoustic</span></code> (<code class="docutils literal notranslate"><span class="pre">EXCLUDE_GAMMA_ACOUSTIC</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#average-degenerate-weights-average-degenerate-weights-true"><code class="docutils literal notranslate"><span class="pre">--average-degenerate-weights</span></code> (<code class="docutils literal notranslate"><span class="pre">AVERAGE_DEGENERATE_WEIGHTS</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sigma-sigma"><code class="docutils literal notranslate"><span class="pre">--sigma</span></code> (<code class="docutils literal notranslate"><span class="pre">SIGMA</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sigma-cutoff-sigma-cutoff-width"><code class="docutils literal notranslate"><span class="pre">--sigma-cutoff</span></code> (<code class="docutils literal notranslate"><span class="pre">SIGMA_CUTOFF_WIDTH</span></code>)</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#full-pp-full-pp-true"><code class="docutils literal notranslate"><span class="pre">--full-pp</span></code> (<code class="docutils literal notranslate"><span class="pre">FULL_PP</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></li>
