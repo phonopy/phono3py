@@ -56,7 +56,7 @@ from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 from numpy.typing import NDArray
-from phonopy.phonon.degeneracy import degenerate_sets
+from phonopy.phonon.degeneracy import get_degenerate_ids
 from phonopy.physical_units import get_physical_units
 
 if TYPE_CHECKING:
@@ -71,6 +71,7 @@ from phono3py.conductivity.utils import (
     get_kappa_star_operations,
     select_colmat_solver,
 )
+from phono3py.phonon.degeneracy import average_over_degenerate_sets
 
 
 @dataclass
@@ -156,6 +157,7 @@ class CollisionMatrixKernel:
         """Init method."""
         self._kappa_settings = kappa_settings
         self._frequencies = frequencies
+        self._degenerate_ids = get_degenerate_ids(frequencies)
         self._num_gp = num_gp
         self._solve_collective_phonon = solve_collective_phonon
         self._pinv_cutoff = pinv_cutoff
@@ -482,10 +484,6 @@ class CollisionMatrixKernel:
         if self._log_level:
             print("[%.3fs]" % (time.time() - start))
             sys.stdout.flush()
-
-    @staticmethod
-    def _get_bi_set(freqs: NDArray[np.double], dset: list[int]) -> list[int]:
-        return [j for j in range(len(freqs)) if j in dset]
 
     # ------------------------------------------------------------------
     # Symmetrization
@@ -992,23 +990,26 @@ class IrreducibleCollisionMatrixKernel(CollisionMatrixKernel):
 
     # -- Degeneracy averaging --
 
-    def _average_colmat_rows_by_degeneracy(self, col_mat: NDArray[np.double]) -> None:
+    def _iter_ir_degenerate_ids(self) -> Iterator[tuple[int, NDArray[np.int64]]]:
+        """Yield (i, degenerate_ids) for irreducible points with degenerate bands.
+
+        i is the index in kappa_settings.grid_points.
+
+        """
         for i, gp in enumerate(self._kappa_settings.grid_points):
-            freqs = self._frequencies[gp]
-            for dset in degenerate_sets(freqs):
-                bi_set = self._get_bi_set(freqs, dset)
-                sum_col = col_mat[:, :, i, bi_set, :, :, :, :].sum(axis=2) / len(bi_set)
-                for j in bi_set:
-                    col_mat[:, :, i, j, :, :, :, :] = sum_col
+            ids = self._degenerate_ids[gp]
+            if (ids != np.arange(len(ids))).any():
+                yield i, ids
+
+    def _average_colmat_rows_by_degeneracy(self, col_mat: NDArray[np.double]) -> None:
+        for i, ids in self._iter_ir_degenerate_ids():
+            col_mat[:, :, i] = average_over_degenerate_sets(col_mat[:, :, i], ids, 2)
 
     def _average_colmat_cols_by_degeneracy(self, col_mat: NDArray[np.double]) -> None:
-        for i, gp in enumerate(self._kappa_settings.grid_points):
-            freqs = self._frequencies[gp]
-            for dset in degenerate_sets(freqs):
-                bi_set = self._get_bi_set(freqs, dset)
-                sum_col = col_mat[:, :, :, :, :, i, bi_set, :].sum(axis=5) / len(bi_set)
-                for j in bi_set:
-                    col_mat[:, :, :, :, :, i, j, :] = sum_col
+        for i, ids in self._iter_ir_degenerate_ids():
+            col_mat[:, :, :, :, :, i] = average_over_degenerate_sets(
+                col_mat[:, :, :, :, :, i], ids, 5
+            )
 
     def _get_symmetrization_size(self) -> int:
         assert self._collision_matrix is not None
@@ -1229,6 +1230,10 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
         if self._kappa_settings.is_kappa_star:
             self._expand_by_symmetry()
         self._combine_collisions()
+        if self._kappa_settings.is_kappa_star:
+            # Same order as the irreducible kernel: main diagonal first, then
+            # degeneracy averaging over all mesh points.
+            self._average_collision_matrix_by_degeneracy()
         weights = self._get_collision_weights()
         self._symmetrize_collision_matrix()
         return weights
@@ -1236,7 +1241,6 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
     # -- Symmetry expansion (reducible only) --
 
     def _expand_by_symmetry(self) -> None:
-        self._average_collision_matrix_by_degeneracy()
         ir_gr_gps, rot_gps = self._get_rotation_maps()
         self._expand_collisions(ir_gr_gps, rot_gps)
         self._expand_local_values(ir_gr_gps, rot_gps)
@@ -1365,25 +1369,26 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
 
     # -- Degeneracy averaging --
 
+    def _iter_mesh_degenerate_ids(self) -> Iterator[tuple[int, NDArray[np.int64]]]:
+        """Yield (i_data, degenerate_ids) for mesh points with degenerate bands."""
+        bz_grid = self._kappa_settings.bz_grid
+        num_mesh_points = int(np.prod(self._kappa_settings.mesh_numbers))
+        for i_data in range(num_mesh_points):
+            ids = self._degenerate_ids[bz_grid.grg2bzg[i_data]]
+            if (ids != np.arange(len(ids))).any():
+                yield i_data, ids
+
     def _average_colmat_rows_by_degeneracy(self, col_mat: NDArray[np.double]) -> None:
-        for gp in self._kappa_settings.grid_points:
-            freqs = self._frequencies[gp]
-            for dset in degenerate_sets(freqs):
-                bi_set = self._get_bi_set(freqs, dset)
-                i_data = int(self._kappa_settings.bz_grid.bzg2grg[gp])
-                sum_col = col_mat[:, :, i_data, bi_set, :, :].sum(axis=2) / len(bi_set)
-                for j in bi_set:
-                    col_mat[:, :, i_data, j, :, :] = sum_col
+        for i_data, ids in self._iter_mesh_degenerate_ids():
+            col_mat[:, :, i_data] = average_over_degenerate_sets(
+                col_mat[:, :, i_data], ids, 2
+            )
 
     def _average_colmat_cols_by_degeneracy(self, col_mat: NDArray[np.double]) -> None:
-        for gp in self._kappa_settings.grid_points:
-            freqs = self._frequencies[gp]
-            for dset in degenerate_sets(freqs):
-                bi_set = self._get_bi_set(freqs, dset)
-                i_data = int(self._kappa_settings.bz_grid.bzg2grg[gp])
-                sum_col = col_mat[:, :, :, :, i_data, bi_set].sum(axis=4) / len(bi_set)
-                for j in bi_set:
-                    col_mat[:, :, :, :, i_data, j] = sum_col
+        for i_data, ids in self._iter_mesh_degenerate_ids():
+            col_mat[:, :, :, :, i_data] = average_over_degenerate_sets(
+                col_mat[:, :, :, :, i_data], ids, 4
+            )
 
     def _get_symmetrization_size(self) -> int:
         assert self._collision_matrix is not None

@@ -16,12 +16,16 @@ import numpy as np
 import pytest
 
 from phono3py import Phono3py
+from phono3py._lang import have_c_ext
 from phono3py.conductivity.calculators import LBTECalculator
 from phono3py.conductivity.factory import conductivity_calculator
 from phono3py.phonon3.interaction import Interaction
 
 pytest.importorskip("phonors")
-pytest.importorskip("phono3py._phono3py")
+
+requires_c_ext = pytest.mark.skipif(
+    not have_c_ext(), reason="C extension phono3py._phono3py is not available"
+)
 
 
 def _build_interaction(
@@ -72,6 +76,7 @@ def _run_lbte(
     return lbte.kappa.copy()
 
 
+@requires_c_ext
 def test_kappa_LBTE_rust_vs_c(si_pbesol: Phono3py):
     """Irreducible LBTE path: kappa from Rust matches C."""
     kappa_c = _run_lbte(si_pbesol, [5, 5, 5], lang="C")
@@ -79,6 +84,7 @@ def test_kappa_LBTE_rust_vs_c(si_pbesol: Phono3py):
     np.testing.assert_allclose(kappa_rust, kappa_c, rtol=1e-10, atol=1e-10)
 
 
+@requires_c_ext
 def test_kappa_LBTE_reducible_rust_vs_c(si_pbesol: Phono3py):
     """Reducible LBTE path: kappa from Rust matches C."""
     kappa_c = _run_lbte(si_pbesol, [5, 5, 5], lang="C", is_reducible=True)
@@ -86,6 +92,24 @@ def test_kappa_LBTE_reducible_rust_vs_c(si_pbesol: Phono3py):
     np.testing.assert_allclose(kappa_rust, kappa_c, rtol=1e-10, atol=1e-10)
 
 
+@pytest.mark.parametrize(
+    "lang", [pytest.param("C", marks=requires_c_ext), pytest.param("Rust")]
+)
+def test_kappa_LBTE_irreducible_vs_reducible(si_pbesol: Phono3py, lang: str):
+    """Irreducible and reducible collision matrices give the same kappa.
+
+    Si has degenerate bands, so this checks that the degeneracy averaging
+    (applied after adding the main diagonal) is consistent between the two.
+
+    """
+    kappa_ir = _run_lbte(si_pbesol, [5, 5, 5], lang=lang, interaction_lang=lang)
+    kappa_red = _run_lbte(
+        si_pbesol, [5, 5, 5], lang=lang, interaction_lang=lang, is_reducible=True
+    )
+    np.testing.assert_allclose(kappa_red, kappa_ir, rtol=1e-8, atol=1e-8)
+
+
+@requires_c_ext
 def test_kappa_LBTE_rust_vs_c_sigma(si_pbesol: Phono3py):
     """Irreducible LBTE with Gaussian smearing: Rust kappa matches C."""
     kappa_c = _run_lbte(si_pbesol, [5, 5, 5], lang="C", sigmas=[0.1])
@@ -93,6 +117,7 @@ def test_kappa_LBTE_rust_vs_c_sigma(si_pbesol: Phono3py):
     np.testing.assert_allclose(kappa_rust, kappa_c, rtol=1e-10, atol=1e-10)
 
 
+@requires_c_ext
 def test_kappa_LBTE_rust_vs_c_isotope(si_pbesol: Phono3py):
     """Irreducible LBTE + isotope scattering: Rust kappa matches C."""
     kappa_c = _run_lbte(si_pbesol, [5, 5, 5], lang="C", is_isotope=True)
@@ -100,6 +125,7 @@ def test_kappa_LBTE_rust_vs_c_isotope(si_pbesol: Phono3py):
     np.testing.assert_allclose(kappa_rust, kappa_c, rtol=1e-10, atol=1e-10)
 
 
+@requires_c_ext
 def test_kappa_LBTE_rust_vs_c_full_pp(si_pbesol: Phono3py):
     """Irreducible LBTE with is_full_pp=True: Rust kappa matches C.
 
@@ -114,6 +140,7 @@ def test_kappa_LBTE_rust_vs_c_full_pp(si_pbesol: Phono3py):
     np.testing.assert_allclose(kappa_rust, kappa_c, rtol=1e-10, atol=1e-10)
 
 
+@requires_c_ext
 def test_kappa_LBTE_rust_vs_c_multi_sigma(si_pbesol: Phono3py):
     """Irreducible LBTE with multiple sigmas in one call.
 
@@ -133,6 +160,7 @@ def test_kappa_LBTE_rust_vs_c_multi_sigma(si_pbesol: Phono3py):
     assert kappa_c.shape[0] == len(sigmas)
 
 
+@requires_c_ext
 def test_kappa_LBTE_rust_vs_c_full_rust(si_pbesol: Phono3py):
     """All-Rust (phonon solver + conductivity) vs all-C, dense mesh.
 
