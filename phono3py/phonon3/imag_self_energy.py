@@ -43,7 +43,6 @@ from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
-from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.physical_units import get_physical_units
 
 from phono3py._lang import log_dispatch, resolve_lang
@@ -51,6 +50,7 @@ from phono3py.file_IO import (
     write_gamma_detail_to_hdf5,
     write_imag_self_energy_at_grid_point,
 )
+from phono3py.phonon.degeneracy import average_over_degenerate_sets
 from phono3py.phonon.func import bose_einstein
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.triplets import get_triplets_integration_weights
@@ -864,10 +864,12 @@ class ImagSelfEnergy:
     def _average_by_degeneracy(
         self, imag_self_energy: NDArray[np.double]
     ) -> NDArray[np.double]:
-        assert self._frequencies is not None
+        assert self._pp.phonons is not None
         assert self._grid_point is not None
         return average_by_degeneracy(
-            imag_self_energy, self._pp.band_indices, self._frequencies[self._grid_point]
+            imag_self_energy,
+            self._pp.band_indices,
+            self._pp.phonons.degenerate_ids[self._grid_point],
         )
 
 
@@ -1327,20 +1329,44 @@ def write_imag_self_energy(
 def average_by_degeneracy(
     imag_self_energy: NDArray[np.double],
     band_indices: NDArray[np.int64],
-    freqs_at_gp: NDArray[np.double],
+    degenerate_ids_at_gp: NDArray[np.int64],
 ) -> NDArray[np.double]:
-    """Take averages of values of energetically degenerated bands."""
-    deg_sets = degenerate_sets(freqs_at_gp)
-    imag_se = np.zeros_like(imag_self_energy)
-    for dset in deg_sets:
-        dset_s = set(dset)
-        bi_set = [i for i, bi in enumerate(band_indices) if bi in dset_s]
-        for i in bi_set:
-            if imag_self_energy.ndim == 1:
-                imag_se[i] = imag_self_energy[bi_set].sum() / len(bi_set)
-            else:
-                imag_se[:, i] = imag_self_energy[:, bi_set].sum(axis=1) / len(bi_set)
-    return imag_se
+    """Take averages of values of energetically degenerated bands.
+
+    Values are averaged over a degenerate set of bands only when all the bands
+    of the set are in ``band_indices``. Values of a set that is only partially
+    included are returned as they are, because the average over the set cannot
+    be taken without the values of the missing bands.
+
+    Parameters
+    ----------
+    imag_self_energy : ndarray
+        Values with the band axis at the last axis for 1D arrays and at axis=1
+        otherwise. The band axis corresponds to ``band_indices``.
+    band_indices : ndarray
+        Band indices of the values in ascending order.
+        shape=(len(band_indices),)
+    degenerate_ids_at_gp : ndarray
+        Smallest band index in the degenerate set of each band at the grid
+        point, see PhononData.degenerate_ids. shape=(num_band,)
+
+    """
+    ids_selected = degenerate_ids_at_gp[band_indices]
+    # Renumber the ids by positions in band_indices.
+    _, first_positions, inverse = np.unique(
+        ids_selected, return_index=True, return_inverse=True
+    )
+    ids = first_positions[inverse]
+    # Bands of partially included sets are made sets of their own.
+    is_partial = (
+        np.bincount(ids_selected)[ids_selected]
+        < np.bincount(degenerate_ids_at_gp)[ids_selected]
+    )
+    ids[is_partial] = np.flatnonzero(is_partial)
+    axis = 0 if imag_self_energy.ndim == 1 else 1
+    averaged = average_over_degenerate_sets(imag_self_energy, ids, axis)
+    # average_over_degenerate_sets returns its input when no bands are degenerate.
+    return averaged.copy() if averaged is imag_self_energy else averaged
 
 
 def run_ise_at_frequency_points_batch(
