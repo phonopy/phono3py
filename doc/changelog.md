@@ -2,6 +2,14 @@
 
 # Change Log
 
+## Oct-4-2026: Version 4.8.1
+
+- Fix the averaging over degenerate bands of the collision matrix with
+  `--reducible-colmat`. The thermal conductivity now agrees better with that
+  obtained with the default (symmetry-reduced) collision matrix.
+- Scattering rates are averaged over a set of degenerate bands only when all the
+  bands of the set are selected by {ref}`--bi <bi_option>`.
+
 ## Oct-3-2026: Version 4.8.0
 
 - Phono3py requires phonopy 4.8.0 or later.
