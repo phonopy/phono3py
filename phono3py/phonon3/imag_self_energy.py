@@ -43,7 +43,6 @@ from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
-from phonopy.phonon.degeneracy import get_degenerate_ids
 from phonopy.physical_units import get_physical_units
 
 from phono3py._lang import log_dispatch, resolve_lang
@@ -865,10 +864,12 @@ class ImagSelfEnergy:
     def _average_by_degeneracy(
         self, imag_self_energy: NDArray[np.double]
     ) -> NDArray[np.double]:
-        assert self._frequencies is not None
+        assert self._pp.phonons is not None
         assert self._grid_point is not None
         return average_by_degeneracy(
-            imag_self_energy, self._pp.band_indices, self._frequencies[self._grid_point]
+            imag_self_energy,
+            self._pp.band_indices,
+            self._pp.phonons.degenerate_ids[self._grid_point],
         )
 
 
@@ -1328,12 +1329,14 @@ def write_imag_self_energy(
 def average_by_degeneracy(
     imag_self_energy: NDArray[np.double],
     band_indices: NDArray[np.int64],
-    freqs_at_gp: NDArray[np.double],
+    degenerate_ids_at_gp: NDArray[np.int64],
 ) -> NDArray[np.double]:
     """Take averages of values of energetically degenerated bands.
 
-    Bands are averaged within the degenerate sets found among ``band_indices``.
-    ``band_indices`` has to be in ascending order of frequencies.
+    Values are averaged over a degenerate set of bands only when all the bands
+    of the set are in ``band_indices``. Values of a set that is only partially
+    included are returned as they are, because the average over the set cannot
+    be taken without the values of the missing bands.
 
     Parameters
     ----------
@@ -1341,12 +1344,25 @@ def average_by_degeneracy(
         Values with the band axis at the last axis for 1D arrays and at axis=1
         otherwise. The band axis corresponds to ``band_indices``.
     band_indices : ndarray
-        Band indices of the values. shape=(len(band_indices),)
-    freqs_at_gp : ndarray
-        Phonon frequencies at the grid point. shape=(num_band,)
+        Band indices of the values in ascending order.
+        shape=(len(band_indices),)
+    degenerate_ids_at_gp : ndarray
+        Smallest band index in the degenerate set of each band at the grid
+        point, see PhononData.degenerate_ids. shape=(num_band,)
 
     """
-    ids = get_degenerate_ids(freqs_at_gp[band_indices][np.newaxis])[0]
+    ids_selected = degenerate_ids_at_gp[band_indices]
+    # Renumber the ids by positions in band_indices.
+    _, first_positions, inverse = np.unique(
+        ids_selected, return_index=True, return_inverse=True
+    )
+    ids = first_positions[inverse]
+    # Bands of partially included sets are made sets of their own.
+    is_partial = (
+        np.bincount(ids_selected)[ids_selected]
+        < np.bincount(degenerate_ids_at_gp)[ids_selected]
+    )
+    ids[is_partial] = np.flatnonzero(is_partial)
     axis = 0 if imag_self_energy.ndim == 1 else 1
     averaged = average_over_degenerate_sets(imag_self_energy, ids, axis)
     # average_over_degenerate_sets returns its input when no bands are degenerate.
