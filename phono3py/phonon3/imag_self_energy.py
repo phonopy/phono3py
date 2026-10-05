@@ -1344,29 +1344,31 @@ def average_by_degeneracy(
         Values with the band axis at the last axis for 1D arrays and at axis=1
         otherwise. The band axis corresponds to ``band_indices``.
     band_indices : ndarray
-        Band indices of the values in ascending order.
-        shape=(len(band_indices),)
+        Band indices of the values in any order. A band given more than once
+        has to have the same values. shape=(len(band_indices),)
     degenerate_ids_at_gp : ndarray
         Smallest band index in the degenerate set of each band at the grid
         point, see PhononData.degenerate_ids. shape=(num_band,)
 
     """
-    ids_selected = degenerate_ids_at_gp[band_indices]
-    # Renumber the ids by positions in band_indices.
-    _, first_positions, inverse = np.unique(
-        ids_selected, return_index=True, return_inverse=True
-    )
-    ids = first_positions[inverse]
-    # Bands of partially included sets are made sets of their own.
-    is_partial = (
-        np.bincount(ids_selected)[ids_selected]
-        < np.bincount(degenerate_ids_at_gp)[ids_selected]
-    )
-    ids[is_partial] = np.flatnonzero(is_partial)
-    axis = 0 if imag_self_energy.ndim == 1 else 1
-    averaged = average_over_degenerate_sets(imag_self_energy, ids, axis)
-    # average_over_degenerate_sets returns its input when no bands are degenerate.
-    return averaged.copy() if averaged is imag_self_energy else averaged
+    # The values are placed in an array of all bands and averaged over the
+    # degenerate sets. Missing bands are NaN, so that the averages over
+    # partially included sets are NaN and the values of those sets are kept.
+    num_band = len(degenerate_ids_at_gp)
+    if imag_self_energy.ndim == 1:
+        values_all_bands = np.full(num_band, np.nan)
+        values_all_bands[band_indices] = imag_self_energy
+        averaged = average_over_degenerate_sets(
+            values_all_bands, degenerate_ids_at_gp, 0
+        )[band_indices]
+    else:
+        shape = (len(imag_self_energy), num_band) + imag_self_energy.shape[2:]
+        values_all_bands = np.full(shape, np.nan)
+        values_all_bands[:, band_indices] = imag_self_energy
+        averaged = average_over_degenerate_sets(
+            values_all_bands, degenerate_ids_at_gp, 1
+        )[:, band_indices]
+    return np.where(np.isnan(averaged), imag_self_energy, averaged)
 
 
 def run_ise_at_frequency_points_batch(
