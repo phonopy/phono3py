@@ -2,6 +2,11 @@
 
 # Change Log
 
+## Oct-5-2026: Version 4.8.2
+
+- Scattering rates are averaged over degenerate bands for band indices given
+  by {ref}`--bi <bi_option>` in any order.
+
 ## Oct-4-2026: Version 4.8.1
 
 - Fix the averaging over degenerate bands of the collision matrix with
