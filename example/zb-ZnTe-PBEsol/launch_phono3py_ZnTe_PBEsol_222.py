@@ -128,7 +128,7 @@ def launch_phono3py(cutoff_energy=350, is_nac=False):
     future = submit(builder)
     print(label)
     print(future)
-    print("Running workchain with pk={}".format(future.pk))
+    print(f"Running workchain with pk={future.pk}")
 
 
 if __name__ == "__main__":
