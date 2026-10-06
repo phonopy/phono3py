@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Unreleased
+
+- Python 3.10 is no longer supported. Python 3.11 or later is required.
+
 ## Oct-5-2026: Version 4.8.2
 
 - Scattering rates are averaged over degenerate bands for band indices given
