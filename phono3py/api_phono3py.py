@@ -40,12 +40,7 @@ import dataclasses
 import os
 import warnings
 from collections.abc import Sequence
-from typing import (  # List and Optional are for < python3.10
-    List,
-    Literal,
-    Optional,
-    cast,
-)
+from typing import Literal, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -3050,7 +3045,7 @@ class Phono3py:
 
         # One displacement supercells
         supercells = cast(
-            List[Optional[PhonopyAtoms]],  # For < python3.10
+            list[PhonopyAtoms | None],
             self._build_phonon_supercells_with_displacements(
                 self._supercell,
                 self._dataset,  # type: ignore[arg-type]

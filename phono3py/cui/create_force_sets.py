@@ -235,7 +235,7 @@ def create_FORCE_SETS_from_FORCES_FCx(
         print(f'Displacement dataset is read from "{disp_filename}".')
         print(f'Forces are read from "{forces_filename}"')
 
-    with open(forces_filename, "r") as f:
+    with open(forces_filename) as f:
         len_first_line = get_length_of_first_line(f)
 
     if len_first_line == 3:

@@ -61,8 +61,9 @@ lint.select = [
     "I", # isort
     "E", # pycodestyle-errors
     "D", # pydocstyle
+    "UP", # pyupgrade
 ]
-lint.extend-ignore = ["D417", "D100"]
+lint.extend-ignore = ["D417", "D100", "UP031"]
 exclude = ["cmake-format.py"]
 
 [tool.ruff.lint.pydocstyle]

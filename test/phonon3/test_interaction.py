@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
 import pytest
@@ -323,8 +323,8 @@ def test_get_all_shortest(aln_lda: Phono3py):
 
 def _get_irt(
     ph3: Phono3py,
-    mesh: Union[int, float, Sequence, np.ndarray],
-    nac_params: Optional[dict] = None,
+    mesh: int | float | Sequence | np.ndarray,
+    nac_params: dict | None = None,
     solve_dynamical_matrices: bool = True,
     make_r0_average: bool = False,
     lang: Literal["C", "Python", "Rust"] = "C",
