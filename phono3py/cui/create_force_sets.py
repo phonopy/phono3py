@@ -61,13 +61,11 @@ def create_FORCES_FC3_and_FORCES_FC2(
     if (
         log_level
         and cell_filename is not None
-        and not is_file_phonopy_yaml(cell_filename, keyword="phono3py")
+        and not is_file_phonopy_yaml(cell_filename)
     ):
         print(f'*Unnecessary to specify "{cell_filename}".')
 
-    if cell_filename is not None and is_file_phonopy_yaml(
-        cell_filename, keyword="phono3py"
-    ):
+    if cell_filename is not None and is_file_phonopy_yaml(cell_filename):
         disp_filename_candidates.insert(0, cell_filename)
     disp_filenames = files_exist(
         disp_filename_candidates, log_level=log_level, is_any=True
@@ -187,9 +185,7 @@ def create_FORCE_SETS_from_FORCES_FCx(
     log_level: int,
 ) -> None:
     """Convert FORCES_FC3 or FORCES_FC2 to FORCE_SETS."""
-    if cell_filename is not None and is_file_phonopy_yaml(
-        cell_filename, keyword="phono3py"
-    ):
+    if cell_filename is not None and is_file_phonopy_yaml(cell_filename):
         disp_filename = cell_filename
     else:
         disp_filename = "phono3py_disp.yaml"

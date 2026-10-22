@@ -306,7 +306,7 @@ def _read_phono3py_settings(
             )
             cell_filename = args.filename[0]
         else:
-            if is_file_phonopy_yaml(args.filename[0], keyword="phono3py"):
+            if is_file_phonopy_yaml(args.filename[0]):
                 phono3py_conf_parser = Phono3pyConfParser(
                     args=args, load_phono3py_yaml=load_phono3py_yaml
                 )
