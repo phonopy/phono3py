@@ -23,11 +23,11 @@ import numpy as np
 import pytest
 from numpy.typing import NDArray
 from phonopy import Phonopy
+from phonopy.phonon.thermal_properties import bose_einstein_dist
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive, Supercell
 
-from phono3py.phonon.func import bose_einstein
 from phono3py.phonon4.fc4 import set_permutation_symmetry_fc4
 from phono3py.phonon4.frequency_shift import FrequencyShift
 
@@ -89,7 +89,7 @@ def _renormalized_shift(
     for nu, e in zip(freqs, eigvecs.T, strict=True):
         if nu <= CUTOFF:
             continue
-        n = bose_einstein(np.array([nu]), temperature)[0]
+        n = bose_einstein_dist(np.array([nu]), temperature)[0]
         q2 = (
             units.Hbar
             * units.EV
