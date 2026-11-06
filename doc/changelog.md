@@ -2,6 +2,21 @@
 
 # Change Log
 
+## Nov-6-2026: Version 4.10.0
+
+- Phono3py requires phonopy 4.10.0 or later.
+- The symfc projector uses the symmetry operations found by phono3py. Until this
+  version, symfc searched the space group from the atomic positions and atomic
+  numbers only, with its own tolerance. As a result, magnetic moments,
+  `is_symmetry=False` and the value of `symprec` were ignored. The symmetrized
+  force constants can change in calculations that use these settings. The symfc
+  projector is used with `--symfc-projector`, with
+  `use_symfc_projector=True` of `Phono3py.symmetrize_fc3` and
+  `Phono3py.symmetrize_fc2`, and in `phono3py.load` unless `fc_calculator` is
+  specified.
+- `phono3py.phonon.func.bose_einstein` is removed. Use
+  `phonopy.phonon.thermal_properties.bose_einstein_dist` instead.
+
 ## Nov-6-2026: Version 4.9.0
 
 - Phono3py requires phonopy 4.9.0 or later.
