@@ -5,8 +5,9 @@ from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
-from phonopy.phonon.thermal_properties import mode_cv
 from phonopy.physical_units import get_physical_units
+
+from phono3py.phonon.func import mode_cv
 
 # Threshold on x = E / (kB T) below which two modes are treated as
 # degenerate and (n_j - n_j') / (x_j - x_j') is replaced by its analytic

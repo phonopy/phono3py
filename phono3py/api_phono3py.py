@@ -1787,6 +1787,7 @@ class Phono3py:
                 options=_options,
                 log_level=self._log_level,
                 show_credit=True,
+                symmetry=self._symmetry,
             )
         else:
             level = 3
@@ -1976,6 +1977,7 @@ class Phono3py:
                 options=_options,
                 log_level=self._log_level,
                 show_credit=True,
+                symmetry=self._phonon_supercell_symmetry,
             )
         else:
             level = 3

@@ -11,6 +11,7 @@ from typing import Literal
 import numpy as np
 from numpy.typing import NDArray
 from phonopy.phonon.degeneracy import degenerate_sets
+from phonopy.phonon.thermal_properties import bose_einstein_dist
 from phonopy.physical_units import get_physical_units
 
 from phono3py._lang import log_dispatch, resolve_lang
@@ -18,7 +19,6 @@ from phono3py.file_IO import (
     write_real_self_energy_at_grid_point,
     write_real_self_energy_to_hdf5,
 )
-from phono3py.phonon.func import bose_einstein
 from phono3py.phonon3.imag_self_energy import get_frequency_points
 from phono3py.phonon3.interaction import Interaction
 
@@ -414,8 +414,8 @@ class RealSelfEnergy:
             ):
                 d = 0.0
                 assert self._temperature is not None
-                n2 = bose_einstein(freqs[1, j], self._temperature)
-                n3 = bose_einstein(freqs[2, k], self._temperature)
+                n2 = bose_einstein_dist(freqs[1, j], self._temperature)
+                n3 = bose_einstein_dist(freqs[2, k], self._temperature)
                 f1 = fpoint + freqs[1, j] + freqs[2, k]
                 f2 = fpoint - freqs[1, j] - freqs[2, k]
                 f3 = fpoint - freqs[1, j] + freqs[2, k]

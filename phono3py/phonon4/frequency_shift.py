@@ -24,12 +24,12 @@ import numpy as np
 from numpy.typing import NDArray
 from phonopy.harmonic.dynamical_matrix import NacParams, get_dynamical_matrix
 from phonopy.phonon.grid import BZGrid, get_qpoints_from_bz_grid_points
+from phonopy.phonon.thermal_properties import bose_einstein_dist
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import Primitive
 
 from phono3py._lang import resolve_lang
-from phono3py.phonon.func import bose_einstein
 from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_rust
 from phono3py.phonon4.real_to_reciprocal import RealToReciprocalFc4
 
@@ -284,7 +284,7 @@ class FrequencyShift:
             occs = np.zeros_like(freqs1)
             if temperature > 0:
                 mask = freqs1 > 0
-                occs[mask] = bose_einstein(freqs1[mask], temperature)
+                occs[mask] = bose_einstein_dist(freqs1[mask], temperature)
             shifts[i_t] = (
                 self._unit_conversion
                 * np.einsum("gjb,gb->j", fc4_normal, 2 * occs + 1).real

@@ -12,11 +12,11 @@ import numpy as np
 from numpy.typing import NDArray
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
 from phonopy.phonon.grid import BZGrid, get_grid_point_from_address
+from phonopy.phonon.thermal_properties import bose_einstein_dist
 from phonopy.physical_units import get_physical_units
 from phonopy.structure.cells import Primitive, Supercell
 
 from phono3py._lang import log_dispatch, resolve_lang
-from phono3py.phonon.func import bose_einstein
 from phono3py.phonon.solver import (
     PhononData,
     run_phonon_solver_c,
@@ -492,7 +492,7 @@ class JointDos:
         t = self._temperature
         freqs = self._phonons.frequencies[self._triplets_at_q[:, 1:]]
         self._occupations = np.where(
-            freqs > self._cutoff_frequency, bose_einstein(freqs, t), -1
+            freqs > self._cutoff_frequency, bose_einstein_dist(freqs, t), -1
         )
 
     def _run_py_with_g_at_temperature(self, jdos: NDArray[np.double], i: int) -> None:

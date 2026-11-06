@@ -10,6 +10,7 @@ from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
+from phonopy.phonon.thermal_properties import bose_einstein_dist
 from phonopy.physical_units import get_physical_units
 
 from phono3py._lang import log_dispatch, resolve_lang
@@ -18,7 +19,6 @@ from phono3py.file_IO import (
     write_imag_self_energy_at_grid_point,
 )
 from phono3py.phonon.degeneracy import average_over_degenerate_sets
-from phono3py.phonon.func import bose_einstein
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.triplets import get_triplets_integration_weights
 
@@ -744,7 +744,7 @@ class ImagSelfEnergy:
         assert self._imag_self_energy is not None
         freqs = self._frequencies[self._triplets_at_q[:, [1, 2]]]
         freqs = np.where(freqs > self._cutoff_frequency, freqs, 1)
-        n = bose_einstein(freqs, self._temperature)
+        n = np.asarray(bose_einstein_dist(freqs, self._temperature))
         for i, (tp, w, interaction) in enumerate(
             zip(self._triplets_at_q, self._weights_at_q, self._pp_strength, strict=True)
         ):
@@ -800,8 +800,8 @@ class ImagSelfEnergy:
                 f1 = self._frequencies[tp[1]][j]
                 f2 = self._frequencies[tp[2]][k]
                 if f1 > self._cutoff_frequency and f2 > self._cutoff_frequency:
-                    n2 = bose_einstein(f1, self._temperature)
-                    n3 = bose_einstein(f2, self._temperature)
+                    n2 = bose_einstein_dist(f1, self._temperature)
+                    n3 = bose_einstein_dist(f2, self._temperature)
                     g1 = self._g[0, i, :, j, k]
                     g2_g3 = self._g[1, i, :, j, k]  # g2 - g3
                     for ll in range(len(interaction)):
