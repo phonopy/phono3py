@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 import numpy as np
 import pytest
 from phonopy.phonon.grid import get_ir_grid_points
@@ -396,7 +394,7 @@ def test_run_prop_dos(si_pbesol: Phono3py):
 def _calculate_kappados(
     ph3: Phono3py,
     mode_prop: np.ndarray,
-    freq_points: Optional[np.ndarray] = None,
+    freq_points: np.ndarray | None = None,
 ):
     tc = ph3.thermal_conductivity
     bz_grid = ph3.grid

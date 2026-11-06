@@ -5,10 +5,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-phono3c = pytest.importorskip("phono3py._phono3py")
-
-from phono3py import Phono3py  # noqa: E402
-from phono3py.phonon3.fc3 import (  # noqa: E402
+from phono3py import Phono3py
+from phono3py._lang import have_c_ext
+from phono3py.phonon3.fc3 import (
     compact_fc3_to_full_fc3,
     cutoff_fc3_by_zero,
     distribute_fc3,
@@ -21,6 +20,19 @@ from phono3py.phonon3.fc3 import (  # noqa: E402
     set_translational_invariance_compact_fc3,
     set_translational_invariance_fc3,
 )
+
+requires_c_ext = pytest.mark.skipif(
+    not have_c_ext(), reason="C extension phono3py._phono3py is not available"
+)
+
+
+def _c_ext_with_lapacke() -> bool:
+    """Return True when the C extension is available and built with lapacke."""
+    if not have_c_ext():
+        return False
+    import phono3py._phono3py as phono3c
+
+    return phono3c.include_lapacke()
 
 
 def test_cutoff_fc3(nacl_pbe_cutoff_fc3: Phono3py, nacl_pbe: Phono3py):
@@ -380,7 +392,7 @@ def test_phonon_smat_alm_cutoff_fc3(si_pbesol_111_222_alm_cutoff_fc3: Phono3py):
 
 
 @pytest.mark.skipif(
-    not phono3c.include_lapacke(), reason="requires to compile with lapacke"
+    not _c_ext_with_lapacke(), reason="requires to compile with lapacke"
 )
 def test_fc3_lapacke_solver(si_pbesol_111: Phono3py):
     """Test fc3 with Si PBEsol 1x1x1 using lapacke solver."""
@@ -419,6 +431,7 @@ def test_fc3_lapacke_solver(si_pbesol_111: Phono3py):
         np.testing.assert_allclose(fc3[0, 1, 7], fc3_ref, atol=1e-8, rtol=0)
 
 
+@requires_c_ext
 def test_distribute_fc3_rust_vs_c():
     """Compare lang='Rust' and default (C) paths of distribute_fc3.
 
@@ -466,6 +479,7 @@ def test_distribute_fc3_rust_vs_c():
     np.testing.assert_array_equal(fc3_rust, fc3_c)
 
 
+@requires_c_ext
 def test_distribute_fc3_compact_rust_vs_c(si_pbesol: Phono3py):
     """Compare Rust and C paths of distribute_fc3 on a compact fc3.
 
@@ -528,6 +542,7 @@ def test_distribute_fc3_compact_rust_vs_c(si_pbesol: Phono3py):
     np.testing.assert_allclose(fc3_rust, fc3_c, rtol=1e-14, atol=1e-14)
 
 
+@requires_c_ext
 def test_distribute_fc3_rust_vs_c_rotated_lattice():
     """Check C vs Rust under a non-trivial rot_cart_inv.
 
@@ -564,6 +579,7 @@ def test_distribute_fc3_rust_vs_c_rotated_lattice():
     np.testing.assert_allclose(fc3_rust, fc3_c, rtol=1e-14, atol=1e-14)
 
 
+@requires_c_ext
 def test_set_translational_invariance_compact_fc3_rust_vs_c(si_pbesol: Phono3py):
     """Compare lang='Rust' and C paths of set_translational_invariance_compact_fc3.
 
@@ -585,6 +601,7 @@ def test_set_translational_invariance_compact_fc3_rust_vs_c(si_pbesol: Phono3py)
     np.testing.assert_array_equal(compact_rust, compact_c)
 
 
+@requires_c_ext
 def test_get_drift_fc3_compact_rust_vs_c(si_pbesol: Phono3py):
     """Compare lang='Rust' and C paths of get_drift_fc3 on a compact fc3."""
     pytest.importorskip("phonors")
@@ -604,6 +621,7 @@ def test_get_drift_fc3_compact_rust_vs_c(si_pbesol: Phono3py):
     np.testing.assert_array_equal(compact_rust, compact_c)
 
 
+@requires_c_ext
 def test_set_permutation_symmetry_compact_fc3_rust_vs_c(si_pbesol: Phono3py):
     """Compare lang='Rust' and C paths of set_permutation_symmetry_compact_fc3."""
     pytest.importorskip("phonors")
@@ -620,6 +638,7 @@ def test_set_permutation_symmetry_compact_fc3_rust_vs_c(si_pbesol: Phono3py):
     np.testing.assert_array_equal(compact_rust, compact_c)
 
 
+@requires_c_ext
 def test_get_fc3_rust_vs_c(si_pbesol_111: Phono3py):
     """Compare lang='Rust' and C paths of get_fc3 (rotate_delta_fc2s path).
 
@@ -647,6 +666,7 @@ def test_get_fc3_rust_vs_c(si_pbesol_111: Phono3py):
     np.testing.assert_allclose(fc3_rust, fc3_c, rtol=1e-13, atol=1e-13)
 
 
+@requires_c_ext
 def test_set_permutation_symmetry_fc3_rust_vs_c():
     """Compare lang='Rust' and default (C) paths of set_permutation_symmetry_fc3.
 

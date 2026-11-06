@@ -3,13 +3,21 @@
 import numpy as np
 import pytest
 
-phono3c = pytest.importorskip("phono3py._phono3py")
+from phono3py._lang import have_c_ext
+from phono3py.api_phono3py import Phono3py
 
-from phono3py.api_phono3py import Phono3py  # noqa: E402
+
+def _c_ext_with_lapacke() -> bool:
+    """Return True when the C extension is available and built with lapacke."""
+    if not have_c_ext():
+        return False
+    import phono3py._phono3py as phono3c
+
+    return phono3c.include_lapacke()
 
 
 @pytest.mark.skipif(
-    not phono3c.include_lapacke(), reason="test for phono3py compiled with lapacke"
+    not _c_ext_with_lapacke(), reason="test for phono3py compiled with lapacke"
 )
 @pytest.mark.parametrize("pinv_solver", [1, 2, 6])
 def test_kappa_LBTE_126(si_pbesol: Phono3py, pinv_solver: int):
@@ -39,7 +47,8 @@ def _test_kappa_LBTE(si_pbesol: Phono3py, pinv_solver: int):
 
 
 @pytest.mark.skipif(
-    phono3c.include_lapacke(), reason="test for phono3py compiled without lapacke"
+    not have_c_ext() or _c_ext_with_lapacke(),
+    reason="test for phono3py C extension compiled without lapacke",
 )
 @pytest.mark.parametrize("pinv_solver", [1, 2])
 def test_kappa_LBTE_witout_lapacke(si_pbesol: Phono3py, pinv_solver: int):

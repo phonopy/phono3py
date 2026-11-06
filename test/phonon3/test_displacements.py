@@ -1,7 +1,7 @@
 """Tests of displacements.py."""
 
 import itertools
-from typing import Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
 import pytest
@@ -86,8 +86,8 @@ distances_NaCl = [
 def test_random_disps_agno2(
     agno2_cell: PhonopyAtoms,
     is_plusminus: bool,
-    distance: Optional[float],
-    number_of_snapshots: Union[int, Literal["auto"]],
+    distance: float | None,
+    number_of_snapshots: int | Literal["auto"],
 ):
     """Test random displacements."""
     pytest.importorskip("symfc")

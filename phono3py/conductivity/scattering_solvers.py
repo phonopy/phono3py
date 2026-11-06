@@ -841,8 +841,7 @@ class RTAScatteringSolver:
         pp_unit_conv = self._pp.unit_conversion_factor
         band_indices = self._pp.band_indices
         assert self._pp.phonons is not None
-        frequencies = self._pp.phonons.frequencies
-        freq_at_gp = frequencies[grid_point]
+        ids_at_gp = self._pp.phonons.degenerate_ids[grid_point]
 
         if self._is_N_U:
             col = collisions.sum(axis=0)
@@ -855,7 +854,7 @@ class RTAScatteringSolver:
         gamma[i_sigma] = average_by_degeneracy(
             col * unit_conv,
             band_indices,
-            freq_at_gp,
+            ids_at_gp,
         )
         if self._is_N_U:
             assert self._gamma_N is not None
@@ -863,12 +862,12 @@ class RTAScatteringSolver:
             self._gamma_N[i_sigma] = average_by_degeneracy(
                 col_N * unit_conv,
                 band_indices,
-                freq_at_gp,
+                ids_at_gp,
             )
             self._gamma_U[i_sigma] = average_by_degeneracy(
                 col_U * unit_conv,
                 band_indices,
-                freq_at_gp,
+                ids_at_gp,
             )
 
     # ------------------------------------------------------------------

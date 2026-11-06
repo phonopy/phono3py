@@ -173,6 +173,7 @@ def _build_lbte_calculator(
     colmat_kernel = create_collision_matrix_kernel(
         kappa_settings=kappa_settings,
         frequencies=frequencies,
+        degenerate_ids=interaction.phonons.degenerate_ids,
         rot_grid_points=rot_grid_points,
         solve_collective_phonon=config.solve_collective_phonon,
         pinv_cutoff=config.pinv_cutoff,

@@ -4,7 +4,6 @@ import os
 import pathlib
 import tempfile
 from collections.abc import Sequence
-from typing import Optional
 
 import h5py
 import numpy as np
@@ -447,7 +446,7 @@ def _set_kappa(
     is_isotope: bool = False,
     is_full_pp: bool = False,
     write_kappa: bool = False,
-    boundary_mfp: Optional[float] = None,
+    boundary_mfp: float | None = None,
 ) -> str:
     ph3.mesh_numbers = mesh
     ph3.init_phph_interaction()

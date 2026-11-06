@@ -5,7 +5,7 @@ import pytest
 from phonopy.phonon.degeneracy import degenerate_sets
 
 from phono3py import Phono3py
-from phono3py.phonon3.imag_self_energy import ImagSelfEnergy
+from phono3py.phonon3.imag_self_energy import ImagSelfEnergy, average_by_degeneracy
 
 
 def test_imag_self_energy_at_bands(si_pbesol: Phono3py):
@@ -1222,3 +1222,59 @@ def test_imag_self_energy_average_degenerate_weights(
         assert diff < 1e-12
     else:
         assert diff > 1e-2
+
+
+def test_average_by_degeneracy_partial_sets():
+    """Average only the degenerate sets fully included in band_indices.
+
+    Bands 1-2 and 4-5 are degenerate. Values of a partially included set are
+    returned as they are.
+
+    """
+    ids = np.array([0, 1, 1, 3, 4, 4], dtype="int64")
+    values = np.array([1.0, 2.0, 4.0, 5.0, 6.0, 10.0])
+
+    # All bands.
+    np.testing.assert_allclose(
+        average_by_degeneracy(values, np.arange(6), ids),
+        [1.0, 3.0, 3.0, 5.0, 8.0, 8.0],
+    )
+    # Set (1, 2) is complete, set (4, 5) is partial.
+    np.testing.assert_allclose(
+        average_by_degeneracy(values[:5], np.arange(5), ids),
+        [1.0, 3.0, 3.0, 5.0, 6.0],
+    )
+    # Both sets are partial.
+    np.testing.assert_allclose(
+        average_by_degeneracy(values[[0, 2, 3, 5]], np.array([0, 2, 3, 5]), ids),
+        values[[0, 2, 3, 5]],
+    )
+    # band_indices not in ascending order.
+    np.testing.assert_allclose(
+        average_by_degeneracy(values[[4, 5, 1, 2]], np.array([4, 5, 1, 2]), ids),
+        [8.0, 8.0, 3.0, 3.0],
+    )
+    np.testing.assert_allclose(
+        average_by_degeneracy(values[[2, 1]], np.array([2, 1]), ids), [3.0, 3.0]
+    )
+    np.testing.assert_allclose(
+        average_by_degeneracy(values[[1, 3, 2]], np.array([1, 3, 2]), ids),
+        [3.0, 5.0, 3.0],
+    )
+    # band_indices with duplicates. The same band has the same value.
+    np.testing.assert_allclose(
+        average_by_degeneracy(
+            values[[0, 1, 2, 3, 4, 5, 1, 2]], np.array([0, 1, 2, 3, 4, 5, 1, 2]), ids
+        ),
+        [1.0, 3.0, 3.0, 5.0, 8.0, 8.0, 3.0, 3.0],
+    )
+    np.testing.assert_allclose(
+        average_by_degeneracy(values[[1, 2, 1]], np.array([1, 2, 1]), ids),
+        [3.0, 3.0, 3.0],
+    )
+    # The band axis of a 2D array is axis=1.
+    values_2d = np.array([values, 2 * values])
+    np.testing.assert_allclose(
+        average_by_degeneracy(values_2d, np.arange(6), ids),
+        [[1.0, 3.0, 3.0, 5.0, 8.0, 8.0], [2.0, 6.0, 6.0, 10.0, 16.0, 16.0]],
+    )

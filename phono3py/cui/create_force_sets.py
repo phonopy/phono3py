@@ -1,38 +1,5 @@
+# SPDX-License-Identifier: BSD-3-Clause
 """Command line user interface to create force sets files."""
-
-# Copyright (C) 2024 Atsushi Togo
-# All rights reserved.
-#
-# This file is part of phono3py.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# * Redistributions of source code must retain the above copyright
-#   notice, this list of conditions and the following disclaimer.
-#
-# * Redistributions in binary form must reproduce the above copyright
-#   notice, this list of conditions and the following disclaimer in
-#   the documentation and/or other materials provided with the
-#   distribution.
-#
-# * Neither the name of the phonopy project nor the names of its
-#   contributors may be used to endorse or promote products derived
-#   from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import annotations
 
@@ -94,13 +61,11 @@ def create_FORCES_FC3_and_FORCES_FC2(
     if (
         log_level
         and cell_filename is not None
-        and not is_file_phonopy_yaml(cell_filename, keyword="phono3py")
+        and not is_file_phonopy_yaml(cell_filename)
     ):
         print(f'*Unnecessary to specify "{cell_filename}".')
 
-    if cell_filename is not None and is_file_phonopy_yaml(
-        cell_filename, keyword="phono3py"
-    ):
+    if cell_filename is not None and is_file_phonopy_yaml(cell_filename):
         disp_filename_candidates.insert(0, cell_filename)
     disp_filenames = files_exist(
         disp_filename_candidates, log_level=log_level, is_any=True
@@ -220,9 +185,7 @@ def create_FORCE_SETS_from_FORCES_FCx(
     log_level: int,
 ) -> None:
     """Convert FORCES_FC3 or FORCES_FC2 to FORCE_SETS."""
-    if cell_filename is not None and is_file_phonopy_yaml(
-        cell_filename, keyword="phono3py"
-    ):
+    if cell_filename is not None and is_file_phonopy_yaml(cell_filename):
         disp_filename = cell_filename
     else:
         disp_filename = "phono3py_disp.yaml"
@@ -235,7 +198,7 @@ def create_FORCE_SETS_from_FORCES_FCx(
         print(f'Displacement dataset is read from "{disp_filename}".')
         print(f'Forces are read from "{forces_filename}"')
 
-    with open(forces_filename, "r") as f:
+    with open(forces_filename) as f:
         len_first_line = get_length_of_first_line(f)
 
     if len_first_line == 3:

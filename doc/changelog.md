@@ -2,6 +2,24 @@
 
 # Change Log
 
+## Nov-6-2026: Version 4.9.0
+
+- Phono3py requires phonopy 4.9.0 or later.
+- Python 3.10 is no longer supported. Python 3.11 or later is required.
+
+## Oct-5-2026: Version 4.8.2
+
+- Scattering rates are averaged over degenerate bands for band indices given
+  by {ref}`--bi <bi_option>` in any order.
+
+## Oct-4-2026: Version 4.8.1
+
+- Fix the averaging over degenerate bands of the collision matrix with
+  `--reducible-colmat`. The thermal conductivity now agrees better with that
+  obtained with the default (symmetry-reduced) collision matrix.
+- Scattering rates are averaged over a set of degenerate bands only when all the
+  bands of the set are selected by {ref}`--bi <bi_option>`.
+
 ## Oct-3-2026: Version 4.8.0
 
 - Phono3py requires phonopy 4.8.0 or later.

@@ -1,38 +1,5 @@
+# SPDX-License-Identifier: BSD-3-Clause
 """Calculation of imaginary-part of self-energy of bubble diagram."""
-
-# Copyright (C) 2020 Atsushi Togo
-# All rights reserved.
-#
-# This file is part of phono3py.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# * Redistributions of source code must retain the above copyright
-#   notice, this list of conditions and the following disclaimer.
-#
-# * Redistributions in binary form must reproduce the above copyright
-#   notice, this list of conditions and the following disclaimer in
-#   the documentation and/or other materials provided with the
-#   distribution.
-#
-# * Neither the name of the phonopy project nor the names of its
-#   contributors may be used to endorse or promote products derived
-#   from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import annotations
 
@@ -43,7 +10,6 @@ from typing import Literal
 
 import numpy as np
 from numpy.typing import NDArray
-from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.physical_units import get_physical_units
 
 from phono3py._lang import log_dispatch, resolve_lang
@@ -51,6 +17,7 @@ from phono3py.file_IO import (
     write_gamma_detail_to_hdf5,
     write_imag_self_energy_at_grid_point,
 )
+from phono3py.phonon.degeneracy import average_over_degenerate_sets
 from phono3py.phonon.func import bose_einstein
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.triplets import get_triplets_integration_weights
@@ -864,10 +831,12 @@ class ImagSelfEnergy:
     def _average_by_degeneracy(
         self, imag_self_energy: NDArray[np.double]
     ) -> NDArray[np.double]:
-        assert self._frequencies is not None
+        assert self._pp.phonons is not None
         assert self._grid_point is not None
         return average_by_degeneracy(
-            imag_self_energy, self._pp.band_indices, self._frequencies[self._grid_point]
+            imag_self_energy,
+            self._pp.band_indices,
+            self._pp.phonons.degenerate_ids[self._grid_point],
         )
 
 
@@ -1327,20 +1296,46 @@ def write_imag_self_energy(
 def average_by_degeneracy(
     imag_self_energy: NDArray[np.double],
     band_indices: NDArray[np.int64],
-    freqs_at_gp: NDArray[np.double],
+    degenerate_ids_at_gp: NDArray[np.int64],
 ) -> NDArray[np.double]:
-    """Take averages of values of energetically degenerated bands."""
-    deg_sets = degenerate_sets(freqs_at_gp)
-    imag_se = np.zeros_like(imag_self_energy)
-    for dset in deg_sets:
-        dset_s = set(dset)
-        bi_set = [i for i, bi in enumerate(band_indices) if bi in dset_s]
-        for i in bi_set:
-            if imag_self_energy.ndim == 1:
-                imag_se[i] = imag_self_energy[bi_set].sum() / len(bi_set)
-            else:
-                imag_se[:, i] = imag_self_energy[:, bi_set].sum(axis=1) / len(bi_set)
-    return imag_se
+    """Take averages of values of energetically degenerated bands.
+
+    Values are averaged over a degenerate set of bands only when all the bands
+    of the set are in ``band_indices``. Values of a set that is only partially
+    included are returned as they are, because the average over the set cannot
+    be taken without the values of the missing bands.
+
+    Parameters
+    ----------
+    imag_self_energy : ndarray
+        Values with the band axis at the last axis for 1D arrays and at axis=1
+        otherwise. The band axis corresponds to ``band_indices``.
+    band_indices : ndarray
+        Band indices of the values in any order. A band given more than once
+        has to have the same values. shape=(len(band_indices),)
+    degenerate_ids_at_gp : ndarray
+        Smallest band index in the degenerate set of each band at the grid
+        point, see PhononData.degenerate_ids. shape=(num_band,)
+
+    """
+    # The values are placed in an array of all bands and averaged over the
+    # degenerate sets. Missing bands are NaN, so that the averages over
+    # partially included sets are NaN and the values of those sets are kept.
+    num_band = len(degenerate_ids_at_gp)
+    if imag_self_energy.ndim == 1:
+        values_all_bands = np.full(num_band, np.nan)
+        values_all_bands[band_indices] = imag_self_energy
+        averaged = average_over_degenerate_sets(
+            values_all_bands, degenerate_ids_at_gp, 0
+        )[band_indices]
+    else:
+        shape = (len(imag_self_energy), num_band) + imag_self_energy.shape[2:]
+        values_all_bands = np.full(shape, np.nan)
+        values_all_bands[:, band_indices] = imag_self_energy
+        averaged = average_over_degenerate_sets(
+            values_all_bands, degenerate_ids_at_gp, 1
+        )[:, band_indices]
+    return np.where(np.isnan(averaged), imag_self_energy, averaged)
 
 
 def run_ise_at_frequency_points_batch(
