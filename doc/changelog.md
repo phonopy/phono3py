@@ -2,8 +2,9 @@
 
 # Change Log
 
-## Unreleased
+## Nov-6-2026: Version 4.9.0
 
+- Phono3py requires phonopy 4.9.0 or later.
 - Python 3.10 is no longer supported. Python 3.11 or later is required.
 
 ## Oct-5-2026: Version 4.8.2
