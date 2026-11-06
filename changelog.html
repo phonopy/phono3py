@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Change Log &#8212; Phono3py v.4.7.0</title>
+    <title>Change Log &#8212; Phono3py v.4.9.0</title>
   
   
   
@@ -39,7 +39,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="_static/documentation_options.js?v=3a5dd307"></script>
+    <script src="_static/documentation_options.js?v=d607d3c8"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
@@ -52,7 +52,7 @@
     <link rel="prev" title="Migrating toward phono3py v5" href="migration-v5.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="4.7" />
+  <meta name="docsearch:version" content="4.9" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -177,7 +177,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.4.7.0</p>
+    <p class="title logo__title">Phono3py v.4.9.0</p>
   
 </a></div>
         <div class="sidebar-primary-item">
@@ -378,6 +378,9 @@
             </div>
             <nav aria-label="Page">
                 <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#nov-6-2026-version-4-9-0">Nov-6-2026: Version 4.9.0</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#oct-5-2026-version-4-8-2">Oct-5-2026: Version 4.8.2</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#oct-4-2026-version-4-8-1">Oct-4-2026: Version 4.8.1</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#oct-3-2026-version-4-8-0">Oct-3-2026: Version 4.8.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sep-27-2026-version-4-7-0">Sep-27-2026: Version 4.7.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sep-10-2026-version-4-5-0">Sep-10-2026: Version 4.5.0</a></li>
@@ -524,6 +527,30 @@
                   
   <section class="tex2jax_ignore mathjax_ignore" id="change-log">
 <span id="changelog"></span><h1>Change Log<a class="headerlink" href="#change-log" title="Link to this heading">#</a></h1>
+<section id="nov-6-2026-version-4-9-0">
+<h2>Nov-6-2026: Version 4.9.0<a class="headerlink" href="#nov-6-2026-version-4-9-0" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Phono3py requires phonopy 4.9.0 or later.</p></li>
+<li><p>Python 3.10 is no longer supported. Python 3.11 or later is required.</p></li>
+</ul>
+</section>
+<section id="oct-5-2026-version-4-8-2">
+<h2>Oct-5-2026: Version 4.8.2<a class="headerlink" href="#oct-5-2026-version-4-8-2" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Scattering rates are averaged over degenerate bands for band indices given
+by <a class="reference internal" href="command-options.html#bi-option"><span class="std std-ref">–bi</span></a> in any order.</p></li>
+</ul>
+</section>
+<section id="oct-4-2026-version-4-8-1">
+<h2>Oct-4-2026: Version 4.8.1<a class="headerlink" href="#oct-4-2026-version-4-8-1" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Fix the averaging over degenerate bands of the collision matrix with
+<code class="docutils literal notranslate"><span class="pre">--reducible-colmat</span></code>. The thermal conductivity now agrees better with that
+obtained with the default (symmetry-reduced) collision matrix.</p></li>
+<li><p>Scattering rates are averaged over a set of degenerate bands only when all the
+bands of the set are selected by <a class="reference internal" href="command-options.html#bi-option"><span class="std std-ref">–bi</span></a>.</p></li>
+</ul>
+</section>
 <section id="oct-3-2026-version-4-8-0">
 <h2>Oct-3-2026: Version 4.8.0<a class="headerlink" href="#oct-3-2026-version-4-8-0" title="Link to this heading">#</a></h2>
 <ul class="simple">
@@ -1723,6 +1750,9 @@ a mesh number is an even number, it is more carefully treated.</p></li>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#nov-6-2026-version-4-9-0">Nov-6-2026: Version 4.9.0</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#oct-5-2026-version-4-8-2">Oct-5-2026: Version 4.8.2</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#oct-4-2026-version-4-8-1">Oct-4-2026: Version 4.8.1</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#oct-3-2026-version-4-8-0">Oct-3-2026: Version 4.8.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sep-27-2026-version-4-7-0">Sep-27-2026: Version 4.7.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sep-10-2026-version-4-5-0">Sep-10-2026: Version 4.5.0</a></li>
