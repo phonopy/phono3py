@@ -425,3 +425,54 @@ def test_symmetrize_fc_symfc(si_pbesol: Phono3py, is_compact_fc: bool):
     ph3.symmetrize_fc2(use_symfc_projector=True)
     v1_sym, v2_sym, _, _ = get_drift_force_constants(ph3.fc2, primitive=ph3.primitive)
     np.testing.assert_allclose([v1_sym, v2_sym], 0, atol=1e-6)
+
+
+def test_symmetrize_fc_symfc_without_symmetry(si_pbesol_111: Phono3py):
+    """Test that the symfc projector follows is_symmetry of Phono3py."""
+    pytest.importorskip("symfc")
+
+    rng = np.random.default_rng(0)
+    num_atom = len(si_pbesol_111.supercell)
+    fc2 = rng.standard_normal((num_atom, num_atom, 3, 3))
+    fc3 = rng.standard_normal((num_atom, num_atom, num_atom, 3, 3, 3))
+
+    symmetrized = []
+    for is_symmetry in (True, False):
+        ph3 = Phono3py(
+            si_pbesol_111.unitcell,
+            supercell_matrix=si_pbesol_111.supercell_matrix,
+            primitive_matrix=si_pbesol_111.primitive_matrix,
+            is_symmetry=is_symmetry,
+            log_level=0,
+        )
+        ph3.fc2 = fc2.copy()
+        ph3.fc3 = fc3.copy()
+        ph3.symmetrize_fc2(use_symfc_projector=True)
+        ph3.symmetrize_fc3(use_symfc_projector=True)
+        symmetrized.append((ph3.fc2, ph3.fc3))
+
+    assert not np.allclose(symmetrized[0][0], symmetrized[1][0])
+    assert not np.allclose(symmetrized[0][1], symmetrized[1][1])
+
+
+def test_symmetrize_fc_symfc_symmetry_of_each_supercell(
+    si_pbesol_111_222_fd: Phono3py, monkeypatch: pytest.MonkeyPatch
+):
+    """Test that fc3 and fc2 are projected with the symmetry of their supercells."""
+    ph3 = si_pbesol_111_222_fd
+    assert ph3.phonon_supercell_symmetry is not ph3.symmetry
+
+    symmetries = {}
+
+    def _record_symmetry(supercell, fc, order, **kwargs):
+        symmetries[order] = kwargs["symmetry"]
+        return fc
+
+    monkeypatch.setattr(
+        "phono3py.api_phono3py.symmetrize_by_projector", _record_symmetry
+    )
+    ph3.symmetrize_fc3(use_symfc_projector=True)
+    ph3.symmetrize_fc2(use_symfc_projector=True)
+
+    assert symmetries[3] is ph3.symmetry
+    assert symmetries[2] is ph3.phonon_supercell_symmetry

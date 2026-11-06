@@ -6,10 +6,10 @@ from collections.abc import Callable
 
 import numpy as np
 from numpy.typing import NDArray
-from phonopy.phonon.thermal_properties import mode_cv
 from phonopy.physical_units import get_physical_units
 
 from phono3py.conductivity.grid_point_data import HeatCapacityResult
+from phono3py.phonon.func import mode_cv
 from phono3py.phonon.heat_capacity_matrix import mode_cv_matrix_njc23
 from phono3py.phonon3.interaction import Interaction
 
