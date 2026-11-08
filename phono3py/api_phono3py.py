@@ -2962,7 +2962,7 @@ class Phono3py:
             )
             if (
                 self._primitive is not None
-                and (self._primitive.numbers != self._phonon_primitive.numbers).any()
+                and self._primitive.symbols != self._phonon_primitive.symbols
             ):
                 print(" Primitive cells for fc2 and fc3 can be different.")
                 raise RuntimeError
