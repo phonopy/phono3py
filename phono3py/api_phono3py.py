@@ -2974,14 +2974,14 @@ class Phono3py:
         positions = supercell.positions
         magmoms = supercell.magnetic_moments
         masses = supercell.masses
-        numbers = supercell.numbers
         lattice = supercell.cell
 
         if "displacements" in dataset:
             for disp in dataset["displacements"]:
                 supercells.append(
                     PhonopyAtoms(
-                        numbers=numbers,
+                        species_table=supercell.species_table,
+                        species_ids=supercell.species_ids,
                         masses=masses,
                         magnetic_moments=magmoms,
                         positions=positions + disp,
@@ -2995,7 +2995,8 @@ class Phono3py:
                 positions[disp1["number"]] += disp_cart1
                 supercells.append(
                     PhonopyAtoms(
-                        numbers=numbers,
+                        species_table=supercell.species_table,
+                        species_ids=supercell.species_ids,
                         masses=masses,
                         magnetic_moments=magmoms,
                         positions=positions,
@@ -3010,7 +3011,6 @@ class Phono3py:
 
         magmoms = self._supercell.magnetic_moments
         masses = self._supercell.masses
-        numbers = self._supercell.numbers
         lattice = self._supercell.cell
 
         # One displacement supercells
@@ -3037,7 +3037,8 @@ class Phono3py:
                         positions[disp2["number"]] += disp2["displacement"]
                         supercells.append(
                             PhonopyAtoms(
-                                numbers=numbers,
+                                species_table=self._supercell.species_table,
+                                species_ids=self._supercell.species_ids,
                                 masses=masses,
                                 magnetic_moments=magmoms,
                                 positions=positions,

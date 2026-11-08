@@ -51,6 +51,45 @@ def test_supercell_displacements_AlN(aln_cell: PhonopyAtoms):
     assert len(ph3.phonon_supercells_with_displacements) == 6
 
 
+@pytest.mark.parametrize("is_random", [False, True])
+def test_supercell_displacements_keep_species(is_random: bool):
+    """Test that displaced supercells keep the species of the perfect supercell.
+
+    Species labels such as B1 and B2 share an atomic number, so they are lost
+    if the displaced supercells are rebuilt from atomic numbers.
+
+    """
+    cell = PhonopyAtoms(
+        symbols=["B1", "N1", "B2", "N2"],
+        masses=[10.811, 14.007, 11.0, 14.007],
+        cell=np.diag([3.0, 3.1, 3.2]),
+        scaled_positions=[[0, 0, 0], [0.5, 0, 0], [0.5, 0.5, 0], [0, 0.5, 0]],
+    )
+    ph3 = Phono3py(
+        cell,
+        supercell_matrix=[2, 1, 1],
+        phonon_supercell_matrix=[2, 2, 1],
+        primitive_matrix="P",
+    )
+    if is_random:
+        ph3.generate_displacements(number_of_snapshots=2, random_seed=1)
+        ph3.generate_fc2_displacements(number_of_snapshots=2, random_seed=1)
+    else:
+        ph3.generate_displacements()
+        ph3.generate_fc2_displacements()
+
+    for perfect, displaced in (
+        (ph3.supercell, ph3.supercells_with_displacements),
+        (ph3.phonon_supercell, ph3.phonon_supercells_with_displacements),
+    ):
+        cells = [c for c in displaced if c is not None]
+        assert cells
+        for c in cells:
+            assert c.symbols == perfect.symbols
+            np.testing.assert_array_equal(c.species_ids, perfect.species_ids)
+            np.testing.assert_allclose(c.masses, perfect.masses)
+
+
 def test_displacements_setter_Si(si_pbesol_111_222_fd: Phono3py):
     """Test Phono3py.displacements setter and Phono3py.phonon_displacements setter.
 
