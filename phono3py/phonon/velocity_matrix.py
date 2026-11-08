@@ -95,10 +95,14 @@ class VelocityMatrix(GroupVelocity):
         _q_points = np.asarray(q_points, dtype="double")
         vm = [self._calculate_velocity_matrix_at_q(q) for q in _q_points]
         self._velocity_matrices = np.array(vm, dtype="cdouble", order="C")
-        gv = np.einsum("qaii->qia", self._velocity_matrices).real
-        for i, q in enumerate(_q_points):
-            gv[i] = gv[i] @ self._get_projector(q).T
-        self._group_velocities = np.ascontiguousarray(gv, dtype="double")
+        self._group_velocities = np.array(
+            [
+                np.einsum("aii->ia", vm_at_q).real @ self._get_projector(q).T
+                for vm_at_q, q in zip(vm, _q_points, strict=True)
+            ],
+            dtype="double",
+            order="C",
+        )
 
     @property
     def velocity_matrices(self) -> NDArray[np.cdouble] | None:
