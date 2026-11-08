@@ -19,7 +19,7 @@ from phonopy.phonon.tetrahedron_method import (
     get_tetrahedra_relative_gr_grid_address,
 )
 from phonopy.structure.atomic_data import get_atomic_data
-from phonopy.structure.atoms import PhonopyAtoms
+from phonopy.structure.atoms import PhonopyAtoms, split_symbol_and_index
 from phonopy.structure.cells import Primitive
 from phonopy.structure.symmetry import Symmetry
 
@@ -97,12 +97,33 @@ def get_unique_grid_points(
     return np.array(np.unique(neighboring_grid_points), dtype="int64")
 
 
+def get_isotope_symbol(symbol: str) -> str:
+    """Return the element symbol used to look up isotope data.
+
+    A labeled symbol such as "B1" gives "B". A symbol that is not a single
+    element with an optional index, such as "GeSn" of a merged mixed-species
+    site, is returned unchanged.
+
+    """
+    try:
+        element, _ = split_symbol_and_index(symbol)
+    except RuntimeError:
+        return symbol
+    return element
+
+
 def get_mass_variances(
     primitive: PhonopyAtoms | None = None,
     symbols: Sequence[str] | None = None,
     isotope_data: dict | None = None,
 ) -> NDArray[np.double]:
-    """Calculate mass variances."""
+    """Calculate mass variances.
+
+    The isotope data of a symbol is taken from ``isotope_data`` by the symbol
+    itself (e.g. "B1"), then from ``isotope_data`` by its element (e.g. "B"),
+    and otherwise from the database of phonopy by its element.
+
+    """
     _symbols: Sequence[str]
     if primitive is not None:
         _symbols = primitive.symbols
@@ -114,10 +135,13 @@ def get_mass_variances(
     _isotope_data = {}
     phonopy_isotope_data = get_atomic_data().isotope_data
     for s in _symbols:
+        element = get_isotope_symbol(s)
         if isotope_data is not None and s in isotope_data:
             _isotope_data[s] = isotope_data[s]
+        elif isotope_data is not None and element in isotope_data:
+            _isotope_data[s] = isotope_data[element]
         else:
-            _isotope_data[s] = phonopy_isotope_data[s]
+            _isotope_data[s] = phonopy_isotope_data[element]
 
     mass_variances = []
     for s in _symbols:

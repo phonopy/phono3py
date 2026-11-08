@@ -93,6 +93,7 @@ from phono3py.interface.fc_calculator import (
     get_fc_calculator_params,
 )
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
+from phono3py.other.isotope import get_isotope_symbol
 from phono3py.phonon3.dataset import forces_in_dataset
 from phono3py.phonon3.fc3 import show_drift_fc3
 from phono3py.phonon3.gruneisen import run_gruneisen_parameters
@@ -1555,10 +1556,10 @@ def main(**argparse_control: Any) -> None:
         symbols = ph3py.phonon_primitive.symbols
         in_database = True
         for s in set(symbols):
-            if s not in isotope_data:
-                print("%s is not in the list of isotope databese" % s)
+            if get_isotope_symbol(s) not in isotope_data:
+                print(f"{s} is not in the list of isotope database")
                 print("(not implemented).")
-                print("Use --mass_variances option.")
+                print("Use --mass-variances option.")
                 in_database = False
         if not in_database:
             if log_level:

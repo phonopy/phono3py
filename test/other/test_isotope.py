@@ -3,6 +3,7 @@
 import numpy as np
 import pytest
 from phonopy.phonon.degeneracy import get_degenerate_ids
+from phonopy.structure.atoms import PhonopyAtoms
 
 from phono3py import Phono3pyIsotope
 from phono3py.other.isotope import Isotope, get_mass_variances
@@ -77,6 +78,32 @@ def test_get_mass_variances_custom_isotope_data():
     custom = {"Si": [(14, 28.0, 1.0)]}  # single isotope, variance = 0
     mv = get_mass_variances(symbols=["Si"], isotope_data=custom)
     np.testing.assert_allclose(mv, [0.0], atol=1e-10)
+
+
+def test_get_mass_variances_labeled_symbols():
+    """Labeled symbols such as B1 use the isotope data of the element."""
+    mv_label = get_mass_variances(symbols=["B1", "N1", "B2", "N2"])
+    mv_element = get_mass_variances(symbols=["B", "N", "B", "N"])
+    np.testing.assert_allclose(mv_label, mv_element)
+
+    cell = PhonopyAtoms(
+        symbols=["B1", "N1", "B2", "N2"],
+        cell=np.diag([3.0, 3.1, 3.2]),
+        scaled_positions=[[0, 0, 0], [0.5, 0, 0], [0.5, 0.5, 0], [0, 0.5, 0]],
+    )
+    np.testing.assert_allclose(get_mass_variances(primitive=cell), mv_element)
+
+
+def test_get_mass_variances_custom_isotope_data_labeled():
+    """Custom isotope data given by label overrides that given by element."""
+    pure = [(14, 28.0, 1.0)]
+    mv_natural = get_mass_variances(symbols=["Si"])[0]
+    mv = get_mass_variances(symbols=["Si1", "Si2"], isotope_data={"Si1": pure})
+    np.testing.assert_allclose(mv, [0.0, mv_natural], atol=1e-10)
+    mv = get_mass_variances(
+        symbols=["Si1", "Si2"], isotope_data={"Si": pure, "Si2": [(14, 30.0, 1.0)]}
+    )
+    np.testing.assert_allclose(mv, [0.0, 0.0], atol=1e-10)
 
 
 def test_get_mass_variances_no_args_raises():
