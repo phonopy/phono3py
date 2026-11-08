@@ -22,6 +22,7 @@ from phono3py import Phono3py
 from phono3py.phonon4.dataset import (
     count_supercells_fc4,
     get_displacements_and_forces_fc4,
+    get_supercells_with_displacements_fc4,
     set_forces_in_dataset_fc4,
 )
 from phono3py.phonon4.displacement_fc4 import (
@@ -143,6 +144,34 @@ def test_displacements_structure(ph3: Phono3py) -> None:
             for third in second["third_atoms"]:
                 ids.append(third["id"])
     assert sorted(ids) == list(range(1, count_supercells_fc4(ds) + 1))
+
+
+def test_supercells_with_displacements_keep_species() -> None:
+    """fc4 displaced supercells keep species, masses and magnetic moments."""
+    cell = PhonopyAtoms(
+        symbols=["B1", "N1", "B2", "N2"],
+        masses=[10.811, 14.007, 11.0, 14.007],
+        magnetic_moments=[1.0, 0.0, 1.0, 0.0],
+        cell=np.diag([3.0, 3.1, 3.2]),
+        scaled_positions=[[0, 0, 0], [0.5, 0, 0], [0.5, 0.5, 0], [0, 0.5, 0]],
+    )
+    ph3_labeled = Phono3py(
+        cell,
+        supercell_matrix=np.eye(3, dtype=int),
+        primitive_matrix="P",
+        log_level=0,
+    )
+    supercell = ph3_labeled.supercell
+    ds = get_fourth_order_displacements(supercell, ph3_labeled.symmetry, 0.03)
+    cells = get_supercells_with_displacements_fc4(supercell, ds)
+    assert len(cells) == count_supercells_fc4(ds)
+    for c in cells:
+        assert c.symbols == supercell.symbols
+        np.testing.assert_array_equal(c.species_ids, supercell.species_ids)
+        np.testing.assert_allclose(c.masses, supercell.masses)
+        assert c.magnetic_moments is not None
+        assert supercell.magnetic_moments is not None
+        np.testing.assert_allclose(c.magnetic_moments, supercell.magnetic_moments)
 
 
 def test_dataset_forces_roundtrip(dataset: Fc4Type1DisplacementDataset) -> None:
