@@ -108,10 +108,15 @@ def get_supercells_with_displacements_fc4(
     """
     displacements, _ = get_displacements_and_forces_fc4(disp_dataset)
     base = supercell.positions
+    masses = supercell.masses
+    magmoms = supercell.magnetic_moments
     return [
         PhonopyAtoms(
             cell=supercell.cell,
-            symbols=supercell.symbols,
+            species_table=supercell.species_table,
+            species_ids=supercell.species_ids,
+            masses=masses,
+            magnetic_moments=magmoms,
             positions=base + disp,
         )
         for disp in displacements
