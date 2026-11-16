@@ -173,9 +173,9 @@ class CalculatorConfig:
     pinv_method : int
         Pseudo-inverse criterion (LBTE only).
     lang : {"C", "Python", "Rust"}
-        Backend for scattering-kernel operations.  ``"Rust"`` is
-        currently only wired through the RTA low-memory collision path;
-        LBTE and other paths fall back to the C backend.
+        Backend of the scattering computations and the operations on the
+        collision matrix.  ``"C"`` falls back to ``"Rust"`` when the C
+        extension is not installed.
     log_level : int
         Verbosity.
     rust_gp_batch_size : int or None

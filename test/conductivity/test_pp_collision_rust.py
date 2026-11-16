@@ -1,9 +1,9 @@
-"""Compare the Rust pp_collision backend against the C one.
+"""Compare the Rust low-memory collision backend against the C one.
 
-Drives ``RTAScatteringSolver`` through its low-memory dispatch path so
-that both the tetrahedron (sigma=None) and Gaussian-smearing branches
-of ``phono3c.pp_collision`` / ``phono3c.pp_collision_with_sigma`` are
-exercised against the Rust implementation.
+Drives ``RTAScatteringSolver`` through its low-memory paths so that both
+the tetrahedron (sigma=None) and Gaussian-smearing branches of
+``phono3c.pp_collision`` / ``phono3c.pp_collision_with_sigma`` (lang="C")
+are compared with ``phonors.collision_at_grid_point`` (lang="Rust").
 
 """
 

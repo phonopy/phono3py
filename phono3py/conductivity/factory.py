@@ -409,9 +409,9 @@ def conductivity_calculator(
     pinv_method : int, optional
         Pseudo-inverse criterion (LBTE only).  Default 0.
     lang : {"C", "Python", "Rust"}, optional
-        Backend for scattering-kernel operations.  ``"Rust"`` is
-        currently only wired through the RTA low-memory collision path;
-        LBTE and other paths fall back to the C backend.  Default "C".
+        Backend of the scattering computations and the operations on the
+        collision matrix.  ``"C"`` falls back to ``"Rust"`` when the C
+        extension is not installed.  Default "Rust".
     log_level : int, optional
         Verbosity.  Default 0.
     rust_gp_batch_size : int or None, optional
