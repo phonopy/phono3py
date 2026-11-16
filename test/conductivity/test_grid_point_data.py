@@ -35,10 +35,10 @@ class _DummyVelocityProvider:
     produces_gv_by_gv: bool = True
     produces_vm_by_vm: bool = False
 
-    def compute(self, grid_point: int, grid_weight: int) -> VelocityResult:
+    def compute(self, grid_points: np.ndarray) -> VelocityResult:
         return VelocityResult(
-            group_velocities=np.zeros((NUM_BAND0, 3), dtype="double"),
-            gv_by_gv=np.zeros((NUM_BAND0, 6), dtype="double"),
+            group_velocities=np.zeros((len(grid_points), NUM_BAND0, 3), dtype="double"),
+            gv_by_gv=np.zeros((len(grid_points), NUM_BAND0, 6), dtype="double"),
         )
 
 
@@ -70,8 +70,8 @@ class _DummyScatteringProvider:
 def test_velocity_provider_protocol_satisfied():
     """A class with the right signature is accepted as VelocitySolver."""
     provider: VelocitySolver = _DummyVelocityProvider()
-    result = provider.compute(10, 2)
-    assert result.group_velocities is not None
+    result = provider.compute(np.array([10, 2], dtype="int64"))
+    assert result.group_velocities.shape == (2, NUM_BAND0, 3)
 
 
 def test_heat_capacity_provider_protocol_satisfied():

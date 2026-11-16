@@ -29,15 +29,15 @@ from numpy.typing import NDArray
 
 @dataclass
 class VelocityResult:
-    """Result from a velocity solver at a single grid point.
+    """Result from a velocity solver at grid points.
 
     Parameters
     ----------
-    group_velocities : ndarray of double, shape (num_band0, 3)
+    group_velocities : ndarray of double, shape (num_gp, num_band0, 3)
         Diagonal (standard) group velocities.
-    gv_by_gv : ndarray of double, shape (num_band0, 6)
+    gv_by_gv : ndarray of double, shape (num_gp, num_band0, 6)
         Symmetrised outer product v x v in Voigt notation.
-    vm_by_vm : ndarray of cdouble, shape (num_band0, num_band, 6), optional
+    vm_by_vm : ndarray of cdouble, shape (num_gp, num_band0, num_band, 6), optional
         Off-diagonal velocity operator/matrix outer product.
         Only set by off-diagonal velocity solvers (e.g. SMM19, NJC23).
     extra : dict
