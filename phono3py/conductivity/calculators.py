@@ -161,7 +161,7 @@ class ConductivityCalculatorBase(abc.ABC):
 
     Subclasses may override:
     - ``_pre_run_check`` (default: no-op)
-    - ``_pre_main_loop`` (default: no-op)
+    - ``_pre_main_loop`` (default: boundary scattering)
     - ``_post_main_loop`` (default: no-op)
     - ``_show_log_at_grid_point`` (default: basic frequency/gv printout)
 
@@ -491,8 +491,12 @@ class ConductivityCalculatorBase(abc.ABC):
     def _pre_run_check(self) -> None:  # noqa: B027
         """Check preconditions before the pipeline starts."""
 
-    def _pre_main_loop(self) -> None:  # noqa: B027
-        """Run pre-main-loop computation (e.g. boundary scattering)."""
+    def _pre_main_loop(self) -> None:
+        """Compute boundary scattering from group velocities."""
+        if self._kappa_settings.boundary_mfp is not None:
+            self._gamma_boundary = compute_bulk_boundary_scattering(
+                self._gv, self._kappa_settings.boundary_mfp
+            )
 
     def _post_main_loop(self) -> None:  # noqa: B027
         """Run post-main-loop computation (e.g. counting ignored modes)."""
@@ -689,12 +693,6 @@ class RTACalculator(ConductivityCalculatorBase):
             raise RuntimeError(
                 "Averaged ph-ph interaction is required with use_ave_pp=True. "
                 "It is read from kappa-m*.hdf5 computed with is_full_pp=True."
-            )
-
-    def _pre_main_loop(self) -> None:
-        if self._kappa_settings.boundary_mfp is not None:
-            self._gamma_boundary = compute_bulk_boundary_scattering(
-                self._gv, self._kappa_settings.boundary_mfp
             )
 
     def _post_main_loop(self) -> None:
