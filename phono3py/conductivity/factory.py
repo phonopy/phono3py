@@ -149,6 +149,9 @@ def _build_lbte_calculator(
     """Build an LBTECalculator from variant component factories."""
     _run_phonon_solver(interaction)
     kappa_settings = build_lbte_kappa_settings(interaction, config)
+    grid_point_indices = _get_lbte_grid_point_indices(
+        kappa_settings.grid_points, config.grid_points
+    )
     assert interaction.phonons is not None
     frequencies = interaction.phonons.frequencies
     rot_grid_points = build_rot_grid_points(kappa_settings)
@@ -181,6 +184,7 @@ def _build_lbte_calculator(
         pinv_method=config.pinv_method,
         lang=config.lang,
         log_level=config.log_level,
+        is_one_gp_colmat=grid_point_indices is not None,
     )
     ctx = VariantContext(
         interaction=interaction,
@@ -209,7 +213,42 @@ def _build_lbte_calculator(
         sigma_cutoff_width=config.sigma_cutoff,
         log_level=config.log_level,
         lang=config.lang,
+        grid_point_indices=grid_point_indices,
     )
+
+
+def _get_lbte_grid_point_indices(
+    lbte_grid_points: NDArray[np.int64],
+    grid_points: NDArray[np.int64] | None,
+) -> NDArray[np.int64] | None:
+    """Return indices of specified grid points in grid points of LBTE.
+
+    Parameters
+    ----------
+    lbte_grid_points : ndarray of int64
+        BZ grid points whose collisions form the collision matrix, i.e.,
+        irreducible grid points, or all grid points without k-star.
+    grid_points : ndarray of int64 or None
+        BZ grid points where collisions are computed. None means all.
+
+    Returns
+    -------
+    ndarray of int64 or None
+        Indices in ``lbte_grid_points``. None when ``grid_points`` is None.
+
+    """
+    if grid_points is None:
+        return None
+    indices = []
+    for gp in grid_points:
+        matched = np.where(lbte_grid_points == gp)[0]
+        if len(matched) == 0:
+            raise ValueError(
+                f"Grid point {gp} is not an irreducible grid point. Collisions "
+                "of the direct solution are computed at irreducible grid points."
+            )
+        indices.append(matched[0])
+    return np.array(indices, dtype="int64")
 
 
 def register_variant(

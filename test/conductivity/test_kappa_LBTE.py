@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+from phonopy.phonon.grid import get_ir_grid_points
 
 from phono3py._lang import have_c_ext
 from phono3py.api_phono3py import Phono3py
@@ -139,7 +140,10 @@ def test_kappa_LBTE_aln_with_sigma(aln_lda: Phono3py):
     np.testing.assert_allclose(ref_kappa, kappa, atol=0.3)
 
 
-def test_kappa_LBTE_read_collision_per_gp(si_pbesol: Phono3py, tmp_path, monkeypatch):
+@pytest.mark.parametrize("is_reducible_collision_matrix", [False, True])
+def test_kappa_LBTE_read_collision_per_gp(
+    si_pbesol: Phono3py, tmp_path, monkeypatch, is_reducible_collision_matrix: bool
+):
     """Write per-GP collision files, then --read-collision round-trip.
 
     Exercises the fallback to per-GP files (``collision-m*-g*.hdf5``) and
@@ -153,6 +157,7 @@ def test_kappa_LBTE_read_collision_per_gp(si_pbesol: Phono3py, tmp_path, monkeyp
     si_pbesol.run_thermal_conductivity(
         is_LBTE=True,
         temperatures=[300],
+        is_reducible_collision_matrix=is_reducible_collision_matrix,
         write_collision=True,
     )
     ref_kappa = si_pbesol.thermal_conductivity.kappa.ravel().copy()
@@ -161,8 +166,69 @@ def test_kappa_LBTE_read_collision_per_gp(si_pbesol: Phono3py, tmp_path, monkeyp
     si_pbesol.run_thermal_conductivity(
         is_LBTE=True,
         temperatures=[300],
+        is_reducible_collision_matrix=is_reducible_collision_matrix,
         read_collision="all",
     )
     read_kappa = si_pbesol.thermal_conductivity.kappa.ravel()
 
     np.testing.assert_allclose(ref_kappa, read_kappa, atol=1e-3)
+
+
+@pytest.mark.parametrize("is_reducible_collision_matrix", [False, True])
+def test_kappa_LBTE_write_collision_at_grid_points(
+    si_pbesol: Phono3py, tmp_path, monkeypatch, is_reducible_collision_matrix: bool
+):
+    """Write collisions grid point by grid point, then read all of them.
+
+    Collisions at each irreducible grid point are computed in a separate run
+    with ``grid_points``, as in distributed calculations. Only the file of the
+    specified grid point is written, and the collision matrix is stored for
+    one grid point.
+
+    """
+    monkeypatch.chdir(tmp_path)
+    si_pbesol.mesh_numbers = [5, 5, 5]
+    si_pbesol.init_phph_interaction()
+    kwargs = {
+        "is_LBTE": True,
+        "temperatures": [300],
+        "is_isotope": True,
+        "is_reducible_collision_matrix": is_reducible_collision_matrix,
+    }
+
+    si_pbesol.run_thermal_conductivity(**kwargs)
+    ref_kappa = si_pbesol.thermal_conductivity.kappa.ravel().copy()
+    ir_grid_points = si_pbesol.thermal_conductivity.grid_points.copy()
+    assert len(ir_grid_points) > 1
+
+    for count, gp in enumerate(ir_grid_points):
+        si_pbesol.run_thermal_conductivity(
+            grid_points=[gp], write_collision=True, **kwargs
+        )
+        collision_matrix = si_pbesol.thermal_conductivity.collision_matrix
+        assert collision_matrix.shape[2] == 1
+        filenames = sorted(p.name for p in tmp_path.glob("collision-m555-g*.hdf5"))
+        assert len(filenames) == count + 1
+        assert f"collision-m555-g{gp}.hdf5" in filenames
+
+    si_pbesol.run_thermal_conductivity(read_collision="all", **kwargs)
+    read_kappa = si_pbesol.thermal_conductivity.kappa.ravel()
+
+    assert np.abs(ref_kappa).max() > 1
+    np.testing.assert_allclose(ref_kappa, read_kappa, atol=1e-8)
+
+
+def test_kappa_LBTE_not_irreducible_grid_point(si_pbesol: Phono3py):
+    """Test that a grid point that is not irreducible is rejected."""
+    si_pbesol.mesh_numbers = [5, 5, 5]
+    si_pbesol.init_phph_interaction()
+    bz_grid = si_pbesol.grid
+    assert bz_grid is not None
+    _, _, ir_map = get_ir_grid_points(bz_grid)
+    not_ir_grg = np.where(ir_map != np.arange(len(ir_map)))[0][0]
+    grid_point = int(bz_grid.grg2bzg[not_ir_grg])
+
+    with pytest.raises(ValueError, match="not an irreducible grid point"):
+        si_pbesol.run_thermal_conductivity(
+            is_LBTE=True, temperatures=[300], grid_points=[grid_point]
+        )

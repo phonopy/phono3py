@@ -811,6 +811,12 @@ class IrreducibleCollisionMatrixKernel(CollisionMatrixKernel):
         Backend for C-extension operations.  Default "C".
     log_level : int, optional
         Verbosity level.  Default 0.
+    is_one_gp_colmat : bool, optional
+        When True, the collision matrix is allocated for one grid point,
+        and the part computed at each grid point overwrites it. This is
+        used to compute collisions at specified grid points and write
+        them to files, where the collision matrix is not solved.
+        Default False.
 
     """
 
@@ -826,6 +832,7 @@ class IrreducibleCollisionMatrixKernel(CollisionMatrixKernel):
         pinv_method: int = 0,
         lang: Literal["C", "Python", "Rust"] = "Rust",
         log_level: int = 0,
+        is_one_gp_colmat: bool = False,
     ) -> None:
         """Init method."""
         num_ir_gp = len(kappa_settings.grid_points)
@@ -842,6 +849,7 @@ class IrreducibleCollisionMatrixKernel(CollisionMatrixKernel):
             log_level,
         )
         self._rot_grid_points = rot_grid_points
+        self._is_one_gp_colmat = is_one_gp_colmat
 
         num_sigma = len(kappa_settings.sigmas)
         num_temp = len(kappa_settings.temperatures)
@@ -852,7 +860,7 @@ class IrreducibleCollisionMatrixKernel(CollisionMatrixKernel):
             (
                 num_sigma,
                 num_temp,
-                num_ir_gp,
+                1 if is_one_gp_colmat else num_ir_gp,
                 num_band0,
                 3,
                 num_ir_gp,
@@ -875,7 +883,8 @@ class IrreducibleCollisionMatrixKernel(CollisionMatrixKernel):
     ) -> None:
         """Store collision matrix row for grid point."""
         assert self._collision_matrix is not None
-        self._collision_matrix[:, :, i_gp, :] = collision_result.collision_row
+        i_colmat = 0 if self._is_one_gp_colmat else i_gp
+        self._collision_matrix[:, :, i_colmat, :] = collision_result.collision_row
 
     def _setup_solve_data(self, aggregates: GridPointAggregates) -> None:
         self._gamma = aggregates.gamma
@@ -1102,6 +1111,8 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
         Backend for C-extension operations.  Default "C".
     log_level : int, optional
         Verbosity level.  Default 0.
+    is_one_gp_colmat : bool, optional
+        See ``IrreducibleCollisionMatrixKernel``. Default False.
 
     """
 
@@ -1116,6 +1127,7 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
         pinv_method: int = 0,
         lang: Literal["C", "Python", "Rust"] = "Rust",
         log_level: int = 0,
+        is_one_gp_colmat: bool = False,
     ) -> None:
         """Init method."""
         num_gp = int(np.prod(kappa_settings.mesh_numbers))
@@ -1132,6 +1144,8 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
             log_level,
         )
 
+        self._is_one_gp_colmat = is_one_gp_colmat
+
         num_sigma = len(kappa_settings.sigmas)
         num_temp = len(kappa_settings.temperatures)
         num_band0 = len(kappa_settings.band_indices)
@@ -1141,7 +1155,7 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
             (
                 num_sigma,
                 num_temp,
-                num_gp,
+                1 if is_one_gp_colmat else num_gp,
                 num_band0,
                 num_gp,
                 num_band,
@@ -1162,8 +1176,11 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
     ) -> None:
         """Store collision matrix row for grid point."""
         assert self._collision_matrix is not None
-        ir_gp = self._kappa_settings.grid_points[i_gp]
-        i_data = int(self._kappa_settings.bz_grid.bzg2grg[ir_gp])
+        if self._is_one_gp_colmat:
+            i_data = 0
+        else:
+            ir_gp = self._kappa_settings.grid_points[i_gp]
+            i_data = int(self._kappa_settings.bz_grid.bzg2grg[ir_gp])
         self._collision_matrix[:, :, i_data, :] = collision_result.collision_row
 
     def _setup_solve_data(self, aggregates: GridPointAggregates) -> None:
@@ -1462,6 +1479,7 @@ def create_collision_matrix_kernel(
     pinv_method: int = 0,
     lang: Literal["C", "Python", "Rust"] = "Rust",
     log_level: int = 0,
+    is_one_gp_colmat: bool = False,
 ) -> CollisionMatrixKernel:
     """Create the appropriate CollisionMatrixKernel subclass.
 
@@ -1492,6 +1510,8 @@ def create_collision_matrix_kernel(
         Backend for C-extension operations.  Default "C".
     log_level : int, optional
         Verbosity level.  Default 0.
+    is_one_gp_colmat : bool, optional
+        See ``IrreducibleCollisionMatrixKernel``. Default False.
 
     Returns
     -------
@@ -1511,6 +1531,7 @@ def create_collision_matrix_kernel(
             pinv_method=pinv_method,
             lang=lang,
             log_level=log_level,
+            is_one_gp_colmat=is_one_gp_colmat,
         )
     return IrreducibleCollisionMatrixKernel(
         kappa_settings=kappa_settings,
@@ -1523,4 +1544,5 @@ def create_collision_matrix_kernel(
         pinv_method=pinv_method,
         lang=lang,
         log_level=log_level,
+        is_one_gp_colmat=is_one_gp_colmat,
     )

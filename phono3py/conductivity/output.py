@@ -316,25 +316,26 @@ class ConductivityLBTEWriter:
 
         if i is not None:
             gp = grid_points[i]
+            # Index of the grid point in the collision matrix. gamma and
+            # gamma_isotope are indexed by i.
             if is_one_gp_colmat:
-                igp = 0
+                i_colmat = 0
+            elif is_reducible_collision_matrix:
+                i_colmat = int(interaction.bz_grid.bzg2grg[gp])
             else:
-                if is_reducible_collision_matrix:
-                    igp = interaction.bz_grid.bzg2grg[gp]
-                else:
-                    igp = i
+                i_colmat = i
             if all_bands_exist(interaction):
                 for j, sigma in enumerate(sigmas):
                     if gamma_isotope is not None:
-                        gamma_isotope_at_sigma = gamma_isotope[j, igp]
+                        gamma_isotope_at_sigma = gamma_isotope[j, i]
                     else:
                         gamma_isotope_at_sigma = None
                     write_collision_to_hdf5(
                         temperatures,
                         mesh,
-                        gamma=gamma[j, :, igp],
+                        gamma=gamma[j, :, i],
                         gamma_isotope=gamma_isotope_at_sigma,
-                        collision_matrix=collision_matrix[j, :, igp],
+                        collision_matrix=collision_matrix[j, :, i_colmat],
                         grid_point=gp,
                         sigma=sigma,
                         sigma_cutoff=sigma_cutoff,
@@ -344,15 +345,15 @@ class ConductivityLBTEWriter:
                 for j, sigma in enumerate(sigmas):
                     for k, bi in enumerate(interaction.band_indices):
                         if gamma_isotope is not None:
-                            gamma_isotope_at_sigma = gamma_isotope[j, igp, k]
+                            gamma_isotope_at_sigma = gamma_isotope[j, i, k]
                         else:
                             gamma_isotope_at_sigma = None
                         write_collision_to_hdf5(
                             temperatures,
                             mesh,
-                            gamma=gamma[j, :, igp, k],
+                            gamma=gamma[j, :, i, k],
                             gamma_isotope=gamma_isotope_at_sigma,
-                            collision_matrix=collision_matrix[j, :, igp, k],
+                            collision_matrix=collision_matrix[j, :, i_colmat, k],
                             grid_point=gp,
                             band_index=bi,
                             sigma=sigma,
