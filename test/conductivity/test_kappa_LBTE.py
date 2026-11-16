@@ -1,11 +1,15 @@
 """Tests for direct solution of LBTE."""
 
+import pathlib
+
 import numpy as np
 import pytest
 from phonopy.phonon.grid import get_ir_grid_points
 
+import phono3py
 from phono3py._lang import have_c_ext
 from phono3py.api_phono3py import Phono3py
+from phono3py.conductivity.exceptions import LBTEInputError
 
 
 def _c_ext_with_lapacke() -> bool:
@@ -228,7 +232,69 @@ def test_kappa_LBTE_not_irreducible_grid_point(si_pbesol: Phono3py):
     not_ir_grg = np.where(ir_map != np.arange(len(ir_map)))[0][0]
     grid_point = int(bz_grid.grg2bzg[not_ir_grg])
 
-    with pytest.raises(ValueError, match="not an irreducible grid point"):
+    with pytest.raises(LBTEInputError, match="not an irreducible grid point"):
         si_pbesol.run_thermal_conductivity(
             is_LBTE=True, temperatures=[300], grid_points=[grid_point]
         )
+
+
+def _load_si_111(band_indices: list[list[int]] | None = None) -> Phono3py:
+    """Return Phono3py instance of Si.
+
+    Session fixtures are not used because band indices are changed.
+
+    """
+    ph3 = phono3py.load(
+        pathlib.Path(__file__).parent / ".." / "phono3py_params_Si111.yaml",
+        produce_fc=True,
+        log_level=0,
+    )
+    ph3.mesh_numbers = [5, 5, 5]
+    if band_indices is not None:
+        ph3.band_indices = band_indices
+    ph3.init_phph_interaction()
+    return ph3
+
+
+@pytest.mark.parametrize("read_collision", [None, "all"])
+def test_kappa_LBTE_with_band_indices_without_write_collision(
+    read_collision: str | None,
+):
+    """Test that a part of bands needs write_collision without read_collision."""
+    ph3 = _load_si_111([[4, 5]])
+    with pytest.raises(LBTEInputError, match="needs all bands"):
+        ph3.run_thermal_conductivity(
+            is_LBTE=True,
+            temperatures=[300],
+            read_collision=read_collision,
+            write_collision=read_collision is not None,
+        )
+
+
+def test_kappa_LBTE_write_collision_with_band_indices(tmp_path, monkeypatch):
+    """Write collisions band by band, then read all of them.
+
+    Degenerate bands are given in the same run.
+
+    """
+    monkeypatch.chdir(tmp_path)
+    ph3 = _load_si_111()
+    ph3.run_thermal_conductivity(is_LBTE=True, temperatures=[300])
+    ref_kappa = ph3.thermal_conductivity.kappa.ravel().copy()
+    num_ir_grid_points = len(ph3.thermal_conductivity.grid_points)
+
+    for band_indices in ([[0, 1, 2]], [[3, 4, 5]]):
+        ph3 = _load_si_111(band_indices)
+        ph3.run_thermal_conductivity(
+            is_LBTE=True, temperatures=[300], write_collision=True
+        )
+        assert not list(tmp_path.glob("kappa-*.hdf5"))
+    filenames = list(tmp_path.glob("collision-m555-g*-b*.hdf5"))
+    assert len(filenames) == num_ir_grid_points * 6
+
+    ph3 = _load_si_111()
+    ph3.run_thermal_conductivity(is_LBTE=True, temperatures=[300], read_collision="all")
+    read_kappa = ph3.thermal_conductivity.kappa.ravel()
+
+    assert np.abs(ref_kappa).max() > 1
+    np.testing.assert_allclose(ref_kappa, read_kappa, atol=1e-8)

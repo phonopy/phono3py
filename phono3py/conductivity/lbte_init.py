@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import os
 import sys
+import textwrap
 from collections.abc import Sequence
 from typing import Literal, TypeAlias
 
@@ -13,7 +14,7 @@ from numpy.typing import NDArray
 from phonopy.phonon.grid import get_ir_grid_points
 
 from phono3py.conductivity.calculators import LBTECalculator
-from phono3py.conductivity.exceptions import LBTECollisionReadError
+from phono3py.conductivity.exceptions import LBTECollisionReadError, LBTEInputError
 from phono3py.conductivity.factory import conductivity_calculator
 from phono3py.conductivity.output import ConductivityLBTEWriter
 from phono3py.conductivity.utils import write_pp_interaction
@@ -295,6 +296,14 @@ def get_thermal_conductivity_LBTE(
     lang: Literal["C", "Python", "Rust"] = "Rust",
 ) -> LBTECalculator:
     """Calculate lattice thermal conductivity by direct solution."""
+    is_all_bands = all_bands_exist(interaction)
+    if not is_all_bands and (read_collision or not write_collision):
+        raise LBTEInputError(
+            "Direct solution of LBTE needs all bands. With band indices that do "
+            "not select all bands in their order, only collisions can be "
+            "computed, which needs --write-collision (write_collision=True)."
+        )
+
     _sigmas = [None] if sigmas is None else list(sigmas)
     if read_collision:
         _temperatures = _peek_temperatures_from_file(
@@ -320,6 +329,12 @@ def get_thermal_conductivity_LBTE(
 
     if log_level:
         print("-" * 19 + " Lattice thermal conductivity (LBTE) " + "-" * 19)
+        if not is_all_bands:
+            message = (
+                "Only collisions are computed and written to files because band "
+                "indices do not select all bands in their order."
+            )
+            print(textwrap.fill(message, width=76))
 
     method = f"{transport_type}-lbte" if transport_type else "std-lbte"
     return _run_standard_lbte(
@@ -560,13 +575,12 @@ def _write_full_collision_if_requested(
     if not write_LBTE_solution:
         return
 
-    # With grid points specified, the collision matrix is not formed.
-    if grid_points is not None:
+    # With grid points specified or a part of bands selected, the collision
+    # matrix is not formed.
+    if grid_points is not None or not all_bands_exist(interaction):
         return
 
-    if (
-        read_collision and all_bands_exist(interaction) and read_from == "grid_points"
-    ) or (not read_collision):
+    if not read_collision or read_from == "grid_points":
         ConductivityLBTEWriter.write_collision(
             lbte, interaction, filename=output_filename
         )

@@ -51,6 +51,7 @@ from phono3py._lang import (
     c_omp_max_threads,
     have_c_ext,
 )
+from phono3py.conductivity.exceptions import LBTEInputError
 from phono3py.cui.create_force_constants import (
     develop_or_load_pypolymlp,
     generate_displacements_and_evaluate_pypolymlp,
@@ -1638,36 +1639,42 @@ def main(**argparse_control: Any) -> None:
     # Run lattice thermal conductivity #
     ####################################
     elif run_mode == "conductivity-RTA" or run_mode == "conductivity-LBTE":
-        ph3py.run_thermal_conductivity(
-            is_LBTE=settings.is_lbte,
-            temperatures=updated_settings["temperatures"],
-            is_isotope=settings.is_isotope,
-            mass_variances=settings.mass_variances,
-            grid_points=grid_points,
-            boundary_mfp=settings.boundary_mfp,
-            solve_collective_phonon=settings.solve_collective_phonon,
-            use_ave_pp=settings.use_ave_pp,
-            is_reducible_collision_matrix=settings.is_reducible_collision_matrix,  # noqa E501
-            is_kappa_star=settings.is_kappa_star,
-            gv_delta_q=settings.group_velocity_delta_q,
-            is_full_pp=(settings.is_full_pp or settings.is_symmetrize_fc3_q),
-            pinv_cutoff=settings.pinv_cutoff,
-            pinv_solver=settings.pinv_solver,
-            pinv_method=settings.pinv_method,
-            write_gamma=settings.write_gamma,
-            read_gamma=settings.read_gamma,
-            write_kappa=True,
-            is_N_U=settings.is_N_U,
-            transport_type=settings.transport_type,
-            write_gamma_detail=settings.write_gamma_detail,
-            write_collision=settings.write_collision,
-            read_collision=settings.read_collision,
-            write_pp=settings.write_pp,
-            read_pp=settings.read_pp,
-            read_elph=settings.read_elph,
-            write_LBTE_solution=settings.write_LBTE_solution,
-            compression=settings.hdf5_compression,
-        )
+        try:
+            ph3py.run_thermal_conductivity(
+                is_LBTE=settings.is_lbte,
+                temperatures=updated_settings["temperatures"],
+                is_isotope=settings.is_isotope,
+                mass_variances=settings.mass_variances,
+                grid_points=grid_points,
+                boundary_mfp=settings.boundary_mfp,
+                solve_collective_phonon=settings.solve_collective_phonon,
+                use_ave_pp=settings.use_ave_pp,
+                is_reducible_collision_matrix=settings.is_reducible_collision_matrix,  # noqa E501
+                is_kappa_star=settings.is_kappa_star,
+                gv_delta_q=settings.group_velocity_delta_q,
+                is_full_pp=(settings.is_full_pp or settings.is_symmetrize_fc3_q),
+                pinv_cutoff=settings.pinv_cutoff,
+                pinv_solver=settings.pinv_solver,
+                pinv_method=settings.pinv_method,
+                write_gamma=settings.write_gamma,
+                read_gamma=settings.read_gamma,
+                write_kappa=True,
+                is_N_U=settings.is_N_U,
+                transport_type=settings.transport_type,
+                write_gamma_detail=settings.write_gamma_detail,
+                write_collision=settings.write_collision,
+                read_collision=settings.read_collision,
+                write_pp=settings.write_pp,
+                read_pp=settings.read_pp,
+                read_elph=settings.read_elph,
+                write_LBTE_solution=settings.write_LBTE_solution,
+                compression=settings.hdf5_compression,
+            )
+        except LBTEInputError as e:
+            print_error_message(str(e))
+            if log_level:
+                print_error()
+            sys.exit(1)
     else:
         if log_level:
             print(
