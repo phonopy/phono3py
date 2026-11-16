@@ -143,12 +143,46 @@ class CollisionFileReader:
         colmat_at_sigma: NDArray[np.double],
         gamma_at_sigma: NDArray[np.double],
         temperatures: NDArray[np.double],
-        i: int,
+        i_gp: int,
         gp: int,
         bzg2grg: NDArray[np.int64],
         is_reducible: bool,
     ) -> bool:
-        """Collect collision data for one grid point."""
+        """Collect collision data of one grid point from its file.
+
+        The collision matrix, gamma, and temperatures in the file of grid
+        point ``gp`` are stored into the given arrays in-place.
+
+        Parameters
+        ----------
+        sigma : float or None
+            Smearing width that selects the file. None for the tetrahedron
+            method.
+        colmat_at_sigma : ndarray of double
+            Collision matrix at ``sigma``, modified in-place. The shape is
+            (num_temp, num_gp, num_band0, 3, num_gp, num_band, 3) for the
+            irreducible collision matrix, where num_gp is the number of grid
+            points of LBTE, and (num_temp, num_mesh, num_band0, num_mesh,
+            num_band) for the reducible collision matrix.
+        gamma_at_sigma : ndarray of double, shape (num_temp, num_gp, num_band0)
+            Gamma at ``sigma``, modified in-place.
+        temperatures : ndarray of double, shape (num_temp,)
+            Temperatures, overwritten by those in the file.
+        i_gp : int
+            Index of ``gp`` in grid points of LBTE.
+        gp : int
+            BZ grid point.
+        bzg2grg : ndarray of int64
+            Map from BZ grid points to grid points on the full mesh.
+        is_reducible : bool
+            Whether the collision matrix is reducible.
+
+        Returns
+        -------
+        bool
+            False when the file is not found.
+
+        """
         try:
             data = self.read(sigma, grid_point=gp)
         except FileNotFoundError:
@@ -156,9 +190,11 @@ class CollisionFileReader:
         if self._log_level:
             sys.stdout.flush()
         colmat_at_gp, gamma_at_gp, temperatures_at_gp = data
-        igp = bzg2grg[gp] if is_reducible else i
-        gamma_at_sigma[:, igp] = gamma_at_gp
-        colmat_at_sigma[:, igp] = colmat_at_gp[0]
+        # The collision matrix is indexed on the full mesh when it is reducible,
+        # and gamma is indexed by grid points of LBTE in both cases.
+        i_colmat = bzg2grg[gp] if is_reducible else i_gp
+        gamma_at_sigma[:, i_gp] = gamma_at_gp
+        colmat_at_sigma[:, i_colmat] = colmat_at_gp[0]
         temperatures[:] = temperatures_at_gp
         return True
 
@@ -168,23 +204,23 @@ class CollisionFileReader:
         colmat_at_sigma: NDArray[np.double],
         gamma_at_sigma: NDArray[np.double],
         temperatures: NDArray[np.double],
-        i: int,
+        i_gp: int,
         gp: int,
         bzg2grg: NDArray[np.int64],
-        j: int,
+        i_band: int,
         is_reducible: bool,
     ) -> bool:
         """Collect collision data for one band."""
         try:
-            data = self.read(sigma, grid_point=gp, band_index=j)
+            data = self.read(sigma, grid_point=gp, band_index=i_band)
         except FileNotFoundError:
             return False
         if self._log_level:
             sys.stdout.flush()
         colmat_at_band, gamma_at_band, temperatures_at_band = data
-        igp = bzg2grg[gp] if is_reducible else i
-        gamma_at_sigma[:, igp, j] = gamma_at_band[0]
-        colmat_at_sigma[:, igp, j] = colmat_at_band[0]
+        i_colmat = bzg2grg[gp] if is_reducible else i_gp
+        gamma_at_sigma[:, i_gp, i_band] = gamma_at_band[0]
+        colmat_at_sigma[:, i_colmat, i_band] = colmat_at_band[0]
         temperatures[:] = temperatures_at_band
         return True
 
@@ -194,7 +230,7 @@ class CollisionFileReader:
         colmat_at_sigma: NDArray[np.double],
         gamma_at_sigma: NDArray[np.double],
         temperatures: NDArray[np.double],
-        i: int,
+        i_gp: int,
         gp: int,
         bzg2grg: NDArray[np.int64],
         is_reducible: bool,
@@ -205,23 +241,23 @@ class CollisionFileReader:
             colmat_at_sigma,
             gamma_at_sigma,
             temperatures,
-            i,
+            i_gp,
             gp,
             bzg2grg,
             is_reducible,
         ):
             return True
         num_band = colmat_at_sigma.shape[2]
-        for j in range(num_band):
+        for i_band in range(num_band):
             if not self.collect_band(
                 sigma,
                 colmat_at_sigma,
                 gamma_at_sigma,
                 temperatures,
-                i,
+                i_gp,
                 gp,
                 bzg2grg,
-                j,
+                i_band,
                 is_reducible,
             ):
                 return False
@@ -358,6 +394,7 @@ def _run_standard_lbte(
         sigma_cutoff=sigma_cutoff,
         is_isotope=is_isotope,
         mass_variances=mass_variances,
+        grid_points=grid_points,
         boundary_mfp=boundary_mfp,
         is_kappa_star=is_kappa_star,
         gv_delta_q=gv_delta_q,
@@ -523,11 +560,12 @@ def _write_full_collision_if_requested(
     if not write_LBTE_solution:
         return
 
+    # With grid points specified, the collision matrix is not formed.
+    if grid_points is not None:
+        return
+
     if (
-        read_collision
-        and all_bands_exist(interaction)
-        and read_from == "grid_points"
-        and grid_points is None
+        read_collision and all_bands_exist(interaction) and read_from == "grid_points"
     ) or (not read_collision):
         ConductivityLBTEWriter.write_collision(
             lbte, interaction, filename=output_filename

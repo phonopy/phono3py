@@ -114,9 +114,14 @@ def _compute_all_isotope(
     isotope_solver: IsotopeScatteringSolver,
     kappa_settings: KappaSettings,
     gamma_iso: NDArray[np.double],
+    grid_point_indices: Sequence[int] | NDArray[np.int64],
 ) -> None:
-    """Compute isotope scattering for all grid points (in-place)."""
-    for i_gp in range(len(kappa_settings.grid_points)):
+    """Compute isotope scattering at grid points (in-place).
+
+    ``grid_point_indices`` are indices in ``kappa_settings.grid_points``.
+
+    """
+    for i_gp in grid_point_indices:
         grid_point = int(kappa_settings.grid_points[i_gp])
         result = isotope_solver.compute(grid_point)
         gamma_iso[:, i_gp, :] = result[:, kappa_settings.band_indices]
@@ -184,6 +189,9 @@ class ConductivityCalculatorBase(abc.ABC):
         self._sigma_cutoff_width = sigma_cutoff_width
         self._log_level = log_level
         self._grid_point_count = 0
+        # Indices in kappa_settings.grid_points where the main loop runs.
+        # None means all. Set by LBTECalculator.
+        self._grid_point_indices: NDArray[np.int64] | None = None
 
         # Isotope solver (optional).
         self._isotope_solver: IsotopeScatteringSolver | None = None
@@ -444,9 +452,19 @@ class ConductivityCalculatorBase(abc.ABC):
                     if sigma is None
                     else f"sigma={sigma}..."
                 )
+        assert self._gamma_iso is not None
         _compute_all_isotope(
-            self._isotope_solver, self._kappa_settings, self._gamma_iso
+            self._isotope_solver,
+            self._kappa_settings,
+            self._gamma_iso,
+            self._get_grid_point_indices(),
         )
+
+    def _get_grid_point_indices(self) -> NDArray[np.int64]:
+        """Return indices in kappa_settings.grid_points of the main loop."""
+        if self._grid_point_indices is None:
+            return np.arange(len(self._kappa_settings.grid_points), dtype="int64")
+        return self._grid_point_indices
 
     def _should_skip_isotope(self) -> bool:
         """Return True to skip isotope computation (overridden in RTA)."""
@@ -485,9 +503,10 @@ class ConductivityCalculatorBase(abc.ABC):
 
     def _iterate_grid_points(self, on_grid_point: Callable[[int], None] | None) -> None:
         """Default per-gp iteration; subclasses may override for batching."""
-        for i_gp in range(len(self._kappa_settings.grid_points)):
+        for count, i_gp in enumerate(self._get_grid_point_indices()):
+            i_gp = int(i_gp)
             self._compute_at_grid_point(i_gp)
-            self._grid_point_count = i_gp + 1
+            self._grid_point_count = count + 1
             if on_grid_point is not None:
                 on_grid_point(i_gp)
 
@@ -908,6 +927,10 @@ class LBTECalculator(ConductivityCalculatorBase):
     Stage 2 (global): LBTEKappaSolver.finalize() assembles the full
     collision matrix, symmetrizes, diagonalizes/inverts, and computes kappa.
 
+    When ``grid_point_indices`` is given, stage 1 runs only at those grid
+    points and stage 2 is skipped. This is used to compute collisions at
+    specified grid points and write them to files.
+
     """
 
     def __init__(
@@ -925,8 +948,16 @@ class LBTECalculator(ConductivityCalculatorBase):
         sigma_cutoff_width: float | None = None,
         log_level: int = 0,
         lang: Literal["C", "Python", "Rust"] = "Rust",
+        grid_point_indices: Sequence[int] | NDArray[np.int64] | None = None,
     ) -> None:
-        """Init method."""
+        """Init method.
+
+        grid_point_indices : array_like of int or None, optional
+            Indices in ``kappa_settings.grid_points`` where collisions are
+            computed. When given, kappa is not computed. Default None, which
+            means all grid points.
+
+        """
         self._collision_solver = collision_solver
         self._kappa_solver = kappa_solver
         self._is_full_pp = is_full_pp
@@ -942,6 +973,8 @@ class LBTECalculator(ConductivityCalculatorBase):
             log_level=log_level,
             lang=lang,
         )
+        if grid_point_indices is not None:
+            self._grid_point_indices = np.array(grid_point_indices, dtype="int64")
 
         # Allocate arrays.
         self._allocate_values()
@@ -1132,6 +1165,9 @@ class LBTECalculator(ConductivityCalculatorBase):
             self._show_log(i_gp, self._gv[i_gp])
 
     def _finalize(self) -> None:
+        # Collisions at a part of grid points do not form the collision matrix.
+        if self._grid_point_indices is not None:
+            return
         self._kappa_solver.finalize(self._build_grid_point_aggregates())
 
     # ------------------------------------------------------------------
