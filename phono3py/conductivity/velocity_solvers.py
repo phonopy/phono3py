@@ -9,10 +9,10 @@ from phonopy.phonon.grid import (
     get_qpoints_from_bz_grid_points,
 )
 from phonopy.phonon.group_velocity import GroupVelocity
+from phonopy.phonon.velocity_matrix import VelocityMatrix
 
 from phono3py.conductivity.grid_point_data import VelocityResult
 from phono3py.conductivity.utils import VOIGT_INDEX_PAIRS, get_kappa_star_operations
-from phono3py.phonon.velocity_matrix import VelocityMatrix
 from phono3py.phonon3.interaction import Interaction
 
 
@@ -159,7 +159,7 @@ class VelocityMatrixSolver:
     """Compute group velocity matrix and its k-star-averaged outer product.
 
     This solver implements the ``VelocitySolver`` protocol for the
-    Green-Kubo formula.  It wraps phono3py's ``VelocityMatrix`` and
+    Green-Kubo formula.  It wraps phonopy's ``VelocityMatrix`` and
     computes the k-star-averaged outer product of velocity matrix elements.
 
     The returned ``VelocityResult`` contains:
