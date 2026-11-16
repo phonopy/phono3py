@@ -86,6 +86,26 @@ def test_kappa_LBTE_full_colmat(si_pbesol: Phono3py):
     np.testing.assert_allclose(ref_kappa, kappa, atol=0.5)
 
 
+@pytest.mark.parametrize("is_reducible_collision_matrix", [False, True])
+def test_kappa_LBTE_si_boundary_mfp(
+    si_pbesol: Phono3py, is_reducible_collision_matrix: bool
+):
+    """Test LBTE with boundary scattering by Si."""
+    ref_kappa = [8.358, 8.358, 8.358, 0, 0, 0]
+    si_pbesol.mesh_numbers = [5, 5, 5]
+    si_pbesol.init_phph_interaction(
+        exclude_gamma_acoustic=True, average_degenerate_weights=True
+    )
+    si_pbesol.run_thermal_conductivity(
+        is_LBTE=True,
+        temperatures=[300],
+        boundary_mfp=0.01,
+        is_reducible_collision_matrix=is_reducible_collision_matrix,
+    )
+    kappa = si_pbesol.thermal_conductivity.kappa.ravel()
+    np.testing.assert_allclose(ref_kappa, kappa, atol=0.01)
+
+
 def test_kappa_LBTE_no_kappa_star(si_pbesol: Phono3py):
     """Test LBTE with is_kappa_star=False iterates all grid points."""
     si_pbesol.mesh_numbers = [5, 5, 5]

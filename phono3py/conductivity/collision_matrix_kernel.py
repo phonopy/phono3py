@@ -144,6 +144,7 @@ class CollisionMatrixKernel:
         # Set by solve() from grid_point_data (references, not copies).
         self._gamma: NDArray[np.double] | None = None
         self._gamma_iso: NDArray[np.double] | None = None
+        self._gamma_boundary: NDArray[np.double] | None = None
         self._gv: NDArray[np.double] | None = None
         self._cv: NDArray[np.double] | None = None
 
@@ -411,22 +412,9 @@ class CollisionMatrixKernel:
         main_diagonal = self._gamma[j, k, i].copy()
         if self._gamma_iso is not None:
             main_diagonal += self._gamma_iso[j, i]
-        if self._kappa_settings.boundary_mfp is not None:
-            main_diagonal += self._get_boundary_scattering(i)
+        if self._gamma_boundary is not None:
+            main_diagonal += self._gamma_boundary[i]
         return main_diagonal
-
-    def _get_boundary_scattering(self, i_gp: int) -> NDArray[np.double]:
-        num_band = self._frequencies.shape[1]
-        g_boundary = np.zeros(num_band, dtype="double")
-        assert self._kappa_settings.boundary_mfp is not None
-        for ll in range(num_band):
-            g_boundary[ll] = (
-                np.linalg.norm(self._gv[i_gp, ll])
-                * get_physical_units().Angstrom
-                * 1e6
-                / (4 * np.pi * self._kappa_settings.boundary_mfp)
-            )
-        return g_boundary
 
     def _iter_sigma_temp(self) -> Iterator[tuple[int, int]]:
         return np.ndindex(  # type: ignore[return-value]
@@ -889,6 +877,7 @@ class IrreducibleCollisionMatrixKernel(CollisionMatrixKernel):
     def _setup_solve_data(self, aggregates: GridPointAggregates) -> None:
         self._gamma = aggregates.gamma
         self._gamma_iso = aggregates.gamma_isotope
+        self._gamma_boundary = aggregates.gamma_boundary
         self._gv = aggregates.group_velocities
         self._cv = aggregates.mode_heat_capacities
 
@@ -1196,6 +1185,7 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
         gv_ir = aggregates.group_velocities
         cv_ir = aggregates.mode_heat_capacities
         gamma_iso_ir = aggregates.gamma_isotope
+        gamma_boundary_ir = aggregates.gamma_boundary
 
         num_sigma, num_temp, _, num_band0 = gamma_ir.shape
 
@@ -1213,6 +1203,10 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
             )
         else:
             self._gamma_iso = None
+        if gamma_boundary_ir is not None:
+            self._gamma_boundary = np.zeros((num_mesh, num_band0), dtype="double")
+        else:
+            self._gamma_boundary = None
 
         for i_gp, ir_gp in enumerate(self._kappa_settings.grid_points):
             i_gr = int(self._kappa_settings.bz_grid.bzg2grg[ir_gp])
@@ -1222,6 +1216,8 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
                 self._cv[:, i_gr, :] = cv_ir[:, i_gp, :]
             if gamma_iso_ir is not None and self._gamma_iso is not None:
                 self._gamma_iso[:, i_gr, :] = gamma_iso_ir[:, i_gp, :]
+            if gamma_boundary_ir is not None and self._gamma_boundary is not None:
+                self._gamma_boundary[i_gr] = gamma_boundary_ir[i_gp]
 
     def _prepare_collision_matrix(self) -> NDArray[np.double]:
         if self._kappa_settings.is_kappa_star:
@@ -1312,7 +1308,7 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
         ir_gr_grid_points: NDArray[np.int64],
         rot_grid_points: NDArray[np.int64],
     ) -> None:
-        """Expand gv, cv, gamma to all mesh grid points by symmetry."""
+        """Expand gv, cv, and gammas to all mesh grid points by symmetry."""
         for ir_gp in ir_gr_grid_points:
             multi = (rot_grid_points[:, ir_gp] == ir_gp).sum()
             gv_irgp = self._gv[ir_gp].copy()
@@ -1324,6 +1320,9 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
             if self._gamma_iso is not None:
                 gamma_iso_irgp = self._gamma_iso[:, ir_gp, :].copy()
                 self._gamma_iso[:, ir_gp, :] = 0
+            if self._gamma_boundary is not None:
+                gamma_boundary_irgp = self._gamma_boundary[ir_gp].copy()
+                self._gamma_boundary[ir_gp] = 0
             for j, r in enumerate(self._rotations_cartesian):
                 gp_r = rot_grid_points[j, ir_gp]
                 self._gv[gp_r] += np.dot(gv_irgp, r.T) / multi
@@ -1331,6 +1330,8 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
                 self._gamma[:, :, gp_r, :] += gamma_irgp / multi
                 if self._gamma_iso is not None:
                     self._gamma_iso[:, gp_r, :] += gamma_iso_irgp / multi  # type: ignore[possibly-undefined]
+                if self._gamma_boundary is not None:
+                    self._gamma_boundary[gp_r] += gamma_boundary_irgp / multi  # type: ignore[possibly-undefined]
 
     # -- Combine diagonals --
 
