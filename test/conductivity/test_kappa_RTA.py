@@ -1,11 +1,13 @@
 """Test for Conductivity_RTA.py."""
 
 import itertools
+import pathlib
 
 import numpy as np
 import pytest
 
 from phono3py import Phono3py
+from phono3py.phonon3.imag_self_energy import ImagSelfEnergy
 
 
 @pytest.mark.parametrize(
@@ -207,6 +209,62 @@ def test_kappa_RTA_si_N_U(si_pbesol):
 
     np.testing.assert_allclose(np.sum(gN_ref, axis=1), gN[0, 0].sum(axis=1), atol=0.05)
     np.testing.assert_allclose(np.sum(gU_ref, axis=1), gU[0, 0].sum(axis=1), atol=0.05)
+
+
+def test_kappa_RTA_si_read_gamma_ave_pp(
+    si_pbesol: Phono3py, tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch
+):
+    """Test RTA with averaged ph-ph interaction read with gamma by Si.
+
+    Gamma is recomputed with the averaged ph-ph interaction stored in
+    kappa-m*.hdf5 by is_full_pp=True.
+
+    """
+    monkeypatch.chdir(tmp_path)
+    ph3 = si_pbesol
+    ph3.mesh_numbers = [4, 4, 4]
+    ph3.init_phph_interaction()
+    ph3.run_thermal_conductivity(temperatures=[300], is_full_pp=True, write_kappa=True)
+    tc = ph3.thermal_conductivity
+    gamma_full_pp = tc.gamma[0, 0].copy()
+    ave_pp = tc.averaged_pp_interaction.copy()
+    grid_points = tc.grid_points.copy()
+
+    ph3.run_thermal_conductivity(temperatures=[300], read_gamma=True, use_ave_pp=True)
+    gamma = ph3.thermal_conductivity.gamma[0, 0]
+
+    gamma_ref = _get_gamma_with_ave_pp(ph3, grid_points, ave_pp, 300)
+    assert not np.allclose(gamma_ref, gamma_full_pp, atol=1e-5)
+    np.testing.assert_allclose(gamma, gamma_ref, atol=1e-8)
+
+
+def test_kappa_RTA_si_ave_pp_without_ave_pp(si_pbesol: Phono3py):
+    """Test that use_ave_pp without averaged ph-ph interaction fails."""
+    ph3 = si_pbesol
+    ph3.mesh_numbers = [4, 4, 4]
+    ph3.init_phph_interaction()
+    with pytest.raises(RuntimeError, match="Averaged ph-ph interaction"):
+        ph3.run_thermal_conductivity(temperatures=[300], use_ave_pp=True)
+
+
+def _get_gamma_with_ave_pp(
+    ph3: Phono3py,
+    grid_points: np.ndarray,
+    ave_pp: np.ndarray,
+    temperature: float,
+) -> np.ndarray:
+    """Return gamma at grid points computed with averaged ph-ph interaction."""
+    ise = ImagSelfEnergy(ph3.phph_interaction)
+    gamma = np.zeros_like(ave_pp)
+    for i, gp in enumerate(grid_points):
+        ise.set_grid_point(gp)
+        ise.set_sigma(None)
+        ise.run_integration_weights()
+        ise.set_averaged_pp_interaction(ave_pp[i])
+        ise.temperature = temperature
+        ise.run()
+        gamma[i] = ise.imag_self_energy
+    return gamma
 
 
 def test_kappa_RTA_nacl(nacl_pbe: Phono3py):

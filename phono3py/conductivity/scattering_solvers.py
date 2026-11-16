@@ -456,6 +456,11 @@ class RTAScatteringSolver:
         return self._is_full_pp or self._use_const_ave_pp
 
     @property
+    def use_ave_pp(self) -> bool:
+        """Return True if given averaged ph-ph interactions are used."""
+        return self._use_ave_pp
+
+    @property
     def gamma_N(self) -> NDArray[np.double] | None:
         """Return Normal-process part of gamma from last compute call."""
         return self._gamma_N
@@ -470,22 +475,35 @@ class RTAScatteringSolver:
         """Return per-triplet gamma from last compute call."""
         return self._gamma_detail_at_q
 
-    def compute(self, grid_point: int) -> ScatteringResult:
+    def compute(
+        self,
+        grid_point: int,
+        averaged_pp_interaction: NDArray[np.double] | None = None,
+    ) -> ScatteringResult:
         """Compute ph-ph linewidth at a grid point.
 
         Parameters
         ----------
         grid_point : int
             BZ grid point index.
+        averaged_pp_interaction : ndarray of double, shape (num_band0,), optional
+            Averaged ph-ph interaction at ``grid_point``. Required when
+            ``use_ave_pp=True``, and ignored otherwise. Default None.
 
         Returns
         -------
         ScatteringResult
             ``gamma`` (num_sigma, num_temp, num_band0) is set.
             ``averaged_pp_interaction`` (num_band0) is set when applicable.
+
         """
         if self._lang == "Rust" and not self._requires_full_gamma_path():
             return self._compute_rust(grid_point)
+
+        if self._use_ave_pp and averaged_pp_interaction is None:
+            raise ValueError(
+                "Averaged ph-ph interaction has to be given with use_ave_pp=True."
+            )
 
         num_band0 = len(self._pp.band_indices)
         num_temp = len(self._temperatures)
@@ -500,7 +518,9 @@ class RTAScatteringSolver:
             self._gamma_U = None
         self._gamma_detail_at_q = None
 
-        self._averaged_pp_interaction: NDArray[np.double] | None = None
+        self._averaged_pp_interaction: NDArray[np.double] | None = (
+            averaged_pp_interaction if self._use_ave_pp else None
+        )
 
         self._collision.set_grid_point(grid_point)
 
