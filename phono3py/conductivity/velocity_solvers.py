@@ -36,9 +36,6 @@ class GroupVelocitySolver:
         called beforehand.
     is_kappa_star : bool, optional
         When True use the full k-star for symmetry averaging. Default True.
-    average_gv_over_kstar : bool, optional
-        When True average group velocities over the k-star arms before
-        computing the outer product. Default False.
     gv_delta_q : float or None, optional
         Finite-difference step in 1/Angstrom for group velocity with NAC.
         Default None.
@@ -53,7 +50,6 @@ class GroupVelocitySolver:
         self,
         pp: Interaction,
         is_kappa_star: bool = True,
-        average_gv_over_kstar: bool = False,
         gv_delta_q: float | None = None,
         log_level: int = 0,
     ):
@@ -62,10 +58,9 @@ class GroupVelocitySolver:
             raise RuntimeError("Interaction.init_dynamical_matrix() must be called.")
         self._pp = pp
         self._is_kappa_star = is_kappa_star
-        self._average_gv_over_kstar = average_gv_over_kstar
         self._gv_delta_q = gv_delta_q
         self._log_level = log_level
-        self._point_operations, self._rotations_cartesian = get_kappa_star_operations(
+        _, self._rotations_cartesian = get_kappa_star_operations(
             pp.bz_grid, is_kappa_star
         )
         self._velocity_obj = GroupVelocity(
@@ -94,7 +89,7 @@ class GroupVelocitySolver:
             ``group_velocities`` (num_band0, 3) and ``gv_by_gv``
             (num_band0, 6) are set.
         """
-        gv = self._get_gv(grid_point)
+        gv = self._get_gv_at_bz_grid_point(grid_point)
         gv_by_gv = self._get_gv_by_gv(grid_point, gv)
         return VelocityResult(
             group_velocities=gv,
@@ -105,31 +100,12 @@ class GroupVelocitySolver:
     # Private helpers
     # ------------------------------------------------------------------
 
-    def _get_gv(self, grid_point: int) -> NDArray[np.double]:
-        if self._average_gv_over_kstar and len(self._point_operations) > 1:
-            return self._get_averaged_gv_over_kstar(grid_point)
-        return self._get_gv_at_bz_grid_point(grid_point)
-
     def _get_gv_at_bz_grid_point(self, bz_gp: int) -> NDArray[np.double]:
         self._velocity_obj.run(
             [get_qpoints_from_bz_grid_points(bz_gp, self._pp.bz_grid)]
         )
         assert self._velocity_obj.group_velocities is not None
         return self._velocity_obj.group_velocities[0, self._pp.band_indices, :]
-
-    def _get_averaged_gv_over_kstar(self, grid_point: int) -> NDArray[np.double]:
-        gps_rotated = get_grid_points_by_rotations(
-            grid_point, self._pp.bz_grid, with_surface=True
-        )
-        assert len(gps_rotated) == len(self._point_operations)
-        gvs = {
-            bz_gp: self._get_gv_at_bz_grid_point(int(bz_gp))
-            for bz_gp in np.unique(gps_rotated)
-        }
-        gv = np.zeros_like(gvs[grid_point])
-        for bz_gp, r in zip(gps_rotated, self._rotations_cartesian, strict=True):
-            gv += np.dot(gvs[bz_gp], r)
-        return gv / len(self._point_operations)
 
     def _get_gv_by_gv(
         self, grid_point: int, gv: NDArray[np.double]
