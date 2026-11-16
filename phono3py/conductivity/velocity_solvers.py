@@ -17,15 +17,15 @@ from phono3py.phonon3.interaction import Interaction
 
 
 class GroupVelocitySolver:
-    """Compute group velocities and their symmetrised outer product at a grid point.
+    """Compute group velocities and their symmetrised outer product at grid points.
 
     This solver implements the ``VelocitySolver`` protocol and corresponds
     to the velocity computation previously embedded in
     ``ConductivityComponents``.
 
     The returned ``VelocityResult`` contains ``group_velocities``
-    (num_band0, 3) and ``gv_by_gv`` (num_band0, 6) for the standard-BTE
-    velocity quantities.  ``gv_by_gv`` stores the six independent
+    (num_gp, num_band0, 3) and ``gv_by_gv`` (num_gp, num_band0, 6) for the
+    standard-BTE velocity quantities.  ``gv_by_gv`` stores the six independent
     components of the symmetry-averaged outer product
     ``v x v``: xx, yy, zz, yz, xz, xy.
 
@@ -75,37 +75,46 @@ class GroupVelocitySolver:
         """Return delta-q used for finite-difference group velocity."""
         return self._gv_delta_q
 
-    def compute(self, grid_point: int) -> VelocityResult:
-        """Compute group velocity and v x v product at a grid point.
+    def compute(self, grid_points: NDArray[np.int64]) -> VelocityResult:
+        """Compute group velocities and v x v products at grid points.
+
+        Group velocities at all grid points are computed by one call of
+        ``GroupVelocity.run`` of phonopy.
 
         Parameters
         ----------
-        grid_point : int
-            BZ grid point index.
+        grid_points : ndarray of int64, shape (num_gp,)
+            BZ grid point indices.
 
         Returns
         -------
         VelocityResult
-            ``group_velocities`` (num_band0, 3) and ``gv_by_gv``
-            (num_band0, 6) are set.
+            ``group_velocities`` (num_gp, num_band0, 3) and ``gv_by_gv``
+            (num_gp, num_band0, 6) are set.
+
         """
-        gv = self._get_gv_at_bz_grid_point(grid_point)
-        gv_by_gv = self._get_gv_by_gv(grid_point, gv)
-        return VelocityResult(
-            group_velocities=gv,
-            gv_by_gv=gv_by_gv,
-        )
+        grid_points = np.asarray(grid_points, dtype="int64")
+        num_band0 = len(self._pp.band_indices)
+        gv = np.zeros((len(grid_points), num_band0, 3), dtype="double", order="C")
+        gv_by_gv = np.zeros((len(grid_points), num_band0, 6), dtype="double", order="C")
+        if len(grid_points) > 0:
+            gv[:] = self._get_gv_at_bz_grid_points(grid_points)
+            for i_gp, grid_point in enumerate(grid_points):
+                gv_by_gv[i_gp] = self._get_gv_by_gv(int(grid_point), gv[i_gp])
+        return VelocityResult(group_velocities=gv, gv_by_gv=gv_by_gv)
 
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
 
-    def _get_gv_at_bz_grid_point(self, bz_gp: int) -> NDArray[np.double]:
+    def _get_gv_at_bz_grid_points(
+        self, bz_gps: NDArray[np.int64]
+    ) -> NDArray[np.double]:
         self._velocity_obj.run(
-            [get_qpoints_from_bz_grid_points(bz_gp, self._pp.bz_grid)]
+            get_qpoints_from_bz_grid_points(bz_gps, self._pp.bz_grid)
         )
         assert self._velocity_obj.group_velocities is not None
-        return self._velocity_obj.group_velocities[0, self._pp.band_indices, :]
+        return self._velocity_obj.group_velocities[:, self._pp.band_indices, :]
 
     def _get_gv_by_gv(
         self, grid_point: int, gv: NDArray[np.double]
@@ -139,13 +148,11 @@ class VelocityMatrixSolver:
     computes the k-star-averaged outer product of velocity matrix elements.
 
     The returned ``VelocityResult`` contains:
-    - ``group_velocities`` (num_band0, 3): diagonal (standard) group velocities,
-      real part of the velocity matrix diagonal.
-    - ``gv_by_gv`` (num_band0, 6): real diagonal of the outer product (standard
-      BTE-compatible).
-    - ``vm_by_vm`` (num_band0, num_band, 6): complex k-star-averaged outer
-      product  V(s,s') * V*(s,s') packed into 6 Voigt components (xx, yy, zz,
-      yz, xz, xy).
+    - ``group_velocities`` (num_gp, num_band, 3): diagonal (standard) group
+      velocities, real part of the velocity matrix diagonal.
+    - ``vm_by_vm`` (num_gp, num_band, num_band, 6): complex k-star-averaged
+      outer product  V(s,s') * V*(s,s') packed into 6 Voigt components (xx,
+      yy, zz, yz, xz, xy).
 
     Notes
     -----
@@ -193,30 +200,41 @@ class VelocityMatrixSolver:
             frequency_factor_to_THz=pp.frequency_factor_to_THz,
         )
 
-    def compute(self, grid_point: int) -> VelocityResult:
-        """Compute velocity matrix quantities at a grid point.
+    def compute(self, grid_points: NDArray[np.int64]) -> VelocityResult:
+        """Compute velocity matrix quantities at grid points.
+
+        Velocity matrices at all grid points are computed by one call of
+        ``VelocityMatrix.run`` of phonopy.
 
         Parameters
         ----------
-        grid_point : int
-            BZ grid point index.
+        grid_points : ndarray of int64, shape (num_gp,)
+            BZ grid point indices.
 
         Returns
         -------
         VelocityResult
-            ``group_velocities`` (num_band0, 3), ``gv_by_gv``
-            (num_band0, 6) real, and ``vm_by_vm``
-            (num_band0, num_band, 6) complex are set.
+            ``group_velocities`` (num_gp, num_band, 3) real and ``vm_by_vm``
+            (num_gp, num_band, num_band, 6) complex are set.
 
         """
-        q_point = get_qpoints_from_bz_grid_points(grid_point, self._pp.bz_grid)
-        self._velocity_obj.run([q_point])
-        assert self._velocity_obj.velocity_matrices is not None
-        assert self._velocity_obj.group_velocities is not None
-        gv = self._velocity_obj.group_velocities[0]
-        vm_by_vm = self._get_vm_by_vm(
-            grid_point, self._velocity_obj.velocity_matrices[0]
+        grid_points = np.asarray(grid_points, dtype="int64")
+        num_band = len(self._pp.primitive) * 3
+        gv = np.zeros((len(grid_points), num_band, 3), dtype="double", order="C")
+        vm_by_vm = np.zeros(
+            (len(grid_points), num_band, num_band, 6), dtype="cdouble", order="C"
         )
+        if len(grid_points) > 0:
+            self._velocity_obj.run(
+                get_qpoints_from_bz_grid_points(grid_points, self._pp.bz_grid)
+            )
+            assert self._velocity_obj.velocity_matrices is not None
+            assert self._velocity_obj.group_velocities is not None
+            gv[:] = self._velocity_obj.group_velocities
+            for i_gp, grid_point in enumerate(grid_points):
+                vm_by_vm[i_gp] = self._get_vm_by_vm(
+                    int(grid_point), self._velocity_obj.velocity_matrices[i_gp]
+                )
         return VelocityResult(group_velocities=gv, vm_by_vm=vm_by_vm)
 
     # ------------------------------------------------------------------

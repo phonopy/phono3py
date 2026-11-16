@@ -10,7 +10,7 @@ the Protocols defined here.
 Protocols
 ---------
 VelocitySolver
-    Computes velocity-related quantities at a single BZ grid point.
+    Computes velocity-related quantities for all grid points at once (bulk).
 HeatCapacitySolver
     Computes heat capacity for all grid points at once (bulk).
 ScatteringSolver
@@ -47,7 +47,10 @@ __all__ = [
 
 
 class VelocitySolver(Protocol):
-    """Protocol for computing velocity-related quantities at a grid point.
+    """Protocol for computing velocity-related quantities at grid points.
+
+    ``compute`` receives all grid points at once and returns arrays whose
+    first axis is the grid point.
 
     Built-in implementations
     ------------------------
@@ -64,15 +67,15 @@ class VelocitySolver(Protocol):
         True when compute() sets VelocityResult.vm_by_vm.
 
     These flags tell the calculator which arrays to pre-allocate
-    before the grid-point loop.
+    before the velocity calculation.
 
     """
 
     produces_gv_by_gv: bool
     produces_vm_by_vm: bool
 
-    def compute(self, grid_point: int) -> VelocityResult:
-        """Compute velocity quantities at a grid point."""
+    def compute(self, grid_points: NDArray[np.int64]) -> VelocityResult:
+        """Compute velocity quantities at grid points."""
         ...
 
 

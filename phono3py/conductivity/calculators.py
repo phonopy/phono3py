@@ -217,7 +217,7 @@ class ConductivityCalculatorBase(abc.ABC):
         Pipeline:
         1. Pre-run check (subclass hook).
         2. Bulk heat capacity (vectorized, single call).
-        3. Velocity loop (per-GP).
+        3. Velocities (all grid points, single call).
         4. Pre-main-loop hook (subclass hook).
         5. Isotope loop (per-GP).
         6. Main loop -> _compute_at_grid_point (abstract).
@@ -244,7 +244,7 @@ class ConductivityCalculatorBase(abc.ABC):
         if hcm is not None:
             self._heat_capacity_matrix = hcm
 
-        # (2) Velocity loop.
+        # (2) Velocities.
         if self._log_level:
             print("Running velocity calculations...")
         self._compute_all_velocities()
@@ -417,15 +417,20 @@ class ConductivityCalculatorBase(abc.ABC):
     # ------------------------------------------------------------------
 
     def _compute_all_velocities(self) -> None:
-        """Compute velocities for all grid points."""
-        for i_gp in range(len(self._kappa_settings.grid_points)):
-            grid_point = int(self._kappa_settings.grid_points[i_gp])
-            vel_result = self._velocity_solver.compute(grid_point)
-            self._gv[i_gp] = vel_result.group_velocities
-            if vel_result.gv_by_gv is not None and self._gv_by_gv is not None:
-                self._gv_by_gv[i_gp] = vel_result.gv_by_gv
-            if vel_result.vm_by_vm is not None and self._vm_by_vm is not None:
-                self._vm_by_vm[i_gp] = vel_result.vm_by_vm
+        """Compute velocities for all grid points at once."""
+        assert self._gv is not None
+        vel_result = self._velocity_solver.compute(self._kappa_settings.grid_points)
+        self._gv[:] = vel_result.group_velocities
+        if vel_result.gv_by_gv is not None and self._gv_by_gv is not None:
+            self._gv_by_gv[:] = vel_result.gv_by_gv
+        if vel_result.vm_by_vm is not None and self._vm_by_vm is not None:
+            # This array is large, so it is not copied.
+            if vel_result.vm_by_vm.shape != self._vm_by_vm.shape:
+                raise RuntimeError(
+                    f"Shape of vm_by_vm {vel_result.vm_by_vm.shape} is not "
+                    f"{self._vm_by_vm.shape}."
+                )
+            self._vm_by_vm = vel_result.vm_by_vm
 
     def _compute_isotope_if_needed(self) -> None:
         """Compute isotope scattering for all grid points if applicable."""
