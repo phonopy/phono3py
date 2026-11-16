@@ -1079,8 +1079,13 @@ class LBTECalculator(ConductivityCalculatorBase):
 
     @property
     def kappa(self) -> NDArray[np.double]:
-        """Return LBTE thermal conductivity, shape (num_sigma, num_temp, 6)."""
-        return self._kappa_solver.solver.kappa
+        """Return LBTE thermal conductivity, shape (num_sigma, num_temp, 6).
+
+        This is the kappa of the kappa solver. For the inter-band variants,
+        it is the sum of the intra-band and inter-band contributions.
+
+        """
+        return self._kappa_solver.kappa
 
     @property
     def kappa_RTA(self) -> NDArray[np.double]:
