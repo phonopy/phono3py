@@ -1044,9 +1044,6 @@ class LBTECalculator(ConductivityCalculatorBase):
         self._post_main_loop()
         self._finalize()
 
-    def delete_gp_collision_and_pp(self) -> None:
-        """No-op: memory management compatibility method."""
-
     # ------------------------------------------------------------------
     # LBTE-specific properties
     # ------------------------------------------------------------------

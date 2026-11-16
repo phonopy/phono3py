@@ -3,7 +3,7 @@
 
 Extracted from LBTEKappaSolver to serve as a shared utility for all
 LBTE-based kappa solvers.  Each kappa solver composes
-a CollisionMatrixKernel instance and calls store() / solve() rather than
+a CollisionMatrixKernel instance and calls store() / solve_iter() rather than
 inheriting or delegating to an inner solver.
 
 The base class CollisionMatrixKernel holds shared logic.  Two subclasses
@@ -18,7 +18,6 @@ from __future__ import annotations
 import sys
 import time
 from collections.abc import Iterator
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
@@ -38,38 +37,6 @@ from phono3py.conductivity.utils import (
     select_colmat_solver,
 )
 from phono3py.phonon.degeneracy import average_over_degenerate_sets
-
-
-@dataclass
-class LBTESolveResult:
-    """Result of CollisionMatrixKernel.solve().
-
-    Attributes
-    ----------
-    kappa : NDArray[np.double]
-        LBTE thermal conductivity, shape (num_sigma, num_temp, 6).
-    kappa_RTA : NDArray[np.double]
-        RTA thermal conductivity, shape (num_sigma, num_temp, 6).
-    mode_kappa : NDArray[np.double]
-        Mode LBTE kappa, shape (num_sigma, num_temp, num_gp, num_band0, 6).
-    mode_kappa_RTA : NDArray[np.double]
-        Mode RTA kappa, shape (num_sigma, num_temp, num_gp, num_band0, 6).
-    collision_eigenvalues : NDArray[np.double] | None
-        Eigenvalues of collision matrix.
-    f_vectors : NDArray[np.double]
-        f-vectors, shape (num_gp, num_band0, 3).
-    mfp : NDArray[np.double]
-        Mean free path, shape (num_sigma, num_temp, num_gp, num_band0, 3).
-
-    """
-
-    kappa: NDArray[np.double]
-    kappa_RTA: NDArray[np.double]
-    mode_kappa: NDArray[np.double]
-    mode_kappa_RTA: NDArray[np.double]
-    collision_eigenvalues: NDArray[np.double] | None
-    f_vectors: NDArray[np.double]
-    mfp: NDArray[np.double]
 
 
 class CollisionMatrixKernel:
@@ -104,8 +71,11 @@ class CollisionMatrixKernel:
     pinv_method : int, optional
         Pseudo-inverse criterion (0=abs(eig)<cutoff, 1=eig<cutoff).
         Default 0.
-    lang : {"C", "Python"}, optional
-        Backend for C-extension operations.  Default "C".
+    lang : {"C", "Python", "Rust"}, optional
+        Backend of the symmetrization and the expansion by symmetry of the
+        collision matrix.  ``"C"`` falls back to ``"Rust"`` when the C
+        extension is not installed, and ``"Python"`` uses numpy.  Default
+        "Rust".
     log_level : int, optional
         Verbosity level.  Default 0.
 
@@ -141,7 +111,7 @@ class CollisionMatrixKernel:
             kappa_settings.bz_grid, kappa_settings.is_kappa_star
         )
 
-        # Set by solve() from grid_point_data (references, not copies).
+        # Set by solve_iter() from aggregates (references, not copies).
         self._gamma: NDArray[np.double] | None = None
         self._gamma_iso: NDArray[np.double] | None = None
         self._gamma_boundary: NDArray[np.double] | None = None
@@ -197,29 +167,6 @@ class CollisionMatrixKernel:
 
         """
         raise NotImplementedError
-
-    def solve(
-        self,
-        aggregates: GridPointAggregates,
-    ) -> LBTESolveResult:
-        """Assemble collision matrix and compute LBTE thermal conductivity.
-
-        Stage 2: combine diagonals, apply weights, symmetrize, solve for
-        kappa.
-
-        Parameters
-        ----------
-        aggregates : GridPointAggregates
-            Aggregated per-grid-point data from the calculator.
-
-        Returns
-        -------
-        LBTESolveResult
-
-        """
-        for _ in self.solve_iter(aggregates):
-            pass
-        return self._build_result()
 
     def solve_iter(
         self,
@@ -383,18 +330,6 @@ class CollisionMatrixKernel:
     # ------------------------------------------------------------------
     # Shared internals
     # ------------------------------------------------------------------
-
-    def _build_result(self) -> LBTESolveResult:
-        """Build LBTESolveResult from current solver state."""
-        return LBTESolveResult(
-            kappa=self._kappa,
-            kappa_RTA=self._kappa_RTA,
-            mode_kappa=self._mode_kappa,
-            mode_kappa_RTA=self._mode_kappa_RTA,
-            collision_eigenvalues=self._collision_eigenvalues,
-            f_vectors=self._f_vectors,  # type: ignore[arg-type]
-            mfp=self._mfp,  # type: ignore[arg-type]
-        )
 
     def _get_main_diagonal(self, i: int, j: int, k: int) -> NDArray[np.double]:
         """Return main diagonal of collision matrix at grid point i.
@@ -795,8 +730,11 @@ class IrreducibleCollisionMatrixKernel(CollisionMatrixKernel):
     pinv_method : int, optional
         Pseudo-inverse criterion (0=abs(eig)<cutoff, 1=eig<cutoff).
         Default 0.
-    lang : {"C", "Python"}, optional
-        Backend for C-extension operations.  Default "C".
+    lang : {"C", "Python", "Rust"}, optional
+        Backend of the symmetrization and the expansion by symmetry of the
+        collision matrix.  ``"C"`` falls back to ``"Rust"`` when the C
+        extension is not installed, and ``"Python"`` uses numpy.  Default
+        "Rust".
     log_level : int, optional
         Verbosity level.  Default 0.
     is_one_gp_colmat : bool, optional
@@ -1096,8 +1034,11 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
     pinv_method : int, optional
         Pseudo-inverse criterion (0=abs(eig)<cutoff, 1=eig<cutoff).
         Default 0.
-    lang : {"C", "Python"}, optional
-        Backend for C-extension operations.  Default "C".
+    lang : {"C", "Python", "Rust"}, optional
+        Backend of the symmetrization and the expansion by symmetry of the
+        collision matrix.  ``"C"`` falls back to ``"Rust"`` when the C
+        extension is not installed, and ``"Python"`` uses numpy.  Default
+        "Rust".
     log_level : int, optional
         Verbosity level.  Default 0.
     is_one_gp_colmat : bool, optional
@@ -1507,8 +1448,11 @@ def create_collision_matrix_kernel(
     pinv_method : int, optional
         Pseudo-inverse criterion (0=abs(eig)<cutoff, 1=eig<cutoff).
         Default 0.
-    lang : {"C", "Python"}, optional
-        Backend for C-extension operations.  Default "C".
+    lang : {"C", "Python", "Rust"}, optional
+        Backend of the symmetrization and the expansion by symmetry of the
+        collision matrix.  ``"C"`` falls back to ``"Rust"`` when the C
+        extension is not installed, and ``"Python"`` uses numpy.  Default
+        "Rust".
     log_level : int, optional
         Verbosity level.  Default 0.
     is_one_gp_colmat : bool, optional
