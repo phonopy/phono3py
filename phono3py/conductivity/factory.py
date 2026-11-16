@@ -55,6 +55,7 @@ from phono3py.conductivity.calculators import LBTECalculator, RTACalculator
 from phono3py.conductivity.collision_matrix_kernel import (
     create_collision_matrix_kernel,
 )
+from phono3py.conductivity.exceptions import LBTEInputError
 from phono3py.conductivity.heat_capacity_solvers import ModeHeatCapacitySolver
 from phono3py.conductivity.kappa_solvers import LBTEKappaSolver, RTAKappaSolver
 from phono3py.conductivity.lbte_collision_solver import LBTECollisionSolver
@@ -243,7 +244,7 @@ def _get_lbte_grid_point_indices(
     for gp in grid_points:
         matched = np.where(lbte_grid_points == gp)[0]
         if len(matched) == 0:
-            raise ValueError(
+            raise LBTEInputError(
                 f"Grid point {gp} is not an irreducible grid point. Collisions "
                 "of the direct solution are computed at irreducible grid points."
             )

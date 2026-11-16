@@ -312,6 +312,46 @@ def test_phono3py_load_lbte():
             os.chdir(original_cwd)
 
 
+@pytest.mark.parametrize("write_collision", [None, True])
+def test_phono3py_load_lbte_with_band_indices(
+    tmp_path: pathlib.Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    write_collision: bool | None,
+):
+    """Test direct solution with a part of bands.
+
+    Without --write-collision, the error message is shown and exit code is 1.
+    With it, collisions of the bands are written and kappa is not computed.
+
+    """
+    monkeypatch.chdir(tmp_path)
+    argparse_control = _get_phono3py_load_args(
+        cwd / ".." / "phono3py_params_Si111.yaml",
+        is_lbte=True,
+        band_indices=["5", "6"],
+        temperatures=["300"],
+        mesh_numbers=["3", "3", "3"],
+        write_collision=write_collision,
+    )
+    with pytest.raises(SystemExit) as excinfo:
+        main(**argparse_control)
+    out = capsys.readouterr().out
+
+    if write_collision:
+        assert excinfo.value.code == 0
+        filenames = {p.name for p in tmp_path.glob("collision-*.hdf5")}
+        assert filenames == {
+            f"collision-m333-g{gp}-b{bi}.hdf5" for gp in (0, 1, 4, 5) for bi in (5, 6)
+        }
+        assert not list(tmp_path.glob("kappa-*.hdf5"))
+        assert "Only collisions are computed" in out
+    else:
+        assert excinfo.value.code == 1
+        assert "Direct solution of LBTE needs all bands." in out
+        assert not list(tmp_path.glob("collision-*.hdf5"))
+
+
 @pytest.mark.parametrize(
     "load_phono3py_yaml,fc_calculator,fc_calculator_options",
     [
@@ -1541,6 +1581,8 @@ def _get_phono3py_load_args(
     fc_calculator: str | None = None,
     fc_calculator_options: str | None = None,
     load_phono3py_yaml: bool = True,
+    band_indices: Sequence | None = None,
+    grid_points: Sequence | None = None,
     is_bterta: bool | None = None,
     is_displacement: bool | None = None,
     is_fc3_r0_average: bool | None = None,
@@ -1560,6 +1602,7 @@ def _get_phono3py_load_args(
     exclude_gamma_acoustic: bool | None = None,
     temperatures: Sequence | None = None,
     use_pypolymlp: bool | None = None,
+    write_collision: bool | None = None,
     write_gamma: bool | None = None,
     write_gamma_detail: bool | None = None,
     write_phonon: bool | None = None,
@@ -1573,6 +1616,8 @@ def _get_phono3py_load_args(
         # assert phono3py_yaml_filepath is not None
         mockargs = Phono3pyMockArgs(
             filename=filename,
+            band_indices=band_indices,
+            grid_points=grid_points,
             create_forces_fc2=create_forces_fc2,
             create_forces_fc3=create_forces_fc3,
             create_forces_fc3_file=create_forces_fc3_file,
@@ -1598,6 +1643,7 @@ def _get_phono3py_load_args(
             exclude_gamma_acoustic=exclude_gamma_acoustic,
             temperatures=temperatures,
             use_pypolymlp=use_pypolymlp,
+            write_collision=write_collision,
             write_gamma=write_gamma,
             write_gamma_detail=write_gamma_detail,
             write_phonon=write_phonon,

@@ -44,7 +44,7 @@ from phono3py.conductivity.utils import (
 )
 from phono3py.conductivity.velocity_solvers import GroupVelocitySolver
 from phono3py.other.isotope import Isotope
-from phono3py.phonon3.interaction import Interaction
+from phono3py.phonon3.interaction import Interaction, all_bands_exist
 from phono3py.phonon3.triplets import get_triplets_at_q
 
 # ------------------------------------------------------------------
@@ -929,7 +929,8 @@ class LBTECalculator(ConductivityCalculatorBase):
 
     When ``grid_point_indices`` is given, stage 1 runs only at those grid
     points and stage 2 is skipped. This is used to compute collisions at
-    specified grid points and write them to files.
+    specified grid points and write them to files. Stage 2 is skipped also
+    when band indices do not select all bands in their order.
 
     """
 
@@ -1165,8 +1166,9 @@ class LBTECalculator(ConductivityCalculatorBase):
             self._show_log(i_gp, self._gv[i_gp])
 
     def _finalize(self) -> None:
-        # Collisions at a part of grid points do not form the collision matrix.
-        if self._grid_point_indices is not None:
+        # Collisions at a part of grid points or of bands do not form the
+        # collision matrix.
+        if self._grid_point_indices is not None or not all_bands_exist(self._pp):
             return
         self._kappa_solver.finalize(self._build_grid_point_aggregates())
 

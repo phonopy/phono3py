@@ -1143,6 +1143,7 @@ class Phono3pyMockArgs:
     """
 
     average_degenerate_weights: bool | None = None
+    band_indices: Sequence[str] | None = None
     cell_filename: str | os.PathLike | None = None
     conf_filename: str | os.PathLike | None = None
     create_forces_fc2: Sequence[str | os.PathLike] | None = None
@@ -1156,6 +1157,7 @@ class Phono3pyMockArgs:
     filename: Sequence[str | os.PathLike] | None = None
     force_sets_mode: bool | None = None
     force_sets_to_forces_fc2_mode: bool | None = None
+    grid_points: Sequence[str] | None = None
     input_filename: None = None
     input_output_filename: None = None
     log_level: int | None = None
@@ -1184,6 +1186,7 @@ class Phono3pyMockArgs:
     use_pypolymlp: bool | None = None
     use_rust: bool | None = None
     use_legacy_backend: bool | None = None
+    write_collision: bool | None = None
     write_gamma: bool | None = None
     write_gamma_detail: bool | None = None
     write_grid_points: bool | None = None
