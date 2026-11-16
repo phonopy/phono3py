@@ -10,9 +10,18 @@ capacity matrix function (e.g. ``mode_cv_matrix_njc23``,
 variant module only needs to supply its name and heat capacity matrix
 function.
 
+The velocity matrix and the heat capacity matrix are quantities of pairs of
+bands and need all bands. When a part of bands is selected by band indices,
+which is done to compute and store gamma band by band, the RTA calculation
+is assembled from the components of the standard method. Then group
+velocities of the selected bands are computed, and the velocity matrix and
+the heat capacity matrix are not.
+
 """
 
 from __future__ import annotations
+
+import textwrap
 
 import numpy as np
 from numpy.typing import NDArray
@@ -22,6 +31,7 @@ from phono3py.conductivity.factory import register_variant
 from phono3py.conductivity.heat_capacity_solvers import (
     CvMatrixFunc,
     HeatCapacityMatrixSolver,
+    ModeHeatCapacitySolver,
 )
 from phono3py.conductivity.interband_kappa_formula import (
     compute_interband_mode_kappa,
@@ -30,11 +40,20 @@ from phono3py.conductivity.interband_kappa_solvers import (
     InterBandLBTEKappaSolver,
     InterBandRTAKappaSolver,
 )
-from phono3py.conductivity.velocity_solvers import VelocityMatrixSolver
+from phono3py.conductivity.kappa_solvers import RTAKappaSolver
+from phono3py.conductivity.velocity_solvers import (
+    GroupVelocitySolver,
+    VelocityMatrixSolver,
+)
+from phono3py.phonon3.interaction import all_bands_exist
 
 
 def register_interband_variant(name: str, cv_matrix_func: CvMatrixFunc) -> None:
     """Register an inter-band variant with RTA and LBTE methods.
+
+    Unless all bands are selected in their order, the velocity solver, the
+    heat capacity solver, and the RTA kappa solver are those of the standard
+    method.
 
     Parameters
     ----------
@@ -47,7 +66,24 @@ def register_interband_variant(name: str, cv_matrix_func: CvMatrixFunc) -> None:
 
     """
 
-    def _make_velocity_solver(ctx: VariantContext) -> VelocityMatrixSolver:
+    def _make_velocity_solver(
+        ctx: VariantContext,
+    ) -> VelocityMatrixSolver | GroupVelocitySolver:
+        if not all_bands_exist(ctx.interaction):
+            if ctx.log_level:
+                message = (
+                    f"Velocity matrix and heat capacity matrix of {name} are not "
+                    "computed because band indices do not select all bands in "
+                    "their order. Group velocities and mode heat capacities are "
+                    "computed as in the standard method."
+                )
+                print(textwrap.fill(message, width=76))
+            return GroupVelocitySolver(
+                ctx.interaction,
+                is_kappa_star=ctx.kappa_settings.is_kappa_star,
+                gv_delta_q=ctx.kappa_settings.gv_delta_q,
+                log_level=ctx.log_level,
+            )
         return VelocityMatrixSolver(
             ctx.interaction,
             is_kappa_star=ctx.kappa_settings.is_kappa_star,
@@ -55,16 +91,30 @@ def register_interband_variant(name: str, cv_matrix_func: CvMatrixFunc) -> None:
             log_level=ctx.log_level,
         )
 
-    def _make_cv_solver(ctx: VariantContext) -> HeatCapacityMatrixSolver:
+    def _make_cv_solver(
+        ctx: VariantContext,
+    ) -> HeatCapacityMatrixSolver | ModeHeatCapacitySolver:
+        if not all_bands_exist(ctx.interaction):
+            return ModeHeatCapacitySolver(
+                ctx.interaction, ctx.kappa_settings.temperatures
+            )
         return HeatCapacityMatrixSolver(
             ctx.interaction,
             ctx.kappa_settings.temperatures,
             cv_matrix_func=cv_matrix_func,
         )
 
-    def _make_rta_kappa_solver(ctx: VariantContext) -> InterBandRTAKappaSolver:
+    def _make_rta_kappa_solver(
+        ctx: VariantContext,
+    ) -> InterBandRTAKappaSolver | RTAKappaSolver:
         assert ctx.interaction.phonons is not None
         frequencies: NDArray[np.double] = ctx.interaction.phonons.frequencies
+        if not all_bands_exist(ctx.interaction):
+            return RTAKappaSolver(
+                kappa_settings=ctx.kappa_settings,
+                frequencies=frequencies,
+                log_level=ctx.log_level,
+            )
         return InterBandRTAKappaSolver(
             kappa_settings=ctx.kappa_settings,
             frequencies=frequencies,
