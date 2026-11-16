@@ -685,6 +685,11 @@ class RTACalculator(ConductivityCalculatorBase):
     def _pre_run_check(self) -> None:
         if self._kappa_settings.temperatures is None:
             raise RuntimeError("Set temperatures before calling run().")
+        if self._scattering_solver.use_ave_pp and self._averaged_pp_interaction is None:
+            raise RuntimeError(
+                "Averaged ph-ph interaction is required with use_ave_pp=True. "
+                "It is read from kappa-m*.hdf5 computed with is_full_pp=True."
+            )
 
     def _pre_main_loop(self) -> None:
         if self._kappa_settings.boundary_mfp is not None:
@@ -744,14 +749,26 @@ class RTACalculator(ConductivityCalculatorBase):
         )
 
     def _compute_at_grid_point(self, i_gp: int) -> None:
-        """Compute ph-ph scattering gamma at a single grid point."""
+        """Compute ph-ph scattering gamma at a single grid point.
+
+        Gamma read from file is recomputed with use_ave_pp=True, where the
+        averaged ph-ph interaction read with it is used.
+
+        """
         _show_log_header(
             i_gp, self._kappa_settings, self._isotope_solver, self._log_level
         )
 
-        if not self._read_gamma:
+        use_ave_pp = self._scattering_solver.use_ave_pp
+        if not self._read_gamma or use_ave_pp:
             grid_point = int(self._kappa_settings.grid_points[i_gp])
-            scat_result = self._scattering_solver.compute(grid_point)
+            given_ave_pp = None
+            if use_ave_pp:
+                assert self._averaged_pp_interaction is not None
+                given_ave_pp = self._averaged_pp_interaction[i_gp]
+            scat_result = self._scattering_solver.compute(
+                grid_point, averaged_pp_interaction=given_ave_pp
+            )
             self._store_scattering_result(
                 i_gp,
                 scat_result,
@@ -871,7 +888,8 @@ class RTACalculator(ConductivityCalculatorBase):
     ) -> None:
         gp = self._kappa_settings.grid_points[i_gp]
         frequencies = self._frequencies[gp][self._kappa_settings.band_indices]
-        pp = ave_pp if self._scattering_solver.is_full_pp else None
+        solver = self._scattering_solver
+        pp = ave_pp if (solver.is_full_pp or solver.use_ave_pp) else None
         gv_delta_q = getattr(self._velocity_solver, "gv_delta_q", None)
         if self._log_level > 2:
             point_ops, rot_cart = get_kappa_star_operations(
