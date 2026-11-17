@@ -86,6 +86,35 @@ def test_kappa_LBTE_full_colmat(si_pbesol: Phono3py):
     np.testing.assert_allclose(ref_kappa, kappa, atol=0.5)
 
 
+def test_kappa_LBTE_full_colmat_RTA_with_cutoff_frequency(si_pbesol: Phono3py):
+    """Test kappa_RTA of full collision matrix with a high cutoff frequency.
+
+    With the cutoff frequency of 4 THz, the cutoff applies to different modes
+    at a grid point than at the grid point of the same index in the other
+    grid indexing (GR or BZ), so taking the frequencies of the wrong grid
+    point gives NaN.
+
+    """
+    ph3 = Phono3py(
+        si_pbesol.unitcell,
+        supercell_matrix=si_pbesol.supercell_matrix,
+        primitive_matrix=si_pbesol.primitive_matrix,
+        cutoff_frequency=4.0,
+    )
+    ph3.fc2 = si_pbesol.fc2
+    ph3.fc3 = si_pbesol.fc3
+    ph3.mesh_numbers = [5, 5, 5]
+    ph3.init_phph_interaction()
+    ph3.run_thermal_conductivity(
+        is_LBTE=True,
+        temperatures=[300],
+        is_reducible_collision_matrix=True,
+    )
+    tc = ph3.thermal_conductivity
+    assert np.isfinite(tc.kappa_RTA).all()
+    assert np.isfinite(tc.mode_kappa_RTA).all()
+
+
 @pytest.mark.parametrize("is_reducible_collision_matrix", [False, True])
 def test_kappa_LBTE_si_boundary_mfp(
     si_pbesol: Phono3py, is_reducible_collision_matrix: bool
