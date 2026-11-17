@@ -258,11 +258,20 @@ class ConductivityCalculatorBase(abc.ABC):
         writers in ``output.py`` according to the write options.
 
         """
-        self._pre_run_check()
+        self._run_before_main_loop()
+        self._grid_point_count = 0
+        self._iterate_grid_points(on_grid_point)
+        self._run_after_main_loop()
 
+    def solve(self) -> None:
+        """Compute kappa from the quantities collected by collect."""
+        self._finalize()
+
+    def _run_before_main_loop(self) -> None:
+        """Run the steps 1-5 of collect, before the main loop."""
+        self._pre_run_check()
         _prepare_isotope_phonons(self._pp, self._isotope_solver)
 
-        # (1) Bulk heat capacity.
         if self._log_level:
             print("Running heat capacity calculations...")
         self._cv, hcm = _compute_bulk_heat_capacities(
@@ -271,33 +280,21 @@ class ConductivityCalculatorBase(abc.ABC):
         if hcm is not None:
             self._heat_capacity_matrix = hcm
 
-        # (2) Velocities.
         if self._log_level:
             print("Running velocity calculations...")
         self._compute_all_velocities()
 
-        # (3) Pre-main-loop hook.
         self._pre_main_loop()
-
-        # (4) Isotope loop.
         self._compute_isotope_if_needed()
 
-        # (5) Main loop.
-        self._grid_point_count = 0
-        self._iterate_grid_points(on_grid_point)
-
+    def _run_after_main_loop(self) -> None:
+        """Run the step 7 of collect, after the main loop."""
         if self._log_level:
             print(
                 "=================== End of collection of collisions "
                 "==================="
             )
-
-        # (6) Post-main-loop hook.
         self._post_main_loop()
-
-    def solve(self) -> None:
-        """Compute kappa from the quantities collected by collect."""
-        self._finalize()
 
     # ------------------------------------------------------------------
     # Properties -- kappa settings access
@@ -1023,30 +1020,14 @@ class LBTECalculator(ConductivityCalculatorBase):
     def set_kappa_at_sigmas(self) -> None:
         """Finalize kappa from a pre-loaded collision matrix (read-from-file path).
 
-        Mirrors the run() pipeline but replaces the per-grid-point collision
-        computation with the gamma/collision_matrix loaded from file.  Group
-        velocities, heat capacities, isotope and boundary scattering are not
-        stored in the collision file and must be computed here.
+        This runs collect and solve, but the main loop only shows the log at
+        each grid point, because the gamma and collision matrix are loaded
+        from file.  Group velocities, heat capacities, isotope and boundary
+        scattering are not stored in the collision file and are computed
+        here.
 
         """
-        self._pre_run_check()
-        _prepare_isotope_phonons(self._pp, self._isotope_solver)
-
-        if self._log_level:
-            print("Running heat capacity calculations...")
-        self._cv, hcm = _compute_bulk_heat_capacities(
-            self._cv_solver, self._kappa_settings.grid_points
-        )
-        if hcm is not None:
-            self._heat_capacity_matrix = hcm
-
-        if self._log_level:
-            print("Running velocity calculations...")
-        self._compute_all_velocities()
-
-        self._pre_main_loop()
-        self._compute_isotope_if_needed()
-
+        self._run_before_main_loop()
         if self._log_level:
             for i_gp in range(len(self._kappa_settings.grid_points)):
                 _show_log_header(
@@ -1056,13 +1037,8 @@ class LBTECalculator(ConductivityCalculatorBase):
                     self._log_level,
                 )
                 self._show_log(i_gp, self._gv[i_gp])
-            print(
-                "=================== End of collection of collisions "
-                "==================="
-            )
-
-        self._post_main_loop()
-        self._finalize()
+        self._run_after_main_loop()
+        self.solve()
 
     # ------------------------------------------------------------------
     # LBTE-specific properties
