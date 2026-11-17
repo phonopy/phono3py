@@ -460,7 +460,7 @@ def _run_standard_lbte(
                     filename=output_filename,
                 )
 
-        lbte.run(
+        lbte.collect(
             on_grid_point=_on_grid_point if (write_pp or write_collision) else None
         )
 
@@ -473,6 +473,9 @@ def _run_standard_lbte(
         grid_points=grid_points,
         output_filename=output_filename,
     )
+
+    if not read_collision:
+        lbte.solve()
 
     if grid_points is None and all_bands_exist(interaction):
         if read_collision:
