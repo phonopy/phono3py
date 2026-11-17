@@ -322,6 +322,14 @@ class CollisionMatrixKernel:
     def _get_X_frequencies(self) -> NDArray[np.double]:
         raise NotImplementedError
 
+    def _get_gamma_index(self) -> int | None:
+        """Return index of Gamma-point in grid points of X and Y.
+
+        None is returned when the grid points do not include Gamma-point.
+
+        """
+        raise NotImplementedError
+
     def _get_Y_problem_size(self) -> tuple[int, int]:
         raise NotImplementedError
 
@@ -678,8 +686,12 @@ class CollisionMatrixKernel:
         Collision matrix is defined as half of that in Chaput's paper,
         so the factor of 2 is not needed here.
 
+        The three lowest modes at Gamma-point are skipped, assuming no
+        imaginary modes.
+
         """
         num_band = self._frequencies.shape[1]
+        i_gamma = self._get_gamma_index()
         for i, (v_gp, f_gp) in enumerate(
             zip(
                 X.reshape(num_grid_points, num_band, 3),
@@ -688,9 +700,7 @@ class CollisionMatrixKernel:
             )
         ):
             for j, (v, f) in enumerate(zip(v_gp, f_gp, strict=True)):
-                # Skip three lowest modes at Gamma-point
-                # (assumed no imaginary modes).
-                if (self._kappa_settings.bz_grid.addresses[i] == 0).all() and j < 3:
+                if i == i_gamma and j < 3:
                     continue
                 sum_k = self._compute_mode_kappa_tensor(v, f)
                 sum_k = sum_k + sum_k.T
@@ -1010,6 +1020,15 @@ class IrreducibleCollisionMatrixKernel(CollisionMatrixKernel):
 
     def _get_X_frequencies(self) -> NDArray[np.double]:
         return self._frequencies[self._kappa_settings.grid_points]
+
+    def _get_gamma_index(self) -> int | None:
+        gp_Gamma = self._kappa_settings.bz_grid.gp_Gamma
+        if gp_Gamma is None:
+            return None
+        indices = np.flatnonzero(self._kappa_settings.grid_points == gp_Gamma)
+        if len(indices) == 0:
+            return None
+        return int(indices[0])
 
     def _get_Y_problem_size(self) -> tuple[int, int]:
         num_band = self._frequencies.shape[1]
@@ -1426,6 +1445,12 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
 
     def _get_X_frequencies(self) -> NDArray[np.double]:
         return self._gr_frequencies
+
+    def _get_gamma_index(self) -> int | None:
+        bz_grid = self._kappa_settings.bz_grid
+        if bz_grid.gp_Gamma is None:
+            return None
+        return int(bz_grid.bzg2grg[bz_grid.gp_Gamma])
 
     def _get_Y_problem_size(self) -> tuple[int, int]:
         num_band = self._frequencies.shape[1]
