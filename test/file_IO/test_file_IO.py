@@ -16,11 +16,13 @@ from phono3py.file_IO import (
     get_length_of_first_line,
     parse_FORCES_FC2,
     parse_FORCES_FC3,
-    read_collision_from_hdf5,
+    read_collision_from_hdf5,  # REMOVE-AT-V5
+    read_collision_from_hdf5_into,
     read_fc3_from_hdf5,
     read_gamma_from_hdf5,
     read_phonon_from_hdf5,
     read_pp_from_hdf5,
+    read_temperatures_from_collision_hdf5,
     write_collision_to_hdf5,
     write_fc2_to_hdf5,
     write_fc3_to_hdf5,
@@ -202,76 +204,147 @@ def test_phonon_read_file_not_found(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# write_collision_to_hdf5 / read_collision_from_hdf5
+# write_collision_to_hdf5 / read_collision_from_hdf5_into
 # ---------------------------------------------------------------------------
 
 
-def test_collision_roundtrip(tmp_path):
-    """write_collision_to_hdf5 and read_collision_from_hdf5 round-trip."""
-    mesh = [4, 4, 4]
-    rng = np.random.default_rng(4)
-    n_temp = 3
-    n_gp = 10
+def _write_collision_at_three_temperatures(
+    mesh: list[int],
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Write a collision file at three temperatures into the current directory."""
+    rng = np.random.default_rng(5)
     temperature = np.array([100.0, 200.0, 300.0])
-    gamma = np.array(rng.random((n_temp, n_gp, 3)), dtype="double", order="C")
-    collision_matrix = np.array(
-        rng.random((n_temp, n_gp * 3, n_gp * 3)), dtype="double", order="C"
+    gamma = rng.random((3, 4, 3))
+    collision_matrix = rng.random((3, 4, 3, 4, 3))
+    write_collision_to_hdf5(
+        temperature, mesh, gamma=gamma, collision_matrix=collision_matrix
     )
+    return temperature, gamma, collision_matrix
 
-    orig_dir = pathlib.Path.cwd()
-    os.chdir(tmp_path)
-    try:
-        write_collision_to_hdf5(
-            temperature,
-            mesh,
-            gamma=gamma,
-            collision_matrix=collision_matrix,
-        )
-        col_r, gamma_r, temp_r = read_collision_from_hdf5(mesh, verbose=False)
-    finally:
-        os.chdir(orig_dir)
+
+def test_collision_roundtrip(tmp_path, monkeypatch):
+    """write_collision_to_hdf5 and read_collision_from_hdf5_into round-trip."""
+    monkeypatch.chdir(tmp_path)
+    mesh = [4, 4, 4]
+    temperature, gamma, collision_matrix = _write_collision_at_three_temperatures(mesh)
+    colmat_r = np.zeros_like(collision_matrix)
+    gamma_r = np.zeros_like(gamma)
+
+    temp_r = read_collision_from_hdf5_into(colmat_r, gamma_r, mesh, verbose=False)
 
     np.testing.assert_array_equal(temperature, temp_r)
     np.testing.assert_array_equal(gamma, gamma_r)
-    np.testing.assert_array_equal(collision_matrix, col_r[0])
+    np.testing.assert_array_equal(collision_matrix, colmat_r)
 
 
-def test_collision_only_temperatures(tmp_path):
-    """read_collision_from_hdf5 with only_temperatures returns temperatures only."""
+@pytest.mark.parametrize("indices", ["all", [0, 2]])
+def test_collision_read_into_view(tmp_path, monkeypatch, indices):
+    """read_collision_from_hdf5_into reads into a non-contiguous view.
+
+    The destination is a slice at one grid point of a larger array, as in
+    reading collisions of each grid point into the collision matrix of LBTE.
+    The other slice must stay untouched.
+
+    """
+    monkeypatch.chdir(tmp_path)
     mesh = [4, 4, 4]
-    temperature = np.array([100.0, 200.0, 300.0])
-    gamma = np.zeros((3, 5, 3))
-    collision_matrix = np.zeros((3, 15, 15))
+    temperature, gamma, collision_matrix = _write_collision_at_three_temperatures(mesh)
+    temp_indices = [0, 1, 2] if indices == "all" else indices
+    num_temp = len(temp_indices)
+    colmat_dest = np.zeros((num_temp, 2) + collision_matrix.shape[1:])
+    gamma_dest = np.zeros((num_temp, 2) + gamma.shape[1:])
 
-    orig_dir = pathlib.Path.cwd()
-    os.chdir(tmp_path)
-    try:
-        write_collision_to_hdf5(
-            temperature,
-            mesh,
-            gamma=gamma,
-            collision_matrix=collision_matrix,
+    temp_r = read_collision_from_hdf5_into(
+        colmat_dest[:, 1],
+        gamma_dest[:, 1],
+        mesh,
+        indices=indices,
+        verbose=False,
+    )
+
+    np.testing.assert_array_equal(temperature[temp_indices], temp_r)
+    np.testing.assert_array_equal(collision_matrix[temp_indices], colmat_dest[:, 1])
+    np.testing.assert_array_equal(gamma[temp_indices], gamma_dest[:, 1])
+    assert not colmat_dest[:, 0].any()
+    assert not gamma_dest[:, 0].any()
+
+
+def test_collision_read_into_wrong_number_of_temperatures(tmp_path, monkeypatch):
+    """read_collision_from_hdf5_into rejects arrays of other temperatures."""
+    monkeypatch.chdir(tmp_path)
+    mesh = [4, 4, 4]
+    _, gamma, collision_matrix = _write_collision_at_three_temperatures(mesh)
+    colmat_dest = np.zeros((2,) + collision_matrix.shape[1:])
+    gamma_dest = np.zeros((2,) + gamma.shape[1:])
+
+    with pytest.raises(ValueError, match="Number of temperatures"):
+        read_collision_from_hdf5_into(colmat_dest, gamma_dest, mesh, verbose=False)
+
+
+def test_collision_read_with_invalid_indices(tmp_path, monkeypatch):
+    """A string other than "all" is rejected as indices of temperatures."""
+    monkeypatch.chdir(tmp_path)
+    mesh = [4, 4, 4]
+    _write_collision_at_three_temperatures(mesh)
+
+    with pytest.raises(ValueError, match="indices"):
+        read_temperatures_from_collision_hdf5(mesh, indices="0 2")
+
+
+@pytest.mark.parametrize("indices", ["all", [0, 2]])
+def test_collision_read_temperatures(tmp_path, monkeypatch, indices):
+    """read_temperatures_from_collision_hdf5 returns temperatures selected."""
+    monkeypatch.chdir(tmp_path)
+    mesh = [4, 4, 4]
+    temperature, _, _ = _write_collision_at_three_temperatures(mesh)
+    temp_indices = [0, 1, 2] if indices == "all" else indices
+
+    temp_r = read_temperatures_from_collision_hdf5(mesh, indices=indices)
+
+    np.testing.assert_array_equal(temperature[temp_indices], temp_r)
+
+
+def test_collision_file_not_found(tmp_path, monkeypatch):
+    """Reading collision raises FileNotFoundError when file is absent."""
+    monkeypatch.chdir(tmp_path)
+    mesh = [4, 4, 4]
+    with pytest.raises(FileNotFoundError):
+        read_temperatures_from_collision_hdf5(mesh)
+    with pytest.raises(FileNotFoundError):
+        read_collision_from_hdf5_into(
+            np.zeros((1, 1)), np.zeros((1, 1)), mesh, verbose=False
         )
+
+
+# REMOVE-AT-V5
+def test_read_collision_from_hdf5_deprecated(tmp_path, monkeypatch):
+    """read_collision_from_hdf5 warns and returns the arrays as before.
+
+    The collision matrix has a leading axis of length one, whereas gamma does
+    not. With only_temperatures, all temperatures are returned regardless of
+    indices.
+
+    """
+    monkeypatch.chdir(tmp_path)
+    mesh = [4, 4, 4]
+    temperature, gamma, collision_matrix = _write_collision_at_three_temperatures(mesh)
+
+    with pytest.warns(DeprecationWarning, match="read_collision_from_hdf5"):
         col_r, gamma_r, temp_r = read_collision_from_hdf5(
-            mesh, only_temperatures=True, verbose=False
+            mesh, indices=[0, 2], verbose=False
         )
-    finally:
-        os.chdir(orig_dir)
+    np.testing.assert_array_equal(temperature[[0, 2]], temp_r)
+    np.testing.assert_array_equal(gamma[[0, 2]], gamma_r)
+    assert col_r.shape == (1, 2) + collision_matrix.shape[1:]
+    np.testing.assert_array_equal(collision_matrix[[0, 2]], col_r[0])
 
+    with pytest.warns(DeprecationWarning, match="read_collision_from_hdf5"):
+        col_r, gamma_r, temp_r = read_collision_from_hdf5(
+            mesh, indices=[0, 2], only_temperatures=True, verbose=False
+        )
     assert col_r is None
     assert gamma_r is None
     np.testing.assert_array_equal(temperature, temp_r)
-
-
-def test_collision_file_not_found(tmp_path):
-    """read_collision_from_hdf5 raises FileNotFoundError when file is absent."""
-    orig_dir = pathlib.Path.cwd()
-    os.chdir(tmp_path)
-    try:
-        with pytest.raises(FileNotFoundError):
-            read_collision_from_hdf5([4, 4, 4], verbose=False)
-    finally:
-        os.chdir(orig_dir)
 
 
 # ---------------------------------------------------------------------------

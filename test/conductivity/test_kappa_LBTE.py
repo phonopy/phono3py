@@ -283,6 +283,36 @@ def test_kappa_LBTE_read_full_collision_matrix(
     np.testing.assert_allclose(ref_kappa, read_kappa, atol=1e-8)
 
 
+@pytest.mark.parametrize(
+    "write_kwargs", [{"write_collision": True}, {"write_LBTE_solution": True}]
+)
+def test_kappa_LBTE_read_collision_at_temperature_index(
+    si_pbesol: Phono3py, tmp_path, monkeypatch, write_kwargs: dict
+):
+    """Read collisions at one temperature selected by its index.
+
+    ``read_collision=[1]``, as ``--read-collision 1``, reads the data at the
+    second temperature in per-grid-point files or the full collision matrix
+    file. The calculation is done only at this temperature.
+
+    """
+    monkeypatch.chdir(tmp_path)
+    si_pbesol.mesh_numbers = [5, 5, 5]
+    si_pbesol.init_phph_interaction()
+
+    si_pbesol.run_thermal_conductivity(
+        is_LBTE=True, temperatures=[100, 300], **write_kwargs
+    )
+    ref_kappa = si_pbesol.thermal_conductivity.kappa[:, 1].copy()
+
+    si_pbesol.run_thermal_conductivity(is_LBTE=True, read_collision=[1])
+    tc = si_pbesol.thermal_conductivity
+
+    np.testing.assert_allclose(tc.temperatures, [300])
+    assert np.abs(ref_kappa).max() > 1
+    np.testing.assert_allclose(ref_kappa, tc.kappa[:, 0], atol=1e-8)
+
+
 @pytest.mark.parametrize("is_reducible_collision_matrix", [False, True])
 def test_kappa_LBTE_write_collision_at_grid_points(
     si_pbesol: Phono3py, tmp_path, monkeypatch, is_reducible_collision_matrix: bool

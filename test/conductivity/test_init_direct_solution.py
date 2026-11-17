@@ -7,6 +7,7 @@ import numpy as np
 
 from phono3py.conductivity import lbte_init as ids
 from phono3py.conductivity.lbte_init import CollisionFileReader
+from phono3py.file_IO import write_collision_to_hdf5
 
 
 def _make_reader(log_level: int = 0) -> CollisionFileReader:
@@ -19,24 +20,38 @@ def _make_reader(log_level: int = 0) -> CollisionFileReader:
     )
 
 
-def test_try_full_matrix_stores_data(monkeypatch):
-    """Full-matrix data is copied into collision buffers."""
-    reader = _make_reader()
-    collisions = (
-        np.array([[[1.5]]], dtype="double"),
-        np.array([[[2.5]]], dtype="double"),
-        np.array([300.0], dtype="double"),
+def test_try_full_matrix_stores_data(tmp_path, monkeypatch):
+    """Full-matrix data at all temperatures is read into collision buffers."""
+    monkeypatch.chdir(tmp_path)
+    colmat_in_file = np.array([[1.5, 1.6], [2.5, 2.6]], dtype="double")
+    gamma_in_file = np.array([[3.5, 3.6], [4.5, 4.6]], dtype="double")
+    write_collision_to_hdf5(
+        np.array([100.0, 300.0], dtype="double"),
+        [2, 2, 2],
+        gamma=gamma_in_file,
+        collision_matrix=colmat_in_file,
     )
-    monkeypatch.setattr(reader, "read", lambda sigma, **kw: collisions)
-
-    collision_matrix = np.zeros((2, 1, 1), dtype="double")
-    gamma = np.zeros((2, 1, 1), dtype="double")
+    reader = _make_reader()
+    collision_matrix = np.zeros((2, 2, 2), dtype="double")
+    gamma = np.zeros((2, 2, 2), dtype="double")
 
     ok = reader.try_full_matrix(None, collision_matrix, gamma, i_sigma=1)
 
     assert ok is True
-    np.testing.assert_allclose(collision_matrix[1], np.array([[1.5]], dtype="double"))
-    np.testing.assert_allclose(gamma[1], np.array([[2.5]], dtype="double"))
+    np.testing.assert_allclose(collision_matrix[1], colmat_in_file)
+    np.testing.assert_allclose(gamma[1], gamma_in_file)
+    assert not collision_matrix[0].any()
+    assert not gamma[0].any()
+
+
+def test_try_full_matrix_returns_false_without_file(tmp_path, monkeypatch):
+    """try_full_matrix returns False when the full-matrix file is missing."""
+    monkeypatch.chdir(tmp_path)
+    reader = _make_reader()
+    collision_matrix = np.zeros((1, 1, 1), dtype="double")
+    gamma = np.zeros((1, 1, 1), dtype="double")
+
+    assert reader.try_full_matrix(None, collision_matrix, gamma, i_sigma=0) is False
 
 
 def test_allocate_with_fallback_prefers_grid_point_path(monkeypatch):
@@ -44,11 +59,11 @@ def test_allocate_with_fallback_prefers_grid_point_path(monkeypatch):
     reader = _make_reader()
     calls = []
 
-    def _fake_read(sigma, *, grid_point=None, band_index=None, only_temperatures=False):
+    def _fake_read(sigma, *, grid_point=None, band_index=None):
         calls.append(("gp" if band_index is None else "band", grid_point))
-        return None, None, np.array([300.0], dtype="double")
+        return np.array([300.0], dtype="double")
 
-    monkeypatch.setattr(reader, "read", _fake_read)
+    monkeypatch.setattr(reader, "read_temperatures", _fake_read)
 
     result = reader.allocate_with_fallback(None, np.array([11], dtype="int64"))
 
@@ -62,13 +77,13 @@ def test_allocate_with_fallback_uses_band_path_when_needed(monkeypatch):
     reader = _make_reader()
     calls = []
 
-    def _fake_read(sigma, *, grid_point=None, band_index=None, only_temperatures=False):
+    def _fake_read(sigma, *, grid_point=None, band_index=None):
         calls.append(("gp" if band_index is None else "band", grid_point))
         if band_index is None:
             raise FileNotFoundError
-        return None, None, np.array([300.0], dtype="double")
+        return np.array([300.0], dtype="double")
 
-    monkeypatch.setattr(reader, "read", _fake_read)
+    monkeypatch.setattr(reader, "read_temperatures", _fake_read)
 
     result = reader.allocate_with_fallback(None, np.array([11], dtype="int64"))
 
@@ -83,7 +98,7 @@ def test_allocate_with_fallback_returns_false_when_missing(monkeypatch):
     def _fake_read(sigma, **kw):
         raise FileNotFoundError
 
-    monkeypatch.setattr(reader, "read", _fake_read)
+    monkeypatch.setattr(reader, "read_temperatures", _fake_read)
 
     result = reader.allocate_with_fallback(None, np.array([11], dtype="int64"))
 
@@ -120,8 +135,15 @@ def test_collect_with_band_fallback_runs_all_bands(monkeypatch):
     assert called_bands == [0, 1, 2]
 
 
-def test_set_collision_from_file_full_matrix_path(monkeypatch):
+def test_set_collision_from_file_full_matrix_path(tmp_path, monkeypatch):
     """`_set_collision_from_file` prefers full-matrix data when available."""
+    monkeypatch.chdir(tmp_path)
+    write_collision_to_hdf5(
+        np.array([300.0], dtype="double"),
+        [2, 2, 2],
+        gamma=np.array([[4.0]], dtype="double"),
+        collision_matrix=np.array([[9.0]], dtype="double"),
+    )
     lbte = SimpleNamespace(
         bz_grid=SimpleNamespace(bzg2grg=np.array([0], dtype="int64")),
         sigmas=[None],
@@ -130,15 +152,6 @@ def test_set_collision_from_file_full_matrix_path(monkeypatch):
         grid_points=np.array([5], dtype="int64"),
         collision_matrix=np.zeros((1, 1, 1), dtype="double"),
         gamma=np.zeros((1, 1, 1), dtype="double"),
-    )
-
-    collisions = (
-        np.array([[[9.0]]], dtype="double"),
-        np.array([[[4.0]]], dtype="double"),
-        np.array([300.0], dtype="double"),
-    )
-    monkeypatch.setattr(
-        CollisionFileReader, "read", lambda self, sigma, **kw: collisions
     )
 
     read_from = ids._set_collision_from_file(cast(Any, lbte), log_level=0)

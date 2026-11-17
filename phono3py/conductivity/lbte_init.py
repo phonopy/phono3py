@@ -18,7 +18,10 @@ from phono3py.conductivity.exceptions import LBTECollisionReadError, LBTEInputEr
 from phono3py.conductivity.factory import conductivity_calculator
 from phono3py.conductivity.output import ConductivityLBTEWriter
 from phono3py.conductivity.utils import write_pp_interaction
-from phono3py.file_IO import read_collision_from_hdf5
+from phono3py.file_IO import (
+    read_collision_from_hdf5_into,
+    read_temperatures_from_collision_hdf5,
+)
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
 
 _CollisionReadSource: TypeAlias = Literal["full_matrix", "grid_points"]
@@ -38,19 +41,19 @@ class CollisionFileReader:
         self._mesh = mesh
         self._indices = indices
         self._sigma_cutoff = sigma_cutoff
-        self._filename = filename
+        # filename is inserted in the file names as a string.
+        self._filename = None if filename is None else os.fspath(filename)
         self._log_level = log_level
 
-    def read(
+    def read_temperatures(
         self,
         sigma: float | None,
         *,
         grid_point: int | None = None,
         band_index: int | None = None,
-        only_temperatures: bool = False,
-    ) -> tuple:
-        """Thin wrapper around read_collision_from_hdf5."""
-        return read_collision_from_hdf5(
+    ) -> NDArray[np.double]:
+        """Thin wrapper around read_temperatures_from_collision_hdf5."""
+        return read_temperatures_from_collision_hdf5(
             self._mesh,
             indices=self._indices,
             grid_point=grid_point,
@@ -58,8 +61,29 @@ class CollisionFileReader:
             sigma=sigma,
             sigma_cutoff=self._sigma_cutoff,
             filename=self._filename,
-            only_temperatures=only_temperatures,
-            verbose=(False if only_temperatures else (self._log_level > 0)),
+        )
+
+    def read_into(
+        self,
+        sigma: float | None,
+        collision_matrix: NDArray[np.double],
+        gamma: NDArray[np.double],
+        *,
+        grid_point: int | None = None,
+        band_index: int | None = None,
+    ) -> NDArray[np.double]:
+        """Thin wrapper around read_collision_from_hdf5_into."""
+        return read_collision_from_hdf5_into(
+            collision_matrix,
+            gamma,
+            self._mesh,
+            indices=self._indices,
+            grid_point=grid_point,
+            band_index=band_index,
+            sigma=sigma,
+            sigma_cutoff=self._sigma_cutoff,
+            filename=self._filename,
+            verbose=self._log_level > 0,
         )
 
     def peek_temperatures(
@@ -67,22 +91,15 @@ class CollisionFileReader:
     ) -> NDArray[np.double]:
         """Read only temperatures, trying full -> GP -> band files."""
         try:
-            _, _, temperatures = self.read(sigma, only_temperatures=True)
-            return temperatures
+            return self.read_temperatures(sigma)
         except FileNotFoundError:
             pass
         try:
-            _, _, temperatures = self.read(
-                sigma, grid_point=first_gp, only_temperatures=True
-            )
-            return temperatures
+            return self.read_temperatures(sigma, grid_point=first_gp)
         except FileNotFoundError:
             pass
         try:
-            _, _, temperatures = self.read(
-                sigma, grid_point=first_gp, band_index=0, only_temperatures=True
-            )
-            return temperatures
+            return self.read_temperatures(sigma, grid_point=first_gp, band_index=0)
         except FileNotFoundError:
             pass
         raise LBTECollisionReadError(
@@ -98,14 +115,11 @@ class CollisionFileReader:
     ) -> bool:
         """Try reading full collision matrix.  Returns True if successful."""
         try:
-            data = self.read(sigma)
+            self.read_into(sigma, collision_matrix[i_sigma], gamma[i_sigma])
         except FileNotFoundError:
             return False
         if self._log_level:
             sys.stdout.flush()
-        colmat_at_sigma, gamma_at_sigma, _temperatures = data
-        collision_matrix[i_sigma] = colmat_at_sigma[0]
-        gamma[i_sigma] = gamma_at_sigma
         return True
 
     def allocate_with_fallback(
@@ -113,10 +127,7 @@ class CollisionFileReader:
     ) -> NDArray[np.double] | Literal[False]:
         """Get temperatures from per-GP or per-band file."""
         try:
-            collision = self.read(
-                sigma, grid_point=grid_points[0], only_temperatures=True
-            )
-            return collision[2]
+            return self.read_temperatures(sigma, grid_point=grid_points[0])
         except FileNotFoundError:
             pass
 
@@ -124,10 +135,9 @@ class CollisionFileReader:
             print("Collision at grid point %d doesn't exist." % grid_points[0])
 
         try:
-            collision = self.read(
-                sigma, grid_point=grid_points[0], band_index=0, only_temperatures=True
+            return self.read_temperatures(
+                sigma, grid_point=grid_points[0], band_index=0
             )
-            return collision[2]
         except FileNotFoundError:
             pass
 
@@ -184,19 +194,20 @@ class CollisionFileReader:
             False when the file is not found.
 
         """
+        # The collision matrix is indexed on the full mesh when it is reducible,
+        # and gamma is indexed by grid points of LBTE in both cases.
+        i_colmat = bzg2grg[gp] if is_reducible else i_gp
         try:
-            data = self.read(sigma, grid_point=gp)
+            temperatures[:] = self.read_into(
+                sigma,
+                colmat_at_sigma[:, i_colmat],
+                gamma_at_sigma[:, i_gp],
+                grid_point=gp,
+            )
         except FileNotFoundError:
             return False
         if self._log_level:
             sys.stdout.flush()
-        colmat_at_gp, gamma_at_gp, temperatures_at_gp = data
-        # The collision matrix is indexed on the full mesh when it is reducible,
-        # and gamma is indexed by grid points of LBTE in both cases.
-        i_colmat = bzg2grg[gp] if is_reducible else i_gp
-        gamma_at_sigma[:, i_gp] = gamma_at_gp
-        colmat_at_sigma[:, i_colmat] = colmat_at_gp[0]
-        temperatures[:] = temperatures_at_gp
         return True
 
     def collect_band(
@@ -212,17 +223,19 @@ class CollisionFileReader:
         is_reducible: bool,
     ) -> bool:
         """Collect collision data for one band."""
+        i_colmat = bzg2grg[gp] if is_reducible else i_gp
         try:
-            data = self.read(sigma, grid_point=gp, band_index=i_band)
+            temperatures[:] = self.read_into(
+                sigma,
+                colmat_at_sigma[:, i_colmat, i_band],
+                gamma_at_sigma[:, i_gp, i_band],
+                grid_point=gp,
+                band_index=i_band,
+            )
         except FileNotFoundError:
             return False
         if self._log_level:
             sys.stdout.flush()
-        colmat_at_band, gamma_at_band, temperatures_at_band = data
-        i_colmat = bzg2grg[gp] if is_reducible else i_gp
-        gamma_at_sigma[:, i_gp, i_band] = gamma_at_band
-        colmat_at_sigma[:, i_colmat, i_band] = colmat_at_band[0]
-        temperatures[:] = temperatures_at_band
         return True
 
     def collect_with_band_fallback(
@@ -310,6 +323,7 @@ def get_thermal_conductivity_LBTE(
             _sigmas,
             sigma_cutoff,
             input_filename,
+            read_collision,
         )
     else:
         _temperatures = _normalize_lbte_temperatures(temperatures)
@@ -499,11 +513,17 @@ def _peek_temperatures_from_file(
     sigmas: Sequence[float | None],
     sigma_cutoff: float | None,
     filename: str | os.PathLike | None,
+    indices: str | Sequence[int],
 ) -> NDArray[np.double]:
-    """Read temperatures from the first available collision HDF5 file."""
+    """Read temperatures from the first available collision HDF5 file.
+
+    Only the temperatures selected by ``indices`` are returned, so that the
+    arrays of LBTE are allocated for the temperatures to be read.
+
+    """
     reader = CollisionFileReader(
         mesh=interaction.mesh_numbers,
-        indices="all",
+        indices=indices,
         sigma_cutoff=sigma_cutoff,
         filename=filename,
         log_level=0,

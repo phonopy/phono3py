@@ -1114,8 +1114,171 @@ def read_collision_from_hdf5(
 ) -> tuple:
     """Read collision matrix.
 
+    Deprecated and will be removed in v5.0. Use
+    ``read_collision_from_hdf5_into`` or
+    ``read_temperatures_from_collision_hdf5`` instead.
+
+    The returned collision matrix has a leading axis of length one in front of
+    the temperature axis, whereas gamma does not.
+
     indices : array_like of int
         Indices of temperatures.
+
+    """
+    # REMOVE-AT-V5
+    warnings.warn(
+        "read_collision_from_hdf5 is deprecated and will be removed in v5.0. "
+        "Use read_collision_from_hdf5_into or "
+        "read_temperatures_from_collision_hdf5 instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    kwargs: dict[str, Any] = {
+        "grid_point": grid_point,
+        "band_index": band_index,
+        "sigma": sigma,
+        "sigma_cutoff": sigma_cutoff,
+        "filename": filename,
+    }
+    if only_temperatures:
+        return None, None, read_temperatures_from_collision_hdf5(mesh, **kwargs)
+
+    full_filename = _get_collision_filename(mesh, **kwargs)
+    with h5py.File(full_filename, "r") as f:
+        num_temp = len(_get_temperature_indices(len(f["temperature"]), indices))
+        colmat_shape = f["collision_matrix"].shape[1:]
+        gamma_shape = f["gamma"].shape[1:]
+    collision_matrix = np.zeros((1, num_temp) + colmat_shape, dtype="double")
+    gamma = np.zeros((num_temp,) + gamma_shape, dtype="double")
+    temperatures = read_collision_from_hdf5_into(
+        collision_matrix[0], gamma, mesh, indices=indices, verbose=verbose, **kwargs
+    )
+    return collision_matrix, gamma, temperatures
+
+
+def read_collision_from_hdf5_into(
+    collision_matrix: NDArray[np.double],
+    gamma: NDArray[np.double],
+    mesh: Sequence[int] | NDArray[np.int64],
+    indices: str | Sequence[int] = "all",
+    grid_point: int | None = None,
+    band_index: int | None = None,
+    sigma: float | None = None,
+    sigma_cutoff: float | None = None,
+    filename: str | None = None,
+    verbose: bool = True,
+) -> NDArray[np.double]:
+    """Read collision matrix and gamma into given arrays.
+
+    The collision matrix is read from the file directly into
+    ``collision_matrix`` without a temporary copy, which matters for the full
+    collision matrix. It is read temperature by temperature with
+    ``read_direct`` of h5py, so ``collision_matrix`` can be a non-contiguous
+    view whose slices at each temperature are C-contiguous.
+
+    Parameters
+    ----------
+    collision_matrix : ndarray of double
+        Destination of the collision matrix, modified in-place. The first axis
+        is temperature, and the rest has the shape of the collision matrix at
+        one temperature in the file. It can be a non-contiguous view, such as
+        a slice at a grid point, but ``collision_matrix[k]`` has to be
+        C-contiguous.
+    gamma : ndarray of double
+        Destination of gamma, modified in-place. The first axis is
+        temperature.
+    mesh : array_like of int, shape (3,)
+        Mesh numbers that select the file.
+    indices : str or array_like of int, optional
+        "all" or indices of temperatures to read. Default is "all".
+    grid_point : int, optional
+        Grid point that selects the file of the grid point.
+    band_index : int, optional
+        Band index that selects the file of the band at ``grid_point``.
+    sigma : float, optional
+        Smearing width that selects the file. None for the tetrahedron method.
+    sigma_cutoff : float, optional
+        Cutoff of smearing function in units of sigma that selects the file.
+    filename : str, optional
+        String inserted in the file name.
+    verbose : bool, optional
+        Show the file read. Default is True.
+
+    Returns
+    -------
+    temperatures : ndarray of double, shape (num_temp,)
+        Temperatures of the data read.
+
+    """
+    full_filename = _get_collision_filename(
+        mesh,
+        grid_point=grid_point,
+        band_index=band_index,
+        sigma=sigma,
+        sigma_cutoff=sigma_cutoff,
+        filename=filename,
+    )
+    with h5py.File(full_filename, "r") as f:
+        temperatures = np.array(f["temperature"][:], dtype="double")
+        temp_indices = _get_temperature_indices(len(temperatures), indices)
+        if len(collision_matrix) != len(temp_indices) or len(gamma) != len(
+            temp_indices
+        ):
+            raise ValueError(
+                "Number of temperatures of destination arrays "
+                f"({len(collision_matrix)}, {len(gamma)}) does not match that "
+                f"to read ({len(temp_indices)})."
+            )
+        dataset = f["collision_matrix"]
+        for k, i_temp in enumerate(temp_indices):
+            dataset.read_direct(collision_matrix[k], source_sel=np.s_[int(i_temp)])
+        gamma[...] = np.array(f["gamma"][:], dtype="double")[temp_indices]
+
+    if verbose:
+        _show_collision_read(full_filename, grid_point, band_index, sigma, sigma_cutoff)
+
+    return temperatures[temp_indices]
+
+
+def read_temperatures_from_collision_hdf5(
+    mesh: Sequence[int] | NDArray[np.int64],
+    indices: str | Sequence[int] = "all",
+    grid_point: int | None = None,
+    band_index: int | None = None,
+    sigma: float | None = None,
+    sigma_cutoff: float | None = None,
+    filename: str | None = None,
+) -> NDArray[np.double]:
+    """Read temperatures selected by indices from collision file.
+
+    The parameters are those of ``read_collision_from_hdf5_into``, and the
+    temperatures are those of the data that it reads.
+
+    """
+    full_filename = _get_collision_filename(
+        mesh,
+        grid_point=grid_point,
+        band_index=band_index,
+        sigma=sigma,
+        sigma_cutoff=sigma_cutoff,
+        filename=filename,
+    )
+    with h5py.File(full_filename, "r") as f:
+        temperatures = np.array(f["temperature"][:], dtype="double")
+    return temperatures[_get_temperature_indices(len(temperatures), indices)]
+
+
+def _get_collision_filename(
+    mesh: Sequence[int] | NDArray[np.int64],
+    grid_point: int | None = None,
+    band_index: int | None = None,
+    sigma: float | None = None,
+    sigma_cutoff: float | None = None,
+    filename: str | None = None,
+) -> str:
+    """Return the name of an existing collision file.
+
+    Raises FileNotFoundError when the file does not exist.
 
     """
     if band_index is None:
@@ -1133,55 +1296,57 @@ def read_collision_from_hdf5(
     full_filename = "collision" + suffix + ".hdf5"
     if not pathlib.Path(full_filename).exists():
         raise FileNotFoundError(f"{full_filename} not found.")
+    return full_filename
 
-    if only_temperatures:
-        with h5py.File(full_filename, "r") as f:
-            temperatures = np.array(f["temperature"][:], dtype="double")
-            return None, None, temperatures
 
-    with h5py.File(full_filename, "r") as f:
-        if indices == "all":
-            colmat_shape = (1,) + f["collision_matrix"].shape
-            collision_matrix = np.zeros(colmat_shape, dtype="double", order="C")
-            gamma = np.array(f["gamma"][:], dtype="double", order="C")
-            collision_matrix[0] = f["collision_matrix"][:]
-            temperatures = np.array(f["temperature"][:], dtype="double")
+def _get_temperature_indices(
+    num_temp: int, indices: str | Sequence[int]
+) -> NDArray[np.int64]:
+    """Return indices of temperatures to read.
+
+    ``indices`` is "all" or a sequence of indices of temperatures.
+
+    """
+    if isinstance(indices, str):
+        if indices != "all":
+            raise ValueError(f'indices has to be "all" or integers: {indices}')
+        return np.arange(num_temp, dtype="int64")
+    return np.array(indices, dtype="int64")
+
+
+def _show_collision_read(
+    full_filename: str,
+    grid_point: int | None,
+    band_index: int | None,
+    sigma: float | None,
+    sigma_cutoff: float | None,
+) -> None:
+    text = "Collisions "
+    if band_index is None:
+        if grid_point is not None:
+            text += "at grid point %d " % grid_point
+    else:
+        if grid_point is not None:
+            text += "at (grid point %d, band index %d) " % (
+                grid_point,
+                band_index,
+            )
+    if sigma is not None:
+        if grid_point is not None:
+            text += "and "
         else:
-            colmat_shape = (1, len(indices)) + f["collision_matrix"].shape[1:]
-            collision_matrix = np.zeros(colmat_shape, dtype="double")
-            gamma = np.array(f["gamma"][indices], dtype="double", order="C")
-            collision_matrix[0] = f["collision_matrix"][indices]
-            temperatures = np.array(f["temperature"][indices], dtype="double")
-
-        if verbose:
-            text = "Collisions "
-            if band_index is None:
-                if grid_point is not None:
-                    text += "at grid point %d " % grid_point
-            else:
-                if grid_point is not None:
-                    text += "at (grid point %d, band index %d) " % (
-                        grid_point,
-                        band_index,
-                    )
-            if sigma is not None:
-                if grid_point is not None:
-                    text += "and "
-                else:
-                    text += "at "
-                text += "sigma %s" % _del_zeros(sigma)
-                if sigma_cutoff is not None:
-                    text += "(%4.2f SD)" % sigma_cutoff
-            if band_index is None and grid_point is not None:
-                text += " were read from "
-                text += "\n"
-            else:
-                text += "\n"
-                text += "were read from "
-            text += '"%s".' % full_filename
-            print(text)
-
-        return collision_matrix, gamma, temperatures
+            text += "at "
+        text += "sigma %s" % _del_zeros(sigma)
+        if sigma_cutoff is not None:
+            text += "(%4.2f SD)" % sigma_cutoff
+    if band_index is None and grid_point is not None:
+        text += " were read from "
+        text += "\n"
+    else:
+        text += "\n"
+        text += "were read from "
+    text += '"%s".' % full_filename
+    print(text)
 
 
 def write_pp_to_hdf5(
