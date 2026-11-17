@@ -216,11 +216,22 @@ class ConductivityCalculatorBase(abc.ABC):
     # Public interface
     # ------------------------------------------------------------------
 
-    def run(
-        self,
-        on_grid_point: Callable[[int], None] | None = None,
-    ) -> None:
+    def run(self, on_grid_point: Callable[[int], None] | None = None) -> None:
         """Run all grid points and compute kappa.
+
+        This calls collect and then solve.
+
+        Parameters
+        ----------
+        on_grid_point : callable or None, optional
+            See collect.
+
+        """
+        self.collect(on_grid_point=on_grid_point)
+        self.solve()
+
+    def collect(self, on_grid_point: Callable[[int], None] | None = None) -> None:
+        """Run all grid points and collect the quantities for kappa.
 
         Pipeline:
         1. Pre-run check (subclass hook).
@@ -230,13 +241,21 @@ class ConductivityCalculatorBase(abc.ABC):
         5. Isotope loop (per-GP).
         6. Main loop -> _compute_at_grid_point (abstract).
         7. Post-main-loop hook (subclass hook).
-        8. Finalize (abstract).
+
+        For LBTE, the collision matrix then contains only the collisions
+        collected at the grid points.  The main diagonal is added in solve.
 
         Parameters
         ----------
         on_grid_point : callable or None, optional
             Called with the grid-point loop index after each grid point is
             processed.  Used for per-grid-point file writes.
+
+        Notes
+        -----
+        The callback is defined by ``_run_standard_rta`` in ``rta_init.py``
+        and ``_run_standard_lbte`` in ``lbte_init.py``, which call the
+        writers in ``output.py`` according to the write options.
 
         """
         self._pre_run_check()
@@ -276,7 +295,8 @@ class ConductivityCalculatorBase(abc.ABC):
         # (6) Post-main-loop hook.
         self._post_main_loop()
 
-        # (7) Finalize.
+    def solve(self) -> None:
+        """Compute kappa from the quantities collected by collect."""
         self._finalize()
 
     # ------------------------------------------------------------------

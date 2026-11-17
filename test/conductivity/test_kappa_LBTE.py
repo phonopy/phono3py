@@ -249,6 +249,38 @@ def test_kappa_LBTE_read_collision_per_gp(
 
 
 @pytest.mark.parametrize("is_reducible_collision_matrix", [False, True])
+def test_kappa_LBTE_read_full_collision_matrix(
+    si_pbesol: Phono3py, tmp_path, monkeypatch, is_reducible_collision_matrix: bool
+):
+    """Write the full collision matrix, then --read-collision round-trip.
+
+    The full collision matrix file (``collision-m*.hdf5``) written with
+    ``write_LBTE_solution`` has to contain the collisions before the main
+    diagonal is added and the matrix is solved.
+
+    """
+    monkeypatch.chdir(tmp_path)
+    si_pbesol.mesh_numbers = [5, 5, 5]
+    si_pbesol.init_phph_interaction()
+    kwargs = {
+        "is_LBTE": True,
+        "temperatures": [300],
+        "is_isotope": True,
+        "is_reducible_collision_matrix": is_reducible_collision_matrix,
+    }
+
+    si_pbesol.run_thermal_conductivity(write_LBTE_solution=True, **kwargs)
+    ref_kappa = si_pbesol.thermal_conductivity.kappa.ravel().copy()
+    assert (tmp_path / "collision-m555.hdf5").exists()
+
+    si_pbesol.run_thermal_conductivity(read_collision="all", **kwargs)
+    read_kappa = si_pbesol.thermal_conductivity.kappa.ravel()
+
+    assert np.abs(ref_kappa).max() > 1
+    np.testing.assert_allclose(ref_kappa, read_kappa, atol=1e-8)
+
+
+@pytest.mark.parametrize("is_reducible_collision_matrix", [False, True])
 def test_kappa_LBTE_write_collision_at_grid_points(
     si_pbesol: Phono3py, tmp_path, monkeypatch, is_reducible_collision_matrix: bool
 ):
