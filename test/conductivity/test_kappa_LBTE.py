@@ -230,7 +230,7 @@ def test_kappa_LBTE_read_collision_per_gp(
 
     si_pbesol.run_thermal_conductivity(
         is_LBTE=True,
-        temperatures=[300],
+        temperatures=[100, 300],
         is_reducible_collision_matrix=is_reducible_collision_matrix,
         write_collision=True,
     )
@@ -239,7 +239,7 @@ def test_kappa_LBTE_read_collision_per_gp(
 
     si_pbesol.run_thermal_conductivity(
         is_LBTE=True,
-        temperatures=[300],
+        temperatures=[100, 300],
         is_reducible_collision_matrix=is_reducible_collision_matrix,
         read_collision="all",
     )
@@ -258,13 +258,16 @@ def test_kappa_LBTE_read_full_collision_matrix(
     ``write_LBTE_solution`` has to contain the collisions before the main
     diagonal is added and the matrix is solved.
 
+    Two temperatures are used, because gamma at the first temperature was
+    once used at all temperatures in reading the file.
+
     """
     monkeypatch.chdir(tmp_path)
     si_pbesol.mesh_numbers = [5, 5, 5]
     si_pbesol.init_phph_interaction()
     kwargs = {
         "is_LBTE": True,
-        "temperatures": [300],
+        "temperatures": [100, 300],
         "is_isotope": True,
         "is_reducible_collision_matrix": is_reducible_collision_matrix,
     }
@@ -376,26 +379,31 @@ def test_kappa_LBTE_with_band_indices_without_write_collision(
 def test_kappa_LBTE_write_collision_with_band_indices(tmp_path, monkeypatch):
     """Write collisions band by band, then read all of them.
 
-    Degenerate bands are given in the same run.
+    Degenerate bands are given in the same run. Two temperatures are used,
+    because gamma at the first temperature was once used at all temperatures
+    in reading the files.
 
     """
     monkeypatch.chdir(tmp_path)
+    temperatures = [100, 300]
     ph3 = _load_si_111()
-    ph3.run_thermal_conductivity(is_LBTE=True, temperatures=[300])
+    ph3.run_thermal_conductivity(is_LBTE=True, temperatures=temperatures)
     ref_kappa = ph3.thermal_conductivity.kappa.ravel().copy()
     num_ir_grid_points = len(ph3.thermal_conductivity.grid_points)
 
     for band_indices in ([[0, 1, 2]], [[3, 4, 5]]):
         ph3 = _load_si_111(band_indices)
         ph3.run_thermal_conductivity(
-            is_LBTE=True, temperatures=[300], write_collision=True
+            is_LBTE=True, temperatures=temperatures, write_collision=True
         )
         assert not list(tmp_path.glob("kappa-*.hdf5"))
     filenames = list(tmp_path.glob("collision-m555-g*-b*.hdf5"))
     assert len(filenames) == num_ir_grid_points * 6
 
     ph3 = _load_si_111()
-    ph3.run_thermal_conductivity(is_LBTE=True, temperatures=[300], read_collision="all")
+    ph3.run_thermal_conductivity(
+        is_LBTE=True, temperatures=temperatures, read_collision="all"
+    )
     read_kappa = ph3.thermal_conductivity.kappa.ravel()
 
     assert np.abs(ref_kappa).max() > 1
