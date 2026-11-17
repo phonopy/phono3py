@@ -236,3 +236,8 @@ class LBTEKappaSolver:
     def solver(self) -> CollisionMatrixKernel:
         """Return the underlying CollisionMatrixKernel."""
         return self._solver
+
+    @property
+    def kappa(self) -> NDArray[np.double]:
+        """Return LBTE thermal conductivity, shape (num_sigma, num_temp, 6)."""
+        return self._solver.kappa
