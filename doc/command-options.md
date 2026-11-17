@@ -693,8 +693,9 @@ The isotope scattering rate is a sum over the modes at $\mathbf{q}'$ of the
 overlap of the eigenvectors multiplied by an integration weight, and has the
 same dependence. With this option, the integration weights are averaged over
 each set of degenerate modes at $\mathbf{q}'$ and over each set of degenerate
-modes at the phonon mode of interest. The isotope scattering rates of the
-degenerate modes at the latter are averaged as well.
+modes at the phonon mode of interest. The isotope scattering rates of
+degenerate modes are averaged with and without this option, as the imaginary
+parts of the self energy are.
 
 The averaged weights are used for the imaginary part of the self energy, the
 isotope scattering and the thermal conductivity. The joint density of states

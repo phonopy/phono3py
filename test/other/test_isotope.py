@@ -383,10 +383,35 @@ def test_Isotope_average_degenerate_weights(si_pbesol, lang):
         np.testing.assert_allclose(iso_ave.gamma, iso.gamma, rtol=1e-8, atol=1e-14)
 
 
+@pytest.mark.parametrize("lang", ["Rust", "Python"])
+def test_Isotope_gamma_averaged_by_degeneracy(si_pbesol, lang):
+    """Gamma is equal among degenerate bands without averaged weights.
+
+    Without average_degenerate_weights, the degenerate bands at q' get
+    different integration weights, and gamma is averaged over each degenerate
+    set at the given grid point afterwards.
+
+    """
+    num_sets = 0
+    for grid_point in (1, 10):
+        iso = _run_isotope(si_pbesol, lang, False, grid_point)
+        ids = iso.phonons.degenerate_ids[grid_point]
+        for start in np.unique(ids):
+            bands = np.flatnonzero(ids == start)
+            if len(bands) == 1:
+                continue
+            num_sets += 1
+            np.testing.assert_allclose(
+                iso.gamma[bands], iso.gamma[bands[0]], rtol=1e-10
+            )
+    assert num_sets > 0
+
+
+@pytest.mark.parametrize("average_degenerate_weights", [False, True])
 @pytest.mark.parametrize("grid_point", [0, 1, 10])
 @pytest.mark.parametrize("band_indices", [[1, 4], [3], [0, 1, 2]])
 def test_Isotope_average_degenerate_weights_band_indices(
-    si_pbesol, grid_point, band_indices
+    si_pbesol, grid_point, band_indices, average_degenerate_weights
 ):
     """Band indices select the averaged gamma of all bands.
 
@@ -400,7 +425,7 @@ def test_Isotope_average_degenerate_weights_band_indices(
             si_pbesol.phonon_primitive,
             symprec=si_pbesol.symmetry.tolerance,
             band_indices=bi,
-            average_degenerate_weights=True,
+            average_degenerate_weights=average_degenerate_weights,
             exclude_gamma_acoustic=True,
         )
         iso.init_dynamical_matrix(
