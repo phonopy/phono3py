@@ -59,8 +59,8 @@ class Phono3pyIsotope:
             Widths of the Gaussian smearing in THz, one calculation for each.
             None in the list means the tetrahedron method. If None, [None].
         frequency_factor_to_THz : float, optional
-            Deprecated. Passing a non-None value emits a
-            ``DeprecationWarning``. If None,
+            Deprecated and will be removed in v5.0. Passing a non-None value
+            emits a ``DeprecationWarning``. If None,
             ``get_physical_units().DefaultToTHz``.
         use_grg : bool, optional, default=False
             Use a generalized regular grid.
@@ -70,8 +70,9 @@ class Phono3pyIsotope:
             Phonon modes with frequency below this value in THz are left out.
             If None, 0.
         lapack_zheev_uplo : str, optional
-            Deprecated. 'L' or 'U' passed to the LAPACK zheev phonon solver.
-            Passing it emits a ``DeprecationWarning``. If None, 'L'.
+            Deprecated and will be removed in v5.0. 'L' or 'U' passed to the
+            LAPACK zheev phonon solver. Passing it emits a
+            ``DeprecationWarning``. If None, 'L'.
         symmetrize_tetrahedra : bool, optional, default=False
             When True, the integration weights of the tetrahedron method are
             averaged over the 24 tetrahedra rotated by all the point-group
@@ -98,21 +99,25 @@ class Phono3pyIsotope:
         else:
             self._sigmas = sigmas
 
+        # REMOVE-AT-V5
         if frequency_factor_to_THz is None:
             _frequency_factor_to_THz = get_physical_units().DefaultToTHz
         else:
             warnings.warn(
-                "frequency_factor_to_THz parameter is deprecated.",
+                "frequency_factor_to_THz parameter is deprecated and will be "
+                "removed in v5.0.",
                 DeprecationWarning,
                 stacklevel=2,
             )
             _frequency_factor_to_THz = frequency_factor_to_THz
 
+        # REMOVE-AT-V5
         if lapack_zheev_uplo is None:
             _lapack_zheev_uplo: Literal["L", "U"] = "L"
         else:
             warnings.warn(
-                "lapack_zheev_uplo parameter is deprecated.",
+                "lapack_zheev_uplo parameter is deprecated and will be "
+                "removed in v5.0.",
                 DeprecationWarning,
                 stacklevel=2,
             )
@@ -123,11 +128,11 @@ class Phono3pyIsotope:
             primitive,
             mass_variances=mass_variances,
             band_indices=band_indices,
-            frequency_factor_to_THz=_frequency_factor_to_THz,
+            frequency_factor_to_THz=_frequency_factor_to_THz,  # REMOVE-AT-V5
             use_grg=use_grg,
             symprec=symprec,
             cutoff_frequency=cutoff_frequency,
-            lapack_zheev_uplo=_lapack_zheev_uplo,
+            lapack_zheev_uplo=_lapack_zheev_uplo,  # REMOVE-AT-V5
             symmetrize_tetrahedra=symmetrize_tetrahedra,
             average_degenerate_weights=average_degenerate_weights,
             exclude_gamma_acoustic=exclude_gamma_acoustic,

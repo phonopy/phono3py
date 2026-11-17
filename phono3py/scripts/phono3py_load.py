@@ -4,6 +4,7 @@ from __future__ import annotations
 from phono3py.cui.phono3py_script import main
 
 
+# REMOVE-AT-V5
 def run() -> None:
     """Run phono3py-load script."""
     argparse_control = {

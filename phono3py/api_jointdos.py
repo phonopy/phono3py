@@ -100,8 +100,8 @@ class Phono3pyJointDos:
             without phonon occupations; otherwise it is weighted by them. If
             None, [None].
         frequency_factor_to_THz : float, optional
-            Deprecated. Passing a non-None value emits a
-            ``DeprecationWarning``. If None,
+            Deprecated and will be removed in v5.0. Passing a non-None value
+            emits a ``DeprecationWarning``. If None,
             ``get_physical_units().DefaultToTHz``.
         frequency_scale_factor : float, optional
             Factor multiplied to all phonon frequencies. If None, not scaled.
@@ -152,11 +152,13 @@ class Phono3pyJointDos:
         else:
             self._sigmas = list(sigmas)
         self._cutoff_frequency = cutoff_frequency
+        # REMOVE-AT-V5
         if frequency_factor_to_THz is None:
             self._frequency_factor_to_THz: float = get_physical_units().DefaultToTHz
         else:
             warnings.warn(
-                "frequency_factor_to_THz parameter is deprecated.",
+                "frequency_factor_to_THz parameter is deprecated and will be "
+                "removed in v5.0.",
                 DeprecationWarning,
                 stacklevel=2,
             )

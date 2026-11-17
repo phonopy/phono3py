@@ -217,7 +217,7 @@ def load(
         each key/value pair is written as ``"key = value"``. Default
         is ``None``.
     factor : float, optional
-        **Deprecated.** Default is ``None``.
+        **Deprecated and will be removed in v5.0.** Default is ``None``.
     produce_fc : bool, optional
         Compute force constants from displacements and forces. When
         False, only the dataset is set up. Default is True.
@@ -349,9 +349,10 @@ def load(
         log_level=log_level,
         lang=lang,
     )
+    # REMOVE-AT-V5
     if factor is not None:
         warnings.warn(
-            "factor parameter is deprecated.",
+            "factor parameter is deprecated and will be removed in v5.0.",
             DeprecationWarning,
             stacklevel=2,
         )

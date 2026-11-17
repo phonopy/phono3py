@@ -1228,10 +1228,14 @@ def main(**argparse_control: Any) -> None:
     # is the phonon and thermal-conductivity calculation workflow. When
     # unset (e.g. from pytest harnesses) no mode-based enforcement happens.
     mode: Literal["init", "run"] | None = argparse_control.get("mode")
+    # REMOVE-AT-V5
     deprecated_command = argparse_control.get("deprecated_command")
     if deprecated_command is not None:
         print("")
-        print(f"WARNING: '{deprecated_command}' is deprecated. Use 'phono3py' instead.")
+        print(
+            f"WARNING: '{deprecated_command}' is deprecated and will be removed "
+            "in v5.0. Use 'phono3py' instead."
+        )
         print("")
 
     if "args" in argparse_control:  # This is for pytest.

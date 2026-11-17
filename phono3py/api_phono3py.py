@@ -207,9 +207,9 @@ class Phono3py:
             zero in scattering and self-energy calculations. Default is
             ``1e-4``.
         frequency_factor_to_THz : float, optional
-            Deprecated. Passing a non-``None`` value emits a
-            ``DeprecationWarning``. By default the conversion factor for
-            the chosen calculator is used.
+            Deprecated and will be removed in v5.0. Passing a non-``None``
+            value emits a ``DeprecationWarning``. By default the conversion
+            factor for the chosen calculator is used.
         is_symmetry : bool, optional
             Use crystal symmetry in most calculations when True. Default
             is True.
@@ -245,11 +245,13 @@ class Phono3py:
 
         """
         self._symprec = symprec
+        # REMOVE-AT-V5
         if frequency_factor_to_THz is None:
             self._frequency_factor_to_THz = get_physical_units().DefaultToTHz
         else:
             warnings.warn(
-                "frequency_factor_to_THz parameter is deprecated.",
+                "frequency_factor_to_THz parameter is deprecated and will be "
+                "removed in v5.0.",
                 DeprecationWarning,
                 stacklevel=2,
             )
@@ -1185,9 +1187,8 @@ class Phono3py:
             fc3 in phonon space is symmetrized by permutation symmetry.
             Default is False.
         lapack_zheev_uplo : str, optional
-            Deprecated. 'L' or 'U' that was passed to the LAPACK zheev phonon
-            solver. This option will be removed together with the C
-            implementation of the phonon solver. Default is None, which means
+            Deprecated and will be removed in v5.0. 'L' or 'U' that was passed
+            to the LAPACK zheev phonon solver. Default is None, which means
             'L' is used. Supplying this parameter raises a
             ``DeprecationWarning``.
         openmp_per_triplets : bool or None, optional, default is None
@@ -1225,11 +1226,13 @@ class Phono3py:
             msg = "Phono3py.fc2 of instance is not found."
             raise RuntimeError(msg)
 
+        # REMOVE-AT-V5
         if lapack_zheev_uplo is None:
             _lapack_zheev_uplo: Literal["L", "U"] = "L"
         else:
             warnings.warn(
-                "lapack_zheev_uplo parameter is deprecated.",
+                "lapack_zheev_uplo parameter is deprecated and will be "
+                "removed in v5.0.",
                 DeprecationWarning,
                 stacklevel=2,
             )
@@ -1249,7 +1252,7 @@ class Phono3py:
             is_mesh_symmetry=self._is_mesh_symmetry,
             symmetrize_fc3q=symmetrize_fc3q,
             make_r0_average=self._make_r0_average,
-            lapack_zheev_uplo=_lapack_zheev_uplo,
+            lapack_zheev_uplo=_lapack_zheev_uplo,  # REMOVE-AT-V5
             openmp_per_triplets=openmp_per_triplets,
             symmetrize_tetrahedra=symmetrize_tetrahedra,
             exclude_gamma_acoustic=exclude_gamma_acoustic,
@@ -1636,7 +1639,7 @@ class Phono3py:
         Parameters
         ----------
         symmetrize_fc3r : bool, optional
-            **Deprecated.** Passing any value emits a
+            **Deprecated and will be removed in v5.0.** Passing any value emits a
             ``DeprecationWarning``. With the traditional solver,
             call :meth:`symmetrize_fc3` (and :meth:`symmetrize_fc2`
             when applicable) after :meth:`produce_fc3` instead.
@@ -1659,25 +1662,28 @@ class Phono3py:
             both. For example, ``"cutoff=4|cutoff=3"`` sets cutoff 4
             for fc2 and 3 for fc3.
         use_symfc_projector : bool, optional
-            **Deprecated.** Passing any value emits a
+            **Deprecated and will be removed in v5.0.** Passing any value emits a
             ``DeprecationWarning``. Call
             ``symmetrize_fc3(use_symfc_projector=True)`` after
             :meth:`produce_fc3` instead. Default is ``None``.
 
         """
+        # REMOVE-AT-V5
         if symmetrize_fc3r is not None:
             warnings.warn(
                 "The symmetrize_fc3r parameter of Phono3py.produce_fc3 is "
-                "deprecated. Call Phono3py.symmetrize_fc3 (and "
+                "deprecated and will be removed in v5.0. Call "
+                "Phono3py.symmetrize_fc3 (and "
                 "Phono3py.symmetrize_fc2 when applicable) after "
                 "Phono3py.produce_fc3 instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
+        # REMOVE-AT-V5
         if use_symfc_projector is not None:
             warnings.warn(
                 "The use_symfc_projector parameter of Phono3py.produce_fc3 is "
-                "deprecated. Call "
+                "deprecated and will be removed in v5.0. Call "
                 "Phono3py.symmetrize_fc3(use_symfc_projector=True) after "
                 "Phono3py.produce_fc3 instead.",
                 DeprecationWarning,
@@ -1703,6 +1709,7 @@ class Phono3py:
         self._fc3_nonzero_indices = None
 
         if fc_calculator == "traditional" or fc_calculator is None:
+            # REMOVE-AT-V5
             if symmetrize_fc3r:
                 fc3_calc_opts = extract_fc2_fc3_calculators_options(
                     fc_calculator_options, 3
@@ -1733,6 +1740,7 @@ class Phono3py:
         if self._phonon_supercell_matrix is None:
             self._fc2 = fc2
             if fc_calculator == "traditional" or fc_calculator is None:
+                # REMOVE-AT-V5
                 if symmetrize_fc3r:
                     fc2_calc_opts = extract_fc2_fc3_calculators_options(
                         fc_calculator_options, 2
@@ -1844,7 +1852,7 @@ class Phono3py:
         Parameters
         ----------
         symmetrize_fc2 : bool, optional
-            **Deprecated.** Passing any value emits a
+            **Deprecated and will be removed in v5.0.** Passing any value emits a
             ``DeprecationWarning``. With the traditional solver, call
             :meth:`symmetrize_fc2` after :meth:`produce_fc2` instead.
             Default is ``None``.
@@ -1862,24 +1870,27 @@ class Phono3py:
         fc_calculator_options : str or None, optional
             Options string forwarded to the chosen calculator.
         use_symfc_projector : bool, optional
-            **Deprecated.** Passing any value emits a
+            **Deprecated and will be removed in v5.0.** Passing any value emits a
             ``DeprecationWarning``. Call
             ``symmetrize_fc2(use_symfc_projector=True)`` after
             :meth:`produce_fc2` instead. Default is ``None``.
 
         """
+        # REMOVE-AT-V5
         if symmetrize_fc2 is not None:
             warnings.warn(
                 "The symmetrize_fc2 parameter of Phono3py.produce_fc2 is "
-                "deprecated. Call Phono3py.symmetrize_fc2 after "
+                "deprecated and will be removed in v5.0. Call "
+                "Phono3py.symmetrize_fc2 after "
                 "Phono3py.produce_fc2 instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
+        # REMOVE-AT-V5
         if use_symfc_projector is not None:
             warnings.warn(
                 "The use_symfc_projector parameter of Phono3py.produce_fc2 is "
-                "deprecated. Call "
+                "deprecated and will be removed in v5.0. Call "
                 "Phono3py.symmetrize_fc2(use_symfc_projector=True) after "
                 "Phono3py.produce_fc2 instead.",
                 DeprecationWarning,
@@ -1912,6 +1923,7 @@ class Phono3py:
         )
         self._fc2 = fc_solver.force_constants[2]  # type: ignore[assignment]
 
+        # REMOVE-AT-V5
         if symmetrize_fc2 and (fc_calculator is None or fc_calculator == "traditional"):
             self.symmetrize_fc2(
                 use_symfc_projector=use_symfc_projector and fc_calculator is None,
@@ -2589,11 +2601,12 @@ class Phono3py:
             HDF5 compression for large datasets. See the h5py
             documentation. Default is ``"gzip"``.
         input_filename : str, optional
-            **Deprecated.** When set, the string is inserted before
-            the filename extension in read paths. Default is ``None``.
+            **Deprecated and will be removed in v5.0.** When set, the string is
+            inserted before the filename extension in read paths. Default is
+            ``None``.
         output_filename : str, optional
-            **Deprecated.** When set, the string is inserted before
-            the filename extension in write paths. Default is
+            **Deprecated and will be removed in v5.0.** When set, the string is
+            inserted before the filename extension in write paths. Default is
             ``None``.
         log_level : int, optional
             Override the instance-level :attr:`log_level` for this
@@ -2605,15 +2618,17 @@ class Phono3py:
             When :meth:`init_phph_interaction` has not been called.
 
         """
+        # REMOVE-AT-V5
         if input_filename is not None:
             warnings.warn(
-                "input_filename parameter is deprecated.",
+                "input_filename parameter is deprecated and will be removed in v5.0.",
                 DeprecationWarning,
                 stacklevel=2,
             )
+        # REMOVE-AT-V5
         if output_filename is not None:
             warnings.warn(
-                "output_filename parameter is deprecated.",
+                "output_filename parameter is deprecated and will be removed in v5.0.",
                 DeprecationWarning,
                 stacklevel=2,
             )
@@ -2655,8 +2670,8 @@ class Phono3py:
                 read_pp=read_pp,
                 write_LBTE_solution=write_LBTE_solution,
                 compression=compression,
-                input_filename=input_filename,
-                output_filename=output_filename,
+                input_filename=input_filename,  # REMOVE-AT-V5
+                output_filename=output_filename,  # REMOVE-AT-V5
                 log_level=_log_level,
                 lang=self._lang,
             )
@@ -2684,8 +2699,8 @@ class Phono3py:
                 read_elph=read_elph,
                 write_gamma_detail=write_gamma_detail,
                 compression=compression,
-                input_filename=input_filename,
-                output_filename=output_filename,
+                input_filename=input_filename,  # REMOVE-AT-V5
+                output_filename=output_filename,  # REMOVE-AT-V5
                 log_level=_log_level,
                 lang=self._lang,
             )

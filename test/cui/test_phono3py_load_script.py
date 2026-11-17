@@ -1535,6 +1535,7 @@ def test_phono3py_init_mode_requires_init_flag(
             os.chdir(original_cwd)
 
 
+# REMOVE-AT-V5
 def test_phono3py_load_deprecation_warning(
     capsys: pytest.CaptureFixture[str],
 ):

@@ -302,6 +302,7 @@ def test_Isotope_python_matches_rust(
         )
 
 
+# REMOVE-AT-V5
 def test_Isotope_get_phonons_and_set_phonons_deprecated(si_pbesol):
     """get_phonons and set_phonons of arrays are deprecated but still work."""
     iso = _run_isotope(si_pbesol, "Rust", False, 10)
