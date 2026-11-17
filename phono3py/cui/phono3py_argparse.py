@@ -355,14 +355,6 @@ def _add_run_options(parser: argparse.ArgumentParser) -> None:
         help="Calculate full supercell force constants matrix",
     )
     parser.add_argument(
-        "--cph",
-        "--collective-phonon",
-        dest="solve_collective_phonon",
-        action="store_true",
-        default=None,
-        help="Solve collective phonons",
-    )
-    parser.add_argument(
         "--const-ave-pp",
         dest="const_ave_pp",
         type=float,

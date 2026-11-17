@@ -164,8 +164,6 @@ class CalculatorConfig:
         Store per-triplet gamma (RTA only).
     is_reducible_collision_matrix : bool
         Use full reducible collision matrix (LBTE only).
-    solve_collective_phonon : bool
-        Use Chaput collective-phonon method (LBTE only).
     pinv_cutoff : float
         Eigenvalue cutoff for pseudo-inversion (LBTE only).
     pinv_solver : int
@@ -204,7 +202,6 @@ class CalculatorConfig:
     is_N_U: bool = False
     is_gamma_detail: bool = False
     is_reducible_collision_matrix: bool = False
-    solve_collective_phonon: bool = False
     pinv_cutoff: float = 1.0e-8
     pinv_solver: int = 0
     pinv_method: int = 0

@@ -179,7 +179,6 @@ def _build_lbte_calculator(
         frequencies=frequencies,
         degenerate_ids=interaction.phonons.degenerate_ids,
         rot_grid_points=rot_grid_points,
-        solve_collective_phonon=config.solve_collective_phonon,
         pinv_cutoff=config.pinv_cutoff,
         pinv_solver=config.pinv_solver,
         pinv_method=config.pinv_method,
@@ -348,7 +347,6 @@ def conductivity_calculator(
     is_N_U: bool = False,
     is_gamma_detail: bool = False,
     is_reducible_collision_matrix: bool = False,
-    solve_collective_phonon: bool = False,
     pinv_cutoff: float = 1.0e-8,
     pinv_solver: int = 0,
     pinv_method: int = 0,
@@ -400,8 +398,6 @@ def conductivity_calculator(
         Store per-triplet gamma (RTA only).  Default False.
     is_reducible_collision_matrix : bool, optional
         Use full reducible collision matrix (LBTE only).  Default False.
-    solve_collective_phonon : bool, optional
-        Use Chaput collective-phonon method (LBTE only).  Default False.
     pinv_cutoff : float, optional
         Eigenvalue cutoff for pseudo-inversion (LBTE only).  Default 1e-8.
     pinv_solver : int, optional
@@ -457,7 +453,6 @@ def conductivity_calculator(
         is_N_U=is_N_U,
         is_gamma_detail=is_gamma_detail,
         is_reducible_collision_matrix=is_reducible_collision_matrix,
-        solve_collective_phonon=solve_collective_phonon,
         pinv_cutoff=pinv_cutoff,
         pinv_solver=pinv_solver,
         pinv_method=pinv_method,

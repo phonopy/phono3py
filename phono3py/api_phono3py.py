@@ -2412,7 +2412,6 @@ class Phono3py:
         mass_variances: Sequence[float] | NDArray[np.double] | None = None,
         grid_points: Sequence[int] | NDArray[np.int64] | None = None,
         boundary_mfp: float | None = None,  # in micrometer
-        solve_collective_phonon: bool = False,
         use_ave_pp: bool = False,
         is_reducible_collision_matrix: bool = False,
         is_kappa_star: bool = True,
@@ -2475,9 +2474,6 @@ class Phono3py:
             Mean free path in micrometers used to model a simple
             boundary-scattering contribution. ``None`` (default)
             disables this contribution.
-        solve_collective_phonon : bool, optional
-            Option for an under-development feature. Default is
-            ``False``.
         use_ave_pp : bool, optional
             RTA only (``is_LBTE=False``). Use an averaged ph-ph
             interaction strength to compute phonon lifetimes. This does
@@ -2644,7 +2640,6 @@ class Phono3py:
                 mass_variances=mass_variances,
                 grid_points=grid_points,
                 boundary_mfp=boundary_mfp,
-                solve_collective_phonon=solve_collective_phonon,
                 is_reducible_collision_matrix=is_reducible_collision_matrix,
                 is_kappa_star=is_kappa_star,
                 gv_delta_q=gv_delta_q,

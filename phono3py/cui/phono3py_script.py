@@ -1647,7 +1647,6 @@ def main(**argparse_control: Any) -> None:
                 mass_variances=settings.mass_variances,
                 grid_points=grid_points,
                 boundary_mfp=settings.boundary_mfp,
-                solve_collective_phonon=settings.solve_collective_phonon,
                 use_ave_pp=settings.use_ave_pp,
                 is_reducible_collision_matrix=settings.is_reducible_collision_matrix,  # noqa E501
                 is_kappa_star=settings.is_kappa_star,
