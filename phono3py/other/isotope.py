@@ -675,19 +675,20 @@ class Isotope:
         return self._band_indices
 
     def _average_over_initial_bands(self) -> bool:
-        """Return whether band_indices include degenerate bands to average."""
-        if not self._averaging:
-            return False
+        """Return whether band_indices include degenerate bands to average.
+
+        np.bincount(degenerate_ids) gives the size of each degenerate set at
+        its smallest band index, which is the value of degenerate_ids.
+
+        """
         assert self._phonons is not None
         degenerate_ids = self._phonons.degenerate_ids[self._grid_point]
-        # bincount gives the size of each degenerate set at its smallest band
-        # index, which is the value of degenerate_ids.
         set_sizes = np.bincount(degenerate_ids)[degenerate_ids[self._band_indices]]
         return bool((set_sizes > 1).any())
 
     @property
     def _averaging(self) -> bool:
-        """Return whether degenerate bands are averaged."""
+        """Return whether integration weights are averaged by degeneracy."""
         return self._average_degenerate_weights and self._sigma is None
 
     def _finalize_integration_weights(
@@ -726,10 +727,11 @@ class Isotope:
 
         Nothing is done when band_indices have no degenerate bands.
 
-        With the weights equal among the degenerate bands, the sum of gamma
-        over a degenerate set does not depend on the choice of eigenvectors,
-        but gamma of each band does. Gamma is therefore averaged over each
-        set.
+        With the tetrahedron method, the degenerate bands at q' get different
+        integration weights unless average_degenerate_weights is set, and
+        then gamma differs among the degenerate bands at the given grid
+        point.  Gamma is averaged over each degenerate set in any case, as
+        the imaginary part of the self-energy is.
 
         """
         if not self._average_over_initial_bands():
