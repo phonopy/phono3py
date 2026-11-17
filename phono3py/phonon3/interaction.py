@@ -497,6 +497,7 @@ class Interaction:
         """
         return self._g_zero
 
+    # REMOVE-AT-V5
     def get_phonons(
         self,
     ) -> tuple[

@@ -440,13 +440,14 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
             elif args.use_grg is False:
                 self._confs["use_grg"] = ".false."
 
+        # REMOVE-AT-V5
         if "use_rust" in arg_list and args.use_rust:
             import warnings
 
             warnings.warn(
-                "--rust is a deprecated no-op in phono3py v4; the Rust backend "
-                "is now the default. Pass --legacy-backend to opt back into "
-                "the C extension.",
+                "--rust is a deprecated no-op and will be removed in v5.0. The Rust "
+                "backend is now the default. Pass --legacy-backend to opt back "
+                "into the C extension.",
                 DeprecationWarning,
                 stacklevel=2,
             )

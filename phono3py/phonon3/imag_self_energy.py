@@ -246,11 +246,17 @@ class ImagSelfEnergy:
             assert self._imag_self_energy is not None
             return self._average_by_degeneracy(self._imag_self_energy)
 
+    # REMOVE-AT-V5
     def get_imag_self_energy(self) -> NDArray[np.double] | None:
-        """Return calculated imaginary-part of self-energies."""
+        """Return calculated imaginary-part of self-energies.
+
+        This method is deprecated and will be removed in v5.0. Use the
+        ``imag_self_energy`` attribute.
+
+        """
         warnings.warn(
-            "Use attribute, ImagSelfEnergy.imag_self_energy "
-            "instead of ImagSelfEnergy.get_imag_self_energy().",
+            "ImagSelfEnergy.get_imag_self_energy() is deprecated and will be "
+            "removed in v5.0. Use the imag_self_energy attribute.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -281,11 +287,17 @@ class ImagSelfEnergy:
         """Return triplets contributions to imaginary-part of self-energies."""
         return self._detailed_imag_self_energy
 
+    # REMOVE-AT-V5
     def get_detailed_imag_self_energy(self) -> NDArray[np.double] | None:
-        """Return triplets contributions to imaginary-part of self-energies."""
+        """Return triplets contributions to imaginary-part of self-energies.
+
+        This method is deprecated and will be removed in v5.0. Use the
+        ``detailed_imag_self_energy`` attribute.
+
+        """
         warnings.warn(
-            "Use attribute, ImagSelfEnergy.detailed_imag_self_energy "
-            "instead of ImagSelfEnergy.get_detailed_imag_self_energy().",
+            "ImagSelfEnergy.get_detailed_imag_self_energy() is deprecated and will be "
+            "removed in v5.0. Use the detailed_imag_self_energy attribute.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -306,11 +318,17 @@ class ImagSelfEnergy:
         """Return unit conversion factor of gamma."""
         return self._unit_conversion
 
+    # REMOVE-AT-V5
     def get_unit_conversion_factor(self) -> float:
-        """Return unit conversion factor of gamma."""
+        """Return unit conversion factor of gamma.
+
+        This method is deprecated and will be removed in v5.0. Use the
+        ``unit_conversion_factor`` attribute.
+
+        """
         warnings.warn(
-            "Use attribute, ImagSelfEnergy.unit_conversion_factor "
-            "instead of ImagSelfEnergy.get_unit_conversion_factor().",
+            "ImagSelfEnergy.get_unit_conversion_factor() is deprecated and will be "
+            "removed in v5.0. Use the unit_conversion_factor attribute.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -355,11 +373,17 @@ class ImagSelfEnergy:
         else:
             self._frequency_points = np.array(frequency_points, dtype="double")
 
+    # REMOVE-AT-V5
     def set_frequency_points(self, frequency_points: NDArray[np.double] | None) -> None:
-        """Set frequency points where spectrum calculation will be performed."""
+        """Set frequency points where spectrum calculation will be performed.
+
+        This method is deprecated and will be removed in v5.0. Use the
+        ``frequency_points`` attribute.
+
+        """
         warnings.warn(
-            "Use attribute, ImagSelfEnergy.frequency_points "
-            "instead of ImagSelfEnergy.set_frequency_points().",
+            "ImagSelfEnergy.set_frequency_points() is deprecated and will be "
+            "removed in v5.0. Use the frequency_points attribute.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -377,11 +401,17 @@ class ImagSelfEnergy:
         else:
             self._temperature = float(temperature)
 
+    # REMOVE-AT-V5
     def set_temperature(self, temperature: float | None) -> None:
-        """Set temperature where calculation will be performed."""
+        """Set temperature where calculation will be performed.
+
+        This method is deprecated and will be removed in v5.0. Use the
+        ``temperature`` attribute.
+
+        """
         warnings.warn(
-            "Use attribute, ImagSelfEnergy.temperature "
-            "instead of ImagSelfEnergy.set_temperature().",
+            "ImagSelfEnergy.set_temperature() is deprecated and will be "
+            "removed in v5.0. Use the temperature attribute.",
             DeprecationWarning,
             stacklevel=2,
         )

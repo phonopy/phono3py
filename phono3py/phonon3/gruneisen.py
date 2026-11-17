@@ -205,13 +205,19 @@ class Gruneisen:
         """Return mode Grueneisen paraterms."""
         return self._gruneisen_parameters
 
+    # REMOVE-AT-V5
     def get_gruneisen_parameters(
         self,
     ) -> NDArray[np.double] | Sequence[NDArray[np.double]] | None:
-        """Return mode Grueneisen paraterms."""
+        """Return mode Grueneisen paraterms.
+
+        This method is deprecated and will be removed in v5.0. Use the
+        ``gruneisen_parameters`` attribute.
+
+        """
         warnings.warn(
-            "Use attribute, Gruneisen.gruneisen_parameters "
-            "instead of Gruneisen.get_gruneisen_parameters().",
+            "Gruneisen.get_gruneisen_parameters() is deprecated and will be "
+            "removed in v5.0. Use the gruneisen_parameters attribute.",
             DeprecationWarning,
             stacklevel=2,
         )

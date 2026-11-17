@@ -730,15 +730,16 @@ def _add_run_options(parser: argparse.ArgumentParser) -> None:
         default=None,
         help="Calculate real part of self energy",
     )
+    # REMOVE-AT-V5
     parser.add_argument(
         "--rust",
         dest="use_rust",
         action="store_true",
         default=None,
         help=(
-            "Deprecated no-op: the Rust backend (phonors) is the default in "
-            "phono3py v4. Pass --legacy-backend to opt back into the C "
-            "extension."
+            "Deprecated no-op that will be removed in v5.0. The Rust backend "
+            "(phonors) is the default in phono3py v4. Pass --legacy-backend "
+            "to opt back into the C extension."
         ),
     )
     parser.add_argument(
@@ -1176,7 +1177,7 @@ class Phono3pyMockArgs:
     temperatures: Sequence[str] | None = None
     transport_type: str | None = None
     use_pypolymlp: bool | None = None
-    use_rust: bool | None = None
+    use_rust: bool | None = None  # REMOVE-AT-V5
     use_legacy_backend: bool | None = None
     write_collision: bool | None = None
     write_gamma: bool | None = None

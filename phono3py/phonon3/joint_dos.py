@@ -175,6 +175,7 @@ class JointDos:
     def frequency_points(self, frequency_points: NDArray[np.double]) -> None:
         self._frequency_points = np.array(frequency_points, dtype="double")
 
+    # REMOVE-AT-V5
     def get_phonons(
         self,
     ) -> tuple[

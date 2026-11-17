@@ -383,6 +383,7 @@ class Isotope:
         """
         return self._phonons
 
+    # REMOVE-AT-V5
     def get_phonons(
         self,
     ) -> tuple[
@@ -436,6 +437,7 @@ class Isotope:
             keyword.
 
         """
+        # REMOVE-AT-V5
         if not isinstance(phonons, PhononData):
             if eigenvectors is None or phonon_done is None:
                 raise TypeError(

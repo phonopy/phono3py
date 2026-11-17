@@ -123,6 +123,7 @@ def test_interaction_RTA_AlN(aln_lda: Phono3py):
     )
 
 
+# REMOVE-AT-V5
 def test_interaction_get_phonons_deprecated(si_pbesol: Phono3py):
     """Test that get_phonons is deprecated and returns the phonons property."""
     itr = _get_irt(si_pbesol, [7, 7, 7])

@@ -416,6 +416,7 @@ def test_jdos_nacl_nac_gamma_at_300K_npoints(nacl_pbe: Phono3py):
     )
 
 
+# REMOVE-AT-V5
 def test_jdos_get_phonons_deprecated(si_pbesol: Phono3py):
     """Test that get_phonons is deprecated and returns the phonons property."""
     jdos = _get_jdos(si_pbesol, [7, 7, 7])
