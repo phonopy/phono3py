@@ -115,6 +115,27 @@ def test_kappa_LBTE_full_colmat_RTA_with_cutoff_frequency(si_pbesol: Phono3py):
     assert np.isfinite(tc.mode_kappa_RTA).all()
 
 
+def test_kappa_LBTE_full_colmat_RTA(si_pbesol: Phono3py):
+    """Test kappa_RTA of full collision matrix against RTA kappa.
+
+    kappa_RTA of the full collision matrix is computed from the diagonal
+    elements of the collision matrix, not from the imaginary part of the
+    self-energy, so it agrees with the RTA kappa only approximately.
+
+    """
+    si_pbesol.mesh_numbers = [5, 5, 5]
+    si_pbesol.init_phph_interaction()
+    si_pbesol.run_thermal_conductivity(temperatures=[300])
+    kappa_rta = si_pbesol.thermal_conductivity.kappa.copy()
+    si_pbesol.run_thermal_conductivity(
+        is_LBTE=True,
+        temperatures=[300],
+        is_reducible_collision_matrix=True,
+    )
+    kappa_lbte_rta = si_pbesol.thermal_conductivity.kappa_RTA
+    np.testing.assert_allclose(kappa_lbte_rta[0, 0, :3], kappa_rta[0, 0, :3], rtol=0.01)
+
+
 @pytest.mark.parametrize("is_reducible_collision_matrix", [False, True])
 def test_kappa_LBTE_si_boundary_mfp(
     si_pbesol: Phono3py, is_reducible_collision_matrix: bool

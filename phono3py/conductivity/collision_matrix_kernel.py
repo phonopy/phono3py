@@ -231,7 +231,15 @@ class CollisionMatrixKernel:
 
     @property
     def kappa_RTA(self) -> NDArray[np.double]:
-        """Return RTA thermal conductivity, shape (num_sigma, num_temp, 6)."""
+        """Return RTA thermal conductivity, shape (num_sigma, num_temp, 6).
+
+        For the irreducible collision matrix, the collision term is
+        approximated by the imaginary part of the self-energy, as in the RTA
+        calculation.  For the reducible collision matrix, it is approximated
+        by the diagonal elements of the collision matrix instead, so the
+        values differ slightly from those of the RTA calculation.
+
+        """
         return self._kappa_RTA
 
     @property
@@ -241,7 +249,11 @@ class CollisionMatrixKernel:
 
     @property
     def mode_kappa_RTA(self) -> NDArray[np.double]:
-        """Return mode RTA kappa."""
+        """Return mode RTA kappa.
+
+        See kappa_RTA for the approximation of the collision term.
+
+        """
         return self._mode_kappa_RTA
 
     @property
@@ -820,16 +832,26 @@ class IrreducibleCollisionMatrixKernel(CollisionMatrixKernel):
         self._cv = aggregates.mode_heat_capacities
 
     def _prepare_collision_matrix(self) -> NDArray[np.double]:
+        """Prepare collision matrix and return weights array.
+
+        The main diagonal is averaged over each degenerate set and added
+        after the degeneracy averaging of the collision matrix.  Added
+        before, it would be averaged over each degenerate block as well, and
+        the diagonal elements would no longer be the scattering rates of the
+        modes.  The averaging over each degenerate set is needed for the
+        isotope scattering rates, which differ among degenerate modes.
+
+        """
+        self._average_collision_matrix_by_degeneracy()
         self._combine_collisions()
         weights = self._get_collision_weights()
-        self._average_collision_matrix_by_degeneracy()
         self._symmetrize_collision_matrix()
         return weights
 
     # -- Combine diagonals --
 
     def _combine_collisions(self) -> None:
-        """Add main diagonal elements to the IR collision matrix."""
+        """Add main diagonal averaged by degeneracy to the collision matrix."""
         for j, k in self._iter_sigma_temp():
             for i_irgp, main_diag, rotation in self._iter_ir_diagonal_entries(j, k):
                 self._add_main_diagonal(
@@ -850,7 +872,11 @@ class IrreducibleCollisionMatrixKernel(CollisionMatrixKernel):
             ):
                 if ir_gp != rotated_gp:
                     continue
-                main_diag = self._get_main_diagonal(i_irgp, i_sigma, i_temp)
+                main_diag = average_over_degenerate_sets(
+                    self._get_main_diagonal(i_irgp, i_sigma, i_temp),
+                    self._degenerate_ids[ir_gp],
+                    0,
+                )
                 yield i_irgp, main_diag, rotation
 
     def _add_main_diagonal(
@@ -1081,7 +1107,6 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
         self._is_one_gp_colmat = is_one_gp_colmat
 
         bz_grid = kappa_settings.bz_grid
-        # Frequencies and degenerate_ids reordered to GR grid order.
         self._gr_frequencies = frequencies[bz_grid.grg2bzg]
         self._gr_degenerate_ids = degenerate_ids[bz_grid.grg2bzg]
         self._ir_gr_grid_points = np.array(
@@ -1171,15 +1196,28 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
                 self._gamma_boundary[ir_gr_gp] = gamma_boundary_ir[i_gp]
 
     def _prepare_collision_matrix(self) -> NDArray[np.double]:
+        """Prepare collision matrix and return weights array.
+
+        With is_kappa_star, the collision matrix is first expanded to all
+        mesh points.  It is averaged by degeneracy before the main diagonal
+        is added, for the reason given in
+        IrreducibleCollisionMatrixKernel._prepare_collision_matrix.
+
+        """
         if self._kappa_settings.is_kappa_star:
             self._expand_by_symmetry()
+        self._average_collision_matrix_by_degeneracy()
         self._combine_collisions()
-        if self._kappa_settings.is_kappa_star:
-            # Same order as the irreducible kernel: main diagonal first, then
-            # degeneracy averaging over all mesh points.
-            self._average_collision_matrix_by_degeneracy()
         weights = self._get_collision_weights()
         self._symmetrize_collision_matrix()
+        if self._log_level:
+            print(
+                "- RTA values below are computed with the collision term "
+                "approximated by the\n"
+                "  diagonal elements of the collision matrix, not by the "
+                "imaginary part of the\n"
+                "  self-energy."
+            )
         return weights
 
     # -- Symmetry expansion (reducible only) --
@@ -1284,11 +1322,15 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
     # -- Combine diagonals --
 
     def _combine_collisions(self) -> None:
-        """Add main diagonal elements to the reducible collision matrix."""
+        """Add main diagonal averaged by degeneracy to the collision matrix."""
         num_mesh_points = int(np.prod(self._kappa_settings.mesh_numbers))
         for j, k in self._iter_sigma_temp():
             for i_mesh in range(num_mesh_points):
-                main_diag = self._get_main_diagonal(i_mesh, j, k)
+                main_diag = average_over_degenerate_sets(
+                    self._get_main_diagonal(i_mesh, j, k),
+                    self._gr_degenerate_ids[i_mesh],
+                    0,
+                )
                 self._add_main_diagonal(
                     i_sigma=j,
                     i_temp=k,
