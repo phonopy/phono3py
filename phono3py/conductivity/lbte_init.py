@@ -105,7 +105,7 @@ class CollisionFileReader:
             sys.stdout.flush()
         colmat_at_sigma, gamma_at_sigma, _temperatures = data
         collision_matrix[i_sigma] = colmat_at_sigma[0]
-        gamma[i_sigma] = gamma_at_sigma[0]
+        gamma[i_sigma] = gamma_at_sigma
         return True
 
     def allocate_with_fallback(
@@ -220,7 +220,7 @@ class CollisionFileReader:
             sys.stdout.flush()
         colmat_at_band, gamma_at_band, temperatures_at_band = data
         i_colmat = bzg2grg[gp] if is_reducible else i_gp
-        gamma_at_sigma[:, i_gp, i_band] = gamma_at_band[0]
+        gamma_at_sigma[:, i_gp, i_band] = gamma_at_band
         colmat_at_sigma[:, i_colmat, i_band] = colmat_at_band[0]
         temperatures[:] = temperatures_at_band
         return True
