@@ -1015,6 +1015,10 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
 
     Uses all grid points in the mesh without symmetry reduction.
 
+    All mesh arrays of this class are indexed by GR grid point indices.  The
+    frequencies and degenerate_ids, given in BZ grid order, are reordered to
+    GR grid order in the init method.
+
     Parameters
     ----------
     kappa_settings : KappaSettings
@@ -1076,6 +1080,14 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
 
         self._is_one_gp_colmat = is_one_gp_colmat
 
+        bz_grid = kappa_settings.bz_grid
+        # Frequencies and degenerate_ids reordered to GR grid order.
+        self._gr_frequencies = frequencies[bz_grid.grg2bzg]
+        self._gr_degenerate_ids = degenerate_ids[bz_grid.grg2bzg]
+        self._ir_gr_grid_points = np.array(
+            bz_grid.bzg2grg[kappa_settings.grid_points], dtype="int64"
+        )
+
         num_sigma = len(kappa_settings.sigmas)
         num_temp = len(kappa_settings.temperatures)
         num_band0 = len(kappa_settings.band_indices)
@@ -1109,8 +1121,7 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
         if self._is_one_gp_colmat:
             i_data = 0
         else:
-            ir_gp = self._kappa_settings.grid_points[i_gp]
-            i_data = int(self._kappa_settings.bz_grid.bzg2grg[ir_gp])
+            i_data = int(self._ir_gr_grid_points[i_gp])
         self._collision_matrix[:, :, i_data, :] = collision_result.collision_row
 
     def _setup_solve_data(self, aggregates: GridPointAggregates) -> None:
@@ -1149,16 +1160,15 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
         else:
             self._gamma_boundary = None
 
-        for i_gp, ir_gp in enumerate(self._kappa_settings.grid_points):
-            i_gr = int(self._kappa_settings.bz_grid.bzg2grg[ir_gp])
-            self._gamma[:, :, i_gr, :] = gamma_ir[:, :, i_gp, :]
-            self._gv[i_gr] = gv_ir[i_gp]
+        for i_gp, ir_gr_gp in enumerate(self._ir_gr_grid_points):
+            self._gamma[:, :, ir_gr_gp, :] = gamma_ir[:, :, i_gp, :]
+            self._gv[ir_gr_gp] = gv_ir[i_gp]
             if cv_ir is not None and self._cv is not None:
-                self._cv[:, i_gr, :] = cv_ir[:, i_gp, :]
+                self._cv[:, ir_gr_gp, :] = cv_ir[:, i_gp, :]
             if gamma_iso_ir is not None and self._gamma_iso is not None:
-                self._gamma_iso[:, i_gr, :] = gamma_iso_ir[:, i_gp, :]
+                self._gamma_iso[:, ir_gr_gp, :] = gamma_iso_ir[:, i_gp, :]
             if gamma_boundary_ir is not None and self._gamma_boundary is not None:
-                self._gamma_boundary[i_gr] = gamma_boundary_ir[i_gp]
+                self._gamma_boundary[ir_gr_gp] = gamma_boundary_ir[i_gp]
 
     def _prepare_collision_matrix(self) -> NDArray[np.double]:
         if self._kappa_settings.is_kappa_star:
@@ -1175,28 +1185,25 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
     # -- Symmetry expansion (reducible only) --
 
     def _expand_by_symmetry(self) -> None:
-        ir_gr_gps, rot_gps = self._get_rotation_maps()
-        self._expand_collisions(ir_gr_gps, rot_gps)
-        self._expand_local_values(ir_gr_gps, rot_gps)
+        rot_gps = self._get_rotation_map()
+        self._expand_collisions(self._ir_gr_grid_points, rot_gps)
+        self._expand_local_values(self._ir_gr_grid_points, rot_gps)
 
-    def _get_rotation_maps(
-        self,
-    ) -> tuple[NDArray[np.int64], NDArray[np.int64]]:
+    def _get_rotation_map(self) -> NDArray[np.int64]:
+        """Return GR grid points rotated from each GR grid point.
+
+        get_grid_points_by_rotations takes and returns BZ grid point indices.
+
+        """
+        bz_grid = self._kappa_settings.bz_grid
         num_mesh_points = int(np.prod(self._kappa_settings.mesh_numbers))
         num_rot = len(self._rotations_cartesian)
         rot_grid_points = np.zeros((num_rot, num_mesh_points), dtype="int64")
-        ir_gr_grid_points = np.array(
-            self._kappa_settings.bz_grid.bzg2grg[self._kappa_settings.grid_points],
-            dtype="int64",
-        )
-        for i in range(num_mesh_points):
-            rot_grid_points[:, i] = self._kappa_settings.bz_grid.bzg2grg[
-                get_grid_points_by_rotations(
-                    self._kappa_settings.bz_grid.grg2bzg[i],
-                    self._kappa_settings.bz_grid,
-                )
+        for gr_gp in range(num_mesh_points):
+            rot_grid_points[:, gr_gp] = bz_grid.bzg2grg[
+                get_grid_points_by_rotations(bz_grid.grg2bzg[gr_gp], bz_grid)
             ]
-        return ir_gr_grid_points, rot_grid_points
+        return rot_grid_points
 
     def _expand_collisions(
         self,
@@ -1309,24 +1316,21 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
     # -- Degeneracy averaging --
 
     def _iter_mesh_degenerate_ids(self) -> Iterator[tuple[int, NDArray[np.int64]]]:
-        """Yield (i_data, degenerate_ids) for mesh points with degenerate bands."""
-        bz_grid = self._kappa_settings.bz_grid
-        num_mesh_points = int(np.prod(self._kappa_settings.mesh_numbers))
-        for i_data in range(num_mesh_points):
-            ids = self._degenerate_ids[bz_grid.grg2bzg[i_data]]
+        """Yield (gr_gp, degenerate_ids) for mesh points with degenerate bands."""
+        for gr_gp, ids in enumerate(self._gr_degenerate_ids):
             if (ids != np.arange(len(ids))).any():
-                yield i_data, ids
+                yield gr_gp, ids
 
     def _average_colmat_rows_by_degeneracy(self, col_mat: NDArray[np.double]) -> None:
-        for i_data, ids in self._iter_mesh_degenerate_ids():
-            col_mat[:, :, i_data] = average_over_degenerate_sets(
-                col_mat[:, :, i_data], ids, 2
+        for gr_gp, ids in self._iter_mesh_degenerate_ids():
+            col_mat[:, :, gr_gp] = average_over_degenerate_sets(
+                col_mat[:, :, gr_gp], ids, 2
             )
 
     def _average_colmat_cols_by_degeneracy(self, col_mat: NDArray[np.double]) -> None:
-        for i_data, ids in self._iter_mesh_degenerate_ids():
-            col_mat[:, :, :, :, i_data] = average_over_degenerate_sets(
-                col_mat[:, :, :, :, i_data], ids, 4
+        for gr_gp, ids in self._iter_mesh_degenerate_ids():
+            col_mat[:, :, :, :, gr_gp] = average_over_degenerate_sets(
+                col_mat[:, :, :, :, gr_gp], ids, 4
             )
 
     def _get_symmetrization_size(self) -> int:
@@ -1369,18 +1373,17 @@ class ReducibleCollisionMatrixKernel(CollisionMatrixKernel):
             self._collision_matrix[i_sigma, i_temp].reshape(size, size)
         )
         Y = np.zeros_like(X)
-        for gp in range(num_mesh_points):
-            frequencies = self._frequencies[gp]
-            for j, f in enumerate(frequencies):
+        for gr_gp in range(num_mesh_points):
+            for j, f in enumerate(self._gr_frequencies[gr_gp]):
                 if f > self._kappa_settings.cutoff_frequency:
-                    i_mode = gp * num_band + j
+                    i_mode = gr_gp * num_band + j
                     Y[i_mode, :] = X[i_mode, :] / v_diag[i_mode]
         return Y
 
     # -- X and Y --
 
     def _get_X_frequencies(self) -> NDArray[np.double]:
-        return self._frequencies[self._kappa_settings.bz_grid.grg2bzg]
+        return self._gr_frequencies
 
     def _get_Y_problem_size(self) -> tuple[int, int]:
         num_band = self._frequencies.shape[1]
