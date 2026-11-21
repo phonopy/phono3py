@@ -2,6 +2,28 @@
 
 # Change Log
 
+## Nov-21-2026: Version 4.11.0
+
+- Phono3py requires phonopy 4.11.0 or later.
+- Bug fix: With {ref}`--gp <gp_option>` and `--write-collision`, the collisions
+  at all irreducible grid points were computed, and every collision file had
+  those of the first grid point. Only the specified grid points are computed
+  now, and the thermal conductivity is not computed. A grid point that is not
+  irreducible is rejected.
+- Bug fix: Boundary scattering ({ref}`--bmfp <boundary_mfp_option>`) was not
+  included in the inter-band thermal conductivity with the direct solution.
+- Bug fix: With the direct solution and an inter-band variant, `kappa` of
+  `Phono3py.thermal_conductivity` was the intra-band part only. It is now the
+  sum of the intra-band and inter-band parts, as with RTA.
+- Bug fix: Without `--average-degenerate-weights`, the isotope scattering rates
+  differed among degenerate bands with the tetrahedron method. They are averaged
+  over degenerate bands now.
+- `phono3py.phonon.velocity_matrix` is removed. `VelocityMatrix` is in
+  `phonopy.phonon.velocity_matrix`.
+- `read_collision_from_hdf5` is deprecated and will be removed in v5.0.
+- `extra` of `VelocityResult`, `HeatCapacityResult`, `ScatteringResult` and
+  `GridPointAggregates` is deprecated and will be removed in v5.0.
+
 ## Nov-6-2026: Version 4.10.0
 
 - Phono3py requires phonopy 4.10.0 or later.
