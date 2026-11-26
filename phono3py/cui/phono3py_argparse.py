@@ -923,6 +923,17 @@ def _add_run_options(parser: argparse.ArgumentParser) -> None:
         help="Disable taking average in fc3-r2q transformation around three atoms",
     )
     parser.add_argument(
+        "--v5",
+        dest="v5",
+        action="store_true",
+        default=None,
+        help=(
+            "Turn on the options that will be on by default in v5.0, which "
+            "are listed in the documentation of --v5. Each of these options "
+            "given explicitly takes precedence"
+        ),
+    )
+    parser.add_argument(
         "--wgp",
         "--write-grid-points",
         dest="write_grid_points",
@@ -1192,6 +1203,7 @@ class Phono3pyMockArgs:
     use_pypolymlp: bool | None = None
     use_rust: bool | None = None  # REMOVE-AT-V5
     use_legacy_backend: bool | None = None
+    v5: bool | None = None
     write_collision: bool | None = None
     write_gamma: bool | None = None
     write_gamma_detail: bool | None = None

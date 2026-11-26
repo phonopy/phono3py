@@ -11,6 +11,13 @@ import numpy as np
 from numpy.typing import NDArray
 from phonopy.cui.settings import ConfParser, Settings, fracval
 
+# Conf keys turned on by V5 = .TRUE. (--v5) unless given explicitly.
+V5_DEFAULT_KEYS = (
+    "exclude_gamma_acoustic",
+    "average_degenerate_weights",
+    "isotope_two_sided_weights",
+)
+
 
 class Phono3pySettings(Settings):
     """Setting parameter container."""
@@ -115,9 +122,23 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
             self._read_file(filename)
         if args is not None:
             self._read_options(args)
+        self._set_v5_defaults()
         self._parse_conf()
         self.settings = Phono3pySettings(load_phono3py_yaml=load_phono3py_yaml)
         self._set_settings(self.settings)
+
+    def _set_v5_defaults(self) -> None:
+        """Turn on the options that will be on by default in v5.0.
+
+        With V5 = .TRUE. in the conf file or --v5, the conf keys in
+        V5_DEFAULT_KEYS are set to .TRUE. unless they are given in the conf
+        file or by command options, which take precedence.
+
+        """
+        if self._confs.get("v5", "").lower() != ".true.":
+            return
+        for key in V5_DEFAULT_KEYS:
+            self._confs.setdefault(key, ".true.")
 
     def _read_options(self, args: argparse.Namespace) -> None:
         super()._read_options(args)  # store data in self._confs
@@ -227,6 +248,10 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
                 self._confs["isotope_two_sided_weights"] = ".true."
             elif args.use_isotope_two_sided_weights is False:
                 self._confs["isotope_two_sided_weights"] = ".false."
+
+        if "v5" in arg_list:
+            if args.v5:
+                self._confs["v5"] = ".true."
 
         if "is_joint_dos" in arg_list:
             if args.is_joint_dos:
