@@ -1,4 +1,4 @@
-"""Shared kappa solvers for inter-band methods (SMM19, NJC23, etc.)."""
+"""Shared kappa solvers for inter-band methods (NJC23, IBDB19, etc.)."""
 
 from __future__ import annotations
 
@@ -65,7 +65,7 @@ def _fill_mode_kappa_matrix(
 
 
 class InterBandRTAKappaSolver:
-    """RTA kappa solver for inter-band methods (SMM19, NJC23, etc.).
+    """RTA kappa solver for inter-band methods (NJC23, IBDB19, etc.).
 
     The per-grid-point mode-kappa computation is delegated to the callable
     ``compute_mode_kappa`` passed at construction time.
@@ -201,7 +201,7 @@ class InterBandRTAKappaSolver:
 
 
 class InterBandLBTEKappaSolver:
-    """LBTE kappa solver for inter-band methods (SMM19, NJC23, etc.).
+    """LBTE kappa solver for inter-band methods (NJC23, IBDB19, etc.).
 
     Composes a CollisionMatrixKernel for the standard LBTE solve (intra-band)
     and adds the inter-band kappa computed by the callable

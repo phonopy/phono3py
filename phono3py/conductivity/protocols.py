@@ -57,7 +57,7 @@ class VelocitySolver(Protocol):
     GroupVelocitySolver
         Standard group velocity and symmetrised v x v product (BTE, LBTE).
     VelocityMatrixSolver
-        Off-diagonal velocity matrix and its outer product (SMM19, NJC23).
+        Off-diagonal velocity matrix and its outer product (NJC23, IBDB19).
 
     Class attributes
     ----------------

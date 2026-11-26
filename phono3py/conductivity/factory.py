@@ -6,10 +6,6 @@ Built-in methods
     Standard BTE in the relaxation time approximation.
 "std-lbte"
     Standard BTE via direct LBTE solution.
-"SMM19-rta"
-    SMM19 transport equation in RTA (experimental).
-"SMM19-lbte"
-    SMM19 transport equation via direct solution (experimental).
 "NJC23-rta"
     Green-Kubo formula in RTA.
 "NJC23-lbte"
@@ -74,6 +70,18 @@ _InternalFactory: TypeAlias = Callable[["Interaction", "CalculatorConfig"], Any]
 # Populated at module load with all built-in factories.
 # External plugins are added via register_variant().
 _REGISTRY: dict[str, _InternalFactory] = {}
+
+# Methods removed from phono3py, mapped to the error message shown when one
+# of them is requested and no plugin has registered it.
+_SMM19_REMOVED_MESSAGE = (
+    "The SMM19 transport type was removed from phono3py. The Wigner "
+    "transport equation is provided by the plugin 'phono3py-wte' "
+    "(https://github.com/MSimoncelli/phono3py-wte), invoked via '--tt wte'."
+)
+_REMOVED_METHODS: dict[str, str] = {
+    "smm19-rta": _SMM19_REMOVED_MESSAGE,
+    "smm19-lbte": _SMM19_REMOVED_MESSAGE,
+}
 
 
 def _run_phonon_solver(interaction: Interaction) -> None:
@@ -274,7 +282,7 @@ def register_variant(
     Parameters
     ----------
     name : str
-        Variant name (e.g. ``"std"``, ``"SMM19"``, ``"NJC23"``).  Becomes
+        Variant name (e.g. ``"std"``, ``"NJC23"``, ``"IBDB19"``).  Becomes
         the prefix of the registered method names.
     make_velocity_solver : callable
         ``(ctx: VariantContext) -> VelocitySolver``.
@@ -368,9 +376,8 @@ def conductivity_calculator(
     sigmas : sequence of (float or None)
         Smearing widths.  A None entry selects the tetrahedron method.
     method : str, optional
-        Calculation method.  Built-in: "std-rta", "std-lbte", "SMM19-rta",
-        "SMM19-lbte", "NJC23-rta", "NJC23-lbte", "IBDB19-rta",
-        "IBDB19-lbte".  Default "std-rta".
+        Calculation method.  Built-in: "std-rta", "std-lbte", "NJC23-rta",
+        "NJC23-lbte", "IBDB19-rta", "IBDB19-lbte".  Default "std-rta".
     grid_points : array-like or None, optional
         BZ grid point indices.  None uses irreducible grid points.  Default None.
     sigma_cutoff : float or None, optional
@@ -432,6 +439,8 @@ def conductivity_calculator(
 
     """
     if method.lower() not in _REGISTRY:
+        if method.lower() in _REMOVED_METHODS:
+            raise NotImplementedError(_REMOVED_METHODS[method.lower()])
         raise NotImplementedError(
             f"method='{method}' is not implemented. "
             f"Registered methods: {sorted(_REGISTRY)}. "
@@ -518,11 +527,6 @@ except ImportError:
 
 try:
     import phono3py.conductivity.ibdb19  # noqa: F401, E402
-except ImportError:
-    pass
-
-try:
-    import phono3py.conductivity.smm19  # noqa: F401, E402
 except ImportError:
     pass
 

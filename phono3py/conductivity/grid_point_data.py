@@ -84,7 +84,7 @@ class VelocityResult:
         Symmetrised outer product v x v in Voigt notation.
     vm_by_vm : ndarray of cdouble, shape (num_gp, num_band0, num_band, 6), optional
         Off-diagonal velocity operator/matrix outer product.
-        Only set by off-diagonal velocity solvers (e.g. SMM19, NJC23).
+        Only set by off-diagonal velocity solvers (e.g. NJC23, IBDB19).
     extra : dict
         Plugin-specific data.  Deprecated and will be removed in v5.0.
 
@@ -203,7 +203,7 @@ class GridPointAggregates:
     Plugin-specific
     ~~~~~~~~~~~~~~~
     vm_by_vm : (num_gp, num_band0, num_band, 6), complex
-        Off-diagonal velocity operator outer product (SMM19/NJC23).
+        Off-diagonal velocity operator outer product (NJC23/IBDB19).
     heat_capacity_matrix : (num_temp, num_gp, num_band0, num_band), real
         Heat-capacity matrix (Kubo).
     extra : dict

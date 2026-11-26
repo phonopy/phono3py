@@ -2569,7 +2569,7 @@ class Phono3py:
             self-energy into normal and Umklapp contributions. Default
             is ``False``.
         transport_type : str, optional
-            ``"SMM19"``, ``"NJC23"``, ``"IBDB19"``, or ``None``. Default
+            ``"NJC23"``, ``"IBDB19"``, or ``None``. Default
             is ``None``.
         write_kappa : bool, optional
             Write thermal conductivity and related properties to a

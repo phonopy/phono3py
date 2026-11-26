@@ -13,11 +13,6 @@ documentation:
 
 For citation, see {ref}`wigner_citation`.
 
-A roughly equivalent in-tree implementation is also under development as an
-experimental feature and can be tried with the `--tt smm19` option. The
-interface and behavior of this experimental implementation may change without
-notice.
-
 ## How to install
 
 ```
