@@ -7,8 +7,6 @@ import numpy as np
 from numpy.typing import NDArray
 from phonopy.physical_units import get_physical_units
 
-from phono3py.phonon.func import mode_cv
-
 # Threshold on x = E / (kB T) below which two modes are treated as
 # degenerate and (n_j - n_j') / (x_j - x_j') is replaced by its analytic
 # limit instead of the quotient.
@@ -178,50 +176,3 @@ def mode_cv_matrix_ibdb19(
     """
     f_mul = np.multiply.outer(freqs, freqs)
     return _mode_cv_matrix(temps, freqs, f_mul)
-
-
-def mode_cv_matrix_smm19(
-    temps: NDArray[np.double],
-    freqs: NDArray[np.double],
-) -> NDArray[np.double]:
-    r"""Calculate effective mode heat capacity matrix, Cqjj', of SMM19.
-
-    This implements the effective heat capacity matrix of the Wigner /
-    unified-theory coherence term of G. Simoncelli, N. Marzari, and
-    F. Mauri, Nat. Phys. 15, 809 (2019), built from the scalar mode heat
-    capacities C_{\mathbf{q}j},
-
-    C^{\mathrm{SMM}}_{\mathbf{q}jj'} =
-    \frac{1}{4}(\omega_{\mathbf{q}j} + \omega_{\mathbf{q}j'})
-    \left( \frac{C_{\mathbf{q}j}}{\omega_{\mathbf{q}j}}
-    + \frac{C_{\mathbf{q}j'}}{\omega_{\mathbf{q}j'}} \right)
-
-    This expression is invariant to the frequency unit, since the unit
-    factor cancels between the sum and the ratios.
-
-    Note
-    ----
-    Diagonal (j=j') terms reduce to normal mode heat capacity.
-
-    Parameters
-    ----------
-    temps: NDArray[np.double]
-        Temperatures in K.
-    freqs : NDArray[np.double]
-        Phonon frequencies at a q-point in eV.
-
-    Returns
-    -------
-    ndarray
-        Heat capacity matrix in eV/K.
-        shape=(num_temps, num_band, num_band), dtype='double', order='C'.
-
-    """
-    with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
-        cv = mode_cv(temps, freqs)  # (num_temp, num_band), eV/K
-        cv_per_freq = cv / freqs[None, :]
-        cv_per_freq = np.where(np.isfinite(cv_per_freq), cv_per_freq, 0.0)
-    f_add = np.add.outer(freqs, freqs)
-    cv_per_freq_sum = cv_per_freq[:, :, None] + cv_per_freq[:, None, :]
-    cvm = 0.25 * f_add[None, :, :] * cv_per_freq_sum
-    return np.ascontiguousarray(cvm)

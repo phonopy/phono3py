@@ -20,7 +20,7 @@ phono3py ... --lbte --tt ibdb19
 
 - `--tt` is combined with `--br` (RTA) or `--lbte` (direct solution). Without
   `--tt`, the standard particle-like formulation is used.
-- The built-in variants `njc23`, `ibdb19`, and `smm19` are **experimental**.
+- The built-in variants `njc23` and `ibdb19` are **experimental**.
   Their interface and behavior may change without notice.
 - `wte` invokes the external
   [phono3py-wte](https://github.com/MSimoncelli/phono3py-wte) plugin, which must
@@ -78,9 +78,9 @@ conductivity tensor is obtained by summing the mode contributions over the
 Brillouin zone and all band pairs (with the usual normalization by the cell
 volume and the number of grid points).
 
-Of the built-in variants, `njc23` and `ibdb19` arise from the Green-Kubo
-formulation and `smm19` from the Wigner / unified-theory picture. All reduce to
-the formula above with a variant-specific heat capacity matrix.
+The built-in variants `njc23` and `ibdb19` arise from the Green-Kubo
+formulation. Both reduce to the formula above with a variant-specific heat
+capacity matrix.
 
 The `njc23` and `ibdb19` heat capacity matrices are closely related. `ibdb19`
 evaluates the main-text Eq. (9) of Isaeva, Barbalinardo, Donadio, and Baroni
@@ -89,7 +89,7 @@ Supplementary Information of the same paper. The expression of Ndour, Jund, and
 Chaput (`njc23`) was obtained independently and turns out to coincide with the
 first term of Eq. (19) of that Supplementary Information, so `njc23` is the more
 accurate of the two. The sections below are ordered from the more accurate
-(`njc23`) to the more approximate (`ibdb19`), followed by `smm19`.
+(`njc23`) to the more approximate (`ibdb19`).
 
 ## `--tt njc23`
 
@@ -135,41 +135,6 @@ while the off-diagonal contribution of `ibdb19` is slightly smaller than that of
   Nat. Commun. **10**, 3853 (2019). DOI:
   [10.1038/s41467-019-11572-4](https://doi.org/10.1038/s41467-019-11572-4)
 
-## `--tt smm19`
-
-This variant evaluates a Wigner / unified-theory term in the spirit of the
-formulation by Simoncelli, Marzari, and Mauri. The original formulation and its
-reference implementation are due to those authors and are provided in the
-phono3py-wte plugin, invoked with `--tt wte` (see {ref}`wigner_solution`). That
-plugin should be used for results consistent with the published Wigner
-formulation. The built-in `smm19` here is an experimental, simplified in-tree
-variant that adopts the velocity matrix defined in the {ref}`Velocity matrix
-<velocity_matrix>` section above (the same definition as the other variants)
-instead of the original velocity-operator definition. Its off-diagonal results
-are therefore not identical to those of the original Wigner formulation.
-
-This in-tree `smm19` shares the same velocity matrix and Lorentzian linewidth
-factor as the other variants. The difference is its heat capacity matrix, an
-effective matrix built from the scalar mode heat capacities $C_{\mathbf{q}j}$ in
-a symmetrized form,
-
-$$
-C_{\mathbf{q}jj'} =
-\frac{1}{4}
-(\omega_{\mathbf{q}j} + \omega_{\mathbf{q}j'})
-\left(
-\frac{C_{\mathbf{q}j}}{\omega_{\mathbf{q}j}}
-+ \frac{C_{\mathbf{q}j'}}{\omega_{\mathbf{q}j'}}
-\right) ,
-$$
-
-which reduces on the diagonal ($j = j'$) to the ordinary mode heat capacity
-$C_{\mathbf{q}j}$.
-
-- M. Simoncelli, N. Marzari, and F. Mauri, "Unified theory of thermal transport
-  in crystals and glasses", Nat. Phys. **15**, 809 (2019). DOI:
-  [10.1038/s41567-019-0520-x](https://doi.org/10.1038/s41567-019-0520-x)
-
 ## Example
 
 The lattice thermal conductivity is reported split into the intra-band part
@@ -187,8 +152,8 @@ K_inter   300.0       0.702      0.746      0.740      0.000      0.000      0.0
 K_TOT     300.0       3.724      3.976      3.975      0.000      0.000      0.000
 ```
 
-For this system the three built-in variants `njc23`, `ibdb19`, and `smm19` give
-`K_inter` values that agree to within about 1%.
+For this system the two built-in variants `njc23` and `ibdb19` give `K_inter`
+values that agree to within about 1%.
 
 ## `--tt wte`
 

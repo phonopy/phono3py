@@ -2,6 +2,15 @@
 
 # Change Log
 
+## Unreleased
+
+- The experimental inter-band transport variant `smm19` (`--tt smm19`) is
+  removed, together with
+  `phono3py.phonon.heat_capacity_matrix.mode_cv_matrix_smm19`. Its results
+  were not those of the Wigner formulation of Simoncelli, Marzari, and Mauri.
+  Use the phono3py-wte plugin (`--tt wte`) for that formulation. See
+  {ref}`wigner_solution`.
+
 ## Nov-21-2026: Version 4.11.0
 
 - Phono3py requires phonopy 4.11.0 or later.

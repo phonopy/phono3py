@@ -38,7 +38,7 @@ def _load(band_indices: list[int] | None = None, log_level: int = 0) -> Phono3py
     return ph3
 
 
-@pytest.mark.parametrize("transport_type", ["NJC23", "IBDB19", "SMM19"])
+@pytest.mark.parametrize("transport_type", ["NJC23", "IBDB19"])
 @pytest.mark.parametrize("band_indices", [[4, 5], [3, 4, 5, 0, 1, 2]])
 def test_interband_rta_with_band_indices(transport_type: str, band_indices: list[int]):
     """Test that the standard method is used unless all bands are selected."""

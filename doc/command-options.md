@@ -846,7 +846,7 @@ equivalent to that of `--br`. More detail is documented at
 Select the transport formulation used to evaluate the inter-band
 contributions to the thermal conductivity. This option is combined with `--br`
 (RTA) or `--lbte` (direct solution). Without `--tt`, the standard particle-like
-formulation is used. The built-in variants `njc23`, `ibdb19`, and `smm19` are
+formulation is used. The built-in variants `njc23` and `ibdb19` are
 experimental.
 `wte` invokes the external phono3py-wte plugin. More detail is documented at
 {ref}`inter_band_transport`.

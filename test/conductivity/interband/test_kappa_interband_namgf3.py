@@ -3,8 +3,8 @@
 NaMgF3 (orthorhombic perovskite, 20 atoms / 60 bands) has many phonon
 bands close in frequency, so the inter-band (off-diagonal) contribution to
 the lattice thermal conductivity is significant (~19% of the total here).
-This makes it a meaningful test of the inter-band variants NJC23, IBDB19,
-and SMM19, unlike the small-cell Si/NaCl cases.
+This makes it a meaningful test of the inter-band variants NJC23 and
+IBDB19, unlike the small-cell Si/NaCl cases.
 
 The scattering linewidths (gamma) are read from a bundled kappa hdf5
 (``--read-gamma``), so fc3 is not needed and the computation is fast. Only
@@ -25,19 +25,18 @@ data_dir = pathlib.Path(__file__).parent
 mesh = [9, 7, 9]
 
 # Reference kappa at 300 K for mesh 9x7x9 (xx, yy, zz) in W/m-K.
-# The diagonal (intra) part is identical for all three variants.
+# The diagonal (intra) part is identical for both variants.
 ref_intra = [3.022, 3.230, 3.234]
 ref_inter = {
     "NJC23": [0.702, 0.746, 0.740],
     "IBDB19": [0.698, 0.742, 0.736],
-    "SMM19": [0.702, 0.746, 0.741],
 }
 TOLERANCE = 0.05
 
 
 @pytest.fixture(scope="module")
 def namgf3_kappa(tmp_path_factory) -> dict[str, tuple[np.ndarray, np.ndarray]]:
-    """Run NJC23/IBDB19/SMM19 RTA for NaMgF3 with read_gamma.
+    """Run NJC23/IBDB19 RTA for NaMgF3 with read_gamma.
 
     The bundled gamma file is copied into a temporary working directory
     under the mesh-convention name ``kappa-m979.hdf5`` expected by
@@ -65,7 +64,7 @@ def namgf3_kappa(tmp_path_factory) -> dict[str, tuple[np.ndarray, np.ndarray]]:
         ph3.mesh_numbers = mesh
         ph3.init_phph_interaction()
         results = {}
-        for transport_type in ("NJC23", "IBDB19", "SMM19"):
+        for transport_type in ("NJC23", "IBDB19"):
             ph3.run_thermal_conductivity(
                 temperatures=[300],
                 read_gamma=True,
@@ -81,15 +80,15 @@ def namgf3_kappa(tmp_path_factory) -> dict[str, tuple[np.ndarray, np.ndarray]]:
     return results
 
 
-@pytest.mark.parametrize("transport_type", ["NJC23", "IBDB19", "SMM19"])
+@pytest.mark.parametrize("transport_type", ["NJC23", "IBDB19"])
 def test_namgf3_kappa_intra(namgf3_kappa, transport_type: str):
-    """Diagonal (intra-band) kappa is the same for all three variants."""
+    """Diagonal (intra-band) kappa is the same for both variants."""
     kappa_intra = namgf3_kappa[transport_type][0]
     np.testing.assert_allclose(ref_intra, kappa_intra[:3], atol=TOLERANCE)
     np.testing.assert_allclose([0, 0, 0], kappa_intra[3:], atol=TOLERANCE)
 
 
-@pytest.mark.parametrize("transport_type", ["NJC23", "IBDB19", "SMM19"])
+@pytest.mark.parametrize("transport_type", ["NJC23", "IBDB19"])
 def test_namgf3_kappa_inter(namgf3_kappa, transport_type: str):
     """Off-diagonal (inter-band) kappa matches the reference values."""
     kappa_inter = namgf3_kappa[transport_type][1]
@@ -100,19 +99,16 @@ def test_namgf3_kappa_inter(namgf3_kappa, transport_type: str):
 
 
 def test_namgf3_kappa_inter_ordering(namgf3_kappa):
-    """IBDB19 inter-band kappa is below NJC23 and SMM19, which agree.
+    """IBDB19 inter-band kappa is below NJC23.
 
     The variants differ only in the heat capacity matrix prefactor:
-    IBDB19 uses the geometric-mean-square ``w_j w_j'`` while NJC23/SMM19
-    use the arithmetic-mean-square ``(w_j + w_j')^2 / 4``. Since
+    IBDB19 uses the geometric-mean-square ``w_j w_j'`` while NJC23 uses
+    the arithmetic-mean-square ``(w_j + w_j')^2 / 4``. Since
     ``w_j w_j' <= (w_j + w_j')^2 / 4`` with equality only on the diagonal,
     IBDB19 gives a strictly smaller off-diagonal contribution.
 
     """
     inter_njc23 = namgf3_kappa["NJC23"][1][:3]
     inter_ibdb19 = namgf3_kappa["IBDB19"][1][:3]
-    inter_smm19 = namgf3_kappa["SMM19"][1][:3]
 
     assert np.all(inter_ibdb19 < inter_njc23)
-    assert np.all(inter_ibdb19 < inter_smm19)
-    np.testing.assert_allclose(inter_njc23, inter_smm19, atol=0.01)

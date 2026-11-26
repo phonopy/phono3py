@@ -1,10 +1,10 @@
 """Registration helper for inter-band (coherence) transport variants.
 
-The inter-band variants NJC23, IBDB19, and SMM19 share the same component
+The inter-band variants NJC23 and IBDB19 share the same component
 construction: the velocity matrix, the heat capacity matrix solver, and the
 generic inter-band mode-kappa kernel. They differ only in the mode heat
-capacity matrix function (e.g. ``mode_cv_matrix_njc23``,
-``mode_cv_matrix_ibdb19``, ``mode_cv_matrix_smm19``).
+capacity matrix function (``mode_cv_matrix_njc23`` or
+``mode_cv_matrix_ibdb19``).
 
 ``register_interband_variant`` captures this shared boilerplate so that each
 variant module only needs to supply its name and heat capacity matrix

@@ -9,7 +9,7 @@ from phono3py import Phono3py
 
 
 @pytest.mark.parametrize("is_reducible_collision_matrix", [False, True])
-@pytest.mark.parametrize("transport_type", ["NJC23", "IBDB19", "SMM19"])
+@pytest.mark.parametrize("transport_type", ["NJC23", "IBDB19"])
 def test_interband_lbte_kappa_is_total(
     si_pbesol: Phono3py, transport_type: str, is_reducible_collision_matrix: bool
 ):
