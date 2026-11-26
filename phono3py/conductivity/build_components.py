@@ -142,6 +142,10 @@ class CalculatorConfig:
         Include isotope scattering.
     mass_variances : ndarray of double or None
         Mass variances for isotope scattering.
+    use_isotope_two_sided_weights : bool
+        Tetrahedron weights of isotope scattering are the mean of those at
+        the frequency points shifted by -1e-12 and +1e-12 THz. See
+        ``use_two_sided_weights`` of ``Isotope``.
     boundary_mfp : float or None
         Boundary mean free path in micrometres.
     use_ave_pp : bool
@@ -191,6 +195,7 @@ class CalculatorConfig:
     sigma_cutoff: float | None = None
     is_isotope: bool = False
     mass_variances: NDArray[np.double] | None = None
+    use_isotope_two_sided_weights: bool = False
     boundary_mfp: float | None = None
     use_ave_pp: bool = False
     is_kappa_star: bool = True

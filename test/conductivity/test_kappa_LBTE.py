@@ -156,6 +156,40 @@ def test_kappa_LBTE_si_boundary_mfp(
     np.testing.assert_allclose(ref_kappa, kappa, atol=0.01)
 
 
+def test_kappa_LBTE_si_iso_two_sided_weights(
+    si_pbesol: Phono3py, monkeypatch: pytest.MonkeyPatch
+):
+    """Test LBTE with isotope tetrahedron weights from both sides by Si.
+
+    The two-sided weights lower kappa from 57.406 to 56.845.
+
+    """
+    import phono3py.conductivity.calculators as calculators
+
+    flags = []
+    isotope_class = calculators.Isotope
+
+    def _isotope(*args, **kwargs):
+        flags.append(kwargs["use_two_sided_weights"])
+        return isotope_class(*args, **kwargs)
+
+    monkeypatch.setattr(calculators, "Isotope", _isotope)
+    ref_kappa = [56.845, 56.845, 56.845, 0, 0, 0]
+    si_pbesol.mesh_numbers = [5, 5, 5]
+    si_pbesol.init_phph_interaction(
+        exclude_gamma_acoustic=True, average_degenerate_weights=True
+    )
+    si_pbesol.run_thermal_conductivity(
+        is_LBTE=True,
+        temperatures=[300],
+        is_isotope=True,
+        use_isotope_two_sided_weights=True,
+    )
+    assert flags == [True]
+    kappa = si_pbesol.thermal_conductivity.kappa.ravel()
+    np.testing.assert_allclose(ref_kappa, kappa, atol=0.05)
+
+
 def test_kappa_LBTE_no_kappa_star(si_pbesol: Phono3py):
     """Test LBTE with is_kappa_star=False iterates all grid points."""
     si_pbesol.mesh_numbers = [5, 5, 5]

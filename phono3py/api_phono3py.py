@@ -2422,6 +2422,7 @@ class Phono3py:
         temperatures: Sequence[float] | NDArray[np.double] | None = None,
         is_isotope: bool = False,
         mass_variances: Sequence[float] | NDArray[np.double] | None = None,
+        use_isotope_two_sided_weights: bool = False,
         grid_points: Sequence[int] | NDArray[np.int64] | None = None,
         boundary_mfp: float | None = None,  # in micrometer
         use_ave_pp: bool = False,
@@ -2477,6 +2478,11 @@ class Phono3py:
             (default) and ``is_isotope=True``, the values stored in the
             phono3py instance are used.
             ``shape=(atoms_in_primitive,)``, ``dtype='double'``.
+        use_isotope_two_sided_weights : bool, optional
+            With the tetrahedron method, the integration weights of isotope
+            scattering are the mean of those at the frequency points shifted
+            by -1e-12 and +1e-12 THz, so that they do not depend on rounding
+            errors of the frequencies. See ``Isotope``. Default is ``False``.
         grid_points : array_like, optional
             Grid-point indices at which mode thermal conductivities are
             computed. With ``None`` (default), all required grid points
@@ -2653,6 +2659,7 @@ class Phono3py:
                 sigma_cutoff=self._sigma_cutoff,
                 is_isotope=is_isotope,
                 mass_variances=mass_variances,
+                use_isotope_two_sided_weights=use_isotope_two_sided_weights,
                 grid_points=grid_points,
                 boundary_mfp=boundary_mfp,
                 is_reducible_collision_matrix=is_reducible_collision_matrix,
@@ -2683,6 +2690,7 @@ class Phono3py:
                 sigma_cutoff=self._sigma_cutoff,
                 is_isotope=is_isotope,
                 mass_variances=mass_variances,
+                use_isotope_two_sided_weights=use_isotope_two_sided_weights,
                 grid_points=grid_points,
                 boundary_mfp=boundary_mfp,
                 use_ave_pp=use_ave_pp,

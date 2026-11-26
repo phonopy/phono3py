@@ -36,6 +36,7 @@ class Phono3pyIsotope:
         symmetrize_tetrahedra: bool = False,
         average_degenerate_weights: bool = False,
         exclude_gamma_acoustic: bool = False,
+        use_two_sided_weights: bool = False,
         lang: Literal["C", "Python", "Rust"] = "Rust",
     ) -> None:
         """Init method.
@@ -89,6 +90,11 @@ class Phono3pyIsotope:
             smallest absolute values are set to zero after the phonons are
             solved. The acoustic modes at Gamma are then zero on every
             platform, instead of small nonzero values from rounding.
+        use_two_sided_weights : bool, optional, default=False
+            When True, the integration weights of the tetrahedron method are
+            the mean of those at the frequency points shifted by -1e-12 and
+            +1e-12 THz, see ``Isotope``. Used only with the tetrahedron method
+            (``sigma=None``).
         lang : str, optional, default='Rust'
             Backend, 'C', 'Python' or 'Rust'.
 
@@ -136,6 +142,7 @@ class Phono3pyIsotope:
             symmetrize_tetrahedra=symmetrize_tetrahedra,
             average_degenerate_weights=average_degenerate_weights,
             exclude_gamma_acoustic=exclude_gamma_acoustic,
+            use_two_sided_weights=use_two_sided_weights,
             lang=lang,
         )
 

@@ -184,6 +184,47 @@ def test_phono3py_load_exclude_gamma_acoustic():
             os.chdir(original_cwd)
 
 
+def test_phono3py_load_isotope_two_sided_weights(monkeypatch: pytest.MonkeyPatch):
+    """Test phono3py-load script with --isotope-two-sided-weights by Si.
+
+    The option reaches Isotope, and it is off without the option.
+
+    """
+    import phono3py.conductivity.calculators as calculators
+
+    flags = []
+    isotope_class = calculators.Isotope
+
+    def _isotope(*args, **kwargs):
+        flags.append(kwargs["use_two_sided_weights"])
+        return isotope_class(*args, **kwargs)
+
+    monkeypatch.setattr(calculators, "Isotope", _isotope)
+    for use_isotope_two_sided_weights in (None, True):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            original_cwd = pathlib.Path.cwd()
+            os.chdir(temp_dir)
+
+            try:
+                argparse_control = _get_phono3py_load_args(
+                    cwd / ".." / "phono3py_params_Si-111-222.yaml",
+                    is_bterta=True,
+                    is_isotope=True,
+                    use_isotope_two_sided_weights=use_isotope_two_sided_weights,
+                    temperatures=[
+                        "300",
+                    ],
+                    mesh_numbers=["5", "5", "5"],
+                )
+                with pytest.raises(SystemExit) as excinfo:
+                    main(**argparse_control)
+                assert excinfo.value.code == 0
+            finally:
+                os.chdir(original_cwd)
+
+    assert flags == [False, True]
+
+
 def test_phono3py_load_generates_kappa_hdf5_contents():
     """Run phono3py-load and validate generated kappa hdf5 content."""
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -1589,6 +1630,7 @@ def _get_phono3py_load_args(
     is_fc3_r0_average: bool | None = None,
     is_full_fc: bool | None = None,
     is_isotope: bool | None = None,
+    use_isotope_two_sided_weights: bool | None = None,
     is_N_U: bool | None = None,
     is_lbte: bool | None = None,
     mesh_numbers: Sequence | None = None,
@@ -1629,6 +1671,7 @@ def _get_phono3py_load_args(
             is_fc3_r0_average=is_fc3_r0_average,
             is_full_fc=is_full_fc,
             is_isotope=is_isotope,
+            use_isotope_two_sided_weights=use_isotope_two_sided_weights,
             is_N_U=is_N_U,
             is_lbte=is_lbte,
             log_level=1,
@@ -1664,6 +1707,7 @@ def _get_phono3py_load_args(
             is_fc3_r0_average=is_fc3_r0_average,
             is_full_fc=is_full_fc,
             is_isotope=is_isotope,
+            use_isotope_two_sided_weights=use_isotope_two_sided_weights,
             is_N_U=is_N_U,
             is_lbte=is_lbte,
             mesh_numbers=mesh_numbers,

@@ -34,6 +34,9 @@ from phono3py.phonon.solver import (
     zero_gamma_acoustic_frequencies,
 )
 
+# Shift of frequency points in THz, see use_two_sided_weights of Isotope.
+_FREQUENCY_POINT_SHIFT = 1e-12
+
 
 def get_unique_grid_points(
     grid_points: NDArray[np.int64],
@@ -176,6 +179,7 @@ class Isotope:
         symmetrize_tetrahedra: bool = False,
         average_degenerate_weights: bool = False,
         exclude_gamma_acoustic: bool = False,
+        use_two_sided_weights: bool = False,
         lang: Literal["C", "Python", "Rust"] = "Rust",
     ):
         """Init method.
@@ -246,6 +250,15 @@ class Isotope:
             smallest absolute values are set to zero after the phonons are
             solved or set. The acoustic modes at Gamma are then zero on every
             platform, instead of small nonzero values from rounding.
+        use_two_sided_weights : bool, optional, default=False
+            When True, the integration weights of the tetrahedron method are
+            the mean of those at the frequency points shifted by -1e-12 and
+            +1e-12 THz. The frequency points equal vertex frequencies at the
+            grid point and at q' equivalent to it by symmetry, but only up to
+            rounding errors of about 1e-14 THz, on which the weights then
+            depend. The shift is larger than these errors and smaller than
+            THM_EPSILON (1e-10) of the tetrahedron method. Used only with the
+            tetrahedron method (``sigma=None``).
         lang : str, optional, default='Rust'
             Backend, 'C', 'Python' or 'Rust'.
 
@@ -269,6 +282,7 @@ class Isotope:
         self._symmetrize_tetrahedra = symmetrize_tetrahedra
         self._average_degenerate_weights = average_degenerate_weights
         self._exclude_gamma_acoustic = exclude_gamma_acoustic
+        self._use_two_sided_weights = use_two_sided_weights
         if lang in ("C", "Rust"):
             lang = resolve_lang(lang)
         self._lang: Literal["C", "Python", "Rust"] = lang
@@ -601,6 +615,9 @@ class Isotope:
         The frequencies are those on all BZ-grid. So all those grid points in
         BZ-grid, i.e., self._grid_points, are passed to get_integration_weights.
 
+        With use_two_sided_weights, the weights are the mean of those at the
+        shifted frequency points (see ``__init__``).
+
         """
         assert self._phonons is not None
         assert self._grid_points is not None
@@ -617,15 +634,19 @@ class Isotope:
             dtype="double",
             order="C",
         )
-        self._integration_weights = self._finalize_integration_weights(
+        integration_weights = [
             get_integration_weights(
-                freq_points,
+                freq_points + shift,
                 self._phonons.frequencies,
                 self._bz_grid,
                 grid_points=self._grid_points,
                 lang=lang,
                 symmetrize_tetrahedra=self._symmetrize_tetrahedra,
             )
+            for shift in self._frequency_point_shifts
+        ]
+        self._integration_weights = self._finalize_integration_weights(
+            np.mean(integration_weights, axis=0)
         )
 
     def _set_integration_weights_py(self) -> None:
@@ -649,6 +670,8 @@ class Isotope:
             (num_grid_points, len(calc_band_indices), num_band), dtype="double"
         )
 
+        freq_points = self._phonons.frequencies[self._grid_point, calc_band_indices]
+        shifts = self._frequency_point_shifts
         for i, gp in enumerate(self._grid_points):
             tfreqs = get_tetrahedra_frequencies(
                 gp, self._bz_grid, relative_grid_address, self._phonons.frequencies
@@ -656,9 +679,11 @@ class Isotope:
 
             for bi, frequencies in enumerate(tfreqs):
                 thm.set_tetrahedra_omegas(frequencies)
-                thm.run(self._phonons.frequencies[self._grid_point, calc_band_indices])
-                iw = thm.get_integration_weight()
-                integration_weights[i, :, bi] = iw
+                for shift in shifts:
+                    thm.run(freq_points + shift)
+                    integration_weights[i, :, bi] += thm.get_integration_weight()
+
+        integration_weights /= len(shifts)
 
         self._integration_weights = self._finalize_integration_weights(
             integration_weights
@@ -687,6 +712,13 @@ class Isotope:
         degenerate_ids = self._phonons.degenerate_ids[self._grid_point]
         set_sizes = np.bincount(degenerate_ids)[degenerate_ids[self._band_indices]]
         return bool((set_sizes > 1).any())
+
+    @property
+    def _frequency_point_shifts(self) -> tuple[float, ...]:
+        """Return shifts of frequency points whose weights are averaged."""
+        if self._use_two_sided_weights:
+            return (-_FREQUENCY_POINT_SHIFT, _FREQUENCY_POINT_SHIFT)
+        return (0.0,)
 
     @property
     def _averaging(self) -> bool:

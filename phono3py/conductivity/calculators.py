@@ -57,6 +57,7 @@ def _build_isotope_solver(
     kappa_settings: KappaSettings,
     log_level: int,
     mass_variances: Sequence[float] | NDArray[np.double] | None,
+    use_two_sided_weights: bool = False,
     lang: Literal["C", "Python", "Rust"] = "Rust",
 ) -> IsotopeScatteringSolver:
     """Build an IsotopeScatteringSolver from Interaction and KappaSettings."""
@@ -72,6 +73,7 @@ def _build_isotope_solver(
         symmetrize_tetrahedra=pp.symmetrize_tetrahedra,
         average_degenerate_weights=pp.average_degenerate_weights,
         exclude_gamma_acoustic=pp.exclude_gamma_acoustic,
+        use_two_sided_weights=use_two_sided_weights,
         lang=lang,
     )
     return IsotopeScatteringSolver(isotope, kappa_settings.sigmas, log_level=log_level)
@@ -176,6 +178,7 @@ class ConductivityCalculatorBase(abc.ABC):
         *,
         is_isotope: bool = False,
         mass_variances: Sequence[float] | NDArray[np.double] | None = None,
+        use_isotope_two_sided_weights: bool = False,
         sigma_cutoff_width: float | None = None,
         log_level: int = 0,
         lang: Literal["C", "Python", "Rust"] = "Rust",
@@ -197,7 +200,12 @@ class ConductivityCalculatorBase(abc.ABC):
         self._isotope_solver: IsotopeScatteringSolver | None = None
         if is_isotope or mass_variances is not None:
             self._isotope_solver = _build_isotope_solver(
-                pp, kappa_settings, log_level, mass_variances, lang=lang
+                pp,
+                kappa_settings,
+                log_level,
+                mass_variances,
+                use_two_sided_weights=use_isotope_two_sided_weights,
+                lang=lang,
             )
 
         # Shared per-grid-point arrays (allocated by subclass _allocate_values).
@@ -572,6 +580,7 @@ class RTACalculator(ConductivityCalculatorBase):
         *,
         is_isotope: bool = False,
         mass_variances: Sequence[float] | NDArray[np.double] | None = None,
+        use_isotope_two_sided_weights: bool = False,
         is_N_U: bool = False,
         is_gamma_detail: bool = False,
         sigma_cutoff_width: float | None = None,
@@ -603,6 +612,7 @@ class RTACalculator(ConductivityCalculatorBase):
             kappa_settings,
             is_isotope=is_isotope,
             mass_variances=mass_variances,
+            use_isotope_two_sided_weights=use_isotope_two_sided_weights,
             sigma_cutoff_width=sigma_cutoff_width,
             log_level=log_level,
             lang=lang,
@@ -978,6 +988,7 @@ class LBTECalculator(ConductivityCalculatorBase):
         *,
         is_isotope: bool = False,
         mass_variances: Sequence[float] | NDArray[np.double] | None = None,
+        use_isotope_two_sided_weights: bool = False,
         is_full_pp: bool = False,
         sigma_cutoff_width: float | None = None,
         log_level: int = 0,
@@ -1003,6 +1014,7 @@ class LBTECalculator(ConductivityCalculatorBase):
             kappa_settings,
             is_isotope=is_isotope,
             mass_variances=mass_variances,
+            use_isotope_two_sided_weights=use_isotope_two_sided_weights,
             sigma_cutoff_width=sigma_cutoff_width,
             log_level=log_level,
             lang=lang,

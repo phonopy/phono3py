@@ -38,6 +38,7 @@ class Phono3pySettings(Settings):
         self.is_gruneisen: bool = False
         self.is_imag_self_energy: bool = False
         self.is_isotope: bool = False
+        self.use_isotope_two_sided_weights: bool = False
         self.is_joint_dos: bool = False
         self.is_kappa_star: bool = True
         self.is_lbte: bool = False
@@ -220,6 +221,12 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
                 self._confs["isotope"] = ".true."
             elif args.is_isotope is False:
                 self._confs["isotope"] = ".false."
+
+        if "use_isotope_two_sided_weights" in arg_list:
+            if args.use_isotope_two_sided_weights:
+                self._confs["isotope_two_sided_weights"] = ".true."
+            elif args.use_isotope_two_sided_weights is False:
+                self._confs["isotope_two_sided_weights"] = ".false."
 
         if "is_joint_dos" in arg_list:
             if args.is_joint_dos:
@@ -524,6 +531,7 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
                 "gruneisen",
                 "imag_self_energy",
                 "isotope",
+                "isotope_two_sided_weights",
                 "joint_dos",
                 "lbte",
                 "N_U",
@@ -755,6 +763,10 @@ class Phono3pyConfParser(ConfParser[Phono3pySettings]):
         # Calculate lifetime due to isotope scattering
         if "isotope" in params:
             settings.is_isotope = params["isotope"]
+
+        # Tetrahedron weights of isotope scattering from both sides of vertices
+        if "isotope_two_sided_weights" in params:
+            settings.use_isotope_two_sided_weights = params["isotope_two_sided_weights"]
 
         # Calculate joint-DOS
         if "joint_dos" in params:
