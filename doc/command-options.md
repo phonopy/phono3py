@@ -712,6 +712,61 @@ The option is recommended for new calculations. It is off by default, and
 `--no-average-degenerate-weights` turns it off explicitly. It will be on by
 default in v5.0, see {ref}`migration_v5`.
 
+(isotope_two_sided_weights_option)=
+
+### `--isotope-two-sided-weights` (`ISOTOPE_TWO_SIDED_WEIGHTS = .TRUE.`)
+
+The isotope scattering rate of a phonon mode at $\mathbf{q}$ is calculated with
+the integration weights of the tetrahedron method at the frequency of that mode.
+The vertices of the tetrahedra include $\mathbf{q}$ itself and the grid points
+that are symmetrically equivalent to $\mathbf{q}$. At these vertices, the
+frequencies of the same band are equal to the frequency of the mode in theory.
+
+In a calculation, the phonons at each grid point are solved separately, and
+these frequencies differ by rounding errors of about $10^{-14}$ THz. The
+frequency of the mode can then be slightly below some of these vertex
+frequencies and slightly above others. The tetrahedron method uses different
+formulas below and above a vertex frequency, so the integration weights of some
+modes depend on the rounding errors. The isotope scattering rates of these modes
+can therefore differ between computers.
+
+With this option, the integration weights are calculated at the frequency of
+the mode shifted by $-10^{-12}$ THz and by $+10^{-12}$ THz, and their average is
+used. The shift is much larger than the rounding errors, so the shifted
+frequencies are below and above all these vertex frequencies. The integration
+weights then do not depend on the rounding errors. In a test with Si and a
+$9\times 9\times 9$ mesh, this option changed the lattice thermal conductivity
+with isotope scattering from 97.08 to 96.99 W/m-K.
+
+The option is used only for the isotope scattering, and it has no effect with
+`--sigma`. The option is recommended for new calculations with isotope
+scattering. It is off by default, and `--no-isotope-two-sided-weights` turns it
+off explicitly. It will be on by default in v5.0, see {ref}`migration_v5`.
+
+(v5_option)=
+
+### `--v5` (`V5 = .TRUE.`)
+
+Some options are off by default in v4.x and will be on by default in v5.0. The
+option `--v5` turns on all of them:
+
+- {ref}`--exclude-gamma-acoustic <exclude_gamma_acoustic_option>`
+- {ref}`--average-degenerate-weights <average_degenerate_weights_option>`
+- {ref}`--isotope-two-sided-weights <isotope_two_sided_weights_option>`
+
+```bash
+% phono3py --mesh 19 19 19 --br --isotope --v5
+```
+
+An option in this list that is given explicitly takes priority over `--v5`. For
+example, `--v5 --no-average-degenerate-weights` turns on the other options in
+the list and turns off the averaging over degenerate modes. In a configuration
+file, `V5 = .TRUE.` works in the same way, and a tag such as
+`AVERAGE_DEGENERATE_WEIGHTS = .FALSE.` in the same file takes priority over it.
+
+The Python API has no option that corresponds to `--v5`. From Python, pass each
+option, see {ref}`migration_v5`.
+
 (sigma_option)=
 
 ### `--sigma` (`SIGMA`)
