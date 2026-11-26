@@ -971,6 +971,7 @@ def _run_isotope_then_exit(
         symmetrize_tetrahedra=settings.symmetrize_tetrahedra,
         average_degenerate_weights=settings.average_degenerate_weights,
         exclude_gamma_acoustic=settings.exclude_gamma_acoustic,
+        use_two_sided_weights=settings.use_isotope_two_sided_weights,
         lang=phono3py.lang,
     )
     assert phono3py.fc2 is not None
@@ -1026,6 +1027,8 @@ def _init_phph_interaction(
             print("Acoustic frequencies at Gamma set to zero: True")
         if settings.average_degenerate_weights:
             print("Tetrahedron weights averaged over degenerate bands: True")
+        if settings.use_isotope_two_sided_weights:
+            print("Isotope tetrahedron weights from both sides of vertices: True")
         if settings.is_fc3_r0_average:
             print("fc3-r2q-transformation over three atoms: True")
         else:
@@ -1649,6 +1652,7 @@ def main(**argparse_control: Any) -> None:
                 temperatures=updated_settings["temperatures"],
                 is_isotope=settings.is_isotope,
                 mass_variances=settings.mass_variances,
+                use_isotope_two_sided_weights=settings.use_isotope_two_sided_weights,
                 grid_points=grid_points,
                 boundary_mfp=settings.boundary_mfp,
                 use_ave_pp=settings.use_ave_pp,

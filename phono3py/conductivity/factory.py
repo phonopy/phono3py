@@ -131,6 +131,7 @@ def _build_rta_calculator(
         kappa_settings=kappa_settings,
         is_isotope=config.is_isotope,
         mass_variances=config.mass_variances,
+        use_isotope_two_sided_weights=config.use_isotope_two_sided_weights,
         is_N_U=config.is_N_U,
         is_gamma_detail=config.is_gamma_detail,
         sigma_cutoff_width=config.sigma_cutoff,
@@ -209,6 +210,7 @@ def _build_lbte_calculator(
         kappa_settings=kappa_settings,
         is_isotope=config.is_isotope,
         mass_variances=config.mass_variances,
+        use_isotope_two_sided_weights=config.use_isotope_two_sided_weights,
         is_full_pp=config.is_full_pp,
         sigma_cutoff_width=config.sigma_cutoff,
         log_level=config.log_level,
@@ -336,6 +338,7 @@ def conductivity_calculator(
     sigma_cutoff: float | None = None,
     is_isotope: bool = False,
     mass_variances: NDArray[np.double] | None = None,
+    use_isotope_two_sided_weights: bool = False,
     boundary_mfp: float | None = None,
     use_ave_pp: bool = False,
     is_kappa_star: bool = True,
@@ -376,6 +379,10 @@ def conductivity_calculator(
         Include isotope scattering.  Default False.
     mass_variances : array-like or None, optional
         Mass variances for isotope scattering.  Default None.
+    use_isotope_two_sided_weights : bool, optional
+        Tetrahedron weights of isotope scattering are the mean of those at
+        the frequency points shifted by -1e-12 and +1e-12 THz.  See
+        ``use_two_sided_weights`` of ``Isotope``.  Default False.
     boundary_mfp : float or None, optional
         Boundary mean free path in micrometres.  Default None.
     use_ave_pp : bool, optional
@@ -442,6 +449,7 @@ def conductivity_calculator(
         sigma_cutoff=sigma_cutoff,
         is_isotope=is_isotope,
         mass_variances=mass_variances,
+        use_isotope_two_sided_weights=use_isotope_two_sided_weights,
         boundary_mfp=boundary_mfp,
         use_ave_pp=use_ave_pp,
         is_kappa_star=is_kappa_star,

@@ -387,6 +387,38 @@ def test_kappa_RTA_aln_iso_average_degenerate_weights(aln_lda: Phono3py):
     np.testing.assert_allclose(ref_kappa_RTA_iso_average, kappa_average, atol=0.1)
 
 
+def test_kappa_RTA_si_iso_two_sided_weights(
+    si_pbesol: Phono3py, monkeypatch: pytest.MonkeyPatch
+):
+    """Test RTA with isotope tetrahedron weights from both sides by Si.
+
+    With the weights also averaged over degenerate bands, kappa depends
+    neither on rounding errors nor on the eigenvectors in the degenerate
+    subspaces. The two-sided weights lower kappa from 96.935 to 96.851.
+
+    """
+    import phono3py.conductivity.calculators as calculators
+
+    flags = []
+    isotope_class = calculators.Isotope
+
+    def _isotope(*args, **kwargs):
+        flags.append(kwargs["use_two_sided_weights"])
+        return isotope_class(*args, **kwargs)
+
+    monkeypatch.setattr(calculators, "Isotope", _isotope)
+    ref_kappa_RTA_iso = [96.851, 96.851, 96.851, 0, 0, 0]
+    kappa = _get_kappa(
+        si_pbesol,
+        [9, 9, 9],
+        is_isotope=True,
+        average_degenerate_weights=True,
+        use_isotope_two_sided_weights=True,
+    ).ravel()
+    assert flags == [True]
+    np.testing.assert_allclose(ref_kappa_RTA_iso, kappa, atol=0.05)
+
+
 def test_kappa_RTA_aln_symmetrize_tetrahedra(
     aln_lda: Phono3py, monkeypatch: pytest.MonkeyPatch
 ):
@@ -467,6 +499,7 @@ def _get_kappa(
     symmetrize_tetrahedra=False,
     exclude_gamma_acoustic=False,
     average_degenerate_weights=False,
+    use_isotope_two_sided_weights=False,
 ):
     ph3.mesh_numbers = mesh
     ph3.init_phph_interaction(
@@ -480,6 +513,7 @@ def _get_kappa(
             300,
         ],
         is_isotope=is_isotope,
+        use_isotope_two_sided_weights=use_isotope_two_sided_weights,
         is_full_pp=is_full_pp,
         transport_type=transport_type,
     )

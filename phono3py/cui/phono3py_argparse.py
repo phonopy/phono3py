@@ -509,6 +509,18 @@ def _add_run_options(parser: argparse.ArgumentParser) -> None:
         help="Isotope scattering lifetime",
     )
     parser.add_argument(
+        "--isotope-two-sided-weights",
+        dest="use_isotope_two_sided_weights",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help=(
+            "Tetrahedron weights of isotope scattering are the mean of those "
+            "at the frequency points shifted by -1e-12 and +1e-12 THz, so "
+            "that they do not depend on rounding errors of the frequencies "
+            "(default: off)"
+        ),
+    )
+    parser.add_argument(
         "--jdos",
         dest="is_joint_dos",
         action="store_true",
@@ -1159,6 +1171,7 @@ class Phono3pyMockArgs:
     is_fc3_r0_average: bool | None = None
     is_full_fc: bool | None = None
     is_isotope: bool | None = None
+    use_isotope_two_sided_weights: bool | None = None
     is_N_U: bool | None = None
     is_lbte: bool | None = None
     mesh_numbers: Sequence[str] | None = None

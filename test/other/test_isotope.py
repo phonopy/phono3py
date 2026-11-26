@@ -6,6 +6,7 @@ from phonopy.phonon.degeneracy import get_degenerate_ids
 from phonopy.structure.atoms import PhonopyAtoms
 
 from phono3py import Phono3pyIsotope
+from phono3py.other import isotope as isotope_module
 from phono3py.other.isotope import Isotope, get_mass_variances
 
 si_pbesol_iso = [
@@ -260,8 +261,9 @@ def test_Phono3pyIsotope_symmetrize_tetrahedra(aln_lda):
         ("aln_lda", [4, 4, 2], False, True),
     ],
 )
+@pytest.mark.parametrize("use_two_sided_weights", [False, True])
 def test_Isotope_python_matches_rust(
-    request, ph3_name, mesh, use_grg, symmetrize_tetrahedra
+    request, ph3_name, mesh, use_grg, symmetrize_tetrahedra, use_two_sided_weights
 ):
     """The pure-Python tetrahedron path gives the gamma of the Rust path.
 
@@ -282,6 +284,7 @@ def test_Isotope_python_matches_rust(
             symprec=ph3.symmetry.tolerance,
             use_grg=use_grg,
             symmetrize_tetrahedra=symmetrize_tetrahedra,
+            use_two_sided_weights=use_two_sided_weights,
             lang=lang,
         )
         iso.init_dynamical_matrix(
@@ -347,13 +350,21 @@ def _rotate_degenerate_eigenvectors(frequencies, eigenvectors, seed=0):
     return rotated
 
 
-def _run_isotope(ph3, lang, average_degenerate_weights, grid_point, phonons=None):
+def _run_isotope(
+    ph3,
+    lang,
+    average_degenerate_weights,
+    grid_point,
+    phonons=None,
+    use_two_sided_weights=False,
+):
     iso = Isotope(
         [6, 6, 6],
         ph3.phonon_primitive,
         symprec=ph3.symmetry.tolerance,
         average_degenerate_weights=average_degenerate_weights,
         exclude_gamma_acoustic=True,
+        use_two_sided_weights=use_two_sided_weights,
         lang=lang,
     )
     iso.init_dynamical_matrix(
@@ -445,3 +456,51 @@ def test_Isotope_average_degenerate_weights_changes_gamma(si_pbesol):
     """Averaging changes gamma where degenerate bands have different weights."""
     gamma = [_run_isotope(si_pbesol, "Rust", ave, 10).gamma for ave in (False, True)]
     assert abs(gamma[0] - gamma[1]).max() > 1e-8
+
+
+@pytest.mark.parametrize("average_degenerate_weights", [False, True])
+def test_Isotope_two_sided_weights(si_pbesol, monkeypatch, average_degenerate_weights):
+    """With use_two_sided_weights, gamma does not depend on rounding errors.
+
+    The frequency points equal vertex frequencies of the tetrahedra up to
+    rounding errors of about 1e-14 THz. Frequency points shifted by -1e-13
+    and +1e-13 THz, larger than these errors, fall on either side of these
+    vertices. In Si, without use_two_sided_weights, gamma on both sides
+    agree, and the unshifted frequency points give gamma different from them
+    by more than 1% of the largest gamma.
+
+    """
+    get_integration_weights = isotope_module.get_integration_weights
+    for use_two_sided_weights in (False, True):
+        gammas = []
+        for shift in (0.0, -1e-13, 1e-13):
+            monkeypatch.setattr(
+                isotope_module,
+                "get_integration_weights",
+                lambda freq_points, *args, shift=shift, **kwargs: (
+                    get_integration_weights(freq_points + shift, *args, **kwargs)
+                ),
+            )
+            gammas.append(
+                np.array(
+                    [
+                        _run_isotope(
+                            si_pbesol,
+                            "Rust",
+                            average_degenerate_weights,
+                            gp,
+                            use_two_sided_weights=use_two_sided_weights,
+                        ).gamma
+                        for gp in (1, 10)
+                    ]
+                )
+            )
+        gamma, gamma_below, gamma_above = gammas
+        if use_two_sided_weights:
+            for gamma_shifted in (gamma_below, gamma_above):
+                np.testing.assert_allclose(gamma_shifted, gamma, rtol=1e-6, atol=1e-12)
+        else:
+            np.testing.assert_allclose(
+                gamma_below, gamma_above, atol=1e-6 * gamma.max()
+            )
+            assert abs(gamma_above - gamma).max() > 1e-2 * gamma.max()
